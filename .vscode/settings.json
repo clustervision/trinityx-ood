@@ -1,10 +1,16 @@
 {
     "cSpell.words": [
+        "bmcsetupname",
+        "bootmenu",
         "datacenter",
         "dynaconf",
         "jqxhr",
+        "localinstall",
+        "netboot",
+        "partscript",
         "Passengerfile",
         "phusion",
+        "setupbmc",
         "Sonaglia",
         "uchiwa",
         "virtualenv"
