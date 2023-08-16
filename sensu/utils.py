@@ -1,10 +1,34 @@
-def prettify_relative_time(time_diff_secs):
-    # Each tuple in the sequence gives the name of a unit, and the number of
-    # previous units which go into it.
-    weeks_per_month = 365.242 / 12 / 7
-    intervals = [('minute', 60), ('hour', 60), ('day', 24), ('week', 7),
-                 ('month', weeks_per_month), ('year', 12)]
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
+"""
+This file will be used by Sensu to provide the sequence.
+This file will create flask object and serve the all routes for on demand.
+"""
+
+__author__      = 'Diego Sonaglia'
+__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__license__     = 'GPL'
+__version__     = '2.0'
+__maintainer__  = 'Diego Sonaglia'
+__email__       = 'diego.sonaglia@clustervision.com'
+__status__      = 'Development'
+
+
+def prettify_relative_time(time_diff_secs=None):
+    """
+    Each tuple in the sequence gives the name of a unit, and the number of
+    previous units which go into it.
+    """
+    weeks_per_month = 365.242 / 12 / 7
+    intervals = [
+        ('minute', 60),
+        ('hour', 60),
+        ('day', 24),
+        ('week', 7),
+        ('month', weeks_per_month),
+        ('year', 12)
+    ]
     unit, number = 'second', abs(time_diff_secs)
     for new_unit, ratio in intervals:
         new_number = float(number) / ratio
@@ -13,4 +37,4 @@ def prettify_relative_time(time_diff_secs):
             break
         unit, number = new_unit, new_number
     shown_num = int(number)
-    return '{} {}'.format(shown_num, unit + ('' if shown_num == 1 else 's')) + ' ago'
+    return f"{shown_num} {unit}{('' if shown_num == 1 else 's')} ago"
