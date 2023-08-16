@@ -1,0 +1,122 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} / Clone  /</span> {{ record }}</h4>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row">
+    <!-- Basic Layout -->
+    <div class="col-xxl">
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Clone {{ record }}</h5>
+          <small class="text-muted float-end">Change values here...</small>
+          <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+        </div>
+        
+        <div class="card-body">
+          <form id="formAuthentication" class="mb-3" action="" method="POST">
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">name</label>
+              <div class="col-sm-10"><input type="text" name="name" class="form-control" required="" disabled maxlength="100" required="" id="id_name" value="{{ data.name }}" /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">new os image name</label>
+              <div class="col-sm-10"><input type="text" name="newosimage" required="" class="form-control" maxlength="100" required="" id="id_name"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">dracut modules</label>
+              <div class="col-sm-10"><input type="text" name="dracutmodules" class="form-control" maxlength="100" id="id_dracutmodules" value="{{ data.dracutmodules }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">grab file systems</label>
+              <div class="col-sm-10"><input type="text" name="grab_filesystems" class="form-control" maxlength="100" id="id_grab_filesystems" value="{{ data.grab_filesystems }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">grab exclude</label>
+              <div class="col-sm-10"><input type="text" name="grab_exclude" class="form-control" maxlength="100" id="id_grab_exclude" value="{{ data.grab_exclude }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">initrd file</label>
+              <div class="col-sm-10"><input type="text" name="initrdfile" class="form-control" maxlength="100" id="id_initrdfile" value="{{ data.initrdfile }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">kernel file</label>
+              <div class="col-sm-10"><input type="text" name="kernelfile" class="form-control" maxlength="100" id="id_kernelfile" value="{{ data.kernelfile }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">kernel modules</label>
+              <div class="col-sm-10"><input type="text" name="kernelmodules" class="form-control" maxlength="100" id="id_kernelmodules" value="{{ data.kernelmodules }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">kernel options</label>
+              <div class="col-sm-10"><input type="text" name="kerneloptions" class="form-control" maxlength="100" id="id_kerneloptions" value="{{ data.kerneloptions }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">kernel version</label>
+              <div class="col-sm-10"><input type="text" name="kernelversion" class="form-control" maxlength="100" id="id_kernelversion" value="{{ data.kernelversion }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">path</label>
+              <div class="col-sm-10"><input type="text" name="path" class="form-control" maxlength="100" id="id_path" value="{{ data.path }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">image file</label>
+              <div class="col-sm-10"><input type="text" name="imagefile" class="form-control" maxlength="100" id="id_imagefile" value="{{ data.imagefile }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">distribution</label>
+              <div class="col-sm-10"><input type="text" name="distribution" class="form-control" maxlength="100" id="id_distribution" value="{{ data.distribution }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">os release</label>
+              <div class="col-sm-10"><input type="text" name="osrelease" class="form-control" maxlength="100" id="id_osrelease" value="{{ data.osrelease }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Bare</label>
+              <div class="col-sm-10"><input type="checkbox" name="bare" class="form-check-input" id="id_bare"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">comment</label>
+              <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" maxlength="100" id="id_comment">{{ data.comment }}</textarea></div>
+            </div>
+ 
+            <div class="row justify-content-end">
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Clone {{ record }}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}

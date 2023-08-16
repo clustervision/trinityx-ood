@@ -1,0 +1,22 @@
+{% extends "table.html" %}
+{% block table %}
+  <thead>
+    <tr>
+      <th>name</th>
+      <th>type</th>
+      <th>interval</th>
+      <th>descritpion</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr>
+        <td>{{item.name}}</td>
+        <td>{{item.type}}</td>
+        <td>{{item.interval}}</td>
+        <td>{{item.descritpion}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

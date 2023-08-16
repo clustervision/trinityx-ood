@@ -1,0 +1,10 @@
+<pre>Output generated: {{ time }}</pre>
+
+{% if (items is defined) and items %}
+    <table class="table table-bordered table-striped">
+        {% block table %}
+        {% endblock %}
+    </table>
+{% else %}
+    No items found !
+{% endif %}

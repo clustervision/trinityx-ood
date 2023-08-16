@@ -1,0 +1,5 @@
+name: BMC Setup
+description: Luna 2 BMC Setup Operations
+icon: fa://charging-station
+category: Trinity
+subcategory: Luna

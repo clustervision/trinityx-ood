@@ -1,0 +1,5 @@
+name: Monitoring
+description: Monitoring info captured by sensu
+icon: fa://stethoscope
+category: Luna
+subcategory: Utilities
