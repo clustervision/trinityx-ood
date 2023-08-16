@@ -1,0 +1,87 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} / Clone  /</span> {{ record }}</h4>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row">
+    <!-- Basic Layout -->
+    <div class="col-xxl">
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Clone {{ record }}</h5>
+          <small class="text-muted float-end">Change values here...</small>
+          <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+        </div>
+
+        <div class="card-body">
+          <form id="formAuthentication" class="mb-3" action="" method="POST">
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">name</label>
+              <div class="col-sm-10"><input type="text" name="name" class="form-control" maxlength="100" required="" disabled id="id_name" value="{{ data.name }}" /></div>
+            </div>
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">New Switch Name</label>
+              <div class="col-sm-10"><input type="text" name="newswitchname" class="form-control" maxlength="100" required="" id="id_newswitchname"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">network</label>
+              <div class="col-sm-10"><select name="network" class="form-control" id="id_network">
+                {{ network_list | safe }}
+              </select></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">ip address</label>
+              <div class="col-sm-10"><input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="{{ data.ipaddress }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">mac address</label>
+              <div class="col-sm-10"><input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="{{ data.macaddress }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">read</label>
+              <div class="col-sm-10"><input type="text" name="read" class="form-control" maxlength="100" id="id_read" value="{{ data.read }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">rw</label>
+              <div class="col-sm-10"><input type="text" name="rw" class="form-control" maxlength="100" id="id_rw" value="{{ data.rw }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">oid</label>
+              <div class="col-sm-10"><input type="text" name="oid" class="form-control" maxlength="100" id="id_oid" value="{{ data.oid }}" /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">comment</label>
+              <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" maxlength="100" id="id_comment">{{ data.comment }}</textarea></div>
+            </div>
+            
+            <div class="row justify-content-end">
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Clone {{ record }}</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}

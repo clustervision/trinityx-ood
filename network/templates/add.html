@@ -1,0 +1,83 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> Add New</h4>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row">
+    <!-- Basic Layout -->
+    <div class="col-xxl">
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Add A {{ table }}</h5>
+          <small class="text-muted float-end">Add values here...</small>
+          <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+        </div>
+        
+        
+        <div class="card-body">
+          <form id="formAuthentication" class="mb-3" action="" method="POST">
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">name</label>
+              <div class="col-sm-10"><input type="text" name="name" class="form-control" maxlength="100" required="" id="id_name"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">network</label>
+              <div class="col-sm-10"><input type="text" name="network" class="form-control" maxlength="100" id="id_network"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">gateway</label>
+              <div class="col-sm-10"><input type="text" name="gateway" class="form-control" maxlength="100" id="id_gateway"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">nameserver ip</label>
+              <div class="col-sm-10"><input type="text" name="nameserver_ip" class="form-control" maxlength="100" id="id_nameserver_ip"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">dhcp</label>
+              <div class="col-sm-10"><input type="checkbox" name="dhcp" class="form-check-input" id="id_dhcp"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">dhcp range begin</label>
+              <div class="col-sm-10"><input type="text" name="dhcp_range_begin" class="form-control" maxlength="100" id="id_dhcp_range_begin"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">dhcp range end</label>
+              <div class="col-sm-10"><input type="text" name="dhcp_range_end" class="form-control" maxlength="100" id="id_dhcp_range_end"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">comment</label>
+              <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" maxlength="100" id="id_comment"></textarea></div>
+            </div>
+            
+            <div class="row justify-content-end">
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Add New Network</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}

@@ -1,0 +1,7 @@
+*.log
+*.lock
+*.pyc
+__pycache__
+# Ignore dynaconf secret files
+.secrets.*
+tmp/restart.txt

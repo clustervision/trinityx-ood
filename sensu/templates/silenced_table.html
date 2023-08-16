@@ -1,0 +1,24 @@
+{% extends "table.html" %}
+{% block table %}
+<thead>
+  <tr>
+    <th>datacenter</th>
+    <th>check_name</th>
+    <th>resason</th>
+    <th>expire_on_resolve</th>
+    <th>silenced_on</th>
+  </tr>
+</thead>
+<tbody>
+  {% for item in items %}
+  <tr>
+      <td>{{item.dc}}</td>
+      <td>{{item.check}}</td>
+      <td>{{item.reason}}</td>
+      <td>{{item.expire_on_resolve}}</td>
+      <td>{{item.timestamp|prettify_ts}}</td>
+  </tr>
+  {% endfor %}
+</tbody>
+{% endblock %}
+
