@@ -1,0 +1,118 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> {{ data.name }}</h4>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row">
+    <!-- Basic Layout -->
+    <div class="col-xxl">
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Edit {{ record }} </h5>
+          <small class="text-muted float-end">Change values here...</small>
+          <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+        </div>
+
+        <div class="card-body">
+          <form id="formAuthentication" class="mb-3" action="" method="POST">
+           
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">name</label>
+              <div class="col-sm-10"><input type="text" name="name" value="{{ data.name }}" class="form-control" maxlength="100" required="" disabled="" id="id_name"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">ntp server</label>
+              <div class="col-sm-10"><input type="text" name="ntp_server" value="{{ data.ntp_server }}" class="form-control ipv4" id="id_ntp_server" inputmode="decimal"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">nameserver ip</label>
+              <div class="col-sm-10"><input type="text" name="nameserver_ip" value="{{ data.nameserver_ip }}" class="form-control ipv4" id="id_nameserver_ip" inputmode="decimal"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">forwardserver ip</label>
+              <div class="col-sm-10"><input type="text" name="forwardserver_ip" value="{{ data.forwardserver_ip }}" class="form-control ipv4" id="id_forwardserver_ip" inputmode="decimal"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">provision method</label>
+              <div class="col-sm-10"><input type="text" name="provision_method" value="{{ data.provision_method }}" class="form-control" id="id_provision_method"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">provision fallback</label>
+              <div class="col-sm-10"><input type="text" name="provision_fallback" value="{{ data.provision_fallback }}" class="form-control" id="id_provision_fallback"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">create node on demand</label>
+              <div class="col-sm-10"><input type="checkbox" name="createnode_ondemand" class="form-check-input" id="id_createnode_ondemand"  {% if data.createnode_ondemand == True or data.createnode_ondemand == 'True' %}checked{% endif %} /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">security</label>
+              <div class="col-sm-10"><input type="checkbox" name="security" class="form-check-input" id="id_security" {% if data.security == True or data.security == 'True' %}checked{% endif %} /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">user</label>
+              <div class="col-sm-10"><input type="text" name="user" value="{{ data.user }}" class="form-control" id="id_user"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">debug</label>
+              <div class="col-sm-10"><input type="checkbox" name="debug" class="form-check-input" id="id_debug" {% if data.debug == True or data.debug == 'True' %}checked{% endif %} /></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">technical contacts</label>
+              <div class="col-sm-10"><input type="text" name="technical_contacts" value="{{ data.technical_contacts }}" class="form-control" id="id_technical_contacts"></div>
+            </div>
+
+            <div class="row justify-content-end">
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Update Cluster</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        
+        <!-- <div class="card-body">
+          <form id="formAuthentication" class="mb-3" action="" method="POST">
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">name</label>
+              <div class="col-sm-10"><input type="text" name="name" class="form-control" maxlength="100" required="" id="id_name" value="{{ data.name }}" ></div>
+            </div>
+            
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">comment</label>
+              <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" maxlength="100" id="id_comment">{{ data.comment }}</textarea></div>
+            </div>
+            
+            <div class="row justify-content-end">
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Update {{ record }}</button>
+              </div>
+            </div>
+          </form>
+        </div> -->
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}

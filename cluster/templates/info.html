@@ -1,0 +1,27 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} {% if record %}/{% endif %}</span> {% if record %}{{ record }}{% endif %} </h4>
+  <!-- Bordered Table -->
+  <div class="card">
+    <h5 class="card-header">{% if record %}{{ record }}{% else %}{{ table }} {% endif %} 
+      <span style="float: right;">
+        <a href="{{ url_for('rename') }}" class="btn btn-warning">Rename Cluster</a>
+        <a href="{{ url_for('edit') }}" class="btn btn-primary">Update {{ table }}</a>
+      </span>
+  </h5>
+    <div class="card-body">
+      <div class="table-responsive text-nowrap">
+        {% if data %}
+          {{ data  | safe }}
+        {% else %}
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <!--/ Bordered Table -->
+</div>
+<!-- / Content --><hr class="my-5" />
+{% endblock content %}
