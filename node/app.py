@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This File is a Main File Luna 2 Group.
+This File is a Main File Luna 2 Node.
 This file will create flask object and serve the all routes for on demand.
 """
 
@@ -14,9 +14,11 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+
+import json
 from string import Template
 from html import unescape
-from flask import Flask, json, request, render_template, flash, url_for, redirect
+from flask import Flask,request, render_template, flash, url_for, redirect
 from rest import Rest
 from helper import Helper
 from presenter import Presenter
@@ -30,11 +32,11 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application. It will list all Groups which is available with daemon.
+    This is the main method of application. It will list all Nodes which is available with daemon.
     """
     data = ""
     error = ""
-    table = 'group'
+    table = 'node'
     table_data = Rest().get_data(table)
     logger.info(table_data)
     if table_data:
@@ -55,7 +57,7 @@ def show(record=None):
     """
     data = ""
     error = ""
-    table = 'group'
+    table = 'node'
     table_data = Rest().get_data(table, record)
     if table_data:
         raw_data = table_data['config'][table][record]
@@ -86,7 +88,8 @@ def add():
     """
     This Method will add a requested record.
     """
-    table = 'group'
+    table = 'node'
+    group_list = Model().get_list_option_html('group')
     bmcsetup_list = Model().get_list_option_html('bmcsetup')
     osimage_list = Model().get_list_option_html('osimage')
     network_list = Model().get_list_option_html('network')
@@ -111,7 +114,7 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table = table.capitalize(), bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list)
+        return render_template("add.html", table = table.capitalize(), bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list)
 
 
 @app.route('/edit/<string:record>', methods=['GET', 'POST'])
@@ -120,7 +123,7 @@ def edit(record=None):
     This Method will add a requested record.
     """
     data = {}
-    table = 'group'
+    table = 'node'
     table_data = Rest().get_data(table, record)
     if table_data:
         data = table_data['config'][table][record]
@@ -134,15 +137,23 @@ def edit(record=None):
             osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
             osimage_list = Model().get_list_option_html('osimage')
+        if 'group' in data:
+            group_list = Model().get_list_option_html('group', data['group'])
+        else:
+            group_list = Model().get_list_option_html('group')
 
         raw_html = Template("""
             <div class="input-group">
-                  <span class="input-group-text">Interface</span>
-                  <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
-                  <span class="input-group-text">Network</span>
-                  <select name="network" class="form-control" id="id_network">$network</select>
-                  <span class="input-group-text">Options</span>
-                  <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+                <span class="input-group-text">Interface</span>
+                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Ip address</span>
+                <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
+                <span class="input-group-text">Mac address</span>
+                <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
+                <span class="input-group-text">Options</span>
+                <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 $button
               </div><br />""")
         interface_html = ""
@@ -152,12 +163,15 @@ def edit(record=None):
             num = 0
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
+                ipaddress = interface_dict['ipaddress'] if 'ipaddress' in interface_dict else ""
+                macaddress = interface_dict['macaddress'] if 'macaddress' in interface_dict else ""
+                macaddress = "" if macaddress == None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=add_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=add_button)
                 else:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
                 num = num + 1
         else:
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
@@ -181,7 +195,7 @@ def edit(record=None):
             flash(error, "error")
         return redirect(url_for('edit', record=record), code=302)
     else:
-        return render_template("edit.html", table = table.capitalize(), record = record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html)
+        return render_template("edit.html", table = table.capitalize(), record = record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
 
 
 @app.route('/delete/<string:record>', methods=['GET'])
@@ -189,7 +203,7 @@ def delete(record=None):
     """
     This Method will delete a requested record.
     """
-    table = 'group'
+    table = 'node'
     response = Rest().get_delete(table, record)
     if response.status_code == 204:
         flash(f'{table.capitalize()}, {record} is deleted.', "success")
@@ -204,7 +218,7 @@ def clone(record=None):
     This Method will clone a requested record.
     """
     data = {}
-    table = 'group'
+    table = 'node'
     table_data = Rest().get_data(table, record)
     if table_data:
         data = table_data['config'][table][record]
@@ -218,15 +232,23 @@ def clone(record=None):
             osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
             osimage_list = Model().get_list_option_html('osimage')
-
+        if 'group' in data:
+            group_list = Model().get_list_option_html('group', data['group'])
+        else:
+            group_list = Model().get_list_option_html('group')
         raw_html = Template("""
             <div class="input-group">
-                  <span class="input-group-text">Interface</span>
-                  <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
-                  <span class="input-group-text">Network</span>
-                  <select name="network" class="form-control" id="id_network">$network</select>
-                  <span class="input-group-text">Options</span>
-                  <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+                <span class="input-group-text">Interface</span>
+                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Ip address</span>
+                <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
+                <span class="input-group-text">Mac address</span>
+                <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
+                <span class="input-group-text">Network</span>
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
+                <span class="input-group-text">Options</span>
+                <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 $button
               </div><br />""")
         interface_html = ""
@@ -236,12 +258,15 @@ def clone(record=None):
             num = 0
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
+                ipaddress = interface_dict['ipaddress'] if 'ipaddress' in interface_dict else ""
+                macaddress = interface_dict['macaddress'] if 'macaddress' in interface_dict else ""
+                macaddress = "" if macaddress == None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=add_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=add_button)
                 else:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
                 num = num + 1
         else:
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
@@ -268,7 +293,7 @@ def clone(record=None):
             flash(error, "error")
         return redirect(url_for('clone', record=record), code=302)
     else:
-        return render_template("clone.html", table = table.capitalize(), record = record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html)
+        return render_template("clone.html", table = table.capitalize(), record = record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
 
 
 @app.route('/member/<string:table>/<string:record>', methods=['GET'])
@@ -293,12 +318,46 @@ def member(table=None, record=None):
     response = json.dumps(response)
     return response
 
+
+@app.route('/osgrab/<string:record>', methods=['GET', 'POST'])
+def osgrab(record=None):
+    """
+    This method will open the Login Page(First Page)
+    """
+    table = 'node'
+    data = {}
+    if request.method == "POST":
+        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        request_data = {'config':{table:{payload['name']: payload}}}
+        uri = f'config/{table}/{payload["name"]}/_osgrab'
+        response = Rest().post_raw(uri, request_data)
+        response_json = response.json()
+        if response.status_code == 200:
+            flash(response_json['message'], "success")
+            if 'request_id' in response_json:
+                return redirect(url_for('osgrab', record = record, request_id=response_json['request_id'], message=response_json['message']), code=302)
+        else:
+            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+            flash(error, "error")
+        return redirect(url_for('osgrab', record=record), code=302)
+
+    elif request.method == 'GET':
+        table_data = Rest().get_data(table, record)
+        node_list = Model().get_list_option_html('node', record)
+        if table_data:
+            raw_data = table_data['config'][table][record]
+            data = Helper().prepare_json(raw_data)
+            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
+    return render_template("osgrab.html", table = table.capitalize(), record = record,  data=data, node_list=node_list, osimage_list=osimage_list)
+
+
+
 @app.route('/ospush/<string:record>', methods=['GET', 'POST'])
 def ospush(record=None):
     """
     This method will open the Login Page(First Page)
     """
-    table = 'group'
+    table = 'node'
     data = {}
     if request.method == "POST":
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
@@ -306,17 +365,6 @@ def ospush(record=None):
         uri = f'config/{table}/{payload["name"]}/_ospush'
         response = Rest().post_raw(uri, request_data)
         response_json = response.json()
-        # if response.status_code == 200:
-        #     flash(response_json['message'], "success")
-        #     redirect_uri = f"/ospush/{table}/{record}"
-        #     if 'request_id' in response_json:
-        #         redirect_uri += f"/?request_id={response_json['request_id']}"
-        #         redirect_uri += f"&message={response_json['message']}"
-        #     # return HttpResponseRedirect(redirect_uri)
-        # else:
-        #     error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-        #     flash(error, "error")
-
         if response.status_code == 200:
             flash(response_json['message'], "success")
             if 'request_id' in response_json:
@@ -325,17 +373,15 @@ def ospush(record=None):
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
         return redirect(url_for('ospush', record=record), code=302)
-    
 
     elif request.method == 'GET':
         table_data = Rest().get_data(table, record)
-        group_list = Model().get_list_option_html('group', record)
+        node_list = Model().get_list_option_html('node', record)
         if table_data:
             raw_data = table_data['config'][table][record]
             data = Helper().prepare_json(raw_data)
             osimage_list = Model().get_list_option_html('osimage', data['osimage'])
-    return render_template("osimage.html", table = table.capitalize(), record = record,  data=data, group_list=group_list, osimage_list=osimage_list)
-
+    return render_template("ospush.html", table = table.capitalize(), record = record,  data=data, node_list=node_list, osimage_list=osimage_list)
 
 
 @app.route('/check_status/<string:status>/status/<string:request_id>', methods=['GET'])
