@@ -1,0 +1,106 @@
+<!-- Core JS -->
+<!-- build:js assets/vendor/js/core.js -->
+<script src="{{ url_for('static', filename='assets/vendor/libs/jquery/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/libs/popper/popper.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/js/menu.js') }}"></script>
+<!-- endbuild -->
+<!-- Vendors JS -->
+<script src="{{ url_for('static', filename='assets/js/chartjs.js') }}"></script>
+<!-- Main JS -->
+<script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+<!-- Page JS -->
+<!-- Data Tables -->
+
+<div class="modal fade" id="logmodal" tabindex="-1" role="dialog" aria-labelledby="logmodalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logmodalLabel">Status</h5>
+          <div id="spinner" style="float: right; margin-right: -50%;"></div>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" onClick="redirection();">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="run-time-body">
+            <pre id="run-time-logs"></pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="redirection();" >Close</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+<script>
+
+    function color_status(message=null){
+        if (message.includes('ON')){
+            message = "<strong style='color:green;'>" + message + "</strong>";
+        } else if (message.includes('OFF')){
+            message =  "<strong style='color:yellow;'>" + message + "</strong>";
+        } else {
+            message = "<strong style='color:red;'>" + message + "</strong>";
+        }
+        return message
+    }
+    
+
+    function color_message(message=null){
+        if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
+            message = "<span style='color:red;'>" + message + "</span><br />";
+        } else {
+            message = "<span style='color:yellow;'>" + message + "</span><br />";
+        }
+        return message
+    }
+
+    function service_action(service, action){
+        $('#run-time-logs').empty();
+        $.ajax({
+            url: window.location.href+"/get_request/service/"+service+"/"+action,
+            type: 'GET',
+            contentType: 'application/json; charset=UTF-8',
+            dataType: 'json',
+            success: function(request_data) {
+                $('#logmodal').modal('show');
+                var text = $('#run-time-logs').text();
+                text += color_message(request_data.message);
+                $('#run-time-logs').html(text);
+                var run_time_div = document.getElementById("run-time-body");
+                var url = window.location.href+"/check_status/"+request_data.request_id;
+                var intervalId;
+                intervalId = setInterval(function(){
+                    $.getJSON(url, function(data){
+                        if (data.message.includes("No data for this request")){
+                            clearInterval(intervalId);
+                        } else {
+                            text = $('#run-time-logs').text();
+                            text = color_message(text);
+                            if  (data.message.includes(';;')){
+                                const myArray = data.message.split(";;");
+                                for (var i=0; i<myArray.length; i++) {
+                                    text += color_message(myArray[i]);
+                                }
+                            } else {
+                                text += color_message("<br />" + data.message);
+                            }
+                            $('#run-time-logs').html(text);
+                            console.log(text);
+                            run_time_div.scrollTop = run_time_div.scrollHeight;
+                        }
+                    });
+                }, 1000);
+            }
+        });
+    }
+
+    function redirection(){
+        window.location.href = window.location.href;
+    }
+
+</script>
