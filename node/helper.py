@@ -523,7 +523,8 @@ class Helper():
                 color='#697a8d;'
             )
             osgrab =  self.make_icon(
-                href=f"/osgrab/{table}/{name}",
+                # href=f"/osgrab/{table}/{name}",
+                href=url_for('osgrab', record=name),
                 onclick=None,
                 text=f'Grab OS for {name}',
                 icon='bx-package',

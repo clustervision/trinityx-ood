@@ -1,0 +1,194 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> Add New</h4>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row">
+    <!-- Basic Layout -->
+    <div class="col-xxl">
+      <div class="card mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Add A {{ table }}</h5>
+          <small class="text-muted float-end">Add values here...</small>
+          <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+        </div>
+
+        <div class="card-body">
+          <form id="formAuthentication" class="mb-3" action="" method="POST">
+                
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">name</label>
+              <div class="col-sm-10"><input type="text" name="name" class="form-control" maxlength="100" required="" id="id_name"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">local boot</label>
+              <div class="col-sm-10"><input type="checkbox" name="localboot" class="form-check-input" id="id_localboot"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">service</label>
+              <div class="col-sm-10"><input type="checkbox" name="service" class="form-check-input" id="id_service"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">setup bmc</label>
+              <div class="col-sm-10"><input type="checkbox" name="setupbmc" class="form-check-input" id="id_setupbmc"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">net boot</label>
+              <div class="col-sm-10"><input type="checkbox" name="netboot" class="form-check-input" id="id_netboot"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">local install</label>
+              <div class="col-sm-10"><input type="checkbox" name="localinstall" class="form-check-input" id="id_localinstall"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">boot menu</label>
+              <div class="col-sm-10"><input type="checkbox" name="bootmenu" class="form-check-input" id="id_bootmenu"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">switch port</label>
+              <div class="col-sm-10"><input type="text" name="switchport" class="form-control" maxlength="100" id="id_switchport"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">status</label>
+              <div class="col-sm-10"><input type="text" name="status" class="form-control" maxlength="100" id="id_status"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">position</label>
+              <div class="col-sm-10"><input type="text" name="position" class="form-control" maxlength="100" id="id_position"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">pre script</label>
+              <div class="col-sm-10"><textarea name="prescript" cols="5" rows="3" class="form-control" maxlength="100" id="id_prescript"></textarea></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">part script</label>
+              <div class="col-sm-10"><textarea name="partscript" cols="5" rows="3" class="form-control" maxlength="100" id="id_partscript"></textarea></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">post script</label>
+              <div class="col-sm-10"><textarea name="postscript" cols="5" rows="3" class="form-control" maxlength="100" id="id_postscript"></textarea></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">provision interface</label>
+              <div class="col-sm-10"><input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">provision method</label>
+              <div class="col-sm-10"><input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">provision fallback</label>
+              <div class="col-sm-10"><input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">tpm uuid</label>
+              <div class="col-sm-10"><input type="text" name="tpm_uuid" class="form-control" maxlength="100" id="id_tpm_uuid"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">tpm pubkey</label>
+              <div class="col-sm-10"><input type="text" name="tpm_pubkey" class="form-control" maxlength="100" id="id_tpm_pubkey"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">tpm sha256</label>
+              <div class="col-sm-10"><input type="text" name="tpm_sha256" class="form-control" maxlength="100" id="id_tpm_sha256"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">unmanaged bmc users</label>
+              <div class="col-sm-10"><input type="text" name="unmanaged_bmc_users" class="form-control" maxlength="100" id="id_unmanaged_bmc_users"></div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">group</label>
+              <div class="col-sm-10">
+                <select name="group" class="form-control" id="id_group">{{ group_list | safe }}</select>
+              </div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">bmc setup</label>
+              <div class="col-sm-10">
+                <select name="bmcsetup" class="form-control" id="id_bmcsetup">{{ bmcsetup_list | safe }}</select>
+              </div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">os image</label>
+              <div class="col-sm-10">
+                <select name="osimage" class="form-control" id="id_osimage">{{ osimage_list | safe }}</select>
+              </div>
+            </div>
+          
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">comment</label>
+              <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" maxlength="100" id="id_comment"></textarea></div>
+            </div>
+            
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">interfaces</label>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  
+                    <span class="input-group-text">Interface</span>
+                    <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface">
+
+                    <span class="input-group-text">Ip address</span>
+                    <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal">
+
+                    <span class="input-group-text">Mac address</span>
+                    <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text">
+
+                    <span class="input-group-text">Network</span>
+                    <select name="network" class="form-control" id="id_network">{{ network_list | safe }}</select>
+                  
+                    <span class="input-group-text">Options</span>
+                    <input type="text" name="options" class="form-control" maxlength="100" id="id_options">
+                  <button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>
+                </div>
+                <div id="nodeinterface"></div>
+                  <br>
+              </div>
+            </div>
+
+            <div class="row justify-content-end">
+              <div class="col-sm-10">
+                <button type="submit" class="btn btn-primary">Add New Node</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}
