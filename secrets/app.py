@@ -16,7 +16,6 @@ __status__      = 'Development'
 
 
 import json
-from string import Template
 from html import unescape
 from flask import Flask,request, render_template, flash, url_for, redirect
 from rest import Rest
@@ -68,65 +67,30 @@ def home(entity=None):
     return render_template("inventory.html", table = table.capitalize(), secrets=secrets, group_secrets=group_secrets, node_secrets=node_secrets)
 
 
-# def secrets(request, table=None, record=None, secret=None):
-#     """
-#     This method will open the Login Page(First Page)
-#     """
-#     if 'username' not in request.session:
-#         return HttpResponseRedirect("/")
-#     context = {"table": 'Secrets', 'secrets': True, "daemon_status": Helper().daemon_status()}
-#     group_secrets, node_secrets = '', ''
-#     uri = 'secrets'
-#     if record:
-#         uri = f'{uri}/{table}/{record}'
-#         if secret:
-#             uri = f'{uri}/{secret}'
-#     secret_list = Rest().get_data(uri)
-#     if secret_list:
-#         secret_data = secret_list['config']['secrets']
-#         if 'group' in secret_data:
-#             fields, rows  =  Helper().get_secrets('groupsecrets', secret_data['group'])
-#             group_secrets = Presenter().show_table(fields, rows)
-#             group_secrets = unescape(group_secrets)
-#         if 'node' in secret_data:
-#             fields, rows  =  Helper().get_secrets('nodesecrets', secret_data['node'])
-#             node_secrets = Presenter().show_table(fields, rows)
-#             node_secrets = unescape(node_secrets)
-#     else:
-#         flash('Secrets are not available.', 'error')
-#         context['secrets'] = False
-#     if table:
-#         if table == 'group':
-#             context['group_secrets'] = group_secrets
-#         if table == 'node':
-#             context['node_secrets'] = node_secrets
-#     else:
-#         context['group_secrets'] = group_secrets
-#         context['node_secrets'] = node_secrets
-
-#     template = loader.get_template("inventory.html")
-#     return HttpResponse(template.render(context, request))
-
-
-
-@app.route('/show/<string:record>', methods=['GET'])
-def show(record=None):
+@app.route('/show/<string:table>/<string:record>/<string:secret>', methods=['GET'])
+def show(table=None, record=None, secret=None):
     """
     This Method will show a specific record.
     """
     data = ""
-    error = ""
-    table = 'node'
+    entity = table.replace('secrets', '')
+    table = 'secrets'
+    entity_name = record
+    secret_name = secret
+    record = f'{entity}/{entity_name}/{secret_name}'
     table_data = Rest().get_data(table, record)
     if table_data:
-        raw_data = table_data['config'][table][record]
+        raw_data = table_data['config'][table][entity][entity_name]
         raw_data = Helper().prepare_json(raw_data)
-        fields, rows  = Helper().filter_data_col(table, raw_data)
+        fields, rows  = Helper().filter_secret_col(
+                entity+table,
+                table_data['config'][table][entity]
+            )
         data = Presenter().show_table_col(fields, rows)
         data = unescape(data)
     else:
         error = f'{record} From {table.capitalize()} is Not available at this time'
-    return render_template("info.html", table = table.capitalize(), data = data, error = error, record=record)
+    return render_template("info.html", table = f'{entity.capitalize()} Secret', data = data, entity_name=entity_name, secret_name=secret_name)
 
 
 @app.route('/get_list/<string:table>', methods=['GET', 'POST'])
@@ -142,30 +106,28 @@ def get_list(table=None):
 
 
 
-@app.route('/add', methods=['GET', 'POST'])
-def add():
+@app.route('/add/<string:table>', methods=['GET', 'POST'])
+def add(table=None):
     """
     This Method will add a requested record.
     """
-    table = 'node'
-    group_list = Model().get_list_option_html('group')
-    bmcsetup_list = Model().get_list_option_html('bmcsetup')
-    osimage_list = Model().get_list_option_html('osimage')
-    network_list = Model().get_list_option_html('network')
+    table_split = table.split('_')
+    entity = table_split[0]
+    table_name = table_split[1]
+    table_capital = f'{entity.capitalize()} {table_name.capitalize()}'
+    select_list = Model().get_list_option_html(entity)
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
+        payload = Helper().prepare_payload(None, request.form)
+        entity_name = payload['name']
+        del payload['name']
+        payload['name'] = payload['secret']
+        del payload['secret']
+        request_data = {'config': {'secrets': {entity: {entity_name: [payload]}}}}
+        uri = f'{entity}/{entity_name}'
+        response = Rest().post_data('secrets', uri, request_data)
 
-        if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, table, payload)
-        request_data = {'config': {table: {payload['name']: payload}}}
-        response = Rest().post_data(table, payload['name'], request_data)
-        # response = Helper().add_record(table, request_data)
         if response.status_code == 201:
-            flash(f'{table.capitalize()}, {payload["name"]} Created.', "success")
+            flash(f'{table_name.capitalize()}, {payload["name"]} Created.', "success")
             return redirect(url_for('home'), code=302)
         else:
             response_json = response.json()
@@ -173,288 +135,101 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table = table.capitalize(), bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list)
+        return render_template("add.html", table = table_capital, entity=entity, select_list=select_list)
 
 
-@app.route('/edit/<string:record>', methods=['GET', 'POST'])
-def edit(record=None):
+@app.route('/edit/<string:table>/<string:record>/<string:secret>', methods=['GET', 'POST'])
+def edit(table=None, record=None, secret=None):
     """
     This Method will add a requested record.
     """
-    data = {}
-    table = 'node'
-    table_data = Rest().get_data(table, record)
-    if table_data:
-        data = table_data['config'][table][record]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
-        if 'bmcsetupname' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
-        else:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup')
-        if 'osimage' in data:
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
-        else:
-            osimage_list = Model().get_list_option_html('osimage')
-        if 'group' in data:
-            group_list = Model().get_list_option_html('group', data['group'])
-        else:
-            group_list = Model().get_list_option_html('group')
-
-        raw_html = Template("""
-            <div class="input-group">
-                <span class="input-group-text">Interface</span>
-                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
-                <span class="input-group-text">Ip address</span>
-                <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
-                <span class="input-group-text">Mac address</span>
-                <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
-                <span class="input-group-text">Network</span>
-                <select name="network" class="form-control" id="id_network">$network</select>
-                <span class="input-group-text">Options</span>
-                <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
-                $button
-              </div><br />""")
-        interface_html = ""
-        add_button = '<button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>'
-        remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
-        if 'interfaces' in data:
-            num = 0
-            for interface_dict in data['interfaces']:
-                interface = interface_dict['interface'] if 'interface' in interface_dict else ""
-                ipaddress = interface_dict['ipaddress'] if 'ipaddress' in interface_dict else ""
-                macaddress = interface_dict['macaddress'] if 'macaddress' in interface_dict else ""
-                macaddress = "" if macaddress == None else macaddress
-                network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
-                options = interface_dict['options'] if 'options' in interface_dict else ""
-                if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=add_button)
-                else:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
-                num = num + 1
-        else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
-        interface_html = interface_html[:-6]
+    return_table = table
+    entity = table.replace('secrets', '')
+    table = 'secrets'
+    entity_name = record
+    secret_name = secret
+    uri = f'{entity}/{entity_name}/{secret_name}'
+    table_data = Rest().get_data(table, uri)
+    data = table_data['config'][table][entity][entity_name][0]
+    data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+    data = Helper().prepare_json(data)
+    select_list = Model().get_list_option_html(entity, entity_name)
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
+        payload = Helper().prepare_payload(None, request.form)
+        entity_name = payload['name']
+        del payload['name']
+        payload['name'] = payload['secret']
+        del payload['secret']
+        request_data = {'config': {'secrets': {entity: {entity_name: [payload]}}}}
+        uri = f'{entity}/{entity_name}'
+        response = Rest().post_data('secrets', uri, request_data)
 
-        if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, table, payload)
-        request_data = {'config': {table: {payload['name']: payload}}}
-        response = Rest().post_data(table, payload['name'], request_data)
         if response.status_code == 204:
             flash(f'{table.capitalize()}, {payload["name"]} Updated.', "success")
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
-        return redirect(url_for('edit', record=record), code=302)
+        return redirect(url_for('edit', table=return_table, record=record, secret=secret), code=302)
     else:
-        return render_template("edit.html", table = table.capitalize(), record = record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
+        return render_template("edit.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name, select_list=select_list)
 
 
-@app.route('/delete/<string:record>', methods=['GET'])
-def delete(record=None):
+@app.route('/delete/<string:table>/<string:record>/<string:secret>', methods=['GET'])
+def delete(table=None, record=None, secret=None):
     """
     This Method will delete a requested record.
     """
-    table = 'node'
-    response = Rest().get_delete(table, record)
+    entity = table.replace('secrets', '')
+    table = 'secrets'
+    entity_name = record
+    secret_name = secret
+    uri = f'{entity}/{entity_name}/{secret_name}'
+    response = Rest().get_delete(table, uri)
+
     if response.status_code == 204:
-        flash(f'{table.capitalize()}, {record} is deleted.', "success")
+        flash(f'{entity_name} secret {secret_name} is deleted.', "success")
     else:
        flash('ERROR :: Something went wrong!', "error")
     return redirect(url_for('home'), code=302)
 
 
-@app.route('/clone/<string:record>', methods=['GET', 'POST'])
-def clone(record=None):
+@app.route('/clone/<string:table>/<string:record>/<string:secret>', methods=['GET', 'POST'])
+def clone(table=None, record=None, secret=None):
     """
-    This Method will clone a requested record.
+    This Method will add a requested record.
     """
-    data = {}
-    table = 'node'
-    table_data = Rest().get_data(table, record)
-    if table_data:
-        data = table_data['config'][table][record]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
-        if 'bmcsetupname' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
-        else:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup')
-        if 'osimage' in data:
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
-        else:
-            osimage_list = Model().get_list_option_html('osimage')
-        if 'group' in data:
-            group_list = Model().get_list_option_html('group', data['group'])
-        else:
-            group_list = Model().get_list_option_html('group')
-        raw_html = Template("""
-            <div class="input-group">
-                <span class="input-group-text">Interface</span>
-                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
-                <span class="input-group-text">Ip address</span>
-                <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
-                <span class="input-group-text">Mac address</span>
-                <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
-                <span class="input-group-text">Network</span>
-                <span class="input-group-text">Network</span>
-                <select name="network" class="form-control" id="id_network">$network</select>
-                <span class="input-group-text">Options</span>
-                <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
-                $button
-              </div><br />""")
-        interface_html = ""
-        add_button = '<button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>'
-        remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
-        if 'interfaces' in data:
-            num = 0
-            for interface_dict in data['interfaces']:
-                interface = interface_dict['interface'] if 'interface' in interface_dict else ""
-                ipaddress = interface_dict['ipaddress'] if 'ipaddress' in interface_dict else ""
-                macaddress = interface_dict['macaddress'] if 'macaddress' in interface_dict else ""
-                macaddress = "" if macaddress == None else macaddress
-                network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
-                options = interface_dict['options'] if 'options' in interface_dict else ""
-                if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=add_button)
-                else:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
-                num = num + 1
-        else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
-        interface_html = interface_html[:-6]
+    return_table = table
+    entity = table.replace('secrets', '')
+    table = 'secrets'
+    entity_name = record
+    secret_name = secret
+    uri = f'{entity}/{entity_name}/{secret_name}'
+    table_data = Rest().get_data(table, uri)
+    data = table_data['config'][table][entity][entity_name][0]
+    data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+    data = Helper().prepare_json(data)
+    select_list = Model().get_list_option_html(entity, entity_name)
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
+        payload = Helper().prepare_payload(None, request.form)
+        entity_name = payload['name']
+        del payload['name']
+        payload['name'] = payload['secret']
+        del payload['secret']
+        request_data = {'config': {'secrets': {entity: {entity_name: [payload]}}}}
+        uri = f'{entity}/{entity_name}/{secret_name}'
 
-        if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, table, payload)
-        request_data = {'config': {table: {payload['name']: payload}}}
-        response = Rest().post_clone(table, payload['name'], request_data)
+        response = Rest().post_clone('secrets', uri, request_data)
+
         if response.status_code == 201:
-            flash(f'{table.capitalize()}, {data["name"]} Cloned as {payload["name"]}.', "success")
+            flash(f'{table.capitalize()}, {payload["name"]} Cloned to {payload["newsecretname"]}.', "success")
         else:
-            try:
-                response_json = response.json()
-                error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            except json.decoder.JSONDecodeError:
-                error = f'HTTP ERROR :: {response.status_code} - {response.content}'
-            flash(error, "error")
-        return redirect(url_for('clone', record=record), code=302)
-    else:
-        return render_template("clone.html", table = table.capitalize(), record = record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
-
-
-@app.route('/member/<string:table>/<string:record>', methods=['GET'])
-def member(table=None, record=None):
-    """
-    This Method will provide all the member nodes for the requested record.
-    """
-    get_member = Rest().get_data(table, record+'/_list')
-    if get_member:
-        data = get_member['config'][table][record]['members']
-        data = Helper().prepare_json(data)
-        num = 1
-        fields = ['S.No.', 'Nodes']
-        rows = []
-        for node in data:
-            new_row = [num, node]
-            rows.append(new_row)
-            num = num + 1
-        response = Presenter().show_table(fields, rows, True)
-    else:
-        response = f'{record} From {table.capitalize()} Not have any members at this time.'
-    response = json.dumps(response)
-    return response
-
-
-@app.route('/osgrab/<string:record>', methods=['GET', 'POST'])
-def osgrab(record=None):
-    """
-    This method will open the Login Page(First Page)
-    """
-    table = 'node'
-    data = {}
-    if request.method == "POST":
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        request_data = {'config':{table:{payload['name']: payload}}}
-        uri = f'config/{table}/{payload["name"]}/_osgrab'
-        response = Rest().post_raw(uri, request_data)
-        response_json = response.json()
-        if response.status_code == 200:
-            flash(response_json['message'], "success")
-            if 'request_id' in response_json:
-                return redirect(url_for('osgrab', record = record, request_id=response_json['request_id'], message=response_json['message']), code=302)
-        else:
+            response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
-        return redirect(url_for('osgrab', record=record), code=302)
-
-    elif request.method == 'GET':
-        table_data = Rest().get_data(table, record)
-        node_list = Model().get_list_option_html('node', record)
-        if table_data:
-            raw_data = table_data['config'][table][record]
-            data = Helper().prepare_json(raw_data)
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
-    return render_template("osgrab.html", table = table.capitalize(), record = record,  data=data, node_list=node_list, osimage_list=osimage_list)
-
-
-
-@app.route('/ospush/<string:record>', methods=['GET', 'POST'])
-def ospush(record=None):
-    """
-    This method will open the Login Page(First Page)
-    """
-    table = 'node'
-    data = {}
-    if request.method == "POST":
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        request_data = {'config':{table:{payload['name']: payload}}}
-        uri = f'config/{table}/{payload["name"]}/_ospush'
-        response = Rest().post_raw(uri, request_data)
-        response_json = response.json()
-        if response.status_code == 200:
-            flash(response_json['message'], "success")
-            if 'request_id' in response_json:
-                return redirect(url_for('ospush', record = record, request_id=response_json['request_id'], message=response_json['message']), code=302)
-        else:
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('ospush', record=record), code=302)
-
-    elif request.method == 'GET':
-        table_data = Rest().get_data(table, record)
-        node_list = Model().get_list_option_html('node', record)
-        if table_data:
-            raw_data = table_data['config'][table][record]
-            data = Helper().prepare_json(raw_data)
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
-    return render_template("ospush.html", table = table.capitalize(), record = record,  data=data, node_list=node_list, osimage_list=osimage_list)
-
-
-@app.route('/check_status/<string:status>/status/<string:request_id>', methods=['GET'])
-def check_status(status=None, request_id=None):
-    """
-    This method will check the status of request on behalf of request ID.
-    """
-    response = {"message": "No Response"}
-    if request:
-        uri = f'{status}/status/{request_id}'
-        result = Rest().get_raw(uri)
-        response = result.json()
-    response = json.dumps(response)
-    return response
+        return redirect(url_for('clone', table=return_table, record=record, secret=secret), code=302)
+    else:
+        return render_template("clone.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name, select_list=select_list)
 
 
 if __name__ == "__main__":

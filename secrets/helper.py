@@ -419,175 +419,51 @@ class Helper():
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
-            status = f'<a href="/power/status/{name}" class="{button}btn-info">Status</a>'
-            turn_on  = f'<a href="/power/on/{name}" class="{button}btn-primary">Power ON</a>'
-            off = f'<a href="/power/off/{name}" class="{button}btn-danger">Power OFF</a>'
-            # info = f'<a href="/info/{table}/{name}" class="{button}btn-info">Info</a>'
             info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
-            # edit = f'<a href="/edit/{table}/{name}" class="{button}btn-primary">Edit</a>'
             edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
-            # delete = f'<a href="/delete/{table}/{name}" class="{button}btn-danger">Delete</a>'
             delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
-            # clone = f'<a href="/clone/{table}/{name}" class="{button}btn-warning">Clone</a>'
             clone = f'<a href="/clone/{name}" class="{button}btn-warning">Clone</a>'
-            member_click = f'onclick="member(\'osimage\', \'{name}\');"'
-            member_button = f'class="{button}rounded-pill btn-outline-primary"'
-            member = f'<button type="button" {member_click} {member_button}>Member Nodes</button>'
-            pack_click = f'onclick="pack_osimage(\'{name}\');"'
-            pack = f'<button type="button" {pack_click} class="{button}btn-secondary">Pack</button>'
-            kernel = f'<a href="/kernel/{table}/{name}" class="{button}btn-dark">Change Kernel</a>'
-            osgrab = f'<a href="/osgrab/{table}/{name}" class="{button}btn-secondary">Grab OS</a>'
-            ospush = f'<a href="/ospush/{table}/{name}" class="{button}btn-dark">OS Push</a>'
-            taken_click = f'onclick="taken(\'{name}\');"'
-            taken_button = f'class="{button}rounded-pill btn-outline-primary"'
-            taken = f'<button type="button" {taken_click} {taken_button}>Reserved IP</button>'
-            ipinfo = f'<a href="/ipinfo/{table}/{name}" class="{button}btn-secondary">IP Info</a>'
-            nextip = f'<a href="/nextip/{table}/{name}" class="{button}btn-dark">Next IP</a>'
         elif item_type == 'icon':
-            status =  self.make_icon(
-                href=f"/power/status/{name}",
-                onclick=None,
-                text=f'Current Status of {name}',
-                icon='bx-stats',
-                color='#03c3ec;'
-            )
-            turn_on =  self.make_icon(
-                href=f"/power/on/{name}",
-                onclick=None,
-                text=f'Power ON {name}',
-                icon='bx-power-off',
-                color='#71dd37;'
-            )
-            off =  self.make_icon(
-                href=f"/power/off/{name}",
-                onclick=None,
-                text=f'Power OFF {name}',
-                icon='bx-power-off bx-flip-vertical',
-                color='#ff3e1d;'
-            )
+            name_split = name.split('/')
             info =  self.make_icon(
-                # href=f"/info/{table}/{name}",
-                href=url_for('show', record=name),
-                # href=f"/show/{name}",
+                href=url_for('show', table=table, record=name_split[0], secret=name_split[1]),
                 onclick=None,
                 text=f'{name} Detail Information',
                 icon='bx-info-circle',
                 color='#03c3ec;'
             )
             edit =  self.make_icon(
-                # href=f"/edit/{table}/{name}",
-                # href=f"/edit/{name}",
-                href=url_for('edit', record=name),
+                href=url_for('edit', table=table, record=name_split[0], secret=name_split[1]),
                 onclick=None,
                 text=f'Change in {name}',
                 icon='bx-edit',
                 color='#696cff;'
             )
             delete =  self.make_icon(
-                # href=f"/delete/{table}/{name}",
-                # href=f"/delete/{name}",
-                href=url_for('delete', record=name),
+                href=url_for('delete', table=table, record=name_split[0], secret=name_split[1]),
                 onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
                 text=f'Delete {name}',
                 icon='bx-trash',
                 color='red;'
             )
             clone =  self.make_icon(
-                # href=f"/clone/{table}/{name}",
-                # href=f"/clone/{name}",
-                href=url_for('clone', record=name),
+                href=url_for('clone', table=table, record=name_split[0], secret=name_split[1]),
                 onclick=None,
                 text=f'Clone {name}',
                 icon='bx-duplicate',
                 color='#20c997;'
             )
-            member =  self.make_icon(
-                href=None,
-                onclick=f'member(\'{table}\', \'{name}\');',
-                text=f'Member Nodes of {name}',
-                icon='bx-copy-alt',
-                color='#007bff;'
-            )
-            pack =  self.make_icon(
-                href=None,
-                onclick=f'member(\'osimage\', \'{name}\');',
-                text=f'Pack {name}',
-                icon='bx-package',
-                color='#8592a3;'
-            )
-            kernel =  self.make_icon(
-                href=f"/kernel/{table}/{name}",
-                onclick=None,
-                text=f'Change Kernel Of {name}',
-                icon='bx-microchip',
-                color='#697a8d;'
-            )
-            osgrab =  self.make_icon(
-                # href=f"/osgrab/{table}/{name}",
-                href=url_for('osgrab', record=name),
-                onclick=None,
-                text=f'Grab OS for {name}',
-                icon='bx-package',
-                color='#8592a3;'
-            )
-            ospush =  self.make_icon(
-                # href=f"/ospush/{table}/{name}",
-                href=url_for('ospush', record=name),
-                onclick=None,
-                text=f'Push OS for {name}',
-                icon='bxs-package',
-                color='#697a8d;'
-            )
-            taken =  self.make_icon(
-                href=None,
-                onclick=f'taken(\'{name}\');',
-                text=f'Reserved IP with {name}',
-                icon='bx-list-ol',
-                color='#007bff;'
-            )
-            ipinfo =  self.make_icon(
-                href=f"/ipinfo/{table}/{name}",
-                onclick=None,
-                text=f'IP Information on {name}',
-                icon='bx-subdirectory-left',
-                color='#fd7e14;'
-            )
-            nextip =  self.make_icon(
-                href=f"/nextip/{table}/{name}",
-                onclick=None,
-                text=f'Next Available IP on {name}',
-                icon='bx-subdirectory-right',
-                color='#ffab00;'
-            )
+
         else:
-            status = ''
-            turn_on  = ''
-            off = ''
             info = ''
             edit = ''
             delete = ''
             clone = ''
-            member = ''
-            pack = ''
-            kernel = ''
-            osgrab = ''
-            ospush = ''
-            taken = ''
-            ipinfo = ''
-            nextip = ''
         action = {
-            'power':    [status, turn_on, off],
-            'node':     [info, edit, delete, clone, osgrab, ospush],
-            'group':    [info, edit, delete, clone, member, ospush],
-            'bmcsetup': [info, edit, delete, clone, member],
-            'switch':   [info, edit, delete, clone],
-            'otherdev': [info, edit, delete, clone],
-            'osimage':  [info, edit, delete, clone, member, pack, kernel],
-            'network':  [info, edit, delete, taken, ipinfo, nextip],
+ 
             'groupsecrets': [info, edit, delete, clone],
-            'nodesecrets':  [info, edit, delete, clone],
-            'osuser': [info, edit, delete],
-            'osgroup':  [info, edit, delete]
+            'nodesecrets':  [info, edit, delete, clone]
+
         }
         response = "&nbsp;".join(action[table])
         return response
@@ -679,7 +555,7 @@ class Helper():
             colored_fields.append(newfield)
         fields = colored_fields
         for outer in rows:
-            action = self.action_items(table, f'{outer[0]}JOIN-NODENAME-SECRETNAME{outer[1]}')
+            action = self.action_items(table, f'{outer[0]}/{outer[1]}')
             outer.insert(len(outer), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
