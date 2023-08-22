@@ -21,29 +21,30 @@ from helper import Helper
 from presenter import Presenter
 from log import Log
 
-logger = Log.init_log('DEBUG')
+LOGGER = Log.init_log('INFO')
+TABLE = 'bmcsetup'
+TABLE_CAP = 'BMC Setup'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application. It will list all BMC setups which is available with daemon.
+    This is the main method of application.
+    It will list all BMC setups which is available with daemon.
     """
-    data = ""
-    error = ""
-    table = 'bmcsetup'
-    table_data = Rest().get_data(table)
-    logger.info(table_data)
+    data, error = "", ""
+    table_data = Rest().get_data(TABLE)
+    LOGGER.info(table_data)
     if table_data:
-        raw_data = table_data['config'][table]
+        raw_data = table_data['config'][TABLE]
         raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data(table, raw_data)
+        fields, rows  = Helper().filter_data(TABLE, raw_data)
         data = Presenter().show_table(fields, rows)
         data = unescape(data)
     else:
-        error = f'No {table.capitalize()} Available at this time.'
-    return render_template("inventory.html", table = table.capitalize(), data = data, error = error)
+        error = f'No {TABLE_CAP} Available at this time.'
+    return render_template("inventory.html", table=TABLE_CAP, data=data, error=error)
 
 
 @app.route('/show/<string:record>', methods=['GET'])
@@ -51,19 +52,18 @@ def show(record=None):
     """
     This Method will show a specific record.
     """
-    data = ""
-    error = ""
-    table = 'bmcsetup'
-    table_data = Rest().get_data(table, record)
+    data, error = "", ""
+    table_data = Rest().get_data(TABLE, record)
+    LOGGER.info(table_data)
     if table_data:
-        raw_data = table_data['config'][table][record]
+        raw_data = table_data['config'][TABLE][record]
         raw_data = Helper().prepare_json(raw_data)
-        fields, rows  = Helper().filter_data_col(table, raw_data)
+        fields, rows  = Helper().filter_data_col(TABLE, raw_data)
         data = Presenter().show_table_col(fields, rows)
         data = unescape(data)
     else:
-        error = f'{record} From {table.capitalize()} is Not available at this time'
-    return render_template("info.html", table = table.capitalize(), data = data, error = error, record=record)
+        error = f'{record} From {TABLE_CAP} is Not available at this time'
+    return render_template("info.html", table=TABLE_CAP, data = data, error = error, record=record)
 
 
 @app.route('/add', methods=['GET', 'POST'])
@@ -71,15 +71,14 @@ def add():
     """
     This Method will add a requested record.
     """
-    table = 'bmcsetup'
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         payload = Helper().prepare_payload(None, payload)
-        request_data = {'config': {table: {payload['name']: payload}}}
-        response = Rest().post_data(table, payload['name'], request_data)
-        # response = Helper().add_record(table, request_data)
+        request_data = {'config': {TABLE: {payload['name']: payload}}}
+        response = Rest().post_data(TABLE, payload['name'], request_data)
+        LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 201:
-            flash(f'{table.capitalize()}, {payload["name"]} Created.', "success")
+            flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
             return redirect(url_for('home'), code=302)
         else:
             response_json = response.json()
@@ -87,36 +86,36 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table = table.capitalize())
+        return render_template("add.html", table=TABLE_CAP)
 
 
 @app.route('/edit/<string:record>', methods=['GET', 'POST'])
 def edit(record=None):
     """
-    This Method will add a requested record.
+    This Method will edit a requested record.
     """
     data = {}
-    table = 'bmcsetup'
-    table_data = Rest().get_data(table, record)
+    table_data = Rest().get_data(TABLE, record)
+    LOGGER.info(table_data)
     if table_data:
-        data = table_data['config'][table][record]
+        data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         payload = Helper().prepare_payload(None, payload)
-        request_data = {'config': {table: {payload['name']: payload}}}
-        response = Rest().post_data(table, payload['name'], request_data)
-        # response = Helper().add_record(table, request_data)
+        request_data = {'config': {TABLE: {payload['name']: payload}}}
+        response = Rest().post_data(TABLE, payload['name'], request_data)
+        LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 204:
-            flash(f'{table.capitalize()}, {payload["name"]} Updated.', "success")
+            flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
         return redirect(url_for('edit', record=record), code=302)
     else:
-        return render_template("edit.html", table = table.capitalize(), record = record,  data=data)
+        return render_template("edit.html", table=TABLE_CAP, record=record, data=data)
 
 
 @app.route('/delete/<string:record>', methods=['GET'])
@@ -124,12 +123,12 @@ def delete(record=None):
     """
     This Method will delete a requested record.
     """
-    table = 'bmcsetup'
-    response = Rest().get_delete(table, record)
+    response = Rest().get_delete(TABLE, record)
+    LOGGER.info(f'{response.status_code} -> {response.content}')
     if response.status_code == 204:
-        flash(f'{table.capitalize()}, {record} is deleted.', "success")
+        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
     else:
-       flash('ERROR :: Something went wrong!', "error")
+        flash('ERROR :: Something went wrong!', "error")
     return redirect(url_for('home'), code=302)
 
 
@@ -139,24 +138,25 @@ def clone(record=None):
     This Method will clone a requested record.
     """
     data = {}
-    table = 'bmcsetup'
-    table_data = Rest().get_data(table, record)
+    table_data = Rest().get_data(TABLE, record)
+    LOGGER.info(table_data)
     if table_data:
-        data = table_data['config'][table][record]
+        data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        response = Helper().clone_record(table, payload)
+        response = Helper().clone_record(TABLE, payload)
+        LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 201:
-            flash(f'{table.capitalize()}, {data["name"]} Cloned as {payload["name"]}.', "success")
+            flash(f'{TABLE_CAP}, {data["name"]} Cloned as {payload["name"]}.', "success")
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
         return redirect(url_for('clone', record=record), code=302)
     else:
-        return render_template("clone.html", table = table.capitalize(), record = record,  data=data)
+        return render_template("clone.html", table=TABLE_CAP, record=record, data=data)
 
 
 @app.route('/member/<string:table>/<string:record>', methods=['GET'])
@@ -165,6 +165,7 @@ def member(table=None, record=None):
     This Method will provide all the member nodes for the requested record.
     """
     get_member = Rest().get_data(table, record+'/_list')
+    LOGGER.info(get_member)
     if get_member:
         data = get_member['config'][table][record]['members']
         data = Helper().prepare_json(data)

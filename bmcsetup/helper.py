@@ -13,15 +13,13 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 import os
-from flask import url_for
-from datetime import datetime
-import urllib.parse
 from time import time
 import base64
 import binascii
 import subprocess
 from random import randrange, randint
 from os import getpid
+from flask import url_for
 import hostlist
 from nested_lookup import nested_lookup, nested_update, nested_delete
 from rest import Rest
@@ -39,137 +37,6 @@ class Helper():
         Constructor - As of now, nothing have to initialize.
         """
         self.logger = Log.get_logger()
-
-
-    def daemon_status(self):
-        """
-        This method will check if daemon is working or not.
-        """
-        response =  Rest().get_data('cluster')
-        if response:
-            response = response['config']['cluster']
-        else:
-            response = None
-        return response
-
-
-    def filter_interfaces(self, request=None, table=None, payload=None):
-        """
-        This method
-        """
-        post_list = dict(request.POST)
-        interface_list, interface = [], {}
-        if table == 'node':
-            if 'ipaddress' not in post_list:
-                post_list["ipaddress"] = [None] * len(post_list["interface"])
-            if 'macaddress' not in post_list:
-                post_list["macaddress"] =  [None] * len(post_list["interface"])
-        if 'network' not in post_list:
-            post_list["network"] =  [None] * len(post_list["interface"])
-        if 'options' not in post_list:
-            post_list["options"] =  [None] * len(post_list["interface"])
-        if table == 'node':
-            zip_interface = zip(
-                post_list["interface"],
-                post_list["ipaddress"],
-                post_list["macaddress"],
-                post_list["network"],
-                post_list["options"]
-            )
-            for list_interface, ipaddress, macaddress, network, options in zip_interface:
-                if list_interface:
-                    interface['interface'] = list_interface
-                if ipaddress:
-                    interface['ipaddress'] = ipaddress
-                if macaddress:
-                    interface['macaddress'] = macaddress
-                if network:
-                    interface['network'] = network
-                if options:
-                    interface['options'] = options
-                if list_interface:
-                    interface_list.append(interface)
-                interface = {}
-        elif table =='group':
-            zip_interface = zip(post_list["interface"], post_list["network"], post_list["options"])
-            for list_interface, network, options in zip_interface:
-                if list_interface:
-                    interface['interface'] = list_interface
-                if network:
-                    interface['network'] = network
-                if options:
-                    interface['options'] = options
-                if list_interface:
-                    interface_list.append(interface)
-                interface = {}
-        if 'interface' in payload:
-            del payload['interface']
-        if table == 'node':
-            if 'ipaddress' in payload:
-                del payload['ipaddress']
-            if 'macaddress' in payload:
-                del payload['macaddress']
-        if 'network' in payload:
-            del payload['network']
-        if 'options' in payload:
-            del payload['options']
-        payload['interfaces'] = interface_list
-        return payload
-
-
-    def statistics(self):
-        """
-        This method will fetch the node and cluster cpu usage.
-        """
-        response = []
-        labels = []
-        dataset  = ""
-        route = 'http://localhost:8086/query?db=telegraf'
-        payload = 'SELECT usage_idle FROM "cpu" WHERE time > now() - 1h GROUP BY host LIMIT 10;'
-        payload = urllib.parse.quote(payload)
-        route = f'{route}&q={payload}'
-        influx_data = Rest().get_url_data(route, payload=None)
-        if influx_data:
-            if influx_data.status_code == 200:
-                result = influx_data.json()
-                date_format = '%Y-%m-%dT%H:%M:%SZ'
-                if 'series' in result['results'][0]:
-                    for host in result['results'][0]['series']:
-                        status = {}
-                        status['data'] = []
-                        status['host'] = host['tags']['host']
-                        for formatting in host['values']:
-                            date_formatted = str(datetime.strptime(formatting[0], date_format))
-                            value = str(int(formatting[1]))
-                            status['data'].append({'x': date_formatted, 'y': int(value)})
-                            labels.append(date_formatted)
-                        response.append(status)
-        num = 1
-        labels = list(dict.fromkeys(labels))
-        for each in response:
-            if num == 1:
-                color = '"#ff3e1d"'
-            else:
-                color = f'"{self.get_color()}"'
-            dataset += f"""
-            {{
-                data: {each["data"]},
-                label: "{each["host"]}",
-                borderColor: {color},
-                tension: .5,
-                pointStyle: "circle",
-                backgroundColor: {color},
-                fill: !1,
-                pointRadius: 1,
-                pointHoverRadius: 5,
-                pointHoverBorderWidth: 5,
-                pointBorderColor: "transparent",
-                pointHoverBorderColor: i,
-                pointHoverBackgroundColor: {color}
-            }},
-            """
-            num = num + 1
-        return labels, dataset
 
 
     def get_color(self):
@@ -433,64 +300,22 @@ class Helper():
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
-            status = f'<a href="/power/status/{name}" class="{button}btn-info">Status</a>'
-            turn_on  = f'<a href="/power/on/{name}" class="{button}btn-primary">Power ON</a>'
-            off = f'<a href="/power/off/{name}" class="{button}btn-danger">Power OFF</a>'
-            # info = f'<a href="/info/{table}/{name}" class="{button}btn-info">Info</a>'
             info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
-            # edit = f'<a href="/edit/{table}/{name}" class="{button}btn-primary">Edit</a>'
             edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
-            # delete = f'<a href="/delete/{table}/{name}" class="{button}btn-danger">Delete</a>'
             delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
-            # clone = f'<a href="/clone/{table}/{name}" class="{button}btn-warning">Clone</a>'
             clone = f'<a href="/clone/{name}" class="{button}btn-warning">Clone</a>'
             member_click = f'onclick="member(\'osimage\', \'{name}\');"'
             member_button = f'class="{button}rounded-pill btn-outline-primary"'
             member = f'<button type="button" {member_click} {member_button}>Member Nodes</button>'
-            pack_click = f'onclick="pack_osimage(\'{name}\');"'
-            pack = f'<button type="button" {pack_click} class="{button}btn-secondary">Pack</button>'
-            kernel = f'<a href="/kernel/{table}/{name}" class="{button}btn-dark">Change Kernel</a>'
-            osgrab = f'<a href="/osgrab/{table}/{name}" class="{button}btn-secondary">Grab OS</a>'
-            ospush = f'<a href="/ospush/{table}/{name}" class="{button}btn-dark">OS Push</a>'
-            taken_click = f'onclick="taken(\'{name}\');"'
-            taken_button = f'class="{button}rounded-pill btn-outline-primary"'
-            taken = f'<button type="button" {taken_click} {taken_button}>Reserved IP</button>'
-            ipinfo = f'<a href="/ipinfo/{table}/{name}" class="{button}btn-secondary">IP Info</a>'
-            nextip = f'<a href="/nextip/{table}/{name}" class="{button}btn-dark">Next IP</a>'
         elif item_type == 'icon':
-            status =  self.make_icon(
-                href=f"/power/status/{name}",
-                onclick=None,
-                text=f'Current Status of {name}',
-                icon='bx-stats',
-                color='#03c3ec;'
-            )
-            turn_on =  self.make_icon(
-                href=f"/power/on/{name}",
-                onclick=None,
-                text=f'Power ON {name}',
-                icon='bx-power-off',
-                color='#71dd37;'
-            )
-            off =  self.make_icon(
-                href=f"/power/off/{name}",
-                onclick=None,
-                text=f'Power OFF {name}',
-                icon='bx-power-off bx-flip-vertical',
-                color='#ff3e1d;'
-            )
             info =  self.make_icon(
-                # href=f"/info/{table}/{name}",
                 href=url_for('show', record=name),
-                # href=f"/show/{name}",
                 onclick=None,
                 text=f'{name} Detail Information',
                 icon='bx-info-circle',
                 color='#03c3ec;'
             )
             edit =  self.make_icon(
-                # href=f"/edit/{table}/{name}",
-                # href=f"/edit/{name}",
                 href=url_for('edit', record=name),
                 onclick=None,
                 text=f'Change in {name}',
@@ -498,8 +323,6 @@ class Helper():
                 color='#696cff;'
             )
             delete =  self.make_icon(
-                # href=f"/delete/{table}/{name}",
-                # href=f"/delete/{name}",
                 href=url_for('delete', record=name),
                 onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
                 text=f'Delete {name}',
@@ -507,8 +330,6 @@ class Helper():
                 color='red;'
             )
             clone =  self.make_icon(
-                # href=f"/clone/{table}/{name}",
-                # href=f"/clone/{name}",
                 href=url_for('clone', record=name),
                 onclick=None,
                 text=f'Clone {name}',
@@ -522,84 +343,14 @@ class Helper():
                 icon='bx-copy-alt',
                 color='#007bff;'
             )
-            pack =  self.make_icon(
-                href=None,
-                onclick=f'member(\'osimage\', \'{name}\');',
-                text=f'Pack {name}',
-                icon='bx-package',
-                color='#8592a3;'
-            )
-            kernel =  self.make_icon(
-                href=f"/kernel/{table}/{name}",
-                onclick=None,
-                text=f'Change Kernel Of {name}',
-                icon='bx-microchip',
-                color='#697a8d;'
-            )
-            osgrab =  self.make_icon(
-                href=f"/osgrab/{table}/{name}",
-                onclick=None,
-                text=f'Grab OS for {name}',
-                icon='bx-package',
-                color='#8592a3;'
-            )
-            ospush =  self.make_icon(
-                href=f"/ospush/{table}/{name}",
-                onclick=None,
-                text=f'Push OS for {name}',
-                icon='bxs-package',
-                color='#697a8d;'
-            )
-            taken =  self.make_icon(
-                href=None,
-                onclick=f'taken(\'{name}\');',
-                text=f'Reserved IP with {name}',
-                icon='bx-list-ol',
-                color='#007bff;'
-            )
-            ipinfo =  self.make_icon(
-                href=f"/ipinfo/{table}/{name}",
-                onclick=None,
-                text=f'IP Information on {name}',
-                icon='bx-subdirectory-left',
-                color='#fd7e14;'
-            )
-            nextip =  self.make_icon(
-                href=f"/nextip/{table}/{name}",
-                onclick=None,
-                text=f'Next Available IP on {name}',
-                icon='bx-subdirectory-right',
-                color='#ffab00;'
-            )
         else:
-            status = ''
-            turn_on  = ''
-            off = ''
             info = ''
             edit = ''
             delete = ''
             clone = ''
             member = ''
-            pack = ''
-            kernel = ''
-            osgrab = ''
-            ospush = ''
-            taken = ''
-            ipinfo = ''
-            nextip = ''
         action = {
-            'power':    [status, turn_on, off],
-            'node':     [info, edit, delete, clone, osgrab, ospush],
-            'group':    [info, edit, delete, clone, member, ospush],
-            'bmcsetup': [info, edit, delete, clone, member],
-            'switch':   [info, edit, delete, clone],
-            'otherdev': [info, edit, delete, clone],
-            'osimage':  [info, edit, delete, clone, member, pack, kernel],
-            'network':  [info, edit, delete, taken, ipinfo, nextip],
-            'groupsecrets': [info, edit, delete, clone],
-            'nodesecrets':  [info, edit, delete, clone],
-            'osuser': [info, edit, delete],
-            'osgroup':  [info, edit, delete]
+            'bmcsetup': [info, edit, delete, clone, member]
         }
         response = "&nbsp;".join(action[table])
         return response
@@ -666,73 +417,6 @@ class Helper():
                     except TypeError:
                         self.logger.debug(f"Without any reason {content} is coming from api.")
         return json_data
-
-
-    def get_secrets(self, table=None, data=None):
-        """
-        This method will filter data for Secrets
-        """
-        self.logger.debug(f'Table => {table} and Data => {data}')
-        rows, colored_fields = [], []
-        fields = filter_columns(table)
-        self.logger.debug(f'Fields => {fields}')
-        for key in data:
-            new_row = []
-            for value in data[key]:
-                self.logger.debug(f'Key => {key} and Value => {value}')
-                new_row.append(key)
-                new_row.append(value['name'])
-                new_row.append(value['path'])
-                content = self.base64_decode(value['content'])
-                new_row.append(content[:60]+'...')
-                rows.append(new_row)
-                new_row = []
-        for newfield in fields:
-            colored_fields.append(newfield)
-        fields = colored_fields
-        for outer in rows:
-            action = self.action_items(table, f'{outer[0]}JOIN-NODENAME-SECRETNAME{outer[1]}')
-            outer.insert(len(outer), action)
-        # Adding Serial Numbers to the dataset
-        fields.insert(0, 'S. No.')
-        fields.insert(len(fields),"Actions")
-        num = 1
-        for outer in rows:
-            outer.insert(0, num)
-            num = num + 1
-        # Adding Serial Numbers to the dataset
-        return fields, rows
-
-
-    def filter_secret_col(self, table=None, data=None):
-        """
-        This method will generate the data as for row format
-        """
-        self.logger.debug(f'Table => {table} and Data => {data}')
-        rows, colored_fields = [], []
-        fields = sortby(table)
-        self.logger.debug(f'Fields => {fields}')
-        for key in data:
-            new_row = []
-            for value in data[key]:
-                self.logger.debug(f'Key => {key} and Value => {value}')
-                new_row.append(key)
-                new_row.append(value['name'])
-                new_row.append(value['path'])
-                content = self.base64_decode(value['content'])
-                new_row.append(content)
-                rows.append(new_row)
-                new_row = []
-        for newfield in fields:
-            colored_fields.append(newfield)
-        fields = colored_fields
-        new_fields, new_row = [], []
-        for row in rows:
-            new_fields = new_fields + fields
-            new_row = new_row + row
-            new_fields.append("")
-            new_row.append("")
-        return new_fields, new_row
 
 
     def filter_data_col(self, table=None, data=None):
