@@ -1,14 +1,6 @@
-<!-- Core JS -->
-<!-- build:js assets/vendor/js/core.js -->
+
 <script src="{{ url_for('static', filename='assets/vendor/libs/jquery/jquery.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/libs/popper/popper.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/vendor/js/bootstrap.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/js/menu.js') }}"></script>
-<!-- endbuild -->
-<!-- Main JS -->
-<script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
-<!-- Data Tables -->
 <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
@@ -32,10 +24,6 @@
       </div>
     </div>
 </div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
-    
 
 
 <script type="text/javascript">
@@ -69,11 +57,6 @@
     }
 </script>
 
-<script type="text/javascript">
-    $('#formAuthentication').submit(function(){
-        $("#formAuthentication :disabled").removeAttr('disabled');
-    });
-</script>
 
 <script type="text/javascript">
     new DataTable('.datatable');
@@ -87,40 +70,6 @@
 
 </script>
 
-<script type="text/javascript">
-    function color_status(message=null){
-        if (message.includes('ON')){
-            message = "<strong style='color:green;'>" + message + "</strong>";
-        } else if (message.includes('OFF')){
-            message =  "<strong style='color:yellow;'>" + message + "</strong>";
-        } else {
-            message = "<strong style='color:red;'>" + message + "</strong>";
-        }
-        return message
-    }
-</script>
-
-<script type="text/javascript">
-
-    function create_row(count, node, status, power){
-        if (power == true){
-            row = '<tr>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;"><input type="checkbox" name="node" value="'+node+'"  id="'+count+'" /></td>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+node+'</td>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(status)+'</td>';
-            row +='<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;"><a id="actions" href="/power/status/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Current Status of '+node+'</span>"><i class="bx bx-md bx-stats" style="color: #03c3ec;"></i></a>&nbsp;<a id="actions" href="/power/on/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power ON '+node+'</span>"><i class="bx bx-md bx-power-off" style="color: #71dd37;"></i></a>&nbsp;<a id="actions" href="/power/off/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power OFF '+node+'</span>"><i class="bx bx-md bx-power-off bx-flip-vertical" style="color: #ff3e1d;"></i></a>';
-            row += '</tr>';
-        } else {
-            row = '<tr>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+node+'</td>';
-            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(status)+'</td>';
-            row += '</tr>';
-        }
-        return row
-    }
-</script>
 
 <script type="text/javascript">
 
@@ -141,6 +90,10 @@
         if  (window.location.pathname.includes('/clone/')){
             redirect_path = window.location.pathname;
             redirect_path = redirect_path.replace('/clone/', '/edit/');
+            window.location.href = redirect_path;
+        } else if  (window.location.pathname.includes('/kernel/')){
+            redirect_path = window.location.pathname;
+            redirect_path = redirect_path.replace('/kernel/', '/kernel/');
             window.location.href = redirect_path;
         } else if  (window.location.pathname.includes('/osgrab/') || window.location.pathname.includes('/ospush/')){
             redirect_path = window.location.pathname;
