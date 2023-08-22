@@ -8,6 +8,8 @@
         "dynaconf",
         "getpid",
         "hostlist",
+        "inputmark",
+        "inputmask",
         "jqxhr",
         "lable",
         "localinstall",
