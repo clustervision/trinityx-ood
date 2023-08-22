@@ -18,7 +18,9 @@ from flask import Flask, json, request, render_template, flash
 from rest import Rest
 from log import Log
 
-logger = Log.init_log('DEBUG')
+LOGGER = Log.init_log('INFO')
+TABLE = 'service'
+TABLE_CAP = 'Service'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
@@ -28,21 +30,21 @@ def home():
     """
     This is the main method of application. It will list all Services and perform operations.
     """
-    table = 'service'
     response = None
     if request.method == "POST":
         response = service_status(request.form['service'], request.form['action'])
         if 'implemented' in response.lower():
-            flash(f'{request.form["service"]}, {response}.', "warning")
+            flash(f'{request.form[TABLE]}, {response}.', "warning")
         elif 'fail' in response.lower() or 'not' in response.lower():
-            flash(f'{request.form["service"]}, {response}.', "error")
+            flash(f'{request.form[TABLE]}, {response}.', "error")
         else:
-            flash(f'{request.form["service"]}, {response}.', "success")
+            flash(f'{request.form[TABLE]}, {response}.', "success")
     current_state = {}
     current_state['dhcp'] = service_status('dhcp', 'status')
     current_state['dns'] = service_status('dns', 'status')
     current_state['luna2'] = service_status('luna2', 'status')
-    return render_template("service.html", table = table.capitalize(), current_state = current_state, response = response)
+    LOGGER.info(current_state)
+    return render_template("service.html", current_state=current_state, response=response)
 
 
 @app.route('/get_request/<string:status>/<string:service_name>/<string:action>', methods=['GET'])
@@ -54,6 +56,7 @@ def get_request(status=None, service_name=None, action=None):
     if request:
         uri = f'{status}/{service_name}/{action}'
         result = Rest().get_raw(uri)
+        LOGGER.info(f'{result.status_code} {result.content}')
         response = result.json()
     response = json.dumps(response)
     return response
@@ -66,8 +69,9 @@ def check_status(request_id=None):
     """
     response = {"message": "No Response"}
     if request:
-        uri = f'service/status/{request_id}'
+        uri = f'{TABLE}/status/{request_id}'
         result = Rest().get_raw(uri)
+        LOGGER.info(f'{result.status_code} {result.content}')
         response = result.json()
     response = json.dumps(response)
     return response
@@ -77,8 +81,9 @@ def service_status(service_name=None, action=None):
     """
     Method to will perform the action on the desired service by Luna Daemon's API.
     """
-    uri = f'service/{service_name}/{action}'
+    uri = f'{TABLE}/{service_name}/{action}'
     response = Rest().get_raw(uri)
+    LOGGER.info(f'{response.status_code} {response.content}')
     if not isinstance(response, bool):
         status_code = response.status_code
         content = response.json()
