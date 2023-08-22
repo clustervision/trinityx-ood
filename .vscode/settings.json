@@ -1,18 +1,29 @@
 {
     "cSpell.words": [
+        "bmcsetup",
         "bmcsetupname",
         "bootmenu",
         "datacenter",
+        "datatable",
         "dynaconf",
+        "getpid",
+        "hostlist",
         "jqxhr",
+        "lable",
         "localinstall",
+        "logmodal",
+        "mgmtchannel",
         "netboot",
+        "netchannel",
+        "newbmcname",
         "partscript",
         "Passengerfile",
         "phusion",
         "setupbmc",
         "Sonaglia",
         "uchiwa",
+        "unmanaged",
+        "userid",
         "virtualenv"
     ]
 }
