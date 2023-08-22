@@ -1,17 +1,8 @@
 <!-- Core JS -->
 <!-- build:js assets/vendor/js/core.js -->
 <script src="{{ url_for('static', filename='assets/vendor/libs/jquery/jquery.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/libs/popper/popper.js') }}"></script>
 <script src="{{ url_for('static', filename='assets/vendor/js/bootstrap.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js') }}"></script>
-<script src="{{ url_for('static', filename='assets/vendor/js/menu.js') }}"></script>
-<!-- endbuild -->
-<!-- Vendors JS -->
-<script src="{{ url_for('static', filename='assets/js/chartjs.js') }}"></script>
-<!-- Main JS -->
-<script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
-<!-- Page JS -->
-<!-- Data Tables -->
+
 
 <div class="modal fade" id="logmodal" tabindex="-1" role="dialog" aria-labelledby="logmodalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
@@ -33,22 +24,8 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
-
 <script>
 
-    function color_status(message=null){
-        if (message.includes('ON')){
-            message = "<strong style='color:green;'>" + message + "</strong>";
-        } else if (message.includes('OFF')){
-            message =  "<strong style='color:yellow;'>" + message + "</strong>";
-        } else {
-            message = "<strong style='color:red;'>" + message + "</strong>";
-        }
-        return message
-    }
-    
 
     function color_message(message=null){
         if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
