@@ -190,7 +190,7 @@ def delete(table=None, record=None, secret=None):
     if response.status_code == 204:
         flash(f'{entity_name} secret {secret_name} is deleted.', "success")
     else:
-       flash('ERROR :: Something went wrong!', "error")
+        flash('ERROR :: Something went wrong!', "error")
     return redirect(url_for('home'), code=302)
 
 
@@ -233,5 +233,5 @@ def clone(table=None, record=None, secret=None):
 
 
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port= 7059, debug= True)
-    # app.run()
+    # app.run(host= '0.0.0.0', port= 7059, debug= True)
+    app.run()
