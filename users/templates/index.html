@@ -2,5 +2,44 @@
 {% extends "base/base.html" %}
 
 {% block content %}
-Nothing to see here
+<div class="container" role="main">
+    <div class="panel panel-default">
+        <div class="panel-heading panel-heading-nav">
+            <ul class="nav nav-tabs">
+              <li role="presentation" class="active">
+                <a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a>
+              </li>
+              <li role="presentation">
+                <a href="#groups" aria-controls="groups" role="tab" data-toggle="tab">Groups</a>
+              </li>
+
+            </ul>
+        </div>
+        <div class="panel-body">
+            <div class="tab-content">
+              <div role="tabpanel" class="tab-pane fade in active" id="users">
+                <h3> Users </h3>
+                <div id="users-container"></div>
+              </div>
+              <div role="tabpanel" class="tab-pane fade " id="groups">
+                <h3> Groups </h3>
+                <div id="groups-container"></div>
+              </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function poll_endpoint(endpoint_url, endpoint_name){
+      $.get(endpoint_url, function(data, status, jqxhr) {
+        $( `#${endpoint_name}-container`).html(data);
+        setTimeout(poll_endpoint, {{ refresh_interval }}, endpoint_url, endpoint_name);
+      });
+    }
+    poll_endpoint("{{ url_for('users') }}", "users");
+    poll_endpoint("{{ url_for('groups') }}", "groups");
+  </script>
+
+
 {% endblock %}

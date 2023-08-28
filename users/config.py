@@ -16,7 +16,7 @@ __status__      = 'Development'
 
 from dynaconf import Dynaconf
 
-sensu_settings = Dynaconf(
+settings = Dynaconf(
     envvar_prefix="DYNACONF",
     settings_files=['settings/luna.toml', '.secrets.toml'],
 )

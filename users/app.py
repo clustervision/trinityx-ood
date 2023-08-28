@@ -13,46 +13,45 @@ __maintainer__  = 'Diego Sonaglia'
 __email__       = 'diego.sonaglia@clustervision.com'
 __status__      = 'Development'
 
+
+import datetime
 from flask import Flask, render_template
 from config import settings
-import requests
+from luna_requests import LunaRequestHandler
 
 app = Flask(__name__, static_url_path='/')
-
-class OsUserRequestHandler():
-    USER_LIST_ENDPOINT = '/config/osusers'
-    GROUP_LIST_ENDPOINT = '/config/osgroups'
-    
-    @classmethod
-    def get_token(cls):
-        """
-        This method will get the token from the /tmp/token.txt file.
-        """
-        with open('/tmp/token.txt', 'r') as f:
-            token = f.read().strip()
-        return token
-    
-    @classmethod
-    def get_auth_header(cls):
-        """
-        This method will get the authentication header.
-        """
-        return {'x-access-tokens': cls.get_token()}
-    
-    @classmethod
-    def get_users(cls):
-        """
-        This method will get all the users from the database.
-        """
-        response = requests.get(auth=cls.get_auth_header(), url=settings.API_URL + cls.USER_LIST_ENDPOINT)
-
+handler = LunaRequestHandler()
 
 @app.route("/")
 def index():
     """
     This is main route of application, it will serve index page of the application.
     """
-    return render_template('index.html')
+    return render_template('index.html', refresh_interval=settings.luna.refresh_interval)
+
+@app.route("/users")
+def users():
+    """
+    This API will get all the users.
+    """
+    try:
+        items = handler.get_users()
+        current_time = datetime.datetime.utcnow()
+        return render_template('users_table.html', items=items, time=current_time)
+    except Exception as e:
+        return render_template('base/error.html', message=e)
+    
+@app.route("/groups")
+def groups():
+    """
+    This API will get all the groups.
+    """
+    try:
+        items = handler.get_groups()
+        current_time = datetime.datetime.utcnow()
+        return render_template('groups_table.html', items=items, time=current_time)
+    except Exception as e:
+        return render_template('base/error.html', message=e)
 
 if __name__ == "__main__":
     app.run()

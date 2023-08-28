@@ -3,18 +3,26 @@
   <thead>
     <tr>
       <th>Name</th>
-      <th>Type</th>
-      <th>Interval</th>
       <th>Description</th>
+      <th>UID</th>
+      <th>GID</th>
+      <th>Home Directory</th>
+      <th>Shell</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
     {% for item in items %}
     <tr>
         <td>{{item.name}}</td>
-        <td>{{item.type}}</td>
-        <td>{{item.interval}}</td>
-        <td>{{item.description}}</td>
+        <td>{{item.fullname}}</td>
+        <td>{{item.userid}}</td>
+        <td>{{item.primarygroup}}</td>
+        <td>{{item.homedir}}</td>
+        <td>{{item.shell}}</td>
+        <td>
+          <button type="button" class="btn btn-danger">Delete</button>
+        </td>
     </tr>
     {% endfor %}
   </tbody>

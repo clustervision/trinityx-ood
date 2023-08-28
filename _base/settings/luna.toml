@@ -1,2 +1,3 @@
 [ luna ]
-url = "http://localhost:7050/"
+url = "http://localhost:7050"
+refresh_interval = 3000
