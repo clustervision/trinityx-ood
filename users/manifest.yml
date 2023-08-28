@@ -1,5 +1,5 @@
-name: Monitoring
-description: Monitoring info captured by sensu
-icon: fa://stethoscope
+name: Users
+description: Managing users and groups
+icon: fa://user
 category: Trinity
 subcategory: Utilities
