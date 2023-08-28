@@ -1,7 +1,20 @@
-{% set app_name = "Sensu Monitoring" %}
-{% extends "base/base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sensu Dashboard</title>
+  <meta charset="UTF-8">
+  {% set app_name = "Sensu Monitoring" %}
 
-{% block content %}
+  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/bootstrap-3.3.7/css/bootstrap.min.css") }}>
+  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/ood-bootstrap3-override-0.0.1/navbar.css") }}>
+</head>
+<body>
+
+<header>
+  <!-- navbar  -->
+  {% include "base/navbar.html" %}
+</header>
+
 <div class="container" role="main">
     <div class="panel panel-default">
         <div class="panel-heading panel-heading-nav">
@@ -36,7 +49,8 @@
     </div>
 </div>
 
-
+<script src={{ url_for("static", filename="/jquery-3.2.1/jquery-3.2.1.min.js") }}></script>
+<script src={{ url_for("static", filename="/bootstrap-3.3.7/js/bootstrap.min.js") }}></script>
 
 <script>
   function poll_endpoint(endpoint_url, endpoint_name){
@@ -50,4 +64,5 @@
   poll_endpoint("{{ url_for('silenced') }}", "silenced");
 </script>
 
-{% endblock %}
+</body>
+</html>

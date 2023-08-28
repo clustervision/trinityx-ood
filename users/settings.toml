@@ -1,0 +1,5 @@
+sensu_host = 'localhost'
+sensu_port = '4567'
+sensu_use_tls = false
+sensu_refresh_interval = 3000
+ood_use_tls = true
