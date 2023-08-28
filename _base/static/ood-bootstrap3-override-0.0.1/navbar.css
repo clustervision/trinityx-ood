@@ -7,6 +7,7 @@
   height: 50px;
 }
 
+
 .ood-appkit.navbar ul.navbar-breadcrumbs > li > a:hover, .ood-appkit.navbar ul.navbar-breadcrumbs > li + li:hover:before, .ood-appkit.navbar ul.navbar-breadcrumbs > li > a:focus, .ood-appkit.navbar ul.navbar-breadcrumbs > li + li:focus:before {
   text-decoration: none;
 }
@@ -75,4 +76,17 @@ li:last-child > a:focus {
 
 .ood-appkit.navbar.navbar-inverse ul.navbar-breadcrumbs > li + li:before {
   color: #cccccc;
+}
+
+.ood-appkit .navbar-brand.navbar-brand-logo img {
+  height: 100%;
+}
+
+.ood-appkit .navbar-brand.navbar-brand-logo {
+  padding: 0;
+  margin-right: 15px;
+}
+
+nav.ood-appkit.navbar {
+  padding: 0.5rem 1rem;
 }

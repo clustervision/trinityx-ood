@@ -27,7 +27,7 @@ def index():
     """
     This is main route of application, it will serve index page of the application.
     """
-    return render_template('index.html', refresh_interval=settings.luna.refresh_interval)
+    return render_template('index.html', settings=settings)
 
 @app.route("/users")
 def users():

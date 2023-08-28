@@ -17,7 +17,7 @@ __status__      = 'Development'
 from dynaconf import Dynaconf
 
 settings = Dynaconf(
-    envvar_prefix="DYNACONF",
+    envvar_prefix="OOD",
     settings_files=['settings/sensu.toml', '.secrets.toml'],
 )
 
