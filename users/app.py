@@ -14,8 +14,38 @@ __email__       = 'diego.sonaglia@clustervision.com'
 __status__      = 'Development'
 
 from flask import Flask, render_template
+from config import settings
+import requests
 
 app = Flask(__name__, static_url_path='/')
+
+class OsUserRequestHandler():
+    USER_LIST_ENDPOINT = '/config/osusers'
+    GROUP_LIST_ENDPOINT = '/config/osgroups'
+    
+    @classmethod
+    def get_token(cls):
+        """
+        This method will get the token from the /tmp/token.txt file.
+        """
+        with open('/tmp/token.txt', 'r') as f:
+            token = f.read().strip()
+        return token
+    
+    @classmethod
+    def get_auth_header(cls):
+        """
+        This method will get the authentication header.
+        """
+        return {'x-access-tokens': cls.get_token()}
+    
+    @classmethod
+    def get_users(cls):
+        """
+        This method will get all the users from the database.
+        """
+        response = requests.get(auth=cls.get_auth_header(), url=settings.API_URL + cls.USER_LIST_ENDPOINT)
+
 
 @app.route("/")
 def index():

@@ -42,7 +42,7 @@
   function poll_endpoint(endpoint_url, endpoint_name){
     $.get(endpoint_url, function(data, status, jqxhr) {
       $( `#${endpoint_name}-container`).html(data);
-      setTimeout(poll_endpoint, {{ sensu_settings.sensu_refresh_interval }}, endpoint_url, endpoint_name);
+      setTimeout(poll_endpoint, {{ refresh_interval }}, endpoint_url, endpoint_name);
     });
   }
   poll_endpoint("{{ url_for('checks') }}", "checks");
