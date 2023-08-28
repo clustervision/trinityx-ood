@@ -3,9 +3,7 @@
 <head>
   <title>Sensu Dashboard</title>
   <meta charset="UTF-8">
-
-  <!-- <%# reload every 15 seconds %> -->
-  <!-- <meta http-equiv="refresh" content="15"> -->
+  {% set app_name = "Sensu Monitoring" %}
 
   <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/bootstrap-3.3.7/css/bootstrap.min.css") }}>
   <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/ood-bootstrap3-override-0.0.1/navbar.css") }}>
@@ -14,29 +12,7 @@
 
 <header>
   <!-- navbar  -->
-  <nav class="ood-appkit navbar navbar-inverse navbar-static-top" role="navigation">
-    <div class="container-fluid">
-      <!-- Brand and toggle get grouped for better mobile display -->
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-responsive-collapse">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <ul class="navbar-breadcrumbs">
-          <li><a href={{ url_for('dashboard') }}>Open OnDemand</a></li>
-          <li><a href={{ url_for('index') }}>Sensu Monitoring</a></li>
-        </ul>
-      </div>
-
-      <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse navbar-responsive-collapse">
-        <ul class="nav navbar-nav">
-        </ul>
-      </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
-  </nav>
+  {% include "base/navbar.html" %}
 </header>
 
 <div class="container" role="main">
