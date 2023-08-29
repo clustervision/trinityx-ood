@@ -1,0 +1,42 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> List Of All {{ table }}</h4>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="alert alert-danger" role="alert" id="power_alert" style="display: none;"></div>
+
+{% if payload %}
+  <!-- Bordered Table -->
+  <div class="card">
+    <form action="" method="POST">
+    <h5 class="card-header">Available Nodes
+      <span style="float: right;">
+        <span>Bulk Operations: &nbsp;&nbsp;&nbsp;</span>
+        <button type="button" onclick="control_action('status');" class="btn btn-sm btn-info">Information</button>
+        <button type="button" onclick="control_action('on');" class="btn btn-sm btn-primary">Power ON</button>
+        <button type="button" onclick="control_action('off');" class="btn btn-sm btn-danger">Power OFF</button>
+    </span>
+    </h5>
+    <div class="card-body">
+      <div id='payload' style="display: None;">{{ payload }}</div>
+      <div class="table-responsive text-nowrap" id='power_table'>
+      </div>
+    </div>
+  </form>
+  </div>
+  <!--/ Bordered Table -->
+  {% endif %}
+
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}

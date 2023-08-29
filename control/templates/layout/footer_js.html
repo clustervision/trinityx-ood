@@ -1,0 +1,300 @@
+
+<script src="{{ url_for('static', filename='assets/vendor/libs/jquery/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/js/bootstrap.js') }}"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+<div class="modal fade" id="logmodal" tabindex="-1" role="dialog" aria-labelledby="logmodalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logmodalLabel">Status</h5>
+          <div id="spinner" style="float: right; margin-right: -50%;"></div>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" onClick="redirection();">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="run-time-body">
+            <pre id="run-time-logs"></pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="redirection();" >Close</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    function color_status(message=null){
+        if (message.includes('ON')){
+            message = "<strong style='color:green;'>" + message + "</strong>";
+        } else if (message.includes('OFF')){
+            message =  "<strong style='color:yellow;'>" + message + "</strong>";
+        } else {
+            message = "<strong style='color:red;'>" + message + "</strong>";
+        }
+        return message
+    }
+    
+
+    function create_row(count, node, status, power){
+        if (power == true){
+            row = '<tr>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;"><input type="checkbox" name="node" value="'+node+'"  id="'+count+'" /></td>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+node+'</td>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(status)+'</td>';
+            row +='<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">';
+            row +='<a id="actions" href="/power/status/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Current Status of '+node+'</span>"><i class="bx bx-md bx-stats" style="color: #03c3ec;"></i></a>&nbsp;<a id="actions" href="/power/on/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power ON '+node+'</span>"><i class="bx bx-md bx-power-off" style="color: #71dd37;"></i></a>&nbsp;<a id="actions" href="/power/off/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power OFF '+node+'</span>"><i class="bx bx-md bx-power-off bx-flip-vertical" style="color: #ff3e1d;"></i></a>';
+            row +='</td>';
+            row += '</tr>';
+        } else {
+            row = '<tr>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+node+'</td>';
+            row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(status)+'</td>';
+            row += '</tr>';
+        }
+        return row
+    }
+
+    
+    function control_table(power_data, sel_data, chassis_data, count, power){
+        var failed = '';
+        var on = '';
+        var off = '';
+        var row = '';
+        if (power_data.control.failed){
+            failed = power_data.control.failed;
+            if  (failed.includes(',')){
+                const myArray = failed.split(",");
+                for (var i=0; i<myArray.length; i++) {
+                    count++;
+                    row += create_row(count, myArray[i], 'Failed', power);
+                }
+            } else { count++; row += create_row(count, failed, 'Failed', power); }
+        }
+        if (power_data.control.power.off){
+            off = power_data.control.power.off;
+            if  (off.includes(',')){
+                const myArray = off.split(",");
+                for (var i=0; i<myArray.length; i++) {
+                    count++;
+                    row += create_row(count, myArray[i], 'OFF', power);
+            }
+            } else { count++; row += create_row(count, off, 'OFF', power); }
+        }
+        if (power_data.control.power.on){
+            on = power_data.control.power.on;
+            if  (on.includes(',')){
+                const myArray = on.split(",");
+                for (var i=0; i<myArray.length; i++) {
+                    count++;
+                    row += create_row(count, myArray[i], 'ON', power);
+            }
+            } else { count++; row += create_row(count, on, 'ON', power); }
+        }
+        return row
+    }
+
+    function control_action(action){
+        $('#run-time-logs').empty();
+        var node_list = [];
+        var form_data = $('form').serialize();
+        if  (form_data.includes('&')){
+            const myArray = form_data.split("&");
+            for (var i=0; i<myArray.length; i++) {
+                node_list.push(myArray[i].replace(/node=/g,''));
+            }
+            $("#power_alert").hide();
+        } else {
+                var error_message = "Kindly select more then one Node to use this option. To perform operation on only one node kindly use buttons next to the node."
+                $('#power_alert').empty();
+                $('#power_alert').append(error_message);
+                $('#power_alert').show(); 
+                
+        }
+        if (node_list.length > 0){
+            var payload = {"hostlist": node_list}
+            $.ajax({
+                url: window.location.href+"/post_request/control/power/"+action,
+                type: 'POST',
+                data: payload,
+                dataType: 'json',
+                success: function(request_data) {
+                    $('#logmodal').modal('show');
+                    var request_id = '';
+                    if (request_data.control.power.request_id){
+                        request_id = request_data.control.power.request_id;
+                    }
+                    var row = '';
+                    var table = '<table frame="box" rules="cols" id="datatable" class="table table-dark table-bordered table-hover table-striped">';
+                    table += '<thead><tr>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">S. No.</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Node Name</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">status</th>';
+                    table += '</tr></thead><tbody>';
+                    $('#run-time-logs').html(table);
+                    var text = $('#run-time-logs').text();
+                    row += table;
+                    var new_rows = control_table(request_data, 0, false);
+                    row += new_rows;
+                    $('#run-time-logs').html(row);
+                    var count = (new_rows.match(/<tr>/g) || []).length;
+                    
+                    var url = window.location.href
+                    url = url.replace(window.location.search,'');
+                    url = url.split('/');
+                    url.pop();
+                    url.pop();
+                    url = url.join("/");
+                    url = url+"/check_status/control/status/"+request_id;
+
+                    var intervalId;
+                    intervalId = setInterval(function(){
+                        $.getJSON(url, function(data){
+                            if (data.message){
+                                clearInterval(intervalId);
+                            } else {
+                                text = $('#run-time-logs').html();
+                                row = text;
+                                var count = (row.match(/<tr>/g) || []).length;
+                                    count--;
+                                var new_rows = control_table(data, count, false);
+                                row += new_rows;
+                                row = row.replace('</tbody></table>','')
+                                $('#run-time-logs').html(row);
+                            } 
+                        }
+                    );
+                }, 1000); 
+                }
+                });
+        } else{
+            console.log("No Nodes are available");
+        }
+    }
+
+
+</script>
+
+<script type="text/javascript">
+
+    function get_status(hostlist, system, action){
+        var response;
+        $.ajax({
+            url: window.location.href+'/post_request/control/'+system+'/'+action,
+            type: 'POST',
+            data: hostlist,
+            dataType: 'json',
+            async: false,
+            contentType: 'application/json; charset=UTF-8',
+            success: function(response_data) {
+                response = response_data;
+            }
+        });
+        return response
+    }
+
+    function power_table(){
+        var payload = $('#payload').text();
+        if (payload){
+            spinner = '<div class="spinner"><div class="spinner-border spinner-border-lg text-primary" role="status"><span class="visually-hidden">Loading Node...</span></div></div>';
+            $('#power_table').html(spinner);
+            payload = JSON.stringify(payload);
+            console.log(payload);
+            var power_data = get_status(payload, 'power', 'status');
+            var sel_data = get_status(payload, 'sel', 'status');
+            var chassis_data = get_status(payload, 'chassis', 'status');
+            console.log(power_data);
+            console.log(sel_data);
+            console.log(chassis_data);
+            var power_request_id;
+            var sel_request_id;
+            var chassis_request_id;
+            if (power_data.control.request_id){ power_request_id = power_data.control.request_id; }
+            if (sel_data.control.request_id){ sel_request_id = sel_data.control.request_id; }
+            if (chassis_data.control.request_id){ chassis_request_id = chassis_data.control.request_id; }
+
+
+            //$.ajax({
+                // url: window.location.href+"/post_request/control/power/status",
+            //    url: window.location.href+"post_request/control/power/status",
+            //    type: 'POST',
+            //    data: payload,
+            //    dataType: 'json',
+            //    contentType: 'application/json; charset=UTF-8',
+            //    success: function(request_data) {
+             //       console.log(request_data);
+            //        var request_id = '';
+             //       if (request_data.control.request_id){
+            //            request_id = request_data.control.request_id;
+            //        }
+            //        console.log(request_id);
+                    var row = '';
+                    var table = '<table frame="box" rules="cols" id="datatable" class="table table-bordered table-hover table-striped">';
+                    table += '<thead><tr>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center"><input type="checkbox" id="selectAll" onclick="select_all();" /></th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">S. No.</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Node Name</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">IPMI State</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Sel</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Chassis</th>';
+                    table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Actions</th>';
+                    table += '</tr></thead><tbody>';
+
+                    $('#power_table').html(table);
+                    var text = $('#power_table').text();
+                    row += table;
+                    var new_rows = control_table(power_data, sel_data, chassis_data, 0, true);
+                    row += new_rows;
+                    $('#power_table').html(row);
+                /*    var count = (new_rows.match(/<tr>/g) || []).length;
+                    
+                    var url = window.location.href
+                    url = url.replace(window.location.search,'');
+                    url = url.split('/');
+                    url.pop();
+                    url.pop();
+                    url = url.join("/");
+                    url = url+"/check_status/control/status/"+request_id;
+                    
+                    var intervalId;
+                    intervalId = setInterval(function(){
+                        $.getJSON(url, function(data){
+                            if (data.message){
+                                $('[data-bs-toggle="tooltip"]').tooltip();
+                                clearInterval(intervalId);
+                            } else {
+                                text = $('#power_table').html();
+                                row = text;
+                                var count = (row.match(/<tr>/g) || []).length;
+                                    count--;
+                                var new_rows = control_table(data, count, true);
+                                row += new_rows;
+                                row = row.replace('</tbody></table>','')
+                                $('#power_table').html(row);
+                            } 
+                        });
+                    }, 1000); 
+                } */
+           // });
+        }
+        
+    }
+
+   power_table();
+
+</script>
+
+
+
+<script type="text/javascript">
+
+    function redirection(){
+        $('#logmodal').modal('hide');
+    }
+</script>
