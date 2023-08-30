@@ -28,6 +28,7 @@
         "nextfreeip",
         "nextip",
         "nodeinterface",
+        "noidentify",
         "osgrab",
         "osimage",
         "ospush",

@@ -7,7 +7,7 @@
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
-      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      <div class="alert alert-{{ category }}" role="alert">{{ message | safe }}</div>
       {% endfor %}
     {% endif %}
   {% endwith %}
@@ -18,14 +18,33 @@
   <!-- Bordered Table -->
   <div class="card">
     <form action="" method="POST">
-    <h5 class="card-header">Available Nodes
-      <span style="float: right;">
-        <span>Bulk Operations: &nbsp;&nbsp;&nbsp;</span>
-        <button type="button" onclick="control_action('status');" class="btn btn-sm btn-info">Information</button>
-        <button type="button" onclick="control_action('on');" class="btn btn-sm btn-primary">Power ON</button>
-        <button type="button" onclick="control_action('off');" class="btn btn-sm btn-danger">Power OFF</button>
-    </span>
-    </h5>
+    <h5 class="card-header">Available Nodes</h5>
+    <div class="card-header">
+      <div class="row">
+        <div class="col col-4">
+          <span>Power: </span>
+          <button type="button" onclick="control_action('status');" class="btn btn-sm btn-info">Status</button>
+          <button type="button" onclick="control_action('on');" class="btn btn-sm btn-primary">Power ON</button>
+          <button type="button" onclick="control_action('reset');" class="btn btn-sm btn-warning">Reset</button>
+          <button type="button" onclick="control_action('off');" class="btn btn-sm btn-danger">Power OFF</button>
+        </div>
+        <div class="col col-2">
+          <span>Sel: </span>
+          <button type="button" onclick="control_action('list');" class="btn btn-sm btn-info">List</button>
+          <button type="button" onclick="control_action('clear');" class="btn btn-sm btn-primary">Clear</button>
+        </div>
+        <div class="col col-3">
+          <span>Chassis: </span>
+          <button type="button" onclick="control_action('identify');" class="btn btn-sm btn-success">Identify</button>
+          <button type="button" onclick="control_action('noidentify');" class="btn btn-sm btn-warning">No Identify</button>
+        </div>
+        <div class="col col-3">
+          <span>Redfish: </span>
+          <button type="button" onclick="control_action('upload');" class="btn btn-sm btn-dark">Upload</button>
+          <button type="button" onclick="control_action('setting');" class="btn btn-sm btn-secondary">Setting</button>
+        </div>
+      </div>
+    </div>
     <div class="card-body">
       <div id='payload' style="display: None;">{{ payload }}</div>
       <div class="table-responsive text-nowrap" id='power_table'>
