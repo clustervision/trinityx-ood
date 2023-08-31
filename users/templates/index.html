@@ -33,15 +33,19 @@
 </div>
 
 <script>
-    function poll_endpoint(endpoint_url, endpoint_name){
-      $.get(endpoint_url, function(data, status, jqxhr) {
-        $( `#${endpoint_name}-table`).html(data);
-        setTimeout(poll_endpoint, {{ settings.luna.refresh_interval }}, endpoint_url, endpoint_name);
-      });
-    }
-    poll_endpoint("{{ url_for('users') }}", "users");
-    poll_endpoint("{{ url_for('groups') }}", "groups");
-  </script>
+  function load_table(endpoint_url, container_id){
+    $.get(endpoint_url, function(data, status, jqxhr) {
+      $( `#${container_id}`).html(data);
+    });
+  }
+
+  load_table("{{ url_for('users') }}", "users-table");
+  load_table("{{ url_for('groups') }}", "groups-table");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('users') }}", "users-table");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('groups') }}", "groups-table");
+
+</script>
+
 
 
 {% endblock %}

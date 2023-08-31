@@ -39,15 +39,19 @@
 
 
 <script>
-  function poll_endpoint(endpoint_url, endpoint_name){
+  function load_table(endpoint_url, container_id){
     $.get(endpoint_url, function(data, status, jqxhr) {
-      $( `#${endpoint_name}-table`).html(data);
-      setTimeout(poll_endpoint, {{ settings.sensu.refresh_interval }}, endpoint_url, endpoint_name);
+      $( `#${container_id}`).html(data);
+      // setTimeout(load_table, {{ settings.sensu.refresh_interval }}, endpoint_url, container_id);
     });
   }
-  poll_endpoint("{{ url_for('checks') }}", "checks");
-  poll_endpoint("{{ url_for('events') }}", "events");
-  poll_endpoint("{{ url_for('silenced') }}", "silenced");
+  load_table("{{ url_for('checks') }}", "checks");
+  load_table("{{ url_for('events') }}", "events");
+  load_table("{{ url_for('silenced') }}", "silenced");
+  setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('checks') }}", "checks");
+  setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('events') }}", "events");
+  setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('silenced') }}", "silenced");
+  
 </script>
 
 {% endblock %}
