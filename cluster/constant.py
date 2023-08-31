@@ -24,8 +24,11 @@ def sortby(table=None):
     """
     response = False
     static = {
-        'cluster': ['name', 'ns_ip','ntp_server', 'provision_fallback', 'provision_method',
-                    'security', 'technical_contacts', 'user', 'debug']
+        'cluster': [
+            'name', 'controller', 'technical_contacts', 'provision_method', 'provision_fallback',
+            'nameserver_ip', 'forwardserver_ip', 'ntp_server', 'security', 'createnode_ondemand'
+            'user', 'debug'
+        ]
     }
     response = list(static[table])
     return response
