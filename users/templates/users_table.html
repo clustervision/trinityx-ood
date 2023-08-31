@@ -3,9 +3,9 @@
   <thead>
     <tr>
       <th>Name</th>
-      <th>Description</th>
       <th>UID</th>
       <th>GID</th>
+      <th>Description</th>
       <th>Home Directory</th>
       <th>Shell</th>
       <th>Actions</th>
@@ -15,13 +15,14 @@
     {% for item in items %}
     <tr>
         <td>{{item.name}}</td>
-        <td>{{item.fullname}}</td>
         <td>{{item.userid}}</td>
         <td>{{item.primarygroup}}</td>
+        <td>{{item.fullname}}</td>
         <td>{{item.homedir}}</td>
         <td>{{item.shell}}</td>
         <td>
           <button type="button" class="btn btn-danger">Delete</button>
+          <button type="button" class="btn btn-primary">Modify</button>
         </td>
     </tr>
     {% endfor %}

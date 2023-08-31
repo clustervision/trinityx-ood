@@ -2,21 +2,22 @@
 {% block table %}
 <thead>
   <tr>
-    <th>Data Center</th>
-    <th>Check Name</th>
-    <th>Reason</th>
-    <th>Expire ON Resolve</th>
-    <th>Silenced ON</th>
+    <th>Name</th>
+    <th>GID</th>
+    <th>Users</th>
+    <th>Actions</th>
   </tr>
 </thead>
 <tbody>
   {% for item in items %}
   <tr>
-      <td>{{item.dc}}</td>
-      <td>{{item.check}}</td>
-      <td>{{item.reason}}</td>
-      <td>{{item.expire_on_resolve}}</td>
-      <td>{{item.timestamp|prettify_ts}}</td>
+      <td>{{item.name}}</td>
+      <td>{{item.groupid}}</td>
+      <td>{{item.users}}</td>
+      <td>
+        <button type="button" class="btn btn-danger">Delete</button>
+        <button type="button" class="btn btn-primary">Modify</button>
+      </td>
   </tr>
   {% endfor %}
 </tbody>
