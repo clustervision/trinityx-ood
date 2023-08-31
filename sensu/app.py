@@ -33,7 +33,7 @@ def index():
     return render_template('index.html', settings=settings)
 
 
-@app.route("/checks")
+@app.route("/table/checks")
 def checks():
     """
     This API will get all the checks.
@@ -45,7 +45,7 @@ def checks():
     except Exception as e:
         return render_template('base/error.html', message=e)
 
-@app.route("/events")
+@app.route("/table/events")
 def events():
     """
     This API will get all the events.
@@ -57,7 +57,7 @@ def events():
     except Exception as e:
         return render_template('base/error.html', message=e)
 
-@app.route("/silenced")
+@app.route("/table/silenced")
 def silenced():
     """
     This API will get all the silenced.

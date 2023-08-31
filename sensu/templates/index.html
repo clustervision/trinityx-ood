@@ -21,15 +21,15 @@
             <div class="tab-content">
               <div role="tabpanel" class="tab-pane fade in active" id="events">
                 <h3> Events </h3>
-                <div id="events-container"></div>
+                <div id="events-table"></div>
               </div>
               <div role="tabpanel" class="tab-pane fade " id="checks">
                 <h3> Checks </h3>
-                <div id="checks-container"></div>
+                <div id="checks-table"></div>
               </div>
               <div role="tabpanel" class="tab-pane fade" id="silenced">
                 <h3> Silenced </h3>
-                <div id="silenced-container"></div>
+                <div id="silenced-table"></div>
               </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
 <script>
   function poll_endpoint(endpoint_url, endpoint_name){
     $.get(endpoint_url, function(data, status, jqxhr) {
-      $( `#${endpoint_name}-container`).html(data);
+      $( `#${endpoint_name}-table`).html(data);
       setTimeout(poll_endpoint, {{ settings.sensu.refresh_interval }}, endpoint_url, endpoint_name);
     });
   }
