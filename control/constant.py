@@ -16,32 +16,3 @@ INI_FILE = '/trinity/local/luna/daemon/config/luna.ini'
 TOKEN_FILE = '/tmp/token.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
-
-
-def filter_columns(table=None):
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'osimage': ['name', 'kernelfile', 'path', 'imagefile', 'distribution', 'osrelease']
-    }
-    response = list(static[table])
-    return response
-
-
-def sortby(table=None):
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'osimage': ['name', 'dracutmodules', 'grab_filesystems', 'grab_exclude', 'initrdfile',
-                    'kernelversion', 'kernelfile', 'kernelmodules', 'kerneloptions', 'path',
-                    'imagefile', 'distribution', 'osrelease', 'comment']
-    }
-    response = list(static[table])
-    return response

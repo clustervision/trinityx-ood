@@ -1,4 +1,4 @@
-## OS Image Manager
+## Control Manager
 
 This project will serve the Control APPS which is tide up with the Luna for Trinity Project.
 

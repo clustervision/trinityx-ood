@@ -26,7 +26,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'osimage': ['name', 'kernelfile', 'path', 'imagefile', 'distribution', 'osrelease']
+        'osimage': ['name', 'kernelversion', 'kernelfile', 'imagefile', 'path', 'distribution', 'osrelease']
     }
     response = list(static[table])
     return response
@@ -39,9 +39,11 @@ def sortby(table=None):
     """
     response = False
     static = {
-        'osimage': ['name', 'dracutmodules', 'grab_filesystems', 'grab_exclude', 'initrdfile',
-                    'kernelversion', 'kernelfile', 'kernelmodules', 'kerneloptions', 'path',
-                    'imagefile', 'distribution', 'osrelease', 'comment']
+        'osimage': [
+            'name', 'grab_filesystems', 'grab_exclude', 'initrdfile',
+            'kernelversion', 'kernelfile', 'kernelmodules', 'kerneloptions', 'path', 'imagefile',
+            'distribution', 'osrelease', 'comment'
+        ],
     }
     response = list(static[table])
     return response

@@ -17,6 +17,7 @@ from configparser import RawConfigParser
 import os
 import requests
 import jwt
+import urllib3
 from log import Log
 from constant import INI_FILE, TOKEN_FILE
 
@@ -33,13 +34,15 @@ class Rest():
         """
         self.logger = Log.get_logger()
         self.get_ini_info()
+        self.security = True if 'y' in self.security.lower() else False
+        urllib3.disable_warnings()
 
 
     def get_ini_info(self):
         """
         This method will get the information from the INI File.
         """
-        self.username, self.password, self.daemon, self.secret_key = "", "", "", ""
+        self.username, self.password, self.daemon, self.secret_key, self.security = "", "", "", "", ""
         self.errors = []
         file_check = os.path.isfile(INI_FILE)
         read_check = os.access(INI_FILE, os.R_OK)
@@ -58,9 +61,10 @@ class Rest():
                 protocol = self.get_option(parser, 'API', 'PROTOCOL')
                 daemon = self.get_option(parser, 'API', 'ENDPOINT')
                 self.daemon = f'{protocol}://{daemon}'
+                self.security = self.get_option(parser, 'API', 'VERIFY_CERTIFICATE')
             else:
                 self.errors.append(f'API section is not found in {INI_FILE}.')
-        return self.username, self.password, self.daemon, self.secret_key, self.errors
+        return self.username, self.password, self.daemon, self.secret_key, self.errors, self.security
 
 
     def get_option(self, parser=None, section=None, option=None):
@@ -83,7 +87,7 @@ class Rest():
         daemon_url = f'{self.daemon}/token'
         self.logger.debug(f'Token URL => {daemon_url}')
         try:
-            call = requests.post(url=daemon_url, json=data, timeout=5)
+            call = requests.post(url=daemon_url, json=data, timeout=5, verify=self.security)
             self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
             if call.content:
                 data = call.json()
@@ -138,7 +142,7 @@ class Rest():
             daemon_url = f'{daemon_url}/{uri}'
         self.logger.debug(f'RAW URL => {daemon_url}')
         try:
-            response = requests.get(url=daemon_url, headers=headers, timeout=5)
+            response = requests.get(url=daemon_url, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')

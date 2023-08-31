@@ -19,7 +19,6 @@ from flask import Flask, json, request, render_template, flash, url_for, redirec
 from rest import Rest
 from helper import Helper
 from log import Log
-from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'Control Nodes'
@@ -61,7 +60,7 @@ def home(system=None, action=None, nodename=None):
             flash(f'<strong>{nodename} {system} {action} :: {message}.</strong>', "warning")
         return redirect(url_for('home'), code=302)
 
-    node_list = Model().get_name_list('node')
+    node_list = Helper().get_name_list('node')
 
     if node_list:
         payload = json.dumps({'hostlist': node_list})

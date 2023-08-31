@@ -4,3 +4,4 @@ prettytable==3.8.0
 PyJWT==2.8.0
 python_hostlist==1.23.0
 requests==2.28.2
+urllib3==2.0.4
