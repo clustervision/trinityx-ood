@@ -9,14 +9,19 @@
   </tr>
 </thead>
 <tbody>
+  <tr>
+    <td colspan="4" class="new">
+      <button type="button" class="btn btn-primary btn-block">Add</button>
+    </td>
+  </tr>
   {% for item in items %}
   <tr>
       <td>{{item.name}}</td>
       <td>{{item.groupid}}</td>
       <td>{{item.users}}</td>
       <td>
+        <button type="button" class="btn btn-primary">Update</button>
         <button type="button" class="btn btn-danger">Delete</button>
-        <button type="button" class="btn btn-primary">Modify</button>
       </td>
   </tr>
   {% endfor %}

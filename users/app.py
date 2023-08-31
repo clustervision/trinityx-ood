@@ -29,7 +29,24 @@ def index():
     """
     return render_template('index.html', settings=settings)
 
-@app.route("/users")
+
+@app.route("/modal/users")
+def user_update():
+    """
+    This API will get all the users.
+    """
+    return render_template('users_modal.html')
+
+
+@app.route("/modal/groups")
+def group_update():
+    """
+    This API will get all the groups.
+    """
+    return render_template('groups_modal.html')
+
+
+@app.route("/table/users")
 def users():
     """
     This API will get all the users.
@@ -41,7 +58,7 @@ def users():
     except Exception as e:
         return render_template('base/error.html', message=e)
     
-@app.route("/groups")
+@app.route("/table/groups")
 def groups():
     """
     This API will get all the groups.
@@ -52,6 +69,8 @@ def groups():
         return render_template('groups_table.html', items=items, time=current_time)
     except Exception as e:
         return render_template('base/error.html', message=e)
+    
+
 
 if __name__ == "__main__":
     app.run()

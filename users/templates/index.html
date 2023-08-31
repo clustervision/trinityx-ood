@@ -19,11 +19,13 @@
             <div class="tab-content">
               <div role="tabpanel" class="tab-pane fade in active" id="users">
                 <h3> Users </h3>
-                <div id="users-container"></div>
+                <div id="users-modal"></div>
+                <div id="users-table"></div>
               </div>
               <div role="tabpanel" class="tab-pane fade " id="groups">
                 <h3> Groups </h3>
-                <div id="groups-container"></div>
+                <div id="groups-table"></div>
+                <div id="groups-modal"></div>
               </div>
             </div>
         </div>
@@ -33,7 +35,7 @@
 <script>
     function poll_endpoint(endpoint_url, endpoint_name){
       $.get(endpoint_url, function(data, status, jqxhr) {
-        $( `#${endpoint_name}-container`).html(data);
+        $( `#${endpoint_name}-table`).html(data);
         setTimeout(poll_endpoint, {{ settings.luna.refresh_interval }}, endpoint_url, endpoint_name);
       });
     }

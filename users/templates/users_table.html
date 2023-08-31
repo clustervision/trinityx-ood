@@ -12,6 +12,11 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td colspan="7" class="new">
+        <button type="button" class="btn btn-primary btn-block">Add</button>
+      </td>
+    </tr>
     {% for item in items %}
     <tr>
         <td>{{item.name}}</td>
@@ -21,8 +26,8 @@
         <td>{{item.homedir}}</td>
         <td>{{item.shell}}</td>
         <td>
+          <button type="button" class="btn btn-primary">Update</button>
           <button type="button" class="btn btn-danger">Delete</button>
-          <button type="button" class="btn btn-primary">Modify</button>
         </td>
     </tr>
     {% endfor %}
