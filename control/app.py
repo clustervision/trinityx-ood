@@ -15,17 +15,14 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 from textwrap import wrap
-from html import unescape
 from flask import Flask, json, request, render_template, flash, url_for, redirect
 from rest import Rest
 from helper import Helper
-from presenter import Presenter
 from log import Log
 from model import Model
 
 LOGGER = Log.init_log('INFO')
-TABLE = 'control'
-TABLE_CAP = 'Control'
+TABLE = 'Control Nodes'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
@@ -70,7 +67,7 @@ def home(system=None, action=None, nodename=None):
         payload = json.dumps({'hostlist': node_list})
     else:
         flash('No Nodes are available at this time.', "error")
-    return render_template("power.html", table='Nodes', data=data, payload= payload)
+    return render_template("power.html", table=TABLE, data=data, payload= payload)
 
 
 @app.route('/get_status', methods=['POST'])
@@ -129,14 +126,11 @@ def perform(system=None, action=None):
     request_data = json.loads(request.get_json())
     hostlist = request_data['hostlist']
     hostlist = Helper().collect_nodelist(hostlist)
-    response = []
-    payload = {'control': {system: {'status': {"hostlist": hostlist}}}}
+    payload = {'control': {system: {action: {"hostlist": hostlist}}}}
     uri = f'control/action/{system}/_{action}'
     result = Rest().post_raw(uri, payload)
     result = result.json()
-    response.append(result)
-    response = json.dumps(response)
-    print(response)
+    response = json.dumps(result)
     return response
 
 
@@ -145,16 +139,14 @@ def check_request(request_id=None):
     """
     This method will check the status of request on behalf of request ID.
     """
-    response = []
     uri = f'control/status/{request_id}'
     result = Rest().get_raw(uri)
     LOGGER.info(f'{result.status_code} {result.content}')
     result = result.json()
-    response.append(result)
-    response = json.dumps(response)
+    response = json.dumps(result)
     return response
 
 
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port= 7059, debug= True)
-    # app.run()
+    # app.run(host= '0.0.0.0', port= 7059, debug= True)
+    app.run()

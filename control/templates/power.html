@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="container-xxl flex-grow-1 container-p-y">
-  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> List Of All {{ table }}</h4>
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> Details Of All Nodes</h4>
   
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -13,6 +13,7 @@
   {% endwith %}
 
   <div class="alert alert-danger" role="alert" id="power_alert" style="display: none;"></div>
+  <div class="alert alert-success" role="alert" id="spinner_alert" style="display: none;"></div>
 
 {% if payload %}
   <!-- Bordered Table -->
@@ -23,25 +24,25 @@
       <div class="row">
         <div class="col col-4">
           <span>Power: </span>
-          <button type="button" onclick="control_action('status');" class="btn btn-sm btn-info">Status</button>
-          <button type="button" onclick="control_action('on');" class="btn btn-sm btn-primary">Power ON</button>
-          <button type="button" onclick="control_action('reset');" class="btn btn-sm btn-warning">Reset</button>
-          <button type="button" onclick="control_action('off');" class="btn btn-sm btn-danger">Power OFF</button>
+          <button type="button" onclick="control_action('power', 'status');" class="btn btn-sm btn-info">Status</button>
+          <button type="button" onclick="control_action('power', 'on');" class="btn btn-sm btn-primary">Power ON</button>
+          <button type="button" onclick="control_action('power', 'reset');" class="btn btn-sm btn-warning">Reset</button>
+          <button type="button" onclick="control_action('power', 'off');" class="btn btn-sm btn-danger">Power OFF</button>
         </div>
         <div class="col col-2">
           <span>Sel: </span>
-          <button type="button" onclick="control_action('list');" class="btn btn-sm btn-info">List</button>
-          <button type="button" onclick="control_action('clear');" class="btn btn-sm btn-primary">Clear</button>
+          <button type="button" onclick="control_action('sel', 'list');" class="btn btn-sm btn-info">List</button>
+          <button type="button" onclick="control_action('sel', 'clear');" class="btn btn-sm btn-primary">Clear</button>
         </div>
         <div class="col col-3">
           <span>Chassis: </span>
-          <button type="button" onclick="control_action('identify');" class="btn btn-sm btn-success">Identify</button>
-          <button type="button" onclick="control_action('noidentify');" class="btn btn-sm btn-warning">No Identify</button>
+          <button type="button" onclick="control_action('chassis', 'identify');" class="btn btn-sm btn-success">Identify</button>
+          <button type="button" onclick="control_action('chassis', 'noidentify');" class="btn btn-sm btn-warning">No Identify</button>
         </div>
         <div class="col col-3">
           <span>Redfish: </span>
-          <button type="button" onclick="control_action('upload');" class="btn btn-sm btn-dark">Upload</button>
-          <button type="button" onclick="control_action('setting');" class="btn btn-sm btn-secondary">Setting</button>
+          <button type="button" onclick="control_action('redfish', 'upload');" class="btn btn-sm btn-dark">Upload</button>
+          <button type="button" onclick="control_action('redfish', 'setting');" class="btn btn-sm btn-secondary">Setting</button>
         </div>
       </div>
     </div>
