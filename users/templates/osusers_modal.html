@@ -1,3 +1,4 @@
+{% set name = item.username or item.groupname or item.name%}
 <!-- Modal -->
 <div class="modal fade" id="modal" role="dialog">
   <div class="modal-dialog modal-lg">
@@ -11,15 +12,15 @@
         {% if mode == 'create'%}
           Creating {{target[:-1]}}
         {% elif mode == 'update' %}
-          Updating {{target[:-1]}} {{item.username or item.groupname}}
+          Updating {{target[:-1]}} {{name}}
         {% elif mode =='show' %}
-          Showing {{target[:-1]}} {{item.username or item.groupname}}
+          Showing {{target[:-1]}} {{name}}
         {% endif %}
         </h4>
       </div>
       <div class="modal-body">
       <!-- begin modal body content  -->
-        <form>
+      <form id="modal-form">
         {% for field in fields %}
           <div class="form-group">
             <label for="{{field}}">{{field}}</label>
@@ -33,7 +34,6 @@
               {{ 'disabled' if (mode == 'show') or (mode == 'update' and field in ['username', 'groupname']) }}>
             {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
           </div>
-
         {% endfor%}
 
         </form>
@@ -41,8 +41,12 @@
       </div>
       <div class="modal-footer">
         <!-- modal footer  -->
-        <center>Bootstrap 3 Modal Footer</center>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        {% if mode == 'update' %}
+          <button type="button" class="btn btn-primary" onclick="handle_submit_button('{{mode}}', '{{target}}', '{{name}}' )">Submit</button>
+        {% elif mode == 'create' %}
+          <button type="button" class="btn btn-primary" onclick="handle_submit_button('{{mode}}', '{{target}}' )">Create</button>
+        {% endif %}
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
       </div>
     </div>
 

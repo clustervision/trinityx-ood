@@ -15,7 +15,7 @@ __status__      = 'Development'
 
 
 import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from config import settings
 from luna_requests import LunaRequestHandler
 
@@ -74,15 +74,23 @@ def table(target):
         return render_template('base/error.html', message=e)
 
 
-# @app.route("/action/<target>/<name>/_<action>")
-# @app.route("/action/<target>/_<action>/", defaults={'name': None})
-# @app.route("/action/<target>/_<action>", defaults={'name': None})
-# def action(target, name, action):
-#     if action in ['update', 'delete'] and name is None:
-#         return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
-#     if action == 'delete':
-#         handler.delete(target, name)
-#         return render_template('base/success.html', message=f'{target} {name} deleted successfully')
+@app.route("/action/<target>/<name>/_<action>")
+@app.route("/action/<target>/_<action>/", defaults={'name': None})
+@app.route("/action/<target>/_<action>", defaults={'name': None})
+def action(target, name, action):
+    if action in ['update', 'delete'] and name is None:
+        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
+    
+    if action == 'delete':
+        handler.delete(target, name)
+        return render_template('base/success.html', message=f'{target} {name} deleted successfully')
 
+    if action == 'update':
+        handler.update(target, name, request.form)
+        return render_template('base/success.html', message=f'{target} {name} updated successfully')
+    
+    if action == 'create':
+        handler.update(target, name, request.form)
+        return render_template('base/success.html', message=f'{target} created successfully')
 if __name__ == "__main__":
     app.run()

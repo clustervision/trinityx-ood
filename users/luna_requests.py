@@ -51,5 +51,25 @@ class LunaRequestHandler():
             raise Exception(f"Error while getting {target}, received status code {resp.status_code}")
         return  resp.json()
 
+    def delete(self, target, name):
+        """
+        This method will delete the group/user from the database.
+        """
+        resp = requests.get(self.endpoints[target]['delete'].format(name=name), headers=self.get_auth_header())
+        print(resp)
+        if resp.status_code not in [200, 201, 204]:
+            raise Exception(f"Error while deleting {target}, received status code {resp.status_code}")
+        return  {"message", 'User Updated successfully'}
+    
+    def update(self, target, name, data):
+        """
+        This method will update the group/user from the database.
+        """
+        print(data)
+        resp = requests.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=data)
+        if resp.status_code not in [200, 201, 204]:
+            raise Exception(f"Error while updating {target}, received status code {resp.status_code}")
+        return  {"message", 'User Updated successfully'}
+
 if __name__ == "__main__":
     handler = LunaRequestHandler()
