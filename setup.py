@@ -36,7 +36,7 @@ def new_version():
     """
     time_now = int(time())
     version = f'2.0.{time_now}'
-    with open('luna/VERSION.txt', 'w', encoding='utf-8') as ver:
+    with open(f'{DIR}/VERSION.txt', 'w', encoding='utf-8') as ver:
         ver.write(version)
     return version
 
