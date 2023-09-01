@@ -1,0 +1,231 @@
+
+<script src="{{ url_for('static', filename='assets/vendor/libs/jquery/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/js/bootstrap.js') }}"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+<script type="text/javascript">
+
+    function color_status(message=null){
+        if (message.includes('ON')){
+            message = "<strong style='color:green;'>" + message + "</strong>";
+        } else if (message.includes('OFF')){
+            message =  "<strong style='color: orange;'>" + message + "</strong>";
+        } else {
+            message = "<strong style='color:red;'>" + message + "</strong>";
+        }
+        return message
+    }
+</script>
+
+<script type="text/javascript">   
+
+    function create_row(count, node, impi, sel, chassis){
+        row = '<tr>';
+        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;"><input type="checkbox" name="node" value="'+node+'"  id="'+count+'" /></td>';
+        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
+        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+node+'</td>';
+        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(impi)+'</td>';
+        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(sel)+'</td>';
+        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(chassis)+'</td>';
+        row +='<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">';
+        row +='<a id="actions" href="'+window.location.href+'/power/status/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Current Status of '+node+'</span>"><i class="bx bx-md bx-stats" style="color: #03c3ec;"></i></a>';
+        row +='<a id="actions" href="'+window.location.href+'/power/on/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power ON '+node+'</span>"><i class="bx bx-md bx-power-off" style="color: #71dd37;"></i></a>&nbsp;';
+        row +='<a id="actions" href="'+window.location.href+'/power/off/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power OFF '+node+'</span>"><i class="bx bx-md bx-power-off bx-flip-vertical" style="color: #ff3e1d;"></i></a>';
+        row +='<a id="actions" href="'+window.location.href+'/power/reset/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Power Reset '+node+'</span>"><i class="bx bx-md bx-repost bx-flip-vertical" style="color: #e83e8c;"></i></a>';
+        row +='</td>';
+        row +='<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">';
+        row +='<a id="actions" href="'+window.location.href+'/sel/list/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Sel List '+node+'</span>"><i class="bx bx-md bx-list-ol" style="color: #20c997;"></i></a>';
+        row +='<a id="actions" href="'+window.location.href+'/sel/clear/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Sel Clear '+node+'</span>"><i class="bx bx-md bx-message-alt-minus" style="color: #fd7e14;"></i></a>';
+        row +='</td>';
+        row +='<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">';
+        row +='<a id="actions" href="'+window.location.href+'/chassis/identify/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Chassis Identify '+node+'</span>"><i class="bx bx-md bx-shield-alt-2" style="color: #696cff;"></i></a>';
+        row +='<a id="actions" href="'+window.location.href+'/chassis/noidentify/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Chassis No Identify '+node+'</span>"><i class="bx bx-md bx-error-alt" style="color: #007bff;"></i></a>';
+        row +='</td>';
+        row +='<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">';
+        row +='<a id="actions" href="'+window.location.href+'/redfish/upload/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Redfish Upload '+node+'</span>"><i class="bx bx-md bx-upload" style="color: #ffab00;"></i></a>';
+        row +='<a id="actions" href="'+window.location.href+'/redfish/setting/'+node+'" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\' ></i> <span>Redfish Setting '+node+'</span>"><i class="bx bx-md bx-cog" style="color: black;"></i></a>';
+        row +='</td>';
+        row += '</tr>';
+        return row
+    }
+</script>
+
+<script type="text/javascript">
+    
+    function control_table(data, count){
+        var row = '';
+        var row_data = {};
+        for (var i=0; i<data.length; i++) {
+            if (data[i].control.power){
+                for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} } row_data[key]['ipmi'] = value; }
+                for (const [key, value] of Object.entries(data[i].control.power.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'ON'; }
+                for (const [key, value] of Object.entries(data[i].control.power.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'OFF'; }
+                for (const [key, value] of Object.entries(data[i].control.power.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'OK'; }
+            }
+
+            if (data[i].control.sel){
+                for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = value; }
+                for (const [key, value] of Object.entries(data[i].control.sel.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = 'ON'; }
+                for (const [key, value] of Object.entries(data[i].control.sel.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = 'OFF'; }
+                for (const [key, value] of Object.entries(data[i].control.sel.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = 'OK'; }
+            }
+
+            if (data[i].control.chassis){
+                for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = value; }
+                for (const [key, value] of Object.entries(data[i].control.chassis.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = 'ON'; }
+                for (const [key, value] of Object.entries(data[i].control.chassis.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = 'OFF'; }
+                for (const [key, value] of Object.entries(data[i].control.chassis.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = 'OK'; }
+            }
+        }
+        for (const [key, value] of Object.entries(row_data)) {
+            row += create_row(count, key, value.ipmi, value.sel, value.chassis);
+            count++
+        }
+        return row
+    }
+</script>
+
+<script type="text/javascript">
+
+    function control_action(system, action){
+        $('#run-time-logs').empty();
+        var node_list = [];
+        var form_data = $('form').serialize();
+        if  (form_data.includes('&')){
+            const myArray = form_data.split("&");
+            for (var i=0; i<myArray.length; i++) { node_list.push(myArray[i].replace(/node=/g,'')); }
+            $("#power_alert").hide();
+        } else {
+            var error_message = "Kindly select more then one Node to use this option. To perform operation on only one node kindly use buttons next to the node."
+            $('#power_alert').empty();
+            $('#power_alert').append(error_message);
+            $('#power_alert').show(); 
+                
+        }
+        
+        if (node_list.length > 0){
+            var spinner_message = system+' '+action+' performed. Refreshing the table.';
+            $('#spinner_alert').empty();
+            $('#spinner_alert').append(spinner_message);
+            $('#spinner_alert').show();
+
+            $('#power_table').html();
+            spinner = '<div class="spinner"><div class="spinner-border spinner-border-lg text-primary" role="status"><span class="visually-hidden">Loading Node...</span></div></div>';
+            $('#power_table').html(spinner);
+
+            var payload = {"hostlist": node_list};
+            payload = JSON.stringify(payload);
+            var response;
+            $.ajax({
+                url: window.location.href+'/perform/'+system+'/'+action,
+                type: 'POST',
+                data: JSON.stringify(payload),
+                dataType: 'json',
+                async: false,
+                contentType: 'application/json; charset=UTF-8',
+                success: function(response_data) { response = response_data; }
+            });
+            var request_id = response.control.request_id;
+            var url = window.location.href+'/check_request/'+request_id;
+            var intervalId;
+            intervalId = setInterval(function(){
+                $.getJSON(url, function(data){
+                    if (data.message){
+                        $('[data-bs-toggle="tooltip"]').tooltip();
+                        $('#power_table').html();
+                        $("#spinner_alert").hide();
+                        clearInterval(intervalId);
+                    }
+                });
+            }, 1000); 
+            power_table(payload);
+        } else { console.log("No Nodes are available"); }
+    }
+
+
+</script>
+
+<script type="text/javascript">
+
+    function select_all(){
+        if ($('#selectAll').is(':checked')){
+            $('#selectAll').closest('table').find('td input:checkbox').prop('checked', true);
+        } else{
+            $('#selectAll').closest('table').find('td input:checkbox').prop('checked', false);
+        }
+    }
+
+</script>
+
+<script type="text/javascript">
+
+    function power_table(action_payload=null){
+        if (action_payload){ var payload = action_payload; } else { var payload = $('#payload').text(); }
+        if (payload){
+            spinner = '<div class="spinner"><div class="spinner-border spinner-border-lg text-primary" role="status"><span class="visually-hidden">Loading Node...</span></div></div>';
+            $('#power_table').html(spinner);
+            var response;
+            $.ajax({
+                url: window.location.href+'/get_status',
+                type: 'POST',
+                data: JSON.stringify(payload),
+                dataType: 'json',
+                async: false,
+                contentType: 'application/json; charset=UTF-8',
+                success: function(response_data) { response = response_data; }
+            });
+            for (var i=0; i<response.length; i++) {
+                if (response[i].control.power){ power_request_id = response[i].control.request_id; }
+                if (response[i].control.sel){ sel_request_id = response[i].control.request_id; }
+                if (response[i].control.chassis){ chassis_request_id = response[i].control.request_id; }
+            }
+
+            var row = '';
+            var table = '<table frame="box" rules="cols" id="datatable" class="table table-bordered table-hover table-striped">';
+            table += '<thead><tr>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center"><input type="checkbox" id="selectAll" onclick="select_all();" /></th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">S. No.</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Node Name</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">IPMI State</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Sel</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Chassis</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Power Actions</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Sel Actions</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Chassis Actions</th>';
+            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Redfish Actions</th>';
+            table += '</tr></thead><tbody>';
+
+            $('#power_table').html(table);
+            var text = $('#power_table').text();
+            row += table;
+            var new_rows = control_table(response, 1);
+            row += new_rows;
+            $('#power_table').html(row);
+            var count = (new_rows.match(/<tr>/g) || []).length;
+            var url = window.location.href+'/check_status/'+power_request_id+'/'+sel_request_id+'/'+chassis_request_id;
+            var intervalId;
+            intervalId = setInterval(function(){
+                $.getJSON(url, function(data){
+                    if (data[0].message){
+                        $('[data-bs-toggle="tooltip"]').tooltip();
+                        clearInterval(intervalId);
+                    } else {
+                        text = $('#power_table').html();
+                        row = text;
+                        var count = (row.match(/<tr>/g) || []).length;
+                        var new_rows = control_table(data, count);
+                        row += new_rows;
+                        row = row.replace('</tbody></table>','')
+                        $('#power_table').html(row);
+                    } 
+                });
+            }, 1000); 
+        } 
+    }
+
+
+power_table();
+
+</script>
