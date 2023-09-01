@@ -1,0 +1,47 @@
+<!-- Modal -->
+<div class="modal fade" id="modal" role="dialog">
+  <div class="modal-dialog modal-lg">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <!-- modal header  -->
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">
+        {% if mode == 'create'%}
+          Creating {{target}}
+        {% elif mode == 'update' %}
+          Updating {{target}} {{name}}
+        {% elif mode =='show' %}
+          Showing {{target}} {{name}}
+        {% endif %}
+        </h4>
+      </div>
+      <div class="modal-body">
+      <!-- begin modal body content  -->
+        <form>
+        {% for field in fields %}
+          <div class="form-group">
+            <label for="{{field}}">{{field}}</label>
+            <input type="text" class="form-control" id="{{field}}" aria-describedby="{{field}}Help" placeholder="Enter {{field}}">
+            {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
+          </div>
+
+        {% endfor%}
+
+        </form>
+      <!-- end modal body content  -->
+      </div>
+      <div class="modal-footer">
+        <!-- modal footer  -->
+        <center>Bootstrap 3 Modal Footer</center>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- </div> -->
+
+
+

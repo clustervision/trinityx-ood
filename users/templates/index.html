@@ -19,17 +19,16 @@
             <div class="tab-content">
               <div role="tabpanel" class="tab-pane fade in active" id="users">
                 <h3> Users </h3>
-                <div id="users-modal"></div>
                 <div id="users-table"></div>
               </div>
               <div role="tabpanel" class="tab-pane fade " id="groups">
                 <h3> Groups </h3>
                 <div id="groups-table"></div>
-                <div id="groups-modal"></div>
               </div>
             </div>
         </div>
     </div>
+    <div id="modal-wrapper"></div>
 </div>
 
 <script>
@@ -38,12 +37,10 @@
       $( `#${container_id}`).html(data);
     });
   }
-
-  load_table("{{ url_for('users') }}", "users-table");
-  load_table("{{ url_for('groups') }}", "groups-table");
-  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('users') }}", "users-table");
-  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('groups') }}", "groups-table");
-
+  load_table("{{ url_for('table', target='users') }}", "users-table");
+  load_table("{{ url_for('table', target='groups') }}", "groups-table");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('table', target='users') }}", "users-table");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('table', target='groups') }}", "groups-table");
 </script>
 
 

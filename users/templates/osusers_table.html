@@ -1,0 +1,53 @@
+{% extends "table.html" %}
+{% block table %}
+  <thead>
+    <tr>
+      {% for field in fields %}
+      <th>{{field}}</th>
+      {% endfor %}
+      <th>actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan={{ (fields | length) +1 }} class="new">
+        <button
+          type="button" 
+          class="btn btn-primary btn-block"
+          onclick="load_modal('{{url_for('modal', target=target, mode='create', name=None)}}')">New User</button>
+      </td>
+    </tr>
+    {% for item in items %}
+    <tr>
+      {% for field in fields %}
+      <td>{{item[field] or ''}}</td>
+      {% endfor %}
+        <td>
+          <button
+            type="button" 
+            class="btn btn-primary"
+            onclick="load_modal('{{url_for('modal', target=target, mode='show', name=(item.username or item.groupname))}}')">Show</button>
+          <button
+            type="button" 
+            class="btn btn-primary"
+            onclick="load_modal('{{url_for('modal', target=target, mode='update', name=(item.username or item.groupname))}}')">Update</button>
+          <button
+            type="button" 
+            class="btn btn-danger">Delete</button>
+        </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+  function load_modal(endpoint_url){
+    $.get(endpoint_url, function(data, status, jqxhr) {
+      $( `#modal-wrapper`).html(data);
+      $( `#modal`).modal('show');
+
+    });
+  }
+</script>
+
+{% endblock %}

@@ -42,7 +42,6 @@
   function load_table(endpoint_url, container_id){
     $.get(endpoint_url, function(data, status, jqxhr) {
       $( `#${container_id}`).html(data);
-      // setTimeout(load_table, {{ settings.sensu.refresh_interval }}, endpoint_url, container_id);
     });
   }
   load_table("{{ url_for('checks') }}", "checks");
@@ -51,7 +50,7 @@
   setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('checks') }}", "checks");
   setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('events') }}", "events");
   setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('silenced') }}", "silenced");
-  
+
 </script>
 
 {% endblock %}

@@ -21,6 +21,16 @@ from luna_requests import LunaRequestHandler
 
 app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
+fields = {
+    'table': {
+        'users': ['username', 'uid', ],
+        'groups': ['groupname', 'gid',]
+    },
+    'modal': {
+        'users': ['username', 'surname', 'givenname', 'email', 'phone', 'shell', 'homedir', 'expire', 'last_change', 'group', 'groups', 'password'],
+        'groups': ['groupname', 'gid', 'users']
+    }
+}
 
 @app.route("/")
 def index():
@@ -29,48 +39,33 @@ def index():
     """
     return render_template('index.html', settings=settings)
 
-
-@app.route("/modal/users")
-def user_update():
+@app.route("/modal/<target>/<mode>", defaults={'name': None})
+@app.route("/modal/<target>/<mode>/<name>")
+def modal(target, mode, name):
     """
     This API will get all the users.
     """
-    return render_template('users_modal.html')
+    if target not in ['users', 'groups']:
+        return render_template('base/error.html', message=f'Invalid target {target}, should be either users or groups')
+    if mode not in ['create', 'update', 'show']:
+        return render_template('base/error.html', message=f'Invalid mode {mode}, should be either create, update or show')
+    if mode in ['update', 'show'] and name is None:
+        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
+    return render_template('osusers_modal.html', target=target, mode=mode, name=name, fields=fields['modal'][target])
 
-
-@app.route("/modal/groups")
-def group_update():
-    """
-    This API will get all the groups.
-    """
-    return render_template('groups_modal.html')
-
-
-@app.route("/table/users")
-def users():
+@app.route("/table/<target>")
+def table(target):
     """
     This API will get all the users.
     """
+    if target not in ['users', 'groups']:
+        return render_template('base/error.html', message=f'Invalid target {target}, should be either users or groups')
     try:
-        items = handler.get_users()
+        items = handler.list(target)
         current_time = datetime.datetime.utcnow()
-        return render_template('users_table.html', items=items, time=current_time)
+        return render_template('osusers_table.html', target=target, fields=fields['table'][target], items=items, time=current_time)
     except Exception as e:
         return render_template('base/error.html', message=e)
-    
-@app.route("/table/groups")
-def groups():
-    """
-    This API will get all the groups.
-    """
-    try:
-        items = handler.get_groups()
-        current_time = datetime.datetime.utcnow()
-        return render_template('groups_table.html', items=items, time=current_time)
-    except Exception as e:
-        return render_template('base/error.html', message=e)
-    
-
 
 if __name__ == "__main__":
     app.run()
