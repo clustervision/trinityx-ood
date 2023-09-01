@@ -13,6 +13,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+from time import time
 import pathlib
 from setuptools import setup, find_packages
 
@@ -33,10 +34,12 @@ def new_version():
     """
     This Method will create a New version and update the Version file.
     """
-    version = "0.0.0"
-    with open(f'{DIR}/VERSION.txt', 'r', encoding='utf-8') as ver:
-        version = ver.read()
+    time_now = int(time())
+    version = f'2.0.{time_now}'
+    with open('luna/VERSION.txt', 'w', encoding='utf-8') as ver:
+        ver.write(version)
     return version
+
 
 setup(
 	name = "trinity-ood",
