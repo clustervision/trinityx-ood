@@ -1,0 +1,64 @@
+{% set app_name = "User Management" %}
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="container" role="main">
+    <div class="panel panel-default">
+        <div class="panel-heading panel-heading-nav">
+            <ul class="nav nav-tabs">
+              <li role="presentation" class="active">
+                <a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a>
+              </li>
+              <li role="presentation">
+                <a href="#groups" aria-controls="groups" role="tab" data-toggle="tab">Groups</a>
+              </li>
+
+            </ul>
+        </div>
+        <div class="panel-body">
+            <div class="tab-content">
+              <div role="tabpanel" class="tab-pane fade in active" id="users">
+                <h3> Users </h3>
+                <div id="users-table"></div>
+              </div>
+              <div role="tabpanel" class="tab-pane fade " id="groups">
+                <h3> Groups </h3>
+                <div id="groups-table"></div>
+              </div>
+            </div>
+        </div>
+    </div>
+    <div id="modal-wrapper"></div>
+</div>
+
+<script>
+  var APP_URL = "{{url_for('index')}}";
+  var LUNA_URL = "{{settings.luna.url}}";
+
+  function load_table(target){
+    var endpoint_url = APP_URL + 'table/' + target;
+    $.get(endpoint_url, function(data, status, jqxhr) {
+      $(`#${target}-table`).html(data);
+    });
+  }
+  
+  function load_modal(target, mode, name){
+    var endpoint_url = APP_URL + 'modal/' + target + '/' + mode ;
+    if (name != null) {
+      endpoint_url += '/' + name;
+    }
+    $.get(endpoint_url, function(data, status, jqxhr) {
+      $( `#modal-wrapper`).html(data);
+      $( `#modal`).modal('show');
+    });
+  }
+
+  load_table("users");
+  load_table("groups");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "users");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "groups");
+</script>
+
+
+
+{% endblock %}

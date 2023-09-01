@@ -17,37 +17,22 @@ __status__      = 'Development'
 
 from pprint import pprint
 import requests
-from config import sensu_settings
-
+from config import settings
 
 class SensuRequestHandler():
     """
     Sensu request handler
     """
-    def __init__(self, sensu_settings) -> None:
-        schema = 'https' if sensu_settings.sensu_use_tls else 'http'
-        host = sensu_settings.sensu_host
-        port = sensu_settings.sensu_port
-        self.sensu_url = f"{schema}://{host}:{port}"
-
-        healthy = self.health_check()
-        if not healthy:
-            raise ConnectionError(f"Cannot connect to sensu backend at {self.sensu_url}")
-
-
-    def health_check(self):
-        """
-        This method will perform a health check
-        """
-        resp = requests.get(f"{self.sensu_url}/health", timeout=10)
-        return resp.status_code in [200, 204]
-
+    def __init__(self, sensu_url) -> None:
+        self.sensu_url = sensu_url
 
     def get_checks(self):
         """
         This method will get all checks.
         """
         resp = requests.get(f"{self.sensu_url}/checks", timeout=10)
+        if resp.status_code not in [200, 201, 204]:
+            raise Exception(f"Error while getting checks, received status code {resp.status_code}")
         return resp.json()
 
 
@@ -56,6 +41,8 @@ class SensuRequestHandler():
         This method will get all events.
         """
         resp = requests.get(f"{self.sensu_url}/events", timeout=10)
+        if resp.status_code not in [200, 201, 204]:
+            raise Exception(f"Error while getting events, received status code {resp.status_code}")
         return resp.json()
 
 
@@ -64,10 +51,13 @@ class SensuRequestHandler():
         This method will get all silenced.
         """
         resp = requests.get(f"{self.sensu_url}/silenced", timeout=10)
+        if resp.status_code not in [200, 201, 204]:
+            raise Exception(f"Error while getting silenced, received status code {resp.status_code}")
         return resp.json()
 
 
 if __name__ == '__main__':
-    handler = SensuRequestHandler(sensu_settings=sensu_settings)
+    print(settings.sensu.url)
+    handler = SensuRequestHandler(sensu_url=settings.sensu.url)
     pprint(handler.get_checks())
     pprint(handler.get_events())

@@ -15,14 +15,14 @@ __status__      = 'Development'
 
 
 import datetime
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template
 from sensu_requests import SensuRequestHandler
-from config import sensu_settings
+from config import settings
 from utils import prettify_relative_time
 
 
 app = Flask(__name__, static_url_path='/')
-handler = SensuRequestHandler(sensu_settings=sensu_settings)
+handler = SensuRequestHandler(sensu_url=settings.sensu.url)
 
 
 @app.route("/")
@@ -30,51 +30,44 @@ def index():
     """
     This is main route of application, it will serve index page of the application.
     """
-    return render_template('index.html', sensu_settings=sensu_settings)
+    return render_template('index.html', settings=settings)
 
 
-@app.route("/checks")
+@app.route("/table/checks")
 def checks():
     """
     This API will get all the checks.
     """
-    items = handler.get_checks()
-    current_time = datetime.datetime.utcnow()
-    return render_template('checks_table.html', items=items, time=current_time)
+    try:
+        items = handler.get_checks()
+        current_time = datetime.datetime.utcnow()
+        return render_template('checks_table.html', items=items, time=current_time)
+    except Exception as e:
+        return render_template('base/error.html', message=e)
 
-
-@app.route("/events")
+@app.route("/table/events")
 def events():
     """
     This API will get all the events.
     """
-    items = handler.get_events()
-    current_time = datetime.datetime.utcnow()
-    return render_template('events_table.html', items=items, time=current_time)
+    try:
+        items = handler.get_events()
+        current_time = datetime.datetime.utcnow()
+        return render_template('events_table.html', items=items, time=current_time)
+    except Exception as e:
+        return render_template('base/error.html', message=e)
 
-
-@app.route("/silenced")
+@app.route("/table/silenced")
 def silenced():
     """
     This API will get all the silenced.
     """
-    items = handler.get_silenced()
-    current_time = datetime.datetime.utcnow()
-    return render_template('silenced_table.html', items=items, time=current_time)
-
-
-@app.route("/dashboard")
-def dashboard():
-    """
-    This API will show the dashboard.
-    - Kind of a hacky workaround to get the dashboard url
-    """
-    if sensu_settings.ood_use_tls:
-        schema = 'https'
-    else:
-        schema = 'http'
-    return redirect(f"{schema}://{request.host}")
-
+    try:
+        items = handler.get_silenced()
+        current_time = datetime.datetime.utcnow()
+        return render_template('silenced_table.html', items=items, time=current_time)
+    except Exception as e:
+        return render_template('base/error.html', message=e)
 
 @app.template_filter('prettify_ts')
 def prettify_ts(timestamp=None):

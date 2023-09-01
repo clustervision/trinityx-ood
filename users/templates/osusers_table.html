@@ -1,0 +1,77 @@
+{% extends "table.html" %}
+{% block table %}
+  <thead>
+    <tr>
+      {% for field in fields %}
+      <th>{{field}}</th>
+      {% endfor %}
+      <th>actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td colspan={{ (fields | length) +1 }} class="new">
+        <button
+          type="button" 
+          class="btn btn-primary btn-block"
+          onclick="handle_new_button('{{target}}')">New {{ target[:-1] | capitalize }}</button>
+      </td>
+    </tr>
+    {% for item in items %}
+    {% set name = item.username or item.groupname or item.name%}
+    <tr>
+      {% for field in fields %}
+      <td>{{item[field] or ''}}</td>
+      {% endfor %}
+        <td>
+          <button
+            type="button" 
+            class="btn btn-secondary"
+            onclick="handle_show_button('{{target}}', '{{name}}')">Show</button>
+          <button
+            type="button" 
+            class="btn btn-primary"
+            onclick="handle_update_button('{{target}}', '{{name}}')">Update</button>
+          <button
+            type="button" 
+            class="btn btn-danger"
+            onclick="handle_delete_button('{{target}}', '{{name}}')">Delete</button>
+        </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+  // $(document).ready(function(){
+    function handle_new_button(target){
+      load_modal(target, 'create',  null);
+    }
+    function handle_show_button(target, name){
+      load_modal(target, 'show', name);
+    }
+    function handle_update_button(target, name){
+      load_modal(target, 'update', name);
+    }
+    function handle_delete_button(target, name){
+      $.ajax({
+        url: "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_delete',
+        type: 'GET',
+        success: function(result) {
+          load_table(target);
+        },
+        error: function(result) {
+          alert('error');
+        }
+      });
+    }
+    function handle_submit_button(target, name, mode){
+      var formdata = {};
+      $("#modal-form input").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
+      console.log(target, name, mode, formdata);
+    }
+  // });
+  
+</script>
+
+{% endblock %}

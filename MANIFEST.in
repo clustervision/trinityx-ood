@@ -4,6 +4,20 @@ include README.md
 include manifest.yml
 include Passengerfile.json
 
+include _base
+include _base/*
+include _base/settings
+include _base/settings/*
+include _base/static
+include _base/static/*
+include _base/static/bootstrap-3.3.7/*
+include _base/static/bootstrap-3.3.7/css/*
+include _base/static/bootstrap-3.3.7/fonts/*
+include _base/static/bootstrap-3.3.7/js/*
+include _base/static/jquery-3.2.1/*
+include _base/static/ood-bootstrap3-override-0.0.1/*
+include _base/templates/*
+
 include bmcsetup
 include bmcsetup/*
 include bmcsetup/static
@@ -213,3 +227,9 @@ include switch/static/assets/vendor/libs/*
 include switch/static/assets/vendor/libs/jquery/*
 include switch/templates/*
 include switch/templates/layout/*
+
+include users
+include users/*
+include users/static
+include users/static/*
+include users/templates/*

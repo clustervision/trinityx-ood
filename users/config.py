@@ -18,7 +18,7 @@ from dynaconf import Dynaconf
 
 settings = Dynaconf(
     envvar_prefix="OOD",
-    settings_files=['settings/sensu.toml', '.secrets.toml'],
+    settings_files=['settings/luna.toml', '.secrets.toml'],
 )
 
 # `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.

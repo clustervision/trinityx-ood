@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{app_name}}</title>
+  <meta charset="UTF-8">
+
+
+  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/base/bootstrap-3.3.7/css/bootstrap.min.css") }}>
+  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/base/ood-bootstrap3-override-0.0.1/navbar.css") }}>
+  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/base/ood-bootstrap3-override-0.0.1/main.css") }}>
+
+</head>
+
+<body>
+  <script src={{ url_for("static", filename="/base/jquery-3.2.1/jquery-3.2.1.min.js") }}></script>
+  <script src={{ url_for("static", filename="/base/bootstrap-3.3.7/js/bootstrap.min.js") }}></script>
+
+    <header>
+      {% include "base/navbar.html" %}
+    </header>
+    {% block content %}{% endblock %}
+</body>
+</html>
