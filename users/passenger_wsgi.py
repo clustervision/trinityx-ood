@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This file will create the settings.
+This file will get the application object and provide for passenger.
 """
 
 __author__      = 'Diego Sonaglia'
@@ -13,13 +13,4 @@ __maintainer__  = 'Diego Sonaglia'
 __email__       = 'diego.sonaglia@clustervision.com'
 __status__      = 'Development'
 
-
-from dynaconf import Dynaconf
-
-settings = Dynaconf(
-    envvar_prefix="OOD",
-    settings_files=['settings/sensu.toml', '.secrets.toml'],
-)
-
-# `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.
-# `settings_files` = Load these files in the order.
+from app import app as application

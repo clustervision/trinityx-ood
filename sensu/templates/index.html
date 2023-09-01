@@ -1,44 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Sensu Dashboard</title>
-  <meta charset="UTF-8">
+{% set app_name = "Sensu Monitoring" %}
+{% extends "base/base.html" %}
 
-  <!-- <%# reload every 15 seconds %> -->
-  <!-- <meta http-equiv="refresh" content="15"> -->
-
-  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/bootstrap-3.3.7/css/bootstrap.min.css") }}>
-  <link rel="stylesheet" type="text/css" href={{ url_for( "static", filename="/ood-bootstrap3-override-0.0.1/navbar.css") }}>
-</head>
-<body>
-
-<header>
-  <!-- navbar  -->
-  <nav class="ood-appkit navbar navbar-inverse navbar-static-top" role="navigation">
-    <div class="container-fluid">
-      <!-- Brand and toggle get grouped for better mobile display -->
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-responsive-collapse">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <ul class="navbar-breadcrumbs">
-          <li><a href={{ url_for('dashboard') }}>Open OnDemand</a></li>
-          <li><a href={{ url_for('index') }}>Sensu Monitoring</a></li>
-        </ul>
-      </div>
-
-      <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse navbar-responsive-collapse">
-        <ul class="nav navbar-nav">
-        </ul>
-      </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
-  </nav>
-</header>
-
+{% block content %}
 <div class="container" role="main">
     <div class="panel panel-default">
         <div class="panel-heading panel-heading-nav">
@@ -58,35 +21,36 @@
             <div class="tab-content">
               <div role="tabpanel" class="tab-pane fade in active" id="events">
                 <h3> Events </h3>
-                <div id="events-container"></div>
+                <div id="events-table"></div>
               </div>
               <div role="tabpanel" class="tab-pane fade " id="checks">
                 <h3> Checks </h3>
-                <div id="checks-container"></div>
+                <div id="checks-table"></div>
               </div>
               <div role="tabpanel" class="tab-pane fade" id="silenced">
                 <h3> Silenced </h3>
-                <div id="silenced-container"></div>
+                <div id="silenced-table"></div>
               </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src={{ url_for("static", filename="/jquery-3.2.1/jquery-3.2.1.min.js") }}></script>
-<script src={{ url_for("static", filename="/bootstrap-3.3.7/js/bootstrap.min.js") }}></script>
+
 
 <script>
-  function poll_endpoint(endpoint_url, endpoint_name){
+  function load_table(endpoint_url, container_id){
     $.get(endpoint_url, function(data, status, jqxhr) {
-      $( `#${endpoint_name}-container`).html(data);
-      setTimeout(poll_endpoint, {{ sensu_settings.sensu_refresh_interval }}, endpoint_url, endpoint_name);
+      $( `#${container_id}`).html(data);
     });
   }
-  poll_endpoint("{{ url_for('checks') }}", "checks");
-  poll_endpoint("{{ url_for('events') }}", "events");
-  poll_endpoint("{{ url_for('silenced') }}", "silenced");
+  load_table("{{ url_for('checks') }}", "checks");
+  load_table("{{ url_for('events') }}", "events");
+  load_table("{{ url_for('silenced') }}", "silenced");
+  setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('checks') }}", "checks");
+  setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('events') }}", "events");
+  setInterval(load_table, {{ settings.sensu.refresh_interval }}, "{{ url_for('silenced') }}", "silenced");
+
 </script>
 
-</body>
-</html>
+{% endblock %}
