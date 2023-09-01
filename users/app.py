@@ -74,23 +74,32 @@ def table(target):
         return render_template('base/error.html', message=e)
 
 
-@app.route("/action/<target>/<name>/_<action>")
-@app.route("/action/<target>/_<action>/", defaults={'name': None})
-@app.route("/action/<target>/_<action>", defaults={'name': None})
+@app.route("/action/<target>/<name>/_<action>", methods=['GET', 'POST'])
+@app.route("/action/<target>/_<action>", defaults={'name': None}, methods=['GET', 'POST'])
 def action(target, name, action):
     if action in ['update', 'delete'] and name is None:
         return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
+    
+    if action not in ['update', 'delete', 'create']:
+        return render_template('base/error.html', message=f'Invalid action {action}, should be either update or delete')
+
+    if action in ['update', 'create']:
+        data = dict(request.form)
     
     if action == 'delete':
         handler.delete(target, name)
         return render_template('base/success.html', message=f'{target} {name} deleted successfully')
 
     if action == 'update':
-        handler.update(target, name, request.form)
+        print(data)
+        handler.update(target, name, data)
         return render_template('base/success.html', message=f'{target} {name} updated successfully')
     
     if action == 'create':
-        handler.update(target, name, request.form)
+        print(data)
+        name = data.get('username') or data.get('groupname')
+        handler.update(target, name, data)
         return render_template('base/success.html', message=f'{target} created successfully')
+    
 if __name__ == "__main__":
     app.run()

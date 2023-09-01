@@ -42,9 +42,9 @@
       <div class="modal-footer">
         <!-- modal footer  -->
         {% if mode == 'update' %}
-          <button type="button" class="btn btn-primary" onclick="handle_submit_button('{{mode}}', '{{target}}', '{{name}}' )">Submit</button>
+          <button type="button" class="btn btn-primary" onclick="handle_submit_button( '{{target}}', '{{name}}', '{{mode}}', ); return false">Submit</button>
         {% elif mode == 'create' %}
-          <button type="button" class="btn btn-primary" onclick="handle_submit_button('{{mode}}', '{{target}}' )">Create</button>
+          <button type="button" class="btn btn-primary" onclick="handle_submit_button( '{{target}}', null, '{{mode}}', ); return false">Create</button>
         {% endif %}
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
       </div>

@@ -66,7 +66,14 @@ class LunaRequestHandler():
         This method will update the group/user from the database.
         """
         print(data)
-        resp = requests.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=data)
+        payload = {
+            "config" : {
+                f"os{target[:-1]}":{
+                    name:data
+                }
+            }
+        }
+        resp = requests.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=payload)
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error while updating {target}, received status code {resp.status_code}")
         return  {"message", 'User Updated successfully'}

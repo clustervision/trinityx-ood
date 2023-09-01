@@ -66,9 +66,30 @@
       });
     }
     function handle_submit_button(target, name, mode){
+      var url;
       var formdata = {};
+      
       $("#modal-form input").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
-      console.log(target, name, mode, formdata);
+      
+      if (mode == 'update'){
+        url = "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_update';
+      } else if (mode == 'create'){
+        url = "{{url_for('index')}}" + 'action/' + target + '/_create';
+      }
+      console.log(target, name, mode, url, formdata);
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: formdata,
+        success: function(result) {
+          load_table(target);
+          $('#modal').modal('hide');
+        },
+        error: function(result) {
+          alert('error');
+        }
+      });
+      return false;
     }
   // });
   
