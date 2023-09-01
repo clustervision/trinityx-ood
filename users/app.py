@@ -39,8 +39,10 @@ def index():
     """
     return render_template('index.html', settings=settings)
 
-@app.route("/modal/<target>/<mode>", defaults={'name': None})
+
 @app.route("/modal/<target>/<mode>/<name>")
+@app.route("/modal/<target>/<mode>/", defaults={'name': None})
+@app.route("/modal/<target>/<mode>", defaults={'name': None})
 def modal(target, mode, name):
     """
     This API will get all the users.
@@ -49,9 +51,13 @@ def modal(target, mode, name):
         return render_template('base/error.html', message=f'Invalid target {target}, should be either users or groups')
     if mode not in ['create', 'update', 'show']:
         return render_template('base/error.html', message=f'Invalid mode {mode}, should be either create, update or show')
-    if mode in ['update', 'show'] and name is None:
-        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
-    return render_template('osusers_modal.html', target=target, mode=mode, name=name, fields=fields['modal'][target])
+    if mode in ['update', 'show']:
+        if name is None:
+            return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
+        item = handler.get(target, name)
+    else:
+        item = None
+    return render_template('osusers_modal.html', target=target, mode=mode, item=item, fields=fields['modal'][target])
 
 @app.route("/table/<target>")
 def table(target):
@@ -66,6 +72,17 @@ def table(target):
         return render_template('osusers_table.html', target=target, fields=fields['table'][target], items=items, time=current_time)
     except Exception as e:
         return render_template('base/error.html', message=e)
+
+
+# @app.route("/action/<target>/<name>/_<action>")
+# @app.route("/action/<target>/_<action>/", defaults={'name': None})
+# @app.route("/action/<target>/_<action>", defaults={'name': None})
+# def action(target, name, action):
+#     if action in ['update', 'delete'] and name is None:
+#         return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
+#     if action == 'delete':
+#         handler.delete(target, name)
+#         return render_template('base/success.html', message=f'{target} {name} deleted successfully')
 
 if __name__ == "__main__":
     app.run()

@@ -9,11 +9,11 @@
         <button type="button" class="close" data-dismiss="modal">&times;</button>
         <h4 class="modal-title">
         {% if mode == 'create'%}
-          Creating {{target}}
+          Creating {{target[:-1]}}
         {% elif mode == 'update' %}
-          Updating {{target}} {{name}}
+          Updating {{target[:-1]}} {{item.username or item.groupname}}
         {% elif mode =='show' %}
-          Showing {{target}} {{name}}
+          Showing {{target[:-1]}} {{item.username or item.groupname}}
         {% endif %}
         </h4>
       </div>
@@ -23,7 +23,14 @@
         {% for field in fields %}
           <div class="form-group">
             <label for="{{field}}">{{field}}</label>
-            <input type="text" class="form-control" id="{{field}}" aria-describedby="{{field}}Help" placeholder="Enter {{field}}">
+            <input
+              type="text"
+              class="form-control"
+              id="{{field}}"
+              value="{{ item[field] or '' if mode in ['show', 'update']}}"
+              aria-describedby="{{field}}Help"
+              placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
+              {{ 'disabled' if (mode == 'show') or (mode == 'update' and field in ['username', 'groupname']) }}>
             {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
           </div>
 

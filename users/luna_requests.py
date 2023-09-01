@@ -51,7 +51,5 @@ class LunaRequestHandler():
             raise Exception(f"Error while getting {target}, received status code {resp.status_code}")
         return  resp.json()
 
-
-
 if __name__ == "__main__":
     handler = LunaRequestHandler()

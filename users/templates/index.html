@@ -32,15 +32,31 @@
 </div>
 
 <script>
-  function load_table(endpoint_url, container_id){
+  var APP_URL = "{{url_for('index')}}";
+  var LUNA_URL = "{{settings.luna.url}}";
+
+  function load_table(target){
+    var endpoint_url = APP_URL + 'table/' + target;
     $.get(endpoint_url, function(data, status, jqxhr) {
-      $( `#${container_id}`).html(data);
+      $(`#${target}-table`).html(data);
     });
   }
-  load_table("{{ url_for('table', target='users') }}", "users-table");
-  load_table("{{ url_for('table', target='groups') }}", "groups-table");
-  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('table', target='users') }}", "users-table");
-  setInterval(load_table, {{ settings.luna.refresh_interval }}, "{{ url_for('table', target='groups') }}", "groups-table");
+  
+  function load_modal(target, mode, name){
+    var endpoint_url = APP_URL + 'modal/' + target + '/' + mode ;
+    if (name != null) {
+      endpoint_url += '/' + name;
+    }
+    $.get(endpoint_url, function(data, status, jqxhr) {
+      $( `#modal-wrapper`).html(data);
+      $( `#modal`).modal('show');
+    });
+  }
+
+  load_table("users");
+  load_table("groups");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "users");
+  setInterval(load_table, {{ settings.luna.refresh_interval }}, "groups");
 </script>
 
 
