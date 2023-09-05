@@ -1,4 +1,4 @@
-{% set name = item.username or item.groupname or item.name%}
+{% set item = item or {} %}
 <!-- Modal -->
 <div class="modal fade" id="modal" role="dialog">
   <div class="modal-dialog modal-lg">
@@ -28,7 +28,7 @@
               type="text"
               class="form-control"
               id="{{field}}"
-              value="{{ item[field] or '' if mode in ['show', 'update']}}"
+              value="{{(item[field] if field not in ['username', 'groupname'] else name) or ''}}"
               aria-describedby="{{field}}Help"
               placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
               {{ 'disabled' if (mode == 'show') or (mode == 'update' and field in ['username', 'groupname']) }}>

@@ -40,7 +40,7 @@ class LunaRequestHandler():
         resp = requests.get(self.endpoints[target]['list'], headers=self.get_auth_header())
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error while listing {target}, received status code {resp.status_code}")
-        return  resp.json()
+        return  resp.json()['config'][f"os{target[:-1]}"]
 
     def get(self, target, name):
         """
@@ -49,14 +49,13 @@ class LunaRequestHandler():
         resp = requests.get(self.endpoints[target]['get'].format(name=name), headers=self.get_auth_header())
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error while getting {target}, received status code {resp.status_code}")
-        return  resp.json()
+        return  resp.json()['config'][f"os{target[:-1]}"][name]
 
     def delete(self, target, name):
         """
         This method will delete the group/user from the database.
         """
         resp = requests.get(self.endpoints[target]['delete'].format(name=name), headers=self.get_auth_header())
-        print(resp)
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error while deleting {target}, received status code {resp.status_code}")
         return  {"message", 'User Updated successfully'}
@@ -65,7 +64,6 @@ class LunaRequestHandler():
         """
         This method will update the group/user from the database.
         """
-        print(data)
         payload = {
             "config" : {
                 f"os{target[:-1]}":{
@@ -73,6 +71,7 @@ class LunaRequestHandler():
                 }
             }
         }
+        print(payload)
         resp = requests.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=payload)
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error while updating {target}, received status code {resp.status_code}")

@@ -23,8 +23,8 @@ app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
 fields = {
     'table': {
-        'users': ['username', 'uid', ],
-        'groups': ['groupname', 'gid',]
+        'users': ['uid'],
+        'groups': ['gid']
     },
     'modal': {
         'users': ['username', 'surname', 'givenname', 'email', 'phone', 'shell', 'homedir', 'expire', 'last_change', 'group', 'groups', 'password'],
@@ -57,7 +57,7 @@ def modal(target, mode, name):
         item = handler.get(target, name)
     else:
         item = None
-    return render_template('osusers_modal.html', target=target, mode=mode, item=item, fields=fields['modal'][target])
+    return render_template('osusers_modal.html', target=target, mode=mode, name=name, item=item, fields=fields['modal'][target])
 
 @app.route("/table/<target>")
 def table(target):
@@ -78,28 +78,31 @@ def table(target):
 @app.route("/action/<target>/_<action>", defaults={'name': None}, methods=['GET', 'POST'])
 def action(target, name, action):
     if action in ['update', 'delete'] and name is None:
-        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
+        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name'), 500
     
     if action not in ['update', 'delete', 'create']:
-        return render_template('base/error.html', message=f'Invalid action {action}, should be either update or delete')
+        return render_template('base/error.html', message=f'Invalid action {action}, should be either update or delete'), 500
 
-    if action in ['update', 'create']:
-        data = dict(request.form)
     
-    if action == 'delete':
-        handler.delete(target, name)
-        return render_template('base/success.html', message=f'{target} {name} deleted successfully')
+    data = dict(request.form) or {}
+    name = name or data.get('username') or data.get('groupname')
+    data = {k:(v or None) for k,v in data.items() if k not in ['username', 'groupname', 'groupname', 'group', 'groups', 'last_change']}
+    print(name, data)
+    try:
+        if action == 'delete':
+            handler.delete(target, name)
+            return render_template('base/success.html', message=f'{target} {name} deleted successfully')
+        if action == 'update':
+            handler.update(target, name, data)
+            return render_template('base/success.html', message=f'{target} {name} updated successfully')
+        if action == 'create':
+            handler.update(target, name, data)
+            return render_template('base/success.html', message=f'{target} created successfully')
+    except Exception as e:
+        print(e)
+        return render_template('base/error.html', message=e), 500
 
-    if action == 'update':
-        print(data)
-        handler.update(target, name, data)
-        return render_template('base/success.html', message=f'{target} {name} updated successfully')
-    
-    if action == 'create':
-        print(data)
-        name = data.get('username') or data.get('groupname')
-        handler.update(target, name, data)
-        return render_template('base/success.html', message=f'{target} created successfully')
-    
+    return '', 200
+
 if __name__ == "__main__":
     app.run()
