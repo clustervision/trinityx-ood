@@ -12,6 +12,6 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-INI_FILE = '/trinity/local/luna/daemon/config/luna.ini'
+INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 TOKEN_FILE = '/tmp/token.txt'
 LOG_FILE = '/var/log/luna/luna2-web.log'
