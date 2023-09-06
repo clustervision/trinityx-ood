@@ -37,7 +37,7 @@ class Rest():
         """
         self.logger = Log.get_logger()
         self.get_ini_info()
-        self.security = True if 'y' in self.security.lower() else False
+        self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
         urllib3.disable_warnings()
         self.session = Session()
         self.retries = Retry(
