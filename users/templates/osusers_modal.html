@@ -31,7 +31,9 @@
               value="{{(item[field] if field not in ['username', 'groupname'] else name) or ''}}"
               aria-describedby="{{field}}Help"
               placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
-              {{ 'disabled' if (mode == 'show') or (mode == 'update' and field in ['username', 'groupname']) }}>
+              {{ 'disabled' if (mode == 'show') or (mode == 'update' and field in ['username', 'groupname']) }}
+              {{ field ['last_change']) }}
+              >
             {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
           </div>
         {% endfor%}
