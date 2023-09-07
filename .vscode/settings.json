@@ -42,6 +42,7 @@
         "nodeinterface",
         "nodesecrets",
         "noidentify",
+        "ondemand",
         "osgrab",
         "osimage",
         "ospush",
