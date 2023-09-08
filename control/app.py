@@ -74,14 +74,14 @@ def get_status():
     """
     This method will fetch the raw data from the daemon.
     """
-    system = ['power', 'sel', 'chassis']
+    system = {'power': 'status', 'sel': 'list', 'chassis': 'identify'}
     request_data = json.loads(request.get_json())
     hostlist = request_data['hostlist']
     hostlist = Helper().collect_nodelist(hostlist)
     response = []
-    for item in system:
-        payload = {'control': {item: {'status': {"hostlist": hostlist}}}}
-        uri = f'control/action/{item}/_status'
+    for key, value in system.items():
+        payload = {'control': {key: {value: {"hostlist": hostlist}}}}
+        uri = f'control/action/{key}/_{value}'
         result = Rest().post_raw(uri, payload)
         result = result.json()
         response.append(result)

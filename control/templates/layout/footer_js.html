@@ -8,7 +8,7 @@
 <script type="text/javascript">
 
     function color_status(message=null){
-        if (message.includes('ON')){
+        if ((message.includes('ON')) || (message.includes('OK'))){
             message = "<strong style='color:green;'>" + message + "</strong>";
         } else if (message.includes('OFF')){
             message =  "<strong style='color: orange;'>" + message + "</strong>";
@@ -62,7 +62,7 @@
                 for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} } row_data[key]['ipmi'] = value; }
                 for (const [key, value] of Object.entries(data[i].control.power.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'ON'; }
                 for (const [key, value] of Object.entries(data[i].control.power.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'OFF'; }
-                for (const [key, value] of Object.entries(data[i].control.power.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'OK'; }
+                for (const [key, value] of Object.entries(data[i].control.power.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = value; }
             }
 
             if (data[i].control.sel){
@@ -161,8 +161,8 @@
 
 <script type="text/javascript">
 
-    function power_table(action_payload=null){
-        if (action_payload){ var payload = action_payload; } else { var payload = $('#payload').text(); }
+    function power_table(){
+        var payload = $('#payload').text();
         if (payload){
             spinner = '<div class="spinner"><div class="spinner-border spinner-border-lg text-primary" role="status"><span class="visually-hidden">Loading Node...</span></div></div>';
             $('#power_table').html(spinner);
