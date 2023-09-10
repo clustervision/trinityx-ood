@@ -60,11 +60,11 @@
               type="text"
               class="form-control form-entry"
               id="{{field}}"
-              value="{{(item[field] if field not in ['username', 'groupname'] else name) or ''}}"
+              value="{% if field in  ['username', 'groupname'] %}{{name or ''}}{% elif field in ['password'] %}{{''}}{% else %}{{item[field] or ''}}{% endif %}"
               aria-describedby="{{field}}Help"
               placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
               {{ 'disabled' if (mode == 'show') or (mode == 'update' and field in ['username', 'groupname']) }}
-              {{ 'disabled' if field in ['last_change'] }}
+              {{ 'disabled' if (mode == 'update') and field in ['last_change', 'uid', 'gid'] }}
               >
             {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
           </div>
