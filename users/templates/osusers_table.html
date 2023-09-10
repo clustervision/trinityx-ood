@@ -62,7 +62,7 @@
           load_table(target);
         },
         error: function(result) {
-          alert(result);
+          $("#modal-error").html(result.responseText)
         }
       });
     }
@@ -70,8 +70,22 @@
       var url;
       var formdata = {};
       
-      $("#modal-form input").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
+      $("#modal-form input.form-entry").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
+      if (target == 'groups') {
+        formdata['users'] = [];
+        $('#modal-form select.form-entry option:selected').each(function() {
+          formdata['users'].push($(this).val()) ;
+        })
+      }
+      if (target == 'users') {
+        formdata['groups'] = [];
+        $('#modal-form select.form-entry option:selected').each(function() {
+          formdata['groups'].push($(this).val()) ;
+        })
+      }
+      console.log(target, name, mode, url, formdata);
       
+
       if (mode == 'update'){
         url = "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_update';
       } else if (mode == 'create'){
@@ -81,14 +95,14 @@
       $.ajax({
         url: url,
         type: 'POST',
-        data: formdata,
+        data: JSON.stringify(formdata),
         success: function(result) {
           load_table(target);
           $('#modal').modal('hide');
         },
         error: function(result) {
-          console.log(result);
-          alert(result);
+          console.log(result)
+          $("#modal-error").html(result.responseText)
         }
       });
       return false;
