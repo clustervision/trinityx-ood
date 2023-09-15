@@ -18,16 +18,17 @@ import datetime
 from flask import Flask, render_template, request
 from config import settings
 from luna_requests import LunaRequestHandler
+"uid","gid","homedir","shell","surname","givenname","phone","email","expire","last_change","password"
 
 app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
 fields = {
     'table': {
-        'users': ['username', 'uid', ],
-        'groups': ['groupname', 'gid',]
+        'users': ['uid'],
+        'groups': ['gid']
     },
     'modal': {
-        'users': ['username', 'surname', 'givenname', 'email', 'phone', 'shell', 'homedir', 'expire', 'last_change', 'group', 'groups', 'password'],
+        'users': ['username', "uid", "gid", "homedir", "shell", "surname", "givenname", "phone", "email", "expire", "last_change", "password", 'groups'],
         'groups': ['groupname', 'gid', 'users']
     }
 }
@@ -47,6 +48,7 @@ def modal(target, mode, name):
     """
     This API will get all the users.
     """
+    
     if target not in ['users', 'groups']:
         return render_template('base/error.html', message=f'Invalid target {target}, should be either users or groups')
     if mode not in ['create', 'update', 'show']:
@@ -57,7 +59,25 @@ def modal(target, mode, name):
         item = handler.get(target, name)
     else:
         item = None
-    return render_template('osusers_modal.html', target=target, mode=mode, item=item, fields=fields['modal'][target])
+    
+    all_users = handler.list('users') if target == 'groups' else None
+    all_groups = handler.list('groups') if target == 'users' else None
+    print(('osusers_modal.html',
+                           target,
+                           mode,
+                           name,
+                           item,
+                           all_users,
+                           all_groups,
+                           fields['modal'][target]))
+    return render_template('osusers_modal.html',
+                           target=target,
+                           mode=mode,
+                           name=name,
+                           item=item,
+                           all_users=all_users,
+                           all_groups=all_groups,
+                           fields=fields['modal'][target])
 
 @app.route("/table/<target>")
 def table(target):
@@ -74,23 +94,54 @@ def table(target):
         return render_template('base/error.html', message=e)
 
 
-@app.route("/action/<target>/<name>/_<action>")
-@app.route("/action/<target>/_<action>/", defaults={'name': None})
-@app.route("/action/<target>/_<action>", defaults={'name': None})
+@app.route("/action/<target>/<name>/_<action>", methods=['GET', 'POST'])
+@app.route("/action/<target>/_<action>", defaults={'name': None}, methods=['GET', 'POST'])
 def action(target, name, action):
-    if action in ['update', 'delete'] and name is None:
-        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
-    
-    if action == 'delete':
-        handler.delete(target, name)
-        return render_template('base/success.html', message=f'{target} {name} deleted successfully')
+    if action not in ['update', 'delete', 'create']:
+        return render_template('base/error.html', message=f'Invalid action {action}, should be either update or delete'), 500
+    if action in ['update', 'create']:
+        data = request.get_json(force=True) or {}
+        if target == 'users':
+            if 'username' not in data:
+                return render_template('base/error.html', message=f'Invalid data {data}, should contain username'), 500
+            else:
+                name = data.pop('username')
+        if target == 'groups':
+            if 'groupname' not in data:
+                return render_template('base/error.html', message=f'Invalid data {data}, should contain groupname'), 500
+            else:
+                name = data.pop('groupname')
+    else:
+        data = {}
+    if name is None:
+        return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name'), 500
 
-    if action == 'update':
-        handler.update(target, name, request.form)
-        return render_template('base/success.html', message=f'{target} {name} updated successfully')
-    
-    if action == 'create':
-        handler.update(target, name, request.form)
-        return render_template('base/success.html', message=f'{target} created successfully')
+    print(name, data)
+    data = {k:(v or None) for k,v in data.items() if k not in ['last_change']}
+    try:
+        old_data = handler.get(target, name)
+        for key, old_value in old_data.items():
+            print(key, old_value)
+            if data.get(key) == str(old_value):
+                data[key] = None
+    except:
+        pass
+    print(name, data)
+    try:
+        if action == 'delete':
+            handler.delete(target, name)
+            return render_template('base/success.html', message=f'{target} {name} deleted successfully')
+        if action == 'update':
+            handler.update(target, name, data)
+            return render_template('base/success.html', message=f'{target} {name} updated successfully')
+        if action == 'create':
+            handler.update(target, name, data)
+            return render_template('base/success.html', message=f'{target} created successfully')
+    except Exception as e:
+        print(e)
+        return render_template('base/error.html', message=e), 500
+
+    return '', 200
+
 if __name__ == "__main__":
     app.run()

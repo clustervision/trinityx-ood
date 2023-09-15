@@ -2,6 +2,7 @@
 {% block table %}
   <thead>
     <tr>
+      <th>Name</th>
       {% for field in fields %}
       <th>{{field}}</th>
       {% endfor %}
@@ -10,16 +11,16 @@
   </thead>
   <tbody>
     <tr>
-      <td colspan={{ (fields | length) +1 }} class="new">
+      <td colspan={{ (fields | length) +2 }} class="new">
         <button
           type="button" 
           class="btn btn-primary btn-block"
           onclick="handle_new_button('{{target}}')">New {{ target[:-1] | capitalize }}</button>
       </td>
     </tr>
-    {% for item in items %}
-    {% set name = item.username or item.groupname or item.name%}
+    {% for name, item in items.items() %}
     <tr>
+      <td>{{name}}</td>
       {% for field in fields %}
       <td>{{item[field] or ''}}</td>
       {% endfor %}
@@ -61,14 +62,50 @@
           load_table(target);
         },
         error: function(result) {
-          alert('error');
+          $("#modal-error").html(result.responseText)
         }
       });
     }
     function handle_submit_button(target, name, mode){
+      var url;
       var formdata = {};
-      $("#modal-form input").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
-      console.log(target, name, mode, formdata);
+      
+      $("#modal-form input.form-entry").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
+      if (target == 'groups') {
+        formdata['users'] = [];
+        $('#modal-form select.form-entry option:selected').each(function() {
+          formdata['users'].push($(this).val()) ;
+        })
+      }
+      if (target == 'users') {
+        formdata['groups'] = [];
+        $('#modal-form select.form-entry option:selected').each(function() {
+          formdata['groups'].push($(this).val()) ;
+        })
+      }
+      console.log(target, name, mode, url, formdata);
+      
+
+      if (mode == 'update'){
+        url = "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_update';
+      } else if (mode == 'create'){
+        url = "{{url_for('index')}}" + 'action/' + target + '/_create';
+      }
+      console.log(target, name, mode, url, formdata);
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: JSON.stringify(formdata),
+        success: function(result) {
+          load_table(target);
+          $('#modal').modal('hide');
+        },
+        error: function(result) {
+          console.log(result)
+          $("#modal-error").html(result.responseText)
+        }
+      });
+      return false;
     }
   // });
   
