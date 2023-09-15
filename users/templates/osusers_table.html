@@ -62,7 +62,9 @@
           load_table(target);
         },
         error: function(result) {
-          $("#modal-error").html(result.responseText)
+          $(`#table-${target}-error`).html(result.responseText)
+          clearInterval(timers[target])
+          timers[target] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, target);
         }
       });
     }
