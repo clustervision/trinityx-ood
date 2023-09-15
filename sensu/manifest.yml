@@ -1,5 +1,4 @@
-name: Monitoring
+name: Sensu
 description: Monitoring info captured by sensu
 icon: fa://stethoscope
-category: Trinity
-subcategory: Utilities
+category: Monitoring
