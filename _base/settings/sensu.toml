@@ -1,3 +1,3 @@
 [ sensu ]
-url = 'http://controller1.cluster:4567'
+url = 'http://localhost:4567'
 refresh_interval = 3000

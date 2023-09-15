@@ -1,2 +1,4 @@
 flask
 dynaconf
+dynaconf[ini]
+PyJWT==2.8.0

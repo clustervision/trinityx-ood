@@ -89,7 +89,7 @@ def table(target):
     try:
         items = handler.list(target)
         current_time = datetime.datetime.utcnow()
-        return render_template('osusers_table.html', target=target, fields=fields['table'][target], items=items, time=current_time)
+        return render_template('osusers_table.html', target=target, fields=fields['table'][target], items=items, time=current_time, settings=settings)
     except Exception as e:
         return render_template('base/error.html', message=e)
 

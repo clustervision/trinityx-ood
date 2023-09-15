@@ -13,13 +13,12 @@ __maintainer__  = 'Diego Sonaglia'
 __email__       = 'diego.sonaglia@clustervision.com'
 __status__      = 'Development'
 
-
 from dynaconf import Dynaconf
 
 settings = Dynaconf(
     envvar_prefix="OOD",
-    settings_files=['settings/sensu.toml', '.secrets.toml'],
+    settings_files=[
+        "settings/sensu.toml",
+        "/trinity/local/ondemand/3.0/config/sensu.toml",
+        ],
 )
-
-# `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.
-# `settings_files` = Load these files in the order.
