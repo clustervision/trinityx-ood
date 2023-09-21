@@ -33,8 +33,7 @@
 
 <script>
   var APP_URL = "{{url_for('index')}}";
-  var LUNA_URL = "{{settings.luna.url}}";
-
+  var timers = {}
   function load_table(target){
     var endpoint_url = APP_URL + 'table/' + target;
     $.get(endpoint_url, function(data, status, jqxhr) {
@@ -55,8 +54,8 @@
 
   load_table("users");
   load_table("groups");
-  setInterval(load_table, {{ settings.luna.refresh_interval }}, "users");
-  setInterval(load_table, {{ settings.luna.refresh_interval }}, "groups");
+  timers['users'] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, "users");
+  timers['groups'] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, "groups");
 </script>
 
 

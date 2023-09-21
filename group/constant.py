@@ -26,7 +26,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'group': ['name', 'bmcsetupname', 'osimage', 'roles', 'interfaces'],
+        'group': ['name', 'bmcsetupname', 'osimage', 'osimagetag', 'roles', 'interfaces'],
         'groupinterface': ['interface', 'network', 'options'],
         'groupsecrets': ['Group', 'name', 'path', 'content']
     }
@@ -42,7 +42,7 @@ def sortby(table=None):
     response = False
     static = {
         'group': [
-            'name', 'domain', 'osimage', 'interfaces', 'setupbmc', 'bmcsetupname',
+            'name', 'domain', 'osimage', 'osimagetag', 'interfaces', 'setupbmc', 'bmcsetupname',
             'unmanaged_bmc_users', 'netboot', 'localinstall', 'bootmenu', 'roles', 'prescript',
             'partscript', 'postscript', 'provision_interface', 'provision_method',
             'provision_fallback', 'comment'

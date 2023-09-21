@@ -1,3 +1,0 @@
-[ luna ]
-url = "http://controller1.cluster:7050"
-refresh_interval = 300000
