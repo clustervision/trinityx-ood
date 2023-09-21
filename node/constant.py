@@ -26,7 +26,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'node': ['name', 'group', 'osimage', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid'],
+        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid'],
         'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network', 'options'],
         'nodesecrets': ['Node', 'name', 'path', 'content']
     }
@@ -42,7 +42,7 @@ def sortby(table=None):
     response = False
     static = {
         'node': [
-            'name', 'hostname', 'group', 'osimage', 'interfaces', 'status', 'vendor', 'assettag',
+            'name', 'hostname', 'group', 'osimage', 'osimagetag', 'interfaces', 'status', 'vendor', 'assettag',
             'position', 'switchport', 'setupbmc', 'bmcsetup', 'unmanaged_bmc_users', 'netboot',
             'localinstall', 'bootmenu', 'roles', 'service', 'prescript', 'partscript',
             'postscript','provision_interface', 'provision_method', 'provision_fallback',

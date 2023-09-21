@@ -1,0 +1,252 @@
+
+<script src="{{ url_for('static', filename='assets/vendor/libs/jquery/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/vendor/js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/main.js') }}"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+<div class="modal fade" id="logmodal" tabindex="-1" role="dialog" aria-labelledby="logmodalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logmodalLabel">Status</h5>
+          <div id="spinner" style="float: right; margin-right: -50%;"></div>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" onClick="redirection();">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="run-time-body">
+            <pre id="run-time-logs"></pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="redirection();" >Close</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    function get_image_info(){
+        var osimage = $('#id_name').val();
+
+        var url = window.location.href
+        url = url.replace(window.location.search,'');
+        url = url.split('/');
+        url.pop();
+        url.pop();
+        url = url.join("/");
+        url = url+"/get_record/"+osimage;
+
+        if  (osimage.length){
+            $.ajax({
+                url: url,
+                type: 'GET',
+                contentType: 'application/json; charset=UTF-8',
+                dataType: 'json',
+                success: function(data) {
+                    $('#id_initrdfile').val('');
+                    $('#id_kernelfile').val('');
+                    $('#id_kernelversion').val('');
+                    if (data.initrdfile && data.initrdfile != 'None'){ $('#id_initrdfile').val(data.initrdfile); }
+                    if (data.kernelfile && data.kernelfile != 'None'){ $('#id_kernelfile').val(data.kernelfile); }
+                    if (data.kernelversion && data.kernelversion != 'None'){ $('#id_kernelversion').val(data.kernelversion); }
+                }
+            });
+        }
+    }
+</script>
+
+
+<script type="text/javascript">
+    new DataTable('.datatable');
+    $('#datatable_length  lable').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $('#datatable_length  select').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $('.dataTables_filter').addClass("datatable_search").parent().next().addClass("datatable_search");
+    $('.dataTables_filter lable').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $('.dataTables_filter input').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $(".dataTables_filter ").after("<br />");
+    $('.dataTables_paginate').addClass("datatable_paginate").parent().next().addClass("datatable_paginate");
+
+</script>
+
+
+<script type="text/javascript">
+
+    function color_message(message=null){
+        if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
+            message = "<span style='color:red;'>" + message + "</span><br />";
+        } else {
+            message = "<span style='color:yellow;'>" + message + "</span><br />";
+        }
+        return message
+    }
+
+</script>
+
+<script type="text/javascript">
+
+    function redirection(){
+        if  (window.location.pathname.includes('/clone/')){
+            redirect_path = window.location.pathname;
+            redirect_path = redirect_path.replace('/clone/', '/edit/');
+            window.location.href = redirect_path;
+        } else if  (window.location.pathname.includes('/kernel/')){
+            redirect_path = window.location.pathname;
+            redirect_path = redirect_path.replace('/kernel/', '/kernel/');
+            window.location.href = redirect_path;
+        } else if  (window.location.pathname.includes('/osgrab/') || window.location.pathname.includes('/ospush/')){
+            redirect_path = window.location.pathname;
+            window.location.href = redirect_path;
+        } else if  (window.location.pathname.includes('/service/')){
+            window.location.href = window.location.href;
+        } else {
+            $('#logmodal').modal('hide');
+        }
+    }
+</script>
+
+<script type="text/javascript">
+
+    function clone_osimage(request_id=null, message=null){
+        $('#run-time-logs').empty();
+        message = decodeURI(message);
+        $(window).on('load', function() {
+            $('#logmodal').modal('show');
+        });
+        var text = $('#run-time-logs').html();
+        text += color_message(message);
+        $('#run-time-logs').html(text);
+        var run_time_div = document.getElementById("run-time-body");
+
+        var url = window.location.href
+        url = url.replace(window.location.search,'');
+        url = url.split('/');
+        url.pop();
+        url.pop();
+        url = url.join("/");
+        url = url+"/check_status/config/status/"+request_id;
+
+        var intervalId;
+        intervalId = setInterval(function(){
+            $.getJSON(url, function(data){
+                if (data.message.includes("No data for this request")){
+                    clearInterval(intervalId);
+                } else {
+                    text = $('#run-time-logs').html();
+                    if  (data.message.length){
+                        if  (data.message.includes(';;')){
+                            const myArray = data.message.split(";;");
+                            for (var i=0; i<myArray.length; i++) { text += color_message(myArray[i]); }
+                        } else {
+                            text += color_message(data.message);
+                        }
+                        $('#run-time-logs').html(text);
+                    }
+                    run_time_div.scrollTop = run_time_div.scrollHeight;
+                }
+            });
+        }, 1000);
+    }
+</script>
+
+<script type="text/javascript">
+
+    function member(table=null, record=null){
+        $('#logmodalLabel').empty();
+        $('#logmodalLabel').html('<span>Member Nodes Of '+table+' >> '+record+' </span>');
+        $('#run-time-logs').empty();
+        $.ajax({
+            url: window.location.href+"/member/"+table+"/"+record,
+            type: 'GET',
+            contentType: 'application/json; charset=UTF-8',
+            dataType: 'json',
+            success: function(request_data) {
+                $('#logmodal').modal('show');
+                var text = $('#run-time-logs').text();
+                text += color_message(request_data);
+                $('#run-time-logs').html(text);
+            }
+        });
+    }
+</script>
+
+<script type="text/javascript">
+    function check_request_id(){
+        var query_string = window.location.search;
+        if (query_string.includes("request_id") && query_string.includes("message")){
+            var query_string = query_string.substr(1).split('&');
+            var params = {};
+            for (var i = 0; i < query_string.length; i++) {
+                var parts = query_string[i].split('=');
+                params[parts[0]] = parts[1];
+            }
+            clone_osimage(params.request_id, params.message);
+        }
+    }
+
+    check_request_id();
+
+</script>
+
+<script type="text/javascript">
+    function pack_osimage(osimage=null){
+        $('#logmodalLabel').empty();
+        $('#logmodalLabel').html('<span>Packing OS Image >> '+osimage+'...</span>');
+        spinner = '<div class="spinner-border spinner-border-lg text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+        $('#spinner').empty();
+        $('#spinner').html(spinner);
+        $('#run-time-logs').empty();
+        if  (osimage.length){
+            $.ajax({
+                url: window.location.href+"/get_request/osimage/"+osimage+"/_pack",
+                type: 'GET',
+                contentType: 'application/json; charset=UTF-8',
+                dataType: 'json',
+                success: function(request_data) {
+                    $('#logmodal').modal('show');
+                    var text = $('#run-time-logs').html();
+                    text += color_message(request_data.message);
+                    $('#run-time-logs').html(text);
+                    var run_time_div = document.getElementById("run-time-body");
+                    var url = window.location.href+"/check_status/config/status/"+request_data.request_id;
+                    var intervalId;
+                    intervalId = setInterval(function(){
+                        $.getJSON(url, function(data){
+                            if (data.message.includes("No data for this request")){
+                                $('#logmodalLabel').empty();
+                                $('#spinner').empty();
+                                $('#logmodalLabel').html('<span>OS Image Packed >> '+osimage+'...</span>');
+                                clearInterval(intervalId);
+                            } else {
+                                text = $('#run-time-logs').html();
+                                if  (data.message.length){
+                                    if  (data.message.includes(';;')){
+                                        const myArray = data.message.split(";;");
+                                        for (var i=0; i<myArray.length; i++) {
+                                            text += color_message(myArray[i]);
+                                        }
+                                    } else {
+                                        text += color_message(data.message);
+                                    }
+                                    $('#run-time-logs').html(text);
+                                }
+                                run_time_div.scrollTop = run_time_div.scrollHeight;
+                            }
+                        });
+                    }, 1000);
+                }
+            });
+        
+        } else {
+            var error_message = "Kindly select an OS Image to pack..."
+            $('#pack_alert').empty();
+            $('#pack_alert').append(error_message);
+            $('#pack_alert').show(); 
+                
+        }
+        
+    }
+    
+</script>

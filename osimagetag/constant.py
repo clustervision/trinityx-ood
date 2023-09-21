@@ -26,9 +26,8 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'group': ['name', 'bmcsetupname', 'osimage', 'osimagetag', 'roles', 'interfaces'],
-        'groupinterface': ['interface', 'network', 'options'],
-        'groupsecrets': ['Group', 'name', 'path', 'content']
+        'osimage': ['name', 'kernelversion', 'kernelfile', 'imagefile', 'path', 'distribution', 'osrelease'],
+        'osimagetag': ['osimage', 'name', 'kernelfile', 'initrdfile', 'imagefile', 'path', 'nodes', 'groups']
     }
     response = list(static[table])
     return response
@@ -41,14 +40,12 @@ def sortby(table=None):
     """
     response = False
     static = {
-        'group': [
-            'name', 'domain', 'osimage', 'osimagetag', 'interfaces', 'setupbmc', 'bmcsetupname',
-            'unmanaged_bmc_users', 'netboot', 'localinstall', 'bootmenu', 'roles', 'prescript',
-            'partscript', 'postscript', 'provision_interface', 'provision_method',
-            'provision_fallback', 'comment'
+        'osimage': [
+            'name', 'grab_filesystems', 'grab_exclude', 'initrdfile',
+            'kernelversion', 'kernelfile', 'kernelmodules', 'kerneloptions', 'path', 'imagefile',
+            'distribution', 'osrelease', 'comment'
         ],
-        'groupinterface': ['interfacename', 'network'],
-        'groupsecrets': ['Group', 'name', 'path', 'content']
+        'osimagetag': ['osimage', 'name', 'kernelfile', 'initrdfile', 'imagefile', 'path', 'nodes', 'groups']
     }
     response = list(static[table])
     return response
