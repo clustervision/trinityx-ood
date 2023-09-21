@@ -1,0 +1,61 @@
+{% extends "layout/base.html" %}
+{% block content %}
+<style>
+  .tag-form {
+    display: flex;
+  }
+  
+  .tag-form > span {
+    height: 100%;
+  }
+  
+</style>
+
+<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} {% if osimage %}/{% endif %}</span> {% if osimage %}{{ osimage }}{% endif %} </h4>
+  <!-- Bordered Table -->
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+  <div class="card">
+    <form action="" method="POST">
+    <h5 class="card-header">{% if osimage %}{{ osimage }}{% else %}{{ table }} {% endif %} 
+      <span style="float: right;">
+        <div class="tag-form">
+          <span id="tag-main">
+            <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a>
+          </span>
+          &nbsp;
+          <span id="second-main">
+            <input type="hidden" name="osimage" class="form-control" maxlength="100" id="id_tag" value="{{ osimage }}"  />
+          </span>
+          <span id="third-main">
+            <input type="text" name="tag" class="form-control" required="" maxlength="100" required="" id="id_tag" />
+          </span>
+          &nbsp;
+          <span id="fourth-main">
+            <button type="submit" class="btn btn-primary">Add a Tag on  {{ osimage }}</button>
+          </span>
+        </div>
+      </span>
+    </h5>
+  </form>
+    <div class="card-body">
+      <div class="table-responsive text-nowrap">
+        {% if data %}
+          {{ data  | safe }}
+        {% else %}
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <!--/ Bordered Table -->
+</div>
+<!-- / Content --><hr class="my-5" />
+{% endblock content %}
