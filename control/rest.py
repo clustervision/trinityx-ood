@@ -94,6 +94,7 @@ class Rest():
         """
         This method will fetch a valid token for further use.
         """
+        response = None
         data = {'username': self.username, 'password': self.password}
         daemon_url = f'{self.daemon}/token'
         self.logger.debug(f'Token URL => {daemon_url}')

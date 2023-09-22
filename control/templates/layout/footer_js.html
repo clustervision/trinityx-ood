@@ -177,9 +177,9 @@
                 success: function(response_data) { response = response_data; }
             });
             for (var i=0; i<response.length; i++) {
-                if (response[i].control.power){ power_request_id = response[i].control.request_id; }
-                if (response[i].control.sel){ sel_request_id = response[i].control.request_id; }
-                if (response[i].control.chassis){ chassis_request_id = response[i].control.request_id; }
+                if (response[i].control.power){ power_request_id = response[i].request_id; }
+                if (response[i].control.sel){ sel_request_id = response[i].request_id; }
+                if (response[i].control.chassis){ chassis_request_id = response[i].request_id; }
             }
 
             var row = '';
