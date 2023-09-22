@@ -144,6 +144,24 @@ include osimage/static/assets/vendor/libs/jquery/*
 include osimage/templates/*
 include osimage/templates/layout/*
 
+include osimage
+include osimage/*
+include osimage/static
+include osimage/static/*
+include osimage/static/assets/*
+include osimage/static/assets/img/*
+include osimage/static/assets/img/avatars/*
+include osimage/static/assets/img/favicon/*
+include osimage/static/assets/vendor/*
+include osimage/static/assets/vendor/css/*
+include osimage/static/assets/vendor/fonts/*
+include osimage/static/assets/vendor/fonts/boxicons/*
+include osimage/static/assets/vendor/js/*
+include osimage/static/assets/vendor/libs/*
+include osimage/static/assets/vendor/libs/jquery/*
+include osimage/templates/*
+include osimage/templates/layout/*
+
 include otherdev
 include otherdev/*
 include otherdev/static
