@@ -39,6 +39,11 @@
               <label class="col-sm-2 col-form-label">gateway</label>
               <div class="col-sm-10"><input type="text" name="gateway" class="form-control ipv4" maxlength="100" id="id_gateway" value="{{ data.gateway }}" /></div>
             </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">ntp server ip</label>
+              <div class="col-sm-10"><input type="text" name="ntp_server" class="form-control ipv4" maxlength="100" id="id_ntp_server" value="{{ data.ntp_server }}" /></div>
+            </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">nameserver ip</label>
@@ -58,6 +63,16 @@
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">dhcp range end</label>
               <div class="col-sm-10"><input type="text" name="dhcp_range_end" class="form-control ipv4" maxlength="100" id="id_dhcp_range_end" value="{{ data.dhcp_range_end }}" /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">shared</label>
+              <div class="col-sm-10"><input type="text" name="shared" class="form-control" maxlength="100" id="id_shared"value="{{ data.shared }}" /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">zone</label>
+              <div class="col-sm-10"><input type="text" name="zone" class="form-control" maxlength="100" id="id_zone"value="{{ data.zone }}" /></div>
             </div>
           
             <div class="row mb-3">
