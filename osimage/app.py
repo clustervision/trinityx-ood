@@ -171,7 +171,7 @@ def member(table=None, record=None):
     """
     This Method will provide all the member nodes for the requested record.
     """
-    get_member = Rest().get_data(table, record+'/_list')
+    get_member = Rest().get_data(table, record+'/_member')
     LOGGER.info(get_member)
     if get_member:
         data = get_member['config'][table][record]['members']
@@ -268,6 +268,7 @@ def get_record(record=None):
         response = Model().get_record(TABLE, record)
         response = json.dumps(response)
     return response
+
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)

@@ -182,7 +182,7 @@ def taken(record=None):
     """
     response = ""
     data = []
-    reserved_ip = Rest().get_data(TABLE, record+'/_list')
+    reserved_ip = Rest().get_data(TABLE, record+'/_member')
     if reserved_ip:
         data = reserved_ip['config'][TABLE][record]['taken']
         data = Helper().prepare_json(data)
