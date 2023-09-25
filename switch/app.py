@@ -102,7 +102,10 @@ def edit(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        network_list = Model().get_list_options('network', data['network'])
+        if 'network' in data:
+            network_list = Model().get_list_options('network', data['network'])
+        else:
+            network_list = Model().get_list_options('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         payload = Helper().prepare_payload(None, payload)
@@ -146,7 +149,10 @@ def clone(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        network_list = Model().get_list_options('network', data['network'])
+        if 'network' in data:
+            network_list = Model().get_list_options('network', data['network'])
+        else:
+            network_list = Model().get_list_options('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         response = Helper().clone_record(TABLE, payload)

@@ -125,8 +125,8 @@ def edit(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        if 'bmcsetupname' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
+        if 'bmcsetup' in data:
+            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
             bmcsetup_list = Model().get_list_option_html('bmcsetup')
         if 'osimage' in data:
@@ -221,8 +221,8 @@ def clone(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        if 'bmcsetupname' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
+        if 'bmcsetup' in data:
+            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
             bmcsetup_list = Model().get_list_option_html('bmcsetup')
         if 'osimage' in data:
@@ -292,30 +292,6 @@ def clone(record=None):
         return redirect(url_for('clone', record=record), code=302)
     else:
         return render_template("clone.html", table=TABLE_CAP, record=record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
-
-
-@app.route('/member/<string:table>/<string:record>', methods=['GET'])
-def member(table=None, record=None):
-    """
-    This Method will provide all the member nodes for the requested record.
-    """
-    get_member = Rest().get_data(table, record+'/_list')
-    LOGGER.info(get_member)
-    if get_member:
-        data = get_member['config'][table][record]['members']
-        data = Helper().prepare_json(data)
-        num = 1
-        fields = ['S.No.', 'Nodes']
-        rows = []
-        for node in data:
-            new_row = [num, node]
-            rows.append(new_row)
-            num = num + 1
-        response = Presenter().show_table(fields, rows, True)
-    else:
-        response = f'{record} From {table.capitalize()} Not have any members at this time.'
-    response = json.dumps(response)
-    return response
 
 
 @app.route('/osgrab/<string:record>', methods=['GET', 'POST'])

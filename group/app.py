@@ -209,8 +209,8 @@ def clone(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        if 'bmcsetupname' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
+        if 'bmcsetup' in data:
+            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
             bmcsetup_list = Model().get_list_option_html('bmcsetup')
         if 'osimage' in data:
@@ -276,7 +276,7 @@ def member(table=None, record=None):
     """
     This Method will provide all the member nodes for the requested record.
     """
-    get_member = Rest().get_data(table, record+'/_list')
+    get_member = Rest().get_data(table, record+'/_member')
     LOGGER.info(get_member)
     if get_member:
         data = get_member['config'][table][record]['members']
