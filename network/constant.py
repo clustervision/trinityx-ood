@@ -26,7 +26,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'network': ['name', 'network', 'ns_ip', 'dhcp', 'dhcp_range_begin', 'dhcp_range_end']
+        'network': ['name', 'network', 'dhcp', 'dhcp_range_begin', 'dhcp_range_end']
     }
     response = list(static[table])
     return response
