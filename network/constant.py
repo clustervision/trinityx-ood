@@ -26,7 +26,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'network': ['name', 'network', 'dhcp', 'dhcp_range_begin', 'dhcp_range_end']
+        'network': ['name', 'network', 'type', 'dhcp', 'dhcp_range_begin', 'dhcp_range_end']
     }
     response = list(static[table])
     return response
@@ -40,7 +40,7 @@ def sortby(table=None):
     response = False
     static = {
         'network': [
-            'name', 'network', 'gateway', 'ntp_server', 'nameserver_ip', 'dhcp',
+            'name', 'type', 'network', 'gateway', 'ntp_server', 'nameserver_ip', 'dhcp',
             'dhcp_range_begin', 'dhcp_range_end', 'shared', 'zone', 'comment'
         ]
     }
