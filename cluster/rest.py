@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
- 
-#This code is part of the TrinityX software suite
-#Copyright (C) 2023  ClusterVision Solutions b.v.
-#
-#This program is free software: you can redistribute it and/or modify
-#it under the terms of the GNU General Public License as published by
-#the Free Software Foundation, either version 3 of the License, or
-#(at your option) any later version.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
 Microservice Class for the Luna Web.
@@ -36,9 +36,10 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
 import urllib3
+from flask import request
 from urllib3.util import Retry
 from log import Log
-from constant import INI_FILE, TOKEN_FILE
+from constant import INI_FILE
 
 
 class Rest():
@@ -51,6 +52,13 @@ class Rest():
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
         from luna.ini from Luna 2 Daemon.
         """
+        if 'X-Forwarded-User' in request.headers:
+            if len(request.headers["X-Forwarded-User"]) > 1:
+                self.token_file = f'/trinity/home/{request.headers["X-Forwarded-User"]}/token.txt'
+            else:
+                self.token_file = '/tmp/token.txt'
+        else:
+            self.token_file = '/tmp/token.txt'
         self.logger = Log.get_logger()
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
@@ -120,7 +128,7 @@ class Rest():
                 data = call.json()
                 if 'token' in data:
                     response = data['token']
-                    with open(TOKEN_FILE, 'w', encoding='utf-8') as file_data:
+                    with open(self.token_file, 'w', encoding='utf-8') as file_data:
                         file_data.write(response)
                 elif 'message' in data:
                     self.errors.append(data["message"])
@@ -141,8 +149,8 @@ class Rest():
         for further use.
         """
         response = False
-        if os.path.isfile(TOKEN_FILE):
-            with open(TOKEN_FILE, 'r', encoding='utf-8') as token:
+        if os.path.isfile(self.token_file):
+            with open(self.token_file, 'r', encoding='utf-8') as token:
                 token_data = token.read()
             try:
                 jwt.decode(token_data, self.secret_key, algorithms=['HS256'])
