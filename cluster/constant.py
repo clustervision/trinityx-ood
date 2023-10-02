@@ -13,7 +13,7 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
-TOKEN_FILE = '/tmp/token.txt'
+TOKEN_FILE = '/trinity/local/ondemand/3.0/config/token.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 
