@@ -130,6 +130,7 @@ class Rest():
                     response = data['token']
                     with open(self.token_file, 'w', encoding='utf-8') as file_data:
                         file_data.write(response)
+                    os.chmod(self.token_file, mode=0o600)
                 elif 'message' in data:
                     self.errors.append(data["message"])
             else:
