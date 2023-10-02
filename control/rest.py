@@ -52,13 +52,14 @@ class Rest():
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
         from luna.ini from Luna 2 Daemon.
         """
-        if 'X-Forwarded-User' in request.headers:
-            if len(request.headers["X-Forwarded-User"]) > 1:
-                self.token_file = f'/trinity/home/{request.headers["X-Forwarded-User"]}/.luna-token.dat'
-            else:
-                self.token_file = '/tmp/.luna-token.dat'
-        else:
-            self.token_file = '/tmp/.luna-token.dat'
+        self.token_file = '/tmp/.luna-token.dat'
+        # if 'X-Forwarded-User' in request.headers:
+        #     if len(request.headers["X-Forwarded-User"]) > 1:
+        #         self.token_file = f'/trinity/home/{request.headers["X-Forwarded-User"]}/.luna-token.dat'
+        #     else:
+        #         self.token_file = '/tmp/.luna-token.dat'
+        # else:
+        #     self.token_file = '/tmp/.luna-token.dat'
         self.logger = Log.get_logger()
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False

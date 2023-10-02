@@ -7,13 +7,18 @@
 <script type="text/javascript">
 
     function color_status(message=null){
-        if ((message.includes('ON')) || (message.includes('OK'))){
-            message = "<strong style='color:green;'>" + message + "</strong>";
-        } else if (message.includes('OFF')){
-            message =  "<strong style='color: orange;'>" + message + "</strong>";
+        if (message){
+            if ((message.includes('ON')) || (message.includes('OK'))){
+                message = "<strong style='color:green;'>" + message + "</strong>";
+            } else if (message.includes('OFF')){
+                message =  "<strong style='color: orange;'>" + message + "</strong>";
+            } else {
+                message = "<strong style='color:red;'>" + message + "</strong>";
+            }
         } else {
             message = "<strong style='color:red;'>" + message + "</strong>";
         }
+        
         return message
     }
 </script>
@@ -23,7 +28,7 @@
     function create_row(count, node, impi, sel, chassis){
         row = '<tr>';
         row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;"><input type="checkbox" name="node" value="'+node+'"  id="'+count+'" /></td>';
-        row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
+        //row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+count+'</td>';
         row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+node+'</td>';
         row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(impi)+'</td>';
         row += '<td style="padding-left: 1em; padding-right: 1em; text-align: center; vertical-align: top;">'+color_status(sel)+'</td>';
@@ -52,36 +57,45 @@
 </script>
 
 <script type="text/javascript">
-    
+    var row_data = {};
+    var real_data = {};
+
     function control_table(data, count){
         var row = '';
-        var row_data = {};
+        
         for (var i=0; i<data.length; i++) {
-            if (data[i].control.power){
+            
+            if (data[i].control.hasOwnProperty("power")){
                 for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} } row_data[key]['ipmi'] = value; }
                 for (const [key, value] of Object.entries(data[i].control.power.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'ON'; }
                 for (const [key, value] of Object.entries(data[i].control.power.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = 'OFF'; }
                 for (const [key, value] of Object.entries(data[i].control.power.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['ipmi'] = value; }
             }
 
-            if (data[i].control.sel){
+            if (data[i].control.hasOwnProperty("sel")) {
                 for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = value; }
                 for (const [key, value] of Object.entries(data[i].control.sel.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = 'ON'; }
                 for (const [key, value] of Object.entries(data[i].control.sel.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = 'OFF'; }
                 for (const [key, value] of Object.entries(data[i].control.sel.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['sel'] = 'OK'; }
             }
 
-            if (data[i].control.chassis){
+            if (data[i].control.hasOwnProperty("chassis")) {
                 for (const [key, value] of Object.entries(data[i].control.failed)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = value; }
                 for (const [key, value] of Object.entries(data[i].control.chassis.on)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = 'ON'; }
                 for (const [key, value] of Object.entries(data[i].control.chassis.off)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = 'OFF'; }
                 for (const [key, value] of Object.entries(data[i].control.chassis.ok)) { if (!row_data.hasOwnProperty(key)) { row_data[key] = {} }  row_data[key]['chassis'] = 'OK'; }
             }
         }
+        
         for (const [key, value] of Object.entries(row_data)) {
-            row += create_row(count, key, value.ipmi, value.sel, value.chassis);
-            count++
+            console.log(row_data);
+            if(value.ipmi && value.sel && value.chassis){
+                    row += create_row(count, key, value.ipmi, value.sel, value.chassis);
+                    count++
+            }
+            
         }
+ 
         return row
     }
 </script>
@@ -185,7 +199,7 @@
             var table = '<table frame="box" rules="cols" id="datatable" class="table table-bordered table-hover table-striped">';
             table += '<thead><tr>';
             table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center"><input type="checkbox" id="selectAll" onclick="select_all();" /></th>';
-            table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">S. No.</th>';
+            //table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">S. No.</th>';
             table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Node Name</th>';
             table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">IPMI State</th>';
             table += '<th style="padding-left: 1em; padding-right: 1em; text-align: center">Sel</th>';
@@ -207,17 +221,31 @@
             var intervalId;
             intervalId = setInterval(function(){
                 $.getJSON(url, function(data){
-                    if (data[0].message){
+                    if (data[2].message){
                         $('[data-bs-toggle="tooltip"]').tooltip();
                         clearInterval(intervalId);
                     } else {
                         text = $('#power_table').html();
                         row = text;
                         var count = (row.match(/<tr>/g) || []).length;
-                        var new_rows = control_table(data, count);
+
+                        var new_data = [];
+                        for (var i=0; i<data.length; i++) {
+                            if (data[i].hasOwnProperty("control")) { new_data.push(data[i]); }
+                        }
+                        var new_rows = control_table(new_data, count);
+                        
+                       // console.log(new_rows);
+
+                        //var new_rows = control_table(data, count);
+
                         row += new_rows;
                         row = row.replace('</tbody></table>','')
-                        $('#power_table').html(row);
+                        //$('#power_table').html();
+                        //$('#power_table').html(table);
+                        var arow = table;
+                        arow += new_rows;
+                        $('#power_table').html(arow);
                     } 
                 });
             }, 1000); 
