@@ -54,11 +54,11 @@ class Rest():
         """
         if 'X-Forwarded-User' in request.headers:
             if len(request.headers["X-Forwarded-User"]) > 1:
-                self.token_file = f'/trinity/home/{request.headers["X-Forwarded-User"]}/token.txt'
+                self.token_file = f'/trinity/home/{request.headers["X-Forwarded-User"]}/.luna-token.dat'
             else:
-                self.token_file = '/tmp/token.txt'
+                self.token_file = '/tmp/.luna-token.dat'
         else:
-            self.token_file = '/tmp/token.txt'
+            self.token_file = '/tmp/.luna-token.dat'
         self.logger = Log.get_logger()
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
