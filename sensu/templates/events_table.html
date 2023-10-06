@@ -5,6 +5,7 @@
     <th>Source</th>
     <th>Data Center</th>
     <th>Check Name</th>
+    <th>Check Output</th>
     <th>Check Description</th>
     <th>Last Executed</th>
     <th>Last OK</th>
@@ -17,6 +18,7 @@
       <td>{{item.client.name}}</td>
       <td>{{item.dc}}</td>
       <td>{{item.check.name}}</td>
+      <td>{{item.check.output}}</td>
       <td>{{item.check.description}}</td>
       <td>{{item.check.executed|prettify_ts}}</td>
       <td>{{item.last_state_change|prettify_ts}}</td>
