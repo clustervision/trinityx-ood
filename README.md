@@ -12,5 +12,5 @@ pip install -r requirements.txt
 In order to fully integrate this app inside OOD the following steps are required:
 - Install `python3` and `python3-pip`
 - Clone the repository to `/tmp/`
-- Add required things to `/var/www/ood/apps/sys/`. Example ` cp -r /tmp/trinity-ood/bmcsetup /var/www/ood/apps/sys/`
+- Add required things to `/var/www/ood/apps/sys/`. Example ` cp -r /tmp/trinityx-ood/bmcsetup /var/www/ood/apps/sys/`
 - Install the python modules located inside `requirements.txt` in each module.
