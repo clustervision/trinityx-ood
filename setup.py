@@ -58,7 +58,7 @@ def new_version():
 
 
 setup(
-	name = "trinity-ood",
+	name = "trinityx-ood",
 	version = new_version(),
 	description = "Trinity Open On Demand Application to support GUI via Luna 2 Daemon.",
 	long_description = "This project will serve the GUI via Luna2 Daemon.\
@@ -67,7 +67,7 @@ setup(
 	author_email = "sumit.sharma@clustervision.com",
 	maintainer = "Sumit Sharma",
 	maintainer_email = "sumit.sharma@clustervision.com",
-	url = "https://gitlab.taurusgroup.one/clustervision/trinity-ood.git",
+	url = "https://gitlab.taurusgroup.one/clustervision/trinityx-ood.git",
 	download_url = f"https://{PRE}@gitlab.taurusgroup.one/api/v4/projects/30/packages/pypi/simple",
 	packages = find_packages(),
 	license = "MIT",
