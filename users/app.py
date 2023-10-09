@@ -67,25 +67,26 @@ def modal(target, mode, name):
     
     if target not in ['users', 'groups']:
         return render_template('base/error.html', message=f'Invalid target {target}, should be either users or groups')
-    if mode not in ['create', 'update', 'show']:
-        return render_template('base/error.html', message=f'Invalid mode {mode}, should be either create, update or show')
-    if mode in ['update', 'show']:
+    if mode not in ['create', 'update', 'show', 'delete']:
+        return render_template('base/error.html', message=f'Invalid mode {mode}, should be either create, update, show or delete')
+    if mode in ['update', 'show', 'delete']:
         if name is None:
             return render_template('base/error.html', message=f'Invalid name {name}, should be a valid name')
         item = handler.get(target, name)
     else:
         item = None
     
+    if mode == 'delete':
+        return render_template('osusers_delete_modal.html',
+                            target=target,
+                            mode=mode,
+                            name=name,
+                            item=item
+                            )
+
     all_users = handler.list('users') if target == 'groups' else None
     all_groups = handler.list('groups') if target == 'users' else None
-    print(('osusers_modal.html',
-                           target,
-                           mode,
-                           name,
-                           item,
-                           all_users,
-                           all_groups,
-                           fields['modal'][target]))
+
     return render_template('osusers_modal.html',
                            target=target,
                            mode=mode,
