@@ -3,17 +3,17 @@
 
 # This code is part of the TrinityX software suite
 # Copyright (C) 2023  ClusterVision Solutions b.v.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
@@ -30,9 +30,11 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+import os
 from html import unescape
 from flask import Flask, request, render_template, flash, url_for, redirect
 from rest import Rest
+from constant import LICENSE
 from helper import Helper
 from presenter import Presenter
 from log import Log
@@ -179,6 +181,19 @@ def clone(record=None):
     else:
         return render_template("clone.html", table=TABLE_CAP, record=record,  data=data, network_list=network_list)
 
+
+@app.route('/license', methods=['GET'])
+def license_info():
+    """
+    This Method will provide license in details.
+    """
+    response= 'LICENSE Information is not available at this moment.'
+    file_check = os.path.isfile(LICENSE)
+    read_check = os.access(LICENSE, os.R_OK)
+    if file_check and read_check:
+        with open(LICENSE, 'r', encoding="utf-8") as file_data:
+            response = file_data.read()
+    return response
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)
