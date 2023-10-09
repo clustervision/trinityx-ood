@@ -1,0 +1,33 @@
+{% set item = item or {} %}
+<!-- Modal -->
+<div class="modal fade" id="modal" role="dialog">
+  <div class="modal-dialog modal-lg">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <!-- modal header  -->
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">
+          Deleting {{target[:-1]}} {{name}}
+        </h4>
+      </div>
+      <div id="modal-error"></div>
+      <div class="modal-body">
+      <!-- begin modal body content  -->
+        Are you sure you want to delete  {{target[:-1]}} {{name}}
+      <!-- end modal body content  -->
+      </div>
+      <div class="modal-footer">
+        <!-- modal footer  -->
+          <button type="button" class="btn btn-danger" onclick="handle_delete_submit_button( '{{target}}', '{{name}}', '{{mode}}', ); return false">Delete</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<!-- </div> -->
+
+
+

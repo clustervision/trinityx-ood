@@ -55,18 +55,22 @@
       load_modal(target, 'update', name);
     }
     function handle_delete_button(target, name){
+      load_modal(target, 'delete', name);
+    }
+    function handle_delete_submit_button(target, name){
       $.ajax({
         url: "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_delete',
         type: 'GET',
         success: function(result) {
           load_table(target);
+          $('#modal').modal('hide');
         },
         error: function(result) {
           $(`#table-${target}-error`).html(result.responseText)
           clearInterval(timers[target])
-          timers[target] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, target);
+          timers[target] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, target)
         }
-      });
+      })
     }
     function handle_submit_button(target, name, mode){
       var url;
@@ -79,21 +83,20 @@
           formdata['users'].push($(this).val()) ;
         })
       }
+
       if (target == 'users') {
         formdata['groups'] = [];
         $('#modal-form select.form-entry option:selected').each(function() {
           formdata['groups'].push($(this).val()) ;
         })
       }
-      console.log(target, name, mode, url, formdata);
-      
 
       if (mode == 'update'){
         url = "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_update';
       } else if (mode == 'create'){
         url = "{{url_for('index')}}" + 'action/' + target + '/_create';
       }
-      console.log(target, name, mode, url, formdata);
+
       $.ajax({
         url: url,
         type: 'POST',
