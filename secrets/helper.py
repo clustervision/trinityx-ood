@@ -3,17 +3,17 @@
 
 # This code is part of the TrinityX software suite
 # Copyright (C) 2023  ClusterVision Solutions b.v.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
@@ -58,12 +58,6 @@ class Helper():
         """
         This method will prepare the payload.
         """
-        # TODO
-        # Nested Update is updating all values of the same key name,
-        # Need to figure out the solution.
-        # For example; While updating the node with multiple interfaces which have the different
-        # option values, is updating first option value to the each option.
-        # raw_data = self.choice_to_bool(raw_data)
         payload = {k: v for k, v in raw_data.items() if v is not None}
         for key in EDITOR_KEYS:
             content = nested_lookup(key, payload)
