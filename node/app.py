@@ -74,7 +74,7 @@ def show(record=None):
     This Method will show a specific record.
     """
     data, error = "", ""
-    table_data = Rest().get_data(TABLE, record)
+    table_data = Rest().get_raw_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE][record]
@@ -143,12 +143,21 @@ def edit(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
+        # for key, value in data.items():
+        #     if "_source" in key:
+        #         print(f'{key} ===============>>>> {value}')
         if 'bmcsetup' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
+            if 'bmcsetup_source' in data:
+                bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['bmcsetup_source'])
+            else:
+                bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
             bmcsetup_list = Model().get_list_option_html('bmcsetup')
         if 'osimage' in data:
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
+            if 'osimage_source' in data:
+                osimage_list = Model().get_list_option_html('osimage', data['osimage'], data['osimage_source'])
+            else:
+                osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
             osimage_list = Model().get_list_option_html('osimage')
         if 'group' in data:
@@ -200,11 +209,13 @@ def edit(record=None):
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
+        # print(request_data)
         response = Rest().post_data(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 204:
             flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
         else:
+            # print(response)
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")

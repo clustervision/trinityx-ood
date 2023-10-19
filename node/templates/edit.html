@@ -22,6 +22,14 @@
           <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
         </div>
 
+
+        
+        <!--
+          data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Node Name</span>"
+        -->
+
+
+
         <div class="card-body">
           <form id="formAuthentication" class="mb-3" action="" method="POST">
                 
@@ -37,22 +45,34 @@
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">setup bmc</label>
-              <div class="col-sm-10"><input type="checkbox" name="setupbmc" class="form-check-input" id="id_setupbmc" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                  <input type="checkbox" name="setupbmc" class="form-check-input" id="id_setupbmc" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} />
+                  {% if data.setupbmc_source %} <strong data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">({{ data.setupbmc_source }})</strong>{% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">net boot</label>
-              <div class="col-sm-10"><input type="checkbox" name="netboot" class="form-check-input" id="id_netboot" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                <input type="checkbox" name="netboot" class="form-check-input" id="id_netboot" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} />
+                {% if data.netboot_source %} <strong data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">({{ data.netboot_source }})</strong>{% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">local install</label>
-              <div class="col-sm-10"><input type="checkbox" name="localinstall" class="form-check-input" id="id_localinstall" {% if data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                <input type="checkbox" name="localinstall" class="form-check-input" id="id_localinstall" {% if data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} />
+                {% if data.localinstall_source %} <strong data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">({{ data.localinstall_source }})</strong>{% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">boot menu</label>
-              <div class="col-sm-10"><input type="checkbox" name="bootmenu" class="form-check-input" id="id_bootmenu" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                <input type="checkbox" name="bootmenu" class="form-check-input" id="id_bootmenu" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} />
+                {% if data.bootmenu_source %} <strong data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">({{ data.bootmenu_source }})</strong>{% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
@@ -82,34 +102,91 @@
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">pre script</label>
-              <div class="col-sm-10"><textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea></div>
+              <div class="col-sm-10">
+                {% if data.prescript_source %}
+                  <div class="input-group">
+                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.prescript_source }}</span>
+                    <textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea>
+                  </div>
+                  {% else %}
+                    <textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea>
+                {% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">part script</label>
-              <div class="col-sm-10"><textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea></div>
+              <div class="col-sm-10">
+                {% if data.partscript_source %}
+                  <div class="input-group">
+                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.partscript_source }}</span>
+                    <textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea>
+                  </div>
+                {% else %}
+                  <textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea>
+                {% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">post script</label>
-              <div class="col-sm-10"><textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea></div>
+              <div class="col-sm-10">
+                {% if data.postscript_source %}
+                  <div class="input-group">
+                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.postscript_source }}</span>
+                    <textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea>
+                  </div>
+                {% else %}
+                  <textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea>
+                {% endif %}
+              </div>
             </div>
-          
+
+            
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">provision interface</label>
-              <div class="col-sm-10"><input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" /></div>
+              <div class="col-sm-10">
+                {% if data.provision_interface_source %}
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.provision_interface_source }}</span>
+                  <input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" />
+                </div>
+                {% else %}
+                  <input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" />
+                {% endif %}
+              </div>
             </div>
+
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">provision method</label>
-              <div class="col-sm-10"><input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" /></div>
+              <div class="col-sm-10">
+                {% if data.provision_method_source %}
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.provision_method_source }}</span>
+                  <input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" />
+                </div>
+                {% else %}
+                  <input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" />
+                {% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">provision fallback</label>
-              <div class="col-sm-10"><input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" /></div>
+              <div class="col-sm-10">
+                {% if data.provision_fallback_source %}
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.provision_fallback_source }}</span>
+                  <input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" />
+                </div>
+                {% else %}
+                <input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" />
+                {% endif %}
+              </div>
             </div>
-          
+
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">tpm uuid</label>
               <div class="col-sm-10"><input type="text" name="tpm_uuid" class="form-control" maxlength="100" id="id_tpm_uuid" value="{{ data.tpm_uuid }}" /></div>
@@ -153,7 +230,16 @@
 
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">tag</label>
-              <div class="col-sm-10"><input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{{ data.osimagetag }}" /></div>
+              <div class="col-sm-10">
+                {% if data.osimagetag_source %}
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.osimagetag_source }}</span>
+                  <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+                </div>
+                {% else %}
+                <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+                {% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
@@ -172,7 +258,7 @@
 
             <div class="row justify-content-end">
               <div class="col-sm-10">
-                <button type="submit" class="btn btn-primary">Update {{ record }}</button>
+                <button type="submit" class="btn btn-primary">Update {{ record }}</button> &nbsp;&nbsp;<span id="form-status"></span>
               </div>
             </div>
           </form>
