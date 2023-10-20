@@ -142,6 +142,9 @@ def edit(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
+        # for key, value in data.items():
+        #     if "_source" in key:
+        #         print(f'{key} ===============>>>> {value}')
         if 'bmcsetupname' in data:
             bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
         else:

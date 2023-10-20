@@ -44,7 +44,7 @@ class Model():
         self.logger = Log.get_logger()
 
 
-    def get_list_option_html(self, table=None, record=None):
+    def get_list_option_html(self, table=None, record=None, source=None):
         """
         This method will open the Login Page(First Page)
         """
@@ -56,7 +56,11 @@ class Model():
             for name, _ in raw_data.items():
                 if record:
                     if record == name:
-                        response += f"<option value='{name}' selected>{name}</option>"
+                        if source:
+                            response += f"<option value='{name}' selected>{name} ({source})</option>"
+                            response += f"<option value='{name}({name})'>{name}</option>"
+                        else:
+                            response += f"<option value='{name}' selected>{name}</option>"
                     else:
                         response += f"<option value='{name}'>{name}</option>"
                 else:

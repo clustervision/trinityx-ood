@@ -79,7 +79,8 @@ class Helper():
                     tmp_interface['network'] = network
                 if options:
                     tmp_interface['options'] = options
-                interface_list.append(tmp_interface)
+                if tmp_interface:
+                    interface_list.append(tmp_interface)
         elif table =='group':
             zip_interface = zip(interface, network, options)
             for interface, network, options in zip_interface:
@@ -583,7 +584,8 @@ class Helper():
         self.logger.debug(f'Sorted Data => {data}')
         fields, rows = [], []
         for key in data:
-            fields.append(f"<strong>{key[0].capitalize()}</strong>")
+            # fields.append(f"<strong>{key[0].capitalize()}</strong>")
+            fields.append(key[0])
             if isinstance(key[1], list):
                 new_list = []
                 for internal in key[1]:
@@ -618,4 +620,27 @@ class Helper():
                     rows.append(value)
                 else:
                     rows.append(key[1])
+        # fields, rows = self.merge_source(fields, rows)
         return fields, rows
+
+
+    def merge_source(self, fields=None, rows=None):
+        """
+        This method will merge *_source field to the real field with braces, also remove the group and
+        node from this merge and remove the *_source keys from the output.
+        """
+        #if '_source' in key[0]:
+        # print(fields)
+        # print(rows)
+        response = {}
+        raw = {}
+        for key, value in zip(fields, rows):
+            raw[key] = value
+            # print(f'KEY => {key} ------------>> VALUE => {value}')
+        temp = {}
+        
+        for key, value in raw.items():
+            print(f'KEY => {key} ------------>> VALUE => {value}')
+        return fields, rows
+
+

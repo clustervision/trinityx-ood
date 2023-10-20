@@ -196,6 +196,35 @@ class Rest():
         return response
 
 
+    def get_raw_data(self, table=None, name=None, data=None):
+        """
+        This method is based on REST API's GET method.
+        It will fetch the records from Luna 2 Daemon
+        via REST API's.
+        """
+        response = False
+        headers = {'x-access-tokens': self.get_token()}
+        daemon_url = f'{self.daemon}/config/{table}'
+        if name:
+            daemon_url = f'{daemon_url}/{name}'
+        self.logger.debug(f'GET URL => {daemon_url}')
+        try:
+            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
+            response_json = call.json()
+            if 'message' in response_json:
+                self.errors.append(response_json["message"])
+            else:
+                response = response_json
+        except requests.exceptions.SSLError as ssl_loop_error:
+            self.errors.append(f'ERROR :: {ssl_loop_error}')
+        except requests.exceptions.ConnectionError:
+            self.errors.append(f'Request Timeout while {daemon_url}')
+        except requests.exceptions.JSONDecodeError:
+            response = False
+        return response
+
+
     def post_data(self, table=None, name=None, data=None):
         """
         This method is based on REST API's POST method.

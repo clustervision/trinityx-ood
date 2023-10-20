@@ -39,25 +39,59 @@
               <label class="col-sm-2 col-form-label">service</label>
               <div class="col-sm-10"><input type="checkbox" name="service" class="form-check-input" id="id_service" {% if data.service == True or data.service == 'True' %}checked{% endif %} /></div>
             </div>
-          
+
+
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">setup bmc</label>
-              <div class="col-sm-10"><input type="checkbox" name="setupbmc" class="form-check-input" id="id_setupbmc" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="true" {% if data.setupbmc_source == 'node' and data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} /> True 
+                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="false"{% if data.setupbmc_source == 'node' and data.setupbmc == False or data.setupbmc == 'False' %}checked{% endif %} />  False
+                  {% if data.netboot_source != 'node' %}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <span>Source: ({{ data.setupbmc_source }})</span>
+                    <input type="radio"  disabled class="form-check-input" id="id_setupbmc" checked /> {{ data.setupbmc }}
+                  {% endif %}
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">net boot</label>
-              <div class="col-sm-10"><input type="checkbox" name="netboot" class="form-check-input" id="id_netboot" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="true" {% if data.netboot_source == 'node' and data.netboot == True or data.netboot == 'True' %}checked{% endif %} /> True 
+                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="false"{% if data.netboot_source == 'node' and data.netboot == False or data.netboot == 'False' %}checked{% endif %} />  False
+                  {% if data.netboot_source != 'node' %}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <span>Source: ({{ data.netboot_source }})</span>
+                    <input type="radio"  disabled class="form-check-input" id="id_netboot" checked /> {{ data.netboot }}
+                  {% endif %}
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">local install</label>
-              <div class="col-sm-10"><input type="checkbox" name="localinstall" class="form-check-input" id="id_localinstall" {% if data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true" {% if data.localinstall_source == 'node' and data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} /> True 
+                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"{% if data.localinstall_source == 'node' and data.localinstall == False or data.localinstall == 'False' %}checked{% endif %} />  False
+                  {% if data.localinstall_source != 'node' %}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <span>Source: ({{ data.localinstall_source }})</span>
+                    <input type="radio"  disabled class="form-check-input" id="id_localinstall" checked /> {{ data.localinstall }}
+                  {% endif %}
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">boot menu</label>
-              <div class="col-sm-10"><input type="checkbox" name="bootmenu" class="form-check-input" id="id_bootmenu" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10">
+                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="true" {% if data.bootmenu_source == 'node' and data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} /> True 
+                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="false"{% if data.bootmenu_source == 'node' and data.bootmenu == False or data.bootmenu == 'False' %}checked{% endif %} />  False
+                  {% if data.bootmenu_source != 'node' %}
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <span>Source: ({{ data.bootmenu_source }})</span>
+                    <input type="radio"  disabled class="form-check-input" id="id_bootmenu" checked /> {{ data.bootmenu }}
+                  {% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
@@ -87,34 +121,83 @@
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">pre script</label>
-              <div class="col-sm-10"><textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea></div>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.prescript_source }}</span>
+                  {% if data.prescript_source != 'node' %}
+                    <textarea disabled cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea>
+                  {% endif %}
+                  <textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{% if data.prescript_source == 'node' %}{{ data.prescript }}{% endif %}</textarea>
+                </div>
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">part script</label>
-              <div class="col-sm-10"><textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea></div>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.partscript_source }}</span>
+                  {% if data.partscript_source != 'node' %}
+                    <textarea disabled cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea>
+                  {% endif %}
+                  <textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{% if data.partscript_source == 'node' %}{{ data.partscript }}{% endif %}</textarea>
+                </div>
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">post script</label>
-              <div class="col-sm-10"><textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea></div>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.postscript_source }}</span>
+                  {% if data.postscript_source != 'node' %}
+                    <textarea disabled cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea>
+                  {% endif %}
+                  <textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{% if data.postscript_source == 'node' %}{{ data.postscript }}{% endif %}</textarea>
+                </div>
+              </div>
             </div>
-          
+
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">provision interface</label>
-              <div class="col-sm-10"><input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" /></div>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.provision_interface_source }}</span>
+                  {% if data.provision_interface_source != 'node' %}
+                   <input type="text" disabled class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" />
+                  {% endif %}
+                  <input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{% if data.provision_interface_source == 'node' %}{{ data.provision_interface }}{% endif %}" />
+                </div>
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">provision method</label>
-              <div class="col-sm-10"><input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" /></div>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.provision_method_source }}</span>
+                  {% if data.provision_method_source != 'node' %}
+                   <input type="text" disabled class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" />
+                  {% endif %}
+                  <input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{% if data.provision_method_source == 'node' %}{{ data.provision_method }}{% endif %}" />
+                </div>
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">provision fallback</label>
-              <div class="col-sm-10"><input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" /></div>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.provision_fallback_source }}</span>
+                  {% if data.provision_fallback_source != 'node' %}
+                   <input type="text" disabled class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" />
+                  {% endif %}
+                  <input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{% if data.provision_fallback_source == 'node' %}{{ data.provision_fallback }}{% endif %}" />
+                </div>
+              </div>
             </div>
-          
+
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">tpm uuid</label>
               <div class="col-sm-10"><input type="text" name="tpm_uuid" class="form-control" maxlength="100" id="id_tpm_uuid" value="{{ data.tpm_uuid }}" /></div>
@@ -158,7 +241,16 @@
 
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">tag</label>
-              <div class="col-sm-10"><input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{{ data.osimagetag }}" /></div>
+              <div class="col-sm-10">
+                {% if data.osimagetag_source %}
+                <div class="input-group">
+                  <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.osimagetag_source }}</span>
+                  <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+                </div>
+                {% else %}
+                <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+                {% endif %}
+              </div>
             </div>
           
             <div class="row mb-3">
@@ -177,7 +269,7 @@
 
             <div class="row justify-content-end">
               <div class="col-sm-10">
-                <button type="submit" class="btn btn-primary">Clone {{ record }}</button>
+                <button type="submit" class="btn btn-primary">Clone {{ record }}</button> &nbsp;&nbsp;<span id="form-status"></span>
               </div>
             </div>
           </form>

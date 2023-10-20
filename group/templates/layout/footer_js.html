@@ -29,7 +29,25 @@
 <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
 
+<script>
+    $(function() {
+        var $form = $('form');
+        var initialState = $form.serialize();
 
+        $form.submit(function (e) {
+          if (initialState === $form.serialize()) {
+            $('#form-status').html();
+            $('#form-status').addClass("alert alert-danger");
+            $('#form-status').html('Nothing is changed!');
+          } else {
+            console.log('Form has changed!');
+            $form.submit();
+          }
+          e.preventDefault();
+        });
+    });
+
+</script>
 <script>
     
     new DataTable('.datatable');
