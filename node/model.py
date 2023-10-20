@@ -58,6 +58,7 @@ class Model():
                     if record == name:
                         if source:
                             response += f"<option value='{name}' selected>{name} ({source})</option>"
+                            response += f"<option value='{name}({name})'>{name}</option>"
                         else:
                             response += f"<option value='{name}' selected>{name}</option>"
                     else:

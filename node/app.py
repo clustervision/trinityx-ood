@@ -136,7 +136,16 @@ def edit(record=None):
     """
     This Method will add a requested record.
     """
+    # print(request.headers)
+    # print(request.cookies)
+    # print(request.data)
+    # print(request.args)
+    # print(request.form)
+    # print(request.endpoint)
+    # print(request.method)
+    # print(request.remote_addr)
     data = {}
+    bmcsetup_list, osimage_list, interface_html, group_list = '', '', '', ''
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
@@ -200,22 +209,28 @@ def edit(record=None):
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
         for k, v in payload.items():
             if v == 'on':
                 payload[k] = True
 
+        if 'osimage' in payload:
+            if '(' in payload['osimage'] and ')' in payload['osimage']:
+                payload['osimage'] = payload['osimage'].split('(', 1)[0]
+
+        if 'bmcsetup' in payload:
+            if '(' in payload['bmcsetup'] and ')' in payload['bmcsetup']:
+                payload['bmcsetup'] = payload['bmcsetup'].split('(', 1)[0]
+
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
-        # print(request_data)
         response = Rest().post_data(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 204:
             flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
         else:
-            # print(response)
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
@@ -238,12 +253,30 @@ def delete(record=None):
     return redirect(url_for('home'), code=302)
 
 
+@app.route('/remove/<string:record>/<string:interface>', methods=['GET'])
+def remove(record=None, interface=None):
+    """
+    This Method will delete a requested record.
+    """
+    result = {}
+    uri = record+'/interfaces/'+interface
+    response = Rest().get_delete(TABLE, uri)
+    LOGGER.info(f'{response.status_code} {response.content}')
+    if response.status_code == 204:
+        result['success'] = f'{interface} Deleted from {TABLE_CAP} {record}.'
+    else:
+        result['error'] = 'ERROR :: Something went wrong!'
+    result = json.dumps(result)
+    return result
+
+
 @app.route('/clone/<string:record>', methods=['GET', 'POST'])
 def clone(record=None):
     """
     This Method will clone a requested record.
     """
     data = {}
+    bmcsetup_list, osimage_list, interface_html, group_list = '', '', '', ''
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
@@ -251,11 +284,17 @@ def clone(record=None):
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
         if 'bmcsetup' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
+            if 'bmcsetup_source' in data:
+                bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['bmcsetup_source'])
+            else:
+                bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
             bmcsetup_list = Model().get_list_option_html('bmcsetup')
         if 'osimage' in data:
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
+            if 'osimage_source' in data:
+                osimage_list = Model().get_list_option_html('osimage', data['osimage'], data['osimage_source'])
+            else:
+                osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
             osimage_list = Model().get_list_option_html('osimage')
         if 'group' in data:
@@ -303,6 +342,14 @@ def clone(record=None):
         for k, v in payload.items():
             if v == 'on':
                 payload[k] = True
+
+        if 'osimage' in payload:
+            if '(' in payload['osimage'] and ')' in payload['osimage']:
+                payload['osimage'] = payload['osimage'].split('(', 1)[0]
+
+        if 'bmcsetup' in payload:
+            if '(' in payload['bmcsetup'] and ')' in payload['bmcsetup']:
+                payload['bmcsetup'] = payload['bmcsetup'].split('(', 1)[0]
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
