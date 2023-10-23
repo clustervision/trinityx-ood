@@ -57,8 +57,12 @@ class Model():
                 if record:
                     if record == name:
                         if source:
-                            response += f"<option value='{name}' selected>{name} ({source})</option>"
-                            response += f"<option value='{name}({name})'>{name}</option>"
+                            if source == 'node':
+                                response += f"<option value='{name}(group)'>{name} (group)</option>"
+                                response += f"<option value='{name}(node)' selected>{name} (node)</option>"
+                            else:
+                                response += f"<option value='{name}(group)' selected>{name} (group)</option>"
+                                response += f"<option value='{name}(node)'>{name} (node)</option>"
                         else:
                             response += f"<option value='{name}' selected>{name}</option>"
                     else:
