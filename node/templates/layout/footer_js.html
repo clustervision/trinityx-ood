@@ -184,46 +184,37 @@
                 
                 }
                 network += '</select>';
-            },
-            //error: function() {
-            //    alert('Error occured');
-           // }
+            }
         });
         return network;
     }
 
     $('body').on('click', '#raw_network', function() {
-        var network = $(this).parent().find('option[selected]').val();
-        console.log(network);
+        var network = $(this).parent().find(':selected').val();
         if (network){
             var response = {};
             var url = window.location.href
             url = url.replace(window.location.search,'');
             url = url.split('/');
             url.pop();
-            if (url.includes("edit") || url.includes("clone")){
-                url.pop();
-            }
+            if (url.includes("edit") || url.includes("clone")){ url.pop(); }
             url = url.join("/");
             url = url+"/nextip_network/"+network;
-
             $.ajax({
                 async: false,
                 global: false,
                 url: url,
                 type: 'GET',
-                success: function(res) {
-                    response = res;
-                }
+                success: function(res) { response = res; }
             });
             $(this).parent().find('.ipv4').val(response);
-            return response;
         } else {
             if ($(this).parent().next().next().children().is("span") || $(this).parent().next().next().next().length == 0){
                 $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">Kindly Select the Network First</p></div>');
             }
         }
 });
+
 
 $('body').on('change', '#id_network', function() {
     var network = this.value;
@@ -250,13 +241,13 @@ $('body').on('change', '#id_network', function() {
             }
         });
         $(this).parent().find('.ipv4').val(response);
-        //return response;
-        if ($(this).parent().next().next().children().is("span") || $(this).parent().next().next().next().length == 0){
-            //$(this).parent().prev().remove();
+        if ((response) && ($(this).parent().next().next().children().is("p"))){
+            $(this).parent().next().remove();
             $(this).parent().next().remove();
         }
     } else {
-        if ($(this).parent().next().next().children().is("span") || $(this).parent().next().next().next().length == 0){
+        $(this).parent().find('.ipv4').val('');
+        if ($(this).parent().next().next().children().is("p")){
             $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">Kindly Select the Network First</p></div>');
         }
     }
@@ -283,10 +274,7 @@ $('body').on('change', '#id_network', function() {
             dataType: 'json',
             success: function(res) {
                 response = res;
-            },
-            //error: function() {
-            //    alert('Error occured');
-           // }
+            }
         });
         return response;
     }
