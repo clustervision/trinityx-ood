@@ -55,7 +55,7 @@ class Helper():
         self.logger = Log.get_logger()
 
 
-    def filter_interfaces(self, request=None, table=None, payload=None):
+    def filter_interfaces(self, request=None, table=None, payload=None, remove_ip=False):
         """
         This method
         """
@@ -72,6 +72,7 @@ class Helper():
                 if interface:
                     tmp_interface['interface'] = interface
                 if ipaddress:
+                    # if remove_ip is False:
                     tmp_interface['ipaddress'] = ipaddress
                 if macaddress:
                     tmp_interface['macaddress'] = macaddress

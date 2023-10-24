@@ -184,15 +184,75 @@
                 
                 }
                 network += '</select>';
-            },
-            //error: function() {
-            //    alert('Error occured');
-           // }
+            }
         });
         return network;
     }
 
+    $('body').on('click', '#raw_network', function() {
+        var network = $(this).parent().find(':selected').val();
+        if (network){
+            var response = {};
+            var url = window.location.href
+            url = url.replace(window.location.search,'');
+            url = url.split('/');
+            url.pop();
+            if (url.includes("edit") || url.includes("clone")){ url.pop(); }
+            url = url.join("/");
+            url = url+"/nextip_network/"+network;
+            $.ajax({
+                async: false,
+                global: false,
+                url: url,
+                type: 'GET',
+                success: function(res) { response = res; }
+            });
+            $(this).parent().find('.ipv4').val(response);
+        } else {
+            if ($(this).parent().next().next().children().is("span") || $(this).parent().next().next().next().length == 0){
+                $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">Kindly Select the Network First</p></div>');
+            }
+        }
+});
 
+
+$('body').on('change', '#id_network', function() {
+    var network = this.value;
+    console.log(network);
+    if (network){
+        var response = {};
+        var url = window.location.href
+        url = url.replace(window.location.search,'');
+        url = url.split('/');
+        url.pop();
+        if (url.includes("edit") || url.includes("clone")){
+            url.pop();
+        }
+        url = url.join("/");
+        url = url+"/nextip_network/"+network;
+
+        $.ajax({
+            async: false,
+            global: false,
+            url: url,
+            type: 'GET',
+            success: function(res) {
+                response = res;
+            }
+        });
+        $(this).parent().find('.ipv4').val(response);
+        if ((response) && ($(this).parent().next().next().children().is("p"))){
+            $(this).parent().next().remove();
+            $(this).parent().next().remove();
+        }
+    } else {
+        $(this).parent().find('.ipv4').val('');
+        if ($(this).parent().next().next().children().is("p")){
+            $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">Kindly Select the Network First</p></div>');
+        }
+    }
+});
+    
     function remove_interface(node, interface){
         var response = {};
 
@@ -214,15 +274,12 @@
             dataType: 'json',
             success: function(res) {
                 response = res;
-            },
-            //error: function() {
-            //    alert('Error occured');
-           // }
+            }
         });
         return response;
     }
 
-    node_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" class="form-control" placeholder="interface" /><span class="input-group-text">Ipaddress</span><input type="text" name="ipaddress" class="form-control ipv4" placeholder="ipaddress" /><span class="input-group-text">Macaddress</span><input type="text" name="macaddress" class="form-control mac" placeholder="macaddress" />'+get_list("network", null)+'<span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
+    node_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" class="form-control" placeholder="interface" /><span class="input-group-tex tbtn btn-sm btn-success" id="raw_network">Ipaddress</span><input type="text" name="ipaddress" class="form-control ipv4" placeholder="ipaddress" /><span class="input-group-text">Macaddress</span><input type="text" name="macaddress" class="form-control mac" placeholder="macaddress" />'+get_list("network", null)+'<span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
     $("#add_nodeinterface").click(function () {
         $("#nodeinterface").append(node_interface);
      });
