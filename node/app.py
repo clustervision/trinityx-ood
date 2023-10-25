@@ -157,9 +157,6 @@ def edit(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        # for key, value in data.items():
-        #     if "_source" in key:
-        #         print(f'{key} ===============>>>> {value}')
         if 'bmcsetup' in data:
             if 'bmcsetup_source' in data:
                 bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['bmcsetup_source'])
@@ -182,7 +179,7 @@ def edit(record=None):
         raw_html = Template("""
             <div class="input-group">
                 <span class="input-group-text">Interface</span>
-                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
                 <span class="input-group-text btn btn-sm btn-success" id="raw_network">Ip address</span>
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
@@ -206,12 +203,12 @@ def edit(record=None):
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=add_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
                 else:
                     interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
                 num = num + 1
         else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
+            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
@@ -339,12 +336,12 @@ def clone(record=None):
                 ipaddress = nextip_network(interface_dict['network']) if 'ipaddress' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=add_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
                 else:
                     interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
                 num = num + 1
         else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
+            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}

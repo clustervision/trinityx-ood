@@ -73,7 +73,7 @@ def show(record=None):
     This Method will show a specific record.
     """
     data, error = "", ""
-    table_data = Rest().get_data(TABLE, record)
+    table_data = Rest().get_raw_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE][record]
@@ -142,9 +142,7 @@ def edit(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        # for key, value in data.items():
-        #     if "_source" in key:
-        #         print(f'{key} ===============>>>> {value}')
+   
         if 'bmcsetupname' in data:
             bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
         else:
@@ -157,7 +155,7 @@ def edit(record=None):
         raw_html = Template("""
             <div class="input-group">
                   <span class="input-group-text">Interface</span>
-                  <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                  <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
                   <span class="input-group-text">Network</span>
                   <select name="network" class="form-control" id="id_network">$network</select>
                   <span class="input-group-text">Options</span>
@@ -174,15 +172,15 @@ def edit(record=None):
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=add_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
                 else:
                     interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
                 num = num + 1
         else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
+            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
         for k, v in payload.items():
             if v == 'on':
@@ -230,8 +228,8 @@ def clone(record=None):
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        if 'bmcsetup' in data:
-            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
+        if 'bmcsetupname' in data:
+            bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetupname'])
         else:
             bmcsetup_list = Model().get_list_option_html('bmcsetup')
         if 'osimage' in data:
@@ -259,15 +257,15 @@ def clone(record=None):
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=add_button)
+                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
                 else:
                     interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
                 num = num + 1
         else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=add_button)
+            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
         for k, v in payload.items():
             if v == 'on':
@@ -275,11 +273,15 @@ def clone(record=None):
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
+        
+        if payload['osimagetag'] == '':
+            del payload['osimagetag']
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_clone(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 201:
             flash(f'{TABLE_CAP}, {data["name"]} Cloned as {payload["name"]}.', "success")
+            return redirect(url_for('edit', record=payload['newgroupname']), code=302)
         else:
             try:
                 response_json = response.json()

@@ -66,6 +66,36 @@ class Model():
         return response
 
 
+    # def get_list_option_html(self, table=None, record=None, source=None):
+    #     """
+    #     This method will open the Login Page(First Page)
+    #     """
+    #     response = ""
+    #     get_list = Rest().get_data(table)
+    #     if get_list:
+    #         raw_data = get_list['config'][table]
+    #         response += f"<option value=''> Select {table.capitalize()}  </option>"
+    #         for name, _ in raw_data.items():
+    #             if record:
+    #                 if record == name:
+    #                     if source:
+    #                         if source == 'group':
+    #                             response += f"<option value='{name}'>{name} ({source})</option>"
+    #                             response += f"<option value='{name}(group)' selected>{name} (group)</option>"
+    #                         else:
+    #                             response += f"<option value='{name}' selected>{name} ({source})</option>"
+    #                             response += f"<option value='{name}(group)'>{name} (group)</option>"
+    #                     else:
+    #                         response += f"<option value='{name}' selected>{name}</option>"
+    #                 else:
+    #                     response += f"<option value='{name}'>{name}</option>"
+    #             else:
+    #                 response += f"<option value='{name}'>{name}</option>"
+    #     else:
+    #         response += f"<option value=''>No {table.capitalize()} Available </option>"
+    #     return response
+
+
     def get_list_options(self, table=None):
         """
         This method will open the Login Page(First Page)

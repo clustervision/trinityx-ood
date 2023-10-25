@@ -194,7 +194,7 @@
         return network;
     }
 
-    group_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" class="form-control" placeholder="interface" />'+get_list("network", null)+'<span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
+    group_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />'+get_list("network", null)+'<span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
     $("#add_nodeinterface").click(function () {
         $("#nodeinterface").append(group_interface);    
      });
