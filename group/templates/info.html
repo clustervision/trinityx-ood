@@ -4,24 +4,30 @@
 <div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
   <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} {% if record %}/{% endif %}</span> {% if record %}{{ record }}{% endif %} </h4>
   <!-- Bordered Table -->
-  <div class="card">
-    <h5 class="card-header">{% if record %}{{ record }}{% else %}{{ table }} {% endif %} 
-      <span style="float: right;">
-        <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a>
-        <a href="{{ url_for('edit', record=record ) }}" class="btn btn-primary">Update {{ table }}</a>
-      </span>
-    </h5>
-    <div class="card-body">
-      <div class="table-responsive text-nowrap">
-        {% if data %}
-          {{ data  | safe }}
-        {% else %}
-        <div class="alert alert-danger" role="alert">{{ message }}</div>
-        {% endif %}
+  {% if data %}
+    <div class="card">
+      <h5 class="card-header">{% if record %}{{ record }}{% else %}{{ table }} {% endif %} 
+        <span style="float: right;">
+          <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a>
+          <a href="{{ url_for('rename', record=record) }}" class="btn btn-info">Rename {{ record }}</a>
+          <a href="{{ url_for('edit', record=record ) }}" class="btn btn-primary">Update {{ table }}</a>
+        </span>
+      </h5>
+      <div class="card-body">
+        <div class="table-responsive text-nowrap">
+          {% if data %}
+            {{ data  | safe }}
+          {% else %}
+          <div class="alert alert-danger" role="alert">{{ message }}</div>
+          {% endif %}
+        </div>
       </div>
     </div>
-  </div>
-  <!--/ Bordered Table -->
+    <!--/ Bordered Table -->
+  {% else %}
+    <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. If you want to create this click <a href="{{ url_for('add') }}" class="btn btn-success">Create</a>  or go back to the main page <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></div>
+  {% endif %}
 </div>
 <!-- / Content --><hr class="my-5" />
 {% endblock content %}
+
