@@ -103,7 +103,7 @@ def edit():
         data = table_data['config'][TABLE]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         cluster_name = payload['name']
         del payload['name']
         response = Helper().update_record(TABLE, payload)
@@ -119,7 +119,6 @@ def edit():
         return render_template("edit.html", table=TABLE_CAP, record=TABLE,  data=data)
 
 
-
 @app.route('/license', methods=['GET'])
 def license_info():
     """
@@ -130,9 +129,11 @@ def license_info():
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.read()
+            response = file_data.readlines()
+            response = '<br />'.join(response)
     return response
 
+
 if __name__ == "__main__":
-    # app.run(host= '0.0.0.0', port= 7059, debug= True)
+    # app.run(host= '0.0.0.0', port= 7058, debug= True)
     app.run()

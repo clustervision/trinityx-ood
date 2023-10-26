@@ -210,6 +210,7 @@ class Rest():
         self.logger.debug(f'POST URL => {daemon_url}')
         self.logger.debug(f'POST DATA => {data}')
         try:
+            print(daemon_url)
             response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:

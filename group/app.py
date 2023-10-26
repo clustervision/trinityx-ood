@@ -108,6 +108,12 @@ def add():
     network_list = Model().get_list_option_html('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        table_data = Rest().get_data(TABLE, payload['name'])
+        if table_data:
+            if payload['name'] in table_data['config'][TABLE]:
+                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
+                flash(error, "error")
+                return redirect(url_for('add'), code=302)
         payload = Helper().prepare_payload(None, payload)
         for k, v in payload.items():
             if v == 'on':
@@ -130,12 +136,42 @@ def add():
         return render_template("add.html", table=TABLE_CAP, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list)
 
 
+@app.route('/rename/<string:record>', methods=['GET', 'POST'])
+def rename(record=None):
+    """
+    This method will Rename the BMC Setup.
+    """
+    data = {}
+    if request.method == "POST":
+        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload['name'] = payload['name']
+        payload['newgroupname'] = payload['newname']
+        del payload['newname']
+        response = Helper().update_record(TABLE, payload)
+        LOGGER.info(f'{response.status_code} {response.content}')
+        if response.status_code == 204:
+            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
+        else:
+            response_json = response.json()
+            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+            flash(error, "error")
+        return redirect(url_for('rename', record=payload['newgroupname']), code=302)
+    elif request.method == 'GET':
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if table_data:
+            raw_data = table_data['config'][TABLE][record]
+            data = {'name': raw_data['name'], 'newname': ''}
+    return render_template("rename.html", table=TABLE_CAP, data=data)
+
+
 @app.route('/edit/<string:record>', methods=['GET', 'POST'])
 def edit(record=None):
     """
     This Method will add a requested record.
     """
     data = {}
+    bmcsetup_list, osimage_list, interface_html = '', '', ''
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
@@ -163,21 +199,13 @@ def edit(record=None):
                 $button
               </div><br />""")
         interface_html = ""
-        add_button = '<button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>'
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
-            num = 0
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
-                else:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
-                num = num + 1
-        else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
+                interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
@@ -185,9 +213,16 @@ def edit(record=None):
         for k, v in payload.items():
             if v == 'on':
                 payload[k] = True
-
+            
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
+        
+        if payload['bmcsetupname'] == '':
+            del payload['bmcsetupname']
+        if payload['osimage'] == '':
+            del payload['osimage']
+        if payload['osimagetag'] == '':
+            del payload['osimagetag']
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
@@ -222,6 +257,7 @@ def clone(record=None):
     This Method will clone a requested record.
     """
     data = {}
+    bmcsetup_list, osimage_list, interface_html = '', '', ''
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
@@ -248,21 +284,13 @@ def clone(record=None):
                 $button
               </div><br />""")
         interface_html = ""
-        add_button = '<button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>'
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
-            num = 0
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
-                else:
-                    interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
-                num = num + 1
-        else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
+                interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
@@ -273,7 +301,11 @@ def clone(record=None):
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
-        
+
+        if payload['bmcsetupname'] == '':
+            del payload['bmcsetupname']
+        if payload['osimage'] == '':
+            del payload['osimage']
         if payload['osimagetag'] == '':
             del payload['osimagetag']
         request_data = {'config': {TABLE: {payload['name']: payload}}}
@@ -324,6 +356,7 @@ def ospush(record=None):
     This method will open the Login Page(First Page)
     """
     data = {}
+    osimage_list = ''
     if request.method == "POST":
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         request_data = {'config':{TABLE:{payload['name']: payload}}}
@@ -352,7 +385,6 @@ def ospush(record=None):
     return render_template("osimage.html", table=TABLE_CAP, record=record, data=data, group_list=group_list, osimage_list=osimage_list)
 
 
-
 @app.route('/check_status/<string:status>/status/<string:request_id>', methods=['GET'])
 def check_status(status=None, request_id=None):
     """
@@ -377,8 +409,10 @@ def license_info():
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.read()
+            response = file_data.readlines()
+            response = '<br />'.join(response)
     return response
+
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)

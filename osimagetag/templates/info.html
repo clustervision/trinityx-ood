@@ -24,27 +24,27 @@
   {% endwith %}
   <div class="card">
     <form action="" method="POST">
-    <h5 class="card-header">{% if osimage %}{{ osimage }}{% else %}{{ table }} {% endif %} 
-      <span style="float: right;">
-        <div class="tag-form">
-          <span id="tag-main">
-            <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a>
-          </span>
-          &nbsp;
-          <span id="second-main">
-            <input type="hidden" name="osimage" class="form-control" maxlength="100" id="id_tag" value="{{ osimage }}"  />
-          </span>
-          <span id="third-main">
-            <input type="text" name="tag" class="form-control" required="" maxlength="100" required="" id="id_tag" />
-          </span>
-          &nbsp;
-          <span id="fourth-main">
-            <button type="submit" class="btn btn-primary">Add a Tag on  {{ osimage }}</button>
-          </span>
-        </div>
-      </span>
-    </h5>
-  </form>
+      <h5 class="card-header">{% if osimage %}{{ osimage }}{% else %}{{ table }} {% endif %} 
+        <span style="float: right;">
+          <div class="tag-form">
+            <span id="tag-main">
+              <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a>
+            </span>
+            &nbsp;
+            <span id="second-main">
+              <input type="hidden" name="osimage" class="form-control" maxlength="100" id="id_tag" value="{{ osimage }}"  />
+            </span>
+            <span id="third-main">
+              <input type="text" name="tag" class="form-control" required="" maxlength="100" required="" id="id_tag" />
+            </span>
+            &nbsp;
+            <span id="fourth-main">
+              <button type="submit" class="btn btn-primary">Add a Tag on  {{ osimage }}</button>
+            </span>
+          </div>
+        </span>
+      </h5>
+    </form>
     <div class="card-body">
       <div class="table-responsive text-nowrap">
         {% if data %}
