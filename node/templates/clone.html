@@ -12,286 +12,289 @@
     {% endif %}
   {% endwith %}
 
-  <div class="row">
-    <!-- Basic Layout -->
-    <div class="col-xxl">
-      <div class="card mb-4">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="mb-0">Clone {{ record }}</h5>
-          <small class="text-muted float-end">Change values here...</small>
-          <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
-        </div>
+  {% if data %}
+    <div class="row">
+      <!-- Basic Layout -->
+      <div class="col-xxl">
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">Clone {{ record }}</h5>
+            <small class="text-muted float-end">Change values here...</small>
+            <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+          </div>
 
-        <div class="card-body">
-          <form id="formAuthentication" class="mb-3" action="" method="POST">
-                
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">name</label>
-              <div class="col-sm-10"><input type="text" name="name" class="form-control" readonly maxlength="100" required="" id="id_name" value="{{ data.name }}" /></div>
-            </div>
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">New Node Name</label>
-              <div class="col-sm-10"><input type="text" name="newnodename" class="form-control" maxlength="100" required="" id="id_newgroupname"></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">service</label>
-              <div class="col-sm-10"><input type="checkbox" name="service" class="form-check-input" id="id_service" {% if data.service == True or data.service == 'True' %}checked{% endif %} /></div>
-            </div>
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">setup bmc</label>
-              <div class="col-sm-10">
-                {% if data.setupbmc_source == 'node' %}
-                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="true" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="false"{% if data.setupbmc == False or data.setupbmc == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="" />  Inherit from Group
-                {% else %}
-                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" checked value="" />  {% if data.setupbmc == True or data.setupbmc == 'True' %}Yes{% else %}No{% endif %} ({{ data.setupbmc_source }})
-                {% endif %}
+          <div class="card-body">
+            <form id="formAuthentication" class="mb-3" action="" method="POST">
+                  
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">name</label>
+                <div class="col-sm-10"><input type="text" name="name" class="form-control" readonly maxlength="100" required="" id="id_name" value="{{ data.name }}" /></div>
               </div>
-            </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">New Node Name</label>
+                <div class="col-sm-10"><input type="text" name="newnodename" class="form-control" maxlength="100" required="" id="id_newgroupname"></div>
+              </div>
             
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">net boot</label>
-              <div class="col-sm-10">
-                {% if data.netboot_source == 'node' %}
-                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="true" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="false"{% if data.netboot == False or data.netboot == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="" />  Inherit from Group
-                {% else %}
-                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="netboot" class="form-check-input" id="id_netboot" checked value="" />  {% if data.netboot == True or data.netboot == 'True' %}Yes{% else %}No{% endif %} ({{ data.netboot_source }})
-                {% endif %}
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">service</label>
+                <div class="col-sm-10"><input type="checkbox" name="service" class="form-check-input" id="id_service" {% if data.service == True or data.service == 'True' %}checked{% endif %} /></div>
               </div>
-            </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">local install</label>
-              <div class="col-sm-10">
-                {% if data.localinstall_source == 'node' %}
-                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true" {% if data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"{% if data.localinstall == False or data.localinstall == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="" />  Inherit from Group
-                {% else %}
-                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" checked value="" />  {% if data.localinstall == True or data.localinstall == 'True' %}Yes{% else %}No{% endif %} ({{ data.localinstall_source }})
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">boot menu</label>
-              <div class="col-sm-10">
-                {% if data.bootmenu_source == 'node' %}
-                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="true" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="false"{% if data.bootmenu == False or data.bootmenu == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="" />  Inherit from Group
-                {% else %}
-                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" checked value="" />  {% if data.bootmenu == True or data.bootmenu == 'True' %}Yes{% else %}No{% endif %} ({{ data.bootmenu_source }})
-                {% endif %}
-              </div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">switch port</label>
-              <div class="col-sm-10"><input type="text" name="switchport" class="form-control" maxlength="100" id="id_switchport" value="{{ data.switchport }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">status</label>
-              <div class="col-sm-10"><input type="text" name="status" class="form-control" maxlength="100" id="id_status" value="{{ data.status }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">position</label>
-              <div class="col-sm-10"><input type="text" name="position" class="form-control" maxlength="100" id="id_position" value="{{ data.position }}" /></div>
-            </div>
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">vendor</label>
-              <div class="col-sm-10"><input type="text" name="vendor" class="form-control" maxlength="100" id="id_vendor" value="{{ data.vendor }}" /></div>
-            </div>
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">asset tag</label>
-              <div class="col-sm-10"><input type="text" name="assettag" class="form-control" maxlength="100" id="id_assettag" value="{{ data.assettag }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">pre script</label>
-              <div class="col-sm-10">
-                <div class="input-group">
-                  <span class="input-group-text">{{ data.prescript_source }}</span>
-                  {% if data.prescript_source != 'node' %}
-                    <textarea disabled cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea>
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">setup bmc</label>
+                <div class="col-sm-10">
+                  {% if data.setupbmc_source == 'node' %}
+                    <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="true" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="false"{% if data.setupbmc == False or data.setupbmc == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="" />  Inherit from Group
+                  {% else %}
+                    <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="setupbmc" class="form-check-input" id="id_setupbmc" checked value="" />  {% if data.setupbmc == True or data.setupbmc == 'True' %}Yes{% else %}No{% endif %} ({{ data.setupbmc_source }})
                   {% endif %}
-                  <textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{% if data.prescript_source == 'node' %}{{ data.prescript }}{% endif %}</textarea>
                 </div>
               </div>
-            </div>
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">part script</label>
-              <div class="col-sm-10">
-                <div class="input-group">
-                  <span class="input-group-text">{{ data.partscript_source }}</span>
-                  {% if data.partscript_source != 'node' %}
-                    <textarea disabled cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea>
+              
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">net boot</label>
+                <div class="col-sm-10">
+                  {% if data.netboot_source == 'node' %}
+                    <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="true" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="false"{% if data.netboot == False or data.netboot == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="" />  Inherit from Group
+                  {% else %}
+                    <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="netboot" class="form-check-input" id="id_netboot" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="netboot" class="form-check-input" id="id_netboot" checked value="" />  {% if data.netboot == True or data.netboot == 'True' %}Yes{% else %}No{% endif %} ({{ data.netboot_source }})
                   {% endif %}
-                  <textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{% if data.partscript_source == 'node' %}{{ data.partscript }}{% endif %}</textarea>
                 </div>
               </div>
-            </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">post script</label>
-              <div class="col-sm-10">
-                <div class="input-group">
-                  <span class="input-group-text">{{ data.postscript_source }}</span>
-                  {% if data.postscript_source != 'node' %}
-                    <textarea disabled cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea>
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">local install</label>
+                <div class="col-sm-10">
+                  {% if data.localinstall_source == 'node' %}
+                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true" {% if data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"{% if data.localinstall == False or data.localinstall == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="" />  Inherit from Group
+                  {% else %}
+                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" checked value="" />  {% if data.localinstall == True or data.localinstall == 'True' %}Yes{% else %}No{% endif %} ({{ data.localinstall_source }})
                   {% endif %}
-                  <textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{% if data.postscript_source == 'node' %}{{ data.postscript }}{% endif %}</textarea>
                 </div>
               </div>
-            </div>
 
-
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">provision interface</label>
-              <div class="col-sm-10">
-                <div class="input-group">
-                  <span class="input-group-text">{{ data.provision_interface_source }}</span>
-                  {% if data.provision_interface_source != 'node' %}
-                   <input type="text" disabled class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" />
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">boot menu</label>
+                <div class="col-sm-10">
+                  {% if data.bootmenu_source == 'node' %}
+                    <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="true" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="false"{% if data.bootmenu == False or data.bootmenu == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="" />  Inherit from Group
+                  {% else %}
+                    <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="radio" name="bootmenu" class="form-check-input" id="id_bootmenu" checked value="" />  {% if data.bootmenu == True or data.bootmenu == 'True' %}Yes{% else %}No{% endif %} ({{ data.bootmenu_source }})
                   {% endif %}
-                  <input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{% if data.provision_interface_source == 'node' %}{{ data.provision_interface }}{% endif %}" />
                 </div>
               </div>
-            </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">switch port</label>
+                <div class="col-sm-10"><input type="text" name="switchport" class="form-control" maxlength="100" id="id_switchport" value="{{ data.switchport }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">status</label>
+                <div class="col-sm-10"><input type="text" name="status" class="form-control" maxlength="100" id="id_status" value="{{ data.status }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">position</label>
+                <div class="col-sm-10"><input type="text" name="position" class="form-control" maxlength="100" id="id_position" value="{{ data.position }}" /></div>
+              </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">provision method</label>
-              <div class="col-sm-10">
-                <div class="input-group">
-                  <span class="input-group-text">{{ data.provision_method_source }}</span>
-                  {% if data.provision_method_source != 'node' %}
-                   <input type="text" disabled class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" />
-                  {% endif %}
-                  <input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{% if data.provision_method_source == 'node' %}{{ data.provision_method }}{% endif %}" />
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">vendor</label>
+                <div class="col-sm-10"><input type="text" name="vendor" class="form-control" maxlength="100" id="id_vendor" value="{{ data.vendor }}" /></div>
+              </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">asset tag</label>
+                <div class="col-sm-10"><input type="text" name="assettag" class="form-control" maxlength="100" id="id_assettag" value="{{ data.assettag }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">pre script</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.prescript_source }}</span>
+                    {% if data.prescript_source != 'node' %}
+                      <textarea disabled cols="5" rows="3" class="form-control" id="id_prescript">{{ data.prescript }}</textarea>
+                    {% endif %}
+                    <textarea name="prescript" cols="5" rows="3" class="form-control" id="id_prescript">{% if data.prescript_source == 'node' %}{{ data.prescript }}{% endif %}</textarea>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">provision fallback</label>
-              <div class="col-sm-10">
-                <div class="input-group">
-                  <span class="input-group-text">{{ data.provision_fallback_source }}</span>
-                  {% if data.provision_fallback_source != 'node' %}
-                   <input type="text" disabled class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" />
-                  {% endif %}
-                  <input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{% if data.provision_fallback_source == 'node' %}{{ data.provision_fallback }}{% endif %}" />
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">part script</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.partscript_source }}</span>
+                    {% if data.partscript_source != 'node' %}
+                      <textarea disabled cols="5" rows="3" class="form-control" id="id_partscript">{{ data.partscript }}</textarea>
+                    {% endif %}
+                    <textarea name="partscript" cols="5" rows="3" class="form-control" id="id_partscript">{% if data.partscript_source == 'node' %}{{ data.partscript }}{% endif %}</textarea>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">tpm uuid</label>
-              <div class="col-sm-10"><input type="text" name="tpm_uuid" class="form-control" maxlength="100" id="id_tpm_uuid" value="{{ data.tpm_uuid }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">tpm pubkey</label>
-              <div class="col-sm-10"><input type="text" name="tpm_pubkey" class="form-control" maxlength="100" id="id_tpm_pubkey" value="{{ data.tpm_pubkey }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">tpm sha256</label>
-              <div class="col-sm-10"><input type="text" name="tpm_sha256" class="form-control" maxlength="100" id="id_tpm_sha256" value="{{ data.tpm_sha256 }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">unmanaged bmc users</label>
-              <div class="col-sm-10"><input type="text" name="unmanaged_bmc_users" class="form-control" maxlength="100" id="id_unmanaged_bmc_users" value="{{ data.unmanaged_bmc_users }}" /></div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">group</label>
-              <div class="col-sm-10">
-                <select name="group" class="form-control" id="id_group">{{ group_list | safe }}</select>
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">post script</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.postscript_source }}</span>
+                    {% if data.postscript_source != 'node' %}
+                      <textarea disabled cols="5" rows="3" class="form-control" id="id_postscript">{{ data.postscript }}</textarea>
+                    {% endif %}
+                    <textarea name="postscript" cols="5" rows="3" class="form-control" id="id_postscript">{% if data.postscript_source == 'node' %}{{ data.postscript }}{% endif %}</textarea>
+                  </div>
+                </div>
               </div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">bmc setup</label>
-              <div class="col-sm-10">
-                <select name="bmcsetup" class="form-control" id="id_bmcsetup">{{ bmcsetup_list | safe }}</select>
-              </div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">os image</label>
-              <div class="col-sm-10">
-                <select name="osimage" class="form-control" id="id_osimage">{{ osimage_list | safe }}</select>
-              </div>
-            </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">tag</label>
-              <div class="col-sm-10">
-                {% if data.osimagetag_source %}
-                <div class="input-group">
-                  <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.osimagetag_source }}</span>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">provision interface</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.provision_interface_source }}</span>
+                    {% if data.provision_interface_source != 'node' %}
+                    <input type="text" disabled class="form-control" maxlength="100" id="id_provision_interface" value="{{ data.provision_interface }}" />
+                    {% endif %}
+                    <input type="text" name="provision_interface" class="form-control" maxlength="100" id="id_provision_interface" value="{% if data.provision_interface_source == 'node' %}{{ data.provision_interface }}{% endif %}" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">provision method</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.provision_method_source }}</span>
+                    {% if data.provision_method_source != 'node' %}
+                    <input type="text" disabled class="form-control" maxlength="100" id="id_provision_method" value="{{ data.provision_method }}" />
+                    {% endif %}
+                    <input type="text" name="provision_method" class="form-control" maxlength="100" id="id_provision_method" value="{% if data.provision_method_source == 'node' %}{{ data.provision_method }}{% endif %}" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">provision fallback</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.provision_fallback_source }}</span>
+                    {% if data.provision_fallback_source != 'node' %}
+                    <input type="text" disabled class="form-control" maxlength="100" id="id_provision_fallback" value="{{ data.provision_fallback }}" />
+                    {% endif %}
+                    <input type="text" name="provision_fallback" class="form-control" maxlength="100" id="id_provision_fallback" value="{% if data.provision_fallback_source == 'node' %}{{ data.provision_fallback }}{% endif %}" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">tpm uuid</label>
+                <div class="col-sm-10"><input type="text" name="tpm_uuid" class="form-control" maxlength="100" id="id_tpm_uuid" value="{{ data.tpm_uuid }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">tpm pubkey</label>
+                <div class="col-sm-10"><input type="text" name="tpm_pubkey" class="form-control" maxlength="100" id="id_tpm_pubkey" value="{{ data.tpm_pubkey }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">tpm sha256</label>
+                <div class="col-sm-10"><input type="text" name="tpm_sha256" class="form-control" maxlength="100" id="id_tpm_sha256" value="{{ data.tpm_sha256 }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">unmanaged bmc users</label>
+                <div class="col-sm-10"><input type="text" name="unmanaged_bmc_users" class="form-control" maxlength="100" id="id_unmanaged_bmc_users" value="{{ data.unmanaged_bmc_users }}" /></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">group</label>
+                <div class="col-sm-10">
+                  <select name="group" class="form-control" id="id_group">{{ group_list | safe }}</select>
+                </div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">bmc setup</label>
+                <div class="col-sm-10">
+                  <select name="bmcsetup" class="form-control" id="id_bmcsetup">{{ bmcsetup_list | safe }}</select>
+                </div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">os image</label>
+                <div class="col-sm-10">
+                  <select name="osimage" class="form-control" id="id_osimage">{{ osimage_list | safe }}</select>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">tag</label>
+                <div class="col-sm-10">
+                  {% if data.osimagetag_source %}
+                  <div class="input-group">
+                    <span class="input-group-text" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Default Source is </span>">{{ data.osimagetag_source }}</span>
+                    <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+                  </div>
+                  {% else %}
                   <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+                  {% endif %}
                 </div>
-                {% else %}
-                <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
-                {% endif %}
               </div>
-            </div>
-          
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">comment</label>
-              <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" id="id_comment">{{ data.comment }}</textarea></div>
-            </div>
             
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label">interfaces</label>
-              <div class="col-sm-10">
-                {{ interface_html | safe }}
-                <div id="nodeinterface"></div>
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">comment</label>
+                <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" id="id_comment">{{ data.comment }}</textarea></div>
               </div>
-            </div>
+              
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">interfaces</label>
+                <div class="col-sm-10">
+                  {{ interface_html | safe }}
+                  <div id="nodeinterface"></div>
+                </div>
+              </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label"></label>
-              <div class="col-sm-10">
-                <button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>
-                <br><br>
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label"></label>
+                <div class="col-sm-10">
+                  <button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>
+                  <br><br>
+                </div>
               </div>
-            </div>
 
-            <div class="row justify-content-end">
-              <div class="col-sm-10">
-                <button type="submit" class="btn btn-primary">Clone {{ record }}</button> &nbsp;&nbsp;<span id="form-status"></span>
+              <div class="row justify-content-end">
+                <div class="col-sm-10">
+                  <button type="submit" class="btn btn-primary">Clone {{ record }}</button> &nbsp;&nbsp;<span id="form-status"></span>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
+
         </div>
-
       </div>
     </div>
-  </div>
+  {% else %}
+    <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. If you want to create this click <a href="{{ url_for('add') }}" class="btn btn-success">Create</a>  or go back to the main page <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></div>
+  {% endif %}
 </div>
-<!-- / Content -->
-<hr class="my-5" />
+<!-- / Content --><hr class="my-5" />
 {% endblock content %}

@@ -108,6 +108,12 @@ def add():
     network_list = Model().get_list_option_html('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        table_data = Rest().get_data(TABLE, payload['name'])
+        if table_data:
+            if payload['name'] in table_data['config'][TABLE]:
+                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
+                flash(error, "error")
+                return redirect(url_for('add'), code=302)
         payload = Helper().prepare_payload(None, payload)
         for k, v in payload.items():
             if v == 'on':
@@ -211,6 +217,10 @@ def edit(record=None):
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
         
+        if payload['bmcsetupname'] == '':
+            del payload['bmcsetupname']
+        if payload['osimage'] == '':
+            del payload['osimage']
         if payload['osimagetag'] == '':
             del payload['osimagetag']
         request_data = {'config': {TABLE: {payload['name']: payload}}}
@@ -291,7 +301,11 @@ def clone(record=None):
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
-        
+
+        if payload['bmcsetupname'] == '':
+            del payload['bmcsetupname']
+        if payload['osimage'] == '':
+            del payload['osimage']
         if payload['osimagetag'] == '':
             del payload['osimagetag']
         request_data = {'config': {TABLE: {payload['name']: payload}}}

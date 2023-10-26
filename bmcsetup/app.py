@@ -92,6 +92,12 @@ def add():
     """
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        table_data = Rest().get_data(TABLE, payload['name'])
+        if table_data:
+            if payload['name'] in table_data['config'][TABLE]:
+                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
+                flash(error, "error")
+                return redirect(url_for('add'), code=302)
         payload = Helper().prepare_payload(None, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
@@ -150,7 +156,7 @@ def edit(record=None):
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
@@ -193,7 +199,7 @@ def clone(record=None):
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         response = Helper().clone_record(TABLE, payload)
         LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 201:

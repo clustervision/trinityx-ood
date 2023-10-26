@@ -110,6 +110,12 @@ def add():
     network_list = Model().get_list_option_html('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        table_data = Rest().get_data(TABLE, payload['name'])
+        if table_data:
+            if payload['name'] in table_data['config'][TABLE]:
+                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
+                flash(error, "error")
+                return redirect(url_for('add'), code=302)
         payload = Helper().prepare_payload(None, payload)
         for k, v in payload.items():
             if v == 'on':
@@ -129,6 +135,35 @@ def add():
             return redirect(url_for('add'), code=302)
     else:
         return render_template("add.html", table=TABLE_CAP, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list)
+
+
+@app.route('/rename/<string:record>', methods=['GET', 'POST'])
+def rename(record=None):
+    """
+    This method will Rename the Node.
+    """
+    data = {}
+    if request.method == "POST":
+        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload['name'] = payload['name']
+        payload['newnodename'] = payload['newname']
+        del payload['newname']
+        response = Helper().update_record(TABLE, payload)
+        LOGGER.info(f'{response.status_code} {response.content}')
+        if response.status_code == 204:
+            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
+        else:
+            response_json = response.json()
+            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+            flash(error, "error")
+        return redirect(url_for('rename', record=payload['newnodename']), code=302)
+    elif request.method == 'GET':
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if table_data:
+            raw_data = table_data['config'][TABLE][record]
+            data = {'name': raw_data['name'], 'newname': ''}
+    return render_template("rename.html", table=TABLE_CAP, data=data)
 
 
 @app.route('/nextip_network/<string:network>', methods=['GET'])
@@ -388,6 +423,7 @@ def osgrab(record=None):
     This method will open the Login Page(First Page)
     """
     data = {}
+    osimage_list = ''
     if request.method == "POST":
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         request_data = {'config':{TABLE:{payload['name']: payload}}}
@@ -421,6 +457,7 @@ def ospush(record=None):
     This method will open the Login Page(First Page)
     """
     data = {}
+    osimage_list = ''
     if request.method == "POST":
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         request_data = {'config':{TABLE:{payload['name']: payload}}}
@@ -473,8 +510,10 @@ def license_info():
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.read()
+            response = file_data.readlines()
+            response = '<br />'.join(response)
     return response
+
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)

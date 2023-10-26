@@ -93,6 +93,12 @@ def add():
     network_list = Model().get_list_options('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        table_data = Rest().get_data(TABLE, payload['name'])
+        if table_data:
+            if payload['name'] in table_data['config'][TABLE]:
+                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
+                flash(error, "error")
+                return redirect(url_for('add'), code=302)
         payload = Helper().prepare_payload(None, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
@@ -109,21 +115,54 @@ def add():
         return render_template("add.html", table=TABLE_CAP, network_list=network_list)
 
 
+@app.route('/rename/<string:record>', methods=['GET', 'POST'])
+def rename(record=None):
+    """
+    This method will Rename the Other Device.
+    """
+    data = {}
+    if request.method == "POST":
+        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload['name'] = payload['name']
+        payload['newotherdevname'] = payload['newname']
+        del payload['newname']
+        response = Helper().update_record(TABLE, payload)
+        LOGGER.info(f'{response.status_code} {response.content}')
+        if response.status_code == 204:
+            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
+        else:
+            response_json = response.json()
+            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+            flash(error, "error")
+        return redirect(url_for('rename', record=payload['newotherdevname']), code=302)
+    elif request.method == 'GET':
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if table_data:
+            raw_data = table_data['config'][TABLE][record]
+            data = {'name': raw_data['name'], 'newname': ''}
+    return render_template("rename.html", table=TABLE_CAP, data=data)
+
+
 @app.route('/edit/<string:record>', methods=['GET', 'POST'])
 def edit(record=None):
     """
     This Method will update a requested record.
     """
     data = {}
+    network_list = ''
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        network_list = Model().get_list_options('network', data['network'])
+        if 'network' in data:
+            network_list = Model().get_list_options('network', data['network'])
+        else:
+            network_list = Model().get_list_options('network')
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
@@ -159,15 +198,19 @@ def clone(record=None):
     This Method will clone a requested record.
     """
     data = {}
+    network_list = ''
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
-        network_list = Model().get_list_options('network', data['network'])
+        if 'network' in data:
+            network_list = Model().get_list_options('network', data['network'])
+        else:
+            network_list = Model().get_list_options('network')
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         response = Helper().clone_record(TABLE, payload)
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 201:
@@ -192,8 +235,10 @@ def license_info():
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.read()
+            response = file_data.readlines()
+            response = '<br />'.join(response)
     return response
+
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)

@@ -103,7 +103,7 @@ def edit():
         data = table_data['config'][TABLE]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {k: v for k, v in request.form.items() if v not in [None]}
         cluster_name = payload['name']
         del payload['name']
         response = Helper().update_record(TABLE, payload)

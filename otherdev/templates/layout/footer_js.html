@@ -6,6 +6,32 @@
 <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
+    $(function() {
+        var $form = $('#formAuthentication');
+        var initialState = $form.serialize();
+
+        $form.submit(function (e) {
+          if (initialState === $form.serialize()) {
+            $('#form-status').html();
+            $('#form-status').addClass("alert alert-danger");
+            $('#form-status').html('Nothing is changed!');
+          } else {
+            console.log('Form has changed!');
+            if ($('#id_name').val() && $('#id_newname').val()){
+                if ($('#id_name').val() == $('#id_newname').val()){
+                    $('#form-status').html();
+                    $('#form-status').addClass("alert alert-danger");
+                    $('#form-status').html('Both Name can not be same, Kindly choose a different name.');
+                } else { $form.submit(); }
+            } else { $form.submit(); }
+          }
+          e.preventDefault();
+        });
+    });
+
+</script>
+
+<script>
 
     new DataTable('.datatable');
     $('#datatable_length  lable').addClass("datatable_length").parent().next().addClass("datatable_length");

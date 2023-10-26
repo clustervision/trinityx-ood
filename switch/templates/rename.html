@@ -1,0 +1,56 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> {{ data.name }}</h4>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  {% if data %}
+    <div class="row">
+      <!-- Basic Layout -->
+      <div class="col-xxl">
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="mb-0">Rename {{ data.name }}</h5>
+            <small class="text-muted float-end">Change values here...</small>
+            <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+          </div>
+          
+          <div class="card-body">
+            <form id="formAuthentication" class="mb-3" action="" method="POST">
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">Name</label>
+                <div class="col-sm-10"><input type="text" name="name" value="{{ data.name }}" class="form-control" readonly id="id_name"></div>
+              </div>
+            
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">New Name</label>
+                <div class="col-sm-10"><input type="text" name="newname" class="form-control" maxlength="100" required="" id="id_newname"></div>
+              </div>
+                  
+              <div class="row justify-content-end">
+                <div class="col-sm-10">
+                  <button type="submit" class="btn btn-primary">Rename {{ data.name }}</button> &nbsp;&nbsp;<span id="form-status"></span>
+                </div>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  {% else %}
+      <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. If you want to create this click <a href="{{ url_for('add') }}" class="btn btn-success">Create</a>  or go back to the main page <a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></div>
+  {% endif %}
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}
