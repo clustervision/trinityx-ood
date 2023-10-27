@@ -35,14 +35,15 @@ import os
 import json
 from html import unescape
 from flask import Flask,request, render_template, flash, url_for, redirect
+from log import Log
 from rest import Rest
 from constant import LICENSE
 from helper import Helper
 from presenter import Presenter
-from log import Log
 from model import Model
 
-logger = Log.init_log('DEBUG')
+# logger = Log.init_log('DEBUG')
+logger = Log.init_log('INFO')
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
@@ -136,6 +137,13 @@ def add(table=None):
     select_list = Model().get_list_option_html(entity)
     if request.method == 'POST':
         payload = Helper().prepare_payload(None, request.form)
+        table_data = Rest().get_data('secrets', f'{entity}/{payload["name"]}/{payload["secret"]}')        
+        if table_data:
+            for each in table_data['config']['secrets'][entity][payload["name"]]:
+                if payload['secret'] in each['name']:
+                    error = f'HTTP ERROR :: {payload["secret"]} is already present in the {payload["name"]}.'
+                    flash(error, "error")
+                    return redirect(url_for('add', table=table), code=302)
         entity_name = payload['name']
         del payload['name']
         payload['name'] = payload['secret']
@@ -151,7 +159,7 @@ def add(table=None):
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
             flash(error, "error")
-            return redirect(url_for('add'), code=302)
+            return redirect(url_for('add', table=table), code=302)
     else:
         return render_template("add.html", table = table_capital, entity=entity, select_list=select_list)
 
@@ -161,6 +169,7 @@ def edit(table=None, record=None, secret=None):
     """
     This Method will add a requested record.
     """
+    data = {}
     return_table = table
     entity = table.replace('secrets', '')
     table = 'secrets'
@@ -168,13 +177,12 @@ def edit(table=None, record=None, secret=None):
     secret_name = secret
     uri = f'{entity}/{entity_name}/{secret_name}'
     table_data = Rest().get_data(table, uri)
-    data = table_data['config'][table][entity][entity_name][0]
-    data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-    data = Helper().prepare_json(data)
-    select_list = Model().get_list_option_html(entity, entity_name)
+    if isinstance(table_data, dict):
+        data = table_data['config'][table][entity][entity_name][0]
+        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+        data = Helper().prepare_json(data)
     if request.method == 'POST':
         payload = Helper().prepare_payload(None, request.form)
-        entity_name = payload['name']
         del payload['name']
         payload['name'] = payload['secret']
         del payload['secret']
@@ -190,7 +198,7 @@ def edit(table=None, record=None, secret=None):
             flash(error, "error")
         return redirect(url_for('edit', table=return_table, record=record, secret=secret), code=302)
     else:
-        return render_template("edit.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name, select_list=select_list)
+        return render_template("edit.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name)
 
 
 @app.route('/delete/<string:table>/<string:record>/<string:secret>', methods=['GET'])
@@ -217,6 +225,7 @@ def clone(table=None, record=None, secret=None):
     """
     This Method will add a requested record.
     """
+    data = {}
     return_table = table
     entity = table.replace('secrets', '')
     table = 'secrets'
@@ -224,13 +233,12 @@ def clone(table=None, record=None, secret=None):
     secret_name = secret
     uri = f'{entity}/{entity_name}/{secret_name}'
     table_data = Rest().get_data(table, uri)
-    data = table_data['config'][table][entity][entity_name][0]
-    data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-    data = Helper().prepare_json(data)
-    select_list = Model().get_list_option_html(entity, entity_name)
+    if isinstance(table_data, dict):
+        data = table_data['config'][table][entity][entity_name][0]
+        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+        data = Helper().prepare_json(data)
     if request.method == 'POST':
         payload = Helper().prepare_payload(None, request.form)
-        entity_name = payload['name']
         del payload['name']
         payload['name'] = payload['secret']
         del payload['secret']
@@ -247,7 +255,7 @@ def clone(table=None, record=None, secret=None):
             flash(error, "error")
         return redirect(url_for('clone', table=return_table, record=record, secret=secret), code=302)
     else:
-        return render_template("clone.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name, select_list=select_list)
+        return render_template("clone.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name)
 
 
 @app.route('/license', methods=['GET'])
@@ -260,8 +268,10 @@ def license_info():
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.read()
+            response = file_data.readlines()
+            response = '<br />'.join(response)
     return response
+
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)
