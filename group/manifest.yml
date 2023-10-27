@@ -1,5 +1,10 @@
-name: Group
-description: Luna 2 Group Operations
+name: Groups
+description: Luna2 Groups Operations
 icon: fa://users
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: "Groups"
+  sub_caption: |
+   Luna2 Groups Operations

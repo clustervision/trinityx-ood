@@ -1,5 +1,10 @@
 name: Switch
-description: Luna 2 Switch Operations
+description: Luna2 Switch Operations
 icon: fa://draw-polygon
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: Switch
+  sub_caption: |
+   Luna 2 Switch Operations

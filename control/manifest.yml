@@ -1,5 +1,10 @@
 name: Control
-description: Luna 2 Control Operations
+description: Luna2 Control Operations
 icon: fa://bolt
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: "Cluster"
+  sub_caption: |
+   Luna2 Control Operations

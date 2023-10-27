@@ -1,5 +1,10 @@
 name: OS Image Tag
-description: Luna 2 OS Image Tags
+description: Luna2 OS Image Tags Operations
 icon: fa://tags
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: "OS Image Tags"
+  sub_caption: |
+   Luna2 OS Image Tags Operations

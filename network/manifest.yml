@@ -1,5 +1,10 @@
 name: Networks
-description: Luna 2 Network Operations
+description: Luna2 Network Operations
 icon: fa://bezier-curve
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: "Networks"
+  sub_caption: |
+   Luna2 Network Operations

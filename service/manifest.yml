@@ -1,5 +1,10 @@
 name: Service
-description: Luna 2 Service Operations
+description: Luna2 Service Operations
 icon: fa://dice-d20
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: Service
+  sub_caption: |
+   Luna2 Service Operations
