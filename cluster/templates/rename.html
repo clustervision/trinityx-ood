@@ -32,7 +32,7 @@
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">New Name</label>
-              <div class="col-sm-10"><input type="text" name="newname" class="form-control" maxlength="100" required="" id="id_newname"></div>
+              <div class="col-sm-10"><input type="text" name="newname" onkeypress="return event.charCode != 32" class="form-control" maxlength="100" required="" id="id_newname"></div>
             </div>
                 
             <div class="row justify-content-end">
