@@ -88,12 +88,35 @@
         }
         
         for (const [key, value] of Object.entries(row_data)) {
-            console.log(row_data);
             if(value.ipmi && value.sel && value.chassis){
-                    row += create_row(count, key, value.ipmi, value.sel, value.chassis);
-                    count++
+                var ipmi = [];
+                var sel = [];
+                var chassis = [];
+                var n = 20;
+                if (value.ipmi.length >= 20){
+                    for(i = 0, len = value.ipmi.length; i < len; i += n) {
+                        ipmi.push(value.ipmi.substr(i, n));
+                    }
+                    ipmi = ipmi.join("<br>");
+                } else { ipmi = value.ipmi; }
+
+                if (value.sel.length >= 20){
+                    for(i = 0, len = value.sel.length; i < len; i += n) {
+                        sel.push(value.sel.substr(i, n));
+                    }
+                    sel = sel.join("<br>");
+                } else { sel = value.sel; }
+
+                if (value.chassis.length >= 20){
+                    for(i = 0, len = value.chassis.length; i < len; i += n) {
+                        chassis.push(value.chassis.substr(i, n));
+                    }
+                    chassis = chassis.join("<br>");
+                } else { chassis = value.chassis; }
+                row += create_row(count, key, ipmi, sel, chassis);
+                //row += create_row(count, key, value.ipmi, value.sel, value.chassis);
+                count++
             }
-            
         }
  
         return row
@@ -234,7 +257,7 @@
                             if (data[i].hasOwnProperty("control")) { new_data.push(data[i]); }
                         }
                         var new_rows = control_table(new_data, count);
-                        
+
                        // console.log(new_rows);
 
                         //var new_rows = control_table(data, count);
