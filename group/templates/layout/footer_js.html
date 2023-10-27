@@ -175,10 +175,23 @@
 
     function get_list(table, select){
         var network = '';
+        var url = window.location.href;
+        url = url.replace(window.location.search,'');
+        if  (url.includes('/edit/') || url.includes('/clone/')){
+            url = url.split('/');
+            url.pop();
+            url.pop();
+            url = url.join("/");
+        } else {
+            url = url.split('/');
+            url.pop();
+            url = url.join("/");
+        }
+        url = url+"/get_list/"+table;
         $.ajax({
             async: false,
             global: false,
-            url: "/get_list/"+table,
+            url: url,
             type: 'GET',
             dataType: 'json',
             success: function(res) {
