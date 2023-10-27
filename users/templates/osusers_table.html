@@ -10,36 +10,38 @@
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td colspan={{ (fields | length) +2 }} class="new">
-        <button
-          type="button" 
-          class="btn btn-primary btn-block"
-          onclick="handle_new_button('{{target}}')">New {{ target[:-1] | capitalize }}</button>
-      </td>
-    </tr>
     {% for name, item in items.items() %}
     <tr>
       <td>{{name}}</td>
       {% for field in fields %}
       <td>{{item[field] or ''}}</td>
       {% endfor %}
-        <td>
-          <button
-            type="button" 
-            class="btn btn-secondary"
-            onclick="handle_show_button('{{target}}', '{{name}}')">Show</button>
-          <button
-            type="button" 
-            class="btn btn-primary"
-            onclick="handle_update_button('{{target}}', '{{name}}')">Update</button>
-          <button
-            type="button" 
-            class="btn btn-danger"
-            onclick="handle_delete_button('{{target}}', '{{name}}')">Delete</button>
-        </td>
+      <td>
+        <button
+        type="button" 
+        class="btn btn-secondary"
+        onclick="handle_show_button('{{target}}', '{{name}}')">Show</button>
+        <button
+        type="button" 
+        class="btn btn-primary"
+        onclick="handle_update_button('{{target}}', '{{name}}')">Update</button>
+        <button
+        type="button" 
+        class="btn btn-danger"
+        onclick="handle_delete_button('{{target}}', '{{name}}')">Delete</button>
+      </td>
     </tr>
     {% endfor %}
+    <tr>
+      <td colspan={{ (fields | length) + 1}} class="new">
+      </td>
+      <td colspan=1 class="new">
+        <button
+          type="button" 
+          class="btn btn-primary"
+          onclick="handle_new_button('{{target}}')">Add a new {{ target[:-1] | capitalize }}</button>
+      </td>
+    </tr>
   </tbody>
 </table>
 
