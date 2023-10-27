@@ -71,7 +71,7 @@ class Rest():
             status_forcelist=[502, 503, 504],
             allowed_methods={'GET', 'POST'},
         )
-        self.timeout = 10
+        self.timeout = 30
         self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
 
 
