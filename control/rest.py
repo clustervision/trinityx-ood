@@ -71,6 +71,7 @@ class Rest():
             status_forcelist=[502, 503, 504],
             allowed_methods={'GET', 'POST'},
         )
+        self.timeout = 10
         self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
 
 
@@ -124,7 +125,7 @@ class Rest():
         daemon_url = f'{self.daemon}/token'
         self.logger.debug(f'Token URL => {daemon_url}')
         try:
-            call = self.session.post(url=daemon_url, json=data, stream=True, timeout=5, verify=self.security)
+            call = self.session.post(url=daemon_url, json=data, stream=True, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
             if call.content:
                 data = call.json()
@@ -182,7 +183,7 @@ class Rest():
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
-            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
             response_json = call.json()
             if 'message' in response_json:
@@ -211,7 +212,7 @@ class Rest():
             daemon_url = f'{daemon_url}/{uri}'
         self.logger.debug(f'RAW URL => {daemon_url}')
         try:
-            response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -231,7 +232,7 @@ class Rest():
         daemon_url = f'{self.daemon}/{route}'
         self.logger.debug(f'Clone URL => {daemon_url}')
         try:
-            response = self.session.post(url=daemon_url, json=payload, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.post(url=daemon_url, json=payload, stream=True, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
