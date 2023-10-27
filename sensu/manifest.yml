@@ -1,4 +1,9 @@
 name: Sensu
-description: Monitoring info captured by sensu
+description: Monitoring events captured by sensu
 icon: fa://stethoscope
 category: Monitoring
+
+tile:
+  title: Sensu
+  sub_caption: |
+   Monitoring events captured by sensu

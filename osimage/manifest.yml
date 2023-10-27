@@ -1,5 +1,11 @@
-name: OS Image
-description: Luna 2 OS Image Operations
+name: OS Images
+description: Luna2 OS Images Operations
 icon: fa://database
 category: Trinity
 subcategory: Luna
+
+
+tile:
+  title: "OS Images"
+  sub_caption: |
+   Luna2 OS Images Operations

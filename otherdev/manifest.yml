@@ -1,5 +1,10 @@
 name: Other Devices
-description: Luna 2 Switch Operations
+description: Luna2 Other Devices Operations
 icon: fa://cogs
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: "Other Devices"
+  sub_caption: |
+   Luna2 OS Other Devices Operations

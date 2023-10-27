@@ -1,5 +1,10 @@
-name: Node
-description: Luna 2 Node Operations
+name: Nodes
+description: Luna2 Nodes Operations
 icon: fa://cube
 category: Trinity
 subcategory: Luna
+
+tile:
+  title: "Nodes"
+  sub_caption: |
+   Luna2 Nodes Operations
