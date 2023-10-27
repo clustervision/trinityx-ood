@@ -103,6 +103,8 @@
     function color_message(message=null){
         if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
             message = "<span style='color:red;'>" + message + "</span><br />";
+        } else if  (message.includes('No data for this request')){
+            message = "<span style='color:white;'>DONE :: " + message + "</span><br />";
         } else {
             message = "<span style='color:yellow;'>" + message + "</span><br />";
         }
@@ -136,6 +138,13 @@
 <script type="text/javascript">
 
     function clone_osimage(request_id=null, message=null){
+        message = message.split("+").join(" ");
+        $('#logmodalLabel').empty();
+        $('#logmodalLabel').html('<span>Packing OS Image >> '+message+'...</span>');
+        spinner = '<div class="spinner-border spinner-border-lg text-primary" style="float:left;" role="status"><span class="visually-hidden">Loading...</span></div>';
+        $('#spinner').empty();
+        $('#spinner').html(spinner);
+
         $('#run-time-logs').empty();
         message = decodeURI(message);
         $(window).on('load', function() {
@@ -158,6 +167,13 @@
         intervalId = setInterval(function(){
             $.getJSON(url, function(data){
                 if (data.message.includes("No data for this request")){
+                    text = $('#run-time-logs').html();
+                    text += color_message(data.message);
+                    $('#run-time-logs').html(text);
+                    $('#logmodalLabel').empty();
+                    $('#spinner').empty();
+                    message = message.split("+").join(" ");
+                    $('#logmodalLabel').html('<span>OS Image Packing is finish.</span>');
                     clearInterval(intervalId);
                 } else {
                     text = $('#run-time-logs').html();
@@ -241,6 +257,9 @@
                     intervalId = setInterval(function(){
                         $.getJSON(url, function(data){
                             if (data.message.includes("No data for this request")){
+                                text = $('#run-time-logs').html();
+                                text += color_message(data.message);
+                                $('#run-time-logs').html(text);
                                 $('#logmodalLabel').empty();
                                 $('#spinner').empty();
                                 $('#logmodalLabel').html('<span>OS Image Packed >> '+osimage+'...</span>');
