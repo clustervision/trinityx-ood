@@ -226,7 +226,6 @@ def edit(record=None):
                 $button
               </div><br />""")
         interface_html = ""
-        add_button = '<button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>'
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
             num = 0
@@ -237,11 +236,7 @@ def edit(record=None):
                 macaddress = "" if macaddress is None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
-                else:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
-                num = num + 1
+                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
         else:
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
@@ -349,7 +344,7 @@ def clone(record=None):
                 <span class="input-group-text btn btn-sm btn-success" id="raw_network" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Next Available IP Address </span>">Ip address</span>
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
-                <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
+                <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="" />
                 <span class="input-group-text">Network</span>
                 <span class="input-group-text">Network</span>
                 <select name="network" class="form-control" id="id_network">$network</select>
@@ -358,23 +353,16 @@ def clone(record=None):
                 $button
               </div><br />""")
         interface_html = ""
-        add_button = '<button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>'
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
-            num = 0
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 macaddress = interface_dict['macaddress'] if 'macaddress' in interface_dict else ""
                 macaddress = "" if macaddress is None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
-                # ipaddress = interface_dict['ipaddress'] if 'ipaddress' in interface_dict else ""
                 ipaddress = nextip_network(interface_dict['network']) if 'ipaddress' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                if num == 0:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
-                else:
-                    interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
-                num = num + 1
+                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, network=network, options=options, button=remove_button)
         else:
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
