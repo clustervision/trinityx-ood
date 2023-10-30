@@ -328,7 +328,8 @@ $('body').on('change', '#id_network', function() {
         var mac_address = $('.mac');
         mac_address.inputmask({
             alias: "mac",
-            greedy: false
+            greedy: false,
+            casing: "lower"
         });
     }
 
