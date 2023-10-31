@@ -54,10 +54,15 @@
               <label class="col-sm-2 col-form-label">provision fallback</label>
               <div class="col-sm-10"><input type="text" name="provision_fallback" value="{{ data.provision_fallback }}" class="form-control" id="id_provision_fallback"></div>
             </div>
-          
+            
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">create node on demand</label>
               <div class="col-sm-10"><input type="checkbox" name="createnode_ondemand" class="form-check-input" id="id_createnode_ondemand"  {% if data.createnode_ondemand == True or data.createnode_ondemand == 'True' %}checked{% endif %} /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Nextnode discover</label>
+              <div class="col-sm-10"><input type="checkbox" name="nextnode_discover" class="form-check-input" id="id_nextnode_discover"  {% if data.nextnode_discover == True or data.nextnode_discover == 'True' %}checked{% endif %} /></div>
             </div>
           
             <div class="row mb-3">
