@@ -123,9 +123,17 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js" integrity="sha512-efAcjYoYT0sXxQRtxGY37CKYmqsFVOIwMApaEbrxJr4RwqVVGw8o+Lfh/+59TU07+suZn1BWq4fDl5fdgyCNkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
-        var ipv4_address = $('.ipv4');
-        ipv4_address.inputmask({
-            alias: "ip",
-            greedy: false
-        });
+    var ipv4_address = $('.ipv4');
+    ipv4_address.inputmask({
+        alias: "ip",
+        greedy: false
+    });
+</script>
+<script>
+    function onlyNumberKey(evt) {
+        var ASCIICode = (evt.which) ? evt.which : evt.keyCode
+        if (ASCIICode > 31 && (ASCIICode < 48 || ASCIICode > 57))
+            return false;
+        return true;
+    }
 </script>

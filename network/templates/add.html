@@ -45,6 +45,11 @@
               <label class="col-sm-2 col-form-label">gateway</label>
               <div class="col-sm-10"><input type="text" name="gateway" class="form-control ipv4" maxlength="100" id="id_gateway"></div>
             </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">gateway metric</label>
+              <div class="col-sm-10"><input type="text" onkeypress="return onlyNumberKey(event)" name="gateway_metric" class="form-control" maxlength="100" id="id_gateway_metric"></div>
+            </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">ntp server ip</label>
