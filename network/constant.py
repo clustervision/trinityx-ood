@@ -56,8 +56,8 @@ def sortby(table=None):
     response = False
     static = {
         'network': [
-            'name', 'type', 'network', 'gateway', 'ntp_server', 'nameserver_ip', 'dhcp',
-            'dhcp_range_begin', 'dhcp_range_end', 'shared', 'zone', 'comment'
+            'name', 'type', 'network', 'gateway', 'gateway_metric', 'ntp_server', 'nameserver_ip',
+            'dhcp', 'dhcp_range_begin', 'dhcp_range_end', 'shared', 'zone', 'comment'
         ]
     }
     response = list(static[table])
