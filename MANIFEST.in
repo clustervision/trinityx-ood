@@ -253,3 +253,20 @@ include monitor/templates
 include monitor/templates/*
 include monitor/templates/layout
 include monitor/templates/layout/*
+
+include dns
+include dns/*
+include dns/static
+include dns/static/*
+include dns/static/css
+include dns/static/css/*
+include dns/static/fonts
+include dns/static/fonts/*
+include dns/static/img
+include dns/static/img/*
+include dns/static/js
+include dns/static/js/*
+include dns/templates
+include dns/templates/*
+include dns/templates/layout
+include dns/templates/layout/*
