@@ -1,0 +1,10 @@
+name: Monitor Luna
+description: Monitor Luna Status and Queue
+icon: fa://fa-monitor-waveform
+category: Trinity
+subcategory: Luna
+
+tile:
+  title: "Monitor Luna"
+  sub_caption: |
+   Monitor Luna Status and Queue
