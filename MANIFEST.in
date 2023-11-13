@@ -238,3 +238,18 @@ include users/*
 include users/static
 include users/static/*
 include users/templates/*
+
+include monitor
+include monitor/*
+include monitor/static
+include monitor/static/*
+include monitor/static/css
+include monitor/static/css/*
+include monitor/static/img
+include monitor/static/img/*
+include monitor/static/js
+include monitor/static/js/*
+include monitor/templates
+include monitor/templates/*
+include monitor/templates/layout
+include monitor/templates/layout/*
