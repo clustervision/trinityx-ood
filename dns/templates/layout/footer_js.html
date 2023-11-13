@@ -1,0 +1,139 @@
+
+<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap4.min.js"  crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<div class="modal fade" id="logmodal" tabindex="-1" role="dialog" aria-labelledby="logmodalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logmodalLabel">Status</h5>
+          <div id="spinner" style="float: right; margin-right: -50%;"></div>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" onClick="redirection();">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="run-time-body">
+            <pre id="run-time-logs"></pre>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" onClick="redirection();" >Close</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<script>
+    $(function() {
+        var $form = $('#formAuthentication');
+        var initialState = $form.serialize();
+
+        $form.submit(function (e) {
+          if (initialState === $form.serialize()) {
+            $('#form-status').html();
+            $('#form-status').addClass("alert alert-danger");
+            $('#form-status').html('Nothing is changed!');
+          } else {
+            console.log('Form has changed!');
+            if ($('#id_name').val() && $('#id_newname').val()){
+                if ($('#id_name').val() == $('#id_newname').val()){
+                    $('#form-status').html();
+                    $('#form-status').addClass("alert alert-danger");
+                    $('#form-status').html('Both Name can not be same, Kindly choose a different name.');
+                } else { $form.submit(); }
+            } else { $form.submit(); }
+          }
+          e.preventDefault();
+        });
+    });
+
+</script>
+
+<script>
+
+    new DataTable('.datatable');
+    $('#datatable_length  lable').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $('#datatable_length  select').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $('.dataTables_filter').addClass("datatable_search").parent().next().addClass("datatable_search");
+    $('.dataTables_filter lable').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $('.dataTables_filter input').addClass("datatable_length").parent().next().addClass("datatable_length");
+    $(".dataTables_filter ").after("<br />");
+    $('.dataTables_paginate').addClass("datatable_paginate").parent().next().addClass("datatable_paginate");
+
+
+
+    function color_message(message=null){
+        if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
+            message = "<span style='color:red;'>" + message + "</span><br />";
+        } else {
+            message = "<span style='color:yellow;'>" + message + "</span><br />";
+        }
+        return message
+    }
+
+
+
+    function redirection(){
+        $('#logmodal').modal('hide');
+    }
+
+
+    function member(table=null, record=null){
+        $('#logmodalLabel').empty();
+        $('#logmodalLabel').html('<span>Member Nodes Of '+table+' >> '+record+' </span>');
+        $('#run-time-logs').empty();
+        $.ajax({
+            url: window.location.href+"member/"+table+"/"+record,
+            type: 'GET',
+            contentType: 'application/json; charset=UTF-8',
+            dataType: 'json',
+            success: function(request_data) {
+                $('#logmodal').modal('show');
+                var text = $('#run-time-logs').text();
+                text += color_message(request_data);
+                $('#run-time-logs').html(text);
+            }
+        });
+    }
+
+
+    function taken(record=null){
+        $('#logmodalLabel').empty();
+        $('#logmodalLabel').html('<span>IP Address Reserved With Network>> '+record+' </span>');
+        $('#run-time-logs').empty();
+        $.ajax({
+            url: window.location.href+"/taken/"+record,
+            type: 'GET',
+            contentType: 'application/json; charset=UTF-8',
+            dataType: 'json',
+            success: function(request_data) {
+                $('#logmodal').modal('show');
+                var text = $('#run-time-logs').text();
+                text += color_message(request_data);
+                $('#run-time-logs').html(text);
+            }
+        });
+    }
+
+
+</script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js" integrity="sha512-efAcjYoYT0sXxQRtxGY37CKYmqsFVOIwMApaEbrxJr4RwqVVGw8o+Lfh/+59TU07+suZn1BWq4fDl5fdgyCNkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    var ipv4_address = $('.ipv4');
+    ipv4_address.inputmask({
+        alias: "ip",
+        greedy: false
+    });
+</script>
+<script>
+    function onlyNumberKey(evt) {
+        var ASCIICode = (evt.which) ? evt.which : evt.keyCode
+        if (ASCIICode > 31 && (ASCIICode < 48 || ASCIICode > 57))
+            return false;
+        return true;
+    }
+</script>

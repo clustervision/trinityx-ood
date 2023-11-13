@@ -1,0 +1,39 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> List Of All {{ table }} Entries</h4>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+{% if data %}
+  <!-- Bordered Table -->
+  <div class="card">
+    <h5 class="card-header">{{ table }} Entries <span><a style="float: right;" href="{{ url_for('add') }}" class="btn btn-success">Add New {{ table }}</a></span></h5>
+    <div class="card-body">
+      <div class="table-responsive text-nowrap">{{ data  | safe }}</div>
+    </div>
+  </div>
+  <!--/ Bordered Table -->
+  {% else %}
+  <!-- Bordered Table -->
+  <div class="card">
+    <h5 class="card-header">{{ table }} Entries <span><a style="float: right;" href="{{ url_for('add') }}" class="btn btn-success">Add New {{ table }}</a></span></h5>
+    <div class="card-body">
+      <div class="table-responsive text-nowrap"><center style="color: red;">There is no DNS Entry, Kindly add one</center></div>
+    </div>
+  </div>
+  <!--/ Bordered Table -->
+
+  {% endif %}
+
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}
