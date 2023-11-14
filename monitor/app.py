@@ -32,10 +32,13 @@ __status__      = 'Development'
 
 import os
 import json
+from html import unescape
 from flask import Flask, render_template
 from rest import Rest
 from constant import LICENSE
 from log import Log
+from helper import Helper
+from presenter import Presenter
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
@@ -48,14 +51,7 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    response = {}
-    route = 'monitor/status'
-    data = Rest().get_raw(route)
-    LOGGER.info(data)
-    if data.content:
-        data = data.content.decode("utf-8")
-        data = json.loads(data)
-        response = json.dumps(data, indent=4)
+    response = status('status')
     return render_template("monitor.html", table=TABLE_CAP, data=response, title='Status')
 
 
@@ -64,13 +60,28 @@ def status(service=None):
     """
     This method to show the monitor status and queue.
     """
-    response = {}
-    route = f'monitor/{service}'
-    data = Rest().get_raw(route)
+    response = ''
+    data = Rest().get_raw('monitor', service)
     if data.content:
         data = data.content.decode("utf-8")
         data = json.loads(data)
-        response = json.dumps(data)
+        data = data['monitor'][service]
+        if data:
+            fields, rows  = Helper().filter_interface(service, data)
+            fields = list(map(lambda x: x.replace('username_initiator', 'Initiate By'), fields))
+            fields = list(map(lambda x: x.replace('request_id', 'Request ID'), fields))
+            fields = list(map(lambda x: x.replace('read', 'Read'), fields))
+            fields = list(map(lambda x: x.replace('message', 'Message'), fields))
+            fields = list(map(lambda x: x.replace('created', 'Created On'), fields))
+            fields = list(map(lambda x: x.replace('username_initiator', 'Initiate By'), fields))
+            fields = list(map(lambda x: x.replace('level', 'Level'), fields))
+            fields = list(map(lambda x: x.replace('status', 'Status'), fields))
+            fields = list(map(lambda x: x.replace('subsystem', 'Sub System'), fields))
+            fields = list(map(lambda x: x.replace('task', 'Task'), fields))
+            data = Presenter().show_table(fields, rows)
+            response = unescape(data)
+        else:
+            response = f'<center><strong style="color: blue;">Monitor {service} is empty.</strong></center>'
     return response
 
 
