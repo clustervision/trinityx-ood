@@ -8,8 +8,8 @@
     <h5 class="card-header">{% if record %}{{ record }}{% else %}{{ table }} {% endif %}
       <span id="title">{{title }}</span>
       <span style="float: right;">
-        <a onclick="status('status');" class="btn btn-info">Monitor Status</a>
-        <a onclick="status('queue');" class="btn btn-primary">Monitor Queue</a>
+        <a onclick="status('status');" id="btn-status" class="btn btn-info">Monitor Status</a>
+        <a onclick="status('queue');" id="btn-queue" class="btn btn-primary">Monitor Queue</a>
       </span>
     </h5>
     <div class="card-body">
