@@ -1,6 +1,6 @@
 name: Monitor Luna
 description: Monitor Luna Status and Queue
-icon: fa://fa-monitor-waveform
+icon: fa://robot
 category: Trinity
 subcategory: Luna
 

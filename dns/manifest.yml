@@ -1,10 +1,10 @@
 name: DNS Records
-description: Manage DNS Records
-icon: fa://list-tree
+description: DNS Records
+icon: fa://code-branch
 category: Trinity
 subcategory: Luna
 
 tile:
   title: "DNS Records"
   sub_caption: |
-   Manage DNS Records
+   DNS Records
