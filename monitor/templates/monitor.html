@@ -8,16 +8,15 @@
     <h5 class="card-header">{% if record %}{{ record }}{% else %}{{ table }} {% endif %}
       <span id="title">{{title }}</span>
       <span style="float: right;">
-        <a onclick="status('status');" id="btn-status" class="btn btn-info">Monitor Status</a>
-        <a onclick="status('queue');" id="btn-queue" class="btn btn-primary">Monitor Queue</a>
+        <a onclick="status('status');" style="color: white;" id="btn-status" class="btn btn-info">Monitor Status</a>
+        <a onclick="status('queue');" style="color: white;" id="btn-queue" class="btn btn-primary">Monitor Queue</a>
       </span>
     </h5>
     <div class="card-body">
       <div class="table-responsive text-nowrap">
-        <pre id="data"></pre>
         <div id="default">
           {% if data %}
-            <pre>{{ data}}</pre>
+            {{ data | safe }}
           {% endif %}
         </div>
       </div>

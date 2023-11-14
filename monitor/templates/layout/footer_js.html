@@ -5,17 +5,19 @@
     $("#btn-status").addClass("active");
     function status(service=null){
         $('#default').empty();
-        $('#data').empty();
+        //$('#data').empty();
         $('#title').empty();
         $.ajax({
             url: window.location.href+"/status/"+service,
             type: 'GET',
             contentType: 'application/json; charset=UTF-8',
-            dataType: 'json',
+            //dataType: 'json',
             success: function(request_data) {
-                const json_data = JSON.stringify(request_data, null, 4);
+                console.log(request_data);
+                $('#default').html(request_data);
+                //const json_data = JSON.stringify(request_data, null, 4);
                 $('#title').append(service.charAt(0).toUpperCase() + service.slice(1));
-                $('#data').append(json_data);
+                //$('#data').append(json_data);
                 if (service === 'status'){
                     $("#btn-status").addClass("active");
                     $("#btn-queue").removeClass("active");

@@ -32,3 +32,15 @@ INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
+
+def filter_columns(table=None):
+    """
+    This method remove the unnecessary fields from the dataset.
+    """
+    response = False
+    static = {
+        'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
+        'queue': ['username_initiator', 'request_id', 'level', 'status', 'subsystem', 'task', 'created']
+    }
+    response = list(static[table])
+    return response
