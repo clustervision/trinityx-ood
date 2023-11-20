@@ -1,19 +1,24 @@
 dragSelect = null;
 configuration = {initialized:false, selectedNodes: []};
 
+function _buildUrl(url){
+    var currentUrl = window.location.href;
+    var newUrl = currentUrl + url;
+    return newUrl;
+}
 
-// 
 function _groupExists(groupName) {
     // Check if a group exists
     return $(`#group-${groupName}`).length > 0;
 }
+
 function createNodesGroup(groupName, callback=undefined) {
     // Create a new nodes group
     console.log('creating nodes group', groupName);
     // Make an ajax request to /components/nodes_group_card?group_name=<groupName>
     // and place the result in the nodes-col div
     var request = new XMLHttpRequest();
-    requestUrl = `/components/nodes_group?group_name=${groupName}`;
+    requestUrl = _buildUrl(`/components/nodes_group?group_name=${groupName}`);
     request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
@@ -97,7 +102,7 @@ function createNode(nodeName, groupNamed) {
     // Make an ajax request to /components/node_card?node_name=<nodeName>&group_name=<groupName>
     // and place the result in the nodes-col div
     var request = new XMLHttpRequest();
-    requestUrl = `/components/node?node_name=${nodeName}&group_name=${groupName}`;
+    requestUrl = _buildUrl(`/components/node?node_name=${nodeName}&group_name=${groupName}`);
     request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
@@ -134,7 +139,8 @@ function importLunaNodes(target) {
     // Make an AJAX request to /load/nodes with the contentJSON in the body
     // and display the result in the preview in a modal
     var request = new XMLHttpRequest();
-    request.open('GET', `/import/luna/nodes`);
+    requestUrl = _buildUrl(`/import/luna/nodes`);
+    request.open('GET', requestUrl);
     request.onload = function() {
         if (request.status == 200) {
             // display the result in the preview in a modal
@@ -186,7 +192,7 @@ function createPartition(partitionName) {
     // Make an ajax request to /components/partition_card?partition_name=<partitionName>
     // and place the result in the partitions-col div
     var request = new XMLHttpRequest();
-    requestUrl = `/components/partition_card?partition_name=${partitionName}`;
+    requestUrl = _buildUrl(`/components/partition_card?partition_name=${partitionName}`);
     request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
@@ -259,7 +265,8 @@ function renderNodesCard() {
     // Make an AJAX request to /components/slurm_nodes_card
     // and place the result in the nodes-col div
     var request = new XMLHttpRequest();
-    request.open('POST', '/components/nodes_card');
+    requestUrl = _buildUrl(`/components/nodes_card`);
+    request.open('POST', requestUrl);
     request.onload = function() {
         if (request.status == 200) {
             nodesColElement = document.querySelector('#nodes-col');
@@ -279,7 +286,8 @@ function renderPartitionsCards() {
     // and place the result in the partitions-col div
 
     var request = new XMLHttpRequest();
-    request.open('POST', '/components/partitions_cards');
+    requestUrl = _buildUrl(`/components/partitions_cards`);
+    request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
         if (request.status == 200) {
@@ -299,7 +307,8 @@ function renderConfigurationPreview() {
     console.log(data);
     // Fetch and display the preview of the configuration
     var request = new XMLHttpRequest();
-    request.open('POST', '/components/configuration_preview');
+    requestUrl = _buildUrl(`/components/configuration_preview`);
+    request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
         if (request.status == 200) {
@@ -376,7 +385,8 @@ function saveConfiguration() {
     // Make an AJAX request to /save with the contentJSON in the body
     // and reload the page
     var request = new XMLHttpRequest();
-    request.open('POST', '/save');
+    requestUrl = _buildUrl(`/save`);
+    request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
         if (request.status == 200) {
@@ -392,7 +402,8 @@ function saveConfiguration() {
 function restoreConfiguration() {
     // Make an AJAX request to /restore and reload the page
     var request = new XMLHttpRequest();
-    request.open('POST', '/restore');
+    requestUrl = _buildUrl(`/restore`);
+    request.open('POST', requestUrl);
     request.onload = function() {
         if (request.status == 200) {
             // reload the page
@@ -407,7 +418,8 @@ function restoreConfiguration() {
 function _downloadConfiguration(target) {
     {
         var request = new XMLHttpRequest();
-        request.open('POST', `/download/${target}`);
+        requestUrl = _buildUrl(`/download/${target}`);
+        request.open('POST', requestUrl);
         request.setRequestHeader('Content-Type', 'application/json');
         request.responseType = 'blob';
         request.onload = function() {
