@@ -1,0 +1,8 @@
+<li class="list-group-item group-header" id="group-header-{{ group_name }}">{{ group_name }}</li>
+<li class="list-group-item group" id="group-{{ group_name }}">
+   <div class='dropzone' id="dropzone-group-{{ group_name }}">
+      {% for node_name in node_names %}
+        {% include "components/node.html" %}
+      {% endfor %}
+   </div>
+</li>

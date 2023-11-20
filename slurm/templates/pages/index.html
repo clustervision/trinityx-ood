@@ -1,0 +1,39 @@
+{% extends "base/pages/index.html" %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+{% endblock %}
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+<script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
+<script src="{{ url_for('static', filename='js/handlers.js') }}"></script>
+<script src="{{ url_for('static', filename='js/drag-select.js') }}"></script>
+{% endblock %}
+<iframe id="download-iframe" style="display:none;"></iframe>
+
+{% block content %}
+<!-- Split the screen in two parts, left for nodes and right for partitions -->
+<div class="row">
+    <div class="col-12">
+        {% include "components/menu.html" %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-6" id="nodes-menu-col">
+        {% include "components/nodes_menu_card.html" %}
+
+    </div>
+    <div class="col-6" id="partitions-menu-col">
+        {% include "components/partitions_menu_card.html" %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-6" id="nodes-col">
+        <!-- Nodes Card here -->
+    </div>
+    <div class="col-6" id="partitions-col">
+        <!-- Partitions Cards here -->
+    </div>
+</div>
+{% endblock %}

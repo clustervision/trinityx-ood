@@ -1,0 +1,55 @@
+<li class="list-group-item collapse" id="settings-{{ partition_name }}">
+    <h5> Settings </h5>
+    
+    <div class="form-group">
+        <label for="{{ partition_name }}-State">State</label>
+        <select class="form-control" id="{{ partition_name }}-State">
+                <option value="" {{'selected' if partition.properties.State == ''}}>(Default)</option>
+                <option value="PENDING" {{'selected' if partition.properties.State == 'PENDING'}}>PENDING</option>
+                <option value="RUNNING" {{'selected' if partition.properties.State == 'RUNNING'}}>RUNNING</option>
+                <option value="SUSPENDED" {{'selected' if partition.properties.State == 'SUSPENDED'}}>SUSPENDED</option>
+                <option value="COMPLETING" {{'selected' if partition.properties.State == 'COMPLETING'}}>COMPLETING</option>
+                <option value="COMPLETED" {{'selected' if partition.properties.State == 'COMPLETED'}}>COMPLETED</option>
+        </select>
+    </div>
+
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="{{ partition_name }}-ExclusiveUser" {{'checked' if partition.properties['ExclusiveUser']}}>
+        <label class="form-check-label" for="{{ partition_name }}-ExclusiveUser">Exclusive user</label>
+    </div>
+
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="{{ partition_name }}-PowerDownOnIdle" {{'checked' if partition.properties['ExclusiveUser']}}>
+        <label class="form-check-label" for="{{ partition_name }}-PowerDownOnIdle">Power down on idle</label>
+    </div>
+
+    <div class="form-group">
+        <label for="{{ partition_name }}-MaxTime">Max time ( for a single Job ) </label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="{{ partition_name }}-MaxTime" value="{{partition.properties.MaxTime}}">
+            <div class="input-group-append">
+                <div class="input-group-text">mins</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="{{ partition_name }}-OverTimeLimit">Over time limit</label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="{{ partition_name }}-OverTimeLimit" value="{{partition.properties.OverTimeLimit}}">
+            <div class="input-group-append">
+                <div class="input-group-text">mins</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="{{ partition_name }}-MaxNodes">Max nodes ( for a single Job ) </label>
+        <div class="input-group">
+            <input type="number" class="form-control" id="{{ partition_name }}-MaxNodes" value="{{partition.properties.MaxNodes}}">
+            <div class="input-group-append">
+                <div class="input-group-text">#</div>
+            </div>
+        </div>
+    </div>
+</li>

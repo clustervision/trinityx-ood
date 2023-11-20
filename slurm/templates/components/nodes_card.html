@@ -1,0 +1,14 @@
+<div class="card">
+
+   <div class="card-header">
+      <h5 class="card-title">Available Nodes</h5>
+   </div>
+   
+   <ul class="list-group list-group-flush" id="nodes-card">
+      {% for group_name in groups %}
+         {% set node_names = grouped_unassinged_nodes[group_name] %}
+         {% include 'components/nodes_group.html' %}
+      {% endfor %}
+   </ul>
+
+</div>

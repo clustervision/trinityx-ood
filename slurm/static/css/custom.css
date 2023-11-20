@@ -1,0 +1,43 @@
+
+* {
+  -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+
+
+.dropzone {
+  border: 2px dashed #007bff;
+  border-radius: 5px;
+  min-height: 100px;
+  width: auto;
+}
+
+.container {
+  margin-top: 50px;
+}
+
+.card {
+  margin-bottom: 5px;
+  position: relative;
+}
+.row {
+  margin-bottom: 10px;
+}
+
+
+.item.new {
+  background: #43e55e !important;
+}
+.item.changed {
+  background: #e5c843 !important;
+}
+.item.deleted {
+  background: #e54343 !important;
+}
+.item.ds-selected {
+  background: #4391e5 !important;
+}
+

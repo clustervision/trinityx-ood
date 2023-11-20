@@ -1,0 +1,11 @@
+name: slurm
+description: Manage slurm partitions
+icon: fa://user
+category: TrinityX
+subcategory: Utils
+
+
+tile:
+  title: slurm
+  sub_caption: |
+   Manage slurm partitions
