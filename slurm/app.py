@@ -27,7 +27,7 @@ __email__       = 'support@clustervision.com'
 __status__      = 'Development'
 
 import sys
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 
 from trinityx_config_manager.parsers.ood_slurm_partitions import OODSlurmPartitionsConfigParser
 from trinityx_config_manager.parsers.ood_slurm_nodes      import OODSlurmNodesConfigParser
@@ -40,8 +40,20 @@ app = Flask(__name__,
             static_folder="static",
             static_url_path='/')
 app.config["TEMPLATES_AUTO_RELOAD"] = True
-app.jinja_env.filters['nodes_to_groups'] = nodes_to_groups
 
+# add a wrapper to all the routes to catch errors
+@app.errorhandler(Exception)
+def wrap_errors(error):
+    """Decorator to wrap errors in a JSON response."""
+    return jsonify({"message": str(error)}), 500
+
+def is_managed_by_ood():
+    """Check if the configuration files are managed by OOD."""
+    partitions_parser = OODSlurmPartitionsConfigParser().read()
+    nodes_parser = OODSlurmNodesConfigParser().read()
+    print(f"checking if partitions is managed by OOD: {partitions_parser.get_manager()}", file=sys.stderr)
+    print(f"checking if nodes is managed by OOD: {nodes_parser.get_manager()}", file=sys.stderr)
+    return partitions_parser.is_manager() and nodes_parser.is_manager()
 
 def load_configuration():
     """Load the configuration files from the default path."""
@@ -58,8 +70,20 @@ def load_configuration():
 @app.route('/')
 def index():
     """Render the index page."""
+    if not is_managed_by_ood():
+        return render_template('pages/unmanaged.html')
     return render_template('pages/index.html')
 
+@app.route('/set_manager')
+def set_manager():
+    """Set the manager of the managed block."""
+    partitions_parser = OODSlurmPartitionsConfigParser().read()
+    nodes_parser = OODSlurmNodesConfigParser().read()
+    partitions_parser.set_manager(OODSlurmPartitionsConfigParser.MANAGER_NAME)
+    nodes_parser.set_manager(OODSlurmNodesConfigParser.MANAGER_NAME)
+    partitions_parser.write(force=True)
+    nodes_parser.write(force=True)
+    return redirect('/')
 
 
 @app.route('/import/luna/nodes', methods=['GET'])
@@ -97,7 +121,6 @@ def restore_configuration():
 
 
 @app.route('/components/node', methods=['POST'])
-@wrap_errors
 def node():
     """Render a node item."""
     node_name = request.args['node_name']
@@ -136,7 +159,6 @@ def nodes_card():
     print(f"rendering nodes card with nodes: {nodes}", file=sys.stderr)
     return render_template('components/nodes_card.html', groups=groups, grouped_unassinged_nodes=grouped_unassinged_nodes)
 
-@wrap_errors
 @app.route('/components/partition_card', methods=['POST'])
 def partition_card():
     """Render a partition card."""
@@ -146,7 +168,6 @@ def partition_card():
     partition_name = request.args['partition_name']
     return render_template('components/partition_card.html', partition_name=partition_name, partition=partition)
 
-@wrap_errors
 @app.route('/components/partitions_cards', methods=['POST'])
 def partitions_cards():
     """Render the partitions cards."""
@@ -166,7 +187,6 @@ def partitions_cards():
     print(f"rendering partitions cards with partitions: {partitions}", file=sys.stderr)
     return render_template('components/partitions_cards.html', partitions=partitions)
 
-@wrap_errors
 @app.route('/components/configuration_preview', methods=['POST'])
 def configuration_preview():
     """Render the configuration preview."""
