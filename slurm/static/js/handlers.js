@@ -9,15 +9,16 @@ function handleNodesImportButton(event) {
 }
 function handleSaveConfigurationButton(event) {
     console.log('handle save configuration ');
-    saveConfiguration();   
+    displayConfirmationModal("Saving Configuration", "Do you want to save the current configuration to file system ?", '', saveConfiguration)
 }
 function handleRestoreConfigurationButton(event) {
-    console.log('handle restore button');
-    restoreConfiguration();   
+    console.log('handle preview restore button');
+    renderConfigurationPreview('backup_configuration');
 }
+
 function handlePreviewConfigurationButton(event) {
     console.log('handle preview button');
-    renderConfigurationPreview();
+    renderConfigurationPreview('configuration');
 }
 function handleDownloadConfigurationButton(event) {
     console.log('handle download button');

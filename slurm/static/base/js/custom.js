@@ -34,14 +34,26 @@ function confirmationButton(text, type) {
     return `<button type="button" id="modal-confirm-button" class="btn btn-${type}">${text}</button>`;
 }
 
-function displayConfirmationModal(title, body, footer, callback) {
+function displayConfirmationModal(title, body, footer, callback, button_text, button_type) {
     if (title == undefined) {
         title = 'Confirmation required';
+    }
+    if (body == undefined) {
+        body = '';
+    }
+    if (footer == undefined) {
+        footer = '';
+    }
+    if (button_text == undefined) {
+        button_text = 'Confirm';
+    }
+    if (button_type == undefined) {
+        button_type = 'primary';
     }
 
     document.querySelector('#modal .modal-title').innerHTML = title;
     document.querySelector('#modal .modal-body').innerHTML = body;
-    document.querySelector('#modal .modal-footer').innerHTML = footer + confirmationButton('Confirm', 'primary');
+    document.querySelector('#modal .modal-footer').innerHTML = footer + confirmationButton(button_text, button_type);
     
     // wrap the callback to hide the modal
     confirmationCallback = function() {

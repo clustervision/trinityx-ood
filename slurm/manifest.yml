@@ -1,11 +1,11 @@
-name: slurm
+name: Slurm
 description: Manage slurm partitions
-icon: fa://user
-category: TrinityX
-subcategory: Utils
-
+icon: fa://tasks
+category: Trinity
+subcategory: Utilities
+new_window: false
 
 tile:
-  title: slurm
+  title: Slurm
   sub_caption: |
    Manage slurm partitions

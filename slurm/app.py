@@ -26,13 +26,16 @@ __maintainer__  = 'ClusterVision Solutions Development Team'
 __email__       = 'support@clustervision.com'
 __status__      = 'Development'
 
+import os
 import sys
+import tempfile
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 
 from trinityx_config_manager.parsers.ood_slurm_partitions import OODSlurmPartitionsConfigParser
 from trinityx_config_manager.parsers.ood_slurm_nodes      import OODSlurmNodesConfigParser
 
-# from config import settings, get_token, get_luna_url
+from config import settings
 from helpers import nodes_to_groups, get_luna_nodes, wrap_errors
 
 app = Flask(__name__,
@@ -41,13 +44,19 @@ app = Flask(__name__,
             static_url_path='/')
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
+
 # add a wrapper to all the routes to catch errors
 @app.errorhandler(Exception)
 def wrap_errors(error):
     """Decorator to wrap errors in a JSON response."""
     return jsonify({"message": str(error)}), 500
 
-def is_managed_by_ood():
+@app.context_processor
+def inject_dict_for_all_templates():
+    return {'settings': {'app_name': 'Slurm', **settings}}
+
+
+def _get_is_managed_by_ood():
     """Check if the configuration files are managed by OOD."""
     partitions_parser = OODSlurmPartitionsConfigParser().read()
     nodes_parser = OODSlurmNodesConfigParser().read()
@@ -59,7 +68,6 @@ def load_configuration():
     """Load the configuration files from the default path."""
     partitions_parser = OODSlurmPartitionsConfigParser()
     nodes_parser = OODSlurmNodesConfigParser()
-
     partitions_parser = partitions_parser.read()
     nodes_parser = nodes_parser.read()
     partitions = partitions_parser.get_content()
@@ -70,7 +78,7 @@ def load_configuration():
 @app.route('/')
 def index():
     """Render the index page."""
-    if not is_managed_by_ood():
+    if not _get_is_managed_by_ood():
         return render_template('pages/unmanaged.html')
     return render_template('pages/index.html')
 
@@ -83,7 +91,7 @@ def set_manager():
     nodes_parser.set_manager(OODSlurmNodesConfigParser.MANAGER_NAME)
     partitions_parser.write(force=True)
     nodes_parser.write(force=True)
-    return redirect('/')
+    return redirect(url_for('index'))
 
 
 @app.route('/import/luna/nodes', methods=['GET'])
@@ -109,6 +117,70 @@ def save_configuration():
     nodes_parser.write(backup=True)
 
     return redirect('/')
+
+@app.route('/test', methods=['POST'])
+def test_configuration():
+    """Render the configuration preview."""
+    # tmpdir = tempfile.mkdtemp()
+    import time
+    import shutil
+    import subprocess
+    tmpdir = '/tmp/ood-slurm-tests'
+    shutil.rmtree(tmpdir, ignore_errors=True)
+    
+    os.makedirs( f"{tmpdir}/etc/", exist_ok=True)
+    os.makedirs( f"{tmpdir}/var/log/slurm", exist_ok=True)
+    
+    shutil.copytree('/etc/slurm', f"{tmpdir}/etc/slurm")
+
+    with open(f"{tmpdir}/etc/slurm/slurm.conf", 'r') as fin:
+        lines = fin.readlines()
+    
+    lines = [line.replace('/etc/slurm', f"{tmpdir}/etc/slurm") for line in lines]
+    lines = [line.replace('/var/log/slurm', f"{tmpdir}/var/log/slurm") for line in lines]
+
+    with open(f"{tmpdir}/etc/slurm/slurm.conf", 'w') as fout:
+        fout.writelines(lines)
+
+        
+    configuration = request.json
+
+    partitions_parser = OODSlurmPartitionsConfigParser(output_filepath=f"{tmpdir}/etc/slurm/slurm-partitions.conf").read()
+    partitions_parser.set_content(configuration['partitions'])
+    partitions_parser.write()
+
+    nodes_parser = OODSlurmNodesConfigParser(output_filepath=f"{tmpdir}/etc/slurm/slurm-nodes.conf").read()
+    nodes_parser.set_content(configuration['nodes'])
+    nodes_parser.write()
+
+
+    slurmctld_proc = subprocess.Popen(["/usr/sbin/slurmctld", "-D", "-f", f"{tmpdir}/etc/slurm/slurm.conf", "-s", tmpdir], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    os.set_blocking(slurmctld_proc.stdout.fileno(), False)
+    os.set_blocking(slurmctld_proc.stderr.fileno(), False)
+    errors = []
+    startup_completed = False
+    while not startup_completed:
+        for pipe in [slurmctld_proc.stderr, slurmctld_proc.stdout]:
+            while (line_bytes := pipe.readline()):
+                line = line_bytes.decode('utf-8').strip()
+                print(line, file=sys.stderr)
+                if line.startswith('slurmctld: Running'):
+                    startup_completed = True
+                if line.startswith('slurmctld: error'):
+                    errors.append(line)
+
+        time.sleep(0.5)
+        if slurmctld_proc.poll() is not None:
+            break
+    
+
+    if startup_completed:
+        if not errors:
+            return jsonify({"message": "success"}), 200
+        else:
+            return jsonify({"message": "warning", "errors": errors}), 200
+    else:
+        return jsonify({"message": "error", "errors": errors}), 500
 
 @app.route('/restore', methods=['POST'])
 def restore_configuration():
@@ -191,16 +263,28 @@ def partitions_cards():
 def configuration_preview():
     """Render the configuration preview."""
     configuration = request.json
-    print(f"rendering configuration preview with configuration: {configuration}", file=sys.stderr)
-    print()
-    print(nodes_to_groups(configuration['nodes']))
-    print()
+
     partitions_parser = OODSlurmPartitionsConfigParser().read()
     partitions_parser.set_content(configuration['partitions'])
     partitions_preview_lines = partitions_parser.dump_lines(marked=True)
 
     nodes_parser = OODSlurmNodesConfigParser().read()
     nodes_parser.set_content(configuration['nodes'])
+    nodes_preview_lines = nodes_parser.dump_lines(marked=True)
+
+    return render_template('components/configuration_preview.html', partitions_preview_lines=partitions_preview_lines, nodes_preview_lines=nodes_preview_lines)
+
+@app.route('/components/backup_configuration_preview', methods=['POST'])
+def backup_configuration_preview():
+    """Render the configuration preview."""
+    configuration = request.json
+
+    partitions_parser = OODSlurmPartitionsConfigParser()
+    partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
+    partitions_preview_lines = partitions_parser.dump_lines(marked=True)
+
+    nodes_parser = OODSlurmNodesConfigParser().read()
+    nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
     nodes_preview_lines = nodes_parser.dump_lines(marked=True)
 
     return render_template('components/configuration_preview.html', partitions_preview_lines=partitions_preview_lines, nodes_preview_lines=nodes_preview_lines)

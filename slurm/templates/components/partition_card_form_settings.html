@@ -19,7 +19,7 @@
     </div>
 
     <div class="form-group form-check">
-        <input type="checkbox" class="form-check-input" id="{{ partition_name }}-PowerDownOnIdle" {{'checked' if partition.properties['ExclusiveUser']}}>
+        <input type="checkbox" class="form-check-input" id="{{ partition_name }}-PowerDownOnIdle" {{'checked' if partition.properties['PowerDownOnIdle']}}>
         <label class="form-check-label" for="{{ partition_name }}-PowerDownOnIdle">Power down on idle</label>
     </div>
 

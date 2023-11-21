@@ -1,17 +1,20 @@
 dragSelect = null;
 configuration = {initialized:false, selectedNodes: []};
 
+
+
 function _buildUrl(url){
     var currentUrl = window.location.href;
     var newUrl = currentUrl + url;
     return newUrl;
 }
 
-function _groupExists(groupName) {
+
+// Node Groups
+function _nodesGoupExists(groupName) {
     // Check if a group exists
     return $(`#group-${groupName}`).length > 0;
 }
-
 function createNodesGroup(groupName, callback=undefined) {
     // Create a new nodes group
     console.log('creating nodes group', groupName);
@@ -26,7 +29,7 @@ function createNodesGroup(groupName, callback=undefined) {
             nodesCardElement = document.querySelector('#nodes-card');
 
             newElement = $(request.responseText);
-            for (let i = 1; i < newElement.length; i++) {
+            for (let i = 0; i < newElement.length; i++) {
                 nodesCardElement.appendChild(newElement[i]);
             }
 
@@ -49,6 +52,9 @@ function getNodeNodeName(item) {
 }
 function getNodeGroupName(item) {
     return $(item).attr('group-name');
+}
+function setNodeGroupName(item, groupName) {
+    $(item).attr('group-name', groupName);
 }
 function moveNode(item, dropzone_id, itemName=undefined) {
     if (itemName == undefined) {
@@ -97,7 +103,7 @@ function resetNodes(items) {
        resetNode(item);
     })
 }
-function createNode(nodeName, groupNamed) {
+function createNode(nodeName, groupName) {
     
     // Make an ajax request to /components/node_card?node_name=<nodeName>&group_name=<groupName>
     // and place the result in the nodes-col div
@@ -133,6 +139,17 @@ function deleteNodes(nodeNames) {
     }
     updateDragSelect();
 }
+function getNodePartition(item) {
+    // Get the partition of the node
+    element = item
+    while(!element.classList.contains('dropzone')) {
+        element = element.parentElement;
+    }
+    if (element.classList.contains('dropzone-partition')) {
+        return element.id.split('-')[2];
+    } 
+    return undefined;
+}
 
 // Nodes - Import from luna
 function importLunaNodes(target) {
@@ -146,8 +163,10 @@ function importLunaNodes(target) {
             // display the result in the preview in a modal
             contentJSON = request.responseText;
             content = JSON.parse(contentJSON);
-
-            _updateNodes(content.config.node);
+            
+            oldNodes = parseConfiguration()['nodes'];
+            
+            _updateNodes(oldNodes, content.config.node);
         } else {
             errorString = _getRequestError(`Error loading ${target}`, request);
             displayAlert('danger', errorString);
@@ -155,32 +174,66 @@ function importLunaNodes(target) {
     }
     request.send();
 }
-function _updateNodes(newNodes) {
+function _updateNodes(oldNodes, newNodes) {
     // Update the unassigned nodes from the configuration
-    oldNodes = parseConfiguration()['nodes'];
-    console.log(oldNodes);
-    console.log(newNodes);
+    
 
+    changes = [];
+    var groupName;
+    var nodeName;
 
     // Get the list of nodes to add
     for (const nodeName in newNodes) {
         if (Object.keys(oldNodes).indexOf(nodeName) < 0 ) {
             groupName = newNodes[nodeName]['group'];
-            if (!_groupExists(groupName)) {
-                createNodesGroup(groupName, () => _updateNodes(newNodes));
+            if (!_nodesGoupExists(groupName)) {
+                createNodesGroup(groupName, () => _updateNodes(oldNodes, newNodes));
                 return;
             } 
             createNode(nodeName, groupName);
+
+            // Register change
+            changes.push(`<li>Added node <span class="font-weight-bold">${nodeName}</span> to group <span class="font-weight-bold">${groupName}</span></li>`);
         }
     }
 
     // Get the list of nodes to remove
     for (const nodeName in oldNodes) {
         if (Object.keys(newNodes).indexOf(nodeName) < 0 ) {
-            $(`#node-${nodeName}`).addClass('deleted');
+            if (!$(`#node-${nodeName}`).hasClass('deleted')) {
+
+                $(`#node-${nodeName}`).addClass('deleted');
+                // Register change
+                changes.push(`<li>Deleted node <span class="font-weight-bold">${nodeName}</span> ( Not present in Luna anymore )</li>`);
+            }
         }
     }
 
+    // Get the list of nodes to change
+    for (const nodeName in newNodes) {
+        if (Object.keys(oldNodes).indexOf(nodeName) >= 0 ) {
+            if (oldNodes[nodeName]['group'] != newNodes[nodeName]['group']) {
+                // Move the node to the new group
+                groupName = newNodes[nodeName]['group'];
+                if (!getNodePartition($(`#node-${nodeName}`)[0])) {
+                    setNodeGroupName($(`#node-${nodeName}`)[0], groupName);
+                    resetNode($(`#node-${nodeName}`)[0]);
+                }
+                $(`#node-${nodeName}`).addClass('changed');
+                // Register change
+                changes.push(`<li>Move node <span class="font-weight-bold">${nodeName}</span> to group <span class="font-weight-bold">${groupName}</span></li>`);
+            }
+        }
+    }
+
+    if (changes.length > 0) {
+        // Display changes
+        changesList = `<ul>${changes.join('')}</ul>`;
+        displayAlert('warning', `Successfully synched nodes from Luna<br>The following changes were made:<br>${changesList}`);
+    } else {
+        displayAlert('success', `Successfully synched nodes from Luna<br>No changes were made`);
+    }
+   
 }
 
 
@@ -302,19 +355,23 @@ function renderPartitionsCards() {
     }
     request.send();
 }
-function renderConfigurationPreview() {
+function renderConfigurationPreview(target) {
     var data = {nodes: parseNodes(), partitions: parsePartitions()};
     console.log(data);
     // Fetch and display the preview of the configuration
     var request = new XMLHttpRequest();
-    requestUrl = _buildUrl(`/components/configuration_preview`);
+    requestUrl = _buildUrl(`/components/${target}_preview`);
     request.open('POST', requestUrl);
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
         if (request.status == 200) {
             // display the result in the preview in a modal
             modalBody = request.responseText;
-            displayModal('Configuration Preview', modalBody, '');
+            if (target == 'configuration') {
+                displayConfirmationModal('Configuration Preview', modalBody, 'Do you want to save this configuration?   ', saveConfiguration, 'Save', 'primary');
+            } else if (target == 'backup_configuration') {
+                displayConfirmationModal('Backup Configuration Preview', modalBody,  'Do you want to restore this configuration?   ', restoreConfiguration, 'Restore', 'warning');
+            }
         } else {
             errorString = _getRequestError(`Error displaying configuration preview`, request);
             displayAlert('danger', errorString);
@@ -476,7 +533,7 @@ function initializePartitionCard(partitionName) {
     partittionElement.querySelector('.button-close').addEventListener('click', handleDeletePartitionButton)
     partittionElement.querySelector('.button-show-settings').addEventListener('click', handleShowSettingsButton)
     partittionElement.querySelector('.button-show-settings-advanced').addEventListener('click', handleShowSettingsAdvancedButton)
-    partittionElement.querySelector('.button-hide-settings').addEventListener('click', handleHideSettingsButton)
+    // partittionElement.querySelector('.button-hide-settings').addEventListener('click', handleHideSettingsButton)
 
 }
 function initializeNodesCard() {
@@ -488,7 +545,7 @@ function initializeDragSelect() {
 
     dragSelect.subscribe('DS:end', ({ items, event, isDragging, isDraggingKeyboard, dropTarget }) => {
         if (isDragging){
-            if (dropTarget) {
+            if (dropTarget && dropTarget.id.startsWith('dropzone-partition-')) {
                 moveNodes(dragSelect.getSelection(), dropTarget.id);
             } else {
                 resetNodes(dragSelect.getSelection());
