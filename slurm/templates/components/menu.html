@@ -7,14 +7,22 @@
                     <li class="list-group-item">
                        <h5> Menu</h5>
             
-                       <button class="btn btn-warning" id="configuration-restore-button">
-                            <i class="fa-solid fa-refresh"></i>
-                            Restore Configuration Backup
-                        </button>
+
                         
                         <button class="btn btn-outline-primary" id="configuration-preview-button">
                             <i class="fa-solid fa-eye"></i>
-                            Preview Configuration
+                            View Configuration
+                        </button>
+
+                        <button class="btn btn-outline-primary" id="configuration-test-button">
+                            <div class="text">
+                                <i class="fa-solid fa-check"></i>
+                                Test Configuration
+                            </div>
+                            <div class="spinner d-none">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                    Testing Configuration
+                            </div>
                         </button>
         
                         <button class="btn btn-primary" id="configuration-save-button">
@@ -22,9 +30,14 @@
                             Save Configuration
                         </button>
         
-                        <button class="btn btn-outline-primary" id="configuration-download-button">
+                        <!-- <button class="btn btn-outline-primary" id="configuration-download-button">
                             <i class="fa-solid fa-file-download"></i>
                             Download Configuration
+                        </button> -->
+
+                        <button class="btn btn-warning" id="configuration-restore-button">
+                            <i class="fa-solid fa-refresh"></i>
+                            Restore Configuration Backup
                         </button>
               
                     </li>

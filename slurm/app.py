@@ -121,12 +121,12 @@ def save_configuration():
 @app.route('/test', methods=['POST'])
 def test_configuration():
     """Render the configuration preview."""
-    # tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp()
     import time
     import shutil
     import subprocess
-    tmpdir = '/tmp/ood-slurm-tests'
-    shutil.rmtree(tmpdir, ignore_errors=True)
+    # tmpdir = '/tmp/ood-slurm-tests'
+    # shutil.rmtree(tmpdir, ignore_errors=True)
     
     os.makedirs( f"{tmpdir}/etc/", exist_ok=True)
     os.makedirs( f"{tmpdir}/var/log/slurm", exist_ok=True)
@@ -173,6 +173,14 @@ def test_configuration():
         if slurmctld_proc.poll() is not None:
             break
     
+    for pipe in [slurmctld_proc.stderr, slurmctld_proc.stdout]:
+        while (line_bytes := pipe.readline()):
+            line = line_bytes.decode('utf-8').strip()
+            print(line, file=sys.stderr)
+            if line.startswith('slurmctld: Running'):
+                startup_completed = True
+            if line.startswith('slurmctld: error'):
+                errors.append(line)
 
     if startup_completed:
         if not errors:
@@ -180,7 +188,7 @@ def test_configuration():
         else:
             return jsonify({"message": "warning", "errors": errors}), 200
     else:
-        return jsonify({"message": "error", "errors": errors}), 500
+        return jsonify({"message": "error", "errors": errors}), 200
 
 @app.route('/restore', methods=['POST'])
 def restore_configuration():

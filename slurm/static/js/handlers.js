@@ -15,6 +15,10 @@ function handleRestoreConfigurationButton(event) {
     console.log('handle preview restore button');
     renderConfigurationPreview('backup_configuration');
 }
+function handleTestConfigurationButton(event) {
+    console.log('handle test configuration button');
+    testConfiguration();
+}
 
 function handlePreviewConfigurationButton(event) {
     console.log('handle preview button');

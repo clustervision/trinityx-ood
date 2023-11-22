@@ -436,6 +436,57 @@ function parsePartitions() {
 function parseConfiguration(){
     return {nodes: parseNodes(), partitions: parsePartitions()};
 }
+function testConfiguration() {
+    var data = parseConfiguration();
+
+    // Set the #configuration-test-button to loading by disabling it and adding the spinner
+    document.querySelector('#configuration-test-button').disabled = true;
+    document.querySelector('#configuration-test-button .text').classList.add('d-none');
+    document.querySelector('#configuration-test-button .spinner').classList.remove('d-none');
+
+
+
+    // Make an AJAX request to /test with the contentJSON in the body
+    // and display the result in the preview in a modal
+    var request = new XMLHttpRequest();
+    var response;
+    var errorList;
+    var errorText;
+    requestUrl = _buildUrl(`/test`);
+    request.open('POST', requestUrl);
+    request.setRequestHeader('Content-Type', 'application/json');
+    request.onload = function() {
+        if (request.status == 200) {
+            // display the result in the preview in a modal
+            response = JSON.parse(request.responseText);
+            console.log(response)
+            if (response.message == 'success'){
+                displayAlert('success', 'Configuration test: ok <br>(Slurmctld started)');
+            } else if (response.message == 'warning') {
+                errorList = response.errors.map(error => `<li>${error}</li>`);
+                errorText = `<ul>${errorList.join('')}</ul>`;
+                displayAlert('warning', 'Configuration test: warning <br>(Slurmctld started but errors found in the log) <br>' + errorText);
+            }
+            else {
+                errorList = response.errors.map(error => `<li>${error}</li>`);
+                errorText = `<ul>${errorList.join('')}</ul>`;
+                displayAlert('danger', 'Configuration test: failed<br> (Slurmctld failed on startup)<br>' + errorText);
+            }
+            // modalBody = request.responseText;
+
+            // displayConfirmationModal('Configuration Test', modalBody, 'Do you want to save this configuration?   ', saveConfiguration, 'Save', 'primary');
+
+        } else {
+            errorText = _getRequestError(`Error testing configuration`, request);
+            displayAlert('danger', errorText);
+        }
+        // restore the state of the button
+        document.querySelector('#configuration-test-button').disabled = false;
+        document.querySelector('#configuration-test-button .text').classList.remove('d-none');
+        document.querySelector('#configuration-test-button .spinner').classList.add('d-none');
+    }
+    request.send(JSON.stringify(data));
+}
 function saveConfiguration() {
     var data = parseConfiguration();
 
@@ -514,6 +565,7 @@ function initializeMenu() {
     $('#configuration-preview-button').click(handlePreviewConfigurationButton);
     $('#configuration-download-button').click(handleDownloadConfigurationButton);
     $('#configuration-save-button').click(handleSaveConfigurationButton);
+    $('#configuration-test-button').click(handleTestConfigurationButton);
 }
 function initializePartitionCards() {
     // Initialize the new partition button
