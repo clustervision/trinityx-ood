@@ -1,3 +1,4 @@
+{% set group_name = group_name or configuration.nodes[node_name].group %}
 <button type="button" class="item ds-selectable {{'ds-dropped-target' if partition_name}} {{'ds-dropped-inside' if partition_name}} {{'ds-dropped-target-dropzone-partition-'+partition_name if partition_name}} {{'ds-dropped-inside-dropzone-partition'+partition_name if partition_name}}" id="node-{{ node_name }}" group-name="{{ group_name or 'UNKNOWN' }}" node-name="{{ node_name }}" >
     <span class="text">{{ node_name }}</span>
 </button>

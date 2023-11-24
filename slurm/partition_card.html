@@ -1,4 +1,3 @@
-{% set partition=configuration.partitions.get(partition_name, {"nodes":[], "properties": {}}) %}
 <div class="card partition-card" id="partition-{{ partition_name }}">
     <div class="card-header">
         <h5 class="card-title">
@@ -7,7 +6,7 @@
                 {{ partition_name }}
             </div>
         </span>
-        <button class="btn btn-danger button-close float-right" type="button" aria-label="Close" onclick="handleDeletePartitionButton(event)">
+        <button class="btn btn-danger button-close " type="button" aria-label="Close" onclick="handleDeletePartitionButton(event)">
             <i class="fa-solid fa-trash"></i>
         </button>
 

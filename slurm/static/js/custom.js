@@ -145,8 +145,8 @@ function getNodePartition(item) {
     while(!element.classList.contains('dropzone')) {
         element = element.parentElement;
     }
-    if (element.classList.contains('dropzone-partition')) {
-        return element.id.split('-')[2];
+    if (element.id.startsWith('dropzone-partition-')) {
+        return element.id.split('-').slice(2).join('-');
     } 
     return undefined;
 }
@@ -251,7 +251,7 @@ function _updateNodes(oldNodes, newNodes) {
 function createPartition(partitionName) {
     // Create a new partition
     console.log('creating partition', partitionName);
-    emptyPartition = {properties: {}, nodes: {}};
+    configuration = parseConfiguration();
     // Make an ajax request to /components/partition_card?partition_name=<partitionName>
     // and place the result in the partitions-col div
     var request = new XMLHttpRequest();
@@ -271,7 +271,7 @@ function createPartition(partitionName) {
             displayAlert('danger', errorString);
         }
     }
-    request.send(JSON.stringify(emptyPartition));
+    request.send(JSON.stringify(configuration));
 
     
 }
@@ -595,8 +595,8 @@ window.onload = function(e){
     initializeDragSelect();
 
     // Render missing components
-    renderNodesCard();
-    renderPartitionsCards();
+    // renderNodesCard();
+    // renderPartitionsCards();
 
     // Update DragSelect
     updateDragSelect();

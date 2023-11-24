@@ -44,13 +44,42 @@ app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+def get_unassigned_nodes(configuration):
+    partitions = configuration["partitions"]
+    nodes = configuration["nodes"]
+    
+    assigned_nodes = []
+    for partition in partitions:
+        if "nodes" in partitions[partition]:
+            assigned_nodes += partitions[partition]["nodes"]
+    _unassigned_nodes = [node for node in nodes if node not in assigned_nodes]
+    unassigned_nodes = {node: nodes[node] for node in _unassigned_nodes}
+    grouped_unassinged_nodes = {}
+    for node in unassigned_nodes:
+        group = unassigned_nodes[node]["group"]
+        if group not in grouped_unassinged_nodes:
+            grouped_unassinged_nodes[group] = []
+        grouped_unassinged_nodes[group].append(node)
 
+    return grouped_unassinged_nodes
 
+def get_groups(configuration):
+    partitions = configuration["partitions"]
+    nodes = configuration["nodes"]
+    groups = {}
+    for node in nodes:
+        group = nodes[node]["group"]
+        if group not in groups:
+            groups[group] = []
+        groups[group].append(node)
+    return groups
+app.jinja_env.globals.update(get_unassigned_nodes=get_unassigned_nodes)
+app.jinja_env.globals.update(get_groups=get_groups)
 # add a wrapper to all the routes to catch errors
-@app.errorhandler(Exception)
-def wrap_errors(error):
-    """Decorator to wrap errors in a JSON response."""
-    return jsonify({"message": str(error)}), 500
+# @app.errorhandler(Exception)
+# def wrap_errors(error):
+#     """Decorator to wrap errors in a JSON response."""
+#     return jsonify({"message": str(error)}), 500
 
 
 @app.context_processor
@@ -89,11 +118,12 @@ def load_configuration():
 def index():
     """Render the index page."""
     message = request.args.get("message")
-    print(request.args, file=sys.stderr)
-    print(f"index called with message: {message}", file=sys.stderr)
+    configuration = load_configuration()
+    
+    print(f"index called with configuration: {configuration} and message: {message}", file=sys.stderr)
     if not _get_is_managed_by_ood():
         return render_template("pages/unmanaged.html")
-    return render_template("pages/index.html", messages=[message] if message else [])
+    return render_template("pages/index.html", configuration=configuration, messages=[message] if message else [])
 
 
 @app.route("/set_manager")
@@ -245,134 +275,6 @@ def restore_configuration():
 
     return redirect("/")
 
-
-@app.route("/components/node", methods=["POST"])
-def node():
-    """Render a node item."""
-    node_name = request.args["node_name"]
-    group_name = request.args["group_name"]
-    print(f"rendering node item with node: {request.args}", file=sys.stderr)
-    return render_template(
-        "components/node.html", node_name=node_name, group_name=group_name
-    )
-
-
-@app.route("/components/nodes_group", methods=["POST"])
-def nodes_group():
-    """Render a nodes group."""
-    group_name = request.args["group_name"]
-    print(f"rendering nodes group with group: {group_name}", file=sys.stderr)
-    return render_template(
-        "components/nodes_group.html", group_name=group_name, node_names=[]
-    )
-
-
-@app.route("/components/nodes_card", methods=["POST"])
-def nodes_card():
-    """Render the nodes card."""
-    configuration = request.get_json(silent=True) or load_configuration()
-    partitions = configuration["partitions"]
-    nodes = configuration["nodes"]
-    groups = list(
-        set([configuration["nodes"][node]["group"] for node in configuration["nodes"]])
-    )
-
-    print(f"rendering nodes card with groups: {groups}", file=sys.stderr)
-    assigned_nodes = []
-    for partition in partitions:
-        if "nodes" in partitions[partition]:
-            assigned_nodes += partitions[partition]["nodes"]
-    _unassigned_nodes = [node for node in nodes if node not in assigned_nodes]
-    unassigned_nodes = {node: nodes[node] for node in _unassigned_nodes}
-    grouped_unassinged_nodes = {}
-    for node in unassigned_nodes:
-        group = unassigned_nodes[node]["group"]
-        if group not in grouped_unassinged_nodes:
-            grouped_unassinged_nodes[group] = []
-        grouped_unassinged_nodes[group].append(node)
-    print(f"rendering nodes card with nodes: {nodes}", file=sys.stderr)
-    return render_template(
-        "components/nodes_card.html",
-        groups=groups,
-        grouped_unassinged_nodes=grouped_unassinged_nodes,
-    )
-
-
-@app.route("/components/partition_card", methods=["POST"])
-def partition_card():
-    """Render a partition card."""
-    partition = request.get_json(silent=True) or {"nodes": {}, "properties": {}}
-
-    print(f"rendering partition card with partition: {partition}", file=sys.stderr)
-    partition_name = request.args["partition_name"]
-    return render_template(
-        "components/partition_card.html",
-        partition_name=partition_name,
-        partition=partition,
-    )
-
-
-@app.route("/components/partitions_cards", methods=["POST"])
-def partitions_cards():
-    """Render the partitions cards."""
-    configuration = request.get_json(silent=True) or load_configuration()
-    partitions = configuration["partitions"]
-
-    nodes_parser = OODSlurmNodesConfigParser().read()
-    _aux_nodes = nodes_parser.get_content()
-    print(f"rendering partitions cards with partitions: {partitions}", file=sys.stderr)
-    print(f"rendering partitions cards with nodes: {_aux_nodes}", file=sys.stderr)
-
-    for partition in partitions:
-        if "nodes" in partitions[partition]:
-            partitions[partition]["nodes"] = {
-                node: _aux_nodes[node] for node in partitions[partition]["nodes"]
-            }
-
-    print(f"rendering partitions cards with partitions: {partitions}", file=sys.stderr)
-    return render_template("components/partitions_cards.html", partitions=partitions)
-
-
-@app.route("/components/configuration_preview", methods=["POST"])
-def configuration_preview():
-    """Render the configuration preview."""
-    configuration = request.json
-
-    partitions_parser = OODSlurmPartitionsConfigParser().read()
-    partitions_parser.set_content(configuration["partitions"])
-    partitions_preview_lines = partitions_parser.dump_lines(marked=True)
-
-    nodes_parser = OODSlurmNodesConfigParser().read()
-    nodes_parser.set_content(configuration["nodes"])
-    nodes_preview_lines = nodes_parser.dump_lines(marked=True)
-
-    return render_template(
-        "components/configuration_preview.html",
-        partitions_preview_lines=partitions_preview_lines,
-        nodes_preview_lines=nodes_preview_lines,
-    )
-
-
-@app.route("/components/backup_configuration_preview", methods=["POST"])
-def backup_configuration_preview():
-    """Render the configuration preview."""
-    configuration = request.json
-
-    partitions_parser = OODSlurmPartitionsConfigParser()
-    partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
-    partitions_preview_lines = partitions_parser.dump_lines(marked=True)
-
-    nodes_parser = OODSlurmNodesConfigParser().read()
-    nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
-    nodes_preview_lines = nodes_parser.dump_lines(marked=True)
-
-    return render_template(
-        "components/configuration_preview.html",
-        partitions_preview_lines=partitions_preview_lines,
-        nodes_preview_lines=nodes_preview_lines,
-    )
-
-
 @app.route("/download/partitions", methods=["POST"])
 def download_partitions():
     """Download the partitions configuration file."""
@@ -433,6 +335,84 @@ def download_nodes():
     )
     response.set_data(partition_str)
     return response
+
+
+# Components
+@app.route("/components/node", methods=["POST"])
+def node():
+    """Render a node item."""
+    node_name = request.args["node_name"]
+    group_name = request.args["group_name"]
+    print(f"rendering node item with node: {request.args}", file=sys.stderr)
+    return render_template(
+        "components/node.html", node_name=node_name, group_name=group_name
+    )
+
+
+@app.route("/components/nodes_group", methods=["POST"])
+def nodes_group():
+    """Render a nodes group."""
+    group_name = request.args["group_name"]
+    print(f"rendering nodes group with group: {group_name}", file=sys.stderr)
+    return render_template(
+        "components/nodes_group.html", group_name=group_name, node_names=[]
+    )
+
+
+@app.route("/components/partition_card", methods=["POST"])
+def partition_card():
+    """Render a partition card."""
+    configuration = request.get_json()
+    partition_name = request.args["partition_name"]
+
+    print(f"rendering partition card with partition: {partition_name}", file=sys.stderr)
+    partition_name = request.args["partition_name"]
+    return render_template(
+        "components/partition_card.html",
+        configuration=configuration,
+        partition_name=partition_name
+    )
+
+
+@app.route("/components/configuration_preview", methods=["POST"])
+def configuration_preview():
+    """Render the configuration preview."""
+    configuration = request.json
+
+    partitions_parser = OODSlurmPartitionsConfigParser().read()
+    partitions_parser.set_content(configuration["partitions"])
+    partitions_preview_lines = partitions_parser.dump_lines(marked=True)
+
+    nodes_parser = OODSlurmNodesConfigParser().read()
+    nodes_parser.set_content(configuration["nodes"])
+    nodes_preview_lines = nodes_parser.dump_lines(marked=True)
+
+    return render_template(
+        "components/configuration_preview.html",
+        partitions_preview_lines=partitions_preview_lines,
+        nodes_preview_lines=nodes_preview_lines,
+    )
+
+
+@app.route("/components/backup_configuration_preview", methods=["POST"])
+def backup_configuration_preview():
+    """Render the configuration preview."""
+    configuration = request.json
+
+    partitions_parser = OODSlurmPartitionsConfigParser()
+    partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
+    partitions_preview_lines = partitions_parser.dump_lines(marked=True)
+
+    nodes_parser = OODSlurmNodesConfigParser().read()
+    nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
+    nodes_preview_lines = nodes_parser.dump_lines(marked=True)
+
+    return render_template(
+        "components/configuration_preview.html",
+        partitions_preview_lines=partitions_preview_lines,
+        nodes_preview_lines=nodes_preview_lines,
+    )
+
 
 
 if __name__ == "__main__":

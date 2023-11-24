@@ -31,9 +31,13 @@
 <div class="row">
     <div class="col-6" id="nodes-col">
         <!-- Nodes Card here -->
+        {% include "components/nodes_card.html" %}
     </div>
     <div class="col-6" id="partitions-col">
         <!-- Partitions Cards here -->
+        {% for partition_name in configuration.partitions.keys() %}
+            {% include "components/partition_card.html" %}
+        {% endfor %}
     </div>
 </div>
 

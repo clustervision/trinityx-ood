@@ -2,9 +2,8 @@
 <li class="list-group-item">
     <h5> Nodes </h5>
     <div class='dropzone' id="dropzone-partition-{{ partition_name }}">
-        {% set nodes = partition['nodes'] %}
-        {% for node_name, attrs in nodes.items() %}
-            {% set group_name = attrs['group'] %}
+
+        {% for node_name in partition.nodes %}
             {% include "components/node.html"%}
         {% endfor %}
     </div>

@@ -65,7 +65,7 @@ function handleShowSettingsButton(event) {
     while (!target.classList.contains('partition-card')) {
         target = target.parentElement;
     }
-    partitionName = target.id.split('-')[1];
+    partitionName = target.id.split('-').slice(1).join('-');
     togglePartitionSettings(partitionName);   
 }
 function handleShowSettingsAdvancedButton(event) {
@@ -75,7 +75,7 @@ function handleShowSettingsAdvancedButton(event) {
     while (!target.classList.contains('partition-card')) {
         target = target.parentElement;
     }
-    partitionName = target.id.split('-')[1];
+    partitionName = target.id.split('-').slice(1).join('-');
     togglePartitionAdvancedSettings(partitionName);   
 }
 function handleHideSettingsButton(event) {
@@ -85,7 +85,7 @@ function handleHideSettingsButton(event) {
     while (!target.classList.contains('partition-card')) {
         target = target.parentElement;
     }
-    partitionName = target.id.split('-')[1];
+    partitionName = target.id.split('-').slice(1).join('-');
     hidePartitionSettings(partitionName);
 }
 function handleDeletePartitionButton(event) {
@@ -95,7 +95,7 @@ function handleDeletePartitionButton(event) {
     while (!target.classList.contains('partition-card')) {
         target = target.parentElement;
     }
-    partitionName = target.id.split('-')[1];
+    partitionName = target.id.split('-').slice(1).join('-');
     deletePartition(partitionName);
 }
 
