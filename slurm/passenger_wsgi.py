@@ -18,12 +18,12 @@
 This file will get the application object and provide for passenger.
 """
 
-__author__      = 'Diego Sonaglia'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
-__license__     = 'GPL'
-__version__     = '2.0'
-__maintainer__  = 'ClusterVision Solutions Development Team'
-__email__       = 'support@clustervision.com'
-__status__      = 'Development'
+__author__ = "Diego Sonaglia"
+__copyright__ = "Copyright 2022, Luna2 Project[OOD]"
+__license__ = "GPL"
+__version__ = "2.0"
+__maintainer__ = "ClusterVision Solutions Development Team"
+__email__ = "support@clustervision.com"
+__status__ = "Development"
 
 from app import app as application

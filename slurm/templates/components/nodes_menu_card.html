@@ -4,11 +4,17 @@
            <h5>Nodes Menu</h5>
 
            <div class="input-group">
-                <button class="btn btn-success" id="nodes-import-button" onclick="handleNodesImportButton(event)">
-                    <i class="fa-solid fa-refresh"></i>
-                    Import Nodes from Luna
-                </button>
+                <button class="btn btn-success text" id="nodes-import-button" onclick="handleNodesImportButton(event)">
+                    <div class="text">
+                        <i class="fa-solid fa-check"></i>
+                        Import Nodes from Luna
+                    </div>
+                    <div class="spinner d-none">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Importing Nodes from Luna
+                    </div>
 
+                </button>
            </div>
 
         </li>

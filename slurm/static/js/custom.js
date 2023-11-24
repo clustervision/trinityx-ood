@@ -155,6 +155,11 @@ function getNodePartition(item) {
 function importLunaNodes(target) {
     // Make an AJAX request to /load/nodes with the contentJSON in the body
     // and display the result in the preview in a modal
+    var button = $(`#nodes-import-button`);
+    button.attr('disabled', true);
+    button.find('.text').addClass('d-none');
+    button.find('.spinner').removeClass('d-none');
+
     var request = new XMLHttpRequest();
     requestUrl = _buildUrl(`/import/luna/nodes`);
     request.open('GET', requestUrl);
@@ -171,8 +176,13 @@ function importLunaNodes(target) {
             errorString = _getRequestError(`Error loading ${target}`, request);
             displayAlert('danger', errorString);
         }
+        button.attr('disabled', false);
+        button.find('.text').removeClass('d-none');
+        button.find('.spinner').addClass('d-none');
     }
     request.send();
+
+
 }
 function _updateNodes(oldNodes, newNodes) {
     // Update the unassigned nodes from the configuration
@@ -284,32 +294,24 @@ function togglePartitionSettings(partitionName) {
     settings = document.querySelector(`#settings-${partitionName}`);
     settings.classList.toggle('show');
     // toggle the btn-outline-primary and btn-primary classes as well
-    btn = document.querySelector(`#partition-${partitionName} .button-show-settings`);
-    btn.classList.toggle('btn-outline-primary');
-    btn.classList.toggle('btn-primary');
+    var button = $(`#partition-${partitionName} .button-show-settings`);
+    var text = button.find('.text');
+    button.toggleClass('btn-outline-primary');
+    button.toggleClass('btn-primary');
+    text.toggleClass('d-none');
+
+    
 }
 function togglePartitionAdvancedSettings(partitionName) {
     console.log('toggling partition advanced settings', partitionName);
     settings = document.querySelector(`#settings-advanced-${partitionName}`);
     settings.classList.toggle('show');
     // toggle the btn-outline-primary and btn-primary classes as well
-    btn = document.querySelector(`#partition-${partitionName} .button-show-settings-advanced`);
-    btn.classList.toggle('btn-outline-primary');
-    btn.classList.toggle('btn-primary');
-}
-function hidePartitionSettings(partitionName) {
-    console.log('hiding all settings', partitionName);
-    settings = document.querySelector(`#settings-${partitionName}`);
-    settings.classList.remove('show');
-    settings = document.querySelector(`#settings-advanced-${partitionName}`);
-    settings.classList.remove('show');
-    // toggle the btn-outline-primary and btn-primary classes as well
-    btn = document.querySelector(`#partition-${partitionName} .button-show-settings`);
-    btn.classList.add('btn-outline-primary');
-    btn.classList.remove('btn-primary');
-    btn = document.querySelector(`#partition-${partitionName} .button-show-settings-advanced`);
-    btn.classList.add('btn-outline-primary');
-    btn.classList.remove('btn-primary');
+    var button = $(`#partition-${partitionName} .button-show-settings-advanced`);
+    var text = button.find('.text');
+    button.toggleClass('btn-outline-primary');
+    button.toggleClass('btn-primary');
+    text.toggleClass('d-none');
 }
 
 
@@ -498,8 +500,8 @@ function saveConfiguration() {
     request.setRequestHeader('Content-Type', 'application/json');
     request.onload = function() {
         if (request.status == 200) {
-            // reload the page
-            location.reload();
+            // set location to url in the response
+            document.location = request.responseText;
         } else {
             errorString = _getRequestError(`Error saving configuration`, request);
             displayAlert('danger', errorString);
@@ -618,16 +620,19 @@ function updateDragSelect() {
 }
 
 
-window.onload = function(e){ 
+window.onload = function(e){
+    // Remove any variables from the url
+    history.replaceState({}, document.title, document.location.href.split('/').slice(0, -1).join('/'));
 
     // Initialize handlers
     initializeDragSelect();
     initializeMenu();
-    
+
 
     // Render missing components
     renderNodesCard();
     renderPartitionsCards();
 
+    // Update DragSelect
     updateDragSelect();
 };
