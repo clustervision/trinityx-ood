@@ -265,7 +265,6 @@ function createPartition(partitionName) {
             // create a new element from the responseText using jquery
             newElement = $(request.responseText);
             partitionsColElement.appendChild(newElement[0]);
-            initializePartitionCard(partitionName);
             updateDragSelect();
         } else {
             errorString =  _getRequestError(`Error creating partition`, request);
@@ -326,7 +325,6 @@ function renderNodesCard() {
         if (request.status == 200) {
             nodesColElement = document.querySelector('#nodes-col');
             nodesColElement.innerHTML += request.responseText;
-            initializeNodesCard();
             updateDragSelect();
         } else {
             errorString = _getRequestError(`Error loading nodes`, request);
@@ -348,7 +346,6 @@ function renderPartitionsCards() {
         if (request.status == 200) {
             partitionsColElement = document.querySelector('#partitions-col');
             partitionsColElement.innerHTML += request.responseText;
-            initializePartitionCards();
             updateDragSelect();
         } else {
             errorString = _getRequestError(`Error loading partitions`, request);
@@ -560,38 +557,8 @@ function downloadConfiguration() {
 }
 
 
-// Iniitialize handlers
-function initializeMenu() {
-    // Initialize the menu
-    $('#configuration-restore-button').click(handleRestoreConfigurationButton);
-    $('#configuration-preview-button').click(handlePreviewConfigurationButton);
-    $('#configuration-download-button').click(handleDownloadConfigurationButton);
-    $('#configuration-save-button').click(handleSaveConfigurationButton);
-    $('#configuration-test-button').click(handleTestConfigurationButton);
-}
-function initializePartitionCards() {
-    // Initialize the new partition button
-    document.querySelector('#new-partition-button').addEventListener('click', (e) => {
-        handleCreatePartitionForm(e);
-    })
-    // Initialize all the partition cards
-    partitionCards = document.querySelectorAll('.partition-card');
-    for (let i = 0; i < partitionCards.length; i++) {
-        initializePartitionCard(partitionCards[i].id.split('-')[1]);
-    }
-}
-function initializePartitionCard(partitionName) {
-    
-    partittionElement = document.querySelector(`#partition-${partitionName}`);
-    // Initialize listeners
-    partittionElement.querySelector('.button-close').addEventListener('click', handleDeletePartitionButton)
-    partittionElement.querySelector('.button-show-settings').addEventListener('click', handleShowSettingsButton)
-    partittionElement.querySelector('.button-show-settings-advanced').addEventListener('click', handleShowSettingsAdvancedButton)
-    // partittionElement.querySelector('.button-hide-settings').addEventListener('click', handleHideSettingsButton)
 
-}
-function initializeNodesCard() {
-}
+
 function initializeDragSelect() {
     dragSelect = new DragSelect({
         draggability: true,
@@ -626,8 +593,6 @@ window.onload = function(e){
 
     // Initialize handlers
     initializeDragSelect();
-    initializeMenu();
-
 
     // Render missing components
     renderNodesCard();

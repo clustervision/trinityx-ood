@@ -9,12 +9,12 @@
             
 
                         
-                        <button class="btn btn-outline-primary" id="configuration-preview-button">
+                        <button class="btn btn-outline-primary" id="configuration-preview-button" onclick="handlePreviewConfigurationButton(event)">
                             <i class="fa-solid fa-eye"></i>
                             View Configuration
                         </button>
 
-                        <!-- <button class="btn btn-outline-primary" id="configuration-test-button">
+                        <button class="btn btn-outline-primary" id="configuration-test-button" onclick=handleTestConfigurationButton(event)>
                             <div class="text">
                                 <i class="fa-solid fa-check"></i>
                                 Test Configuration
@@ -23,19 +23,19 @@
                                 <i class="fa-solid fa-spinner fa-spin"></i>
                                 Testing Configuration
                             </div>
-                        </button> -->
+                        </button>
         
-                        <button class="btn btn-primary" id="configuration-save-button">
+                        <button class="btn btn-primary" id="configuration-save-button" onclick=handleSaveConfigurationButton(event)>
                             <i class="fa-solid fa-floppy-disk"></i>
                             Save Configuration
                         </button>
         
-                        <!-- <button class="btn btn-outline-primary" id="configuration-download-button">
+                        <!-- <button class="btn btn-outline-primary" id="configuration-download-button" onclick=handleDownloadConfigurationButton(event)>
                             <i class="fa-solid fa-file-download"></i>
                             Download Configuration
                         </button> -->
 
-                        <button class="btn btn-warning" id="configuration-restore-button">
+                        <button class="btn btn-warning" id="configuration-restore-button" onclick=handleRestoreConfigurationButton(event)>
                             <i class="fa-solid fa-refresh"></i>
                             Restore Configuration Backup
                         </button>
