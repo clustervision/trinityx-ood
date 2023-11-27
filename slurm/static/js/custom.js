@@ -369,7 +369,7 @@ function renderConfigurationPreview(target) {
             if (target == 'configuration') {
                 displayConfirmationModal('Configuration Preview', modalBody, 'Do you want to save this configuration?   ', saveConfiguration, 'Save', 'primary');
             } else if (target == 'backup_configuration') {
-                displayConfirmationModal('Backup Configuration Preview', modalBody,  'Do you want to restore this configuration?   ', restoreConfiguration, 'Restore', 'warning');
+                displayConfirmationModal('Backup Configuration Preview', modalBody,  'Do you want to load this configuration?   ', loadConfiguration, 'Load', 'warning');
             }
         } else {
             errorString = _getRequestError(`Error displaying configuration preview`, request);
@@ -410,7 +410,7 @@ function parsePartitions() {
         inputs = partitionsElements[i].querySelectorAll('input, select');
         for (let j = 0; j < inputs.length; j++) {
             input = inputs[j];
-            fieldName = input.id.split('-')[1];
+            fieldName = input.id.split('-').slice(-1).join('-');
             
             
             if (input.type == 'checkbox') {
@@ -459,17 +459,17 @@ function testConfiguration() {
             // display the result in the preview in a modal
             response = JSON.parse(request.responseText);
             console.log(response)
-            if (response.message == 'success'){
-                displayAlert('success', 'Configuration test: ok <br>(Slurmctld started)');
-            } else if (response.message == 'warning') {
+            if (response.status == 'success'){
+                displayAlert('success', 'Configuration test successful');
+            } else if (response.status == 'warning') {
                 errorList = response.errors.map(error => `<li>${error}</li>`);
                 errorText = `<ul>${errorList.join('')}</ul>`;
-                displayAlert('warning', 'Configuration test: warning <br>(Slurmctld started but errors found in the log) <br>' + errorText);
+                displayAlert('warning', 'Configuration test successful but errors were found' + errorText);
             }
             else {
                 errorList = response.errors.map(error => `<li>${error}</li>`);
                 errorText = `<ul>${errorList.join('')}</ul>`;
-                displayAlert('danger', 'Configuration test: failed<br> (Slurmctld failed on startup)<br>' + errorText);
+                displayAlert('danger', 'Configuration test failed' + errorText);
             }
             // modalBody = request.responseText;
 
@@ -479,7 +479,7 @@ function testConfiguration() {
             errorText = _getRequestError(`Error testing configuration`, request);
             displayAlert('danger', errorText);
         }
-        // restore the state of the button
+        // load the state of the button
         document.querySelector('#configuration-test-button').disabled = false;
         document.querySelector('#configuration-test-button .text').classList.remove('d-none');
         document.querySelector('#configuration-test-button .spinner').classList.add('d-none');
@@ -506,15 +506,15 @@ function saveConfiguration() {
     }
     request.send(JSON.stringify(data));
 }
-function restoreConfiguration() {
-    // Make an AJAX request to /restore and reload the page
+function loadConfiguration() {
+    // Make an AJAX request to /load and reload the page
     var request = new XMLHttpRequest();
-    requestUrl = _buildUrl(`/restore`);
+    requestUrl = _buildUrl(`/load`);
     request.open('POST', requestUrl);
     request.onload = function() {
         if (request.status == 200) {
             // reload the page
-            location.reload();
+            document.location = request.responseText;
         } else {
             errorString = _getRequestError(`Error restoring configuration`, request);
             displayAlert('danger', errorString);

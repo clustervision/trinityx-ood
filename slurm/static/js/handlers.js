@@ -12,7 +12,7 @@ function handleSaveConfigurationButton(event) {
     displayConfirmationModal("Saving Configuration", "Do you want to save the current configuration to file system ?", '', saveConfiguration)
 }
 function handleRestoreConfigurationButton(event) {
-    console.log('handle preview restore button');
+    console.log('handle preview load button');
     renderConfigurationPreview('backup_configuration');
 }
 function handleTestConfigurationButton(event) {
