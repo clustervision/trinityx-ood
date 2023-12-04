@@ -47,7 +47,7 @@ const NodesEditorParams = {
     clearable: true,
     multiselect: true,
 };
-const NodesColumnValidator = function(cell, value, parameters) {
+function NodesColumnValidator(cell, value, parameters) {
     if (!value || value.length == 0) {
         return false;
     }
@@ -64,7 +64,7 @@ const NodesColumnValidator = function(cell, value, parameters) {
     });
     return isValid;
 }
-const HWPresetColumnValidator = function(cell, value, parameters) {
+function HWPresetColumnValidator(cell, value, parameters) {
     if (!value || value.length == 0) {
         return true;
     }
@@ -73,8 +73,68 @@ const HWPresetColumnValidator = function(cell, value, parameters) {
     });
     return hw_presets.includes(value);
 }
-const NodesRowIsEditable = function(row) {
+function NodesRowIsEditable(row) {
     return (!row.getData().group_name) || (row.getData().group_name == "");
+}
+function NodesImport(){
+    $.ajax({
+        type: "GET",
+        url: "/json/luna/nodes",
+        contentType: "application/json; charset=utf-8",
+        success: function(data){
+            changes = [];
+            lunaNodes = data.config.node;
+            tableNodes = Object.assign({}, ...tables.nodes.getData().map(function(row) {
+                return {[row.name]: {group: row.group_name}}
+            }));
+
+            for (var idx in Object.keys(lunaNodes)) {
+                var nodename = Object.keys(lunaNodes)[idx];
+                var groupname = lunaNodes[nodename].group;
+                
+                // Add the nodes that are not in the table
+                if (!tableNodes[nodename]) {
+                    tables.nodes.addRow({
+                        "name": nodename,
+                        "group_name": groupname,
+                    });
+                    changes.push(`Added node <span class="font-weight-bold">${nodename}</span>`);
+                }
+
+                // Update the group of nodes that are in the table
+                else if (tableNodes[nodename].group != groupname) {
+                    var row = tables.nodes.searchRows("name", "=", nodename)[0];
+                    var rowData = row.getData();
+                    rowData.group_name = groupname;
+                    row.update(rowData);
+                    changes.push(`Updated group of node <span class="font-weight-bold">${nodename}</span>`);
+                }
+            }
+
+            // Remove the group for nodes that are not in the luna configuration
+            for (var idx in Object.keys(tableNodes)) {
+                var nodename = Object.keys(tableNodes)[idx];
+                var groupname = tableNodes[nodename].group;
+                if (!lunaNodes[nodename]) {
+                    var row = tables.nodes.searchRows("name", "=", nodename)[0];
+                    var rowData = row.getData();
+                    rowData.group_name = "";
+                    row.update(rowData);
+                    changes.push(`Removed group from node <span class="font-weight-bold">${nodename}</span> (not presen in luna anymore)`);
+                }
+            }
+
+            if (changes.length == 0) {
+                displayAlert("success", "No changes were made to the nodes table");
+            } else {
+                displayAlert("warning", `Imported nodes from luna configuration:<br>${changes.join("<br>")}`);
+            }
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to import nodes: <br>${data.responseJSON.message}`);
+        }
+    });
 }
 
 window.onload = function() {
@@ -151,6 +211,9 @@ window.onload = function() {
         tables.nodes.addRow({});
         tables.nodes.validate();
         displayAlert("success", "Added new empty node");
+    });
+    document.getElementById("import-nodes-button").addEventListener("click", function(){
+        NodesImport();
     });
     document.getElementById("delete-nodes-button").addEventListener("click", function(){
         selectedRows = tables.nodes.getSelectedRows();
@@ -251,7 +314,6 @@ function _validateTables() {
     }
 }
 
-
 function previewConfiguration(){
     var configuration = _getConfiguration();
 
@@ -304,7 +366,6 @@ function testConfiguration(){
     });
 }
 
-
 function _saveConfigurationAction(configuration) {
     $.ajax({
         type: "POST",
@@ -330,7 +391,6 @@ function saveConfiguration(){
         () => {_saveConfigurationAction(configuration)}, 
         "Save");
 }
-
 
 function _loadConfigurationBackupAction() {
     var targetUrl = "/?load_from_backup=true&message=Configuration%20backup%20loaded%20successfully";
