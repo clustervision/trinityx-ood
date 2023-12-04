@@ -101,7 +101,6 @@ window.onload = function() {
         reactiveData:true,
         ajaxURL: "/json/configuration/hw_presets"
     });
-
     document.getElementById("add-hw-preset-button").addEventListener("click", function(){
         tables.hw_presets.addRow({
             "name": undefined,
@@ -124,13 +123,9 @@ window.onload = function() {
             row.delete();
         });
         displayAlert("success", "Deleted selected hardware presets");
-        validateTables();
+        _validateTables();
 
     })
-
-
-
-
 
     // Initialize the nodes table
     tables.nodes = new Tabulator("#nodes-table", {
@@ -152,7 +147,6 @@ window.onload = function() {
         reactiveData:true,
         ajaxURL: "/json/configuration/nodes"
     });
-
     document.getElementById("add-node-button").addEventListener("click", function(){
         tables.nodes.addRow({});
         tables.nodes.validate();
@@ -165,14 +159,9 @@ window.onload = function() {
             row.delete();
         });
         displayAlert("success", "Deleted selected nodes");
-        validateTables();
+        _validateTables();
 
     })
-
-
-
-
-
 
     // Initialize the partitions table
     tables.partitions = new Tabulator("#partitions-table", {
@@ -197,7 +186,6 @@ window.onload = function() {
         reactiveData:true,
         ajaxURL: "/json/configuration/partitions"
     });
-
     document.getElementById("add-partition-button").addEventListener("click", function(){
         tables.partitions.addRow({});
         tables.partitions.validate();
@@ -210,16 +198,40 @@ window.onload = function() {
             row.delete();
         });
         displayAlert("success", "Deleted selected partitions");
-        validateTables();
+        _validateTables();
 
     })
+
+    // Register handlers for the configuration menu buttons
+    document.getElementById("configuration-preview-button").addEventListener("click", function(){
+        previewConfiguration();
+    });
+    document.getElementById("configuration-test-button").addEventListener("click", function(){
+        testConfiguration();
+    });
+    document.getElementById("configuration-save-button").addEventListener("click", function(){
+        saveConfiguration();
+    });
+    document.getElementById("configuration-load-backup-button").addEventListener("click", function(){
+        loadConfigurationBackup();
+    }); 
 
 }
 
 
+function _getConfiguration() {
+    var hw_presets = tables.hw_presets.getData();
+    var nodes = tables.nodes.getData();
+    var partitions = tables.partitions.getData();
+    var configuration = {
+        hw_presets: hw_presets,
+        nodes: nodes,
+        partitions: partitions,
+    };
+    return configuration;
+}
 
-
-function validateTables() {
+function _validateTables() {
     var validationResults = {};
 
     Object.keys(tables).forEach(function(table) {
@@ -232,55 +244,16 @@ function validateTables() {
         invalidTables = Object.keys(validationResults).filter(function(table) {
             return !validationResults[table];
         });
-        return [1, `The following tables are invalid: ${invalidTables.join(", ")}`]
+        errorsList = invalidTables.map(function(table) {
+            return `<li>${table}</li>`
+        }).join("");
+        return [1, `The following tables are invalid:<br>${errorsList}`]
     }
 }
 
-
-function testConfiguration(){
-    var [result, message] = validateTables();
-    if (result == 0) {
-        displayAlert("success", "Configuration is valid");
-    } else {
-        displayAlert("danger", message);
-    }
-}
-
-function saveConfiguration(){
-
-    var hw_presets = tables.hw_presets.getData();
-    var nodes = tables.nodes.getData();
-    var partitions = tables.partitions.getData();
-    var configuration = {
-        hw_presets: hw_presets,
-        nodes: nodes,
-        partitions: partitions,
-    };
-    console.log(configuration);
-    $.ajax({
-        type: "POST",
-        url: "/json/configuration",
-        data: JSON.stringify(configuration),
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function(data){
-            window.location.href = data.redirect;
-        },
-        failure: function(errMsg) {
-            displayAlert("danger", "Failed to save configuration");
-        }
-    });
-}
 
 function previewConfiguration(){
-    var hw_presets = tables.hw_presets.getData();
-    var nodes = tables.nodes.getData();
-    var partitions = tables.partitions.getData();
-    var configuration = {
-        hw_presets: hw_presets,
-        nodes: nodes,
-        partitions: partitions,
-    };
+    var configuration = _getConfiguration();
 
     $.ajax({
         type: "POST",
@@ -288,10 +261,97 @@ function previewConfiguration(){
         data: JSON.stringify(configuration),
         contentType: "application/json; charset=utf-8",
         success: function(previewHTML){
-            displayModal("Configuration Preview", previewHTML)
+            displayModal("Configuration Preview", previewHTML, '')
         },
-        failure: function(errMsg) {
-            displayAlert("danger", "Failed to save configuration");
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to load configuration preview: <br>${data.responseJSON.message}`);
+        }
+    });
+}
+
+function testConfiguration(){
+    // First validate the tables
+    var [result, message] = _validateTables();
+    if (result != 0) {
+        displayAlert("danger", `${message}<br>Please fix the errors and try again.`);
+        return
+    }
+    // If the tables are valid, then test the configuration with the slurm linter and display the results
+    var configuration = _getConfiguration();
+    $.ajax({
+        type: "POST",
+        url: "/json/configuration/test",
+        data: JSON.stringify(configuration),
+        contentType: "application/json; charset=utf-8",
+        success: function(testResults){
+            if (testResults.status == "success") {
+                // Slurm linter succeeded
+                displayAlert("success", "Configuration is valid");
+            } else {
+                // Slurm linter failed
+                errorsList = testResults.errors.map(function(error) {
+                    return `<li>${error}</li>`
+                }).join("");
+                displayAlert("danger", `Configuration is invalid: \n${errorsList}<br>Please fix the errors and try again.`)
+            }
+        },
+        error: function(data) {
+            // Error occurred while running slurm linter
+            console.log(data);
+            displayAlert("danger", `Failed to test configuration: <br>${data.responseJSON.message}`);
+        }
+    });
+}
+
+
+function _saveConfigurationAction(configuration) {
+    $.ajax({
+        type: "POST",
+        url: "/json/configuration/save",
+        data: JSON.stringify(configuration),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data){
+            window.location.href = data.redirect;
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to save configuration: <br>${data.responseJSON.message}`);
+        }
+    });
+}
+function saveConfiguration(){
+    var configuration = _getConfiguration();
+    displayConfirmationModal(
+        "Save Configuration", 
+        "Are you sure you want to save the current configuration?", 
+        "", 
+        () => {_saveConfigurationAction(configuration)}, 
+        "Save");
+}
+
+
+function _loadConfigurationBackupAction() {
+    var targetUrl = "/?load_from_backup=true&message=Configuration%20backup%20loaded%20successfully";
+    window.location.href = targetUrl;
+}
+function loadConfigurationBackup(){
+    $.ajax({
+        type: "POST",
+        url: "/json/configuration/preview?load_from_backup=true",
+        contentType: "application/json; charset=utf-8",
+        success: function(previewHTML){
+            displayConfirmationModal(
+                "Load Configuration Backup", 
+                previewHTML, 
+                "Are you sure you want to load the configuration backup?",
+                _loadConfigurationBackupAction,
+                "Load");
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to load backup configuration preview: <br>${data.responseJSON.message}`);
         }
     });
 }

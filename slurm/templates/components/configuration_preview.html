@@ -2,51 +2,23 @@
 <!-- Tabs navs -->
 <ul class="nav nav-tabs mb-3" role="tablist" tabindex="1">
     <li class="nav-item" role="presentation">
-      <a
-        class="nav-link active"
-        id="nodes-preview-tab-button"
-        data-toggle="tab"
-        data-target="#nodes-preview-tab"
-        role="tab"
-        >/etc/slurm/slurm-nodes.conf</a
-      >
+        <a class="nav-link active" id="nodes-preview-tab-button" data-toggle="tab" data-target="#nodes-preview-tab"
+            role="tab">/etc/slurm/slurm-nodes.conf</a>
     </li>
     <li class="nav-item" role="presentation">
-      <a
-        class="nav-link"
-        id="partitions-preview-tab-button"
-        data-toggle="tab"
-        data-target="#partitions-preview-tab"
-        role="tab"
-        >/etc/slurm/slurm-partitions.conf</a
-      >
+        <a class="nav-link" id="partitions-preview-tab-button" data-toggle="tab" data-target="#partitions-preview-tab"
+            role="tab">/etc/slurm/slurm-partitions.conf</a>
     </li>
-  </ul>
-  <!-- Tabs navs -->
-  
-  <!-- Tabs content -->
-  <div class="tab-content">
+</ul>
+<!-- Tabs navs -->
+
+<!-- Tabs content -->
+<div class="tab-content">
     <div class="tab-pane fade show active " id="nodes-preview-tab" role="tabpanel">
-        <div class="text">
-          {% for node_preview_line, marked in nodes_preview_lines %}
-            {% if marked %}
-              <div class="font-weight-bold">{{ node_preview_line }}</div>
-            {% else %}
-              <div>{{ node_preview_line }}</div>
-            {% endif %}
-          {% endfor %}
-        </div>
+        <pre>{% for node_preview_line, marked in nodes_preview_lines %}{{ node_preview_line }}{% endfor %}</pre>
     </div>
     <div class="tab-pane fade " id="partitions-preview-tab" role="tabpanel" >
-      <div class="text">
-          {% for partition_preview_line, marked in partitions_preview_lines %}
-            {% if marked %}
-              <div class="font-weight-bold">{{ partition_preview_line }}</div>
-            {% else %}
-              <div>{{ partition_preview_line }}</div>
-            {% endif %}
-          {% endfor %}
-        </div>
+        <pre>{% for partition_preview_line, marked in partitions_preview_lines %}{{ partition_preview_line }}{% endfor %}</pre>
     </div>
   </div>
   <!-- Tabs content -->

@@ -15,12 +15,3 @@ function _getRequestError(prefix, request) {
     }
     return errorString;
 }
-
-function _nodeNamestoNodes(nodeNames) {
-    console.log("nodeNames", nodeNames)
-    var nodes = {};
-    for (let i = 0; i < nodeNames.length; i++) {
-        nodes[nodeNames[i]] = configuration['nodes'][nodeNames[i]];
-    }
-    return nodes;
-}

@@ -26,6 +26,7 @@ __maintainer__ = "ClusterVision Solutions Development Team"
 __email__ = "support@clustervision.com"
 __status__ = "Development"
 
+import sys
 import jwt
 import requests
 from dynaconf import Dynaconf
@@ -61,6 +62,7 @@ def get_token():
     # Otherwise just fetch a new one
     data = {"username": settings.api.username, "password": settings.api.password}
     daemon_url = f"{settings.api.protocol}://{settings.api.endpoint}/token"
+    print(daemon_url, sys.stderr )
     response = requests.post(
         daemon_url,
         json=data,

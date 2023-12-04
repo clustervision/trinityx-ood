@@ -31,8 +31,8 @@ import sys
 import tempfile
 import itertools
 
-
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from slurmlint.linter import lint
 
 from trinityx_config_manager.parsers.ood_base import (
     NodesConfig,
@@ -42,7 +42,6 @@ from trinityx_config_manager.parsers.ood_base import (
     Partition,
     HWPreset,
 )
-
 from trinityx_config_manager.parsers.ood_slurm_partitions import (
     OODSlurmPartitionsConfigParser,
 )
@@ -53,7 +52,7 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
 from config import settings
 from helpers import (
     get_luna_nodes,
-    wrap_errors,
+    managed_by_ood,
 )
 
 app = Flask(
@@ -63,31 +62,17 @@ app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # add a wrapper to all the routes to catch errors
-# @app.errorhandler(Exception)
-# def wrap_errors(error):
-#     """Decorator to wrap errors in a JSON response."""
-#     if app.debug:
-#         raise error
-#     return jsonify({"message": str(error)}), 500
+@app.errorhandler(Exception)
+def wrap_errors(error):
+    """Decorator to wrap errors in a JSON response."""
+    if app.debug:
+        raise error
+    return jsonify({"message": str(error)}), 500
 
 
 @app.context_processor
 def inject_settings():
     return {"settings": {"app_name": "Slurm", **settings}}
-
-def get_is_managed_by_ood():
-    """Check if the configuration files are managed by OOD."""
-    partitions_parser = OODSlurmPartitionsConfigParser().read()
-    nodes_parser = OODSlurmNodesConfigParser().read()
-    print(
-        f"checking if partitions is managed by OOD: {partitions_parser.get_manager()}",
-        file=sys.stderr,
-    )
-    print(
-        f"checking if nodes is managed by OOD: {nodes_parser.get_manager()}",
-        file=sys.stderr,
-    )
-    return partitions_parser.is_manager() and nodes_parser.is_manager()
 
 
 def load_configuration(load_from_backup=False):
@@ -111,10 +96,11 @@ def load_configuration(load_from_backup=False):
     configuration = nodes_config
     configuration.partitions = partitions_config.partitions
 
-    print("loaded configuration:", file=sys.stderr)
-    print(f"{configuration}", file=sys.stderr)
+    # print("loaded configuration:", file=sys.stderr)
+    # print(f"{configuration}", file=sys.stderr)
 
     return configuration
+
 
 def save_configuration(configuration):
     """Save the configuration files to the default path."""
@@ -130,28 +116,38 @@ def save_configuration(configuration):
     partitions_parser.set_content(configuration)
     nodes_parser.set_content(configuration)
 
-    partitions_parser.write()
-    nodes_parser.write()
+    partitions_parser.write(backup=True)
+    nodes_parser.write(backup=True)
 
     return True
+
 
 def parse_raw_configuration(raw_configuration):
     raw_groups = []
     group_nodes = [node for node in raw_configuration["nodes"] if node["group_name"]]
     sorted_nodes = sorted(group_nodes, key=lambda node: node["group_name"])
-    for group_name, nodes in itertools.groupby(sorted_nodes, key=lambda node: node["group_name"]):
+    for group_name, nodes in itertools.groupby(
+        sorted_nodes, key=lambda node: node["group_name"]
+    ):
         node_names = [node["name"] for node in nodes]
         raw_groups.append({"name": group_name, "node_names": node_names})
     for node in raw_configuration["nodes"]:
         node.pop("group_name", None)
 
-    nodes = [ Node(**node) for node in raw_configuration["nodes"] ]
-    groups = [ Group(**group) for group in raw_groups ]
-    partitions = [ Partition(**partition) for partition in raw_configuration["partitions"] ]
-    hw_presets = [ HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"] ]
+    nodes = [Node(**node) for node in raw_configuration["nodes"]]
+    groups = [Group(**group) for group in raw_groups]
+    partitions = [
+        Partition(**partition) for partition in raw_configuration["partitions"]
+    ]
+    hw_presets = [
+        HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"]
+    ]
 
-    config = NodesConfig(nodes=nodes, groups=groups, partitions=partitions, hw_presets=hw_presets)
+    config = NodesConfig(
+        nodes=nodes, groups=groups, partitions=partitions, hw_presets=hw_presets
+    )
     return config
+
 
 # Pages
 @app.route("/")
@@ -162,13 +158,14 @@ def index_route():
         load_from_backup="load_from_backup" in request.args
     )
 
-    if not get_is_managed_by_ood():
+    if not managed_by_ood():
         return render_template("pages/unmanaged.html")
     return render_template(
         "pages/index.html",
         configuration=configuration,
         messages=[message] if message else [],
     )
+
 
 @app.route("/set_manager")
 def set_manager_route():
@@ -181,11 +178,13 @@ def set_manager_route():
     nodes_parser.write(force=True)
     return redirect(url_for("index_route"))
 
+
 # Actions
 @app.route("/json/configuration/hw_presets", methods=["GET"])
 def get_hw_presets_route():
     configuration = load_configuration().to_dict()
     return jsonify(configuration["hw_presets"])
+
 
 @app.route("/json/configuration/nodes", methods=["GET"])
 def get_nodes_route():
@@ -193,11 +192,18 @@ def get_nodes_route():
     nodes = configuration["nodes"]
 
     for node in nodes:
-        print( configuration["groups"] )
-        group_name = next((group['name'] for group in configuration["groups"] if node['name'] in group["node_names"]), None)
-        node['group_name'] = group_name
-    
+        group_name = next(
+            (
+                group["name"]
+                for group in configuration["groups"]
+                if node["name"] in group["node_names"]
+            ),
+            None,
+        )
+        node["group_name"] = group_name
+
     return jsonify(nodes)
+
 
 @app.route("/json/configuration/partitions", methods=["GET"])
 def get_partitions_route():
@@ -206,19 +212,28 @@ def get_partitions_route():
     return jsonify(partitions)
 
 
-@app.route("/json/configuration", methods=["POST"])
+@app.route("/json/configuration/save", methods=["POST"])
 def set_configuration_route():
     """Set the configuration."""
     raw_configuration = request.json
     configuration = parse_raw_configuration(raw_configuration)
     save_configuration(configuration)
-    output = {"redirect":  url_for("index_route", message="Configuration saved successfully, restart the slurmctld service to apply the changes.") }
+    output = {
+        "redirect": url_for(
+            "index_route",
+            message="Configuration saved successfully, restart the slurmctld service to apply the changes.",
+        )
+    }
     return jsonify(output)
+
 
 @app.route("/json/configuration/preview", methods=["POST"])
 def configuration_preview_route():
     """Render the configuration preview."""
-    configuration = parse_raw_configuration(request.json)
+    if request.args.get("load_from_backup", False):
+        configuration = load_configuration(load_from_backup=True)
+    else:
+        configuration = parse_raw_configuration(request.json)
 
     partitions_parser = OODSlurmPartitionsConfigParser().read()
     partitions_parser.set_content(configuration)
@@ -227,6 +242,7 @@ def configuration_preview_route():
     nodes_parser = OODSlurmNodesConfigParser().read()
     nodes_parser.set_content(configuration)
     nodes_preview_lines = nodes_parser.dump_lines(marked=True)
+    # print(f"nodes_preview_lines: {nodes_preview_lines}", file=sys.stderr)
 
     return render_template(
         "components/configuration_preview.html",
@@ -234,14 +250,43 @@ def configuration_preview_route():
         nodes_preview_lines=nodes_preview_lines,
     )
 
-# @app.route("/import/luna/nodes", methods=["GET"])
-# def import_luna_nodes_route():
-#     """Load the luna nodes from the luna daemon."""
-#     try:
-#         nodes = get_luna_nodes()
-#         return jsonify(nodes), 200
-#     except Exception as e:
-#         return jsonify({"message": str(e)}), 500
+
+@app.route("/json/configuration/test", methods=["POST"])
+def test_configuration_route():
+    configuration = parse_raw_configuration(raw_configuration=request.json)
+
+    node_lines = (
+        OODSlurmNodesConfigParser().read().set_content(configuration).dump_lines()
+    )
+    partition_lines = (
+        OODSlurmPartitionsConfigParser().read().set_content(configuration).dump_lines()
+    )
+
+    configuration_lines = node_lines + partition_lines
+    configuration_text = "".join(configuration_lines)
+
+    res = lint(configuration_text)
+    # print(f"running lint with configuration: {configuration_lines}", file=sys.stderr)
+    # print(f"res: {res}", file=sys.stderr)
+    errors = res.get("errors", [])
+
+    expanded_errors = [
+        f"{configuration_lines[idx-1]}: {error}" for idx, error in errors
+    ]
+    if not errors:
+        return jsonify({"status": "success"}), 200
+    else:
+        return jsonify({"status": "danger", "errors": expanded_errors}), 200
+
+
+@app.route("/json/luna/nodes", methods=["GET"])
+def import_luna_nodes_route():
+    """Load the luna nodes from the luna daemon."""
+    try:
+        nodes = get_luna_nodes()
+        return jsonify(nodes), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
 
 
 # @app.route("/save", methods=["POST"])
@@ -359,33 +404,6 @@ def configuration_preview_route():
 #         return jsonify({"status": "error", "errors": errors}), 200
 
 
-# @app.route("/test", methods=["POST"])
-# def test_configuration_route():
-#     configuration = load_configuration(raw_configuration=request.json)
-#     print(configuration, file=sys.stderr)
-#     node_lines = OODSlurmNodesConfigParser.dump_managed_block(configuration["nodes"])
-#     partition_lines = OODSlurmPartitionsConfigParser.dump_managed_block(
-#         configuration["partitions"]
-#     )
-
-#     configuration_lines = partition_lines + node_lines
-
-#     from slurmlint.linter import lint
-
-#     res = lint("\n".join(configuration_lines))
-#     print(f"running lint with configuration: {configuration_lines}", file=sys.stderr)
-#     print(f"res: {res}", file=sys.stderr)
-#     errors = res.get("errors", [])
-
-#     expanded_errors = [
-#         f"{configuration_lines[line]}: {error}" for line, error in errors
-#     ]
-#     if not errors:
-#         return jsonify({"status": "success"}), 200
-#     else:
-#         return jsonify({"status": "error", "errors": expanded_errors}), 200
-
-
 # @app.route("/load", methods=["POST"])
 # def load_configuration_route():
 #     """load the configuration files from the backup path."""
@@ -491,9 +509,6 @@ def configuration_preview_route():
 #         "components/partition_card.html",
 #         partition=partition,
 #     )
-
-
-
 
 
 # @app.route("/components/backup_configuration_preview", methods=["POST"])
