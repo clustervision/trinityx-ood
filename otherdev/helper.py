@@ -222,19 +222,9 @@ class Helper():
                 tmp.append(element[array])
             final_rows.append(tmp)
         rows = final_rows
-        for ele in data:
-            if 'name' in data[ele]:
-                name = data[ele]["name"]
-            elif 'username' in data[ele]:
-                name = data[ele]["username"]
-            elif 'groupname' in data[ele]:
-                name = data[ele]["groupname"]
-            if name:
-                action = self.action_items(table, name)
-                for row in rows:
-                    if name in row:
-                        row.insert(len(row), action)
-                        name = ""
+        for row in rows:
+            action = self.action_items(table, row[0])
+            row.insert(len(row), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
         fields.insert(len(fields),"Actions")
@@ -243,14 +233,6 @@ class Helper():
             outer.insert(0, num)
             num = num + 1
         # Adding Serial Numbers to the dataset
-        if table == 'power':
-            head = '<input type="checkbox" id="selectAll" />'
-            fields.insert(0, head)
-            num = 1
-            for outer in rows:
-                checkbox = f'<input type="checkbox" name="node" value="{outer[1]}"  id="{num}" />'
-                outer.insert(0, checkbox)
-                num = num + 1
         return fields, rows
 
 
