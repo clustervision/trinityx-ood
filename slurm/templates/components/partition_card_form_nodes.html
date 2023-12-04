@@ -1,8 +1,6 @@
 
 <li class="list-group-item">
-    <h5> Nodes </h5>
     <div class='dropzone' id="dropzone-partition-{{ partition_name }}">
-
         {% for node_name in partition.nodes %}
             {% include "components/node.html"%}
         {% endfor %}

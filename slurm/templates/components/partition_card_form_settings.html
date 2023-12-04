@@ -1,4 +1,7 @@
-<li class="list-group-item collapse" id="settings-{{ partition_name }}">
+<div class="collapse" id="settings-{{ partition_name }}">
+
+
+<li class="list-group-item">
     <h5> Settings </h5>
     
     <div class="form-group">
@@ -53,3 +56,16 @@
         </div>
     </div>
 </li>
+<li class="list-group-item">
+    <button  class="btn btn-outline-primary button-show-settings-advanced " type="button"  data-target="#settings-advanced-{{ partition_name }}" onclick="handleShowSettingsAdvancedButton(event)">
+        <div class="text closed">
+            <i class="fa-solid fa-eye"></i>
+            Show Advanced Settings
+        </div>
+        <div class="text opened d-none">
+            <i class="fa-solid fa-eye-slash"></i>
+            Hide Advanced Settings
+        </div>
+    </button>
+</li>
+</div>

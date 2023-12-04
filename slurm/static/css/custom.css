@@ -1,12 +1,9 @@
-
 * {
   -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
 }
-
-
 
 .dropzone {
   border: 2px dashed #007bff;
@@ -20,14 +17,12 @@
 }
 
 .card {
-  margin-bottom: 5px;
-  position: relative;
+  margin-bottom: 8px;
 }
-.row {
-  margin-bottom: 10px;
+/* set color of first list-item in card to EBF3E8 */
+.card .list-group-item:first-child {
+  background-color: #e8e7e3;
 }
-
-
 .item.new {
   background: #43e55e !important;
 }
@@ -39,4 +34,10 @@
 }
 .item.ds-selected {
   background: #4391e5 !important;
+}
+.table {
+  margin-top: 10px
+}
+a.nav-link {
+  color: black;
 }

@@ -1,45 +1,38 @@
-{% set partition=configuration.partitions.get(partition_name, {"nodes":[], "properties": {}}) %}
+{% set partition_name=partition.name %}
 <div class="card partition-card" id="partition-{{ partition_name }}">
-    <div class="card-header">
-        <h5 class="card-title">
-        <span> Partition 
-            <div class="font-weight-bold d-inline">
-                {{ partition_name }}
-            </div>
-        </span>
-        <button class="btn btn-danger button-close float-right" type="button" aria-label="Close" onclick="handleDeletePartitionButton(event)">
-            <i class="fa-solid fa-trash"></i>
-        </button>
-
-        </h5>
-    </div>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">
-            <div class="button-group float-center">
-                <button  class="btn btn-outline-primary button-show-settings " type="button"  data-target="settings-{{ partition_name }}" onclick="handleShowSettingsButton(event)">
+            <span class="font-weight-bold">
+                Partition:
+            </span>
+            <span>
+                {{ partition_name }}
+            </span>
+        </li>
+        <li class="list-group-item">
+            <span>
+
+                {% include "components/hardware_button.html" %}
+                <button class="btn btn-outline-primary button-show-settings" type="button"
+                    data-target="settings-{{ partition_name }}" onclick="handleShowSettingsButton(event)">
                     <div class="text closed">
                         <i class="fa-solid fa-eye"></i>
-                        Show Settings
+                        Settings
                     </div>
                     <div class="text opened d-none">
                         <i class="fa-solid fa-eye-slash"></i>
-                        Hide Settings
+                        Settings
                     </div>
                 </button>
-                <button  class="btn btn-outline-primary button-show-settings-advanced " type="button"  data-target="#settings-advanced-{{ partition_name }}" onclick="handleShowSettingsAdvancedButton(event)">
-                    <div class="text closed">
-                        <i class="fa-solid fa-eye"></i>
-                        Show Advanced Settings
-                    </div>
-                    <div class="text opened d-none">
-                        <i class="fa-solid fa-eye-slash"></i>
-                        Hide Advanced Settings
-                    </div>
+                <button class="btn btn-danger button-close h-100" type="button" aria-label="Close"
+                    onclick="handleDeletePartitionButton(event)">
+                    <i class="fa-solid fa-trash"></i>
                 </button>
-                <!-- <button  class="btn btn-outline-primary button-hide-settings " type="button"  data-target="#hide-settings-{{ partition_name }}">
+            </span>
+            <!-- <button  class="btn btn-outline-primary button-hide-settings " type="button"  data-target="#hide-settings-{{ partition_name }}">
                     <i class="fa-solid fa-eye-slash"></i>
                 </button> -->
-            </div>
+
         </li>
         {% include "components/partition_card_form_settings.html" %}
         {% include "components/partition_card_form_advanced_settings.html" %}

@@ -12,33 +12,99 @@
 
 {% block content %}
 <!-- Split the screen in two parts, left for nodes and right for partitions -->
-<div class="row">
-    <div class="col-12">
-        {% include "components/menu.html" %}
-    </div>
+
+{% include "components/menu_card.html" %}
+
+<div class="card">
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="" data-toggle="tab" data-target="#hw-presets-tab">
+                        <!-- Microchip fontawesome -->
+                        <i class="fas fa-microchip"></i>
+                        <span>Hardware</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="" data-toggle="tab" data-target="#nodes-tab">
+                        <!-- Computer fontawesome -->
+                        <i class="fas fa-desktop"></i>
+                        <span>Nodes</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="" data-toggle="tab" data-target="#partitions-tab">
+                        <!-- Selection fontawesome -->
+                        <i class="fas fa-hand-pointer"></i>
+                        <span>Partition</span>
+                    </a>
+                </li>
+            </ul>
+
+
+        </li>
+        <li class="list-group-item">
+            <div id="tabsContent" class="tab-content">
+                <div id="hw-presets-tab" class="tab-pane fade active show">
+                    <button id="add-hw-preset-button" class="btn btn-primary">Add Hardware Preset</button>
+                    <button id="delete-hw-presets-button" class="btn btn-danger">Delete Selected Hardware Presets</button>
+                    <table class="table table-bordered" id="hw-presets-table"></table>
+                </div>
+                <div id="nodes-tab" class="tab-pane fade">
+                    <button id="add-node-button" class="btn btn-primary">Add Node</button>
+                    <button id="import-nodes-button" class="btn btn-primary">Import From Luna</button>
+                    <button id="delete-nodes-button" class="btn btn-danger">Delete Selected Nodes</button>
+                    <table class="table table-bordered" id="nodes-table"></table>
+                </div>
+                <div id="partitions-tab" class="tab-pane fade">
+                    <button id="add-partition-button" class="btn btn-primary">Add Partition</button>
+                    <button id="delete-partitions-button" class="btn btn-danger">Delete Selected Partitions</button>
+                    <table class="table table-bordered" id="partitions-table"></table>
+                </div>
+
+            </div>
+        </li>
+    </ul>
 </div>
 
+
+<!-- <div>  
+    <button id="add-hw-preset-button">Add Hardware Preset</button>
+    <button id="delete-hw-presets-button">Delete Selected Hardware Presets</button>
+    <table id="hw-presets-table"></table>
+    <br>
+    <button id="add-node-button">Add Node</button>
+    <button id="delete-nodes-button">Delete Selected Nodes</button>
+    <button id="import-nodes-button">Import From Luna</button>
+    <table id="nodes-table"></table>
+    <br>
+    <button id="add-partition-button">Add Partition</button>
+    <button id="delete-partitions-button">Delete Selected Partitions</button>
+    <table id="partitions-table"></table>
+</div> -->
+{#
 <div class="row">
     <div class="col-6" id="nodes-menu-col">
-        {% include "components/nodes_menu_card.html" %}
+        {% include "components/nodes_card_add.html" %}
+        {% include "components/nodes_card_selected.html" %}
 
     </div>
     <div class="col-6" id="partitions-menu-col">
-        {% include "components/partitions_menu.html" %}
+        {% include "components/partition_card_add.html" %}
     </div>
 </div>
 
-<div class="row">
+<div class="row" id="selectable-area">
     <div class="col-6" id="nodes-col">
-        <!-- Nodes Card here -->
-        {% include "components/nodes_card.html" %}
+        {% include "components/nodes_card_available.html" %}
     </div>
     <div class="col-6" id="partitions-col">
-        <!-- Partitions Cards here -->
-        {% for partition_name in configuration.partitions.keys() %}
-            {% include "components/partition_card.html" %}
+        {% for partition in configuration.partitions %}
+        {% include "components/partition_card.html" %}
         {% endfor %}
     </div>
 </div>
-
+#}
 {% endblock %}

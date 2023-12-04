@@ -1,0 +1,14 @@
+<div class="card">
+   
+   <ul class="list-group list-group-flush" id="nodes-card">
+      <li class="list-group-item">
+         <span class="font-weight-bold">
+            Available Nodes
+         </span>
+      </li>
+      {% for group_name, nodes in configuration.nodes.by_groupname().items() %}
+         {% include 'components/nodes_group.html' %}
+      {% endfor %}
+   </ul>
+
+</div>

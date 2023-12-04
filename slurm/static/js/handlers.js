@@ -22,7 +22,7 @@ function handleTestConfigurationButton(event) {
 
 function handlePreviewConfigurationButton(event) {
     console.log('handle preview button');
-    renderConfigurationPreview('configuration');
+    previewConfiguration('configuration');
 }
 function handleDownloadConfigurationButton(event) {
     console.log('handle download button');
