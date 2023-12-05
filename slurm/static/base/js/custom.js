@@ -1,4 +1,8 @@
+function clearAlerts() {
+    document.getElementById('alerts').innerHTML = '';
+}
 function displayAlert(type, message) {
+    clearAlerts();
     alert_types = ['success', 'info', 'warning', 'danger'];
     if (alert_types.indexOf(type) == -1) {
         console.log(`Alert type ${type} is not valid`);
@@ -14,7 +18,9 @@ function displayAlert(type, message) {
             </div>`;
         document.getElementById('alerts').appendChild(alert_div);
     }
+    
 }
+
 
 function showModal() {
     $('#modal').modal('show');

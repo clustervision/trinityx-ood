@@ -124,7 +124,7 @@ def save_configuration(configuration):
 
 def parse_raw_configuration(raw_configuration):
     raw_groups = []
-    group_nodes = [node for node in raw_configuration["nodes"] if node["group_name"]]
+    group_nodes = [node for node in raw_configuration["nodes"] if node.get("group_name")]
     sorted_nodes = sorted(group_nodes, key=lambda node: node["group_name"])
     for group_name, nodes in itertools.groupby(
         sorted_nodes, key=lambda node: node["group_name"]

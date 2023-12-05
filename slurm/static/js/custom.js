@@ -1,5 +1,6 @@
 const tables = {};
-const nameRegexValidator = "regex:^[a-zA-Z0-9_]+$";
+const baseUrl = window.location.href.split("?")[0];
+const nameRegexValidator = "regex:^[a-zA-Z0-9_\-]+$";
 const HWPresetEditorParams = {
     valuesLookup: function(){
         return tables.hw_presets.getData().map(function(row) {
@@ -47,6 +48,11 @@ const NodesEditorParams = {
     clearable: true,
     multiselect: true,
 };
+function resetLocation() {
+    // Remove any query parameters from the url
+    window.history.replaceState({}, document.title, baseUrl);
+}
+
 function NodesColumnValidator(cell, value, parameters) {
     if (!value || value.length == 0) {
         return false;
@@ -79,7 +85,7 @@ function NodesRowIsEditable(row) {
 function NodesImport(){
     $.ajax({
         type: "GET",
-        url: "/json/luna/nodes",
+        url: `${baseUrl}/json/luna/nodes`,
         contentType: "application/json; charset=utf-8",
         success: function(data){
             changes = [];
@@ -140,15 +146,15 @@ function NodesImport(){
 window.onload = function() {
     // Initialize hardware presets table
     tables.hw_presets = new Tabulator("#hw-presets-table", {
-        responsiveLayout:"collapse",
+        // responsiveLayout:"collapse",
         // height:"311px",
-        layout:"fitColumns",
+        layout:"fitDataFill",
         placeholder:"No Data Set",
         columns:[
             {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width:15, cellClick:function(e, cell){
                 cell.getRow().toggleSelect();
               }},
-            {title:"Name", field:"name", sorter:"string", width:200,  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
+            {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
             {title: "Properties", columns:[
                 {title:"# Boards", field:"properties.Boards", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"# Sockets", field:"properties.Sockets", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
@@ -156,14 +162,15 @@ window.onload = function() {
                 {title:"# ThreadsPerCore", field:"properties.ThreadsPerCore", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"RealMemory (MB)", field:"properties.RealMemory", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"TmpDisk (MB)", field:"properties.TmpDisk", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
+                {title:"CpuBind", field:"properties.CpuBind", sorter:"string",  editor:"list", editorParams:{values:["socket", "ldom", "core", "thread"], clearable: true}},
             ]},
         ],
         reactiveData:true,
-        ajaxURL: "/json/configuration/hw_presets"
+        ajaxURL: `${baseUrl}/json/configuration/hw_presets`
     });
     document.getElementById("add-hw-preset-button").addEventListener("click", function(){
         tables.hw_presets.addRow({
-            "name": undefined,
+            "name": null,
             "properties": {
                 "Boards": 1,
                 "Sockets": 1,
@@ -189,26 +196,26 @@ window.onload = function() {
 
     // Initialize the nodes table
     tables.nodes = new Tabulator("#nodes-table", {
-        responsiveLayout:"collapse",
+        // responsiveLayout:"collapse",
         // height:"311px",
-        layout:"fitColumns",
+        layout:"fitDataFill",
         placeholder:"No Data Set",
         columns:[
             {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width:15, cellClick:function(e, cell){
                 cell.getRow().toggleSelect();
               }},
-            {title:"Name", field:"name", sorter:"string", width:200,  editor: "input", validator:[ "unique", "required", nameRegexValidator], editable: NodesRowIsEditable},
-            {title:"Group", field:"group_name", sorter:"string"},
+            {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator], editable: NodesRowIsEditable},
+            {title:"Luna Group", field:"group_name", sorter:"string"},
             {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
             {title:"Properties", columns:[
-                {title: "State", field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["DRAIN", "UNKNOWN", "IDLE"], clearable: true}},
+                {title: "State", minWidth:200, field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["DRAIN", "UNKNOWN", "IDLE"], clearable: true}},
             ]},
         ],
         reactiveData:true,
-        ajaxURL: "/json/configuration/nodes"
+        ajaxURL: `${baseUrl}/json/configuration/nodes`
     });
     document.getElementById("add-node-button").addEventListener("click", function(){
-        tables.nodes.addRow({});
+        tables.nodes.addRow({name:null, group_name:null, properties:{}});
         tables.nodes.validate();
         displayAlert("success", "Added new empty node");
     });
@@ -228,29 +235,33 @@ window.onload = function() {
 
     // Initialize the partitions table
     tables.partitions = new Tabulator("#partitions-table", {
-        responsiveLayout:"collapse",
+        // responsiveLayout:"collapse",
         // height:"311px",
-        layout:"fitColumns",
+        layout:"fitDataFill",
         placeholder:"No Data Set",
         columns:[
             {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width:15, cellClick:function(e, cell){
                 cell.getRow().toggleSelect();
               }},
-            {title:"Name", field:"name", sorter:"string", width:200,  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
-            {title:"Nodes", field:"node_names", sorter:"string", editor:"list", editorParams:NodesEditorParams, validator:[NodesColumnValidator]},
+            {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
+            {title:"Nodes", field:"node_names", sorter:"string", editor:"list", width:300, editorParams:NodesEditorParams, validator:[NodesColumnValidator]},
             {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
             {title:"Properties", columns:[
-                {title: "Exclusive", field:"properties.ExclusiveUser", sorter:"string",  editor:"list", editorParams:{values:["YES","NO"], clearable: true}},
-                {title: "PowerDownOnIdle", field:"properties.PowerDownOnIdle", sorter:"string",  editor:"list", editorParams:{values:["YES","NO"], clearable: true}},
-                {title: "MaxTime", field:"properties.MaxTime", sorter:"number",  editor:"input", validator:[ "integer", "min:0"]},
+                {title: "State", field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["UP", "DOWN", "DRAIN", "INACTIVE"], clearable: true}},
+                {title: "Default", field:"properties.Default", sorter:"string",  editor:"list", editorParams:{values:["YES","NO"], clearable: true}},
+                {title: "MaxNodes", field:"properties.MaxNodes", sorter:"number",  editor:"input", validator:[ "integer", "min:0"]},
+                {title: "Shared", field:"properties.Shared", sorter:"string",  editor:"list", editorParams:{values:["YES","NO"], clearable: true}},
+                // {title: "PowerDownOnIdle", field:"properties.PowerDownOnIdle", sorter:"string",  editor:"list", editorParams:{values:["YES","NO"], clearable: true}},
+                {title: "MaxTime", field:"properties.MaxTime", sorter:"number",  editor:"input", validator:[ "integer", "min:-1"]},
                 {title: "OverTimeLimit", field:"properties.OverTimeLimit", sorter:"number",  editor:"input", validator:[ "integer", "min:0"]},
+                {title: "AllowAccounts", field:"properties.AllowAccounts", sorter:"string",  editor:"input", validator:[ nameRegexValidator]},
             ]},
         ],
         reactiveData:true,
-        ajaxURL: "/json/configuration/partitions"
+        ajaxURL: `${baseUrl}/json/configuration/partitions`
     });
     document.getElementById("add-partition-button").addEventListener("click", function(){
-        tables.partitions.addRow({});
+        tables.partitions.addRow({name: null, node_names: [], properties:{}});
         tables.partitions.validate();
         displayAlert("success", "Added new empty partition");
     });
@@ -278,6 +289,8 @@ window.onload = function() {
     document.getElementById("configuration-load-backup-button").addEventListener("click", function(){
         loadConfigurationBackup();
     }); 
+
+    resetLocation();
 
 }
 
@@ -319,7 +332,7 @@ function previewConfiguration(){
 
     $.ajax({
         type: "POST",
-        url: "/json/configuration/preview",
+        url: `${baseUrl}/json/configuration/preview`,
         data: JSON.stringify(configuration),
         contentType: "application/json; charset=utf-8",
         success: function(previewHTML){
@@ -343,7 +356,7 @@ function testConfiguration(){
     var configuration = _getConfiguration();
     $.ajax({
         type: "POST",
-        url: "/json/configuration/test",
+        url: `${baseUrl}/json/configuration/test`,
         data: JSON.stringify(configuration),
         contentType: "application/json; charset=utf-8",
         success: function(testResults){
@@ -369,7 +382,7 @@ function testConfiguration(){
 function _saveConfigurationAction(configuration) {
     $.ajax({
         type: "POST",
-        url: "/json/configuration/save",
+        url: `${baseUrl}/json/configuration/save`,
         data: JSON.stringify(configuration),
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -399,7 +412,7 @@ function _loadConfigurationBackupAction() {
 function loadConfigurationBackup(){
     $.ajax({
         type: "POST",
-        url: "/json/configuration/preview?load_from_backup=true",
+        url: `${baseUrl}/json/configuration/preview?load_from_backup=true`,
         contentType: "application/json; charset=utf-8",
         success: function(previewHTML){
             displayConfirmationModal(
