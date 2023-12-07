@@ -406,8 +406,16 @@ function saveConfiguration(){
 }
 
 function _loadConfigurationBackupAction() {
-    var targetUrl = "/?load_from_backup=true&message=Configuration%20backup%20loaded%20successfully";
-    window.location.href = targetUrl;
+    // var targetUrl = "/?load_from_backup=true&message=Configuration%20backup%20loaded%20successfully";
+    var nodesBackupUrl = `${baseUrl}/json/configuration/nodes?load_from_backup=true`;
+    var partitionsBackupUrl = `${baseUrl}/json/configuration/partitions?load_from_backup=true`;
+    var hwPresetsBackupUrl = `${baseUrl}/json/configuration/hw_presets?load_from_backup=true`;
+
+    tables.nodes.setData(nodesBackupUrl);
+    tables.partitions.setData(partitionsBackupUrl);
+    tables.hw_presets.setData(hwPresetsBackupUrl);
+    
+
 }
 function loadConfigurationBackup(){
     $.ajax({

@@ -84,6 +84,8 @@ def load_configuration(load_from_backup=False):
 
     # Load the configuration files
     if load_from_backup:
+        print(F"loading configuration from backup {partitions_parser.backup_filepath}", file=sys.stderr)
+        print(F"loading configuration from backup {nodes_parser.backup_filepath}", file=sys.stderr)
         partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
         nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
     else:
@@ -133,14 +135,15 @@ def parse_raw_configuration(raw_configuration):
         raw_groups.append({"name": group_name, "node_names": node_names})
     for node in raw_configuration["nodes"]:
         node.pop("group_name", None)
+        node['properties'] = {k:v for k,v in node.get('properties', {}).items() }
 
-    nodes = [Node(**node) for node in raw_configuration["nodes"]]
-    groups = [Group(**group) for group in raw_groups]
+    nodes = [Node(**node) for node in raw_configuration["nodes"] or []]
+    groups = [Group(**group) for group in raw_groups or []]
     partitions = [
-        Partition(**partition) for partition in raw_configuration["partitions"]
+        Partition(**partition) for partition in raw_configuration["partitions"] or []
     ]
     hw_presets = [
-        HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"]
+        HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"] or []
     ]
 
     config = NodesConfig(
@@ -154,15 +157,12 @@ def parse_raw_configuration(raw_configuration):
 def index_route():
     """Render the index page."""
     message = request.args.get("message")
-    configuration = load_configuration(
-        load_from_backup="load_from_backup" in request.args
-    )
+
 
     if not managed_by_ood():
         return render_template("pages/unmanaged.html")
     return render_template(
         "pages/index.html",
-        configuration=configuration,
         messages=[message] if message else [],
     )
 
@@ -182,13 +182,15 @@ def set_manager_route():
 # Actions
 @app.route("/json/configuration/hw_presets", methods=["GET"])
 def get_hw_presets_route():
-    configuration = load_configuration().to_dict()
+    load_from_backup = request.args.get("load_from_backup")
+    configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
     return jsonify(configuration["hw_presets"])
 
 
 @app.route("/json/configuration/nodes", methods=["GET"])
 def get_nodes_route():
-    configuration = load_configuration().to_dict()
+    load_from_backup = request.args.get("load_from_backup")
+    configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
     nodes = configuration["nodes"]
 
     for node in nodes:
@@ -207,7 +209,8 @@ def get_nodes_route():
 
 @app.route("/json/configuration/partitions", methods=["GET"])
 def get_partitions_route():
-    configuration = load_configuration().to_dict()
+    load_from_backup = request.args.get("load_from_backup")
+    configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
     partitions = configuration["partitions"]
     return jsonify(partitions)
 
