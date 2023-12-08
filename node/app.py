@@ -74,7 +74,7 @@ def show(record=None):
     This Method will show a specific record.
     """
     data, error = "", ""
-    table_data = Rest().get_raw_data(TABLE, record)
+    table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE][record]
