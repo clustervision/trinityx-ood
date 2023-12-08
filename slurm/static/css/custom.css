@@ -1,0 +1,53 @@
+* {
+  -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+.dropzone {
+  border: 2px dashed #007bff;
+  border-radius: 5px;
+  min-height: 100px;
+  width: auto;
+}
+
+.container {
+  margin-top: 30px;
+  /* margin-left: 30px;
+  margin-right: 30px; */
+  max-width: 90%;
+}
+
+.card {
+  margin-bottom: 8px;
+}
+.card .tabs-header {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.card .tabs-content {
+  padding: 1.5rem;
+}
+/* set color of first list-item in card to EBF3E8 */
+.card .list-group-item:first-child {
+  background-color: #e8e7e3;
+}
+.item.new {
+  background: #43e55e !important;
+}
+.item.changed {
+  background: #e5c843 !important;
+}
+.item.deleted {
+  background: #e54343 !important;
+}
+.item.ds-selected {
+  background: #4391e5 !important;
+}
+.table {
+  margin-top: 10px
+}
+a.nav-link {
+  color: black;
+}

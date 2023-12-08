@@ -1,0 +1,11 @@
+name: Slurm
+description: Manage slurm partitions
+icon: fa://tasks
+category: Trinity
+subcategory: Utilities
+new_window: false
+
+tile:
+  title: Slurm
+  sub_caption: |
+   Manage slurm partitions

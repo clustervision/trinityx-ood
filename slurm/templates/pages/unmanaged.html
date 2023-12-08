@@ -1,0 +1,16 @@
+{% extends "base/pages/index.html" %}
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+{% endblock %}
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+<script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
+<script src="{{ url_for('static', filename='js/handlers.js') }}"></script>
+<script src="{{ url_for('static', filename='js/drag-select.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+Configurations are not managed by this tool. Do you want to switch ?
+<a href="{{ url_for('set_manager_route') }}"><button class="btn btn-warning" id="switch-button">Switch</button></a>
+
+{% endblock %}
