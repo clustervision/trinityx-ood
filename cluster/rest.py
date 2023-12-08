@@ -174,7 +174,7 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'

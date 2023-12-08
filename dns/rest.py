@@ -174,7 +174,7 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
@@ -203,7 +203,7 @@ class Rest():
         And use for creating and updating records.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json', 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
@@ -226,7 +226,7 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_delete'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:

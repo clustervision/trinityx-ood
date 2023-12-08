@@ -59,10 +59,10 @@ def sortby(table=None):
     static = {
         'node': [
             'name', 'hostname', 'group', 'osimage', 'osimagetag', 'interfaces', 'status', 'vendor', 'assettag',
-            'position', 'switchport', 'setupbmc', 'bmcsetup', 'unmanaged_bmc_users', 'netboot',
+            'position', 'switch', 'switchport', 'setupbmc', 'bmcsetup', 'unmanaged_bmc_users', 'netboot',
             'localinstall', 'bootmenu', 'roles', 'service', 'prescript', 'partscript',
             'postscript','provision_interface', 'provision_method', 'provision_fallback',
-            'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment', 'switch',  'macaddress'
+            'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment', 'macaddress'
         ],
         'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network'],
         'nodesecrets': ['Node', 'name', 'path', 'content']
