@@ -270,3 +270,5 @@ include dns/templates
 include dns/templates/*
 include dns/templates/layout
 include dns/templates/layout/*
+
+recursive-include slurm *
