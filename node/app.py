@@ -106,6 +106,7 @@ def add():
     """
     group_list = Model().get_list_option_html('group')
     bmcsetup_list = Model().get_list_option_html('bmcsetup')
+    switch_list = Model().get_list_option_html('switch')
     osimage_list = Model().get_list_option_html('osimage')
     network_list = Model().get_list_option_html('network')
     if request.method == 'POST':
@@ -134,7 +135,7 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table=TABLE_CAP, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list)
+        return render_template("add.html", table=TABLE_CAP, switch_list=switch_list, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list)
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
@@ -210,6 +211,10 @@ def edit(record=None):
             group_list = Model().get_list_option_html('group', data['group'])
         else:
             group_list = Model().get_list_option_html('group')
+        if 'switch' in data:
+            switch_list = Model().get_list_option_html('switch', data['switch'])
+        else:
+            switch_list = Model().get_list_option_html('switch')
 
         raw_html = Template("""
             <div class="input-group">
@@ -272,7 +277,7 @@ def edit(record=None):
             flash(error, "error")
         return redirect(url_for('edit', record=record), code=302)
     else:
-        return render_template("edit.html", table=TABLE_CAP, record=record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
+        return render_template("edit.html", table=TABLE_CAP, record=record,  data=data, switch_list=switch_list, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
 
 
 @app.route('/delete/<string:record>', methods=['GET'])
@@ -337,6 +342,10 @@ def clone(record=None):
             group_list = Model().get_list_option_html('group', data['group'])
         else:
             group_list = Model().get_list_option_html('group')
+        if 'switch' in data:
+            switch_list = Model().get_list_option_html('switch', data['switch'])
+        else:
+            switch_list = Model().get_list_option_html('switch')
         raw_html = Template("""
             <div class="input-group">
                 <span class="input-group-text">Interface</span>
@@ -402,7 +411,7 @@ def clone(record=None):
             flash(error, "error")
         return redirect(url_for('clone', record=record), code=302)
     else:
-        return render_template("clone.html", table=TABLE_CAP, record=record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
+        return render_template("clone.html", table=TABLE_CAP, record=record,  data=data, switch_list=switch_list, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html, group_list=group_list)
 
 
 @app.route('/osgrab/<string:record>', methods=['GET', 'POST'])
