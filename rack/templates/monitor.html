@@ -1,0 +1,553 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<!-- <div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{{ table }} /</span> Luna</h4>
+  <div class="card">
+    <h5 class="card-header">{% if record %}{{ record }}{% else %}{{ table }} {% endif %}
+      <span id="title">{{title }}</span>
+      <span style="float: right;">
+        <a onclick="status('status');" style="color: white;" id="btn-status" class="btn btn-info">Monitor Status</a>
+        <a onclick="status('queue');" style="color: white;" id="btn-queue" class="btn btn-primary">Monitor Queue</a>
+      </span>
+    </h5>
+    <div class="card-body">
+      <div class="table-responsive text-nowrap">
+        <div id="default">
+          {% if data %}
+            {{ data | safe }}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div> -->
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack /</span> Position</h4>
+  {% if messages %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+
+<style>
+  .red-cell {
+    background: #F00; /* Or some other color */
+  }
+</style>
+
+
+<style>
+  .node{
+    background-color: #696cff;
+    color: #fff;
+  }
+  .switch{
+    background-color: #007bff;
+    color: #fff;
+  }
+  .otherdev{
+    background-color: #fd7e14;
+    color: #fff;
+  }
+  </style>
+
+<!-- <style>
+  #ctxMenu{
+    display:none;
+    z-index:100;
+}
+#notepad{
+    position:absolute;
+    left:25%;
+    top:10%;
+    width:300px;
+    height:300px;
+    background-color:rgb(110, 69, 69);
+}
+menu {
+    position:absolute;
+    display:block;
+    left:0px;
+    top:0px;
+    height:20px;
+    width:20px;
+    padding:0;
+    margin:0;
+    border:1px solid;
+    background-color:white;
+    font-weight:normal;
+    white-space:nowrap;
+}
+menu:hover{
+    background-color:#eef;
+    font-weight:bold;
+}
+menu:hover > menu{
+    display:block;
+}
+menu > menu{
+    display:none;
+    position:relative;
+    top:-20px;
+    left:100%;
+    width:55px;
+}
+menu[title]:before{
+    content:attr(title);
+}
+menu:not([title]):before{
+    content:"\2630";
+}
+</style> -->
+<div class="row">
+  <!-- Basic Layout -->
+  <div class="col-xxl">
+    <div class="card mb-4">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">Rack Position <span style="color: red;">Drag and Drop  devices between racks are not permited at this moment.</span></h5>
+        <small class="text-muted float-end">Change Position here...</small>
+      </div>
+
+      <!-- <menu id="ctxMenu">
+        <menu title="Redfish"></menu>
+        <menu title="Redfish"></menu>
+        <menu title="Redfish"></menu>
+        <menu title="Redfish"></menu>
+        <menu title="Redfish"></menu>
+        <menu title="Redfish"></menu>
+        <menu title="Control">
+            <menu title="Power"></menu>
+            <menu title="Sel"></menu>
+            <menu title="Chassis"></menu>
+            <menu title="Redfish"></menu>
+        </menu>
+        <menu title="Edit">
+            <menu title="Cut"></menu>
+            <menu title="Copy"></menu>
+            <menu title="Paste"></menu>
+        </menu>
+    </menu>
+    <div id="notepad">
+    </div> -->
+
+<style>
+  .dropdown-menu>li>a {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: normal;
+    line-height: 1.428571429;
+    color: #333;
+    white-space: nowrap;
+}
+</style>
+
+
+      <div class="card-body">
+        
+        <table id="myTable" class="table table-hover">
+          <thead>
+              <tr>
+                  <th>#</th>
+                  <th>First Name</th>
+                  <th>Last Name</th>
+                  <th>Username</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+                  <td>1</td>
+                  <td>Mark</td>
+                  <td>Otto</td>
+                  <td class="username">@mdo</td>
+              </tr>
+              <tr>
+                  <td>2</td>
+                  <td>Jacob</td>
+                  <td>Thornton</td>
+                  <td class="username">@fat</td>
+              </tr>
+              <tr>
+                  <td>3</td>
+                  <td>Larry</td>
+                  <td>the Bird</td>
+                  <td class="username">@twitter</td>
+              </tr>
+          </tbody>
+      </table>
+      
+      <ul id="contextMenu" class="dropdown-menu" role="menu" style="display:none" >
+          <li><a tabindex="-1" href="#" value="menu1:action-1">Action</a></li>
+          <li><a tabindex="-1" href="#" value="menu1:action-2">Another action</a></li>
+          <li><a tabindex="-1" href="#" value="menu1:action-3">Something else here</a></li>
+          <li class="divider"></li>
+          <li><a tabindex="-1" href="#" value="action-4">Separated link</a></li>
+      </ul>
+      <ul id="contextMenuUsername" class="dropdown-menu" role="menu" style="display:none" >
+          <li><a tabindex="-1" href="#" value="menu2:action-1">User action</a></li>
+          <li><a tabindex="-1" href="#" value="menu2:action-2">Another user action</a></li>
+      </ul>
+      
+      
+
+
+<!-- 
+
+Left Pane
+
+ClusterName       > Right Click -> Edit Cluster
+  - Networks
+    - Add a Network
+    - Cluster     > Right Click -> Open Menu to Info, Edit, Remove
+    - IPMI        > Right Click -> Open Menu to Info, Edit, Remove
+    - IB          > Right Click -> Open Menu to Info, Edit, Remove
+  - OS Images
+    - Add a OS Image
+    - RedHat 8    > Right Click -> Open Menu to Info, Edit, Remove, Clone, Pack
+    - RedHat 9    > Right Click -> Open Menu to Info, Edit, Remove, Clone, Pack
+    - Ubuntu      > Right Click -> Open Menu to Info, Edit, Remove, Clone, Pack
+  - BMC Setups
+    - Add a BMC Setup
+    - Compute     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - Belwin      > Right Click -> Open Menu to Info, Edit, Remove, Clone
+  - Groups
+    - Add a Group
+    - Compute     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - Raritan     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+  - Nodes
+    - Add a Node
+    - Node001     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - Node002     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - Node003     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - Node004     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+  - Switches
+    - Add a Switch
+    - Switch01    > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - NetGear     > Right Click -> Open Menu to Info, Edit, Remove, Clone
+  - Other Devices
+    - Add a Other Device
+    - Ardino01    > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - Cam01       > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - SUT-EHL-01  > Right Click -> Open Menu to Info, Edit, Remove, Clone
+    - SUT-TGL-01  > Right Click -> Open Menu to Info, Edit, Remove, Clone
+
+Right Pane
+ClusterName     > Left Click
+Tabs > Info, Edit, Rack View
+
+
+Rack View
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Left Pane
+Rack Room
+
+
+Right Pane
+        Rack01    Rack02    Rack03    Rack04    Rack05
+Hight
+Width
+Nodes > Node Name, Temperature > Right Click > Control, Info, edit, etc.
+
+
+
+
+ -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+<!-- <svg baseProfile="full" height="300" version="1.1" width="269" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <style type="text/css">
+      <![CDATA[
+      svg {
+        --nbx-rack-bg: #e9ecef;
+        --nbx-rack-border: #000;
+        --nbx-rack-slot-bg: #e9ecef;
+        --nbx-rack-slot-border: #adb5bd;
+        --nbx-rack-slot-hover-bg: #ced4da;
+        --nbx-rack-link-color: #0d6efd;
+        --nbx-rack-unit-color: #6c757d
+      }
+
+      svg[data-netbox-color-mode=dark] {
+        --nbx-rack-bg: #343a40;
+        --nbx-rack-border: #6c757d;
+        --nbx-rack-slot-bg: #343a40;
+        --nbx-rack-slot-border: #495057;
+        --nbx-rack-slot-hover-bg: #212529;
+        --nbx-rack-link-color: #9ec5fe;
+        --nbx-rack-unit-color: #6c757d
+      }
+
+      * {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, Liberation Sans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", Segoe UI Symbol, "Noto Color Emoji";
+        font-size: .875rem
+      }
+
+      rect {
+        box-sizing: border-box
+      }
+
+      text {
+        text-anchor: middle;
+        dominant-baseline: middle
+      }
+
+      svg .unit {
+        margin: 0;
+        padding: 5px 0;
+        fill: var(--nbx-rack-unit-color)
+      }
+
+      svg .hidden {
+        visibility: hidden
+      }
+
+      svg rect.shaded,
+      svg image.shaded {
+        opacity: 25%
+      }
+
+      svg text.shaded {
+        opacity: 50%
+      }
+
+      svg .rack {
+        fill: none;
+        stroke-width: 2px;
+        stroke: var(--nbx-rack-border);
+        background-color: var(--nbx-rack-bg)
+      }
+
+      svg .slot {
+        fill: var(--nbx-rack-slot-bg);
+        stroke: var(--nbx-rack-slot-border)
+      }
+
+      svg .slot:hover {
+        fill: var(--nbx-rack-slot-hover-bg)
+      }
+
+      svg .slot+.add-device {
+        fill: var(--nbx-rack-link-color);
+        opacity: 0;
+        pointer-events: none
+      }
+
+      svg .slot:hover+.add-device {
+        opacity: 1
+      }
+
+      svg .slot.occupied[class],
+      svg .slot.occupied:hover[class] {
+        fill: url(#occupied)
+      }
+
+      svg .slot.blocked[class],
+      svg .slot.blocked:hover[class] {
+        fill: url(#blocked)
+      }
+
+      svg .slot.blocked:hover+.add-device {
+        opacity: 0
+      }
+
+      svg .reservation[class] {
+        fill: url(#reserved)
+      }
+      ]]>
+    </style>
+    <linearGradient gradientTransform="rotate(45, 0, 0)" gradientUnits="userSpaceOnUse" id="reserved" spreadMethod="repeat" x1="0" x2="0" y1="0" y2="25">
+      <stop offset="0%" stop-color="#f7f7f7" />
+      <stop offset="50%" stop-color="#f7f7f7" />
+      <stop offset="50%" stop-color="#b0b0ff" />
+      <stop offset="100%" stop-color="#b0b0ff" />
+    </linearGradient>
+    <linearGradient gradientTransform="rotate(45, 0, 0)" gradientUnits="userSpaceOnUse" id="occupied" spreadMethod="repeat" x1="0" x2="0" y1="0" y2="25">
+      <stop offset="0%" stop-color="#f7f7f7" />
+      <stop offset="50%" stop-color="#f7f7f7" />
+      <stop offset="50%" stop-color="#d7d7d7" />
+      <stop offset="100%" stop-color="#d7d7d7" />
+    </linearGradient>
+    <linearGradient gradientTransform="rotate(45, 0, 0)" gradientUnits="userSpaceOnUse" id="blocked" spreadMethod="repeat" x1="0" x2="0" y1="0" y2="25">
+      <stop offset="0%" stop-color="#f7f7f7" />
+      <stop offset="50%" stop-color="#f7f7f7" />
+      <stop offset="50%" stop-color="#ffc0c0" />
+      <stop offset="100%" stop-color="#ffc0c0" />
+    </linearGradient>
+  </defs>
+  <text class="unit" x="15.0" y="15.0">1</text>
+  <text class="unit" x="15.0" y="37.0">2</text>
+  <text class="unit" x="15.0" y="59.0">3</text>
+  <text class="unit" x="15.0" y="81.0">4</text>
+  <text class="unit" x="15.0" y="103.0">5</text>
+  <text class="unit" x="15.0" y="125.0">6</text>
+  <text class="unit" x="15.0" y="147.0">7</text>
+  <text class="unit" x="15.0" y="169.0">8</text>
+  <text class="unit" x="15.0" y="191.0">9</text>
+  <text class="unit" x="15.0" y="213.0">10</text>
+  <text class="unit" x="15.0" y="235.0">11</text>
+  <text class="unit" x="15.0" y="257.0">12</text>
+  <text class="unit" x="15.0" y="279.0">13</text>
+  
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=13">
+    <rect class="slot" height="22" width="220" x="32" y="2" />
+    <text class="add-device" x="142.0" y="13.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=12">
+    <rect class="slot" height="22" width="220" x="32" y="24" />
+    <text class="add-device" x="142.0" y="35.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=11">
+    <rect class="slot" height="22" width="220" x="32" y="46" />
+    <text class="add-device" x="142.0" y="57.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=10">
+    <rect class="slot" height="22" width="220" x="32" y="68" />
+    <text class="add-device" x="142.0" y="79.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=9">
+    <rect class="slot" height="22" width="220" x="32" y="90" />
+    <text class="add-device" x="142.0" y="101.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=8">
+    <rect class="slot" height="22" width="220" x="32" y="112" />
+    <text class="add-device" x="142.0" y="123.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=7">
+    <rect class="slot" height="22" width="220" x="32" y="134" />
+    <text class="add-device" x="142.0" y="145.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=6">
+    <rect class="slot" height="22" width="220" x="32" y="156" />
+    <text class="add-device" x="142.0" y="167.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=5">
+    <rect class="slot" height="22" width="220" x="32" y="178" />
+    <text class="add-device" x="142.0" y="189.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=4">
+    <rect class="slot" height="22" width="220" x="32" y="200" />
+    <text class="add-device" x="142.0" y="211.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=3">
+    <rect class="slot" height="22" width="220" x="32" y="222" />
+    <text class="add-device" x="142.0" y="233.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=2">
+    <rect class="slot" height="22" width="220" x="32" y="244" />
+    <text class="add-device" x="142.0" y="255.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="/dcim/devices/add/?site=2&amp;location=&amp;rack=1&amp;face=front&amp;position=1">
+    <rect class="slot" height="22" width="220" x="32" y="266" />
+    <text class="add-device" x="142.0" y="277.0">add device</text>
+  </a>
+  <a target="_parent" xlink:href="https://demo.netbox.dev/dcim/devices/74/">
+    <title>Name: None Role: Patch Panel Device Type: Panduit 48-Port Patch Panel (2U) </title>
+    <rect class="slot" height="44" style="fill: #607d8b" width="220" x="32" y="2" />
+    <text class="label" fill="#ffffff" x="142.0" y="24.0">48-Port Patch Panel</text>
+  </a>
+  <a target="_parent" xlink:href="https://demo.netbox.dev/dcim/devices/14/">
+    <title>Name: dmi01-akron-sw01 Role: Access Switch Device Type: Cisco C9200-48P (1U) </title>
+    <rect class="slot" height="22" style="fill: #03a9f4" width="220" x="32" y="46" />
+    <text class="label" fill="#ffffff" x="142.0" y="57.0">dmi01-akron-sw01</text>
+  </a>
+  <a target="_parent" xlink:href="https://demo.netbox.dev/dcim/devices/1/">
+    <title>Name: dmi01-akron-rtr01 Role: Router Device Type: Cisco ISR 1111-8P (1U) </title>
+    <rect class="slot" height="22" style="fill: #4caf50" width="220" x="32" y="178" />
+    <text class="label" fill="#ffffff" x="142.0" y="189.0">dmi01-akron-rtr01</text>
+  </a>
+  <a target="_parent" xlink:href="https://demo.netbox.dev/dcim/devices/27/">
+    <title>Name: dmi01-akron-pdu01 Role: PDU Device Type: APC AP7901 (1U) </title>
+    <rect class="slot" height="22" style="fill: #607d8b" width="220" x="32" y="266" />
+    <text class="label" fill="#ffffff" x="142.0" y="277.0">dmi01-akron-pdu01</text>
+  </a>
+  <rect class="rack" height="288" width="222" x="31.0" y="1.0" />
+</svg> -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 
+        {% if rack_data %}
+          {% for rack, devices in rack_data.items() %}
+            <style>
+              #{{ rack }} {
+                width: 300px; height: 400px; padding: 0.5em; float: left; margin: 10px;
+                border: 1px solid #696cff;
+                min-height: 20px;
+                list-style-type: none;
+                padding: 5px 0 0 0;
+                float: left;
+                margin-right: 10px;
+              }
+              #{{ rack }} li {
+                width: 280px; height: 50px; padding: 0.5em; float: left; margin: 5px 5px 5px 5px;
+                padding: 5px;
+                border: 1px solid #e83e8c;
+                font-size: 1.2em;
+              }
+            </style>
+            <ul id="{{ rack }}" class="connectedSortable"><h5 style="margin-left: 10px;">{{ rack.capitalize() }}</h5>
+              {% for device in devices %}
+                <li id="{{ device }}" class="ui-state-default {% if 'node' in device%}node{% elif 'switch' in device%}switch{% else %}otherdev{% endif %}">
+                  {{ device.upper() }}
+                  <span style="float: right;">
+                    <a href="/rack/on/{{ device }}" class="on" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs' ></i> <span>ON</span>"><i class="bx bx-sm bx-power-off" style="color: #71dd37;"></i></a>
+                    <a href="/rack/off/{{ device }}" class="off" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs' ></i> <span>OFF</span>"><i class="bx bx-sm bx-power-off bx-flip-vertical" style="color: #ff3e1d;"></i></a>
+                    <a href="/rack/status/{{ device }}" class="status" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs' ></i> <span>Check Status</span>"><i class="bx bx-sm bx-stats" style="color: #03c3ec;"></i></a>
+                  </span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endfor %}
+        {% else %}
+          <div class="alert alert-error" role="alert">No Rack is available to manage.</div>
+        {% endif %} -->
+   
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<hr class="my-5" />
+{% endblock content %}

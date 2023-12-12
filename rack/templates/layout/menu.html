@@ -1,0 +1,217 @@
+
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+  <div class="app-brand demo">
+    <a href="/" class="app-brand-link gap-2">
+      <!-- <img class="mb-4" src="{{ url_for('static', filename='img/ClusterVisionlogo.svg') }}" alt="" width="100" height="100"> -->
+      <span class="app-brand-text demo text-body fw-bolder">Rack Manage</span>
+    </a>
+    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+      <i class="bx bx-chevron-left bx-sm align-middle"></i>
+    </a>
+  </div>
+
+  <div class="menu-inner-shadow"></div>
+
+  <ul class="menu-inner py-1">
+    <!-- Dashboard -->
+    <li class="menu-item">
+      <a href="/dashboard" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-home-circle"></i>
+        <div data-i18n="Analytics">Dashboard</div>
+      </a>
+    </li>
+
+    <li class="menu-item">
+        <a href="/dashboard" class="menu-link">
+          <i class="menu-icon tf-icons bx bx-home-circle"></i>
+          <div data-i18n="Analytics">Rack Layout</div>
+        </a>
+      </li>
+  
+
+    <li class="menu-item open active">
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+          <i class="menu-icon tf-icons bx bx-user"></i>
+          <div data-i18n="Account Settings">Rack Layout</div>
+        </a>
+        <ul class="menu-sub">
+          <li class="menu-item active">
+            <a href="/inventory/osuser" class="menu-link">
+              <div data-i18n="Account">User List</div>
+            </a>
+          </li>
+          <li class="menu-item {% if '/inventory/osgroup' in request.build_absolute_uri %}active{% endif %}">
+            <a href="/inventory/osgroup" class="menu-link">
+              <div data-i18n="Account">Group List</div>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+    <!-- <li class="menu-item">
+        <a href="/dashboard" class="menu-link">
+          <i class="menu-icon tf-icons bx bx-home-circle"></i>
+          <div data-i18n="Analytics">Racks</div>
+        </a>
+      </li> -->
+
+    <!-- <li class="menu-item ">
+      <a href="/rack" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-server"></i>
+        <div data-i18n="Basic">Rack Position</div>
+      </a>
+    </li> -->
+
+    <!-- <li class="menu-item open active">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bx-user"></i>
+        <div data-i18n="Account Settings">User Management</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item active">
+          <a href="/inventory/osuser" class="menu-link">
+            <div data-i18n="Account">User List</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/inventory/osgroup' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/inventory/osgroup" class="menu-link">
+            <div data-i18n="Account">Group List</div>
+          </a>
+        </li>
+      </ul>
+    </li> -->
+
+    <!-- Components -->
+    <li class="menu-header small text-uppercase"><span class="menu-header-text">Manage</span></li>
+    <!-- Cards -->
+
+    <li class="menu-item {% if '/cluster' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/cluster" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-chip"></i>
+        <div data-i18n="Basic">Cluster</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if '/network' in request.build_absolute_uri or '/ipinfo' in request.build_absolute_uri or '/nextip' in request.build_absolute_uri %}open{% endif %}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bx-network-chart"></i>
+        <div data-i18n="Account Settings">Networks</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if '/inventory/network' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/inventory/network" class="menu-link">
+            <div data-i18n="Account">Network List</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/ipinfo' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/ipinfo" class="menu-link">
+            <div data-i18n="Notifications">IP Information</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/nextip' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/nextip" class="menu-link">
+            <div data-i18n="Connections">Next Free IP</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="menu-item {% if '/bmcsetup' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/inventory/bmcsetup" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-wallet-alt"></i>
+        <div data-i18n="Basic">BMC Setups</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if '/switch' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/inventory/switch" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-customize"></i>
+        <div data-i18n="Basic">Switches</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if '/otherdev' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/inventory/otherdev" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-devices"></i>
+        <div data-i18n="Basic">Other Devices</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if '/osimage' in request.build_absolute_uri or '/pack' in request.build_absolute_uri or '/kernel' in request.build_absolute_uri %}open{% endif %}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bx-images"></i>
+        <div data-i18n="Account Settings">OS Images</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if '/inventory/osimage' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/inventory/osimage" class="menu-link">
+            <div data-i18n="Account">OS Image List</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/pack' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/pack" class="menu-link">
+            <div data-i18n="Notifications">Pack A OS Image</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/kernel' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/kernel" class="menu-link">
+            <div data-i18n="Connections">Change Kernel</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="menu-item {% if '/group/' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/inventory/group" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-group"></i>
+        <div data-i18n="Basic">Groups</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if '/node/' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/inventory/node" class="menu-link">
+        <i class="menu-icon tf-icons bx bxs-component"></i>
+        <div data-i18n="Basic">Nodes</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if 'secrets' in request.build_absolute_uri %}open{% endif %}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bxs-data"></i>
+        <div data-i18n="Account Settings">Secrets</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if '/secrets/' in request.build_absolute_uri and '/group/' not in request.build_absolute_uri  and '/node/' not in request.build_absolute_uri  %}active{% endif %}">
+          <a href="/secrets/" class="menu-link">
+            <div data-i18n="Account">All Secrets</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/secrets/group' in request.build_absolute_uri or '/groupsecrets' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/secrets/group" class="menu-link">
+            <div data-i18n="Account">Group Secrets</div>
+          </a>
+        </li>
+        <li class="menu-item {% if '/secrets/node' in request.build_absolute_uri or '/nodesecrets' in request.build_absolute_uri %}active{% endif %}">
+          <a href="/secrets/node" class="menu-link">
+            <div data-i18n="Account">Node Secrets</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="menu-item {% if '/service' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/service" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-hive"></i>
+        <div data-i18n="Basic">Services</div>
+      </a>
+    </li>
+
+    <li class="menu-item {% if '/power' in request.build_absolute_uri %}active{% endif %}">
+      <a href="/power" onclick="power_table();" class="menu-link">
+        <i class="menu-icon tf-icons bx bxl-react"></i>
+        <div data-i18n="Basic">Power <span style="color: red;"></span></div>
+      </a>
+    </li>
+
+  </ul>
+</aside>
