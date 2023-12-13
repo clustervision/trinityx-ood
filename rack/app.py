@@ -58,7 +58,8 @@ def home():
     }
 
     response = status('status')
-    return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
+    # return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
+    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
 
 
 @app.route('/status/<string:service>', methods=['GET'])

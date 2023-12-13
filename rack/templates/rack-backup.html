@@ -1,0 +1,734 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<meta name="author" content="Darko Bunic"/>
+		<meta name="description" content="Drag and drop table content with JavaScript"/>
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css" media="screen" />
+		<script type="text/javascript" src="{{ url_for('static', filename='js/drag.js') }}"></script>
+		<!-- initialize drag and drop -->
+		<script type="text/javascript">
+      
+
+			window.onload = function () {
+				// reference to the REDIPS.drag class
+				var rd = REDIPS.drag;
+				// initialization
+				rd.init();
+				// only "smile" can be placed to the marked cell
+				rd.mark.exception.d8 = 'smile';
+				// prepare handlers
+				rd.myhandler_clicked    = function () {document.getElementById('message').innerHTML = 'Clicked'}
+				rd.myhandler_moved      = function () {document.getElementById('message').innerHTML = 'Moved'}
+				rd.myhandler_notmoved   = function () {document.getElementById('message').innerHTML = 'Not moved'}
+				//rd.myhandler_dropped    = function () {document.getElementById('message').innerHTML = 'Dropped'}
+				rd.myhandler_switched   = function () {document.getElementById('message').innerHTML = 'Switched'}
+				rd.myhandler_clonedend1 = function () {document.getElementById('message').innerHTML = 'Cloned end1'}
+				rd.myhandler_clonedend2 = function () {document.getElementById('message').innerHTML = 'Cloned end2'}
+				rd.myhandler_notcloned  = function () {document.getElementById('message').innerHTML = 'Not cloned'}
+				rd.myhandler_deleted    = function () {document.getElementById('message').innerHTML = 'Deleted'}
+				rd.myhandler_undeleted  = function () {document.getElementById('message').innerHTML = 'Undeleted'}
+				rd.myhandler_cloned     = function () {
+					// display message
+					document.getElementById('message').innerHTML = 'Cloned';
+					// append 'd' to the element text (Clone -> Cloned)
+					rd.obj.innerHTML += 'd';
+				}
+				rd.myhandler_changed    = function () {
+					// define current row and current cell
+					var ri = REDIPS.drag.current_cell.parentNode.rowIndex,
+						ci = REDIPS.drag.current_cell.cellIndex;
+					// display current row and current cell
+					document.getElementById('message').innerHTML = 'Changed: ' + ri + ' ' + ci;
+				}
+
+        rd.myhandler_dropped    = function () {
+         // console.log(REDIPS.drag.current_cell);
+         //   console.log(REDIPS.drag);
+         var source_rowspan = REDIPS.drag.source_cell.rowSpan;
+         var destination_rowspan = REDIPS.drag.current_cell.rowSpan;
+            //console.log(REDIPS.drag.source_cell.rowSpan);
+            console.log(REDIPS.drag);
+            console.log(REDIPS.drag.source_cell.parentNode);
+            console.log(REDIPS.drag.source_cell.parentNode.rowIndex);
+            console.log(REDIPS.drag.source_cell.cellIndex);
+            console.log(REDIPS.drag.source_cell.id);
+            console.log(REDIPS.drag.current_cell);
+
+          if (source_rowspan != 1){
+            var source_id = REDIPS.drag.source_cell.id;
+            var current_id = REDIPS.drag.current_cell.id;
+
+            console.log(current_id);
+            console.log(current_id+1);
+            console.log(current_id+2);
+            var element = document.getElementById(Number(current_id)+1);
+            element.remove();
+            var element = document.getElementById(Number(current_id)+2);
+            element.remove();
+
+            
+            REDIPS.drag.source_cell.rowSpan = destination_rowspan;
+            REDIPS.drag.current_cell.rowSpan = source_rowspan;
+
+            /*             
+            var element = document.getElementById(Number(source_id)+1);
+            element.remove();
+            var element = document.getElementById(Number(source_id)+2);
+            element.remove();
+            */
+
+          }
+
+            
+
+
+            //console.log(REDIPS.drag);
+            //REDIPS.drag.source_cell.rowSpan = destination_rowspan;
+            //REDIPS.drag.current_cell.rowSpan = source_rowspan;
+
+          document.getElementById('message').innerHTML = 'Dropped';
+        }
+			}
+
+
+			// toggles trash_ask parameter defined at the top
+			function toggle_confirm(chk) {
+				REDIPS.drag.trash_ask = chk.checked;
+			}
+			// toggles delete_cloned parameter defined at the top
+			function toggle_delete_cloned(chk) {
+				REDIPS.drag.delete_cloned = chk.checked;
+			}
+			// enables / disables dragging
+			function toggle_dragging(chk) {
+				REDIPS.drag.enable_drag(chk.checked);
+			}
+
+
+      REDIPS.drag.drop_option = "single";
+
+			// function sets drop_option parameter defined at the top
+			function set_drop_option(radio_button) {
+				//REDIPS.drag.drop_option = radio_button.value;
+				REDIPS.drag.drop_option = "single";
+			}
+
+ /*     // set drop option regarding to the table where DIV element belongs
+			function set_drop_option (el) {
+				// loop up until found table
+				while (el && el.nodeName !== 'TABLE') {
+					el = el.parentNode;
+				}
+				// loop ends and "el" position should be table
+				//if (el.id === 'table1') {
+				//	rd.drop_option = 'switching';
+				//}
+				//else {
+					rd.drop_option = 'single';
+          REDIPS.drag.multipleDrop = 'top';
+				//}
+			}
+
+
+*/
+
+/*   
+			// show prepared content for saving
+			function save(){
+				// scan first table
+				var content = REDIPS.drag.save_content(0);
+				// if content doesn't exist
+				if (content === '') {
+					alert('Table is empty!');
+				}
+				// display query string
+				else {
+					//window.open('/my/multiple-parameters.php?' + content, 'Mypop', 'width=350,height=160,scrollbars=yes');
+					window.open('multiple-parameters.php?' + content, 'Mypop', 'width=350,height=260,scrollbars=yes');
+				}
+			}
+
+      */
+		</script>
+		<title>Rack Manage</title>
+
+
+    <script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/jquery.contextmenu.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.css') }}">
+    <script>
+      $(function() {
+        $('.right-click').contextPopup({
+          title: 'My Popup Menu',
+          items: [
+            {label:'Detail',     icon:'icons/shopping-basket.png',             action:function() { alert('clicked 1') } },
+            {label:'Edit', icon:'icons/receipt-text.png',                action:function() { alert('clicked 2') } },
+            {label:'Clone',     icon:'icons/book-open-list.png',              action:function() { alert('clicked 3') } },
+            null, // divider
+            {label:'Delete',         icon:'icons/application-monitor.png',         action:function() { alert('clicked 4') } },
+            {label:'Power ON',        icon:'icons/bin-metal.png',                   action:function() { alert('clicked 5') } },
+            {label:'Power OFF',         icon:'icons/magnifier-zoom-actual-equal.png', action:function() { alert('clicked 6') } },
+            null, // divider
+            {label:'Power Reset',       icon:'icons/application-table.png',           action:function() { alert('clicked 7') } },
+            {label:'Power Status',      icon:'icons/cassette.png',                    action:function() { alert('clicked 8') } }
+          ]
+        });
+      });
+    </script>
+
+
+	</head>
+	<body>
+
+    <!-- <div class="mythingy" style="width:50; height: 50px; margin: 10px; border:2px dashed #666666; padding:6px">
+      right click in this box to show custom context menu 
+    </div>
+
+    <div class="right-click" >
+      right click in this box to show custom context menu 
+    </div> -->
+		<center>
+			<h1><a href="http://www.clustervision.com">Rack Manage</a></h1>
+			<h2>Manage Rack</h2>
+		</center>
+		<!-- tables inside this DIV could have draggable content -->
+		<div id="drag">
+			<table id="table1">
+        <tr>
+        <td class="mark light"></td>
+        <td id="message" class="mark light" title="You can not drop here">State</td>
+        <td class="trash mark light" title="Trash" style="">Trash</td>
+        <td class="mark light"><div><input type="checkbox" class="checkbox" onclick="toggle_dragging(this)" title="Enable dragging" checked="true"/>Drag Drop</div></td>
+      </tr>
+				<colgroup><col width="100"/><col width="100"/><col width="100"/><col width="100"/><col width="100"/></colgroup>
+        
+				<tr>
+					<td class="mark dark">U</td>
+					<td class="mark dark">Rack 01</td>
+					<!-- <td class="mark dark">Rack 02</td>
+					<td class="mark dark">Rack 03</td>
+					<td class="mark dark">Rack 04</td>
+					<td class="mark dark">Rack 05</td> -->
+				</tr>
+				<tr style="background-color: #eee">
+          <td class="mark light">01</td>
+					<td id="11" rowspan="3" style="vertical-align: top;"><div id="d1"  class="drag t1 right-click">Node001</div></td>
+          
+          <!-- <div style="left: 0px; top: 0px; width: 100%; height: 100%; position: absolute; z-index: 1000000;"></div> -->
+
+					<!-- <td></td>
+					<td><div id="d2" class="drag t2 right-click">Node002</div></td>
+					<td><div id="d3" class="drag t2 right-click">Node003</div></td>
+					<td></td> -->
+				</tr>
+				<tr>
+          <td class="mark light">02</td>
+					<!-- <td><div id="d4" class="drag t1">Node004</div></td> -->
+					<!-- <td></td>
+					<td></td>
+					<td></td>
+					<td><div id="d5" class="drag t2 right-click">Node005</div></td> -->
+				</tr>
+				<tr style="background-color: #eee">
+          <td class="mark light">03</td>
+					<!-- <td></td> -->
+					<!-- <td><div id="d6" class="drag t2">Node006</div></td>
+					<td></td>
+					<td></td>
+					<td></td> -->
+				</tr>
+				<tr>
+          <td class="mark light">04</td>
+					<td id="14"></td>
+					<!-- <td></td>
+					<td><div id="d7" class="drag t2">Node007</div></td>
+					<td></td>
+					<td></td> -->
+				</tr>
+				<tr style="background-color: #eee">
+          <td class="mark light">05</td>
+					<td id="15"></td>
+					<!-- <td></td>
+					<td></td>
+					<td></td>
+					<td><div id="d8" class="drag t2"><img id="smile_img" src="{{ url_for('static', filename='icons/icon_smile.gif') }}"/> GPU 001</div></td> -->
+				</tr>
+        <tr >
+          <td class="mark light">06</td>
+					<td id="16"></td>
+					<!-- <td></td>
+					<td></td>
+					<td></td>
+					<td><div id="d8" class="drag t2"><img id="smile_img" src="{{ url_for('static', filename='icons/icon_smile.gif') }}"/> GPU 001</div></td> -->
+				</tr>
+
+
+
+        
+        <!-- <tr>
+          <td>06</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>07</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>08</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>09</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>10</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>11</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>12</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>13</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>14</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>15</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>16</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>16</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>18</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>19</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>20</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>21</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>22</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>23</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>24</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>25</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>26</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>27</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>28</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>29</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>30</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>31</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>32</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>33</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>34</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>35</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>36</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>37</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>38</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>39</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>40</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>41</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>42</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>43</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>44</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>45</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>46</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>47</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>48</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>49</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>50</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr style="background-color: #eee">
+          <td>51</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr>
+        <tr>
+          <td>52</td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td></td>
+				</tr> -->
+        
+			</table>
+
+			<!-- <table id="table2">
+				<colgroup><col width="100"/><col width="100"/><col width="100"/><col width="100"/><col width="100"/></colgroup>
+				<tr>
+					<td class="mark" title="You can not drop here">Table2</td>
+					<td style="background-color: #eee"><div id="d9" class="drag t2">and</div></td>
+					<td rowspan="3" style="background-color: #C6C8CB" title="rowspan 3"></td>
+					<td style="background-color: #eee"></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td><div id="d10" class="drag t2">Drag</div></td>
+					<td style="background-color: #eee"></td>
+					<td style="background-color: #eee"><div id="d11" class="drag t2">drop</div></td>
+					<td><div id="d12" class="drag t2">table</div></td>
+				</tr>
+				<tr>
+					<td colspan="2" style="background-color: #C6C8CB" title="colspan 2"></td>
+					<td colspan="2" style="background-color: #C6C8CB" title="colspan 2"></td>
+				</tr>
+				<tr>
+					<td colspan="2" style="background-color: #C6C8CB" title="colspan 2"></td>
+					<td rowspan="3" style="background-color: #C6C8CB" title="rowspan 3"></td>
+					<td colspan="2" style="background-color: #C6C8CB" title="colspan 2"></td>
+				</tr>
+				<tr>
+					<td><div id="d13" class="drag t2"><input type="text" style="width: 60px" value="content"/></div></td>
+					<td style="background-color: #eee"></td>
+					<td style="background-color: #eee"></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td style="background-color: #eee"><div id="d14" class="drag t2">with</div></td>
+					<td style="background-color: #eee"><div id="d15" class="drag t2">JavaScript</div></td>
+					<td class="mark smile" title="Only smile can be placed here"></td>
+				</tr>
+			</table>
+			<table id="table3">
+				<colgroup><col width="100"/><col width="100"/><col width="100"/><col width="100"/><col width="100"/></colgroup>
+				<tr style="background-color: #eee">
+					<td id="message" class="mark" title="You can not drop here">Table3</td>
+					<td><div id="link1" class="drag t3"><a href="#smile_img" title="Jump to the smile image (links can be used as well)">Smile</a></div></td>
+					<td></td>
+					<td></td>
+					<td><div id="d16" class="drag t3"><input type="checkbox" name="cb1"/><input type="checkbox" name="cb2"/><input type="checkbox" name="cb3"/></div></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td></td>
+					<td><div id="d17" class="drag t3 clone" title="infinite cloning">Clone</div></td>
+					<td></td>
+					<td></td>
+				</tr>
+				<tr>
+					<td><div id="d18" class="drag t3 clone climit1_3" title="Clone three elements">(1) Clone</div></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td><div id="d19" class="drag t3 clone climit2_2" title="Clone two elements and die">(2) Clone</div></td>
+				</tr>
+				<tr style="background-color: #eee">
+					<td><div id="d20" class="drag t3"><input type="radio" name="radio1"/><input type="radio" name="radio1"/><input type="radio" name="radio1"/></div></td>
+					<td></td>
+					<td></td>
+					<td></td>
+					<td class="trash" title="Trash">Trash</td>
+				</tr>
+			</table> -->
+			<!-- <div><input type="button" value="Save" class="button" onclick="save()" title="Send content to the server"/><span class="message_line">Save content of the first table (it will only show accepted parameters)</span></div>
+			<div><input type="radio" name="drop_option" class="checkbox" onclick="set_drop_option(this)" value="multiple" title="Enable dropping to already taken table cells"/><span class="message_line">Enable dropping to already taken table cells</span></div>
+			<div><input type="radio" name="drop_option" class="checkbox" onclick="set_drop_option(this)" value="single" title="Disable dropping to already taken table cells" checked="true"/><span class="message_line">Disable dropping to already taken table cells</span></div>
+			<div><input type="radio" name="drop_option" class="checkbox" onclick="set_drop_option(this)" value="switch" title="Switch content"/><span class="message_line">Switch content</span></div>
+			<div><input type="radio" name="drop_option" class="checkbox" onclick="set_drop_option(this)" value="switching" title="Switching content continuously"/><span class="message_line">Switching content continuously</span></div>
+			<div><input type="radio" name="drop_option" class="checkbox" onclick="set_drop_option(this)" value="overwrite" title="Overwrite content"/><span class="message_line">Overwrite content</span></div>
+			<div><input type="checkbox" class="checkbox" onclick="toggle_delete_cloned(this)" title="Remove cloned object if dragged outside of any table" checked="true"/><span class="message_line">Remove cloned object if dragged outside of any table</span></div>
+			<div><input type="checkbox" class="checkbox" onclick="toggle_confirm(this)" title="Confirm before delete object" checked="true"/><span class="message_line">Confirm before delete object</span></div> -->
+					
+		</div>
+
+
+
+
+      
+  
+
+
+	</body>
+</html>
