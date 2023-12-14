@@ -57,9 +57,9 @@ def home():
         "rack003": ["node003", "node004", "cam001"]
     }
 
-    response = status('status')
-    # return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
-    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
+    # response = status('status')
+    return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, rack_size=52, title='Status')
+    # return render_template("newrack.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
 
 
 @app.route('/status/<string:service>', methods=['GET'])
