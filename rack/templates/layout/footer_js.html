@@ -2,25 +2,12 @@
 <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 <script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-
-<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
-
-
-{% if rack_data %}
-    {% for rack, devices in rack_data.items() %}
-        <script>
-            $(function(){
-                $("#{{ rack }}").sortable({connectWith: ".connectedSortable"}).disableSelection();
-            });
-        </script>
-        
-    {% endfor %}
-{% endif %}
-<!-- {% for device in devices %}
-            <script>
-                $("#{{ device }}").draggable({ revert: "invalid" });
-            </script>
-        {% endfor %} -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script type="text/javascript">
+    //$('#devices').hide();
+    //$('#hide-button').hide();
+    //var text = $(this).attr("size")
+    //var text = $("#draggable").attr("size")
+    //console.log(text);
+</script>
