@@ -58,11 +58,11 @@ def home():
     # }
 
     rack_data = {
-        "rack001": {"size": 52, "devices": [{"name": "node001", "height": 1, "postion": 1}, {"name": "node002", "height": 1, "postion": 2}, {"name": "node003", "height": 4, "postion": 11}, {"name": "switch001", "height": 2, "postion": 20}, ] },
-        "rack002": {"size": 42, "devices": [{"name": "node004", "height": 1, "postion": 1}, {"name": "node005", "height": 1, "postion": 2}, {"name": "node006", "height": 4, "postion": 11}, {"name": "switch002", "height": 2, "postion": 20}, ] },
-        "rack003": {"size": 48, "devices": [{"name": "node007", "height": 1, "postion": 1}, {"name": "node008", "height": 1, "postion": 2}, {"name": "node009", "height": 4, "postion": 11}, {"name": "switch003", "height": 2, "postion": 20}, ] },
-        "rack004": {"size": 50, "devices": [{"name": "node010", "height": 1, "postion": 1}, {"name": "node011", "height": 1, "postion": 2}, {"name": "node012", "height": 4, "postion": 11}, {"name": "switch004", "height": 2, "postion": 20}, ] },
-        "rack005": {"size": 30, "devices": [{"name": "node013", "height": 1, "postion": 1}, {"name": "node014", "height": 1, "postion": 2}, {"name": "node015", "height": 4, "postion": 11}, {"name": "switch005", "height": 2, "postion": 20}, ] }
+        "rack001": {"size": 52, "devices": [{"name": "node001", "height": 1, "postion": 1}, {"name": "node002", "height": 2, "postion": 5}, {"name": "node003", "height": 3, "postion": 11}, {"name": "switch001", "height": 4, "postion": 20}, ] },
+        "rack002": {"size": 42, "devices": [{"name": "node004", "height": 5, "postion": 1}, {"name": "node005", "height": 6, "postion": 5}, {"name": "node006", "height": 7, "postion": 11}, {"name": "switch002", "height": 8, "postion": 20}, ] },
+        "rack003": {"size": 48, "devices": [{"name": "node007", "height": 1, "postion": 1}, {"name": "node008", "height": 1, "postion": 5}, {"name": "node009", "height": 4, "postion": 11}, {"name": "switch003", "height": 2, "postion": 20}, ] },
+        "rack004": {"size": 50, "devices": [{"name": "node010", "height": 1, "postion": 1}, {"name": "node011", "height": 1, "postion": 5}, {"name": "node012", "height": 4, "postion": 11}, {"name": "switch004", "height": 2, "postion": 20}, ] },
+        "rack005": {"size": 30, "devices": [{"name": "node013", "height": 1, "postion": 1}, {"name": "node014", "height": 1, "postion": 5}, {"name": "node015", "height": 4, "postion": 11}, {"name": "switch005", "height": 2, "postion": 20}, ] }
     
     }
 

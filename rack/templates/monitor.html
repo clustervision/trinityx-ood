@@ -9,21 +9,37 @@
     {% endfor %}
 {% endif %}
 
-<script type="text/javascript">
-
-//var text = $(this).attr("size")
-
-</script>
-
   <style>
-  .draggable {  width: 200px; height: 30px; padding: 0.5em; float: left; margin: 5px 5px 5px 5px; }
-  .draggable-xl {  width: 200px; height: 60px; padding: 0.5em; float: left; margin: 5px 5px 5px 5px; }
-  .draggable-xxl {  width: 200px; height: 90px; padding: 0.5em; float: left; margin: 5px 5px 5px 5px; }
-  .snaptarget p, .ui-widget-content p { margin: 0; }
+  .manage{ position: absolute; z-index: 100; }
+  .draggable {  width: 200px; height: 30px; }
   .snaptarget {width: 220px; height: 30px; }
+  #devices {width: 100%; height: 300px; background-color: antiquewhite;
+    /*   display: flex;   position: absolute;
+    justify-content: space-between; */
+  }
+
+  .ui-state-hover {
+    border: 1px solid #cccccc;
+    background: #067a19;
+    font-weight:bolder;
+    color: #ffffff;
+}
   </style>
   
-
+  <style>
+    .scrollmenu {
+      /*  overflow: auto;*/
+      /*    overflow-y: auto; */
+     
+     overflow-x: auto;white-space: nowrap;
+    }
+    
+    .right-click {
+      display: inline-block;
+      text-align: center;
+    }
+    
+    </style>
   <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 
  
@@ -47,33 +63,25 @@
             </div>
           </div>
           <br />
-          <div id="devices" class="row">
-            
+          <div id="devices" class=" ui-widget-header scrollmenu snaptarget">
             {% if rack_data %}
-            {% for key, value in rack_data.items() %}
-              {% for each in value['devices'] %}
-                  <div id="{{ each['name'] }}" style="height: {{ each['height']*30-2 }}px;"  class="draggable ui-widget-content right-click" size="{{ each['height'] }}" ><p>{{ each['name'] }}</p></div>
+              {% for key, value in rack_data.items() %}
+                {% for each in value['devices'] %}
+                  <div id="{{ each['name'] }}" style="height: {{ each['height']*30-2 }}px;"  class="draggable ui-widget-content right-click " size="{{ each['height'] }}" ><strong>{{ each['name'] }}</strong></div>
                   <script type="text/javascript">
-                    $( function() { $( "#{{ each['name'] }}" ).draggable({ snap: ".snaptarget", start: function(){ $(this).data("origPosition",$(this).position()); } }); });
+                    $(function(){
+                      $("#{{ each['name'] }}").draggable({
+                        revert: function() { if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } },
+                        cursor: "move", scroll: true,
+                        snap: ".snaptarget"
+                      }); 
+                    });
                   </script>
                 {% endfor %}
-            {% endfor %}
-          {% endif %}
-
-
-              <!-- <div id="draggable" class="draggable ui-widget-content right-click" size="1" ><p>Regular Size Node001</p></div>
-              <div id="draggable1" class="draggable ui-widget-content right-click" size="1"><p>Regular Size Node002</p></div>
-              <div id="draggable2" class="draggable ui-widget-content right-click" size="1"><p>Regular Size Node003</p></div>
-  
-              <div id="draggable3" class="draggable-xl ui-widget-content right-click" size="2"><p>Large Size GPU001</p></div>
-              <div id="draggable4" class="draggable-xl ui-widget-content right-click" size="2"><p>Large Size GPU002</p></div>
-              <div id="draggable5" class="draggable-xl ui-widget-content right-click" size="2"><p>Large Size GPU003</p></div>
-  
-              <div id="draggable6" class="draggable-xxl ui-widget-content right-click" size="3"><p>Extra Large Size Switch001</p></div>
-              <div id="draggable7" class="draggable-xxl ui-widget-content right-click" size="3"><p>Extra Large Size Switch002</p></div>
-              <div id="draggable8" class="draggable-xxl ui-widget-content right-click" size="3"><p>Extra Large Size Switch003</p></div> -->
-            </div>
-            <br />
+              {% endfor %}
+            {% endif %}
+          </div>
+          <br />
         </div>
     
         <div class="row">
@@ -93,7 +101,17 @@
             <div class="col col-2">
               <div class="ui-widget-header snaptarget"><p>{{ key }}</p></div>
                 {% for each in range(value["size"]+1) %}
-                <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
+                <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot</p>
+                  <!-- <div id="node001{{each}}" style="height: 28px; position: relative; left: 2px; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle" size="1"><strong>node001</strong></div>
+                  <script type="text/javascript">
+                    $(function(){
+                      $("#{{ each['name'] }}").draggable({
+                        revert: function() { if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } },
+                        cursor: "move", scroll: true,
+                        snap: ".snaptarget"
+                      }); 
+                    });
+                  </script> -->
                 </div>
                 {% endfor %}
               </div>
@@ -101,71 +119,7 @@
           </div> 
           {% endif %}
 
-          
-
-
-
-<!-- 
-          {% if rack_data %}
-            {% for key, value in rack_data.items() %}
-            <div class="col col-2">
-              <div class="ui-widget-header snaptarget"><p>{{ key }}</p></div>
-                {% for each in value['devices'] %}
-                  {{ each['name'] }}
-                  {{ each['height'] }}
-                  {{ each['postion'] }}
-                {% endfor %}
-              </div>
-            </div>
-            {% endfor %}
-          {% endif %} -->
-
-
-          <!-- <div class="col col-2">
-            <div class="ui-widget-header snaptarget"><p>RACK 1</p></div>
-            {% for each in range(rack_size+1) %}
-            <div id="snaptarget" class="ui-widget-header droppable snaptarget">
-              <p>Empty Slot: {{ each }}</p>
-            </div>
-            {% endfor %}
-          </div>
-
-          <div class="col col-2">
-            <div class="ui-widget-header snaptarget"><p>RACK 2</p></div>
-            {% for each in range(rack_size+1) %}
-            <div id="snaptarget" class="ui-widget-header droppable snaptarget">
-              <p>Empty Slot: {{ each }}</p>
-            </div>
-            {% endfor %}
-          </div>
-
-          <div class="col col-2">
-            <div class="ui-widget-header snaptarget"><p>RACK 3</p></div>
-            {% for each in range(rack_size+1) %}
-            <div id="snaptarget" class="ui-widget-header droppable snaptarget">
-              <p>Empty Slot: {{ each }}</p>
-            </div>
-            {% endfor %}
-          </div>
-
-          <div class="col col-2">
-            <div class="ui-widget-header snaptarget"><p>RACK 4</p></div>
-            {% for each in range(rack_size+1) %}
-            <div id="snaptarget" class="ui-widget-header droppable snaptarget">
-              <p>Empty Slot: {{ each }}</p>
-            </div>
-            {% endfor %}
-          </div>
-
-          <div class="col col-2">
-            <div class="ui-widget-header snaptarget"><p>RACK 5</p></div>
-            {% for each in range(rack_size+1) %}
-            <div id="snaptarget" class="ui-widget-header droppable snaptarget">
-              <p>Empty Slot: {{ each }}</p>
-            </div>
-            {% endfor %}
-          </div> -->
-
+      
         </div>
         <br style="clear:both">
 
@@ -174,70 +128,79 @@
   </div>
 </div>
 
-
 </div>
-
-
 
 <hr class="my-5" />
 
+<script>
 
 
-
-
-
-
-  <script>
   $( function() {
+    $( "#devices" ).droppable({
+      classes: {
+        "ui-droppable-active": "ui-state-active",
+        "ui-droppable-hover": "ui-state-hover"
+      },
+      
+      drop: function( event, ui ) {
+       
+          if ($(ui.draggable).parent().attr("class").includes("ui-state-highlight")){
+            $(ui.draggable).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+            $(ui.draggable).parent().nextAll().slice(0,$(ui.draggable).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+            console.log("YES");
+          } else {
+            console.log("NO");
+          }
 
-   // $( "#draggable" ).draggable({ snap: ".snaptarget", start: function(){ $(this).data("origPosition",$(this).position()); } });
-    //$( "#draggable" ).draggable({ snap: ".snaptarget" });
-   // $( "#draggable1" ).draggable({ snap: ".snaptarget",
-    //start: function(){
-    //  $(this).data("origPosition",$(this).position());
-  //} });
-    //$( "#draggable2" ).draggable({ snap: ".snaptarget",
-    //start: function(){
-    //  $(this).data("origPosition",$(this).position());
-  //} });
-    //$( "#draggable3" ).draggable({ snap: ".snaptarget",
-   // start: function(){
-   //   $(this).data("origPosition",$(this).position());
-  //} });
-    //$( "#draggable4" ).draggable({ snap: ".snaptarget" });
-   // $( "#draggable5" ).draggable({ snap: ".snaptarget" });
-    //$( "#draggable6" ).draggable({ snap: ".snaptarget" });
-   // $( "#draggable7" ).draggable({ snap: ".snaptarget" });
-    //$( "#draggable8" ).draggable({ snap: ".snaptarget" });
 
+      }
+    });
+  });
+
+
+
+
+  $( function() {
     $( ".droppable" ).droppable({
       classes: {
         "ui-droppable-active": "ui-state-active",
         "ui-droppable-hover": "ui-state-hover"
       },
+      
       drop: function( event, ui ) {
-        $(ui.draggable).detach().css({top: -28,left: 2}).appendTo(this);
 
-
+       
+    
         if ($(this).attr("class").includes("ui-state-highlight") ){
-          ui.draggable.animate(ui.draggable.data("origPosition"),"slow");
+          $(ui.draggable).addClass('drag-revert');
+
+        }
+        else if ($(this).nextAll().slice(0,$(ui.draggable).attr("size")).length != $(ui.draggable).attr("size")){
+          $(ui.draggable).addClass('drag-revert'); //ui.draggable.animate(ui.draggable.data("origPosition"),"slow");
         }
 
+        else if ($(this).nextAll().slice(0,$(ui.draggable).attr("size")).hasClass("ui-state-highlight") ){
+          $(ui.draggable).addClass('drag-revert'); //ui.draggable.animate(ui.draggable.data("origPosition"),"slow");
+        }
+        else{
 
+          if ($(ui.draggable).parent().attr("class").includes("ui-state-highlight")){
+            $(ui.draggable).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+            $(ui.draggable).parent().nextAll().slice(0,$(ui.draggable).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+            console.log("YES");
+          } else {
+            console.log("NO");
+          }
 
-        $(this).addClass( "ui-state-highlight" ).find( "p" ).html( "Dropped!" );
-        for (let i = 0; i < $(ui.draggable).attr("size"); i++) {
-          $(this).next().addClass( "ui-state-highlight" ).find( "p" ).html( "Dropped!" );
-        } 
-    
-
+          console.log($(ui.draggable.parent()));
+          $(ui.draggable).detach().css({top: -40,left: 2}).appendTo(this);
         
-        
-        console.log($(ui.draggable).attr("size"));
-        //console.log($( this ));
-        //console.log($( this ).next());
-        //console.log($( this ).attr("size"));
-       
+          
+          $(this).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          
+        }
+
       }
     });
   });
@@ -245,7 +208,7 @@
   </script>
 
  
-  <script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+  <!-- <script src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
   <script src="{{ url_for('static', filename='js/jquery.contextmenu.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.css') }}">
   <script>
@@ -267,11 +230,7 @@
         ]
       });
     });
-  </script>
+  </script> -->
   
 
 {% endblock content %}
-
-
-
-
