@@ -26,6 +26,7 @@ __maintainer__ = "ClusterVision Solutions Development Team"
 __email__ = "support@clustervision.com"
 __status__ = "Development"
 
+import os
 import sys
 import jwt
 import requests
@@ -35,9 +36,11 @@ TOKEN = None
 settings = Dynaconf(
     envvar_prefix="OOD",
     settings_files=[
-        "configs/slurm.toml",
-        "configs/luna.ini",
-        "/trinity/local/ondemand/3.0/config/slurm.toml",
+        os.path.join(os.path.dirname(__file__), "settings", "sensu.toml"),
+        os.path.join(os.path.dirname(__file__), "settings", "luna.ini"),
+        os.path.join(os.path.dirname(__file__), "..", "settings", "sensu.toml"),
+        os.path.join(os.path.dirname(__file__), "..", "settings", "luna.ini"),
+        "/trinity/local/ondemand/3.0/config/sensu.toml",
         "/trinity/local/ondemand/3.0/config/luna.ini",
     ],
 )

@@ -1,0 +1,11 @@
+name: bmcterminal
+description: Access the webterminal of the BMC board
+icon: fa://microchip
+category: Trinity
+subcategory: App SubCategory
+
+
+tile:
+  title: bmcterminal
+  sub_caption: |
+   Access the webterminal of the BMC board

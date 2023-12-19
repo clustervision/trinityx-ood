@@ -49,7 +49,7 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
     OODSlurmNodesConfigParser,
 )
 
-from config import settings
+from base.config import settings
 from helpers import (
     get_luna_nodes,
     managed_by_ood,
@@ -58,7 +58,7 @@ from helpers import (
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
-app.config["TEMPLATES_AUTO_RELOAD"] = True
+# app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # add a wrapper to all the routes to catch errors
@@ -84,8 +84,14 @@ def load_configuration(load_from_backup=False):
 
     # Load the configuration files
     if load_from_backup:
-        print(F"loading configuration from backup {partitions_parser.backup_filepath}", file=sys.stderr)
-        print(F"loading configuration from backup {nodes_parser.backup_filepath}", file=sys.stderr)
+        print(
+            f"loading configuration from backup {partitions_parser.backup_filepath}",
+            file=sys.stderr,
+        )
+        print(
+            f"loading configuration from backup {nodes_parser.backup_filepath}",
+            file=sys.stderr,
+        )
         partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
         nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
     else:
@@ -97,9 +103,6 @@ def load_configuration(load_from_backup=False):
 
     configuration = nodes_config
     configuration.partitions = partitions_config.partitions
-
-    # print("loaded configuration:", file=sys.stderr)
-    # print(f"{configuration}", file=sys.stderr)
 
     return configuration
 
@@ -126,7 +129,9 @@ def save_configuration(configuration):
 
 def parse_raw_configuration(raw_configuration):
     raw_groups = []
-    group_nodes = [node for node in raw_configuration["nodes"] if node.get("group_name")]
+    group_nodes = [
+        node for node in raw_configuration["nodes"] if node.get("group_name")
+    ]
     sorted_nodes = sorted(group_nodes, key=lambda node: node["group_name"])
     for group_name, nodes in itertools.groupby(
         sorted_nodes, key=lambda node: node["group_name"]
@@ -135,7 +140,7 @@ def parse_raw_configuration(raw_configuration):
         raw_groups.append({"name": group_name, "node_names": node_names})
     for node in raw_configuration["nodes"]:
         node.pop("group_name", None)
-        node['properties'] = {k:v for k,v in node.get('properties', {}).items() }
+        node["properties"] = {k: v for k, v in node.get("properties", {}).items()}
 
     nodes = [Node(**node) for node in raw_configuration["nodes"] or []]
     groups = [Group(**group) for group in raw_groups or []]
@@ -157,7 +162,6 @@ def parse_raw_configuration(raw_configuration):
 def index_route():
     """Render the index page."""
     message = request.args.get("message")
-
 
     if not managed_by_ood():
         return render_template("pages/unmanaged.html")
@@ -245,7 +249,6 @@ def configuration_preview_route():
     nodes_parser = OODSlurmNodesConfigParser().read()
     nodes_parser.set_content(configuration)
     nodes_preview_lines = nodes_parser.dump_lines(marked=True)
-    # print(f"nodes_preview_lines: {nodes_preview_lines}", file=sys.stderr)
 
     return render_template(
         "components/configuration_preview.html",
@@ -269,8 +272,7 @@ def test_configuration_route():
     configuration_text = "".join(configuration_lines)
 
     res = lint(configuration_text)
-    # print(f"running lint with configuration: {configuration_lines}", file=sys.stderr)
-    # print(f"res: {res}", file=sys.stderr)
+
     errors = res.get("errors", [])
 
     expanded_errors = [
@@ -290,248 +292,6 @@ def import_luna_nodes_route():
         return jsonify(nodes), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
-
-
-# @app.route("/save", methods=["POST"])
-# def save_configuration_route():
-#     """Render the configuration preview."""
-#     configuration = load_configuration(raw_configuration=request.json)
-
-#     partitions_parser = OODSlurmPartitionsConfigParser().read()
-#     partitions_parser.set_content(configuration["partitions"])
-#     partitions_parser.write(backup=True)
-
-#     nodes_parser = OODSlurmNodesConfigParser().read()
-#     nodes_parser.set_content(configuration["nodes"])
-#     nodes_parser.write(backup=True)
-#     message = "Configuration saved successfully, restart the slurmctld service to apply the changes."
-#     return url_for("index_route", message=message)
-
-
-# @app.route("/test", methods=["POST"])
-# def test_configuration_route():
-#     """Render the configuration preview."""
-#     tmpdir = tempfile.mkdtemp()
-#     import time
-#     import shutil
-#     import subprocess
-
-#     # tmpdir = '/tmp/ood-slurm-tests'
-#     # shutil.rmtree(tmpdir, ignore_errors=True)
-
-#     os.makedirs(f"{tmpdir}/etc/slurm", exist_ok=True)
-#     os.makedirs(f"{tmpdir}/run/slurm", exist_ok=True)
-
-#     for root, dirs, files in os.walk("/etc/slurm"):
-#         for file in files:
-#             try:
-#                 shutil.copy(os.path.join(root, file), f"{tmpdir}/etc/slurm")
-#             except Exception as e:
-#                 print(f"error copying file {file}: {e}", file=sys.stderr)
-
-#     with open(f"{tmpdir}/etc/slurm/slurm.conf", "r") as fin:
-#         lines = fin.readlines()
-
-#     lines = [line.replace("/etc/slurm", f"{tmpdir}/etc/slurm") for line in lines]
-#     lines = [
-#         line.replace("/var/log/slurm", f"{tmpdir}/var/log/slurm") for line in lines
-#     ]
-#     lines = [f"#{line}" if line.startswith("Accounting") else line for line in lines]
-#     lines = [f"#{line}" if line.startswith("SlurmdLogFile") else line for line in lines]
-#     lines = [
-#         f"#{line}" if line.startswith("SlurmctldLogFile") else line for line in lines
-#     ]
-#     lines = [
-#         f"#{line}" if line.startswith("SlurmctldPidFile") else line for line in lines
-#     ]
-#     lines.append(f"SlurmctldPidFile={tmpdir}/run/slurm/slurmctld.pid")
-
-#     with open(f"{tmpdir}/etc/slurm/slurm.conf", "w") as fout:
-#         fout.writelines(lines)
-
-#     configuration = load_configuration(raw_configuration=request.json)
-
-#     partitions_parser = OODSlurmPartitionsConfigParser(
-#         output_filepath=f"{tmpdir}/etc/slurm/slurm-partitions.conf"
-#     ).read()
-#     partitions_parser.set_content(configuration["partitions"])
-#     partitions_parser.write()
-
-#     nodes_parser = OODSlurmNodesConfigParser(
-#         output_filepath=f"{tmpdir}/etc/slurm/slurm-nodes.conf"
-#     ).read()
-#     nodes_parser.set_content(configuration["nodes"])
-#     nodes_parser.write()
-
-#     workdir_args = ["-s", f"{tmpdir}/var/slurm"]
-#     conf_args = ["-f", f"{tmpdir}/etc/slurm/slurm.conf"]
-
-#     slurmctld_proc = subprocess.Popen(
-#         ["/usr/sbin/slurmctld", "-D", "-s", tmpdir, *conf_args],
-#         stderr=subprocess.PIPE,
-#         stdout=subprocess.PIPE,
-#     )
-#     os.set_blocking(slurmctld_proc.stdout.fileno(), False)
-#     os.set_blocking(slurmctld_proc.stderr.fileno(), False)
-#     errors = []
-#     startup_completed = False
-#     while not startup_completed:
-#         for pipe in [slurmctld_proc.stderr, slurmctld_proc.stdout]:
-#             while line_bytes := pipe.readline():
-#                 line = line_bytes.decode("utf-8").strip()
-#                 print(line, file=sys.stderr)
-#                 if line.startswith("slurmctld: Running"):
-#                     startup_completed = True
-#                 if line.startswith("slurmctld: error"):
-#                     errors.append(line)
-
-#         time.sleep(0.5)
-#         if slurmctld_proc.poll() is not None:
-#             break
-
-#     for pipe in [slurmctld_proc.stderr, slurmctld_proc.stdout]:
-#         while line_bytes := pipe.readline():
-#             line = line_bytes.decode("utf-8").strip()
-#             print(line, file=sys.stderr)
-#             if line.startswith("slurmctld: Running"):
-#                 startup_completed = True
-#             if line.startswith("slurmctld: error"):
-#                 errors.append(line)
-
-#     if startup_completed:
-#         if not errors:
-#             return jsonify({"status": "success"}), 200
-#         else:
-#             return jsonify({"status": "warning", "errors": errors}), 200
-#     else:
-#         return jsonify({"status": "error", "errors": errors}), 200
-
-
-# @app.route("/load", methods=["POST"])
-# def load_configuration_route():
-#     """load the configuration files from the backup path."""
-#     return url_for(
-#         "index_route",
-#         load_from_backup=True,
-#         message="Backup configuration loaded successfully, save the configuration to apply the changes.",
-#     )
-
-
-# @app.route("/download/partitions", methods=["POST"])
-# def download_partitions_route():
-#     """Download the partitions configuration file."""
-#     configuration = load_configuration(raw_configuration=request.json)
-#     partitions_parser = OODSlurmPartitionsConfigParser().read()
-#     partitions_parser.set_content(configuration["partitions"])
-#     partition_str = partitions_parser.dump()
-#     # make a file from partition_str to return
-#     import io
-#     import mimetypes
-#     from flask import Response
-#     from werkzeug.datastructures import Headers
-
-#     filename = "slurm-partitions.conf"
-#     mimetype_tuple = mimetypes.guess_type(filename)
-#     response = Response()
-#     response.headers = Headers(
-#         {
-#             "Pragma": "public",  # required,
-#             "Expires": "0",
-#             "Cache-Control": "must-revalidate, post-check=0, pre-check=0",
-#             "Content-Type": mimetype_tuple[0],
-#             "Content-Disposition": f"attachment;filename={filename}",
-#             "Content-Transfer-Encoding": "binary",
-#             "Content-Length": len(partition_str),
-#         }
-#     )
-#     response.set_data(partition_str)
-#     return response
-
-
-# @app.route("/download/nodes", methods=["POST"])
-# def download_nodes_route():
-#     """Download the nodes configuration file."""
-#     configuration = load_configuration(raw_configuration=request.json)
-#     nodes_parser = OODSlurmNodesConfigParser().read()
-#     nodes_parser.set_content(configuration["nodes"])
-#     partition_str = nodes_parser.dump()
-#     # make a file from partition_str to return
-#     import io
-#     import mimetypes
-#     from flask import Response
-#     from werkzeug.datastructures import Headers
-
-#     filename = "slurm-nodes.conf"
-#     mimetype_tuple = mimetypes.guess_type(filename)
-#     response = Response()
-#     response.headers = Headers(
-#         {
-#             "Pragma": "public",  # required,
-#             "Expires": "0",
-#             "Cache-Control": "must-revalidate, post-check=0, pre-check=0",
-#             "Content-Type": mimetype_tuple[0],
-#             "Content-Disposition": f"attachment;filename={filename}",
-#             "Content-Transfer-Encoding": "binary",
-#             "Content-Length": len(partition_str),
-#         }
-#     )
-#     response.set_data(partition_str)
-#     return response
-
-
-# # Components
-# @app.route("/components/node", methods=["POST"])
-# def node_route():
-#     """Render a node item."""
-#     node_name = request.args["node_name"]
-#     group_name = request.args["group_name"]
-#     print(f"rendering node item with node: {request.args}", file=sys.stderr)
-#     return render_template(
-#         "components/node.html", node_name=node_name, group_name=group_name
-#     )
-
-
-# @app.route("/components/nodes_group", methods=["POST"])
-# def nodes_group_route():
-#     """Render a nodes group."""
-#     group_name = request.args["group_name"]
-#     print(f"rendering nodes group with group: {group_name}", file=sys.stderr)
-#     return render_template(
-#         "components/nodes_group.html", group_name=group_name, node_names=[]
-#     )
-
-
-# @app.route("/components/partition_card", methods=["POST"])
-# def partition_card_route():
-#     """Render a partition card."""
-#     partition = Partition(name=request.args['partition_name'], nodenames=[], properties={})
-
-#     print(f"rendering partition card with partition: {partition}", file=sys.stderr)
-
-#     return render_template(
-#         "components/partition_card.html",
-#         partition=partition,
-#     )
-
-
-# @app.route("/components/backup_configuration_preview", methods=["POST"])
-# def backup_configuration_preview_route():
-#     """Render the configuration preview."""
-#     configuration = load_configuration(raw_configuration=request.json)
-
-#     partitions_parser = OODSlurmPartitionsConfigParser()
-#     partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
-#     partitions_preview_lines = partitions_parser.dump_lines(marked=True)
-
-#     nodes_parser = OODSlurmNodesConfigParser().read()
-#     nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
-#     nodes_preview_lines = nodes_parser.dump_lines(marked=True)
-
-#     return render_template(
-#         "components/configuration_preview.html",
-#         partitions_preview_lines=partitions_preview_lines,
-#         nodes_preview_lines=nodes_preview_lines,
-#     )
 
 
 if __name__ == "__main__":

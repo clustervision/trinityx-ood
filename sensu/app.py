@@ -33,7 +33,7 @@ __status__      = 'Development'
 import datetime
 from flask import Flask, render_template
 from sensu_requests import SensuRequestHandler
-from config import settings
+from base.config import settings
 from utils import prettify_relative_time
 
 
