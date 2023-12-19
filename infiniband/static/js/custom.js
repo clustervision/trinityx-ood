@@ -1,7 +1,49 @@
+var layouts = {
+    'force': {
+        name: 'cose',
+        nodeOverlap: 100,
+
+    },
+    'hierarchical': {
+        name: 'breadthfirst',
+        directed: false,
+        roots: undefined,
+        circle: false,
+        spacingFactor: 1,
+    },
+    'concentric': {
+        name: 'breadthfirst',
+        directed: false,
+        roots: undefined,
+        circle: true,
+        spacingFactor: 3,
+    },
+    // 'concentric': {
+    //     name: 'concentric',
+    //     concentric: function( node ){ // returns numeric value for each node, placing higher nodes in levels towards the centre
+    //         return node._private.data.rank;
+    //         },
+    //     levelWidth: function( nodes ){ // the variation of concentric values in each level
+    //         return 1;
+    //         }
+    // },
+}
+var graph;
+var data;
+
+function handleLayoutChange(event) {
+    var layoutName = event.target.value;
+    var layout = graph.layout(layouts[layoutName]);
+    layout.run()
+
+}
+
 window.onload = function () {
     // Set height and width of graph to the max height and width 
     document.getElementById('graph').style.height = window.innerHeight + 'px';
     document.getElementById('graph').style.width = window.innerWidth + 'px';
+
+    $(".layout-button").click(handleLayoutChange);
     // Make an ajax request to GET /graph
     // When the request is complete, if the request was successful, render the graph
     // in the div with id="graph", otherwise log the error with displayAlert('danger', error)
@@ -10,15 +52,20 @@ window.onload = function () {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', targetUrl);
     xhr.onload = function () {
-        console.log(xhr.responseText);
+        
         if (xhr.status === 200) {
-
-            var graph = cytoscape({
-
+            data = JSON.parse(xhr.responseText);
+            var roots = (
+                data.map(function (x) { 
+                    if (x.data.rank == 3){
+                        return x.data.id;
+                    }}).filter(function (x) { return x != undefined; })
+             );
+            layouts['hierarchical']['roots'] = roots;
+            layouts['concentric']['roots'] = roots;
+            graph = cytoscape({
                 container: document.getElementById('graph'), // container to render in
-
-                elements: JSON.parse(xhr.responseText),
-
+                elements: data,
                 style: [ // the stylesheet for the graph
                     {
                         selector: 'node',
@@ -34,8 +81,6 @@ window.onload = function () {
                             "text-max-width": 200,
                             "border-width": "3px",
                             "border-color": "#000",
-                            "border-opacity": "1",
-                            "border-radius": "10px",
                         }
                     },
                     {
@@ -52,33 +97,13 @@ window.onload = function () {
                         style: {
                             'width': 'data(width)',
                             'curve-style': 'bezier',
-                            // 'line-color': '#111111',
 
                         }
                     }
                 ],
-
-                layout:  {
-                    name: 'cose',
-                    nodeDimensionsIncludeLabels: false, // Boolean which changes whether label dimensions are included when calculating node dimensions
-                    fit: true, // Whether to fit
-                    padding: 10, // Padding on fit
-                    animate: false, // Whether to transition the node positions
-                    // componentSpacing: 10,
-                    nodeRepulsion: 0.1,
-                    nodeOverlap: 200,
-                    edgeElasticity: 10,
-                    initialTemp: 4000,
-                    coolingFactor: 0.995,
-                    numIter: 5000,
-                    // idealEdgeLength: function( edge ){ return 400; },
-
-                  }
-
+                layout:  layouts['force'],
             });
-
-        }
-        else {
+        } else {
             displayAlert('danger', xhr.responseText);
         }
     };
