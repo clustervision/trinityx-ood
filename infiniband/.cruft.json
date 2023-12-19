@@ -1,0 +1,23 @@
+{
+  "template": "git@gitlab.taurusgroup.one:clustervision/trinityx-ood-apps-template.git",
+  "commit": "8e1a1305c26182a8b48aaa9c9ce735b414cd57a6",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "app_name": "infiniband",
+      "app_author_name": "Diego Sonaglia",
+      "app_mantainer_name": "ClusterVision Solutions Development Team",
+      "app_mantainer_mail": "support@clustervision.com",
+      "app_category": "Monitoring",
+      "app_subcategory": "App SubCategory",
+      "app_description": "View the infiniband connection network",
+      "app_icon": "network-wired",
+      "_copy_without_render": [
+        "templates/base/*.html",
+        "templates/*.html"
+      ],
+      "_template": "git@gitlab.taurusgroup.one:clustervision/trinityx-ood-apps-template.git"
+    }
+  },
+  "directory": null
+}

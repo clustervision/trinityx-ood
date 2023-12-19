@@ -1,0 +1,13 @@
+{% extends "base/pages/index.html" %}
+{% block additional_js %}
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.0/dist/cytoscape.min.js"></script>
+<script src="{{ url_for('static', filename='js/cytoscape.js') }}"></script>
+<script src="{{ url_for('static', filename='js/elk.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cytoscape-elk.js') }}"></script>
+<script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+{% endblock %}
+
+
+{% block content %}
+<div id="graph" class="container"></div>
+{% endblock %}

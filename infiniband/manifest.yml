@@ -1,0 +1,10 @@
+name: infiniband
+description: View the infiniband connection network
+icon: fa://network-wired
+category: Monitoring
+
+
+tile:
+  title: infiniband
+  sub_caption: |
+   View the infiniband connection network
