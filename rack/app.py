@@ -51,23 +51,55 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    # rack_data = {
-    #     "rack001": ["node001", "switch001"],
-    #     "rack002": ["node002", "switch002", "sutehl001"],
-    #     "rack003": ["node003", "node004", "cam001"]
-    # }
 
+    """
+    API - URI -> /config/rack
+    API - URI -> /config/rack/rack001
+    Method -  GET & POST [on GET get the data; on POST Create OR Update]
+    """
     rack_data = {
-        "rack001": {"size": 52, "devices": [{"name": "node001", "height": 1, "postion": 1}, {"name": "node002", "height": 2, "postion": 5}, {"name": "node003", "height": 3, "postion": 11}, {"name": "switch001", "height": 4, "postion": 20}, ] },
-        "rack002": {"size": 42, "devices": [{"name": "node004", "height": 5, "postion": 1}, {"name": "node005", "height": 6, "postion": 5}, {"name": "node006", "height": 7, "postion": 11}, {"name": "switch002", "height": 8, "postion": 20}, ] },
-        "rack003": {"size": 48, "devices": [{"name": "node007", "height": 1, "postion": 1}, {"name": "node008", "height": 1, "postion": 5}, {"name": "node009", "height": 4, "postion": 11}, {"name": "switch003", "height": 2, "postion": 20}, ] },
-        "rack004": {"size": 50, "devices": [{"name": "node010", "height": 1, "postion": 1}, {"name": "node011", "height": 1, "postion": 5}, {"name": "node012", "height": 4, "postion": 11}, {"name": "switch004", "height": 2, "postion": 20}, ] },
-        "rack005": {"size": 30, "devices": [{"name": "node013", "height": 1, "postion": 1}, {"name": "node014", "height": 1, "postion": 5}, {"name": "node015", "height": 4, "postion": 11}, {"name": "switch005", "height": 2, "postion": 20}, ] }
-    
+         "config": {
+            "rack": {
+                "rack001": {"size": 52, "devices": [{"name": "node001", "type": "compute", "height": 1, "postion": 1}, {"name": "node002", "type": "compute", "height": 2, "postion": 5}, {"name": "node003", "type": "compute", "height": 3, "postion": 11}, {"name": "switch001", "type": "switch", "height": 4, "postion": 20}, ] },
+                "rack002": {"size": 42, "devices": [{"name": "node004", "type": "compute", "height": 5, "postion": 1}, {"name": "node005", "type": "compute", "height": 6, "postion": 6}, {"name": "node006", "type": "compute", "height": 7, "postion": 15}, {"name": "switch002", "type": "switch", "height": 8, "postion": 25}, ] },
+                "rack003": {"size": 48, "devices": [{"name": "node007", "type": "compute", "height": 5, "postion": 1}, {"name": "node008", "type": "compute", "height": 4, "postion": 5}, {"name": "node009", "type": "compute", "height": 4, "postion": 11}, {"name": "switch003", "type": "switch", "height": 2, "postion": 20}, ] },
+                "rack004": {"size": 50, "devices": [{"name": "node010", "type": "compute", "height": 1, "postion": 1}, {"name": "node011", "type": "compute", "height": 1, "postion": 5}, {"name": "node012", "type": "compute", "height": 4, "postion": 11}, {"name": "switch004", "type": "switch", "height": 2, "postion": 20}, ] },
+                "rack005": {"size": 30, "devices": [{"name": "node013", "type": "compute", "height": 1, "postion": 1}, {"name": "node014", "type": "compute", "height": 1, "postion": 5}, {"name": "node015", "type": "compute", "height": 4, "postion": 11}, {"name": "switch005", "type": "switch", "height": 2, "postion": 20}, ] }
+            }
+        }
     }
 
+    """
+    API - URI -> /config/rack/inventory
+    Method -  GET & POST [on GET get the data; on POST Create OR Update]
+    """
+    inventory = {
+        "config": {
+            "rack": {
+                "inventory": [
+                    {"name": "node00111", "type": "compute", "height": 1}, {"name": "node00211", "type": "compute", "height": 2}, {"name": "node00311", "type": "compute", "height": 3}, {"name": "switch00111", "type": "switch", "height": 4}, 
+                    {"name": "node00411", "type": "compute", "height": 5}, {"name": "node00511", "type": "compute", "height": 6}, {"name": "node00611", "type": "compute", "height": 7}, {"name": "switch00211", "type": "switch", "height": 8}, 
+                    {"name": "node00711", "type": "compute", "height": 1}, {"name": "node00811", "type": "compute", "height": 1}, {"name": "node00911", "type": "compute", "height": 4}, {"name": "switch00311", "type": "switch", "height": 2}, 
+                    {"name": "node01011", "type": "compute", "height": 1}, {"name": "node01111", "type": "compute", "height": 1}, {"name": "node01211", "type": "compute", "height": 4}, {"name": "switch00411", "type": "switch", "height": 2}, 
+                    {"name": "node01311", "type": "compute", "height": 1}, {"name": "node01411", "type": "compute", "height": 1}, {"name": "node01511", "type": "compute", "height": 4}, {"name": "switch00511", "type": "switch", "height": 2},
+                ]
+            }
+        }
+    }
+
+    """
+    API - URI -> /config/rack/rack001/_delete
+    Method -  GET [Delete the Rack From Database, Move devices into the inventory]
+    API - URI -> /config/rack/inventory/node00111/_delete
+    Method -  GET & DELETE [Delete device from the inventory ]
+    """
+
+    rack_data = rack_data["config"]["rack"]
+    inventory = inventory["config"]["rack"]["inventory"]
+    
+
     # response = status('status')
-    return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, rack_size=52, title='Status')
+    return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
     # return render_template("newrack.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
 
 
