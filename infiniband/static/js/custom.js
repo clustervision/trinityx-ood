@@ -1,5 +1,8 @@
-var node;
+const baseOpacity = 0.3;
+const highlightOpacity = 1;
+var table;
 var link;
+var node;
 
 function loadGraph(enpoint, callback) {
     url = `${window.location.href}${enpoint}`;
@@ -42,12 +45,27 @@ function wrap(text, width) {
     });
 }
 
+function nodeHighlight(d) {
+    table.selectRow(d.id);
+    node.style('stroke-opacity', o => (o.id == d.id) ? highlightOpacity : baseOpacity);
+    node.style('stroke-width', o => (o.id == d.id) ? 3 : 1.5);
+    link.style('stroke-opacity', o => (o.source.id == d.id || o.target.id == d.id) ? highlightOpacity : baseOpacity);
+    link.style('stroke-width', o => (o.source.id == d.id || o.target.id == d.id) ? Math.sqrt(o.count) + 3 : Math.sqrt(o.count));
+}
+
+function nodeHighlightReset() {
+    table.deselectRow();
+    node.style('stroke-opacity', baseOpacity);
+    node.style('stroke-width', 1.5);
+    link.style('stroke-opacity', baseOpacity);
+    link.style('stroke-width', d => Math.sqrt(d.count));
+}
+
 function renderGraph(data) {
 
-    const width = 928;
-    const height = 600;
-    const baseOpacity = 0.3;
-    const highlightOpacity = 1;
+    const width = $("#graph").parent().width();
+    const height = $("#graph").parent().height();
+
 
     // The force simulation mutates links and nodes, so create a copy
     // so that re-evaluating this cell produces the same result.
@@ -57,19 +75,22 @@ function renderGraph(data) {
     // Create a simulation with several forces.
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id))
-        .force("charge", d3.forceManyBody().strength(d => -(nodeRadius(d) ** 2)))
-        .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30))
+        .force("charge", d3.forceManyBody().strength(-800))
+        .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .on("tick", ticked);
 
-    // Create the SVG container.
+
     const svg = d3.select("#graph").append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [0, 0, width, height])
-        .attr("style", "max-width: 100%; height: auto;");
+        .attr("style", "max-width: 100%; height: auto;")
 
+    // Create a container for the links and nodes. ( Hidden on startup )
     const container = svg.append("g")
+                        .attr("class", "container")
+                        .attr("style", "display: none;")
 
     // Add a line for each link, and a circle for each node.
     link = container.append("g")
@@ -80,7 +101,7 @@ function renderGraph(data) {
         .join("line")
         .attr("stroke-width", d => Math.sqrt(d.count));
 
-    node_container = container.append("g")
+    const node_container = container.append("g")
         .selectAll()
         .data(nodes)
         .join("g")
@@ -92,14 +113,14 @@ function renderGraph(data) {
         .attr("fill", d => "#CCC")
         .attr("r", d => nodeRadius(d));
 
-    img = node_container.append("image")
+    const img = node_container.append("image")
         .attr("xlink:href", nodeImage)
         .attr("x", d => -nodeRadius(d) * 0.7)
         .attr("y", d => -nodeRadius(d) * 0.7)
         .attr("width", d => nodeRadius(d) * 0.7 * 2)
         .attr("height", d => nodeRadius(d) * 0.7 * 2)
 
-    label = node_container.append("text")
+    const label = node_container.append("text")
         .attr("text-anchor", "middle")
         .attr("alignment-baseline", "middle")
         .text(d => d.name.split(" ").join(" "))
@@ -111,6 +132,8 @@ function renderGraph(data) {
 
     // invalidation.then(() => simulation.stop());
     function ticked() {
+        container.attr("style", "display: block;")
+
         link.attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x)
@@ -137,6 +160,7 @@ function renderGraph(data) {
 
     // Update the subject (dragged node) position during drag.
     function dragged(event) {
+        console.log(event)
         event.subject.fx = event.x;
         event.subject.fy = event.y;
     }
@@ -151,32 +175,62 @@ function renderGraph(data) {
 
     function mouseover(event) {
         d = d3.select(this).datum();
-        node.style('stroke-opacity', o => (o == d) ? highlightOpacity : baseOpacity);
-        node.style('stroke-width', o => (o == d) ? 3 : 1.5);
-        link.style('stroke-opacity', o => (o.source == d || o.target == d) ? highlightOpacity : baseOpacity);
-        link.style('stroke-width', o => (o.source == d || o.target == d) ? Math.sqrt(o.count) + 3 : Math.sqrt(o.count));
+        nodeHighlight(d);
+
     };
 
     // Set the stroke width back to normal when mouse leaves the node.
     function mouseout(event) {
-        node.style('stroke-opacity', baseOpacity);
-        node.style('stroke-width', 1.5);
-        link.style('stroke-opacity', baseOpacity);
-        link.style('stroke-width', d => Math.sqrt(d.count));
+        nodeHighlightReset();
     };
 
-
-    node.call(d3.drag()
+    svg.call(zoom).call(zoom.transform, d3.zoomIdentity);
+    
+    node_container.call(d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended))
 
     node_container.on("mouseover", mouseover)
-        .on("mouseout", mouseout);
+                  .on("mouseout", mouseout);
 
-    svg.call(zoom).call(zoom.transform, d3.zoomIdentity);
+    //
 };
 
+function renderTable(data) {
+    table = new Tabulator("#table", {
+        data: data.nodes,           //load row data from array
+        layout:"fitColumns",      //fit columns to width of table
+        pagination:"local",       //paginate the data
+        paginationSize:15,         //allow 7 rows per page of data
+        paginationButtonCount:4,  // 4 page buttons
+        paginationCounter:function(pageSize, currentRow, currentPage, totalRows, totalPages){
+            return `Rows ${currentRow} - ${currentRow + pageSize - 1} of ${totalRows}`
+        },
+        initialSort:[             //set the initial sort order of the data
+            {column:"name", dir:"asc"},
+        ],
+        // selectable:true,
+        columns:[                 //define the table columns
+            {title:"Name", field:"name"},
+            {title:"ID", field:"id"},
+        ],
+    });
+    table.on("rowMouseOver", function(e, row){
+        //e - the event object
+        //row - row component
+
+        nodeHighlight(row.getData());
+    });
+    table.on("rowMouseOut", function(e, row){
+        //e - the event object
+        //row - row component
+
+        nodeHighlightReset();
+    });
+}
+
 window.onload = function () {
+    loadGraph("/graph", renderTable);
     loadGraph("/graph", renderGraph);
 }

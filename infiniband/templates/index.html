@@ -1,28 +1,33 @@
 {% extends "base/pages/index.html" %}
 {% block additional_js %}
-<!-- <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.0/dist/cytoscape.min.js"></script> -->
-<script src="{{ url_for('static', filename='js/cytoscape.js') }}"></script>
-<!-- <script src="{{ url_for('static', filename='js/elk.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/cytoscape-elk.js') }}"></script> -->
-    
-
-<script src="{{ url_for('static', filename='js/dagre.core.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dagre.js') }}"></script>
-<script src="{{ url_for('static', filename='js/cytoscape-dagre.js') }}"></script>
-<script src="{{ url_for('static', filename='js/custom.js') }}"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 {% endblock %}
 
 
 {% block content %}
-<div>
+<!-- <div>
     {% set layouts = ['force', 'concentric', 'hierarchical', ] %}
     Radio buttons for the layouts:
     {% for layout in layouts %}
     <input type="radio" name="layout" value="{{ layout }}" id="{{ layout }}" class="layout-button" {% if loop.first %}checked{% endif %}>
     <label for="{{ layout }}">{{ layout }}</label>
     {% endfor %}
+</div> -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div id="graph"></div>
+        </div>
+        <div class="col-md-4">
+            <div id="table"></div>
+        </div>
+    </div>
 </div>
-<div id="graph" style="height: 500px; width: 100%;"></div>
+
+
 {% endblock %}
