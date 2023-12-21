@@ -7,114 +7,6 @@ import re
 from base.config import settings
 import networkx as nx
 
-app = Flask(
-    __name__, template_folder="templates", static_folder="static", static_url_path="/"
-)
-
-def plot_graph(text):
-    """
-    This method will plot a graph.
-    """
-
-    switches = []
-    nodes = []
-    links = {}
-
-    last_uid = None
-    last_type = None
-    for line in text.splitlines():
-        if line.startswith("Ca"):
-            # Ca	1 "H-506b4b03003fa98a"		# "node019 HCA-1"
-            match = re.search(r"Ca\s+([0-9]+) +\"(H|S)-([0-9a-fA-F]+)\"\s+#\s*\"(.*)\"(.*)", line)
-            ports = match.group(1)
-            uid = match.group(3)
-            name = match.group(4)
-            location = match.group(5)
-            desc = f"NAME: {name}\nUID: {uid}"
-            nodes.append({"id": uid, "desc": desc, "rank": 1})
-            last_uid = uid
-            last_type = match.group(2)
-            
-        elif line.startswith("Switch"):
-            # Switch	36 "S-ec0d9a0300ec8240"		# "SwitchIB Mellanox Technologies" base port 0 lid 48 lmc 0
-            match = re.search(r"Switch\s+([0-9]+) +\"(H|S)-([0-9a-fA-F]+)\"\s+#\s*\"(.*)\"(.*)", line)
-            ports = match.group(1)
-            uid = match.group(3)
-            name = match.group(4)
-            location = match.group(5)
-            desc = f"NAME: {name}\nUID: {uid}\nPORTS: {ports}"
-            switches.append({"id": uid, "desc": desc, "rank": 2})
-            last_uid = uid
-            last_type = match.group(2)
-            
-        elif re.search(r"\[[0-9]+\]", line):
-            match = re.search(r"\"(H|S)-([0-9a-fA-F]+)\"", line)
-            
-            type = match.group(1)
-            uid = match.group(2)
-            
-            
-            source, target = tuple(sorted([last_uid, uid]))
-            rank = 1 if ("H" in [type, last_type]) else 2
-            
-            if (source, target) in links:
-                links[(source, target)]['width'] += 4
-            else:
-                links[(source, target)] = {"width": 4, "source": source, "target": target, "rank": rank}
-            
-            
-    edge_switches = []
-    backbone_switches = []
-    for switch in switches:
-        switch_name = switch["id"]
-        switch_links = [link for link in links if link[0] == switch_name or link[1] == switch_name]
-        switch_backbone_links = [link for link in switch_links if links[link]["rank"] > 1]
-
-        count_switch_links = sum([links[link]["width"] for link in switch_links])
-        count_switch_backbone_links = sum([links[link]["width"] for link in switch_backbone_links])
-
-        if (count_switch_backbone_links / count_switch_links) > 0.5:
-            switch["rank"] = 3
-            backbone_switches.append(switch)
-        else:
-            edge_switches.append(switch)
-        
-
-    
-        
-
-
-    # Plot the graph using NetworkX
-    # G = nx.Graph()
-    # G.add_nodes_from(nodes + switches)
-    # G.add_edges_from(links)
-    # dot = nx.drawing.nx_pydot.to_pydot(G).to_string()
-    
-    graph = [
-        {"group": "nodes", "data": s, "classes": ["switch"]} for s in switches
-    ] + [
-        {"group": "nodes", "data": n,  "classes": ["compute"]} for n in nodes
-    ] + [
-        {"group": "edges", "data": c}  for (s, t), c in links.items()
-    ]
-    
-    return jsonify(graph)
-
-
-
-
-@app.route('/')
-def index_route():
-    # Display the graph
-    return render_template("index.html", content="", settings=settings)
-
-@app.errorhandler(Exception)
-def wrap_errors(error):
-    """Decorator to wrap errors in a JSON response."""
-    if app.debug:
-        raise error
-    return jsonify({"message": str(error)}), 500
-
 
 text = \
 """
@@ -923,6 +815,145 @@ Ca	1 "H-506b4b030043f9e2"		# "controller mlx5_0"
 """
 
 
+app = Flask(
+    __name__, template_folder="templates", static_folder="static", static_url_path="/"
+)
+
+def plot_graph(text):
+    """
+    This method will plot a graph.
+    """
+
+    switch_regex = r"(Switch|Ca)\s+([0-9]+)\s+\"([SH]-[0-9a-z]+)\"\s+#\s+\"(.*)\".*\n?(\[[0-9]+\].*\n)*"
+    link_regex = r"\[([0-9]+)\].*\"([SH]-[0-9a-z]+)\".*\[([0-9]+)\].*"
+    matches = re.finditer(switch_regex, text, re.MULTILINE)
+
+    nodes = {}
+    edges = {}
+    
+    for switch_match in matches:
+        ports = switch_match.group(2)
+        uid = switch_match.group(3)
+        name = switch_match.group(4)
+        nodes[uid] = {"name": name, "ports": ports, "type": uid[0]}
+
+        for link_match in re.finditer(link_regex, switch_match.group(0)):
+            interface = link_match.group(1)
+            target_uid = link_match.group(2)
+            target_interface = link_match.group(3)
+            # print(f"{name} [{interface}] -> {target_uid}")
+            edge_uid = tuple(sorted([uid, target_uid]))
+            edge_count = edges.get(edge_uid, 0)
+            edges[edge_uid] = edge_count + 1
+
+    # from pprint import pprint
+    # sorted_nodes = sorted(nodes.items(), key=lambda x: x[1]['name'] + x[0])
+    # sorted_edges = sorted(edges, key=lambda x: x[0] + x[1])
+
+    nodes = [{"id": uid, **data} for uid, data in nodes.items()]
+    links = [{"source": source, "target": target, "count":count} for (source, target), count in edges.items()]
+    graph = {"nodes": nodes, "links": links}
+    return jsonify(graph)
+
+
+
+    # switches = []
+    # nodes = []
+    # links = {}
+
+    # last_uid = None
+    # last_type = None
+    # for line in text.splitlines():
+    #     if line.startswith("Ca"):
+    #         # Ca	1 "H-506b4b03003fa98a"		# "node019 HCA-1"
+    #         match = re.search(r"Ca\s+([0-9]+) +\"(H|S)-([0-9a-fA-F]+)\"\s+#\s*\"(.*)\"(.*)", line)
+    #         ports = match.group(1)
+    #         uid = match.group(3)
+    #         name = match.group(4)
+    #         location = match.group(5)
+    #         desc = f"NAME: {name}\nUID: {uid}"
+    #         nodes.append({"id": uid, "desc": desc, "rank": 1})
+    #         last_uid = uid
+    #         last_type = match.group(2)
+            
+    #     elif line.startswith("Switch"):
+    #         # Switch	36 "S-ec0d9a0300ec8240"		# "SwitchIB Mellanox Technologies" base port 0 lid 48 lmc 0
+    #         match = re.search(r"Switch\s+([0-9]+) +\"(H|S)-([0-9a-fA-F]+)\"\s+#\s*\"(.*)\"(.*)", line)
+    #         ports = match.group(1)
+    #         uid = match.group(3)
+    #         name = match.group(4)
+    #         location = match.group(5)
+    #         desc = f"NAME: {name}\nUID: {uid}\nPORTS: {ports}"
+    #         switches.append({"id": uid, "desc": desc, "rank": 2})
+    #         last_uid = uid
+    #         last_type = match.group(2)
+            
+    #     elif re.search(r"\[[0-9]+\]", line):
+    #         match = re.search(r"\"(H|S)-([0-9a-fA-F]+)\"", line)
+            
+    #         type = match.group(1)
+    #         uid = match.group(2)
+            
+            
+    #         source, target = tuple(sorted([last_uid, uid]))
+    #         rank = 1 if ("H" in [type, last_type]) else 2
+            
+    #         if (source, target) in links:
+    #             links[(source, target)]['width'] += 4
+    #         else:
+    #             links[(source, target)] = {"width": 4, "source": source, "target": target, "rank": rank}
+            
+            
+    # edge_switches = []
+    # backbone_switches = []
+    # for switch in switches:
+    #     switch_name = switch["id"]
+    #     switch_links = [link for link in links if link[0] == switch_name or link[1] == switch_name]
+    #     switch_backbone_links = [link for link in switch_links if links[link]["rank"] > 1]
+
+    #     count_switch_links = sum([links[link]["width"] for link in switch_links])
+    #     count_switch_backbone_links = sum([links[link]["width"] for link in switch_backbone_links])
+
+    #     if (count_switch_backbone_links / count_switch_links) > 0.5:
+    #         switch["rank"] = 3
+    #         backbone_switches.append(switch)
+    #     else:
+    #         edge_switches.append(switch)
+        
+
+    
+        
+
+
+    # # Plot the graph using NetworkX
+    # # G = nx.Graph()
+    # # G.add_nodes_from(nodes + switches)
+    # # G.add_edges_from(links)
+    # # dot = nx.drawing.nx_pydot.to_pydot(G).to_string()
+    
+    # graph = [
+    #     {"group": "nodes", "data": s, "classes": ["switch"]} for s in switches
+    # ] + [
+    #     {"group": "nodes", "data": n,  "classes": ["compute"]} for n in nodes
+    # ] + [
+    #     {"group": "edges", "data": c}  for (s, t), c in links.items()
+    # ]
+    
+    # return jsonify(graph)
+
+
+@app.errorhandler(Exception)
+def wrap_errors(error):
+    """Decorator to wrap errors in a JSON response."""
+    if app.debug:
+        raise error
+    return jsonify({"message": str(error)}), 500
+
+@app.route('/')
+def index_route():
+    # Display the graph
+    return render_template("index.html", content="", settings=settings)
+
 @app.route('/graph')
 def graph_route():
     # Display the graph
@@ -932,4 +963,4 @@ def graph_route():
     return plot_graph(text)
 
 if __name__ == '__main__':
-    app.run()
+    plot_graph(text)
