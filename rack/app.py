@@ -99,9 +99,100 @@ def home():
     
 
     # response = status('status')
-    return render_template("monitor.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
+    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
     # return render_template("newrack.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
 
+
+@app.route('/manage/<string:page>', methods=['GET'])
+def manage(page=None):
+    """
+    This is the main route to manage things.
+    """
+    data, error = "", ""
+    if page == "site":
+        data = {"config": {"rack": {"site": ["ClusterVision Amsterdam", "ClusterVision Schiphol"] } } }
+    elif page == "room":
+        data = {"config": {"rack": {"room": ["Basement", "1st Floor"] } } }
+    elif page == "rack":
+        data = {
+         "config": {
+            "rack": {
+                "rack001": {"name": "rack001", "order": "ascending", "size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "postion": 1}, {"name": "node002", "type": "node", "height": 2, "postion": 5}, {"name": "node003", "type": "node", "height": 3, "postion": 11}, {"name": "switch001", "type": "switch", "height": 4, "postion": 20}, ] },
+                "rack002": {"name": "rack002", "order": "descending", "size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "postion": 1}, {"name": "node005", "type": "node", "height": 6, "postion": 6}, {"name": "node006", "type": "node", "height": 7, "postion": 15}, {"name": "switch002", "type": "switch", "height": 8, "postion": 25}, ] },
+                "rack003": {"name": "rack003", "order": "ascending", "size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "postion": 1}, {"name": "node008", "type": "node", "height": 4, "postion": 5}, {"name": "node009", "type": "node", "height": 4, "postion": 11}, {"name": "switch003", "type": "switch", "height": 2, "postion": 20}, ] },
+                "rack004": {"name": "rack004", "order": "descending", "size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "postion": 1}, {"name": "node011", "type": "node", "height": 1, "postion": 5}, {"name": "node012", "type": "node", "height": 4, "postion": 11}, {"name": "switch004", "type": "switch", "height": 2, "postion": 20}, ] },
+                "rack005": {"name": "rack005", "order": "descending", "size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "postion": 1}, {"name": "node014", "type": "node", "height": 1, "postion": 5}, {"name": "node015", "type": "node", "height": 4, "postion": 11}, {"name": "switch005", "type": "switch", "height": 2, "postion": 20}, ] }
+            }
+        }
+    }
+    elif page == "inventory":
+        data = {
+        "config": {
+            "rack":{
+                "inventory": [
+                    {"name": "node00111", "type": "node", "height": 1}, {"name": "node00211", "type": "node", "height": 2}, {"name": "node00311", "type": "node", "height": 3}, {"name": "switch00111", "type": "switch", "height": 4}, 
+                    {"name": "node00411", "type": "node", "height": 5}, {"name": "node00511", "type": "node", "height": 6}, {"name": "node00611", "type": "node", "height": 7}, {"name": "switch00211", "type": "switch", "height": 8}, 
+                    {"name": "node00711", "type": "node", "height": 1}, {"name": "node00811", "type": "node", "height": 1}, {"name": "node00911", "type": "node", "height": 4}, {"name": "switch00311", "type": "switch", "height": 2}, 
+                    {"name": "node01011", "type": "node", "height": 1}, {"name": "node01111", "type": "node", "height": 1}, {"name": "node01211", "type": "node", "height": 4}, {"name": "switch00411", "type": "switch", "height": 2}, 
+                    {"name": "node01311", "type": "node", "height": 1}, {"name": "node01411", "type": "node", "height": 1}, {"name": "node01511", "type": "node", "height": 4}, {"name": "switch00511", "type": "switch", "height": 2},
+                ]
+            }
+        }
+    }
+
+
+    # data = Rest().get_raw('config/rack', page)
+    # return render_template("manage.html", page=page_cap, data=data)
+    # table_data = Rest().get_data(TABLE)
+    table_data = data
+    LOGGER.info(table_data)
+    if table_data:
+        if page in ["site", "room"]:
+            raw_data = table_data['config']['rack'][page]
+            if page == "site":
+                fields = ["#", "Site", "Actions"]
+            else:
+                fields = ["#", "Site", "Room", "Actions"]
+            rows = []
+            sno = 1
+            for each in raw_data:
+                row = []
+                row.append(sno)
+                if page == "room":
+                    row.append("ClusterVision Amsterdam")
+                row.append(each)
+                action_items = Helper().action_items('rack', each)
+                row.append(action_items)
+                sno = sno + 1
+                rows.append(row)
+            data = Presenter().show_table(fields, rows)
+            data = unescape(data)
+        elif page == "rack":
+            raw_data = table_data['config']['rack']
+            fields, rows  = Helper().filter_data(page, raw_data)
+            data = Presenter().show_table(fields, rows)
+            data = unescape(data)
+        elif page == "inventory":
+            raw_data = table_data['config']['rack'][page]
+            fields, rows  = Helper().filter_data_list(page, raw_data)
+            data = Presenter().show_table(fields, rows)
+            data = unescape(data)
+
+    if page in ["site", "room", "rack", "inventory"]:
+        page_cap = page.capitalize()
+    return render_template("manage.html", page=page_cap, data=data, error=error)
+
+@app.route('/show/<string:record>', methods=['GET'])
+def show(record=None):
+    print("show")
+
+@app.route('/edit/<string:record>', methods=['GET'])
+def edit(record=None):
+    print("edit")
+
+@app.route('/delete/<string:record>', methods=['GET'])
+def delete(record=None):
+    print("delete")
 
 @app.route('/status/<string:service>', methods=['GET'])
 def status(service=None):

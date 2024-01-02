@@ -28,6 +28,11 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
+import base64
+import binascii
+from flask import url_for
+from nested_lookup import nested_lookup, nested_update, nested_delete
+from constant import filter_columns, EDITOR_KEYS, sortby
 from log import Log
 from constant import filter_columns
 
@@ -95,6 +100,245 @@ class Helper():
         rows = final_rows
         # Adding Serial Numbers to the dataset
         fields.insert(0, '#')
+        num = 1
+        for outer in rows:
+            outer.insert(0, num)
+            num = num + 1
+        # Adding Serial Numbers to the dataset
+        return fields, rows
+
+
+    def filter_data(self, table=None, data=None):
+        """
+        This method will generate the data as for
+        row format
+        """
+        # self.logger.debug(f'Table => {table}')
+        # self.logger.debug(f'Data => {data}')
+        fields, rows, colored_fields = [], [], []
+        fields = filter_columns(table)
+        # self.logger.debug(f'Fields => {fields}')
+        for field_key in fields:
+            val_row = []
+            for ele in data:
+                if field_key in list((data[ele].keys())):
+                    if isinstance(data[ele][field_key], list):
+                        new_list = []
+                        for internal in data[ele][field_key]:
+                            if isinstance(internal, str):
+                                new_list.append(internal)
+                            else:
+                                for internal_val in internal:
+                                    # self.logger.debug(f'Key => {internal_val}')
+                                    # self.logger.debug(f'Value => {internal[internal_val]}')
+                                    in_key = internal_val
+                                    in_val = internal[internal_val]
+                                    new_list.append(f'{in_key} = {in_val} ')
+                        new_list = '\n'.join(new_list)
+                        val_row.append(new_list)
+                        new_list = []
+                    elif field_key == 'tpm_uuid':
+                        if data[ele][field_key]:
+                            val_row.append(True)
+                        else:
+                            val_row.append(False)
+                    else:
+                        if data[ele][field_key] in [True, False, None, '', 'None']:
+                            value = self.format_value(data[ele][field_key])
+                            val_row.append(value)
+                        else:
+                            val_row.append(data[ele][field_key])
+                else:
+                    val_row.append(self.format_value(None))
+            rows.append(val_row)
+            # self.logger.debug(f'Each Row => {val_row}')
+            val_row = []
+            colored_fields.append(field_key)
+        fields = colored_fields
+        final_rows = []
+        for array in range(len(rows[0])):
+            tmp = []
+            for element in rows:
+                tmp.append(element[array])
+            final_rows.append(tmp)
+        rows = final_rows
+        for row in rows:
+            action = self.action_items(table, row[0])
+            row.insert(len(row), action)
+        # Adding Serial Numbers to the dataset
+        fields.insert(0, 'S. No.')
+        fields.insert(len(fields),"Actions")
+        num = 1
+        for outer in rows:
+            outer.insert(0, num)
+            num = num + 1
+        # Adding Serial Numbers to the dataset
+        return fields, rows
+
+
+    def make_icon(self, href=None, onclick=None, text=None, icon=None, color=None):
+        """
+        This method will create action item on-demand.
+        """
+        if href:
+            href = f'href="{href}"'
+        else:
+            href = ''
+        if onclick:
+            onclick = f'onclick="{onclick}"'
+        else:
+            onclick = ''
+        data = 'id="actions" '
+        data += 'data-bs-toggle="tooltip" '
+        data += 'data-bs-offset="0,4" '
+        data += 'data-bs-placement="top" '
+        data += 'data-bs-html="true" '
+        inner = f'<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>{text}</span>'
+        data += f'data-bs-original-title="{inner}" '
+        icon = f'<i class="bx bx-md {icon}" style="color: {color}"></i>'
+        item = f'<a {href} {onclick} {data}>{icon}</a>'
+        return item
+
+
+    def action_items(self, table=None, name=None):
+        """
+        This method provide the action items for the table. 
+        """
+        ## Here we have two strategy to show action items. One with buttons and one with icons.
+        ## I choose icons here with tooltips. If in future buttons are required instead of icons
+        ## than set the value of items to button
+        item_type = 'icon'
+        if item_type == 'button':
+            button = "btn btn-sm "
+            info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
+            edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
+            delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
+        elif item_type == 'icon':
+            info =  self.make_icon(
+                href=url_for('show', record=name),
+                onclick=None,
+                text=f'{name} Detail Information',
+                icon='bx-info-circle',
+                color='#03c3ec;'
+            )
+            edit =  self.make_icon(
+                href=url_for('edit', record=name),
+                onclick=None,
+                text=f'Change in {name}',
+                icon='bx-edit',
+                color='#696cff;'
+            )
+            delete =  self.make_icon(
+                href=url_for('delete', record=name),
+                onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
+                text=f'Delete {name}',
+                icon='bx-trash',
+                color='red;'
+            )
+        else:
+            info = ''
+            edit = ''
+            delete = ''
+        action = {
+            'rack': [info, edit, delete]
+        }
+        response = "&nbsp;".join(action[table])
+        return response
+
+
+    def format_value(self, value=None):
+        """
+        This method will format true, false, and none in html format.
+        """
+        if value is True:
+            value = '<span class="badge bg-label-success me-1">True</span>'
+        elif value is False:
+            value = '<span class="badge bg-label-warning me-1">False</span>'
+        # elif value is None or value == '' or 'None' in value:
+        elif value in [None, '', 'None']:
+            value = '<span class="badge bg-label-dark me-1">None</span>'
+        return value
+
+
+    def base64_encode(self, content=None):
+        """
+        This method will encode a base 64 string.
+        """
+        try:
+            if content is not None:
+                content = base64.b64encode(content).decode("utf-8")
+        except binascii.Error:
+            self.logger.debug(f'Base64 Encode Error => {content}')
+        return content
+
+
+    def base64_decode(self, content=None):
+        """
+        This method will decode the base 64 string.
+        """
+        try:
+            if content is not None:
+                content = base64.b64decode(content)
+                content = content.decode("utf-8")
+        except binascii.Error:
+            self.logger.debug(f'Base64 Decode Error => {content}')
+        except UnicodeDecodeError:
+            self.logger.debug(f'Base64 Unicode Decode Error => {content}')
+        return content
+
+
+    def prepare_json(self, json_data=None, limit=False):
+        """
+        This method will decode the base 64 string.
+        """
+        for key in EDITOR_KEYS:
+            content = nested_lookup(key, json_data)
+            if content:
+                if content[0] is not None:
+                    try:
+                        content = self.base64_decode(content[0])
+                        if limit:
+                            if len(content) and '<empty>' not in content:
+                                content = content[:60]
+                                if '\n' in content:
+                                    content = content.removesuffix('\n')
+                                content = f'{content}...'
+                        json_data = nested_update(json_data, key=key, value=content)
+                    except TypeError:
+                        self.logger.debug(f"Without any reason {content} is coming from api.")
+        return json_data
+
+
+    def filter_data_list(self, table=None, data=None):
+        """
+        This method will generate the data as for row format
+        """
+        fields, rows, colored_fields = [], [], []
+        fields = filter_columns(table)
+        for field_key in fields:
+            val_row = []
+            for each in data:
+                for key, value in each.items():
+                    if field_key == key:
+                        val_row.append(self.format_value(value))
+            rows.append(val_row)
+            val_row = []
+            colored_fields.append(field_key)
+        fields = colored_fields
+        final_rows = []
+        for array in range(len(rows[0])):
+            tmp = []
+            for element in rows:
+                tmp.append(element[array])
+            final_rows.append(tmp)
+        rows = final_rows
+        for row in rows:
+            action = self.action_items('rack', row[0])
+            row.insert(len(row), action)
+
+        # Adding Serial Numbers to the dataset
+        fields.insert(0, 'S. No.')
+        fields.insert(len(fields),"Actions")
         num = 1
         for outer in rows:
             outer.insert(0, num)

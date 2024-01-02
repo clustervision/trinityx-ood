@@ -32,6 +32,8 @@ INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
+EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+
 
 def filter_columns(table=None):
     """
@@ -39,8 +41,43 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
+        'site': ['username_initiator', 'request_id', 'read', 'message', 'created'],
+        'rack': ['name', 'size'],
+        'inventory': ['name', 'type', 'height', 'orientation'],
+        # 'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
+        # 'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
         'queue': ['username_initiator', 'request_id', 'level', 'status', 'subsystem', 'task', 'created']
+    }
+    response = list(static[table])
+    return response
+
+
+
+
+# def filter_columns(table=None):
+#     """
+#     This method remove the unnecessary fields from
+#     the dataset.
+#     """
+#     response = False
+#     static = {
+#         'bmcsetup': ['name', 'userid', 'netchannel', 'mgmtchannel', 'unmanaged_bmc_users']
+#     }
+#     response = list(static[table])
+#     return response
+
+
+def sortby(table=None):
+    """
+    This method remove the unnecessary fields from
+    the dataset.
+    """
+    response = False
+    static = {
+        'bmcsetup': [
+            'name', 'userid', 'username', 'password', 'netchannel', 'mgmtchannel',
+            'unmanaged_bmc_users', 'comment'
+        ]
     }
     response = list(static[table])
     return response
