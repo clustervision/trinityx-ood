@@ -39,6 +39,7 @@ from constant import LICENSE
 from log import Log
 from helper import Helper
 from presenter import Presenter
+from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
@@ -60,11 +61,11 @@ def home():
     rack_data = {
          "config": {
             "rack": {
-                "rack001": {"size": 52, "devices": [{"name": "node001", "type": "compute", "height": 1, "postion": 1}, {"name": "node002", "type": "compute", "height": 2, "postion": 5}, {"name": "node003", "type": "compute", "height": 3, "postion": 11}, {"name": "switch001", "type": "switch", "height": 4, "postion": 20}, ] },
-                "rack002": {"size": 42, "devices": [{"name": "node004", "type": "compute", "height": 5, "postion": 1}, {"name": "node005", "type": "compute", "height": 6, "postion": 6}, {"name": "node006", "type": "compute", "height": 7, "postion": 15}, {"name": "switch002", "type": "switch", "height": 8, "postion": 25}, ] },
-                "rack003": {"size": 48, "devices": [{"name": "node007", "type": "compute", "height": 5, "postion": 1}, {"name": "node008", "type": "compute", "height": 4, "postion": 5}, {"name": "node009", "type": "compute", "height": 4, "postion": 11}, {"name": "switch003", "type": "switch", "height": 2, "postion": 20}, ] },
-                "rack004": {"size": 50, "devices": [{"name": "node010", "type": "compute", "height": 1, "postion": 1}, {"name": "node011", "type": "compute", "height": 1, "postion": 5}, {"name": "node012", "type": "compute", "height": 4, "postion": 11}, {"name": "switch004", "type": "switch", "height": 2, "postion": 20}, ] },
-                "rack005": {"size": 30, "devices": [{"name": "node013", "type": "compute", "height": 1, "postion": 1}, {"name": "node014", "type": "compute", "height": 1, "postion": 5}, {"name": "node015", "type": "compute", "height": 4, "postion": 11}, {"name": "switch005", "type": "switch", "height": 2, "postion": 20}, ] }
+                "rack001": {"size": 52, "devices": [{"name": "node001", "type": "compute", "height": 1, "position": 1}, {"name": "node002", "type": "compute", "height": 2, "position": 5}, {"name": "node003", "type": "compute", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
+                "rack002": {"size": 42, "devices": [{"name": "node004", "type": "compute", "height": 5, "position": 1}, {"name": "node005", "type": "compute", "height": 6, "position": 6}, {"name": "node006", "type": "compute", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
+                "rack003": {"size": 48, "devices": [{"name": "node007", "type": "compute", "height": 5, "position": 1}, {"name": "node008", "type": "compute", "height": 4, "position": 5}, {"name": "node009", "type": "compute", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
+                "rack004": {"size": 50, "devices": [{"name": "node010", "type": "compute", "height": 1, "position": 1}, {"name": "node011", "type": "compute", "height": 1, "position": 5}, {"name": "node012", "type": "compute", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
+                "rack005": {"size": 30, "devices": [{"name": "node013", "type": "compute", "height": 1, "position": 1}, {"name": "node014", "type": "compute", "height": 1, "position": 5}, {"name": "node015", "type": "compute", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
             }
         }
     }
@@ -77,11 +78,11 @@ def home():
         "config": {
             "rack": {
                 "inventory": [
-                    {"name": "node00111", "type": "compute", "height": 1}, {"name": "node00211", "type": "compute", "height": 2}, {"name": "node00311", "type": "compute", "height": 3}, {"name": "switch00111", "type": "switch", "height": 4}, 
-                    {"name": "node00411", "type": "compute", "height": 5}, {"name": "node00511", "type": "compute", "height": 6}, {"name": "node00611", "type": "compute", "height": 7}, {"name": "switch00211", "type": "switch", "height": 8}, 
-                    {"name": "node00711", "type": "compute", "height": 1}, {"name": "node00811", "type": "compute", "height": 1}, {"name": "node00911", "type": "compute", "height": 4}, {"name": "switch00311", "type": "switch", "height": 2}, 
-                    {"name": "node01011", "type": "compute", "height": 1}, {"name": "node01111", "type": "compute", "height": 1}, {"name": "node01211", "type": "compute", "height": 4}, {"name": "switch00411", "type": "switch", "height": 2}, 
-                    {"name": "node01311", "type": "compute", "height": 1}, {"name": "node01411", "type": "compute", "height": 1}, {"name": "node01511", "type": "compute", "height": 4}, {"name": "switch00511", "type": "switch", "height": 2},
+                    {"name": "node00111", "type": "compute", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "compute", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "compute", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
+                    {"name": "node00411", "type": "compute", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "compute", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "compute", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
+                    {"name": "node00711", "type": "compute", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "compute", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "compute", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
+                    {"name": "node01011", "type": "compute", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "compute", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "compute", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
+                    {"name": "node01311", "type": "compute", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "compute", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "compute", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
                 ]
             }
         }
@@ -110,31 +111,34 @@ def manage(page=None):
     """
     data, error = "", ""
     if page == "site":
-        data = {"config": {"rack": {"site": ["ClusterVision Amsterdam", "ClusterVision Schiphol"] } } }
+        data = {"config": {"rack": {"site": [{"name": "ClusterVision Amsterdam", "rooms": 2}, {"name": "ClusterVision Schiphol", "rooms": 3}] } } }
     elif page == "room":
-        data = {"config": {"rack": {"room": ["Basement", "1st Floor"] } } }
+        data = {"config": {"rack": {"room": [
+            {"name": "Basement", "site": "ClusterVision Amsterdam", "racks": 20}, {"name": "1st Floor", "site": "ClusterVision Amsterdam", "racks": 10},
+            {"name": "Basement", "site": "ClusterVision Schiphol", "racks": 10}, {"name": "1st Floor", "site": "ClusterVision Schiphol", "racks": 20}, {"name": "2nd Floor", "site": "ClusterVision Schiphol", "racks": 30}
+            ] } } }
     elif page == "rack":
         data = {
          "config": {
             "rack": {
-                "rack001": {"name": "rack001", "order": "ascending", "size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "postion": 1}, {"name": "node002", "type": "node", "height": 2, "postion": 5}, {"name": "node003", "type": "node", "height": 3, "postion": 11}, {"name": "switch001", "type": "switch", "height": 4, "postion": 20}, ] },
-                "rack002": {"name": "rack002", "order": "descending", "size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "postion": 1}, {"name": "node005", "type": "node", "height": 6, "postion": 6}, {"name": "node006", "type": "node", "height": 7, "postion": 15}, {"name": "switch002", "type": "switch", "height": 8, "postion": 25}, ] },
-                "rack003": {"name": "rack003", "order": "ascending", "size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "postion": 1}, {"name": "node008", "type": "node", "height": 4, "postion": 5}, {"name": "node009", "type": "node", "height": 4, "postion": 11}, {"name": "switch003", "type": "switch", "height": 2, "postion": 20}, ] },
-                "rack004": {"name": "rack004", "order": "descending", "size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "postion": 1}, {"name": "node011", "type": "node", "height": 1, "postion": 5}, {"name": "node012", "type": "node", "height": 4, "postion": 11}, {"name": "switch004", "type": "switch", "height": 2, "postion": 20}, ] },
-                "rack005": {"name": "rack005", "order": "descending", "size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "postion": 1}, {"name": "node014", "type": "node", "height": 1, "postion": 5}, {"name": "node015", "type": "node", "height": 4, "postion": 11}, {"name": "switch005", "type": "switch", "height": 2, "postion": 20}, ] }
+                "rack001": {"name": "rack001", "order": "ascending", "size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
+                "rack002": {"name": "rack002", "order": "descending", "size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
+                "rack003": {"name": "rack003", "order": "ascending", "size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
+                "rack004": {"name": "rack004", "order": "descending", "size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
+                "rack005": {"name": "rack005", "order": "descending", "size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
             }
         }
     }
     elif page == "inventory":
         data = {
         "config": {
-            "rack":{
+            "rack": {
                 "inventory": [
-                    {"name": "node00111", "type": "node", "height": 1}, {"name": "node00211", "type": "node", "height": 2}, {"name": "node00311", "type": "node", "height": 3}, {"name": "switch00111", "type": "switch", "height": 4}, 
-                    {"name": "node00411", "type": "node", "height": 5}, {"name": "node00511", "type": "node", "height": 6}, {"name": "node00611", "type": "node", "height": 7}, {"name": "switch00211", "type": "switch", "height": 8}, 
-                    {"name": "node00711", "type": "node", "height": 1}, {"name": "node00811", "type": "node", "height": 1}, {"name": "node00911", "type": "node", "height": 4}, {"name": "switch00311", "type": "switch", "height": 2}, 
-                    {"name": "node01011", "type": "node", "height": 1}, {"name": "node01111", "type": "node", "height": 1}, {"name": "node01211", "type": "node", "height": 4}, {"name": "switch00411", "type": "switch", "height": 2}, 
-                    {"name": "node01311", "type": "node", "height": 1}, {"name": "node01411", "type": "node", "height": 1}, {"name": "node01511", "type": "node", "height": 4}, {"name": "switch00511", "type": "switch", "height": 2},
+                    {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
+                    {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
+                    {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
+                    {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
+                    {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
                 ]
             }
         }
@@ -147,52 +151,48 @@ def manage(page=None):
     table_data = data
     LOGGER.info(table_data)
     if table_data:
-        if page in ["site", "room"]:
+        if page in ["site", "room", "inventory"]:
             raw_data = table_data['config']['rack'][page]
-            if page == "site":
-                fields = ["#", "Site", "Actions"]
-            else:
-                fields = ["#", "Site", "Room", "Actions"]
-            rows = []
-            sno = 1
-            for each in raw_data:
-                row = []
-                row.append(sno)
-                if page == "room":
-                    row.append("ClusterVision Amsterdam")
-                row.append(each)
-                action_items = Helper().action_items('rack', each)
-                row.append(action_items)
-                sno = sno + 1
-                rows.append(row)
-            data = Presenter().show_table(fields, rows)
-            data = unescape(data)
+            fields, rows  = Helper().filter_data_list(page, raw_data)
         elif page == "rack":
             raw_data = table_data['config']['rack']
             fields, rows  = Helper().filter_data(page, raw_data)
-            data = Presenter().show_table(fields, rows)
-            data = unescape(data)
-        elif page == "inventory":
-            raw_data = table_data['config']['rack'][page]
-            fields, rows  = Helper().filter_data_list(page, raw_data)
-            data = Presenter().show_table(fields, rows)
-            data = unescape(data)
+        data = Presenter().show_table(fields, rows)
+        data = unescape(data)
 
     if page in ["site", "room", "rack", "inventory"]:
         page_cap = page.capitalize()
     return render_template("manage.html", page=page_cap, data=data, error=error)
 
-@app.route('/show/<string:record>', methods=['GET'])
-def show(record=None):
+@app.route('/show/<string:page>/<string:record>', methods=['GET'])
+def show(page=None, record=None):
+    print("------------------")
     print("show")
+    print(page)
+    print(record)
+    print("------------------")
 
-@app.route('/edit/<string:record>', methods=['GET'])
-def edit(record=None):
+@app.route('/edit/<string:page>', methods=['GET'])
+@app.route('/edit/<string:page>/<string:record>', methods=['GET'])
+def edit(page=None, record=None):
+    data, error = "", ""
+    # site_list = Model().get_list_options('network')
+    site_list = ''
+    print("------------------")
     print("edit")
+    print(page)
+    print(record)
+    print("------------------")
+    page_cap = page.capitalize()
+    return render_template("change.html", page=page_cap, record=record, site_list=site_list, error=error)
 
-@app.route('/delete/<string:record>', methods=['GET'])
-def delete(record=None):
+@app.route('/delete/<string:page>/<string:record>', methods=['GET'])
+def delete(page=None, record=None):
+    print("------------------")
     print("delete")
+    print(page)
+    print(record)
+    print("------------------")
 
 @app.route('/status/<string:service>', methods=['GET'])
 def status(service=None):

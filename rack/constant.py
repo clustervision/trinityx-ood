@@ -41,30 +41,13 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'site': ['username_initiator', 'request_id', 'read', 'message', 'created'],
         'rack': ['name', 'size'],
-        'inventory': ['name', 'type', 'height', 'orientation'],
-        # 'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
-        # 'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
-        'queue': ['username_initiator', 'request_id', 'level', 'status', 'subsystem', 'task', 'created']
+        'site': ['name', 'rooms'],
+        'room': ['name', 'site', 'racks'],
+        'inventory': ['name', 'type', 'height', 'orientation']
     }
     response = list(static[table])
     return response
-
-
-
-
-# def filter_columns(table=None):
-#     """
-#     This method remove the unnecessary fields from
-#     the dataset.
-#     """
-#     response = False
-#     static = {
-#         'bmcsetup': ['name', 'userid', 'netchannel', 'mgmtchannel', 'unmanaged_bmc_users']
-#     }
-#     response = list(static[table])
-#     return response
 
 
 def sortby(table=None):

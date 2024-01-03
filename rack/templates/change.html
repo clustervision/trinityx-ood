@@ -1,0 +1,111 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{% if record %}Update{% else %}Add{% endif %}/</span> {{ page }}</h4>
+  {% if messages %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+  <div class="col-xxl">
+    <div class="card mb-4">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">{% if record %}Update{% else %}Add{% endif %} {{ page }} {% if record %}- {{ record }}{% endif %}</h5>
+        <small class="text-muted float-end">Change values here...</small>
+        <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
+      </div>
+      <div class="card-body">
+        <form id="formAuthentication" class="mb-3" action="" method="POST">
+          
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label">name</label>
+            <div class="col-sm-10"><input type="text" name="name" onkeypress="return event.charCode != 32" class="form-control" maxlength="100" required="" id="id_name"></div>
+          </div>
+
+          {% if page == 'Site' %}
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Total Rooms</label>
+              <div class="col-sm-10"><input type="number" name="rooms" class="form-control" min="0" max="1000" id="id_rooms"></div>
+            </div>
+            {% elif page == 'Room' %}
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Select Site</label>
+              <div class="col-sm-10">
+                <select name="site" class="form-control" id="id_site">{{ site_list | safe }}</select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Total Racks</label>
+              <div class="col-sm-10"><input type="number" name="rooms" class="form-control" min="0" max="1000" id="id_rooms"></div>
+            </div>
+
+            {% elif page == 'Rack' %}
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Select Order</label>
+              <div class="col-sm-10">
+                <select name="order" class="form-control" id="id_order">
+                  <option values=""> Select Order for Rack </option>
+                  <option values="ascending"> Ascending (Top To Bottom) </option>
+                  <option values="descending"> Descending (Bottom To Top) </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Size Of Rack</label>
+              <div class="col-sm-10"><input type="number" name="size" class="form-control" min="0" max="1000" id="id_size"></div>
+            </div>
+
+            {% elif page == 'Inventory' %}
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Select Type</label>
+              <div class="col-sm-10">
+                <select name="type" class="form-control" id="id_type">
+                  <option values=""> Select Inventory Type </option>
+                  <option values="node"> Compute Node </option>
+                  <option values="switch"> Switch </option>
+                  <option values="otherdev"> Any Other Device </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Inventory Height</label>
+              <div class="col-sm-10"><input type="number" name="height" class="form-control" min="0" max="80" id="id_height"></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Inventory Orientation</label>
+              <div class="col-sm-10">
+                <select name="type" class="form-control" id="id_type">
+                  <option values=""> Select Orientation </option>
+                  <option values="front"> Front Side </option>
+                  <option values="back"> Back Side </option>
+                </select>
+              </div>
+            </div>
+
+          {% endif %}
+          
+          <div class="row justify-content-end">
+            <div class="col-sm-10">
+              <button type="submit" class="btn btn-primary">{% if record %}Update{% else %}Add{% endif %} {{ page }} {% if record %}{{ record }}{% endif %}</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<hr class="my-5" />
+
+{% endblock content %}

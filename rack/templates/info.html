@@ -13,7 +13,7 @@
 <div class="row">
   <div class="col-xxl">
     <div class="card mb-4">
-      <h5 class="card-header">List of all {{ page }} <span><a style="float: right;" href="{{ url_for('edit', page=page) }}" class="btn btn-success">Add New {{ page }}</a></span></h5>
+      <h5 class="card-header">List of all {{ page }} <span><a style="float: right;" href="{{ url_for('home') }}" class="btn btn-success">Add New {{ page }}</a></span></h5>
       <div class="card-body">
         <div class="table-responsive text-nowrap">{{ data  | safe }}</div>
       </div>

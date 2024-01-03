@@ -121,7 +121,7 @@
 
                     {% for each_device in value['devices'] %}
 
-                      {% if each_device['postion'] == each+1  %}
+                      {% if each_device['position'] == each+1  %}
 
                         <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; left: 2px; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle" size="{{ each_device['height'] }}">
                           {% if each_device['type'] == "compute" %}

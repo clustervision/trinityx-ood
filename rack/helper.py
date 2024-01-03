@@ -210,26 +210,26 @@ class Helper():
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
-            info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
-            edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
-            delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
+            info = f'<a href="/show/{table}/{name}" class="{button}btn-info">Info</a>'
+            edit = f'<a href="/edit/{table}/{name}" class="{button}btn-primary">Edit</a>'
+            delete = f'<a href="/delete/{table}/{name}" class="{button}btn-danger">Delete</a>'
         elif item_type == 'icon':
             info =  self.make_icon(
-                href=url_for('show', record=name),
+                href=url_for('show', page=table, record=name),
                 onclick=None,
                 text=f'{name} Detail Information',
                 icon='bx-info-circle',
                 color='#03c3ec;'
             )
             edit =  self.make_icon(
-                href=url_for('edit', record=name),
+                href=url_for('edit', page=table, record=name),
                 onclick=None,
                 text=f'Change in {name}',
                 icon='bx-edit',
                 color='#696cff;'
             )
             delete =  self.make_icon(
-                href=url_for('delete', record=name),
+                href=url_for('delete', page=table, record=name),
                 onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
                 text=f'Delete {name}',
                 icon='bx-trash',
@@ -239,10 +239,10 @@ class Helper():
             info = ''
             edit = ''
             delete = ''
-        action = {
-            'rack': [info, edit, delete]
-        }
-        response = "&nbsp;".join(action[table])
+        if table in ['site', 'room', 'inventory']:
+            response = "&nbsp;".join([edit, delete])
+        else:
+            response = "&nbsp;".join([info, edit, delete])
         return response
 
 
@@ -333,7 +333,7 @@ class Helper():
             final_rows.append(tmp)
         rows = final_rows
         for row in rows:
-            action = self.action_items('rack', row[0])
+            action = self.action_items(table, row[0])
             row.insert(len(row), action)
 
         # Adding Serial Numbers to the dataset
