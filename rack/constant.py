@@ -41,7 +41,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'rack': ['name', 'size'],
+        'rack': ['name', 'size', 'order', 'room', 'site'],
         'site': ['name', 'rooms'],
         'room': ['name', 'site', 'racks'],
         'inventory': ['name', 'type', 'height', 'orientation']

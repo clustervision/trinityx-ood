@@ -239,10 +239,11 @@ class Helper():
             info = ''
             edit = ''
             delete = ''
-        if table in ['site', 'room', 'inventory']:
-            response = "&nbsp;".join([edit, delete])
-        else:
-            response = "&nbsp;".join([info, edit, delete])
+        response = "&nbsp;".join([edit, delete])
+        # if table in ['site', 'room', 'inventory']:
+        #     response = "&nbsp;".join([edit, delete])
+        # else:
+        #     response = "&nbsp;".join([info, edit, delete])
         return response
 
 
@@ -328,6 +329,7 @@ class Helper():
         final_rows = []
         for array in range(len(rows[0])):
             tmp = []
+            
             for element in rows:
                 tmp.append(element[array])
             final_rows.append(tmp)
