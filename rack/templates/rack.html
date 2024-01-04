@@ -38,6 +38,11 @@
       display: inline-block;
       text-align: center;
     }
+
+    .controller {
+      background-color: #404dff;
+      color: #ffffff;
+    }
     .node {
       background-color: #d9e7eb;
     }
@@ -78,13 +83,22 @@
           <div id="devices" class=" ui-widget-header scrollmenu snaptarget">
             {% if inventory %}
                 {% for each in inventory %}
-                  <div id="{{ each['name'] }}" style="height: {{ each['height']*30-2 }}px;"  class="draggable ui-widget-content right-click " size="{{ each['height'] }}">
-                    {% if each['type'] == "node" %}
-                    <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
-                    {% elif each['type'] == "switch" %}
-                    <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
-                    {% endif %}
-                    <strong>{{ each['name'] }}</strong>
+                  <div id="{{ each['name'] }}" style="height: {{ each['height']*30-2 }}px;"  class="draggable ui-widget-content right-click {{ each['type'] }}" size="{{ each['height'] }}">
+                    <div class="device">
+                      <div class="row" style="margin-right: 0px; margin-left-0px;">
+                        <div class="col col-2">
+                          {% if each['type'] == "node" %}
+                            <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                          {% elif each['type'] == "switch" %}
+                            <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                          {% elif each['type'] == "controller" %}
+                            <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                          {% endif %}
+                        </div>
+                        <div class="col col-8" ><strong style="float: left;">{{ each['name'] }}</strong></div>
+                        <div class="col col-2" style="background-color: #22cf65;"></div>
+                      </div>
+                    </div>
                   </div>
                   <script type="text/javascript">
                     $(function(){
@@ -111,29 +125,39 @@
     
         <div class="row">
 
-          <div class="col col-1" style="width: 2%; height: 1%;">
+          <!-- <div class="col col-1" style="width: 2%; height: 1%;">
             <div class="ui-widget-header snaptarget"><p>U</p></div>
             {% for each in range(rack_size+1) %}
             <div class="ui-widget-header  snaptarget">
               <p>{{ each }}</p>
             </div>
             {% endfor %}
-          </div>
+          </div> -->
 
           <script type="text/javascript">var devices = [];</script>
 
           {% if rack_data %}
             {% for key, value in rack_data.items() %}
+
+            <div class="col col-1" style="width: 2%; height: 1%;">
+              <div class="ui-widget-header snaptarget"><p>U</p></div>
+              {% for each in range(value["size"]+1) %}
+              <div class="ui-widget-header  snaptarget">
+                <p>{{ each }}</p>
+              </div>
+              {% endfor %}
+            </div>
+
+
             <div class="col col-2">
               <div class="ui-widget-header snaptarget"><p>{{ key }}</p></div>
                 {% for each in range(value["size"]+1) %}
                   <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{each }}</p>
 
                     {% for each_device in value['devices'] %}
-
                       {% if each_device['position'] == each+1  %}
 
-                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {% if each_device['type'] == 'node' %}node{% elif each_device['type'] == 'switch' %}switch{% else %}otherdev{% endif %}" size="{{ each_device['height'] }}">
+                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
                           <div class="device">
                             <div class="row" style="margin-right: 0px; margin-left-0px;">
                               <div class="col col-2">
@@ -141,6 +165,8 @@
                                   <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
                                 {% elif each_device['type'] == "switch" %}
                                   <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                                {% elif each_device['type'] == "controller" %}
+                                  <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
                                 {% endif %}
                               </div>
                               <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
@@ -176,6 +202,17 @@
                   </div>
                 {% endfor %}
               </div> 
+
+              <!-- <div class="col col-1" style="width: 2%; height: 1%;">
+                <div class="ui-widget-header snaptarget"><p>U</p></div>
+                {% for each in range(value["size"]+1) %}
+                <div class="ui-widget-header snaptarget">
+                  <p>{{ each }}</p>
+                </div>
+                {% endfor %}
+              </div> -->
+
+
             {% endfor %}
           </div> 
           {% endif %}

@@ -42,7 +42,7 @@ from presenter import Presenter
 from model import Model
 
 LOGGER = Log.init_log('INFO')
-TABLE = 'monitor'
+TABLE = 'rack'
 TABLE_CAP = 'Monitor'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
@@ -53,50 +53,61 @@ def home():
     This is the main method of application. It will Show Monitor Options.
     """
 
-    """
-    API - URI -> /config/rack
-    API - URI -> /config/rack/rack001
-    Method -  GET & POST [on GET get the data; on POST Create OR Update]
-    """
-    rack_data = {
-         "config": {
-            "rack": {
-                "rack001": {"size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
-                "rack002": {"size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
-                "rack003": {"size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
-                "rack004": {"size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
-                "rack005": {"size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
-            }
-        }
-    }
+    table_data = Rest().get_data(TABLE)
+    if table_data:
+        rack_data = table_data["config"]["rack"]
+    else:
+        rack_data = {}
 
-    """
-    API - URI -> /config/rack/inventory
-    Method -  GET & POST [on GET get the data; on POST Create OR Update]
-    """
-    inventory = {
-        "config": {
-            "rack": {
-                "inventory": [
-                    {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
-                    {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
-                    {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
-                    {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
-                    {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
-                ]
-            }
-        }
-    }
+    # """
+    # API - URI -> /config/rack
+    # API - URI -> /config/rack/rack001
+    # Method -  GET & POST [on GET get the data; on POST Create OR Update]
+    # """
+    # rack_data = {
+    #      "config": {
+    #         "rack": {
+    #             "rack001": {"size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
+    #             "rack002": {"size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
+    #             "rack003": {"size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
+    #             "rack004": {"size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
+    #             "rack005": {"size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
+    #         }
+    #     }
+    # }
 
-    """
-    API - URI -> /config/rack/rack001/_delete
-    Method -  GET [Delete the Rack From Database, Move devices into the inventory]
-    API - URI -> /config/rack/inventory/node00111/_delete
-    Method -  GET & DELETE [Delete device from the inventory ]
-    """
+    # """
+    # API - URI -> /config/rack/inventory
+    # Method -  GET & POST [on GET get the data; on POST Create OR Update]
+    # """
+    # inventory = {
+    #     "config": {
+    #         "rack": {
+    #             "inventory": [
+    #                 {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
+    #                 {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
+    #                 {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
+    #                 {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
+    #                 {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
+    #             ]
+    #         }
+    #     }
+    # }
+    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
+    if table_data:
+        inventory = table_data["config"]["rack"]["inventory"]
+    else:
+        inventory = {}
 
-    rack_data = rack_data["config"]["rack"]
-    inventory = inventory["config"]["rack"]["inventory"]
+    # """
+    # API - URI -> /config/rack/rack001/_delete
+    # Method -  GET [Delete the Rack From Database, Move devices into the inventory]
+    # API - URI -> /config/rack/inventory/node00111/_delete
+    # Method -  GET & DELETE [Delete device from the inventory ]
+    # """
+
+    # rack_data = rack_data["config"]["rack"]
+    # inventory = inventory["config"]["rack"]["inventory"]
     
 
     # response = status('status')
@@ -111,44 +122,50 @@ def manage(page=None):
     """
     data, error = "", ""
     if page == "site":
-        data = {"config": {"rack": {"site": [{"name": "ClusterVision Amsterdam", "rooms": 2}, {"name": "ClusterVision Schiphol", "rooms": 3}] } } }
+        table_data = {"config": {"rack": {"site": [{"name": "ClusterVision Amsterdam", "rooms": 2}, {"name": "ClusterVision Schiphol", "rooms": 3}] } } }
     elif page == "room":
-        data = {"config": {"rack": {"room": [
+        table_data = {"config": {"rack": {"room": [
             {"name": "Basement", "site": "ClusterVision Amsterdam", "racks": 20}, {"name": "1st Floor", "site": "ClusterVision Amsterdam", "racks": 10},
             {"name": "Basement", "site": "ClusterVision Schiphol", "racks": 10}, {"name": "1st Floor", "site": "ClusterVision Schiphol", "racks": 20}, {"name": "2nd Floor", "site": "ClusterVision Schiphol", "racks": 30}
             ] } } }
     elif page == "rack":
-        data = {
-         "config": {
-            "rack": {
-                "rack001": {"name": "rack001", "site": "ClusterVision Amsterdam", "room": "Basement", "order": "ascending", "size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
-                "rack002": {"name": "rack002", "site": "ClusterVision Amsterdam", "room": "1st Floor", "order": "descending", "size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
-                "rack003": {"name": "rack003", "order": "ascending", "size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
-                "rack004": {"name": "rack004", "site": "ClusterVision Schiphol", "room": "1st Floor", "order": "descending", "size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
-                "rack005": {"name": "rack005", "site": "ClusterVision Schiphol", "room": "1st Floor", "order": "descending", "size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
-            }
-        }
-    }
+        table_data = Rest().get_data(TABLE)
+        # if table_data:
+        #     data = table_data
+        # else:
+        #     data = {}
+    #     data = {
+    #      "config": {
+    #         "rack": {
+    #             "rack001": {"name": "rack001", "site": "ClusterVision Amsterdam", "room": "Basement", "order": "ascending", "size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
+    #             "rack002": {"name": "rack002", "site": "ClusterVision Amsterdam", "room": "1st Floor", "order": "descending", "size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
+    #             "rack003": {"name": "rack003", "order": "ascending", "size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
+    #             "rack004": {"name": "rack004", "site": "ClusterVision Schiphol", "room": "1st Floor", "order": "descending", "size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
+    #             "rack005": {"name": "rack005", "site": "ClusterVision Schiphol", "room": "1st Floor", "order": "descending", "size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
+    #         }
+    #     }
+    # }
     elif page == "inventory":
-        data = {
-        "config": {
-            "rack": {
-                "inventory": [
-                    {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
-                    {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
-                    {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
-                    {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
-                    {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
-                ]
-            }
-        }
-    }
+        table_data = Rest().get_data(TABLE, "inventory")
+    #     if table_data:
+    #         data = table_data
+    #     else:
+    #         data = {}
+    #     table_data = {
+    #     "config": {
+    #         "rack": {
+    #             "inventory": [
+    #                 {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
+    #                 {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
+    #                 {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
+    #                 {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
+    #                 {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
+    #             ]
+    #         }
+    #     }
+    # }
 
 
-    # data = Rest().get_raw('config/rack', page)
-    # return render_template("manage.html", page=page_cap, data=data)
-    # table_data = Rest().get_data(TABLE)
-    table_data = data
     LOGGER.info(table_data)
     if table_data:
         if page in ["site", "room", "inventory"]:
@@ -172,19 +189,39 @@ def show(page=None, record=None):
     print(record)
     print("------------------")
 
+
 @app.route('/edit/<string:page>', methods=['GET'])
 @app.route('/edit/<string:page>/<string:record>', methods=['GET'])
 def edit(page=None, record=None):
     data, error = "", ""
     # site_list = Model().get_list_options('network')
     site_list = ''
+    
+    if page == "rack":
+        table_data = Rest().get_data(TABLE, record)
+    else:
+        table_data = Rest().get_data(TABLE, page)
+    print(table_data)
+    if table_data:
+        if page == "rack":
+            data = table_data["config"]["rack"][record]
+        else:
+            tmp_data = table_data["config"]["rack"][page]
+            for each in tmp_data:
+                if each['name'] == record:
+                    data = each
+
+    else:
+        data = {}
     print("------------------")
     print("edit")
     print(page)
     print(record)
+    print(data)
     print("------------------")
+
     page_cap = page.capitalize()
-    return render_template("change.html", page=page_cap, record=record, site_list=site_list, error=error)
+    return render_template("change.html", page=page_cap, record=record, data=data, site_list=site_list, error=error)
 
 @app.route('/delete/<string:page>/<string:record>', methods=['GET'])
 def delete(page=None, record=None):
