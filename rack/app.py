@@ -59,60 +59,14 @@ def home():
     else:
         rack_data = {}
 
-    # """
-    # API - URI -> /config/rack
-    # API - URI -> /config/rack/rack001
-    # Method -  GET & POST [on GET get the data; on POST Create OR Update]
-    # """
-    # rack_data = {
-    #      "config": {
-    #         "rack": {
-    #             "rack001": {"size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
-    #             "rack002": {"size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
-    #             "rack003": {"size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
-    #             "rack004": {"size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
-    #             "rack005": {"size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
-    #         }
-    #     }
-    # }
-
-    # """
-    # API - URI -> /config/rack/inventory
-    # Method -  GET & POST [on GET get the data; on POST Create OR Update]
-    # """
-    # inventory = {
-    #     "config": {
-    #         "rack": {
-    #             "inventory": [
-    #                 {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
-    #                 {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
-    #                 {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
-    #                 {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
-    #                 {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
-    #             ]
-    #         }
-    #     }
-    # }
+   
     table_data = Rest().get_data(TABLE, "inventory/unconfigured")
     if table_data:
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
 
-    # """
-    # API - URI -> /config/rack/rack001/_delete
-    # Method -  GET [Delete the Rack From Database, Move devices into the inventory]
-    # API - URI -> /config/rack/inventory/node00111/_delete
-    # Method -  GET & DELETE [Delete device from the inventory ]
-    # """
-
-    # rack_data = rack_data["config"]["rack"]
-    # inventory = inventory["config"]["rack"]["inventory"]
-    
-
-    # response = status('status')
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
-    # return render_template("newrack.html", table=TABLE_CAP, rack_data=rack_data, data=response, title='Status')
 
 
 @app.route('/manage/<string:page>', methods=['GET'])
@@ -130,40 +84,8 @@ def manage(page=None):
             ] } } }
     elif page == "rack":
         table_data = Rest().get_data(TABLE)
-        # if table_data:
-        #     data = table_data
-        # else:
-        #     data = {}
-    #     data = {
-    #      "config": {
-    #         "rack": {
-    #             "rack001": {"name": "rack001", "site": "ClusterVision Amsterdam", "room": "Basement", "order": "ascending", "size": 52, "devices": [{"name": "node001", "type": "node", "height": 1, "position": 1}, {"name": "node002", "type": "node", "height": 2, "position": 5}, {"name": "node003", "type": "node", "height": 3, "position": 11}, {"name": "switch001", "type": "switch", "height": 4, "position": 20}, ] },
-    #             "rack002": {"name": "rack002", "site": "ClusterVision Amsterdam", "room": "1st Floor", "order": "descending", "size": 42, "devices": [{"name": "node004", "type": "node", "height": 5, "position": 1}, {"name": "node005", "type": "node", "height": 6, "position": 6}, {"name": "node006", "type": "node", "height": 7, "position": 15}, {"name": "switch002", "type": "switch", "height": 8, "position": 25}, ] },
-    #             "rack003": {"name": "rack003", "order": "ascending", "size": 48, "devices": [{"name": "node007", "type": "node", "height": 5, "position": 1}, {"name": "node008", "type": "node", "height": 4, "position": 5}, {"name": "node009", "type": "node", "height": 4, "position": 11}, {"name": "switch003", "type": "switch", "height": 2, "position": 20}, ] },
-    #             "rack004": {"name": "rack004", "site": "ClusterVision Schiphol", "room": "1st Floor", "order": "descending", "size": 50, "devices": [{"name": "node010", "type": "node", "height": 1, "position": 1}, {"name": "node011", "type": "node", "height": 1, "position": 5}, {"name": "node012", "type": "node", "height": 4, "position": 11}, {"name": "switch004", "type": "switch", "height": 2, "position": 20}, ] },
-    #             "rack005": {"name": "rack005", "site": "ClusterVision Schiphol", "room": "1st Floor", "order": "descending", "size": 30, "devices": [{"name": "node013", "type": "node", "height": 1, "position": 1}, {"name": "node014", "type": "node", "height": 1, "position": 5}, {"name": "node015", "type": "node", "height": 4, "position": 11}, {"name": "switch005", "type": "switch", "height": 2, "position": 20}, ] }
-    #         }
-    #     }
-    # }
     elif page == "inventory":
         table_data = Rest().get_data(TABLE, "inventory")
-    #     if table_data:
-    #         data = table_data
-    #     else:
-    #         data = {}
-    #     table_data = {
-    #     "config": {
-    #         "rack": {
-    #             "inventory": [
-    #                 {"name": "node00111", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00211", "type": "node", "height": 2, "orientation": "front"}, {"name": "node00311", "type": "node", "height": 3, "orientation": "back"}, {"name": "switch00111", "type": "switch", "height": 4, "orientation": "back"}, 
-    #                 {"name": "node00411", "type": "node", "height": 5, "orientation": "back"}, {"name": "node00511", "type": "node", "height": 6, "orientation": "back"}, {"name": "node00611", "type": "node", "height": 7, "orientation": "front"}, {"name": "switch00211", "type": "switch", "height": 8, "orientation": "back"}, 
-    #                 {"name": "node00711", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00811", "type": "node", "height": 1, "orientation": "front"}, {"name": "node00911", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00311", "type": "switch", "height": 2, "orientation": "back"}, 
-    #                 {"name": "node01011", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01111", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01211", "type": "node", "height": 4, "orientation": "front"}, {"name": "switch00411", "type": "switch", "height": 2, "orientation": "back"}, 
-    #                 {"name": "node01311", "type": "node", "height": 1, "orientation": "back"}, {"name": "node01411", "type": "node", "height": 1, "orientation": "front"}, {"name": "node01511", "type": "node", "height": 4, "orientation": "back"}, {"name": "switch00511", "type": "switch", "height": 2, "orientation": "back"},
-    #             ]
-    #         }
-    #     }
-    # }
 
 
     LOGGER.info(table_data)
