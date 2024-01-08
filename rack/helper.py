@@ -28,11 +28,17 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
+import os
+from time import time
 import base64
 import binascii
+import subprocess
+from random import randrange, randint
+from os import getpid
 from flask import url_for
 from nested_lookup import nested_lookup, nested_update, nested_delete
 from constant import filter_columns, EDITOR_KEYS, sortby
+from rest import Rest
 from log import Log
 from constant import filter_columns
 
@@ -200,7 +206,7 @@ class Helper():
         return item
 
 
-    def action_items(self, table=None, name=None):
+    def action_items(self, table=None, name=None, device_type=None):
         """
         This method provide the action items for the table. 
         """
@@ -212,7 +218,10 @@ class Helper():
             button = "btn btn-sm "
             info = f'<a href="/show/{table}/{name}" class="{button}btn-info">Info</a>'
             edit = f'<a href="/edit/{table}/{name}" class="{button}btn-primary">Edit</a>'
-            delete = f'<a href="/delete/{table}/{name}" class="{button}btn-danger">Delete</a>'
+            if table == "inventory":
+                delete = f'<a href="/delete/{table}/{name}/{device_type}" class="{button}btn-danger">Delete</a>'
+            else:
+                delete = f'<a href="/delete/{table}/{name}" class="{button}btn-danger">Delete</a>'
         elif item_type == 'icon':
             info =  self.make_icon(
                 href=url_for('show', page=table, record=name),
@@ -228,22 +237,31 @@ class Helper():
                 icon='bx-edit',
                 color='#696cff;'
             )
-            delete =  self.make_icon(
-                href=url_for('delete', page=table, record=name),
-                onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
-                text=f'Delete {name}',
-                icon='bx-trash',
-                color='red;'
-            )
+            if table == "inventory":
+                delete =  self.make_icon(
+                    href=url_for('delete', page=table, record=name, device=device_type),
+                    onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
+                    text=f'Delete {name}',
+                    icon='bx-trash',
+                    color='red;'
+                )
+            else:
+                delete =  self.make_icon(
+                    href=url_for('delete', page=table, record=name),
+                    onclick=f'return confirm(\'Are you sure you want to delete {name}?\');',
+                    text=f'Delete {name}',
+                    icon='bx-trash',
+                    color='red;'
+                )
         else:
             info = ''
             edit = ''
             delete = ''
-        response = "&nbsp;".join([edit, delete])
-        # if table in ['site', 'room', 'inventory']:
-        #     response = "&nbsp;".join([edit, delete])
-        # else:
-        #     response = "&nbsp;".join([info, edit, delete])
+        # response = "&nbsp;".join([edit, delete])
+        if table == 'rack':
+            response = "&nbsp;".join([info, edit, delete])
+        else:
+            response = "&nbsp;".join([edit, delete])
         return response
 
 
@@ -335,7 +353,7 @@ class Helper():
             final_rows.append(tmp)
         rows = final_rows
         for row in rows:
-            action = self.action_items(table, row[0])
+            action = self.action_items(table, row[0], row[1])
             row.insert(len(row), action)
 
         # Adding Serial Numbers to the dataset
@@ -347,3 +365,69 @@ class Helper():
             num = num + 1
         # Adding Serial Numbers to the dataset
         return fields, rows
+
+
+
+    def prepare_payload(self, table=None, raw_data=None):
+        """
+        This method will prepare the payload.
+        """
+        payload = {k: v for k, v in raw_data.items() if v is not None}
+        for key in EDITOR_KEYS:
+            content = nested_lookup(key, payload)
+            if content:
+                if content[0] is True:
+                    if table:
+                        get_list = Rest().get_data(table, payload['name'])
+                        if get_list:
+                            value = nested_lookup(key, get_list)
+                            if value:
+                                content = self.open_editor(key, value[0], payload)
+                                payload = nested_update(payload, key=key, value=content)
+                    else:
+                        content = self.open_editor(key, None, payload)
+                        payload = nested_update(payload, key=key, value=content)
+                elif content[0] is False:
+                    payload = nested_delete(payload, key)
+                elif content[0]:
+                    if os.path.exists(content[0]):
+                        if os.path.isfile(content[0]):
+                            with open(content[0], 'rb') as file_data:
+                                content = self.base64_encode(file_data.read())
+                                payload = nested_update(payload, key=key, value=content)
+                        else:
+                            print(f'ERROR :: {content[0]} is a Invalid filepath.')
+                    else:
+                        content = self.base64_encode(bytes(content[0], 'utf-8'))
+                        payload = nested_update(payload, key=key, value=content)
+        return payload
+
+
+    def open_editor(self, key=None, value=None, payload=None):
+        """
+        This Method will open a default text editor to
+        write the multiline text for keys such as comment,
+        prescript, postscript, partscript, content etc. but
+        not limited to them only.
+        """
+        response = ''
+        editor = str(os.path.abspath(__file__)).replace('helper.py', 'editor.sh')
+        os.chmod(editor, 0o0755)
+        random_path = str(time())+str(randint(1001,9999))+str(getpid())
+        tmp_folder = f'/tmp/lunatmp-{random_path}'
+        os.mkdir(tmp_folder)
+        if key == 'content':
+            filename = f'/tmp/lunatmp-{random_path}/{payload["name"]}{key}'
+        else:
+            filename = f'/tmp/lunatmp-{random_path}/{key}'
+        temp_file = open(filename, "x", encoding='utf-8')
+        if value:
+            value = self.base64_decode(value)
+            temp_file.write(value)
+            temp_file.close()
+        subprocess.call([editor, filename])
+        with open(filename, 'rb') as file_data:
+            response = self.base64_encode(file_data.read())
+        os.remove(filename)
+        os.rmdir(tmp_folder)
+        return response

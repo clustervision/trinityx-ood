@@ -33,7 +33,7 @@ __status__      = 'Development'
 import os
 import json
 from html import unescape
-from flask import Flask, render_template
+from flask import Flask, render_template, request, flash, url_for, redirect
 from rest import Rest
 from constant import LICENSE
 from log import Log
@@ -43,7 +43,7 @@ from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'rack'
-TABLE_CAP = 'Monitor'
+TABLE_CAP = 'Rack'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
@@ -52,20 +52,16 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-
     table_data = Rest().get_data(TABLE)
     if table_data:
         rack_data = table_data["config"]["rack"]
     else:
         rack_data = {}
-
-   
     table_data = Rest().get_data(TABLE, "inventory/unconfigured")
     if table_data:
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 
@@ -87,7 +83,6 @@ def manage(page=None):
     elif page == "inventory":
         table_data = Rest().get_data(TABLE, "inventory")
 
-
     LOGGER.info(table_data)
     if table_data:
         if page in ["site", "room", "inventory"]:
@@ -103,27 +98,33 @@ def manage(page=None):
         page_cap = page.capitalize()
     return render_template("manage.html", page=page_cap, data=data, error=error)
 
+
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
 def show(page=None, record=None):
-    print("------------------")
-    print("show")
-    print(page)
-    print(record)
-    print("------------------")
+    table_data = Rest().get_data(TABLE, record)
+    if table_data:
+        rack_data = table_data["config"]["rack"][record]
+    else:
+        rack_data = {}
+    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
+    if table_data:
+        inventory = table_data["config"]["rack"]["inventory"]
+    else:
+        inventory = {}
+    page_cap = page.capitalize()
+    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 
-@app.route('/edit/<string:page>', methods=['GET'])
-@app.route('/edit/<string:page>/<string:record>', methods=['GET'])
+@app.route('/edit/<string:page>', methods=['GET', 'POST'])
+@app.route('/edit/<string:page>/<string:record>', methods=['GET', 'POST'])
 def edit(page=None, record=None):
     data, error = "", ""
     # site_list = Model().get_list_options('network')
     site_list = ''
-    
     if page == "rack":
         table_data = Rest().get_data(TABLE, record)
     else:
         table_data = Rest().get_data(TABLE, page)
-    print(table_data)
     if table_data:
         if page == "rack":
             data = table_data["config"]["rack"][record]
@@ -132,55 +133,45 @@ def edit(page=None, record=None):
             for each in tmp_data:
                 if each['name'] == record:
                     data = each
-
     else:
         data = {}
-    print("------------------")
-    print("edit")
-    print(page)
-    print(record)
-    print(data)
-    print("------------------")
-
+    payload = {}
+    if request.method == 'POST':
+        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = Helper().prepare_payload(None, payload)
+        if page == "rack":
+            request_data = {'config': {TABLE: {payload['name']: payload}}}
+        else:
+            request_data = {'config': {TABLE: {"inventory": [{payload['name']: payload}]}}}
+        if page == "rack":
+            response = Rest().post_data(TABLE, payload['name'], request_data)
+        else:
+            response = Rest().post_data(TABLE, f'{page}/{payload["name"]}', request_data)
+        LOGGER.info(f'{response.status_code} -> {response.content}')
+        if response.status_code == 204:
+            flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
+        else:
+            response_json = response.json()
+            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+            flash(error, "error")
+        return redirect(url_for('edit', page=page, record=record), code=302)
     page_cap = page.capitalize()
     return render_template("change.html", page=page_cap, record=record, data=data, site_list=site_list, error=error)
 
-@app.route('/delete/<string:page>/<string:record>', methods=['GET'])
-def delete(page=None, record=None):
-    print("------------------")
-    print("delete")
-    print(page)
-    print(record)
-    print("------------------")
 
-@app.route('/status/<string:service>', methods=['GET'])
-def status(service=None):
-    """
-    This method to show the monitor status and queue.
-    """
-    response = ''
-    data = Rest().get_raw('monitor', service)
-    if data.content:
-        data = data.content.decode("utf-8")
-        data = json.loads(data)
-        data = data['monitor'][service]
-        if data:
-            fields, rows  = Helper().filter_interface(service, data)
-            fields = list(map(lambda x: x.replace('username_initiator', 'Initiate By'), fields))
-            fields = list(map(lambda x: x.replace('request_id', 'Request ID'), fields))
-            fields = list(map(lambda x: x.replace('read', 'Read'), fields))
-            fields = list(map(lambda x: x.replace('message', 'Message'), fields))
-            fields = list(map(lambda x: x.replace('created', 'Created On'), fields))
-            fields = list(map(lambda x: x.replace('username_initiator', 'Initiate By'), fields))
-            fields = list(map(lambda x: x.replace('level', 'Level'), fields))
-            fields = list(map(lambda x: x.replace('status', 'Status'), fields))
-            fields = list(map(lambda x: x.replace('subsystem', 'Sub System'), fields))
-            fields = list(map(lambda x: x.replace('task', 'Task'), fields))
-            data = Presenter().show_table(fields, rows)
-            response = unescape(data)
-        else:
-            response = f'<center><strong style="color: blue;">Monitor {service} is empty.</strong></center>'
-    return response
+@app.route('/delete/<string:page>/<string:record>', methods=['GET'])
+@app.route('/delete/<string:page>/<string:record>/<string:device>', methods=['GET'])
+def delete(page=None, record=None, device=None):
+    if page == "rack":
+        response = Rest().get_delete(TABLE, record)
+    else:
+        response = Rest().get_delete(TABLE, f'inventory/{record}/type/{device}')
+    LOGGER.info(f'{response.status_code} -> {response.content}')
+    if response.status_code == 204:
+        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
+    else:
+        flash('ERROR :: Something went wrong!', "error")
+    return redirect(url_for('manage', page=page), code=302)
 
 
 @app.route('/license', methods=['GET'])

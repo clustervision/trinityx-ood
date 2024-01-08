@@ -3,11 +3,14 @@
 
 <div class="container-xxl flex-grow-1 container-p-y">
   <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">{% if record %}Update{% else %}Add{% endif %}/</span> {{ page }}</h4>
-  {% if messages %}
-    {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
-    {% endfor %}
-{% endif %}
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
 <div class="row">
   <div class="col-xxl">
@@ -49,14 +52,16 @@
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">Select Site</label>
               <div class="col-sm-10">
-                <select name="site" class="form-control" id="id_site">{{ site_list | safe }}</select>
+                <div class="col-sm-10"><input type="text" name="site" class="form-control" maxlength="100" required="" id="id_site" value="{{ data['site'] }}" /></div>
+                <!-- <select name="site" class="form-control" id="id_site">{{ site_list | safe }}</select> -->
               </div>
             </div>
 
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">Select Room</label>
               <div class="col-sm-10">
-                <select name="room" class="form-control" id="id_room">{{ room_list | safe }}</select>
+                <div class="col-sm-10"><input type="text" name="room" class="form-control" maxlength="100" required="" id="id_room" value="{{ data['room'] }}" /></div>
+                <!-- <select name="room" class="form-control" id="id_room">{{ room_list | safe }}</select> -->
               </div>
             </div>
 
@@ -64,9 +69,9 @@
               <label class="col-sm-2 col-form-label">Select Order</label>
               <div class="col-sm-10">
                 <select name="order" class="form-control" id="id_order">
-                  <option values=""> Select Order for Rack </option>
-                  <option values="ascending" {% if data['order'] == 'ascending' %}selected{% endif %}> Ascending (Top To Bottom) </option>
-                  <option values="descending" {% if data['order'] == 'descending' %}selected{% endif %}> Descending (Bottom To Top) </option>
+                  <option value=""> Select Order for Rack </option>
+                  <option value="ascending" {% if data['order'] == 'ascending' %}selected{% endif %}> Ascending (Top To Bottom) </option>
+                  <option value="descending" {% if data['order'] == 'descending' %}selected{% endif %}> Descending (Bottom To Top) </option>
                 </select>
               </div>
             </div>
@@ -82,11 +87,11 @@
               <label class="col-sm-2 col-form-label">Select Type</label>
               <div class="col-sm-10">
                 <select name="type" class="form-control" id="id_type">
-                  <option values=""> Select Inventory Type </option>
-                  <option values="node"{% if data['type'] == 'node' %}selected{% endif %}> Compute Node </option>
-                  <option values="switch"{% if data['type'] == 'switch' %}selected{% endif %}> Switch </option>
-                  <option values="otherdev"{% if data['type'] == 'otherdev' %}selected{% endif %}> Any Other Device </option>
-                  <option values="controller"{% if data['type'] == 'controller' %}selected{% endif %}> Controller (Head Node) </option>
+                  <option value=""> Select Inventory Type </option>
+                  <option value="node"{% if data['type'] == 'node' %}selected{% endif %}> Compute Node </option>
+                  <option value="switch"{% if data['type'] == 'switch' %}selected{% endif %}> Switch </option>
+                  <option value="otherdev"{% if data['type'] == 'otherdev' %}selected{% endif %}> Any Other Device </option>
+                  <option value="controller"{% if data['type'] == 'controller' %}selected{% endif %}> Controller (Head Node) </option>
                 </select>
               </div>
             </div>
@@ -100,9 +105,9 @@
               <label class="col-sm-2 col-form-label">Inventory Orientation</label>
               <div class="col-sm-10">
                 <select name="orientation" class="form-control" id="id_type">
-                  <option values=""> Select Orientation </option>
-                  <option values="front" {% if data['orientation'] == 'front' %}selected{% endif %}> Front Side </option>
-                  <option values="back" {% if data['orientation'] == 'back' %}selected{% endif %}> Back Side </option>
+                  <option value=""> Select Orientation </option>
+                  <option value="front" {% if data['orientation'] == 'front' %}selected{% endif %}> Front Side </option>
+                  <option value="back" {% if data['orientation'] == 'back' %}selected{% endif %}> Back Side </option>
                 </select>
               </div>
             </div>
