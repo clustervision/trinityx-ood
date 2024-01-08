@@ -10,21 +10,60 @@
 
 
 {% block content %}
-<!-- <div>
-    {% set layouts = ['force', 'concentric', 'hierarchical', ] %}
-    Radio buttons for the layouts:
-    {% for layout in layouts %}
-    <input type="radio" name="layout" value="{{ layout }}" id="{{ layout }}" class="layout-button" {% if loop.first %}checked{% endif %}>
-    <label for="{{ layout }}">{{ layout }}</label>
-    {% endfor %}
-</div> -->
-<div class="container">
+<div class="container" id="container">
+
     <div class="row">
         <div class="col-md-8">
+            <div class="form-row">
+
+                <div class="col">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"># Switches </span>
+                        </div>
+                        <input type="text" class="form-control" id="n-switches" readonly>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"># Nodes </span>
+                        </div>
+                        <input type="text" class="form-control" id="n-computes" readonly>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"># Links </span>
+                        </div>
+                        <input type="text" class="form-control" id="n-links" readonly>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"># Links </span>
+                        </div>
+                        <select class="form-control" id="simulation-type">
+                            {% set simulations = [ ('all', 'All'), ('compute', 'Nodes'), ('none', 'None') ] %}
+                            {% for (value, name) in simulations %}
+                            <option value="{{value}}">{{name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+
+
+            </div>
             <div id="graph"></div>
         </div>
         <div class="col-md-4">
-            <div id="table"></div>
+            <div id="table" class="table-sm table-borderless"></div>
         </div>
     </div>
 </div>

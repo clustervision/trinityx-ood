@@ -1,26 +1,14 @@
-const baseOpacity = 0.3;
-const highlightOpacity = 1;
-var table;
-var link;
-var node;
-
-function loadGraph(enpoint, callback) {
-    url = `${window.location.href}${enpoint}`;
-    d3.json(url).then(function (data) {
-        callback(data);
-    });
-}
-
 function nodeRadius(d) {
     return Math.sqrt(d.ports) + 11;
 }
-
+function linkWidth(d, highlighted) {
+    return (highlighted) ? d.count + 3 : d.count + 1;
+}
 function nodeImage(d) {
     var imageName = (d.type == "S") ? "switch.png" : "host.png";
     var imageUrl = `${window.location.href}/${imageName}`;
     return imageUrl;
 }
-
 function wrap(text, width) {
     text.each(function () {
         var text = d3.select(this),
@@ -45,192 +33,278 @@ function wrap(text, width) {
     });
 }
 
-function nodeHighlight(d) {
-    table.selectRow(d.id);
-    node.style('stroke-opacity', o => (o.id == d.id) ? highlightOpacity : baseOpacity);
-    node.style('stroke-width', o => (o.id == d.id) ? 3 : 1.5);
-    link.style('stroke-opacity', o => (o.source.id == d.id || o.target.id == d.id) ? highlightOpacity : baseOpacity);
-    link.style('stroke-width', o => (o.source.id == d.id || o.target.id == d.id) ? Math.sqrt(o.count) + 3 : Math.sqrt(o.count));
-}
+const Context = {
+    
+    baseOpacity: 0.3,
+    highlightOpacity: 0.8,
+    svg: null,
+    containerItem: null,
+    nodeContainerItems: null,
+    linkItems: null,
+    nodeItems: null,
+    nodeImageItems: null,
+    ndeLabelItems: null,
+    zoomItem: null,
 
-function nodeHighlightReset() {
-    table.deselectRow();
-    node.style('stroke-opacity', baseOpacity);
-    node.style('stroke-width', 1.5);
-    link.style('stroke-opacity', baseOpacity);
-    link.style('stroke-width', d => Math.sqrt(d.count));
-}
-
-function renderGraph(data) {
-
-    const width = $("#graph").parent().width();
-    const height = $("#graph").parent().height();
+    data: null,
+    table: null,
+    tablePageSize: 15,
 
 
-    // The force simulation mutates links and nodes, so create a copy
-    // so that re-evaluating this cell produces the same result.
-    const links = data.links.map(d => ({ ...d }));
-    const nodes = data.nodes.map(d => ({ ...d }));
+    width() {
+        return $("#graph").parent().width();
+    },
+    height() {
+        return $("#graph").parent().height();
+    },
+    links() {
+        return this.data.links;
+    },
+    nodes() {
+        return this.data.nodes;
+    },
+    computeNodes() {
+        return this.nodes().filter(d => d.type == "H");
+    },
+    switchNodes() {
+        return this.nodes().filter(d => d.type == "S");
+    },
+    switchLinks() {
+        return this.links().filter(d => d.source.type == "S" && d.target.type == "S");
+    },
+    setSimulationType(type) {
+        $("#simulation-type").val(type);
+        this.onchangeSimulationType();
+    },
+    getSimulationType() {
+        return $("#simulation-type").val();
+    },
+    onchangeSimulationType() {
+        this._simulation = this.simulation();
+    },
+    simulation() {
+        var simulationType = this.getSimulationType();
 
-    // Create a simulation with several forces.
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id))
-        .force("charge", d3.forceManyBody().strength(-800))
-        .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .on("tick", ticked);
+        console.log(simulationType);
+        
+        if ( this._simulation != null) {
+            this._simulation.stop();
+        }
+        if (simulationType == 'all') {
+            this.switchNodes().forEach((d) => {
+                d.fx = null;
+                d.fy = null;
+            });
+        } else {
+            this.switchNodes().forEach((d) => {
+                d.fx = d.x;
+                d.fy = d.y;
+            });
+        }
+        
+        if (simulationType == 'all') {
+            return d3.forceSimulation(this.nodes())
+                .force("link", d3.forceLink(this.links()).id(d => d.id))
+                .force("charge", d3.forceManyBody().strength( -600 ))
+                .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
+                .force("center", d3.forceCenter(this.width() / 2, this.height() / 2))
+                .on("tick", () => this.ticked());
+        } else if (simulationType == 'compute') {
+            return  d3.forceSimulation(this.nodes())
+                .force("link", d3.forceLink(this.links()).id(d => d.id))
+                .force("charge", d3.forceManyBody().strength( -600 ))
+                .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
+                // .force("center", d3.forceCenter(this.width() / 2, this.height() / 2))
+                .on("tick", () => this.ticked());
+        } else if (simulationType == 'none') {
+            return  d3.forceSimulation(this.nodes())
+                    .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
+                    .on("tick", () => this.ticked());
+        }
+
+    },
+    nodeselected(d) {
+        this.table.scrollToRow(d.id, "center", false);
+        this.table.selectRow(d.id);
 
 
-    const svg = d3.select("#graph").append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", [0, 0, width, height])
-        .attr("style", "max-width: 100%; height: auto;")
+        this.nodeItems.style('stroke-opacity', o => (o.id == d.id) ? this.highlightOpacity : this.baseOpacity);
+        this.nodeItems.style('stroke-width', o => (o.id == d.id) ? 3 : 1.5);
+        this.linkItems.style('stroke-opacity', l => (l.source.id == d.id || l.target.id == d.id) ? this.highlightOpacity : this.baseOpacity);
+        this.linkItems.style('stroke-width', l => linkWidth(l,(l.source.id == d.id || l.target.id == d.id)));
+    },
+    nodesunselected() {
+        this.table.deselectRow();
+        this.nodeItems.style('stroke-opacity', this.baseOpacity);
+        this.nodeItems.style('stroke-width', 1.5);
+        this.linkItems.style('stroke-opacity', this.baseOpacity);
+        this.linkItems.style('stroke-width', l => linkWidth(l,false));
+    },
+    dragstarted(event) {
 
-    // Create a container for the links and nodes. ( Hidden on startup )
-    const container = svg.append("g")
-                        .attr("class", "container")
-                        .attr("style", "display: none;")
+        if (this.getSimulationType() == 'all'){
+            this.setSimulationType('compute');
+        }
 
-    // Add a line for each link, and a circle for each node.
-    link = container.append("g")
-        .attr("stroke", "#222")
-        .attr("stroke-opacity", baseOpacity)
-        .selectAll()
-        .data(links)
-        .join("line")
-        .attr("stroke-width", d => Math.sqrt(d.count));
-
-    const node_container = container.append("g")
-        .selectAll()
-        .data(nodes)
-        .join("g")
-
-    node = node_container.append("circle")
-        .attr("stroke", "#222")
-        .attr("stroke-opacity", baseOpacity)
-        .attr("stroke-width", 1.5)
-        .attr("fill", d => "#CCC")
-        .attr("r", d => nodeRadius(d));
-
-    const img = node_container.append("image")
-        .attr("xlink:href", nodeImage)
-        .attr("x", d => -nodeRadius(d) * 0.7)
-        .attr("y", d => -nodeRadius(d) * 0.7)
-        .attr("width", d => nodeRadius(d) * 0.7 * 2)
-        .attr("height", d => nodeRadius(d) * 0.7 * 2)
-
-    const label = node_container.append("text")
-        .attr("text-anchor", "middle")
-        .attr("alignment-baseline", "middle")
-        .text(d => d.name.split(" ").join(" "))
-        .attr("x", 0)
-        .attr("y", d => nodeRadius(d) + 12)
-        .attr("dy", 0)
-        .call(wrap, 100)
-
-
-    // invalidation.then(() => simulation.stop());
-    function ticked() {
-        container.attr("style", "display: block;")
-
-        link.attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node_container.attr("transform", d => `translate(${d.x}, ${d.y})`)
-    }
-
-    const zoom = d3.zoom()
-        .scaleExtent([0.5, 32])
-        .on("zoom", zoomed);
-
-    function zoomed({ transform }) {
-        // link.attr("transform", transform);
-        // node_container.attr("transform", transform);
-        container.attr("transform", transform);
-    }
-    // Reheat the simulation when drag starts, and fix the subject position.
-    function dragstarted(event) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
+        if (!event.active) this._simulation.alphaTarget(0.3).restart();
         event.subject.fx = event.subject.x;
         event.subject.fy = event.subject.y;
-    }
-
-    // Update the subject (dragged node) position during drag.
-    function dragged(event) {
-        console.log(event)
+    },
+    dragged(event) {
         event.subject.fx = event.x;
         event.subject.fy = event.y;
-    }
+    },
+    dragended(event) {
+        if (!event.active) this._simulation.alphaTarget(0);
+        if ( event.subject.type != "S" ) {
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+        // event.subject.fx = null;
+        // event.subject.fy = null;
+    },
+    _containerInitialized() {
+        // Set the container height to 80% of the window height
+        var canvasHeight = window.innerHeight * 0.80;
+        $("#container .row").height(canvasHeight);
 
-    // Restore the target alpha so the simulation cools after dragging ends.
-    // Unfix the subject position now that it’s no longer being dragged.
-    function dragended(event) {
-        if (!event.active) simulation.alphaTarget(0);
-        event.subject.fx = null;
-        event.subject.fy = null;
-    }
+        // Register the event handler for the simulation type
+        $("#simulation-type").change(() => this.onchangeSimulationType());
 
-    function mouseover(event) {
-        d = d3.select(this).datum();
-        nodeHighlight(d);
 
-    };
 
-    // Set the stroke width back to normal when mouse leaves the node.
-    function mouseout(event) {
-        nodeHighlightReset();
-    };
+    },
+    async _graphInitialized() {
+        this.svg = d3.select("#graph").append("svg")
+            .attr("width", this.width())
+            .attr("height", this.height())
+            .attr("viewBox", [0, 0, this.width(), this.height()])
+            .attr("style", "max-width: 100%; height: auto;")
 
-    svg.call(zoom).call(zoom.transform, d3.zoomIdentity);
+        this.containerItem = this.svg.append("g")
+            .attr("class", "container")
+            .attr("style", "display: none;")
+
+        this.linkItems = this.containerItem.append("g")
+            .attr("stroke", "#222")
+            .attr("stroke-opacity", this.baseOpacity)
+            .selectAll()
+            .data(this.links())
+            .join("line")
+            .attr("stroke-width", l => linkWidth(l,false))
+
+        this.nodeContainerItems = this.containerItem.append("g")
+            .selectAll()
+            .data(this.nodes())
+            .join("g")
+
+        this.nodeItems = this.nodeContainerItems.append("circle")
+            .attr("stroke", "#222")
+            .attr("stroke-opacity", this.baseOpacity)
+            .attr("stroke-width", 1.5)
+            .attr("fill", d => "#CCC")
+            .attr("r", d => nodeRadius(d));
+
+        this.nodeImageItems = this.nodeContainerItems.append("image")
+            .attr("xlink:href", nodeImage)
+            .attr("x", d => -nodeRadius(d) * 0.7)
+            .attr("y", d => -nodeRadius(d) * 0.7)
+            .attr("width", d => nodeRadius(d) * 0.7 * 2)
+            .attr("height", d => nodeRadius(d) * 0.7 * 2)
+
+        this.nodeLabelItems = this.nodeContainerItems.append("text")
+            .attr("text-anchor", "middle")
+            .attr("alignment-baseline", "middle")
+            .text(d => d.name.split(" ").join(" "))
+            .attr("x", 0)
+            .attr("y", d => nodeRadius(d) + 12)
+            .attr("dy", 0)
+            .call(wrap, 100)
+        
+        this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
+
+        
+
+        this.svg.call(this.zoomItem.on("zoom", ({transform}) => {
+            this.containerItem.attr("transform", transform);
+        }))
     
-    node_container.call(d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended))
+        this.nodeContainerItems.call(d3.drag()
+                    .on("start", (e) => this.dragstarted(e))
+                    .on("drag", (e) => this.dragged(e))
+                    .on("end", (e) => this.dragended(e)))
+            
+        this.nodeContainerItems.on("mouseover", (e) => {
+            d = d3.select(e.target).datum();
+            this.nodeselected(d);
+        });
+        this.nodeContainerItems.on("mouseout", (e) => {
+            this.nodesunselected();
+        });
 
-    node_container.on("mouseover", mouseover)
-                  .on("mouseout", mouseout);
+        this._simulation = this.simulation()
+    },
+    async _tableInitialized() {
+        this.table = new Tabulator("#table", {
+            data: this.data.nodes,           //load row data from array
+            layout:"fitColumns",             //fit columns to width of table
+            height:"100%",
+            columns:[                        //define the table columns
+                {formatter:"rownum", hozAlign:"center", width:65},
+                {title:"Name", field:"name"},
+                {title:"ID", field:"id"},
+            ],
+            
+            printRowRange:"all"
 
-    //
-};
+        });
 
-function renderTable(data) {
-    table = new Tabulator("#table", {
-        data: data.nodes,           //load row data from array
-        layout:"fitColumns",      //fit columns to width of table
-        pagination:"local",       //paginate the data
-        paginationSize:15,         //allow 7 rows per page of data
-        paginationButtonCount:4,  // 4 page buttons
-        paginationCounter:function(pageSize, currentRow, currentPage, totalRows, totalPages){
-            return `Rows ${currentRow} - ${currentRow + pageSize - 1} of ${totalRows}`
-        },
-        initialSort:[             //set the initial sort order of the data
-            {column:"name", dir:"asc"},
-        ],
-        // selectable:true,
-        columns:[                 //define the table columns
-            {title:"Name", field:"name"},
-            {title:"ID", field:"id"},
-        ],
-    });
-    table.on("rowMouseOver", function(e, row){
-        //e - the event object
-        //row - row component
+        this.table.on("rowMouseOver", (e, row) =>{ 
+            this.nodeselected(row.getData()) 
+        });
 
-        nodeHighlight(row.getData());
-    });
-    table.on("rowMouseOut", function(e, row){
-        //e - the event object
-        //row - row component
+        this.table.on("rowMouseOut", () => {
+            this.nodesunselected()
+        });
+    },
+    async _menuInitialized() {
+        $('#n-switches').val(this.switchNodes().length);
+        $('#n-computes').val(this.computeNodes().length);
+        $('#n-links').val(this.links().length);
+    },
+    initialized() {
+        this._containerInitialized();
+        this._tableInitialized();
+        this._graphInitialized();
+        this._menuInitialized();
+    },
+    loaded(endpoint) {
+        // Get the current url without any trailing slash
+        var currentUrl = window.location.href.replace(/\/$/, "");
+        var url = `${currentUrl}${endpoint}`;
+        var callback = (data) => { 
+            this.data = data
+            this.initialized()
+        }
 
-        nodeHighlightReset();
-    });
+        d3.json(url).then(function (data) {
+            callback(data);
+        });
+    },
+    ticked() {
+        this.containerItem.attr("style", "display: block;");
+        this.linkItems.attr("x1", d => d.source.x)
+                      .attr("y1", d => d.source.y)
+                      .attr("x2", d => d.target.x)
+                      .attr("y2", d => d.target.y);
+
+        this.nodeContainerItems.attr("transform", d => `translate(${d.x}, ${d.y})`)
+    },
+    
 }
 
+var context;
 window.onload = function () {
-    loadGraph("/graph", renderTable);
-    loadGraph("/graph", renderGraph);
+    context = Object.create(Context)
+    context.loaded("/graph");
 }
