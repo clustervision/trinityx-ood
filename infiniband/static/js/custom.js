@@ -286,14 +286,16 @@ const Context = {
         // Get the current url without any trailing slash
         var currentUrl = window.location.href.replace(/\/$/, "");
         var url = `${currentUrl}${endpoint}`;
-        var callback = (data) => { 
+        var successCallback = (data) => { 
             this.data = data
             this.initialized()
         }
+        var failureCallback = (error) => {
+            console.log(error)
+            displayAlert("danger", error)
+        }
 
-        d3.json(url).then(function (data) {
-            callback(data);
-        });
+        d3.json(url).then( successCallback, failureCallback);
     },
     ticked() {
         this.containerItem.attr("style", "display: block;");

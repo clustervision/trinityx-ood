@@ -27,7 +27,6 @@ __email__ = "support@clustervision.com"
 __status__ = "Development"
 
 import os
-import sys
 import jwt
 import requests
 from dynaconf import Dynaconf

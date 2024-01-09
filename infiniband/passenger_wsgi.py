@@ -26,4 +26,4 @@ __maintainer__ = "ClusterVision Solutions Development Team"
 __email__ = "support@clustervision.com"
 __status__ = "Development"
 
-from app import app as application
+from app import app as application  # noqa
