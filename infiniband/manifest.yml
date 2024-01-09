@@ -5,6 +5,6 @@ category: Monitoring
 
 
 tile:
-  title: infiniband
+  title: Infiniband
   sub_caption: |
-   View the infiniband connection network
+   View the Infiniband connection network
