@@ -1,15 +1,21 @@
-function nodeRadius(d) {
-    return Math.sqrt(d.ports) + 11;
+function nodeRadius(n) {
+    return Math.sqrt(n.ports) + 11;
 }
-function linkWidth(d, highlighted) {
-    return (highlighted) ? d.count + 3 : d.count + 1;
-}
-function nodeImage(d) {
-    var imageName = (d.type == "S") ? "switch.png" : "host.png";
-    var imageUrl = `${window.location.href}/${imageName}`;
+function nodeImage(n) {
+    var imageName = (n.type == "S") ? "switch.png" : "host.png";
+    var imageUrl = `${window.location.href}/assets/${imageName}`;
     return imageUrl;
 }
-function wrap(text, width) {
+function nodeStrokeWidth(highlighted) {
+    return (highlighted) ? 3 : 1.5;
+}
+function linkStrokeWidth(l, highlighted) {
+    return (highlighted) ? l.count + 3 : l.count + 1;
+}
+function strokeOpacity(highlighted) {
+    return (highlighted) ? 0.8 : 0.3;
+}
+function wrapText(text, width) {
     text.each(function () {
         var text = d3.select(this),
             words = text.text().split(/\s+/).reverse(),
@@ -35,8 +41,6 @@ function wrap(text, width) {
 
 const Context = {
     
-    baseOpacity: 0.3,
-    highlightOpacity: 0.8,
     svg: null,
     containerItem: null,
     nodeContainerItems: null,
@@ -128,17 +132,17 @@ const Context = {
         this.table.selectRow(d.id);
 
 
-        this.nodeItems.style('stroke-opacity', o => (o.id == d.id) ? this.highlightOpacity : this.baseOpacity);
-        this.nodeItems.style('stroke-width', o => (o.id == d.id) ? 3 : 1.5);
-        this.linkItems.style('stroke-opacity', l => (l.source.id == d.id || l.target.id == d.id) ? this.highlightOpacity : this.baseOpacity);
-        this.linkItems.style('stroke-width', l => linkWidth(l,(l.source.id == d.id || l.target.id == d.id)));
+        this.nodeItems.style('stroke-opacity', o => strokeOpacity(o.id == d.id));
+        this.nodeItems.style('stroke-width', o =>  nodeStrokeWidth(o.id == d.id));
+        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == d.id || l.target.id == d.id));
+        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == d.id || l.target.id == d.id)));
     },
     nodesunselected() {
         this.table.deselectRow();
-        this.nodeItems.style('stroke-opacity', this.baseOpacity);
-        this.nodeItems.style('stroke-width', 1.5);
-        this.linkItems.style('stroke-opacity', this.baseOpacity);
-        this.linkItems.style('stroke-width', l => linkWidth(l,false));
+        this.nodeItems.style('stroke-opacity', strokeOpacity(false));
+        this.nodeItems.style('stroke-width', nodeStrokeWidth(false));
+        this.linkItems.style('stroke-opacity', strokeOpacity(false));
+        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,false));
     },
     dragstarted(event) {
 
@@ -187,11 +191,11 @@ const Context = {
 
         this.linkItems = this.containerItem.append("g")
             .attr("stroke", "#222")
-            .attr("stroke-opacity", this.baseOpacity)
+            .attr("stroke-opacity", strokeOpacity(false))
             .selectAll()
             .data(this.links())
             .join("line")
-            .attr("stroke-width", l => linkWidth(l,false))
+            .attr("stroke-width", l => linkStrokeWidth(l, false))
 
         this.nodeContainerItems = this.containerItem.append("g")
             .selectAll()
@@ -200,8 +204,8 @@ const Context = {
 
         this.nodeItems = this.nodeContainerItems.append("circle")
             .attr("stroke", "#222")
-            .attr("stroke-opacity", this.baseOpacity)
-            .attr("stroke-width", 1.5)
+            .attr("stroke-opacity", strokeOpacity(false))
+            .attr("stroke-width", nodeStrokeWidth(false))
             .attr("fill", d => "#CCC")
             .attr("r", d => nodeRadius(d));
 
@@ -219,7 +223,7 @@ const Context = {
             .attr("x", 0)
             .attr("y", d => nodeRadius(d) + 12)
             .attr("dy", 0)
-            .call(wrap, 100)
+            .call(wrapText, 100)
         
         this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
 
