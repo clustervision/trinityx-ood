@@ -207,7 +207,7 @@ const Context = {
             .attr("stroke-opacity", strokeOpacity(false))
             .attr("stroke-width", nodeStrokeWidth(false))
             .attr("fill", d => "#CCC")
-            .attr("r", d => nodeRadius(d));
+            .attr("r", d => nodeRadius(d))
 
         this.nodeImageItems = this.nodeContainerItems.append("image")
             .attr("xlink:href", nodeImage)
@@ -225,9 +225,10 @@ const Context = {
             .attr("dy", 0)
             .call(wrapText, 100)
         
-        this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
 
-        
+
+
+        this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
 
         this.svg.call(this.zoomItem.on("zoom", ({transform}) => {
             this.containerItem.attr("transform", transform);
@@ -246,7 +247,22 @@ const Context = {
             this.nodesunselected();
         });
 
-        this._simulation = this.simulation()
+
+
+        if (this.data.state){
+            this.nodes().forEach((d) => {
+                var nodePosition = this.data.state.nodePositions.find(n => n.id == d.id);
+                if (nodePosition) {
+                    d.x = nodePosition.x;
+                    d.y = nodePosition.y;
+                }
+            });
+            this.setSimulationType(this.data.state.simulationType);
+            this.fitzoom();
+        } else {
+            this._simulation = this.simulation()
+        }
+
     },
     async _tableInitialized() {
         this.table = new Tabulator("#table", {
@@ -275,6 +291,8 @@ const Context = {
         $('#n-switches').val(this.switchNodes().length);
         $('#n-computes').val(this.computeNodes().length);
         $('#n-links').val(this.links().length);
+
+        $('#save-graph').click(() => this.saved());
     },
     initialized() {
         this._containerInitialized();
@@ -306,11 +324,57 @@ const Context = {
 
         this.nodeContainerItems.attr("transform", d => `translate(${d.x}, ${d.y})`)
     },
+    saved() {
+        var url = `${window.location.href}/graph/state/save`;
+        var state = this.getState();
+
+        var successCallback = (data) => { 
+            displayAlert("success", data.message)
+        }
+        var failureCallback = (error) => {
+            console.log(error)
+            displayAlert("danger", error.message)
+        }
+
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: JSON.stringify(state),
+            contentType: "application/json",
+            dataType: "json",
+            success: successCallback,
+            error: failureCallback
+        });
+    },
+    getState() {
+        var state = {
+            simulationType: this.getSimulationType(),
+            nodePositions: this.nodes().map(d => { return {id: d.id, x: d.x, y: d.y} })
+        }
+        return state;
+    },
+    fitzoom() {
+        var minX = d3.min(this.nodes(), d => d.x);
+        var maxX = d3.max(this.nodes(), d => d.x);
+        var minY = d3.min(this.nodes(), d => d.y);
+        var maxY = d3.max(this.nodes(), d => d.y);
+        var midX = (minX + maxX) / 2;
+        var midY = (minY + maxY) / 2;
+
+        var width = maxX - minX;
+        var height = maxY - minY;
+        var scale = 0.9 / Math.max(width / this.width(), height / this.height());
+        var translateX = this.width() / 2 - scale * midX;
+        var translateY = this.height() / 2 - scale * midY;
+
+        this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
+        
+    }
     
 }
 
 var context;
 window.onload = function () {
     context = Object.create(Context)
-    context.loaded("/graph");
+    context.loaded("/graph/get");
 }

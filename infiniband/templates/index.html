@@ -16,6 +16,7 @@
         <div class="col-md-8">
             <div class="form-row">
 
+                <!-- Read only input for the number of switch nodes -->
                 <div class="col">
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
@@ -25,6 +26,7 @@
                     </div>
                 </div>
 
+                <!-- Read only input for the number of compute nodes -->
                 <div class="col">
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
@@ -34,6 +36,7 @@
                     </div>
                 </div>
 
+                <!-- Read only input for the number of links -->
                 <div class="col">
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
@@ -43,6 +46,7 @@
                     </div>
                 </div>
 
+                <!-- Select for the simulation type -->
                 <div class="col">
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
@@ -54,6 +58,13 @@
                             <option value="{{value}}">{{name}}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                </div>
+
+                <!-- Button to save the graph state -->
+                <div class="col">
+                    <div class="input-group mb-3">
+                        <button type="button" class="btn btn-primary" id="save-graph">Save</button>
                     </div>
                 </div>
 

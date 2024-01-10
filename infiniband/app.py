@@ -1,7 +1,9 @@
 import re
+import os
 import subprocess
+from json import loads, dumps, JSONDecodeError
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, render_template, request
 
 from base.config import settings
 
@@ -17,7 +19,7 @@ def wrap_errors(error):
     """
     if app.debug:
         raise error
-    return jsonify({"message": str(error)}), 500
+    return dumps({"message": str(error)}), 500
 
 
 def parse_graph(text):
@@ -55,7 +57,7 @@ def parse_graph(text):
     ]
 
     graph = {"nodes": nodes, "links": links}
-    return jsonify(graph)
+    return graph
 
 
 @app.route("/")
@@ -67,7 +69,7 @@ def index_route():
     return render_template("index.html", content="", settings=settings)
 
 
-@app.route("/graph")
+@app.route("/graph/get")
 def graph_route():
     """
     Route to get the graph.
@@ -80,6 +82,29 @@ def graph_route():
         raise Exception(
             f"ibnetdiscover failed with code {process.returncode}:\n{process.stderr.decode('utf-8')}"
         )
-    else:
-        text = process.stdout.decode("utf-8")
-        return parse_graph(text)
+
+    ibnetdiscover_output = process.stdout.decode("utf-8")
+    graph = parse_graph(ibnetdiscover_output)
+    state_path = os.path.join(os.path.dirname(__file__), "state.json")
+    
+    try:
+        if os.path.exists(state_path):
+            with open(state_path, "r") as f:
+                graph["state"] = loads(f.read())
+    except JSONDecodeError:
+        pass
+    finally:
+        return dumps(graph)
+
+@app.route("/graph/state/save", methods=["POST"])
+def save_route():
+    """
+    Route to save the graph.
+    """
+
+    state = request.json
+    state_path = os.path.join(os.path.dirname(__file__), "state.json")
+    with open(state_path, "w") as f:
+        f.write(dumps(state))
+    response = {"message": f"Saved state to {state_path}"}
+    return dumps(response)
