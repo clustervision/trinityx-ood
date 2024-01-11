@@ -27,8 +27,8 @@ def parse_graph(text):
     This method will parse the ibnetdiscover output into a graph.
     """
 
-    switch_regex = r"(Switch|Ca)\s+([0-9]+)\s+\"([SH]-[0-9a-z]+)\"\s+#\s*\"(.*)\".*\n?(\[[0-9]+\].*\n)*"
-    link_regex = r"\[([0-9]+)\].*\"([SH]-[0-9a-z]+)\".*\[([0-9]+)\].*#\s*\"(.*)\""
+    switch_regex = r"(Switch|Ca)\s+([0-9]+)\s+\"([SH]-[0-9a-z]+)\".*#.*\"(.*)\".*\n?(\[[0-9]+\].*\n)*"
+    link_regex = r"\[([0-9]+)\].*\"([SH]-[0-9a-z]+)\".*\[([0-9]+)\].*#.*\"(.*)\""
     matches = re.finditer(switch_regex, text, re.MULTILINE)
 
     nodes = {}
@@ -38,16 +38,31 @@ def parse_graph(text):
         ports = switch_match.group(2)
         uid = switch_match.group(3)
         name = switch_match.group(4)
-        nodes[uid] = {"name": name, "ports": ports, "type": uid[0]}
+        nodes[uid] = {"name": name, "ports": ports, "type": uid[0], "_children": []}
 
         for link_match in re.finditer(link_regex, switch_match.group(0)):
-            _ = link_match.group(1)
+            port_id = link_match.group(1)
             target_uid = link_match.group(2)
-            _ = link_match.group(3)
-            _ = link_match.group(4)
+            target_port_id = link_match.group(3)
+            target_name = link_match.group(4)
+
+            interface = {
+                "name":name,
+                "port_id": port_id,
+                "target_port_id": target_port_id,
+                "target_name": target_name,
+                "source":{
+                    "id":uid,
+                },
+                "target":{
+                    "id":target_uid,    
+                }
+            }
+            nodes[uid]["_children"].append(interface)
 
             edge_uid = tuple(sorted([uid, target_uid]))
             edge_count = edges.get(edge_uid, 0)
+
             edges[edge_uid] = edge_count + 1
 
     nodes = [{"id": uid, **data} for uid, data in nodes.items()]

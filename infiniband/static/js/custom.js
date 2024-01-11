@@ -52,8 +52,6 @@ const Context = {
 
     data: null,
     table: null,
-    tablePageSize: 15,
-
 
     width() {
         return $("#graph").parent().width();
@@ -127,17 +125,20 @@ const Context = {
         }
 
     },
-    nodeselected(d) {
-        this.table.scrollToRow(d.id, "center", false);
-        this.table.selectRow(d.id);
-
-
-        this.nodeItems.style('stroke-opacity', o => strokeOpacity(o.id == d.id));
-        this.nodeItems.style('stroke-width', o =>  nodeStrokeWidth(o.id == d.id));
-        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == d.id || l.target.id == d.id));
-        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == d.id || l.target.id == d.id)));
+    nodeselected(n) {
+        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.id == n.id));
+        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.id == n.id));
+        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == n.id || l.target.id == n.id));
+        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == n.id || l.target.id == n.id)));
     },
-    nodesunselected() {
+    linkselected(l) {
+        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.id == l.source.id || n.id == l.target.id));
+        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.id == l.source.id || n.id == l.target.id));
+        this.linkItems.style('stroke-opacity', ol => strokeOpacity((l.source.id == ol.source.id && l.target.id == ol.target.id) || (l.source.id == ol.target.id && l.target.id == ol.source.id)));
+        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((l.source.id == ol.source.id && l.target.id == ol.target.id) || (l.source.id == ol.target.id && l.target.id == ol.source.id))));        
+    },
+
+    unselected() {
         this.table.deselectRow();
         this.nodeItems.style('stroke-opacity', strokeOpacity(false));
         this.nodeItems.style('stroke-width', nodeStrokeWidth(false));
@@ -229,22 +230,25 @@ const Context = {
 
 
         this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
+        this.dragItem = d3.drag()
 
         this.svg.call(this.zoomItem.on("zoom", ({transform}) => {
             this.containerItem.attr("transform", transform);
         }))
     
-        this.nodeContainerItems.call(d3.drag()
+        this.nodeContainerItems.call(this.dragItem
                     .on("start", (e) => this.dragstarted(e))
                     .on("drag", (e) => this.dragged(e))
                     .on("end", (e) => this.dragended(e)))
             
         this.nodeContainerItems.on("mouseover", (e) => {
-            d = d3.select(e.target).datum();
-            this.nodeselected(d);
+            n = d3.select(e.target).datum();
+            this.table.scrollToRow(n.id, "center", false);
+            this.table.selectRow(n.id);
+            this.nodeselected(n);
         });
         this.nodeContainerItems.on("mouseout", (e) => {
-            this.nodesunselected();
+            this.unselected();
         });
 
 
@@ -267,24 +271,32 @@ const Context = {
     async _tableInitialized() {
         this.table = new Tabulator("#table", {
             data: this.data.nodes,           //load row data from array
-            layout:"fitColumns",             //fit columns to width of table
-            height:"100%",
+            layout:"fitData",
+            height:this.height(),
             columns:[                        //define the table columns
-                {formatter:"rownum", hozAlign:"center", width:65},
+                // {formatter:"rownum", hozAlign:"center", width:65},
                 {title:"Name", field:"name"},
-                {title:"ID", field:"id"},
+                {title:"Port", field:"port_id", width: 50},
+                {title: "Target Name", field:"target_name"},
+                {title:"Target Port", field:"target_port_id", width: 50},
             ],
-            
+            dataTree:true,
             printRowRange:"all"
 
         });
 
-        this.table.on("rowMouseOver", (e, row) =>{ 
-            this.nodeselected(row.getData()) 
+        this.table.on("rowMouseOver", (e, row) =>{
+            var data = row.getData();
+            console.log(data, data.target_name)
+            if (data.target_name != undefined) { 
+                this.linkselected(data);
+            } else {
+                this.nodeselected(data);
+            }
         });
 
         this.table.on("rowMouseOut", () => {
-            this.nodesunselected()
+            this.unselected()
         });
     },
     async _menuInitialized() {
