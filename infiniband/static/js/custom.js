@@ -1,10 +1,22 @@
 function nodeRadius(n) {
-    return Math.sqrt(n.ports) + 11;
+    var baseRadius = Math.sqrt(n.ports);
+    if (n.type == "S") {
+        return baseRadius + 16;
+    } else {
+        return baseRadius + 11;
+    }
 }
 function nodeImage(n) {
     var imageName = (n.type == "S") ? "switch.png" : "host.png";
     var imageUrl = `${window.location.href}/assets/${imageName}`;
     return imageUrl;
+}
+function nodeText(n) {
+    if ((n.type == "S") && (n.name == 'SwitchIB Mellanox Technologies')) {
+        return Array.prototype.concat('SwitchIB', n.uid).join(" ");
+    } else {
+        return n.name;
+    }
 }
 function nodeStrokeWidth(highlighted) {
     return (highlighted) ? 3 : 1.5;
@@ -86,8 +98,6 @@ const Context = {
     },
     simulation() {
         var simulationType = this.getSimulationType();
-
-        console.log(simulationType);
         
         if ( this._simulation != null) {
             this._simulation.stop();
@@ -125,17 +135,17 @@ const Context = {
         }
 
     },
-    nodeselected(n) {
-        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.id == n.id));
-        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.id == n.id));
-        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == n.id || l.target.id == n.id));
-        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == n.id || l.target.id == n.id)));
+    nodeselected(uid) {
+        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.id == uid));
+        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.id == uid));
+        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == uid || l.target.id == uid));
+        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == uid || l.target.id == uid)));
     },
-    linkselected(l) {
-        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.id == l.source.id || n.id == l.target.id));
-        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.id == l.source.id || n.id == l.target.id));
-        this.linkItems.style('stroke-opacity', ol => strokeOpacity((l.source.id == ol.source.id && l.target.id == ol.target.id) || (l.source.id == ol.target.id && l.target.id == ol.source.id)));
-        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((l.source.id == ol.source.id && l.target.id == ol.target.id) || (l.source.id == ol.target.id && l.target.id == ol.source.id))));        
+    linkselected(source_uid, target_uid) {
+        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.id == source_uid || n.id == target_uid));
+        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.id == source_uid || n.id == target_uid));
+        this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id)));
+        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id))));        
     },
 
     unselected() {
@@ -220,7 +230,7 @@ const Context = {
         this.nodeLabelItems = this.nodeContainerItems.append("text")
             .attr("text-anchor", "middle")
             .attr("alignment-baseline", "middle")
-            .text(d => d.name.split(" ").join(" "))
+            .text( d => nodeText(d))
             .attr("x", 0)
             .attr("y", d => nodeRadius(d) + 12)
             .attr("dy", 0)
@@ -245,7 +255,7 @@ const Context = {
             n = d3.select(e.target).datum();
             this.table.scrollToRow(n.id, "center", false);
             this.table.selectRow(n.id);
-            this.nodeselected(n);
+            this.nodeselected(n.id);
         });
         this.nodeContainerItems.on("mouseout", (e) => {
             this.unselected();
@@ -276,22 +286,23 @@ const Context = {
             columns:[                        //define the table columns
                 // {formatter:"rownum", hozAlign:"center", width:65},
                 {title:"Name", field:"name"},
-                {title:"Port", field:"port_id", width: 50},
-                {title: "Target Name", field:"target_name"},
-                {title:"Target Port", field:"target_port_id", width: 50},
+                {title:"UID", field:"uid"},
+                {title:"Port", field:"port_id"},
+                {title:"Target Name", field:"target_name"},
+                {title:"Target Port", field:"target_port_id"},
+                {title:"Target UID", field:"target_uid"},
+                
             ],
             dataTree:true,
-            printRowRange:"all"
-
         });
 
         this.table.on("rowMouseOver", (e, row) =>{
             var data = row.getData();
-            console.log(data, data.target_name)
+
             if (data.target_name != undefined) { 
-                this.linkselected(data);
+                this.linkselected(data.uid, data.target_uid);
             } else {
-                this.nodeselected(data);
+                this.nodeselected(data.uid);
             }
         });
 
@@ -316,12 +327,19 @@ const Context = {
         // Get the current url without any trailing slash
         var currentUrl = window.location.href.replace(/\/$/, "");
         var url = `${currentUrl}${endpoint}`;
-        var successCallback = (data) => { 
+        var successCallback = (data) => {
+            data.nodes.forEach((d) => {
+                d._children = [];
+            });
+            data.extlinks.forEach((l) => {
+                var source = data.nodes.find(n => n.uid == l.uid);
+                source._children.push(l);
+            });
+            console.log(data)
             this.data = data
             this.initialized()
         }
         var failureCallback = (error) => {
-            console.log(error)
             displayAlert("danger", error)
         }
 
@@ -344,7 +362,6 @@ const Context = {
             displayAlert("success", data.message)
         }
         var failureCallback = (error) => {
-            console.log(error)
             displayAlert("danger", error.message)
         }
 

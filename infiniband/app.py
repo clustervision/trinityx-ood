@@ -21,57 +21,65 @@ def wrap_errors(error):
         raise error
     return dumps({"message": str(error)}), 500
 
+def _compress_extlinks(extlinks):
+    links_dict = {}
+
+    sorted_extlinks = sorted(extlinks, key=lambda x: f"{x['uid']} {x['target_uid']} {x['port_id']} {x['target_port_id']}")
+    for extlink in sorted_extlinks:
+        source, target = sorted([extlink["uid"], extlink["target_uid"]])
+        count = links_dict.get((source, target), 0)
+        links_dict[(source, target)] = count + 1
+
+    links = [ {"source": source, "target": target, "count": count//2} for (source, target), count in links_dict.items()]
+    return links
 
 def parse_graph(text):
     """
     This method will parse the ibnetdiscover output into a graph.
     """
 
-    switch_regex = r"(Switch|Ca)\s+([0-9]+)\s+\"([SH]-[0-9a-z]+)\".*#.*\"(.*)\".*\n?(\[[0-9]+\].*\n)*"
+    node_regex = r"(Switch|Ca)\s+([0-9]+)\s+\"([SH]-[0-9a-z]+)\".*#.*\"(.*)\".*\n?(\[[0-9]+\].*\n)*"
     link_regex = r"\[([0-9]+)\].*\"([SH]-[0-9a-z]+)\".*\[([0-9]+)\].*#.*\"(.*)\""
-    matches = re.finditer(switch_regex, text, re.MULTILINE)
 
-    nodes = {}
-    edges = {}
+    nodes = []
+    links = []
+    extlinks = []
 
-    for switch_match in matches:
-        ports = switch_match.group(2)
+    for switch_match in re.finditer(node_regex, text, re.MULTILINE):
         uid = switch_match.group(3)
         name = switch_match.group(4)
-        nodes[uid] = {"name": name, "ports": ports, "type": uid[0], "_children": []}
+        ports = switch_match.group(2)
+
+        node = {
+            "uid": uid,
+            "name": name,
+            "ports": ports,
+            "type": uid[0],
+            "_children": [],
+        }
+
+        nodes.append(node)
 
         for link_match in re.finditer(link_regex, switch_match.group(0)):
             port_id = link_match.group(1)
             target_uid = link_match.group(2)
-            target_port_id = link_match.group(3)
             target_name = link_match.group(4)
+            target_port_id = link_match.group(3)
 
-            interface = {
-                "name":name,
+            link = {
+                "name": name,
+                "uid": uid,	
                 "port_id": port_id,
-                "target_port_id": target_port_id,
                 "target_name": target_name,
-                "source":{
-                    "id":uid,
-                },
-                "target":{
-                    "id":target_uid,    
-                }
+                "target_uid": target_uid,
+                "target_port_id": target_port_id,
             }
-            nodes[uid]["_children"].append(interface)
 
-            edge_uid = tuple(sorted([uid, target_uid]))
-            edge_count = edges.get(edge_uid, 0)
+            extlinks.append(link)
 
-            edges[edge_uid] = edge_count + 1
-
-    nodes = [{"id": uid, **data} for uid, data in nodes.items()]
-    links = [
-        {"source": source, "target": target, "count": count // 2}
-        for (source, target), count in edges.items()
-    ]
-
-    graph = {"nodes": nodes, "links": links}
+    nodes = [{"id": n['uid'], **n} for n in nodes]
+    links = _compress_extlinks(extlinks)
+    graph = {"nodes": nodes, "links": links, 'extlinks': extlinks}
     return graph
 
 
