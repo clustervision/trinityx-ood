@@ -1,9 +1,11 @@
-name: Sensu
-description: Monitoring events captured by sensu
+name: sensu
+description: Sensu system checks
 icon: fa://stethoscope
 category: Monitoring
+subcategory: App SubCategory
+
 
 tile:
-  title: Sensu
+  title: sensu
   sub_caption: |
-   Monitoring events captured by sensu
+   Sensu system checks

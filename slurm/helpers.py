@@ -9,7 +9,8 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
     OODSlurmNodesConfigParser,
 )
 
-from config import settings, get_token, get_luna_url
+from base.config import settings, get_token, get_luna_url
+
 
 def get_luna_nodes():
     """
