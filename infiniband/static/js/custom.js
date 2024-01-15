@@ -24,6 +24,32 @@ function nodeStrokeWidth(highlighted) {
 function linkStrokeWidth(l, highlighted) {
     return (highlighted) ? l.count + 3 : l.count + 1;
 }
+function linkRotationAngle(d) {
+    var angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x);
+    var angleDeg = ((angle * 180 / Math.PI) + 360) % 360;
+    if (d.target.id == "S-ec0d9a0300ec8480" && d.source.id == "S-ec0d9a0300ec8200") {
+        console.log(angleDeg)
+    }
+    return angleDeg
+}
+function linkLabelTransform(d, type){
+    var angle = d.angle;
+    var rotation = (angle > 270 || angle < 90) ? 0 : 180;
+    var radius = nodeRadius(d.source)
+    var startPosition = radius + 10;
+    var endPosition = Math.sqrt(Math.pow(d.target.x - d.source.x, 2) + Math.pow(d.target.y - d.source.y, 2)) - radius - 10;
+    var translation = (type == "source") ? startPosition : endPosition;
+
+    return `translate(${translation}, 0) rotate(${rotation})`;
+}
+function linkLabelAnchor(d, type){
+    var angle = d.angle;
+    var isRotated = (angle > 270 || angle < 90);
+    var isSource = (type == "source");
+    var anchor = (isRotated ^ isSource) ? "end" : "start";
+
+    return anchor;
+}
 function strokeOpacity(highlighted) {
     return (highlighted) ? 0.8 : 0.3;
 }
@@ -126,7 +152,6 @@ const Context = {
                 .force("link", d3.forceLink(this.links()).id(d => d.id))
                 .force("charge", d3.forceManyBody().strength( -600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
-                // .force("center", d3.forceCenter(this.width() / 2, this.height() / 2))
                 .on("tick", () => this.ticked());
         } else if (simulationType == 'none') {
             return  d3.forceSimulation(this.nodes())
@@ -147,13 +172,43 @@ const Context = {
         this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id)));
         this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id))));        
     },
-
     unselected() {
         this.table.deselectRow();
         this.nodeItems.style('stroke-opacity', strokeOpacity(false));
         this.nodeItems.style('stroke-width', nodeStrokeWidth(false));
         this.linkItems.style('stroke-opacity', strokeOpacity(false));
         this.linkItems.style('stroke-width', l => linkStrokeWidth(l,false));
+    },
+    showlabel(target) {
+        var buttonIds = ["all-label-button", "node-label-button", "link-label-button"];
+
+
+        for (var i = 0; i < buttonIds.length; i++) {
+            var buttonId = buttonIds[i];
+            if (buttonId == target + "-label-button") {
+                $("#" + buttonId).removeClass("btn-outline-primary");
+                $("#" + buttonId).addClass("btn-primary");
+                $("#" + buttonId + " svg").attr("style", "");
+            } else {
+                $("#" + buttonId).removeClass("btn-primary");
+                $("#" + buttonId).addClass("btn-outline-primary");
+                $("#" + buttonId + " svg").attr("style", "display: none;");
+            }
+        }
+
+        if (target == "all") {
+            this.nodeLabelItems.attr("style", "");
+            this.linkSourceLabelItems.attr("style", "");
+            this.linkTargetLabelItems.attr("style", "");
+        } else if (target == "node") {
+            this.nodeLabelItems.attr("style", "");
+            this.linkSourceLabelItems.attr("style", "display: none;");
+            this.linkTargetLabelItems.attr("style", "display: none;");
+        } else if (target == "link") {
+            this.nodeLabelItems.attr("style", "display: none;");
+            this.linkSourceLabelItems.attr("style", "");
+            this.linkTargetLabelItems.attr("style", "");
+        }
     },
     dragstarted(event) {
 
@@ -200,13 +255,32 @@ const Context = {
             .attr("class", "container")
             .attr("style", "display: none;")
 
-        this.linkItems = this.containerItem.append("g")
-            .attr("stroke", "#222")
-            .attr("stroke-opacity", strokeOpacity(false))
+        this.linkContainerItems = this.containerItem.append("g")
             .selectAll()
             .data(this.links())
-            .join("line")
+            .join('g')
+
+        this.linkItems = this.linkContainerItems.append("line")
             .attr("stroke-width", l => linkStrokeWidth(l, false))
+            .attr("stroke", "#222")
+            .attr("stroke-opacity", strokeOpacity(false))
+
+        this.linkSourceLabelItems = this.linkContainerItems.append("text")
+            .attr("text-anchor", "start")
+            // .attr("alignment-baseline", "middle")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("dy", 0)
+            .text( d => (d.source_name))
+        
+        this.linkTargetLabelItems = this.linkContainerItems.append("text")
+            .attr("text-anchor", "end")
+            // .attr("alignment-baseline", "middle")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("dy", 0)
+            .text( d => (d.target_name))
+        
 
         this.nodeContainerItems = this.containerItem.append("g")
             .selectAll()
@@ -272,6 +346,7 @@ const Context = {
                 }
             });
             this.setSimulationType(this.data.state.simulationType);
+            this.ticked()
             this.fitzoom();
         } else {
             this._simulation = this.simulation()
@@ -316,6 +391,10 @@ const Context = {
         $('#n-links').val(this.links().length);
 
         $('#save-graph').click(() => this.saved());
+
+        $("#all-label-button").click(() => this.showlabel("all"));
+        $("#node-label-button").click(() => this.showlabel("node"));
+        $("#link-label-button").click(() => this.showlabel("link"));
     },
     initialized() {
         this._containerInitialized();
@@ -347,12 +426,22 @@ const Context = {
     },
     ticked() {
         this.containerItem.attr("style", "display: block;");
-        this.linkItems.attr("x1", d => d.source.x)
-                      .attr("y1", d => d.source.y)
-                      .attr("x2", d => d.target.x)
-                      .attr("y2", d => d.target.y);
+        
+        this.linkItems.attr("x1", 0)
+                      .attr("y1", 0)
+                      .attr("x2", d => Math.sqrt(Math.pow(d.target.x - d.source.x, 2) + Math.pow(d.target.y - d.source.y, 2)))
+                      .attr("y2", 0 )
 
+        this.linkContainerItems.each((d) => { d.angle = linkRotationAngle(d); })
+
+        this.linkContainerItems.attr("transform", d => `translate(${d.source.x}, ${d.source.y}) rotate(${d.angle})`)
         this.nodeContainerItems.attr("transform", d => `translate(${d.x}, ${d.y})`)
+
+        this.linkSourceLabelItems.attr("transform", d => linkLabelTransform(d, "source"))
+        this.linkTargetLabelItems.attr("transform", d => linkLabelTransform(d, "target"))
+        this.linkSourceLabelItems.attr("text-anchor", d => linkLabelAnchor(d, "source"))
+        this.linkTargetLabelItems.attr("text-anchor", d => linkLabelAnchor(d, "target"))
+        
     },
     saved() {
         var url = `${window.location.href}/graph/state/save`;

@@ -21,16 +21,52 @@ def wrap_errors(error):
         raise error
     return dumps({"message": str(error)}), 500
 
+def _compress_portrange(port_ids):
+    port_ids = sorted(list(set(port_ids)))
+    port_ranges = []
+    start = None
+    end = None
+    for port_id in port_ids:
+        if start is None:
+            start = port_id
+            end = port_id
+        elif port_id == end + 1:
+            end = port_id
+        else:
+            port_ranges.append(f"{start}-{end}")
+            start = port_id
+            end = port_id
+    if start is not None:
+        port_ranges.append(f"{start}-{end}")
+    return ",".join(port_ranges)
+
+
 def _compress_extlinks(extlinks):
     links_dict = {}
 
     sorted_extlinks = sorted(extlinks, key=lambda x: f"{x['uid']} {x['target_uid']} {x['port_id']} {x['target_port_id']}")
     for extlink in sorted_extlinks:
-        source, target = sorted([extlink["uid"], extlink["target_uid"]])
-        count = links_dict.get((source, target), 0)
-        links_dict[(source, target)] = count + 1
+        _source, _target = extlink["uid"], extlink["target_uid"]
+        source, target = sorted([_source, _target])
+        
+        count, source_port_ids, target_port_ids, type = links_dict.get((source, target), (0, [], [], None))
+        
+        count += 1
+        if source.startswith("S") and target.startswith("S"):
+            type = type or "SS"
+            if _source == source:
+                source_port_ids.append(extlink["port_id"])
+                target_port_ids.append(extlink["target_port_id"])
+            else:
+                source_port_ids.append(extlink["target_port_id"])
+                target_port_ids.append(extlink["port_id"])
+        else:
+            type = type or "SH"
+        
+        links_dict[(source, target)] = (count, source_port_ids, target_port_ids, type)
 
-    links = [ {"source": source, "target": target, "count": count//2} for (source, target), count in links_dict.items()]
+    links = [ {"source": source, "target": target, "count": count//2, "source_name": _compress_portrange(source_port_ids), 'target_name': _compress_portrange(target_port_ids), 'type': type } \
+             for (source, target), (count, source_port_ids, target_port_ids, type) in links_dict.items()]
     return links
 
 def parse_graph(text):
@@ -69,10 +105,10 @@ def parse_graph(text):
             link = {
                 "name": name,
                 "uid": uid,	
-                "port_id": port_id,
+                "port_id": int(port_id),
                 "target_name": target_name,
                 "target_uid": target_uid,
-                "target_port_id": target_port_id,
+                "target_port_id": int(target_port_id),
             }
 
             extlinks.append(link)

@@ -61,10 +61,32 @@
                     </div>
                 </div>
 
+                <!-- Button to show node labels or link labels -->
+                <div class="col">                
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" id="all-label-button">
+                            <!-- Font awesome price tag -->
+                            <i class="fa fa-tag"></i>  All
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="node-label-button">
+                            <!-- Font awesome price tag -->
+                            <i class="fa fa-tag" style="display: none;"></i>  Nodes
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="link-label-button">
+                            <!-- Font awesome price tag -->
+                            <i class="fa fa-tag" style="display: none;"></i>  Links
+                        </button>
+                    </div>
+                </div>
+                
+
                 <!-- Button to save the graph state -->
                 <div class="col">
                     <div class="input-group mb-3">
-                        <button type="button" class="btn btn-primary" id="save-graph">Save Layout</button>
+                        <button type="button" class="btn btn-primary" id="save-graph">
+                            <i class="fa fa-save"></i>
+                            Save
+                        </button>
                     </div>
                 </div>
 
