@@ -2,6 +2,7 @@
 {% block content %}
 
 <div class="container-xxl flex-grow-1 container-p-y">
+  <!-- <div class="container-fluid flex-grow-1 container-p-y"> -->
   <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Racks /</span> Visual Representation</h4>
   {% if messages %}
     {% for message in messages %}
@@ -71,7 +72,20 @@
     
   <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 
- 
+
+
+  <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+    <div class="toast-header">
+      <i class="bx bx-bell me-2"></i>
+      <div class="me-auto fw-medium">Rack Update</div>
+      <small>0 mins ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Node001 added in Rack002.
+    </div>
+  </div>
+
 
 <div class="row">
   <!-- Basic Layout -->
@@ -89,12 +103,13 @@
               <strong>Available Devices to put in Rack(s) <i class="bx bx-sm bx-info-circle" style="color: #03c3ec;"></i></strong>
           </div>
             <div class="col col-6">
-              <button style="float: right;" id="show-button" type="button" onclick="$('#devices').show();$('#show-button').hide();$('#hide-button').show();" class="btn btn-sm btn-info">Show Devices</button>
-              <button style="float: right;" id="hide-button" type="button" onclick="$('#devices').hide();$('#show-button').show();$('#hide-button').hide();" class="btn btn-sm btn-warning">Hide Devices</button>
+              <button style="float: right;" class="btn btn-sm btn-info me-1 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#devices" aria-expanded="false" aria-controls="devices">Devices</button>
+              <!-- <button style="float: right;" id="show-button" type="button" onclick="$('#devices').show();$('#show-button').hide();$('#hide-button').show();" class="btn btn-sm btn-info">Show Devices</button>
+              <button style="float: right;" id="hide-button" type="button" onclick="$('#devices').hide();$('#show-button').show();$('#hide-button').hide();" class="btn btn-sm btn-warning">Hide Devices</button> -->
             </div>
           </div>
           <br />
-          <div id="devices" class=" ui-widget-header scrollmenu snaptarget">
+          <div id="devices" class="collapse "class=" ui-widget-header scrollmenu snaptarget">
             {% if inventory %}
                 {% for each in inventory %}
                   <div id="{{ each['name'] }}" style="height: {{ each['height']*30-2 }}px;"  class="draggable ui-widget-content right-click {{ each['type'] }}" size="{{ each['height'] }}">
@@ -325,7 +340,7 @@ function update(name=null, type=null, rack=null, position=null){
           console.log("DONE");
           var result = update(name, type, rack, position);
           console.log("result: "+result);
-
+          $("#rack-toast").toast("show");
         }
       }
     });
