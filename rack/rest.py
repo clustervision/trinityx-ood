@@ -320,6 +320,10 @@ class Rest():
         self.logger.debug(f'Clone URL => {daemon_url}')
         try:
             response = self.session.post(url=daemon_url, json=payload, stream=True, headers=headers, timeout=5, verify=self.security)
+            print(f'url {daemon_url}')
+            print(f'headers {headers}')
+            print(f'payload {payload}')
+            print(f'Response {response.content} & HTTP Code {response.status_code}')
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')

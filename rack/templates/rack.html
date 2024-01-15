@@ -54,15 +54,28 @@
       background-color: #696b6a;
     }
     
-    
+
+
+    .row {flex-wrap: nowrap;}
+    .card-body { overflow-x: auto; white-space: nowrap;}
+    .col-1 {
+      display: inline-block;
+      float: none;
+    }
+    .col-2 {
+      display: inline-block;
+      float: none;
+    }
     </style>
+
+    
   <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
 
  
 
 <div class="row">
   <!-- Basic Layout -->
-  <div class="col-xxl">
+  <!-- <div class="col-xxl"> -->
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Rack Position</h5>
@@ -95,6 +108,7 @@
                           {% elif each['type'] == "controller" %}
                             <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
                           {% endif %}
+                          <input type="hidden" name="type" value="{{ each['type'] }}" />
                         </div>
                         <div class="col col-8" ><strong style="float: left;">{{ each['name'] }}</strong></div>
                         <div class="col col-2" style="background-color: #22cf65;"></div>
@@ -124,7 +138,7 @@
           <br />
         </div>
     
-        <div class="row">
+        <!-- <div class="row "> -->
           <script type="text/javascript">var devices = [];</script>
 
           {% if rack_data %}
@@ -137,6 +151,8 @@
                 {% set rack_slots = range(value["size"], 0, -1) %}
               {% endif %}
 
+          <!-- <div class="col-6">
+            <div class="row "> -->
             <div class="col col-1" style="width: 2%; height: 1%; bottom: 0;">
               <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
               {% for each in rack_slots %}
@@ -149,8 +165,10 @@
             <div class="col col-2" style="bottom: 0;">
               <div class="ui-widget-header snaptarget"><p>{{ key }}</p></div>
                 {% for each in rack_slots %}
-                  <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{each }}</p>
-
+                  <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
+                    <input type="hidden" name="rack" value="{{ key }}" />
+                    <input type="hidden" name="position" value="{{ each }}" />
+                    
                     {% for each_device in value['devices'] %}
                       {% if each_device['position'] == each  %}
 
@@ -165,6 +183,7 @@
                                 {% elif each_device['type'] == "controller" %}
                                   <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
                                 {% endif %}
+                                <input type="hidden" name="type" value="{{ each_device['type'] }}" />
                               </div>
                               <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
                               <div class="col col-2" style="background-color: #22cf65;"></div>
@@ -182,7 +201,6 @@
                                 $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
                                 $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
                                 if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
-                             
                             },
                               cursor: "move", scroll: true,
                               snap: ".snaptarget"
@@ -191,27 +209,28 @@
                           devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
                         </script>
             
-                     {% endif %}
-
+                      {% endif %}
                     {% endfor %}
 
                   </div>
                 {% endfor %}
               </div> 
+            
+          
 
-              <div class="col col-1" style="width: 2%; height: 1%;bottom: 0;">
-                <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
-                {% for each in rack_slots %}
-                    {% set each = each | string() %}
-                    <div class="ui-widget-header snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
-                  {% endfor %}
-              </div>
-
-              <div class="col col-1" style="width: 4%;bottom: 0;"></div>
-
-
+            <div class="col col-1" style="width: 2%; height: 1%;bottom: 0;">
+              <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
+              {% for each in rack_slots %}
+                  {% set each = each | string() %}
+                  <div class="ui-widget-header snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
+                {% endfor %}
+            </div>
+          
+            <div class="col col-1" style="width: 4%;bottom: 0;"></div>
+          
+            
             {% endfor %}
-          </div> 
+          </div>
           {% endif %}
           <script type="text/javascript">
            for (let i = 0; i < devices.length; i++) {
@@ -221,13 +240,39 @@
           </script>
         </div>
         <br style="clear:both">
-      </div>
-    </div>
+      
   </div>
+<!-- </div> -->
 </div>
 
 </div>
 <hr class="my-5" />
+
+<script type="text/javascript">
+function update(name=null, type=null, rack=null, position=null){
+  var response;
+  var payload = {"name": name, "type": type, "rack": rack, "position": position};
+  payload = JSON.stringify(payload);
+  $.ajax({
+      //url: window.location.href+"/update",
+      url: "/update",
+      type: 'POST',
+      data: JSON.stringify(payload),
+      dataType: 'json',
+      contentType: 'application/json; charset=UTF-8',
+      async: false,
+      success: function(response_data) {
+          console.log(response_data);
+          response = response_data
+      }
+  });
+
+  console.log(response);
+  return response;
+}
+
+
+</script>
 <script type="text/javascript">
   $( function() {
     $( "#devices" ).droppable({
@@ -267,6 +312,20 @@
           $(ui.draggable).detach().css({top: -40,left: 2}).appendTo(this);
           $(this).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
           $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          var name = $(ui.draggable).attr('id');
+          var type = $(ui.draggable).find("input[name='type']").val();
+          var rack = $(this).find("input[name='rack']").val();
+          var position = Number($(this).find("input[name='position']").val());
+          console.log("type: "+ type);
+          //console.log($(ui.draggable).attr('id'));
+          //console.log($(this).find("input"));
+          //console.log($(this).find("input[name='rack']").val());
+          //console.log($(this).find("input[name='position']").val());
+          console.log("name: "+name+" type: "+type+" rack: "+rack+" position: "+position);
+          console.log("DONE");
+          var result = update(name, type, rack, position);
+          console.log("result: "+result);
+
         }
       }
     });

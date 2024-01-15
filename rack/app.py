@@ -115,19 +115,36 @@ def show(page=None, record=None):
     return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 
+@app.route('/update', methods=['POST'])
+def update():
+    """
+    This API route will update the position of a device in a rack.
+    """
+    request_data = json.loads(request.get_json())
+    payload = {'config': {'rack': {'inventory': [request_data]}}}
+    uri = 'config/rack/inventory'
+    result = Rest().post_raw(uri, payload)
+    # result = result.json()
+    response = json.dumps(payload)
+
+    return response
+
+
 @app.route('/edit/<string:page>', methods=['GET', 'POST'])
 @app.route('/edit/<string:page>/<string:record>', methods=['GET', 'POST'])
 def edit(page=None, record=None):
     data, error = "", ""
     # site_list = Model().get_list_options('network')
     site_list = ''
-    if page == "rack":
+    if page.lower() == "rack":
         table_data = Rest().get_data(TABLE, record)
     else:
         table_data = Rest().get_data(TABLE, page)
+    print(table_data)
     if table_data:
-        if page == "rack":
-            data = table_data["config"]["rack"][record]
+        if page.lower() == "rack":
+            if record in table_data["config"]["rack"]:
+                data = table_data["config"]["rack"][record]
         else:
             tmp_data = table_data["config"]["rack"][page]
             for each in tmp_data:
@@ -137,16 +154,33 @@ def edit(page=None, record=None):
         data = {}
     payload = {}
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload = {
+            k: v
+            for k, v in request.form.items() if v not in [None, '']
+        }
         payload = Helper().prepare_payload(None, payload)
-        if page == "rack":
+        if page.lower() == "rack":
             request_data = {'config': {TABLE: {payload['name']: payload}}}
         else:
-            request_data = {'config': {TABLE: {"inventory": [{payload['name']: payload}]}}}
-        if page == "rack":
+            request_data = {
+                'config': {
+                    TABLE: {
+                        "inventory": [{
+                            payload['name']: payload
+                        }]
+                    }
+                }
+            }
+        if page.lower() == "rack":
             response = Rest().post_data(TABLE, payload['name'], request_data)
         else:
-            response = Rest().post_data(TABLE, f'{page}/{payload["name"]}', request_data)
+            response = Rest().post_data(TABLE, f'{page}/{payload["name"]}',
+                                        request_data)
+        print(TABLE)
+        print(page)
+        print(payload['name'])
+        print(request_data)
+        print(f'{response.status_code} -> {response.content}')
         LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 204:
             flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
@@ -156,7 +190,12 @@ def edit(page=None, record=None):
             flash(error, "error")
         return redirect(url_for('edit', page=page, record=record), code=302)
     page_cap = page.capitalize()
-    return render_template("change.html", page=page_cap, record=record, data=data, site_list=site_list, error=error)
+    return render_template("change.html",
+                           page=page_cap,
+                           record=record,
+                           data=data,
+                           site_list=site_list,
+                           error=error)
 
 
 @app.route('/delete/<string:page>/<string:record>', methods=['GET'])
@@ -190,5 +229,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port= 7059, debug= True)
+    app.run(host='0.0.0.0', port=7059, debug=True)
     # app.run()

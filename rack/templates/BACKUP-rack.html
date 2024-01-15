@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="container-xxl flex-grow-1 container-p-y">
-  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack /</span> Position</h4>
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Racks /</span> Visual Representation</h4>
   {% if messages %}
     {% for message in messages %}
         <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
@@ -54,22 +54,6 @@
       background-color: #696b6a;
     }
     
-    .rack-border {
-      width: 300px;
-      border-style: solid;
-      border-color: red;
-      /* height: 1650px;
-      width: 250px;
-      background-color: #FFFFFF;
-      border: 15px solid transparent;
-      padding: 15px;
-      border-image-source: url({{ url_for('static', filename='img/rack.gif') }});
-      border-image-repeat: stretch;
-      border-image-slice: 30;
-      border-image-width: 120px;
-      border-image-outset: 100px;  */
-  }
-  
     
     </style>
   <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
@@ -90,7 +74,8 @@
           <div class="row">
             <div class="col col-6">
               <strong>Available Devices to put in Rack(s) <i class="bx bx-sm bx-info-circle" style="color: #03c3ec;"></i></strong>
-            </div><div class="col col-6">
+          </div>
+            <div class="col col-6">
               <button style="float: right;" id="show-button" type="button" onclick="$('#devices').show();$('#show-button').hide();$('#hide-button').show();" class="btn btn-sm btn-info">Show Devices</button>
               <button style="float: right;" id="hide-button" type="button" onclick="$('#devices').hide();$('#show-button').show();$('#hide-button').hide();" class="btn btn-sm btn-warning">Hide Devices</button>
             </div>
@@ -140,120 +125,36 @@
           <br />
         </div>
     
-        <div class="row">
+        <div class="row ">
           <script type="text/javascript">var devices = [];</script>
-          
+
           {% if rack_data %}
-            {% set rack_order = rack_data['order'] | string() %}
-            {% if rack_order == 'ascending' %}
-              {% set rack_slots = range(1, rack_data["size"]+1) %}
-            {% else %}
-              {% set rack_slots = range(rack_data["size"], 0, -1) %}
-            {% endif %}
+            {% for key, value in rack_data.items() %}
 
-            <div class="col col-2"></div>
-      
-              <div class="col col-1" style="width: 2%; height: 1%;">
-                <h4>&nbsp;</h4>
-                <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
-                {% for each in rack_slots %}
-                  {% set each = each | string() %}
-                  <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
-                {% endfor %}
-              </div>
-            
-              <div class="col col-2">
-                <center><h4>Front Side</h4></center>
-                <div class="ui-widget-header snaptarget"><p>{{ rack_data['name'] }}</p></div>
-                
-                  {% for each in rack_slots %}
-                  <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
-                    <input type="hidden" name="rack" value="{{ rack_data['name'] }}" />
-                    <input type="hidden" name="position" value="{{ each }}" />
+              {% set rack_order = value['order'] | string() %}
+              {% if rack_order == 'ascending' %}
+                {% set rack_slots = range(1, value["size"]+1) %}
+              {% else %}
+                {% set rack_slots = range(value["size"], 0, -1) %}
+              {% endif %}
 
-                    {% for each_device in rack_data['devices'] %}
-                      {% if each_device['orientation'] == 'front' %}
-                        {% if each_device['position'] == each  %}
-
-                          <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
-                            <div class="device">
-                              <div class="row" style="margin-right: 0px; margin-left-0px;">
-                                <div class="col col-2">
-                                  {% if each_device['type'] == "node" %}
-                                    <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
-                                  {% elif each_device['type'] == "switch" %}
-                                    <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
-                                  {% elif each_device['type'] == "controller" %}
-                                    <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
-                                  {% endif %}
-                                  <input type="hidden" name="type" value="{{ each_device['type'] }}" />
-                                </div>
-                                <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
-                                <div class="col col-2" style="background-color: #22cf65;"></div>
-                              </div>
-                            </div>
-                          </div>
-                          <script type="text/javascript">
-                            $(function(){
-                              $("#{{ each_device['name'] }}").draggable({
-                                start: function() { 
-                                  $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
-                                  $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
-                                },
-                                revert: function() {
-                                  $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
-                                  $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
-                                  if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
-                                
-                              },
-                                cursor: "move", scroll: true,
-                                snap: ".snaptarget"
-                              }); 
-                            });
-                            devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
-                          </script>
-                          {% endif %}
-                        {% endif %}
-
-                    {% endfor %}
-                  </div>
-                {% endfor %}
-              </div>
-
-              <div class="col col-1" style="width: 2%; height: 1%;">
-                <h4>&nbsp;</h4>
-                <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
-                {% for each in rack_slots %}
-                  {% set each = each | string() %}
-                  <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
-                {% endfor %}
-              </div>
-            
-        
-
-            <div class="col col-2"></div>
-
-
-
-            <div class="col col-1" style="width: 2%; height: 1%;">
-              <h4>&nbsp;</h4>
+            <div class="col col-1" style="width: 2%; height: 1%; bottom: 0;">
               <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
               {% for each in rack_slots %}
-                {% set each = each | string() %}
-                <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
-              {% endfor %}
+                  {% set each = each | string() %}
+                  <div class="ui-widget-header snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
+                {% endfor %}
             </div>
 
-            <div class="col col-2">
-              <center><h4>Back Side</h4></center>
-              <div class="ui-widget-header snaptarget"><p>{{ rack_data['name'] }}</p></div>
-              {% for each in rack_slots %}
-                <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
-                  <input type="hidden" name="rack" value="{{ rack_data['name'] }}" />
-                    <input type="hidden" name="position" value="{{ each }}" />
 
-                  {% for each_device in rack_data['devices'] %}
-                  {% if each_device['orientation'] == 'back' %}
+            <div class="col col-2" style="bottom: 0;">
+              <div class="ui-widget-header snaptarget"><p>{{ key }}</p></div>
+                {% for each in rack_slots %}
+                  <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
+                    <input type="hidden" name="rack" value="{{ key }}" />
+                    <input type="hidden" name="position" value="{{ each }}" />
+                    
+                    {% for each_device in value['devices'] %}
                       {% if each_device['position'] == each  %}
 
                         <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
@@ -285,7 +186,7 @@
                                 $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
                                 $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
                                 if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
-                              
+                             
                             },
                               cursor: "move", scroll: true,
                               snap: ".snaptarget"
@@ -293,71 +194,70 @@
                           });
                           devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
                         </script>
-                      {% endif %}
-                    {% endif %}
+            
+                     {% endif %}
 
+                    {% endfor %}
+
+                  </div>
+                {% endfor %}
+              </div> 
+
+              <div class="col col-1" style="width: 2%; height: 1%;bottom: 0;">
+                <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
+                {% for each in rack_slots %}
+                    {% set each = each | string() %}
+                    <div class="ui-widget-header snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
                   {% endfor %}
-                </div>
-              {% endfor %}
-            </div>
+              </div>
 
-            <div class="col col-1" style="width: 2%; height: 1%;">
-              <h4>&nbsp;</h4>
-              <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
-              {% for each in rack_slots %}
-                {% set each = each | string() %}
-                <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
-              {% endfor %}
-            </div>
+              <div class="col col-1" style="width: 4%;bottom: 0;"></div>
 
 
-
+            {% endfor %}
+          </div> 
           {% endif %}
-        </div> 
-          
-        <script type="text/javascript">
-          for (let i = 0; i < devices.length; i++) {
-          $("#"+devices[i]).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
-          $("#"+devices[i]).parent().nextAll().slice(0, $("#"+devices[i]).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied2" );
-        }
-        </script>
+          <script type="text/javascript">
+           for (let i = 0; i < devices.length; i++) {
+            $("#"+devices[i]).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+            $("#"+devices[i]).parent().nextAll().slice(0, $("#"+devices[i]).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied2" );
+          }
+          </script>
+        </div>
+        <br style="clear:both">
       </div>
-      <br style="clear:both">
     </div>
   </div>
 </div>
 
+</div>
 <hr class="my-5" />
 
-
 <script type="text/javascript">
-  function update(name=null, type=null, rack=null, position=null){
-    var response;
-    var payload = {"name": name, "type": type, "rack": rack, "position": position};
-    payload = JSON.stringify(payload);
-    $.ajax({
-        //url: window.location.href+"/update",
-        url: "/update",
-        type: 'POST',
-        data: JSON.stringify(payload),
-        dataType: 'json',
-        contentType: 'application/json; charset=UTF-8',
-        async: false,
-        success: function(response_data) {
-            console.log(response_data);
-            response = response_data
-        }
-    });
-  
-    console.log(response);
-    return response;
-  }
-  
-  
-  </script>
+function update(name=null, type=null, rack=null, position=null){
+  var response;
+  var payload = {"name": name, "type": type, "rack": rack, "position": position};
+  payload = JSON.stringify(payload);
+  $.ajax({
+      //url: window.location.href+"/update",
+      url: "/update",
+      type: 'POST',
+      data: JSON.stringify(payload),
+      dataType: 'json',
+      contentType: 'application/json; charset=UTF-8',
+      async: false,
+      success: function(response_data) {
+          console.log(response_data);
+          response = response_data
+      }
+  });
+
+  console.log(response);
+  return response;
+}
 
 
-
+</script>
 <script type="text/javascript">
   $( function() {
     $( "#devices" ).droppable({
@@ -397,7 +297,6 @@
           $(ui.draggable).detach().css({top: -40,left: 2}).appendTo(this);
           $(this).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
           $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
-
           var name = $(ui.draggable).attr('id');
           var type = $(ui.draggable).find("input[name='type']").val();
           var rack = $(this).find("input[name='rack']").val();
