@@ -21,6 +21,7 @@ def wrap_errors(error):
         raise error
     return dumps({"message": str(error)}), 500
 
+
 def _compress_portrange(port_ids):
     port_ids = sorted(list(set(port_ids)))
     port_ranges = []
@@ -44,13 +45,18 @@ def _compress_portrange(port_ids):
 def _compress_extlinks(extlinks):
     links_dict = {}
 
-    sorted_extlinks = sorted(extlinks, key=lambda x: f"{x['uid']} {x['target_uid']} {x['port_id']} {x['target_port_id']}")
+    sorted_extlinks = sorted(
+        extlinks,
+        key=lambda x: f"{x['uid']} {x['target_uid']} {x['port_id']} {x['target_port_id']}",
+    )
     for extlink in sorted_extlinks:
         _source, _target = extlink["uid"], extlink["target_uid"]
         source, target = sorted([_source, _target])
-        
-        count, source_port_ids, target_port_ids, type = links_dict.get((source, target), (0, [], [], None))
-        
+
+        count, source_port_ids, target_port_ids, type = links_dict.get(
+            (source, target), (0, [], [], None)
+        )
+
         count += 1
         if source.startswith("S") and target.startswith("S"):
             type = type or "SS"
@@ -62,12 +68,27 @@ def _compress_extlinks(extlinks):
                 target_port_ids.append(extlink["port_id"])
         else:
             type = type or "SH"
-        
+
         links_dict[(source, target)] = (count, source_port_ids, target_port_ids, type)
 
-    links = [ {"source": source, "target": target, "count": count//2, "source_name": _compress_portrange(source_port_ids), 'target_name': _compress_portrange(target_port_ids), 'type': type } \
-             for (source, target), (count, source_port_ids, target_port_ids, type) in links_dict.items()]
+    links = [
+        {
+            "source": source,
+            "target": target,
+            "count": count // 2,
+            "source_name": _compress_portrange(source_port_ids),
+            "target_name": _compress_portrange(target_port_ids),
+            "type": type,
+        }
+        for (source, target), (
+            count,
+            source_port_ids,
+            target_port_ids,
+            type,
+        ) in links_dict.items()
+    ]
     return links
+
 
 def parse_graph(text):
     """
@@ -104,7 +125,7 @@ def parse_graph(text):
 
             link = {
                 "name": name,
-                "uid": uid,	
+                "uid": uid,
                 "port_id": int(port_id),
                 "target_name": target_name,
                 "target_uid": target_uid,
@@ -113,9 +134,9 @@ def parse_graph(text):
 
             extlinks.append(link)
 
-    nodes = [{"id": n['uid'], **n} for n in nodes]
+    nodes = [{"id": n["uid"], **n} for n in nodes]
     links = _compress_extlinks(extlinks)
-    graph = {"nodes": nodes, "links": links, 'extlinks': extlinks}
+    graph = {"nodes": nodes, "links": links, "extlinks": extlinks}
     return graph
 
 
@@ -145,7 +166,7 @@ def graph_route():
     ibnetdiscover_output = process.stdout.decode("utf-8")
     graph = parse_graph(ibnetdiscover_output)
     state_path = os.path.join(os.path.dirname(__file__), "state.json")
-    
+
     try:
         if os.path.exists(state_path):
             with open(state_path, "r") as f:
@@ -154,6 +175,7 @@ def graph_route():
         pass
     finally:
         return dumps(graph)
+
 
 @app.route("/graph/state/save", methods=["POST"])
 def save_route():
