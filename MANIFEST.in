@@ -272,3 +272,5 @@ include dns/templates/layout
 include dns/templates/layout/*
 
 recursive-include slurm *
+
+recursive-include infiniband *
