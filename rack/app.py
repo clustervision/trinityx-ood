@@ -120,11 +120,21 @@ def update():
     """
     This API route will update the position of a device in a rack.
     """
+    payload = {}
     request_data = json.loads(request.get_json())
-    payload = {'config': {'rack': {'inventory': [request_data]}}}
-    uri = 'config/rack/inventory'
-    result = Rest().post_raw(uri, payload)
-    # result = result.json()
+    if request_data['rack']:
+        rack_name = request_data['rack']
+        del request_data['rack']
+        payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
+        print(payload)
+        uri = f'config/rack/{rack_name}'
+        result = Rest().post_raw(uri, payload)
+        # result = result.json()
+    else:
+        uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
+        result = Rest().get_delete(TABLE, uri)
+        print(f'Response {result.content} & HTTP Code {result.status_code}')
+    
     response = json.dumps(payload)
 
     return response
@@ -140,7 +150,7 @@ def edit(page=None, record=None):
         table_data = Rest().get_data(TABLE, record)
     else:
         table_data = Rest().get_data(TABLE, page)
-    print(table_data)
+    # print(table_data)
     if table_data:
         if page.lower() == "rack":
             if record in table_data["config"]["rack"]:
@@ -160,22 +170,21 @@ def edit(page=None, record=None):
         }
         payload = Helper().prepare_payload(None, payload)
         if page.lower() == "rack":
+            payload['size'] = int(payload['size'])
             request_data = {'config': {TABLE: {payload['name']: payload}}}
         else:
-            request_data = {
-                'config': {
-                    TABLE: {
-                        "inventory": [{
-                            payload['name']: payload
-                        }]
-                    }
-                }
-            }
+            # request_data = { 'config': { TABLE: { "inventory": [{ payload['name']: payload }] } } }
+            request_data = { 'config': { TABLE: { "inventory": [payload] } } }
         if page.lower() == "rack":
             response = Rest().post_data(TABLE, payload['name'], request_data)
         else:
-            response = Rest().post_data(TABLE, f'{page}/{payload["name"]}',
-                                        request_data)
+            print("-----------------------------------------------------------------------")
+            print(TABLE)
+            print(f'{page}/{payload["name"]}')
+            print(request_data)
+            print("-----------------------------------------------------------------------")
+            # response = Rest().post_data(TABLE, f'{page}/{payload["name"]}', request_data)
+            response = Rest().post_data(TABLE, page, request_data)
         print(TABLE)
         print(page)
         print(payload['name'])
