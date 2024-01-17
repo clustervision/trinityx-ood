@@ -43,8 +43,35 @@
   });
 
   function updateTables() {
-    eventsTable.setData("/events");
-    checksTable.setData("/checks");
+    var currentLocation = window.location;
+
+    var eventsEndpoint = currentLocation.protocol + "//" + currentLocation.host + "/events";
+    var eventsRequest = new XMLHttpRequest();
+    eventsRequest.open("GET", eventsEndpoint, true);
+    eventsRequest.send();
+    eventsRequest.onreadystatechange = function () {
+      if (eventsRequest.readyState == 4 && eventsRequest.status == 200) {
+        newEvents = JSON.parse(eventsRequest.responseText);
+        eventsTable.setData(JSON.parse(eventsRequest.responseText));
+      } else if (eventsRequest.readyState == 4) {
+        displayAlert("danger", "Could not retrieve events");
+      }
+    };
+
+    var checksEndpoint = currentLocation.protocol + "//" + currentLocation.host + "/checks";
+    var checksRequest = new XMLHttpRequest();
+    checksRequest.open("GET", checksEndpoint, true);
+    checksRequest.send();
+    checksRequest.onreadystatechange = function () {
+      if (checksRequest.readyState == 4 && checksRequest.status == 200) {
+        newChecks = JSON.parse(checksRequest.responseText);
+        checksTable.setData(JSON.parse(checksRequest.responseText));
+      } else if (eventsRequest.readyState == 4) {
+        displayAlert("danger", "Could not retrieve checks");
+      }
+    };
+
+
   }
 
   setInterval(updateTables, 60_000);
