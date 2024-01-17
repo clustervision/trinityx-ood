@@ -38,7 +38,7 @@ from utils import prettify_relative_time
 
 
 app = Flask(__name__, static_url_path='/')
-handler = SensuRequestHandler(sensu_url=settings.sensu.url)
+handler = SensuRequestHandler(sensu_url='http://localhost:4567')
 
 
 @app.route("/")
@@ -49,41 +49,27 @@ def index():
     return render_template('index.html', settings=settings)
 
 
-@app.route("/table/checks")
+@app.route("/checks")
 def checks():
     """
     This API will get all the checks.
     """
-    try:
-        items = handler.get_checks()
-        current_time = datetime.datetime.utcnow()
-        return render_template('checks_table.html', items=items, time=current_time)
-    except Exception as e:
-        return render_template('base/error.html', message=e)
 
-@app.route("/table/events")
+    items = handler.get_checks()
+    current_time = datetime.datetime.utcnow()
+    return items
+    
+
+@app.route("/events")
 def events():
     """
     This API will get all the events.
     """
-    try:
-        items = handler.get_events()
-        current_time = datetime.datetime.utcnow()
-        return render_template('events_table.html', items=items, time=current_time)
-    except Exception as e:
-        return render_template('base/error.html', message=e)
 
-@app.route("/table/silenced")
-def silenced():
-    """
-    This API will get all the silenced.
-    """
-    try:
-        items = handler.get_silenced()
-        current_time = datetime.datetime.utcnow()
-        return render_template('silenced_table.html', items=items, time=current_time)
-    except Exception as e:
-        return render_template('base/error.html', message=e)
+    items = handler.get_events()
+    current_time = datetime.datetime.utcnow()
+    return items
+
 
 @app.template_filter('prettify_ts')
 def prettify_ts(timestamp=None):

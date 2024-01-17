@@ -1,11 +1,10 @@
-name: sensu
-description: Sensu system checks
+name: Sensu
+description: Visualize sensu events inside OOD
 icon: fa://stethoscope
 category: Monitoring
-subcategory: App SubCategory
 
 
 tile:
-  title: sensu
+  title: Sensu
   sub_caption: |
-   Sensu system checks
+   Visualize sensu events inside OOD
