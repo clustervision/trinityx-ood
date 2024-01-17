@@ -33,7 +33,7 @@ __status__      = 'Development'
 
 from pprint import pprint
 import requests
-from config import settings
+from base.config import settings
 
 class SensuRequestHandler():
     """
@@ -73,7 +73,8 @@ class SensuRequestHandler():
 
 
 if __name__ == '__main__':
-    print(settings.sensu.url)
-    handler = SensuRequestHandler(sensu_url=settings.sensu.url)
+    SENSU_URL = "http://localhost:4567"
+    print(SENSU_URL)
+    handler = SensuRequestHandler(sensu_url=SENSU_URL)
     pprint(handler.get_checks())
     pprint(handler.get_events())

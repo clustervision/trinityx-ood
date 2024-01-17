@@ -10,7 +10,7 @@
       "app_mantainer_mail": "support@clustervision.com",
       "app_category": "Monitoring",
       "app_subcategory": "App SubCategory",
-      "app_description": "Sensu system checks",
+      "app_description": "Visualize sensu events inside OOD",
       "app_icon": "stethoscope",
       "_copy_without_render": [
         "templates/base/*.html",
