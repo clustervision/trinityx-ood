@@ -187,18 +187,6 @@ include secrets/templates/*
 include secrets/templates/layout
 include secrets/templates/layout/*
 
-include sensu
-include sensu/*
-include sensu/static
-include sensu/static/*
-include sensu/static/bootstrap-3.3.7/*
-include sensu/static/bootstrap-3.3.7/css/*
-include sensu/static/bootstrap-3.3.7/fonts/*
-include sensu/static/bootstrap-3.3.7/js/*
-include sensu/static/jquery-3.2.1/*
-include sensu/static/ood-bootstrap3-override-0.0.1/*
-include sensu/templates/*
-
 include service
 include service/*
 include service/static
@@ -233,12 +221,6 @@ include switch/templates/*
 include switch/templates/layout
 include switch/templates/layout/*
 
-include users
-include users/*
-include users/static
-include users/static/*
-include users/templates/*
-
 include monitor
 include monitor/*
 include monitor/static
@@ -271,4 +253,10 @@ include dns/templates/*
 include dns/templates/layout
 include dns/templates/layout/*
 
+recursive-include users * 
+
+recursive-include infiniband *
+
 recursive-include slurm *
+
+recursive-include sensu *
