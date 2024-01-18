@@ -1,7 +1,7 @@
 {% extends "base/pages/index.html" %}
 
 {% block content %}
-<div class="container" role="main">
+<div class="container mt-5" role="main">
   <ul class="nav nav-tabs">
     <li class="nav-item">
       <a class="nav-link active" id="events-tab" data-toggle="tab" href="#events" role="tab" aria-controls="events"
@@ -27,15 +27,20 @@
 
 
 <script>
+  var currentLocation = window.location;
+
+  var eventsEndpoint = currentLocation.protocol + "//" + currentLocation.host + currentLocation.pathname + "/events";
+  var checksEndpoint = currentLocation.protocol + "//" + currentLocation.host + currentLocation.pathname + "/checks";
+
   var eventsTable = new Tabulator("#events-table", {
-    ajaxURL: "/events",
+    ajaxURL: eventsEndpoint,
     autoColumns: true, //create columns from data field names
     layout: "fitColumns", //fit columns to width of table (optional)
     pagination: "local",
     paginationSize: 20,
   });
   var checksTable = new Tabulator("#checks-table", {
-    ajaxURL: "/checks",
+    ajaxURL: checksEndpoint,
     autoColumns: true, //create columns from data field names
     layout: "fitColumns", //fit columns to width of table (optional)
     pagination: "local",
@@ -43,9 +48,7 @@
   });
 
   function updateTables() {
-    var currentLocation = window.location;
 
-    var eventsEndpoint = currentLocation.protocol + "//" + currentLocation.host + "/events";
     var eventsRequest = new XMLHttpRequest();
     eventsRequest.open("GET", eventsEndpoint, true);
     eventsRequest.send();
@@ -58,7 +61,6 @@
       }
     };
 
-    var checksEndpoint = currentLocation.protocol + "//" + currentLocation.host + "/checks";
     var checksRequest = new XMLHttpRequest();
     checksRequest.open("GET", checksEndpoint, true);
     checksRequest.send();
@@ -74,7 +76,7 @@
 
   }
 
-  setInterval(updateTables, 60_000);
+  setInterval(updateTables, 60000);
 </script>
 
 {% endblock %}
