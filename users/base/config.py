@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 # This code is part of the TrinityX software suite
 # Copyright (C) 2023  ClusterVision Solutions b.v.
 #
@@ -21,15 +18,17 @@
 This file will create the settings.
 """
 
-__author__      = 'Diego Sonaglia'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
-__license__     = 'GPL'
-__version__     = '2.0'
-__maintainer__  = 'Diego Sonaglia'
-__email__       = 'diego.sonaglia@clustervision.com'
-__status__      = 'Development'
+__author__ = "Diego Sonaglia"
+__copyright__ = "Copyright 2022, Luna2 Project[OOD]"
+__license__ = "GPL"
+__version__ = "2.0"
+__maintainer__ = "ClusterVision Solutions Development Team"
+__email__ = "support@clustervision.com"
+__status__ = "Development"
 
-import jwt 
+import os
+import sys
+import jwt
 import requests
 from dynaconf import Dynaconf
 
@@ -37,17 +36,15 @@ TOKEN = None
 settings = Dynaconf(
     envvar_prefix="OOD",
     settings_files=[
-        "settings/osusers.toml",
-        "settings/luna.ini",
-        "/trinity/local/ondemand/3.0/config/osusers.toml",
+        os.path.join(os.path.dirname(__file__), "settings", "users.toml"),
+        os.path.join(os.path.dirname(__file__), "settings", "luna.ini"),
+        os.path.join(os.path.dirname(__file__), "..", "settings", "users.toml"),
+        os.path.join(os.path.dirname(__file__), "..", "settings", "luna.ini"),
+        "/trinity/local/ondemand/3.0/config/users.toml",
         "/trinity/local/ondemand/3.0/config/luna.ini",
-        ],
+    ],
 )
-print(settings)
-import sys
-sys.stdout.flush()
-# `envvar_prefix` = export envvars with `export DYNACONF_FOO=bar`.
-# `settings_files` = Load these files in the order.
+
 
 def get_token():
     """
@@ -55,19 +52,34 @@ def get_token():
     This method will fetch a valid token for further use.
 
     """
-    # If there is a token check that is valid and return it 
+    # If there is a token check that is valid and return it
     if TOKEN is not None:
         try:
             # Try to decode the token to check if it is still valid
-            jwt.decode(TOKEN, settings.api.secret_key, algorithms=['HS256'])
+            jwt.decode(TOKEN, settings.api.secret_key, algorithms=["HS256"])
             return TOKEN
         except jwt.exceptions.ExpiredSignatureError:
             # If the token is expired is ok, we fetch a new one
             pass
 
     # Otherwise just fetch a new one
-    data = {'username': settings.api.username, 'password': settings.api.password}
-    daemon_url = f'{settings.api.protocol}://{settings.api.endpoint}/token'
-    response = requests.post(daemon_url, json=data, stream=True, timeout=3, verify=(settings.api.verify_certificate.lower() == 'true'))
-    token = response.json()['token']
+    data = {"username": settings.api.username, "password": settings.api.password}
+    daemon_url = f"{settings.api.protocol}://{settings.api.endpoint}/token"
+    response = requests.post(
+        daemon_url,
+        json=data,
+        stream=True,
+        timeout=3,
+        verify=(settings.api.verify_certificate.lower() == "true"),
+    )
+    token = response.json()["token"]
     return token
+
+
+def get_luna_url():
+    """
+
+    This method will return the luna url.
+
+    """
+    return f"{settings.api.protocol}://{settings.api.endpoint}"

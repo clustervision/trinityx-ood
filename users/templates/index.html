@@ -1,63 +1,28 @@
 {% set app_name = "User Management" %}
-{% extends "base/base.html" %}
+{% extends "base/pages/index.html" %}
+{% block additional_js %}
+<script src="{{url_for('static', filename='js/custom.js')}}"></script>
+{% endblock %}
 
 {% block content %}
-<div class="container" role="main">
-    <div class="panel panel-default">
-        <div class="panel-heading panel-heading-nav">
-            <ul class="nav nav-tabs">
-              <li role="presentation" class="active">
-                <a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a>
-              </li>
-              <li role="presentation">
-                <a href="#groups" aria-controls="groups" role="tab" data-toggle="tab">Groups</a>
-              </li>
-
-            </ul>
-        </div>
-        <div class="panel-body">
-            <div class="tab-content">
-              <div role="tabpanel" class="tab-pane fade in active" id="users">
-                <h3> Users </h3>
-                <div id="users-table"></div>
-              </div>
-              <div role="tabpanel" class="tab-pane fade " id="groups">
-                <h3> Groups </h3>
-                <div id="groups-table"></div>
-              </div>
-            </div>
-        </div>
+<div class="container mt-5" role="main">
+  <ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="users-tab" data-toggle="tab" href="#users" role="tab" aria-controls="users" aria-selected="true">Users</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="groups-tab" data-toggle="tab" href="#groups" role="tab" aria-controls="groups" aria-selected="false">Groups</a>
+    </li>
+  </ul>
+  <div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+      <div id="new-user-wrapper" class="mt-3 mb-3"></div>
+      <div id="users-table"  class="table-sm"></div>
     </div>
-    <div id="modal-wrapper"></div>
+    <div class="tab-pane fade" id="groups" role="tabpanel" aria-labelledby="groups-tab">
+      <div id="new-group-wrapper" class="mt-3 mb-3"></div>
+      <div id="groups-table"  class="table-sm"></div>
+    </div>
+  </div>
 </div>
-
-<script>
-  var APP_URL = "{{url_for('index')}}";
-  var timers = {}
-  function load_table(target){
-    var endpoint_url = APP_URL + 'table/' + target;
-    $.get(endpoint_url, function(data, status, jqxhr) {
-      $(`#${target}-table`).html(data);
-    });
-  }
-  
-  function load_modal(target, mode, name){
-    var endpoint_url = APP_URL + 'modal/' + target + '/' + mode ;
-    if (name != null) {
-      endpoint_url += '/' + name;
-    }
-    $.get(endpoint_url, function(data, status, jqxhr) {
-      $( `#modal-wrapper`).html(data);
-      $( `#modal`).modal('show');
-    });
-  }
-
-  load_table("users");
-  load_table("groups");
-  timers['users'] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, "users");
-  timers['groups'] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, "groups");
-</script>
-
-
-
 {% endblock %}
