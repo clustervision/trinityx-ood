@@ -18,7 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 import requests
-from config import settings, get_token
+from base.config import settings, get_token, get_luna_url
 
 class LunaRequestHandler():
     endpoints = {
@@ -54,10 +54,21 @@ class LunaRequestHandler():
         This method will get all the groups/users from the database.
         """
         resp = self.session.get(self.endpoints[target]['list'], headers=self.get_auth_header(), verify=(settings.api.verify_certificate.lower() == 'true'))
-        print(resp.text)
-        if resp.status_code not in [200, 201, 204]:
+        if resp.status_code == 404:
+            return []
+        elif resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {resp.text} while listing {target}, received status code {resp.status_code}")
-        return  resp.json()['config'][f"os{target[:-1]}"]
+        data = resp.json()['config'][f"os{target[:-1]}"]
+        data = [{'name': k, **v} for k, v in data.items()]
+        for item in data:
+            additional_info = self.get(target, item['name'])
+            # groups = additional_info.pop('groups', [])
+            # groups = [ group['name'] for group in groups ]     
+            # additional_info['groups'] = groups
+            
+            item.update(additional_info)
+            
+        return data
 
     def get(self, target, name):
         """

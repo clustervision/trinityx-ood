@@ -1,5 +1,4 @@
-{% extends "table.html" %}
-{% block table %}
+<table class="table table-bordered table-striped">
   <thead>
     <tr>
       <th>Name</th>
@@ -17,18 +16,12 @@
       <td>{{item[field] or ''}}</td>
       {% endfor %}
       <td>
-        <button
-        type="button" 
-        class="btn btn-secondary"
-        onclick="handle_show_button('{{target}}', '{{name}}')">Show</button>
-        <button
-        type="button" 
-        class="btn btn-primary"
-        onclick="handle_update_button('{{target}}', '{{name}}')">Update</button>
-        <button
-        type="button" 
-        class="btn btn-danger"
-        onclick="handle_delete_button('{{target}}', '{{name}}')">Delete</button>
+        <button type="button" class="btn btn-secondary"
+          onclick="handle_show_button('{{target}}', '{{name}}')">Show</button>
+        <button type="button" class="btn btn-primary"
+          onclick="handle_update_button('{{target}}', '{{name}}')">Update</button>
+        <button type="button" class="btn btn-danger"
+          onclick="handle_delete_button('{{target}}', '{{name}}')">Delete</button>
       </td>
     </tr>
     {% endfor %}
@@ -36,86 +29,12 @@
       <td colspan={{ (fields | length) + 1}} class="new">
       </td>
       <td colspan=1 class="new">
-        <button
-          type="button" 
-          class="btn btn-primary"
-          onclick="handle_new_button('{{target}}')">Add a new {{ target[:-1] | capitalize }}</button>
+        <button type="button" class="btn btn-primary" onclick="handle_new_button('{{target}}')">Add a new {{ target[:-1]
+          | capitalize }}</button>
       </td>
     </tr>
   </tbody>
 </table>
 
-<script>
-  // $(document).ready(function(){
-    function handle_new_button(target){
-      load_modal(target, 'create',  null);
-    }
-    function handle_show_button(target, name){
-      load_modal(target, 'show', name);
-    }
-    function handle_update_button(target, name){
-      load_modal(target, 'update', name);
-    }
-    function handle_delete_button(target, name){
-      load_modal(target, 'delete', name);
-    }
-    function handle_delete_submit_button(target, name){
-      $.ajax({
-        url: "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_delete',
-        type: 'GET',
-        success: function(result) {
-          load_table(target);
-          $('#modal').modal('hide');
-        },
-        error: function(result) {
-          $(`#table-${target}-error`).html(result.responseText)
-          clearInterval(timers[target])
-          timers[target] = setInterval(load_table, {{ settings.osusers.refresh_interval }}, target)
-        }
-      })
-    }
-    function handle_submit_button(target, name, mode){
-      var url;
-      var formdata = {};
-      
-      $("#modal-form input.form-entry").map( function(){ formdata[$(this).attr('id')] = $(this).val()})
-      if (target == 'groups') {
-        formdata['users'] = [];
-        $('#modal-form select.form-entry option:selected').each(function() {
-          formdata['users'].push($(this).val()) ;
-        })
-      }
 
-      if (target == 'users') {
-        formdata['groups'] = [];
-        $('#modal-form select.form-entry option:selected').each(function() {
-          formdata['groups'].push($(this).val()) ;
-        })
-      }
-
-      if (mode == 'update'){
-        url = "{{url_for('index')}}" + 'action/' + target + '/' + name + '/_update';
-      } else if (mode == 'create'){
-        url = "{{url_for('index')}}" + 'action/' + target + '/_create';
-      }
-
-      $.ajax({
-        url: url,
-        type: 'POST',
-        data: JSON.stringify(formdata),
-        success: function(result) {
-          load_table(target);
-          $('#modal').modal('hide');
-        },
-        error: function(result) {
-          console.log(result)
-          $("#modal-error").html(result.responseText)
-        }
-      });
-      return false;
-    }
-  // });
-  
-</script>
-
-{% endblock %}
+</table>
