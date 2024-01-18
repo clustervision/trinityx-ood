@@ -1,6 +1,8 @@
 var currentLocation = window.location;
 var currentUrl = currentLocation.protocol + "//" + currentLocation.host + currentLocation.pathname;
-
+if (currentUrl[currentUrl.length - 1] != '/') {
+    currentUrl += '/';
+}
 function renderNewUserButton(cell, formatterParams) {
     return "<button class='btn btn-primary' onclick='handle_new_button(\"users\")'>Add new user</button>"
 }

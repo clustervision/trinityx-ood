@@ -19,6 +19,8 @@
 
 import requests
 from base.config import settings, get_token, get_luna_url
+from multiprocessing.pool import ThreadPool
+
 
 class LunaRequestHandler():
     endpoints = {
@@ -60,12 +62,18 @@ class LunaRequestHandler():
             raise Exception(f"Error {resp.text} while listing {target}, received status code {resp.status_code}")
         data = resp.json()['config'][f"os{target[:-1]}"]
         data = [{'name': k, **v} for k, v in data.items()]
-        for item in data:
-            additional_info = self.get(target, item['name'])
-            # groups = additional_info.pop('groups', [])
-            # groups = [ group['name'] for group in groups ]     
-            # additional_info['groups'] = groups
-            
+
+
+
+        # for item in data:
+        #     additional_info = self.get(target, item['name'])
+        #     item.update(additional_info)
+
+        tpool = ThreadPool(5)
+        additional_data = tpool.map(lambda x: self.get(target, x['name']), data)
+        tpool.close()
+        tpool.join()
+        for item, additional_info in zip(data, additional_data):
             item.update(additional_info)
             
         return data
