@@ -7,3 +7,7 @@ ol.breadcrumb {
     padding: 4px;
     margin: 0px
 }
+#app-container{
+    margin-top: 50px;
+    max-width: 90%;
+}

@@ -1,11 +1,19 @@
-name: users
+name: Users
+
 description: Manage LDAP users and groups
+
+
 icon: fa://user
+
+
 category: Trinity
+
+
 subcategory: Utilities
 
 
+
 tile:
-  title: users
+  title: Users
   sub_caption: |
    Manage LDAP users and groups
