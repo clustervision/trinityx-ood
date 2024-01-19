@@ -67,6 +67,11 @@
         background-color: #3b3b3b;
         color:#ffffff;
       }
+      .rack-flip {
+        width: 380px;
+        background-color: #c6cc74;
+        color:#ffffff;
+      }
       .rack-base {
         width: 380px;
         background-color: #3b3b3b;
@@ -195,6 +200,11 @@
                     {% set rack_slots = range(value["size"], 0, -1) %}
                   {% endif %}
 
+              <div class="row">
+                <div class="rack-flip">
+                  <center><strong>Back View<button style="float: right;" class="btn btn-sm btn-warning" type="button">Front View</button></strong></center>
+                </div>
+              </div>
               <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
               <div class="row">
                 <div class="rack-pillar"><strong>| |</strong></div>
