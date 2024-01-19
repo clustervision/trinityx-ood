@@ -157,7 +157,7 @@ window.onload = function() {
             {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
             {title: "Properties", columns:[
                 {title:"# Boards", field:"properties.Boards", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
-                {title:"# Sockets", field:"properties.Sockets", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
+                {title:"# SocketsPerBoard", field:"properties.SocketsPerBoard", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"# CoresPerSocket", field:"properties.CoresPerSocket", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"# ThreadsPerCore", field:"properties.ThreadsPerCore", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"RealMemory (MB)", field:"properties.RealMemory", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
@@ -173,7 +173,7 @@ window.onload = function() {
             "name": null,
             "properties": {
                 "Boards": 1,
-                "Sockets": 1,
+                "SocketsPerBoard": 1,
                 "CoresPerSocket": 1,
                 "ThreadsPerCore": 1,
                 "RealMemory": 1,
