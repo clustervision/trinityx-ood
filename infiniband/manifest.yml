@@ -1,4 +1,4 @@
-name: infiniband
+name: Infiniband
 description: View the infiniband connection network
 icon: fa://network-wired
 category: Monitoring

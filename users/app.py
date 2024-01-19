@@ -52,7 +52,6 @@ fields = {
 
 @app.template_filter('get_names')
 def get_name_filter(items):
-    print(items)
     return [i['name'] for i in items]
 
 @app.errorhandler(Exception)
