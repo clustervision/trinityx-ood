@@ -28,7 +28,6 @@ function linkRotationAngle(d) {
     var angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x);
     var angleDeg = ((angle * 180 / Math.PI) + 360) % 360;
     if (d.target.id == "S-ec0d9a0300ec8480" && d.source.id == "S-ec0d9a0300ec8200") {
-        console.log(angleDeg)
     }
     return angleDeg
 }
@@ -153,10 +152,13 @@ const Context = {
                 .force("charge", d3.forceManyBody().strength( -600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .on("tick", () => this.ticked());
+
         } else if (simulationType == 'none') {
             return  d3.forceSimulation(this.nodes())
                     .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
-                    .on("tick", () => this.ticked());
+                    .on("tick", () => this.ticked())
+;
+r
         }
 
     },
@@ -236,7 +238,7 @@ const Context = {
     _containerInitialized() {
         // Set the container height to 80% of the window height
         var canvasHeight = window.innerHeight * 0.80;
-        $("#container .row").height(canvasHeight);
+        $("#app-container .row").height(canvasHeight);
 
         // Register the event handler for the simulation type
         $("#simulation-type").change(() => this.onchangeSimulationType());
@@ -414,15 +416,23 @@ const Context = {
                 var source = data.nodes.find(n => n.uid == l.uid);
                 source._children.push(l);
             });
-            console.log(data)
             this.data = data
             this.initialized()
         }
-        var failureCallback = (error) => {
-            displayAlert("danger", error)
+        var failureCallback = (request) => {
+            response = JSON.parse(request.responseText);
+            displayAlert("danger", response.message)
         }
 
-        d3.json(url).then( successCallback, failureCallback);
+        // d3.json(url).then( successCallback, failureCallback);
+        $.ajax({
+            url: url,
+            type: "GET",
+            contentType: "application/json",
+            dataType: "json",
+            success: successCallback,
+            error: failureCallback
+        });
     },
     ticked() {
         this.containerItem.attr("style", "display: block;");
