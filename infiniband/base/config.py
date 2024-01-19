@@ -37,6 +37,8 @@ settings = Dynaconf(
     settings_files=[
         os.path.join(os.path.dirname(__file__), "settings", "infiniband.toml"),
         os.path.join(os.path.dirname(__file__), "settings", "luna.ini"),
+        os.path.join(os.path.dirname(__file__), "..", "settings", "infiniband.toml"),
+        os.path.join(os.path.dirname(__file__), "..", "settings", "luna.ini"),
         "/trinity/local/ondemand/3.0/config/infiniband.toml",
         "/trinity/local/ondemand/3.0/config/luna.ini",
     ],

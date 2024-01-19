@@ -1,6 +1,6 @@
 {
   "template": "git@gitlab.taurusgroup.one:clustervision/trinityx-ood-apps-template.git",
-  "commit": "41da3daa6eea0808f2dc279195fd0611e7966fdf",
+  "commit": "a6b0c8a3ab0846e08ad471a27e2c2f011d07f56d",
   "checkout": null,
   "context": {
     "cookiecutter": {

@@ -1,7 +1,7 @@
 {% extends "base/pages/index.html" %}
 
 {% block content %}
-<div class="container mt-5" role="main">
+
   <ul class="nav nav-tabs">
     <li class="nav-item">
       <a class="nav-link active" id="events-tab" data-toggle="tab" href="#events" role="tab" aria-controls="events"
@@ -22,7 +22,7 @@
       <div id="checks-table"></div>
     </div>
   </div>
-</div>
+
 
 
 
@@ -48,35 +48,34 @@
   });
 
   function updateTables() {
-
-    var eventsRequest = new XMLHttpRequest();
-    eventsRequest.open("GET", eventsEndpoint, true);
-    eventsRequest.send();
-    eventsRequest.onreadystatechange = function () {
-      if (eventsRequest.readyState == 4 && eventsRequest.status == 200) {
-        newEvents = JSON.parse(eventsRequest.responseText);
-        eventsTable.setData(JSON.parse(eventsRequest.responseText));
-      } else if (eventsRequest.readyState == 4) {
+    $.ajax({
+      url: eventsEndpoint,
+      type: "GET",
+      dataType: "json",
+      success: function (data) {
+        eventsTable.setData(data);
+      },
+      failure: function (data) {
         displayAlert("danger", "Could not retrieve events");
       }
-    };
+    });
 
-    var checksRequest = new XMLHttpRequest();
-    checksRequest.open("GET", checksEndpoint, true);
-    checksRequest.send();
-    checksRequest.onreadystatechange = function () {
-      if (checksRequest.readyState == 4 && checksRequest.status == 200) {
-        newChecks = JSON.parse(checksRequest.responseText);
-        checksTable.setData(JSON.parse(checksRequest.responseText));
-      } else if (eventsRequest.readyState == 4) {
+    $.ajax({
+      url: checksEndpoint,
+      type: "GET",
+      dataType: "json",
+      success: function (data) {
+        checksTable.setData(data);
+      },
+      failure: function (data) {
         displayAlert("danger", "Could not retrieve checks");
       }
-    };
+    });
 
 
   }
 
-  setInterval(updateTables, 60000);
+  setInterval(updateTables, 6000);
 </script>
 
 {% endblock %}
