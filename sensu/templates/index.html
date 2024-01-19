@@ -2,26 +2,26 @@
 
 {% block content %}
 
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link active" id="events-tab" data-toggle="tab" href="#events" role="tab" aria-controls="events"
-        aria-selected="true">Events</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="checks-tab" data-toggle="tab" href="#checks" role="tab" aria-controls="checks"
-        aria-selected="false">Checks</a>
-    </li>
-  </ul>
-  <div class="tab-content">
-    <div class="tab-pane fade show active" id="events" role="tabpanel" aria-labelledby="events-tab">
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link active" id="events-tab" data-toggle="tab" href="#events" role="tab" aria-controls="events"
+      aria-selected="true">Events</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" id="checks-tab" data-toggle="tab" href="#checks" role="tab" aria-controls="checks"
+      aria-selected="false">Checks</a>
+  </li>
+</ul>
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="events" role="tabpanel" aria-labelledby="events-tab">
 
-      <div id="events-table"></div>
-    </div>
-    <div class="tab-pane fade" id="checks" role="tabpanel" aria-labelledby="checks-tab">
-
-      <div id="checks-table"></div>
-    </div>
+    <div id="events-table"></div>
   </div>
+  <div class="tab-pane fade" id="checks" role="tabpanel" aria-labelledby="checks-tab">
+
+    <div id="checks-table"></div>
+  </div>
+</div>
 
 
 
@@ -34,17 +34,42 @@
 
   var eventsTable = new Tabulator("#events-table", {
     ajaxURL: eventsEndpoint,
-    autoColumns: true, //create columns from data field names
-    layout: "fitColumns", //fit columns to width of table (optional)
+    layout: "fitData",
     pagination: "local",
     paginationSize: 20,
+    responsiveLayout: "collapse",
+    columns: [
+      { formatter: "responsiveCollapse", width: "5%", resizable: false, headerSort: false },
+      { title: "Client Name", field: "client.name" },
+      { title: "Client IP", field: "client.address" },
+      { title: "Check Name", field: "check.name" },
+      { title: "Check Output", field: "check.output"},
+      { title: "Check Last Executed", field: "check.executed"},
+      { title: "ID", field: "id"},
+      { title: "Last Ok", field: "last_ok"},
+      { title: "Last State Change", field: "last_state_change"},
+    ],
+    responsiveLayoutCollapseStartOpen: false,
+
   });
+
   var checksTable = new Tabulator("#checks-table", {
     ajaxURL: checksEndpoint,
-    autoColumns: true, //create columns from data field names
-    layout: "fitColumns", //fit columns to width of table (optional)
+    layout: "fitData",
     pagination: "local",
     paginationSize: 20,
+    responsiveLayout: "collapse",
+    columns: [
+      { formatter: "responsiveCollapse", width: "5%", resizable: false, headerSort: false },
+      { title: "Name", field: "name", width: "95%" },
+      { title: "Command", field: "command" },
+      { title: "Description", field: "status" },
+      { title: "Handler", field: "handler" },
+      { title: "Interval", field: "interval" },
+      { title: "subscribers", field: "subscribers" },
+    ],
+    responsiveLayoutCollapseStartOpen: false,
+
   });
 
   function updateTables() {
@@ -53,7 +78,21 @@
       type: "GET",
       dataType: "json",
       success: function (data) {
-        eventsTable.setData(data);
+        console.log("events");
+
+        oldEvents = eventsTable.getData();
+        returnedEvents = data;
+
+        newEvents = returnedEvents.filter(function (o1) {
+          return !oldEvents.some(function (o2) {
+            return o1.id === o2.id;
+          });
+        });
+
+        for (var i = 0; i < newEvents.length; i++) {
+          eventsTable.addRow(newEvents[i]);
+        }
+        
       },
       failure: function (data) {
         displayAlert("danger", "Could not retrieve events");
@@ -65,7 +104,22 @@
       type: "GET",
       dataType: "json",
       success: function (data) {
-        checksTable.setData(data);
+        console.log("checks");
+
+        oldChecks = checksTable.getData();
+        returnedChecks = data;
+
+        newChecks = returnedChecks.filter(function (o1) {
+          return !oldChecks.some(function (o2) {
+            return o1.id === o2.id;
+          });
+        });
+
+        for (var i = 0; i < newChecks.length; i++) {
+          checksTable.addRow(newChecks[i]);
+        }
+
+
       },
       failure: function (data) {
         displayAlert("danger", "Could not retrieve checks");
@@ -75,7 +129,7 @@
 
   }
 
-  setInterval(updateTables, 6000);
+  setInterval(updateTables, 5000);
 </script>
 
 {% endblock %}
