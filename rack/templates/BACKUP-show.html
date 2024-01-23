@@ -1,0 +1,474 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack /</span> Position</h4>
+  {% if messages %}
+    {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+  <style>
+  .manage{ position: absolute; z-index: 100; }
+  .draggable {  width: 220px; height: 30px; }
+  .snaptarget {width: 220px; height: 30px; }
+  .rack-num {width: 20px; height: 30px; }
+  #devices {width: 100%; height: 300px; background-color: antiquewhite;
+    /*   display: flex;   position: absolute;
+    justify-content: space-between; */
+  }
+
+  .ui-state-hover {
+    border: 1px solid #cccccc;
+    background: #067a19;
+    font-weight:bolder;
+    color: #ffffff;
+}
+  </style>
+  
+  <style>
+    .scrollmenu {
+      /*  overflow: auto;*/
+      /*    overflow-y: auto; */
+     
+     overflow-x: auto;white-space: nowrap;
+    }
+    
+    .right-click {
+      display: inline-block;
+      text-align: center;
+    }
+
+    .controller {
+      background-color: #404dff;
+      color: #ffffff;
+    }
+    .node {
+      background-color: #d9e7eb;
+    }
+    .switch {
+      background-color: #c8f0d2;
+    }
+    .otherdev {
+      background-color: #696b6a;
+    }
+    
+    .rack-border {
+      width: 300px;
+      border-style: solid;
+      border-color: red;
+      /* height: 1650px;
+      width: 250px;
+      background-color: #FFFFFF;
+      border: 15px solid transparent;
+      padding: 15px;
+      border-image-source: url({{ url_for('static', filename='img/rack.gif') }});
+      border-image-repeat: stretch;
+      border-image-slice: 30;
+      border-image-width: 120px;
+      border-image-outset: 100px;  */
+  }
+  
+    
+    </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+
+  <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+    <div class="toast-header">
+      <i class="bx bx-bell me-2"></i>
+      <div class="me-auto fw-medium">Rack Update</div>
+      <small>0 mins ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body"></div>
+  </div>
+
+  <div id="rack-remove-toast" class="bs-toast toast toast-placement-ex m-2 fade bg-danger top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+    <div class="toast-header">
+      <i class="bx bx-bell me-2"></i>
+      <div class="me-auto fw-medium">Rack Update</div>
+      <small>0 mins ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body"></div>
+  </div>
+
+<div class="row">
+  <!-- Basic Layout -->
+  <div class="col-xxl">
+    <div class="card mb-4">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">Rack Position</h5>
+        <small class="text-muted float-end">Change Position here...</small>
+      </div>
+      <div class="card-body">
+
+        <div id="inventory">
+          <div class="row">
+            <div class="col col-6">
+              <strong>Available Devices to put in Rack(s) <i class="bx bx-sm bx-info-circle" style="color: #03c3ec;"></i></strong>
+            </div>
+            <div class="col col-6">
+              <button style="float: right;" class="btn btn-sm btn-info me-1 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#devices" aria-expanded="false" aria-controls="devices">Devices</button>
+            </div>
+          </div>
+          <br />
+          <div id="devices" class="collapse ui-widget-header scrollmenu snaptarget">
+            <input type="hidden" name="devices" value="devices" />
+            {% if inventory %}
+                {% for each in inventory %}
+                  <div id="{{ each['name'] }}" style="height: {{ each['height']*30-2 }}px;"  class="draggable ui-widget-content right-click {{ each['type'] }}" size="{{ each['height'] }}">
+                    <div class="device">
+                      <div class="row" style="margin-right: 0px; margin-left-0px;">
+                        <div class="col col-2">
+                          {% if each['type'] == "node" %}
+                            <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                          {% elif each['type'] == "switch" %}
+                            <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                          {% elif each['type'] == "controller" %}
+                            <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                          {% endif %}
+                          <input type="hidden" name="type" value="{{ each['type'] }}" />
+                        </div>
+                        <div class="col col-8" ><strong style="float: left;">{{ each['name'] }}</strong></div>
+                        <div class="col col-2" style="background-color: #22cf65;"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <script type="text/javascript">
+                    $(function(){
+                      $("#{{ each['name'] }}").draggable({
+                        start: function() { 
+                          $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+                          $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+                        },
+                        revert: function() {
+                          $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+                          $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+                          if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                              },
+                        cursor: "move", scroll: true,
+                        snap: ".snaptarget"
+                      }); 
+                    });
+                  </script>
+                {% endfor %}
+            {% endif %}
+          </div>
+          <br />
+        </div>
+    
+        <div class="row">
+          <script type="text/javascript">var devices = [];</script>
+          
+          {% if rack_data %}
+            {% set rack_order = rack_data['order'] | string() %}
+            {% if rack_order == 'ascending' %}
+              {% set rack_slots = range(1, rack_data["size"]+1) %}
+            {% else %}
+              {% set rack_slots = range(rack_data["size"], 0, -1) %}
+            {% endif %}
+
+            <div class="col col-2"></div>
+      
+              <div class="col col-1" style="width: 2%; height: 1%;">
+                <h4>&nbsp;</h4>
+                <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
+                {% for each in rack_slots %}
+                  {% set each = each | string() %}
+                  <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
+                {% endfor %}
+              </div>
+            
+              <div class="col col-2">
+                <center><h4>Front Side</h4></center>
+                <div class="ui-widget-header snaptarget"><p>{{ rack_data['name'] }}</p></div>
+                
+                  {% for each in rack_slots %}
+                  <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
+                    <input type="hidden" name="rack" value="{{ rack_data['name'] }}" />
+                    <input type="hidden" name="position" value="{{ each }}" />
+                    <input type="hidden" name="orientation" value="front" />
+
+                    {% for each_device in rack_data['devices'] %}
+                      {% if each_device['orientation'] == 'front' %}
+                        {% if each_device['position'] == each  %}
+
+                          <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
+                            <div class="device">
+                              <div class="row" style="margin-right: 0px; margin-left-0px;">
+                                <div class="col col-2">
+                                  {% if each_device['type'] == "node" %}
+                                    <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                                  {% elif each_device['type'] == "switch" %}
+                                    <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                                  {% elif each_device['type'] == "controller" %}
+                                    <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                                  {% endif %}
+                                  <input type="hidden" name="type" value="{{ each_device['type'] }}" />
+                                </div>
+                                <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
+                                <div class="col col-2" style="background-color: #22cf65;"></div>
+                              </div>
+                            </div>
+                          </div>
+                          <script type="text/javascript">
+                            $(function(){
+                              $("#{{ each_device['name'] }}").draggable({
+                                start: function() { 
+                                  $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+                                  $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+                                },
+                                revert: function() {
+                                  $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+                                  $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+                                  if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                                
+                              },
+                                cursor: "move", scroll: true,
+                                snap: ".snaptarget"
+                              }); 
+                            });
+                            devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
+                          </script>
+                          {% endif %}
+                        {% endif %}
+
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              </div>
+
+              <div class="col col-1" style="width: 2%; height: 1%;">
+                <h4>&nbsp;</h4>
+                <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
+                {% for each in rack_slots %}
+                  {% set each = each | string() %}
+                  <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
+                {% endfor %}
+              </div>
+            
+        
+
+            <div class="col col-2"></div>
+
+
+
+            <div class="col col-1" style="width: 2%; height: 1%;">
+              <h4>&nbsp;</h4>
+              <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
+              {% for each in rack_slots %}
+                {% set each = each | string() %}
+                <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
+              {% endfor %}
+            </div>
+
+            <div class="col col-2">
+              <center><h4>Back Side</h4></center>
+              <div class="ui-widget-header snaptarget"><p>{{ rack_data['name'] }}</p></div>
+              {% for each in rack_slots %}
+                <div id="snaptarget" class="ui-widget-header droppable snaptarget"><p>Empty Slot: {{ each }}</p>
+                  <input type="hidden" name="rack" value="{{ rack_data['name'] }}" />
+                    <input type="hidden" name="position" value="{{ each }}" />
+                    <input type="hidden" name="orientation" value="back" />
+
+                  {% for each_device in rack_data['devices'] %}
+                  {% if each_device['orientation'] == 'back' %}
+                      {% if each_device['position'] == each  %}
+
+                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; top: -40px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
+                          <div class="device">
+                            <div class="row" style="margin-right: 0px; margin-left-0px;">
+                              <div class="col col-2">
+                                {% if each_device['type'] == "node" %}
+                                  <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                                {% elif each_device['type'] == "switch" %}
+                                  <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                                {% elif each_device['type'] == "controller" %}
+                                  <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                                {% endif %}
+                                <input type="hidden" name="type" value="{{ each_device['type'] }}" />
+                              </div>
+                              <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
+                              <div class="col col-2" style="background-color: #22cf65;"></div>
+                            </div>
+                          </div>
+                        </div>
+                        <script type="text/javascript">
+                          $(function(){
+                            $("#{{ each_device['name'] }}").draggable({
+                              start: function() { 
+                                $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+                                $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+                              },
+                              revert: function() {
+                                $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+                                $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+                                if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                              
+                            },
+                              cursor: "move", scroll: true,
+                              snap: ".snaptarget"
+                            }); 
+                          });
+                          devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
+                        </script>
+                      {% endif %}
+                    {% endif %}
+
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="col col-1" style="width: 2%; height: 1%;">
+              <h4>&nbsp;</h4>
+              <div class="ui-widget-header snaptarget rack-num"><p>U</p></div>
+              {% for each in rack_slots %}
+                {% set each = each | string() %}
+                <div class="ui-widget-header  snaptarget rack-num"><p>{{ each.zfill(2) }}</p></div>
+              {% endfor %}
+            </div>
+
+
+
+          {% endif %}
+        </div> 
+          
+        <script type="text/javascript">
+          for (let i = 0; i < devices.length; i++) {
+          $("#"+devices[i]).parent().addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          $("#"+devices[i]).parent().nextAll().slice(0, $("#"+devices[i]).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied2" );
+        }
+        </script>
+      </div>
+      <br style="clear:both">
+    </div>
+  </div>
+</div>
+
+<hr class="my-5" />
+
+<script type="text/javascript">
+  function update(name=null, type=null, rack=null, position=null, orientation=null){
+    var response;
+    var payload = {"name": name, "type": type, "rack": rack, "position": position, "orientation": orientation};
+    payload = JSON.stringify(payload);
+    $.ajax({
+        //url: window.location.href+"/update",
+        url: "/update",
+        type: 'POST',
+        data: JSON.stringify(payload),
+        dataType: 'json',
+        contentType: 'application/json; charset=UTF-8',
+        async: false,
+        success: function(response_data) {
+            console.log(response_data);
+            response = response_data
+        }
+    });
+  
+    console.log(response);
+    return response;
+  }
+  
+  
+  </script>
+
+
+
+<script type="text/javascript">
+  $( function() {
+    $( "#devices" ).droppable({
+      classes: {
+        "ui-droppable-active": "ui-state-active",
+        "ui-droppable-hover": "ui-state-hover"
+      },
+      drop: function( event, ui ) {
+          if ($(ui.draggable).parent().attr("class").includes("ui-state-highlight")){
+            $(ui.draggable).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+            $(ui.draggable).parent().nextAll().slice(0,$(ui.draggable).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+          }
+
+          $(ui.draggable).detach().css({top: 0,left: 2}).appendTo(this);
+          $(this).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          var name = $(ui.draggable).attr('id');
+          var type = $(ui.draggable).find("input[name='type']").val();
+          var rack = $(this).find("input[name='rack']").val();
+          var position = Number($(this).find("input[name='position']").val());
+          var result = update(name, type, rack, position);
+          $(".toast-body").html();
+          $(".toast-body").html(name + " Removed from Rack.");
+          $("#rack-remove-toast").toast("show");
+      }
+    });
+  });
+
+  $( function() {
+    $( ".droppable" ).droppable({
+      classes: {
+        "ui-droppable-active": "ui-state-active",
+        "ui-droppable-hover": "ui-state-hover"
+      },
+      drop: function( event, ui ) {
+        if ($(this).attr("class").includes("ui-state-highlight") ){
+          $(ui.draggable).addClass('drag-revert');
+        }
+        else if ($(this).nextAll().slice(0, $(ui.draggable).attr("size")-1).hasClass("ui-state-highlight") ){
+          $(ui.draggable).addClass('drag-revert');
+        }
+        else if (Number($(this).nextAll().length) < Number($(ui.draggable).attr("size")-1)){
+          $(ui.draggable).addClass('drag-revert');
+        } else {
+          if ($(ui.draggable).parent().attr("class").includes("ui-state-highlight")){
+            $(ui.draggable).parent().removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+            $(ui.draggable).parent().nextAll().slice(0,$(ui.draggable).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html( "Empty Slot" );
+          }
+          $(ui.draggable).detach().css({top: -40,left: 2}).appendTo(this);
+          $(this).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+          $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html( "Occupied" );
+
+          var name = $(ui.draggable).attr('id');
+          var type = $(ui.draggable).find("input[name='type']").val();
+          var orientation = $(this).find("input[name='orientation']").val();
+          var rack = $(this).find("input[name='rack']").val();
+          var position = Number($(this).find("input[name='position']").val());
+          var result = update(name, type, rack, position, orientation);
+          $(".toast-body").html();
+          $(".toast-body").html(name + " Added to Rack "+ rack +".");
+          $("#rack-toast").toast("show");
+
+        }
+      }
+    });
+  });
+
+  </script>
+
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.contextmenu.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.css') }}">
+  <script type="text/javascript">
+    var jQuery_1_6_2 = $.noConflict(true); // Resolving Conflict Between JQuery Versions - Sumit Sharma
+    jQuery_1_6_2(function() {
+      jQuery_1_6_2('.right-click').contextPopup({
+        title: 'My Popup Menu',
+        items: [
+          {label:'Detail',     icon:'icons/shopping-basket.png',             action:function() { alert('clicked 1') } },
+          {label:'Edit', icon:'icons/receipt-text.png',                action:function() { alert('clicked 2') } },
+          {label:'Clone',     icon:'icons/book-open-list.png',              action:function() { alert('clicked 3') } },
+          null, // divider
+          {label:'Delete',         icon:'icons/application-monitor.png',         action:function() { alert('clicked 4') } },
+          {label:'Power ON',        icon:'icons/bin-metal.png',                   action:function() { alert('clicked 5') } },
+          {label:'Power OFF',         icon:'icons/magnifier-zoom-actual-equal.png', action:function() { alert('clicked 6') } },
+          null, // divider
+          {label:'Power Reset',       icon:'icons/application-table.png',           action:function() { alert('clicked 7') } },
+          {label:'Power Status',      icon:'icons/cassette.png',                    action:function() { alert('clicked 8') } }
+        ]
+      });
+    });
+  </script>
+
+{% endblock content %}
