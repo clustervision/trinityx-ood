@@ -1,8 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<!-- <div class="container-xxl flex-grow-1 container-p-y"> -->
-  <div class="container-fluid flex-grow-1 container-p-y">
+<div class="container-fluid flex-grow-1 container-p-y">
   <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Racks /</span> Visual Representation</h4>
   {% if messages %}
     {% for message in messages %}
@@ -60,6 +59,7 @@
       display: inline-block;
       float: none;
     }
+    
     </style>
     <style>
       .rack-pillar {
@@ -69,7 +69,12 @@
       }
       .rack-flip {
         width: 380px;
-        background-color: #c6cc74;
+        background-color: #000000;
+        color:#ffffff;
+      }
+      .rack-flip-front {
+        width: 380px;
+        background-color: #b4b4b4;
         color:#ffffff;
       }
       .rack-base {
@@ -96,12 +101,11 @@
       }
       .rack-slot p {
         margin: 0;
-      }s
+      }
     </style>
     
   <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
   
-
 
   <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
     <div class="toast-header">
@@ -129,8 +133,12 @@
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Rack Position</h5>
         <small class="text-muted float-end">Change Position here...</small>
+        {% if rack_data %}
+          <button style="float: right;" id="show-button" class="btn btn-sm btn-secondary " type="button" onclick="$('.front').show();$('.back').hide();$('#show-button').hide();$('#hide-button').show();">Flip to Front View</button>
+          <button style="float: right;" id="hide-button" class="btn btn-sm btn-dark" type="button" onclick="$('.back').show();$('.front').hide();$('#show-button').show();$('#hide-button').hide();">Flip to Back View</button>
+        {% endif %}
       </div>
-      <div class="card-body">
+      <div class="card-body revert-back">
 
         <div id="inventory">
           <div class="row">
@@ -167,6 +175,7 @@
                 <script type="text/javascript">
                   $(function(){
                     $("#{{ each['name'] }}").draggable({
+                      containment: ".card-body",
                       start: function() { 
                         $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html();
                         $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html();
@@ -188,95 +197,187 @@
         </div>
     
 
-            <script type="text/javascript">var devices = [];</script>
-            {% if rack_data %}
-              {% for key, value in rack_data.items() %}
+        <script type="text/javascript">var devices = [];</script>
+        {% if rack_data %}
+          {% for key, value in rack_data.items() %}
 
-            <div class="col-3">
-              {% set rack_order = value['order'] | string() %}
-                  {% if rack_order == 'ascending' %}
-                    {% set rack_slots = range(1, value["size"]+1) %}
-                  {% else %}
-                    {% set rack_slots = range(value["size"], 0, -1) %}
-                  {% endif %}
+          
 
-              <div class="row">
-                <div class="rack-flip">
-                  <center><strong>Back View<button style="float: right;" class="btn btn-sm btn-warning" type="button">Front View</button></strong></center>
-                </div>
-              </div>
-              <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
-              <div class="row">
-                <div class="rack-pillar"><strong>| |</strong></div>
-                <div class="rack-unit"><strong>U</strong></div>
-                <div class="rack-name">
-                  <center><strong>{{ key }}</strong></center>
-                </div>
-                <div class="rack-unit"><strong>U</strong></div>
-                <div class="rack-pillar"><strong>| |</strong></div>
-              </div>
-              {% for each in rack_slots %}
-                {% set each_string = each | string() %}
+              <div class="col-3 back" id="{{ key }}back">
+                {% set rack_order = value['order'] | string() %}
+                    {% if rack_order == 'ascending' %}
+                      {% set rack_slots = range(1, value["size"]+1) %}
+                    {% else %}
+                      {% set rack_slots = range(value["size"], 0, -1) %}
+                    {% endif %}
+
+                
+                <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
                 <div class="row">
                   <div class="rack-pillar"><strong>| |</strong></div>
-                  <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
-                  <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable" id="snaptarget"><center><p></p></center>
-                    <input type="hidden" name="rack" value="{{ key }}" />
-                    <input type="hidden" name="position" value="{{ each }}" />
-                    
-                    {% for each_device in value['devices'] %}
-                      {% if each_device['position'] == each  %}
-                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; margin: -14px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
-                          <div class="device">
-                            <div class="row" style="margin-right: 0px; margin-left-0px;">
-                              <div class="col col-2">
-                                {% if each_device['type'] == "node" %}
-                                  <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
-                                {% elif each_device['type'] == "switch" %}
-                                  <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
-                                {% elif each_device['type'] == "controller" %}
-                                  <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
-                                {% elif each_device['type'] == "otherdevices" %}
-                                  <i class="bx bx-sm bx-shape-square" style="color: #9812b3;"></i>
-                                {% endif %}
-                                <input type="hidden" name="type" value="{{ each_device['type'] }}" />
-                              </div>
-                              <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
-                              <div class="col col-2" style="background-color: #22cf65;"></div>
-                            </div>
-                          </div>
-                        </div>
-                        <script type="text/javascript">
-                          $(function(){
-                            $("#{{ each_device['name'] }}").draggable({
-                              start: function() { 
-                                $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html();
-                                $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html();
-                              },
-                              revert: function() {
-                                $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html();
-                                $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
-                                if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
-                            },
-                              cursor: "move", scroll: true,
-                              snap: ".snaptarget"
-                            }); 
-                          });
-                          devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
-                        </script>
-                      {% endif %}
-                    {% endfor %}
-                    
-                  
+                  <div class="rack-unit"><strong>U</strong></div>
+                  <div class="rack-name">
+                      <span>
+                        <strong>{{ key }} Back View</strong>
+                        <button   style="float: right;" onclick="extendview({{ key }}front);" class="btn btn-sm btn-secondary" type="button">Front</button>
+                      </span>
                   </div>
-                  <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
+                  <div class="rack-unit"><strong>U</strong></div>
                   <div class="rack-pillar"><strong>| |</strong></div>
                 </div>
-              {% endfor %}
-              
-              <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
-            </div>
-            
+                {% for each in rack_slots %}
+                  {% set each_string = each | string() %}
+                  <div class="row">
+                    <div class="rack-pillar"><strong>| |</strong></div>
+                    <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
+                    <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable" id="snaptarget"><center><p></p></center>
+                      <input type="hidden" name="rack" value="{{ key }}" />
+                      <input type="hidden" name="position" value="{{ each }}" />
+                      <input type="hidden" name="orientation" value="back" />
+                      
+                      {% for each_device in value['devices'] %}
+                        {% if each_device['orientation'] == 'back' %}
+                          {% if each_device['position'] == each  %}
+                            <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; margin: -14px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
+                              <div class="device">
+                                <div class="row" style="margin-right: 0px; margin-left-0px;">
+                                  <div class="col col-2">
+                                    {% if each_device['type'] == "node" %}
+                                      <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                                    {% elif each_device['type'] == "switch" %}
+                                      <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                                    {% elif each_device['type'] == "controller" %}
+                                      <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                                    {% elif each_device['type'] == "otherdevices" %}
+                                      <i class="bx bx-sm bx-shape-square" style="color: #9812b3;"></i>
+                                    {% endif %}
+                                    <input type="hidden" name="type" value="{{ each_device['type'] }}" />
+                                  </div>
+                                  <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
+                                  <div class="col col-2" style="background-color: #22cf65;"></div>
+                                </div>
+                              </div>
+                            </div>
+                            <script type="text/javascript">
+                              $(function(){
+                                $("#{{ each_device['name'] }}").draggable({
+                                  containment: ".card-body",
+                                  start: function() { 
+                                    $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html();
+                                    $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html();
+                                  },
+                                  revert: function() {
+                                    $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html();
+                                    $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
+                                    if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                                },
+                                  cursor: "move", scroll: true,
+                                  snap: ".snaptarget"
+                                }); 
+                              });
+                              devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
+                            </script>
+                          {% endif %}
+                        {% endif %}
+                      {% endfor %}
+                      
+                    </div>
+                    <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
+                    <div class="rack-pillar"><strong>| |</strong></div>
+                  </div>
+                {% endfor %}
+                
+                <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
+              </div>
+        
+
+              <div class="col-3 front" id="{{ key }}front">
+                {% set rack_order = value['order'] | string() %}
+                    {% if rack_order == 'ascending' %}
+                      {% set rack_slots = range(1, value["size"]+1) %}
+                    {% else %}
+                      {% set rack_slots = range(value["size"], 0, -1) %}
+                    {% endif %}
+
+           
+                <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
+                <div class="row">
+                  <div class="rack-pillar"><strong>| |</strong></div>
+                  <div class="rack-unit"><strong>U</strong></div>
+                  <div class="rack-name">
+                    <span>
+                      <strong>{{ key }} Front View</strong>
+                      <button   style="float: right;" onclick="extendview({{ key }}back);" class="btn btn-sm btn-dark" type="button">Back</button>
+                    </span>
+                  </div>
+                  <div class="rack-unit"><strong>U</strong></div>
+                  <div class="rack-pillar"><strong>| |</strong></div>
+                </div>
+                {% for each in rack_slots %}
+                  {% set each_string = each | string() %}
+                  <div class="row">
+                    <div class="rack-pillar"><strong>| |</strong></div>
+                    <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
+                    <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable" id="snaptarget"><center><p></p></center>
+                      <input type="hidden" name="rack" value="{{ key }}" />
+                      <input type="hidden" name="position" value="{{ each }}" />
+                      <input type="hidden" name="orientation" value="front" />
+                      
+                      {% for each_device in value['devices'] %}
+                        {% if each_device['orientation'] == 'front' %}
+                          {% if each_device['position'] == each  %}
+                            <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; margin: -14px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
+                              <div class="device">
+                                <div class="row" style="margin-right: 0px; margin-left-0px;">
+                                  <div class="col col-2">
+                                    {% if each_device['type'] == "node" %}
+                                      <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                                    {% elif each_device['type'] == "switch" %}
+                                      <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                                    {% elif each_device['type'] == "controller" %}
+                                      <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                                    {% elif each_device['type'] == "otherdevices" %}
+                                      <i class="bx bx-sm bx-shape-square" style="color: #9812b3;"></i>
+                                    {% endif %}
+                                    <input type="hidden" name="type" value="{{ each_device['type'] }}" />
+                                  </div>
+                                  <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
+                                  <div class="col col-2" style="background-color: #22cf65;"></div>
+                                </div>
+                              </div>
+                            </div>
+                            <script type="text/javascript">
+                              $(function(){
+                                $("#{{ each_device['name'] }}").draggable({
+                                  start: function() { 
+                                    $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html();
+                                    $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html();
+                                  },
+                                  revert: function() {
+                                    $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html();
+                                    $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
+                                    if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                                },
+                                  cursor: "move", scroll: true,
+                                  snap: ".snaptarget"
+                                }); 
+                              });
+                              devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
+                            </script>
+                          {% endif %}
+                        {% endif %}
+                      {% endfor %}
+                      
+                    </div>
+                    <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
+                    <div class="rack-pillar"><strong>| |</strong></div>
+                  </div>
+                {% endfor %}
+                
+                <div class="row"><div class="rack-base"><strong>X================================X</strong></div></div>
+              </div>
+
+      
             {% endfor %}
             {% endif %}
          
@@ -296,9 +397,13 @@
 <hr class="my-5" />
 
 <script type="text/javascript">
-function update(name=null, type=null, rack=null, position=null){
+
+  function extendview(id){
+    $(id).toggle();
+  }
+function update(name=null, type=null, rack=null, position=null, orientation=null){
   var response;
-  var payload = {"name": name, "type": type, "rack": rack, "position": position};
+  var payload = {"name": name, "type": type, "rack": rack, "position": position, "orientation": orientation};
   payload = JSON.stringify(payload);
   $.ajax({
       //url: window.location.href+"/update",
@@ -348,6 +453,14 @@ function update(name=null, type=null, rack=null, position=null){
   });
 
   $( function() {
+    $( ".revert-back" ).droppable({
+      drop: function( event, ui ) {
+        $(ui.draggable).addClass('drag-revert');
+      }
+    });
+  });
+
+  $( function() {
     $( ".droppable" ).droppable({
       classes: {
         "ui-droppable-active": "ui-state-active",
@@ -372,9 +485,10 @@ function update(name=null, type=null, rack=null, position=null){
           $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
           var name = $(ui.draggable).attr('id');
           var type = $(ui.draggable).find("input[name='type']").val();
+          var orientation = $(this).find("input[name='orientation']").val();
           var rack = $(this).find("input[name='rack']").val();
           var position = Number($(this).find("input[name='position']").val());
-          var result = update(name, type, rack, position);
+          var result = update(name, type, rack, position, orientation);
           $(".toast-body").html();
           $(".toast-body").html(name + " Added to Rack "+ rack +".");
           $("#rack-toast").toast("show");
@@ -394,7 +508,7 @@ function update(name=null, type=null, rack=null, position=null){
       jQuery_1_6_2('.right-click').contextPopup({
         title: 'My Popup Menu',
         items: [
-          {label:'Detail',     icon:'icons/shopping-basket.png',             action:function() { alert('clicked 1') } },
+          {label:'Details',     icon:'icons/shopping-basket.png',             action:function() { alert('clicked 1') } },
           {label:'Edit', icon:'icons/receipt-text.png',                action:function() { alert('clicked 2') } },
           {label:'Clone',     icon:'icons/book-open-list.png',              action:function() { alert('clicked 3') } },
           null, // divider
