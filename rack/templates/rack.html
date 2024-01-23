@@ -503,12 +503,41 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
   <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.contextmenu.js') }}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.css') }}">
   <script type="text/javascript">
+  /*  var jQuery_1_6_2 = $.noConflict(true); 
+    $('.right-click').bind("contextmenu",function(e){
+      alert('Context Menu event has fired!');
+
+      jQuery_1_6_2(function() {
+        jQuery_1_6_2('.right-click').contextPopup({
+          //console.log(jQuery_1_6_2(this)),
+          title: 'My Popup Menu',
+          items: [
+            {label:'Details',     icon:'icons/shopping-basket.png',             action:function() { console.log(jQuery_1_6_2(this)); alert('clicked 1') } },
+            {label:'Edit', icon:'icons/receipt-text.png',                action:function() { alert('clicked 2') } },
+            {label:'Clone',     icon:'icons/book-open-list.png',              action:function() { alert('clicked 3') } },
+            null, // divider
+            {label:'Delete',         icon:'icons/application-monitor.png',         action:function() { alert('clicked 4') } },
+            {label:'Power ON',        icon:'icons/bin-metal.png',                   action:function() { alert('clicked 5') } },
+            {label:'Power OFF',         icon:'icons/magnifier-zoom-actual-equal.png', action:function() { alert('clicked 6') } },
+            null, // divider
+            {label:'Power Reset',       icon:'icons/application-table.png',           action:function() { alert('clicked 7') } },
+            {label:'Power Status',      icon:'icons/cassette.png',                    action:function() { alert('clicked 8') } }
+          ]
+        });
+      });
+
+
+      return false;
+   }); 
+*/
+
     var jQuery_1_6_2 = $.noConflict(true); // Resolving Conflict Between JQuery Versions - Sumit Sharma
     jQuery_1_6_2(function() {
       jQuery_1_6_2('.right-click').contextPopup({
+        //console.log(jQuery_1_6_2(this)),
         title: 'My Popup Menu',
         items: [
-          {label:'Details',     icon:'icons/shopping-basket.png',             action:function() { alert('clicked 1') } },
+          {label:'Details',     icon:'icons/shopping-basket.png',             action:function() { console.log(jQuery_1_6_2(this)); alert('clicked 1') } },
           {label:'Edit', icon:'icons/receipt-text.png',                action:function() { alert('clicked 2') } },
           {label:'Clone',     icon:'icons/book-open-list.png',              action:function() { alert('clicked 3') } },
           null, // divider
