@@ -63,10 +63,24 @@ def home():
     else:
         inventory = {}
     print(rack_data)
-    print(inventory)
+    vendors= []
     if inventory:
         for each in inventory:
-            print(each['vendor'])
+            if isinstance(each['vendor'], str):
+                vendor = each['vendor'].lower()
+                vendor = vendor.replace('.', '')
+                vendor = vendor.replace(' ', '')
+                vendors.append(vendor)
+    if rack_data:
+        for _, value in rack_data.items():
+            for each_device in value['devices']:
+                if isinstance(each_device['vendor'], str):
+                    vendor = each_device['vendor'].lower()
+                    vendor = vendor.replace('.', '')
+                    vendor = vendor.replace(' ', '')
+                    vendors.append(vendor)
+    print(vendors)
+
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 
