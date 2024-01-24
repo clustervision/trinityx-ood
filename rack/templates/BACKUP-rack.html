@@ -39,7 +39,6 @@
       text-align: center;
     }
 
-/* 
     .controller {
       background-color: #404dff;
       color: #ffffff;
@@ -53,8 +52,6 @@
     .otherdevices {
       background-color: #e7e693;
     }
-
-    */
     
     .row {flex-wrap: nowrap;}
     .card-body { overflow-x: auto; white-space: nowrap;}
@@ -240,20 +237,36 @@
                 <div class="rack-pillar-front"><strong>| |</strong></div>
                 <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
                 <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable" id="snaptarget"><center><p></p></center>
-
+                  <input type="hidden" name="rack" value="{{ key }}" />
+                  <input type="hidden" name="position" value="{{ each }}" />
+                  <input type="hidden" name="orientation" value="front" />
+                  
                   {% for each_device in value['devices'] %}
                     {% if each_device['orientation'] == 'front' %}
                       {% if each_device['position'] == each  %}
-                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30 }}px; margin: -14px;" class="draggable ui-widget-content right-click {{ each_device['type'] }}" size="{{ each_device['height'] }}">
-                          <input type="hidden" name="rack" value="{{ key }}" />
-                          <input type="hidden" name="position" value="{{ each }}" />
-                          <input type="hidden" name="orientation" value="front" />
-                          <span>{{ each_device['name'] }}</span>
+                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30-2 }}px; position: relative; margin: -14px;" class="draggable ui-widget-content right-click ui-draggable ui-draggable-handle {{ each_device['type'] }}" size="{{ each_device['height'] }}">
+                          <div class="device">
+                            <div class="row" style="margin-right: 0px; margin-left-0px;">
+                              <div class="col col-2">
+                                {% if each_device['type'] == "node" %}
+                                  <i class="bx bx-sm bx-server" style="color: #03c3ec;"></i>
+                                {% elif each_device['type'] == "switch" %}
+                                  <i class="bx bx-sm bx-toggle-right" style="color: #20c997;"></i>
+                                {% elif each_device['type'] == "controller" %}
+                                  <i class="bx bx-sm bx-shape-square" style="color: #c6abe6;"></i>
+                                {% elif each_device['type'] == "otherdevices" %}
+                                  <i class="bx bx-sm bx-shape-square" style="color: #9812b3;"></i>
+                                {% endif %}
+                                <input type="hidden" name="type" value="{{ each_device['type'] }}" />
+                              </div>
+                              <div class="col col-8" ><strong style="float: left;">{{ each_device['name'] }}</strong></div>
+                              <div class="col col-2" style="background-color: #22cf65;"></div>
+                            </div>
+                          </div>
                         </div>
                         <script type="text/javascript">
                           $(function(){
                             $("#{{ each_device['name'] }}").draggable({
-                              greedy: true,
                               start: function() { 
                                 $(this).parent().removeClass( "ui-state-highlight" ).find( "p" ).html();
                                 $(this).parent().nextAll().slice(0,$(this).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html();
@@ -267,7 +280,7 @@
                               snap: ".snaptarget"
                             }); 
                           });
-                          devices.push($("#{{ each_device['name'] }}").find("strong").html());
+                          devices.push($("#{{ each_device['name'] }}").find( "strong" ).html());
                         </script>
                       {% endif %}
                     {% endif %}
@@ -454,8 +467,6 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
   $( function() {
     $( ".droppable" ).droppable({
-     // greedy: true,
-      //tolerance: true,
       classes: {
         "ui-droppable-active": "ui-state-active",
         "ui-droppable-hover": "ui-state-hover"
@@ -463,23 +474,8 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
       drop: function( event, ui ) {
 
         $(ui.draggable).detach().css({top: 0,left: 2}).appendTo(this);
-        $(this).addClass( "ui-state-highlight" );
-        $(this).nextAll().slice(0, $(ui.draggable).attr("size") -1).addClass("ui-state-highlight");
-        var total_elements = Number($(this).find("div").length);
-        var each_width = 220 / total_elements;
-        each_width = String(each_width)+'px';
-       // each_width = String(each_width+14)+'px';
-        console.log(total_elements);
-        console.log(each_width);
-        console.log($(this).find("div"));
-        $(this).find("div").css('width', each_width);
-
-        //$(this).find("div").each(function( index ) {
-       //   console.log( index + ": " + $( this ).text() );
-        //});
-
-        //console.log($(this).html());
-        //console.log(ui);
+        $(this).addClass( "ui-state-highlight" ).find( "p" ).html();
+        $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
 
 
       /*  if ($(this).attr("class").includes("ui-state-highlight") ){
@@ -545,7 +541,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
       return false;
    }); 
 
-   
+
     var jQuery_1_6_2 = $.noConflict(true); // Resolving Conflict Between JQuery Versions - Sumit Sharma
     jQuery_1_6_2(function() {
       jQuery_1_6_2('.right-click').contextPopup({
@@ -564,7 +560,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           {label:'Power Status',      icon:'icons/cassette.png',                    action:function() { alert('clicked 8') } }
         ]
       });
-    });  */
+    });*/
   </script>
 
 {% endblock content %}
