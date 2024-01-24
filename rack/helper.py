@@ -33,11 +33,11 @@ from time import time
 import base64
 import binascii
 import subprocess
-from random import randrange, randint
+from random import randint
 from os import getpid
 from flask import url_for
 from nested_lookup import nested_lookup, nested_update, nested_delete
-from constant import filter_columns, EDITOR_KEYS, sortby
+from constant import filter_columns, EDITOR_KEYS
 from rest import Rest
 from log import Log
 from constant import filter_columns

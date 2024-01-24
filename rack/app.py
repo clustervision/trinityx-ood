@@ -33,7 +33,6 @@ __status__      = 'Development'
 import os
 import json
 from html import unescape
-import cssutils
 from flask import Flask, render_template, request, flash, url_for, redirect
 from rest import Rest
 from constant import LICENSE
@@ -63,37 +62,6 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-
-    vendors= []
-    if inventory:
-        for each in inventory:
-            if isinstance(each['vendor'], str):
-                vendor = each['vendor'].lower()
-                vendor = vendor.replace('.', '')
-                vendor = vendor.replace(' ', '')
-                vendors.append(vendor)
-    if rack_data:
-        for _, value in rack_data.items():
-            for each_device in value['devices']:
-                if isinstance(each_device['vendor'], str):
-                    vendor = each_device['vendor'].lower()
-                    vendor = vendor.replace('.', '')
-                    vendor = vendor.replace(' ', '')
-                    vendors.append(vendor)
-    current_dir = os.path.dirname(os.path.realpath(__file__))
-    vendor_file = f'{current_dir}/static/css/vendor.css'
-    vendor_style = ''
-    if os.path.exists(vendor_file):
-        if os.path.isfile(vendor_file):
-            with open(vendor_file, 'r', encoding='utf-8') as file_data:
-                vendor_style =file_data.read()
-    dct = {}
-    sheet = cssutils.parseString(vendor_style)
-    for rule in sheet:
-        selector = rule.selectorText
-        styles = rule.style.cssText
-        dct[selector] = styles
-    print(dct)
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 
