@@ -244,7 +244,16 @@
                   {% for each_device in value['devices'] %}
                     {% if each_device['orientation'] == 'front' %}
                       {% if each_device['position'] == each  %}
-                        <div id="{{ each_device['name'] }}" style="height: {{ each_device['height']*30 }}px; margin: -14px;" class="draggable ui-widget-content right-click {{ each_device['type'] }}" size="{{ each_device['height'] }}">
+                        <div
+                        id="{{ each_device['name'] }}"
+                        style="height: {{ each_device['height']*30 }}px; margin: -14px;"
+                        class="draggable ui-widget-content right-click {{ each_device['type'] }}"
+                        data-bs-toggle="tooltip"
+                        data-bs-html="true"
+                        data-bs-placement="top"
+                        title="<strong>{{ each_device['type'] }}:</strong> {{ each_device['name'] }}"
+                        size="{{ each_device['height'] }}"
+                        >
                           <input type="hidden" name="rack" value="{{ key }}" />
                           <input type="hidden" name="position" value="{{ each }}" />
                           <input type="hidden" name="orientation" value="front" />
