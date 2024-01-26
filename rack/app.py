@@ -34,7 +34,7 @@ import os
 import json
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect
-from vsdx import VisioFile
+# from vsdx import VisioFile
 from rest import Rest
 from constant import LICENSE
 from log import Log
@@ -65,8 +65,8 @@ def home():
         inventory = {}
     # vis = VisioFile('/home/sumit/Desktop/trinity-ood/rack/static/img/Lenovo-ThinkEdge.vssx')
     # vis = VisioFile('/home/sumit/Desktop/trinity-ood/rack/static/img/test4_connectors.vsdx')
-    with VisioFile('/home/sumit/Desktop/trinity-ood/rack/static/img/test4_connectors.vsdx') as v:
-        print(v.pages[0].connects)
+    # with VisioFile('/home/sumit/Desktop/trinity-ood/rack/static/img/test4_connectors.vsdx') as v:
+    #     print(v.pages[0].connects)
     # print(vis)
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
