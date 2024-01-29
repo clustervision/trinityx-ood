@@ -300,39 +300,35 @@
                           <input type="hidden" name="position" value="{{ each }}" />
                           <input type="hidden" name="orientation" value="front" />
                           <span class="server-image-text" style="color: white;">{{ each_device['name'] }}</span>
-              
+                          <!-- <div class="server-image"> -->
+                            <!-- <img src="{{ url_for('static', filename='img/front.png') }}" class="img-logo" style="width: 218px; height: {{ each_device['height']*30-2 }}px;" /> -->
+                            <!-- <div class="server-image-text">{{ each_device['name'] }}</div> -->
+                          <!-- </div> -->
+                          
                         </div>
                         <script type="text/javascript">
                           $(function(){
-                            var device_height = Number({{ each_device['height'] }});
-                            var device_position = Number({{ each }});
-                            var till = device_height + device_position;
-
-                            for (let index = 0; index < device_height; index++) {
-                              var slot = Number(device_position+index);
-                              $("."+slot+"-{{ key }}").addClass("ui-state-highlight");
-                            }
-
+                            
                             $("#{{ each_device['name'] }}").draggable({
                               //greedy: true,
                               start: function() { 
-                                //console.log($(this));
                                 source_rack = $(this).parent().attr('rack');
                                 source_slot = $(this).parent().attr('slot');
+                                //$(this).parent().removeClass("ui-state-highlight");
+                                //$(this).parent().nextAll().slice(0, $(this).attr("size") - 1).removeClass( "ui-state-highlight" ).find( "p" ).html();
+                                //console.log($(this).attr("size"));
                                 if ($(this).attr("size") > 1){
                                   $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
                                 } else {
                                   $(this).parent().removeClass("ui-state-highlight");
                                 }
-                                //$(this).parent().css('zIndex', '99999');
+
+
                               },
                               revert: function() {
                                 $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html();
                                 $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
                                 if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
-                            },
-                            stop: function(event, ui) {
-                             // $(this).parent().css('zIndex', '0');
                             },
                               cursor: "move",
                               scroll: true,
@@ -535,140 +531,75 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
         "ui-droppable-hover": "ui-state-hover"
       },
       drop: function(event, ui) {
-        var exact_div;
 
-       // console.log($(this).parent().nextAll());
-       // console.log($(ui.draggable).attr("size"));
+        
 
-        if (Number($(this).parent().nextAll().length) < Number($(ui.draggable).attr("size"))){
-          $(ui.draggable).addClass('drag-revert');
-        } 
-         else {
+        if ($(ui.draggable).attr("size") > 1){                ///////// --> If Device height is bigger
+
+          var elm = $(this).parent().nextAll().add($(this).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot');
+          $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+          $(this).parent().nextAll().add($(this).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
 
 
-          if ($(this).attr("class").includes("ui-state-highlight") && (Number($(this).children().length) == 0)){
-            console.log("this condition");
-      
-            exact_div = $(this).parent().prevAll().children().children("div.draggable:first").parent();
-            var big_element = Number($(this).parent().prevAll().children().children("div.draggable:first").attr("size"));
-            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
-            $(ui.draggable).css('height', big_element*30-2);
-            $(ui.draggable).attr("size", big_element);
-            
-            var total_elements = Number($(this).parent().prevAll().children().children("div.draggable:first").parent().find("div").length);
-            var each_width = 220 / total_elements;
-            each_width = String(each_width-2)+'px';
-            if (total_elements != 1){ $(this).parent().prevAll().children().children("div.draggable:first").parent().find("span").hide(); } else { $(this).parent().prevAll().children().children("div.draggable:first").parent().find("span").show(); }
-            $(this).parent().prevAll().children().children("div.draggable:first").parent().find("div").css('width', each_width);
-    
-           
-          }
-  
-          else {   
-  
-          if ($(ui.draggable).attr("size") > 1){                ///////// --> If Device height is bigger
-  
-            if(Number($(this).find("div").attr("size")) > $(ui.draggable).attr("size")){
-              var big_element = Number($(this).find("div").attr("size"));
-            } else {
-              var big_element = Number($(ui.draggable).attr("size"));
-            }
-  
-            //var big_element = Number($(this).find("div").attr("size"));
 
-            //console.log($(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot'));
-            $(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').addClass("ui-state-highlight");          
-              
-            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-            $(ui.draggable).css('height', big_element*30-2);
-            $(ui.draggable).attr("size", big_element);
-  
-            $(this).find("div").css('height', big_element*30-2);
-            $(this).find("div").attr("size", big_element);
-  
-  
-           // var elm = $(this).parent().nextAll().add($(this).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot');
-           // $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-            //$(this).parent().nextAll().add($(this).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
-  
-  
-            console.log("this another condition");
-  
-          } else {                 ///////// --> If Device height is Normal
-  
-            var total_elements = Number($(this).find("div").length);
-            var big_element = Number($(this).find("div").attr("size"));
-            
-            if (total_elements > 1){                ///////// --> If Slot has Device
-  
-              $(this).parent().nextAll().add($(this).parent()).slice(1, big_element).find('.rack-slot').addClass("ui-state-highlight");            
-              $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-              $(ui.draggable).css('height', big_element*30-2);
-              $(ui.draggable).attr("size", big_element);
-              //$(this).addClass("ui-state-highlight" );
-              //$(ui.draggable).css('height', $("."+source_slot+"-"+source_rack).children("div").attr("size")*30-2);
-              console.log("this new condition");
-            } else {                ///////// --> If Slot don't have Device
-  
-              //console.log(big_element);
-              //console.log(big_element*30-2);
-              //console.log(total_elements);
-  
-              var source_size = Number($("."+source_slot+"-"+source_rack).children("div").attr("size"));
-              //console.log(source_size);
-              $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-              $(ui.draggable).attr("size", big_element);
-              $(ui.draggable).css('height', big_element*30-2);
-              $(this).addClass("ui-state-highlight" );
-              
-              console.log("this extra condition");
-            }
-            
-          }
+
+
+
+
+
+
+
           
-  
-          //$(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-          //$(this).addClass("ui-state-highlight" );
-         // $(this).parent().nextAll().slice(0, $(ui.draggable).attr("size") -1).addClass("ui-state-highlight");
+        } else {                 ///////// --> If Device height is Normal
+
           var total_elements = Number($(this).find("div").length);
-          var each_width = 220 / total_elements;
-          each_width = String(each_width-2)+'px';
-          if (total_elements != 1){ $(this).find("span").hide(); } else { $(this).find("span").show(); }
-          $(this).find("div").css('width', each_width);
-  
+          var big_element = Number($(this).find("div").attr("size"));
+          console.log(big_element);
+          if (total_elements > 1){                ///////// --> If Slot has Device
+
+            $(this).parent().nextAll().add($(this).parent()).slice(1, big_element).find('.rack-slot').addClass("ui-state-highlight");            
+            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+            $(ui.draggable).css('height', big_element*30-2)
+
+          } else {                ///////// --> If Slot don't have Device
+
+            var source_size = Number($("."+source_slot+"-"+source_rack).children("div").attr("size"));
+            //console.log(source_size);
+            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+            $(this).addClass("ui-state-highlight" );
+
+          }
           
-             var source_div_length = Number($("."+source_slot+"-"+source_rack).children("div").length);
-            // console.log(source_div_length);
-            // console.log($("."+source_slot+"-"+source_rack).children("div").attr("size"));
-  
-             //$(ui.draggable).css('height', $("."+source_slot+"-"+source_rack).children("div").attr("size")*30-2);
-  
-  
-          if (source_div_length >= 1){
-            var each_div_width = 220 / source_div_length;
-            each_div_width = String(each_div_width-2)+'px';
-            
-          if (source_div_length == 1){ $("."+source_slot+"-"+source_rack).children("div").find("span").show(); }
-            $("."+source_slot+"-"+source_rack).children("div").css('width', each_div_width);
-          }    
-     
-          }
-  
-          if ($("."+source_slot+"-"+source_rack).find("div.draggable").length >= 1){
-            //$("."+source_slot+"-"+source_rack).parent().nextAll().add($(this).parent()).slice(1, big_element).find('.rack-slot').addClass("ui-state-highlight"); 
-            $("."+source_slot+"-"+source_rack).addClass("ui-state-highlight");
-            //console.log($("."+source_slot+"-"+source_rack).find("div.draggable"));
-            $("."+source_slot+"-"+source_rack).parent().nextAll().add($("."+source_slot+"-"+source_rack).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
-          }
-
-
-
         }
         
-        //$(ui.draggable).css('zIndex', '0');
-        
+
+        //$(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+        //$(this).addClass("ui-state-highlight" );
+       // $(this).parent().nextAll().slice(0, $(ui.draggable).attr("size") -1).addClass("ui-state-highlight");
+        var total_elements = Number($(this).find("div").length);
+        var each_width = 220 / total_elements;
+        each_width = String(each_width-2)+'px';
+        if (total_elements != 1){ $(this).find("span").hide(); } else { $(this).find("span").show(); }
+        $(this).find("div").css('width', each_width);
 
         
+           var source_div_length = Number($("."+source_slot+"-"+source_rack).children("div").length);
+          // console.log(source_div_length);
+          // console.log($("."+source_slot+"-"+source_rack).children("div").attr("size"));
+
+           //$(ui.draggable).css('height', $("."+source_slot+"-"+source_rack).children("div").attr("size")*30-2);
+
+
+        if (source_div_length >= 1){
+          var each_div_width = 220 / source_div_length;
+          each_div_width = String(each_div_width-2)+'px';
+          
+        if (source_div_length == 1){ $("."+source_slot+"-"+source_rack).children("div").find("span").show(); }
+          $("."+source_slot+"-"+source_rack).children("div").css('width', each_div_width);
+        }    
+   
+
+
 
       /*  if ($(this).attr("class").includes("ui-state-highlight") ){
           $(ui.draggable).addClass('drag-revert');
