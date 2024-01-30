@@ -62,6 +62,12 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
+    # if rack_data:
+    #     for key, value in rack_data.items():
+    #         device_list = []
+    #         for each_device in value['devices']:
+    #             print(each_device)
+
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 

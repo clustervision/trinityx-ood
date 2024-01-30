@@ -28,11 +28,48 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
+from flask import url_for
+
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+
+# RACK_CLASS = {
+#    "default": url_for('static', filename='img/supermicro-1.png'),
+#    "noname": url_for('static', filename='img/noname.png'),
+#    "switch": url_for('static', filename='img/switch.png'),
+
+#    "asus-1": url_for('static', filename='img/asus-1.png'),
+#    "asus-2": url_for('static', filename='img/asus-2.png'),
+#    "asus-3": url_for('static', filename='img/asus-3.png'),
+#    "asus-4": url_for('static', filename='img/asus-4.png'),
+
+#    "dell-1": url_for('static', filename='img/dell-1.png'),
+#    "dell-2": url_for('static', filename='img/dell-2.png'),
+#    "dell-4": url_for('static', filename='img/dell-4.png'),
+
+#    "gigabyte-1": url_for('static', filename='img/gigabyte-1.png'),
+#    "gigabyte-2": url_for('static', filename='img/gigabyte-2.png'),
+#    "gigabyte-4": url_for('static', filename='img/gigabyte-4.png'),
+
+#    "hp-1": url_for('static', filename='img/hp-1.png'),
+#    "hp-2": url_for('static', filename='img/hp-2.png'),
+#    "hp-4": url_for('static', filename='img/hp-4.png'),
+
+#    "lenovo-1": url_for('static', filename='img/lenovo-1.png'),
+#    "lenovo-2": url_for('static', filename='img/lenovo-2.png'),
+#    "lenovo-3": url_for('static', filename='img/lenovo-3.png'),
+
+#    "supermicro-1": url_for('static', filename='img/supermicro-1.png'),
+#    "supermicro-2": url_for('static', filename='img/supermicro-2.png'),
+#    "supermicro-3": url_for('static', filename='img/supermicro-3.png'),
+#    "supermicro-4": url_for('static', filename='img/supermicro-4.png')
+
+
+# }
+
 
 
 def filter_columns(table=None):

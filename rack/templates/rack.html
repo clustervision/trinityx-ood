@@ -9,133 +9,15 @@
     {% endfor %}
 {% endif %}
 
-  <style>
-  .draggable {
-    width: 218px;
-    height: 30px;
+<!-- <style type="text/css">
+  .server-image {
+  /*  background-image: url("{{ url_for('static', filename='qqimg/front.png') }}");   */
+    background-image: url("{{ url_for('static', filename='img/supermicro-1.png') }}");
+    background-size: 218px 28px;
   }
-  #devices {
-    width: 100%;
-    height: 300px;
-    background-color: antiquewhite;
-  }
-
-  .ui-state-hover {
-    border: 1px solid #cccccc;
-    background: #067a19;
-    font-weight:bolder;
-    color: #ffffff;
-}
-  </style>
-  
-  <style>
-    .scrollmenu {
-     overflow-x: auto;
-     white-space: nowrap;
-    }
+</style> -->
     
-    .right-click {
-      display: inline-block;
-      text-align: center;
-    }
-
-/* 
-    .controller {
-      background-color: #404dff;
-      color: #ffffff;
-    }
-    .node {
-      background-color: #d9e7eb;
-    }
-    .switch {
-      background-color: #c8f0d2;
-    }
-    .otherdevices {
-      background-color: #e7e693;
-    }
-
-    */
-    
-    .row {flex-wrap: nowrap;}
-    .card-body { overflow-x: auto; white-space: nowrap;}
-    .col-3 {
-      display: inline-block;
-      float: none;
-    }
-    
-    </style>
-    <style>
-      .rack-pillar {
-        width: 40px;
-        background-color: #3b3b3b;
-        color:#ffffff;
-      }
-      .rack-base {
-        width: 380px;
-        background-color: #3b3b3b;
-        color:#ffffff;
-      }
-      .rack-name {
-        width: 220px;
-        background-color: #bebebe;
-        color:#000000;
-      }
-
-      .rack-pillar-front {
-        width: 40px;
-        background-color: #cecece;
-        color:#000000;
-      }
-      .rack-base-front {
-        width: 380px;
-        background-color: #cecece;
-        color:#000000;
-      }
-      .rack-name-front {
-        width: 220px;
-        background-color: #e7e7e7;
-        color:#000000;
-      }
-
-      .rack-unit {
-        width: 40px;
-        height: 30px;
-        background-color: #aaaaaa;
-        color:#000000;
-      }
-      .rack-slot {
-        width: 220px;
-        height: 30px;
-        padding: 0;
-        margin: 0;
-        /* border: 0; */
-        /* background-color: #cacaca; */
-        color:#ffffff;
-      }
-      .rack-slot p {
-        margin: 0;
-      }
-
-      .server-image {
-        background-image: url("{{ url_for('static', filename='img/front.png') }}");
-        background-size: 218px 28px;
-        background-repeat: repeat-y;
-        
-        /* position: relative;*/
-        /* text-align: center;*/
-        /* color: white;*/
-      }
-
-      /* .server-image-text {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      }*/
-
-    </style>
-    
-  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.js"></script>
   
 
   <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
@@ -163,27 +45,6 @@
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Rack Position</h5>
-
-
-
-        <!-- <div class="mxgraph" style="max-width:100%;border:1px solid transparent;" data-mxgraph="{&quot;highlight&quot;:&quot;#0000ff&quot;,&quot;nav&quot;:true,&quot;resize&quot;:true,&quot;toolbar&quot;:&quot;zoom layers tags lightbox&quot;,&quot;edit&quot;:&quot;_blank&quot;,&quot;xml&quot;:&quot;&lt;mxfile host=\&quot;app.diagrams.net\&quot; modified=\&quot;2024-01-26T13:48:30.311Z\&quot; agent=\&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\&quot; etag=\&quot;WyC7dv1A5Jj4Xarz7Itc\&quot; version=\&quot;23.0.2\&quot;&gt;\n  &lt;diagram name=\&quot;Page-1\&quot; id=\&quot;GKEajGmsHmy1GRGG4fEy\&quot;&gt;\n    &lt;mxGraphModel dx=\&quot;1434\&quot; dy=\&quot;772\&quot; grid=\&quot;1\&quot; gridSize=\&quot;10\&quot; guides=\&quot;1\&quot; tooltips=\&quot;1\&quot; connect=\&quot;1\&quot; arrows=\&quot;1\&quot; fold=\&quot;1\&quot; page=\&quot;1\&quot; pageScale=\&quot;1\&quot; pageWidth=\&quot;850\&quot; pageHeight=\&quot;1100\&quot; math=\&quot;0\&quot; shadow=\&quot;0\&quot;&gt;\n      &lt;root&gt;\n        &lt;mxCell id=\&quot;0\&quot; /&gt;\n        &lt;mxCell id=\&quot;1\&quot; parent=\&quot;0\&quot; /&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-5\&quot; value=\&quot;\&quot; style=\&quot;html=1;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;outlineConnect=0;shadow=0;dashed=0;shape=mxgraph.rackGeneral.rackCabinet3;fillColor2=#f4f4f4;container=1;collapsible=0;childLayout=rack;allowGaps=1;marginLeft=33;marginRight=9;marginTop=21;marginBottom=22;textColor=#666666;numDisp=ascend;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;40\&quot; y=\&quot;20\&quot; width=\&quot;204\&quot; height=\&quot;670\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-14\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;labelPosition=right;align=left;spacingLeft=15;shadow=0;dashed=0;outlineConnect=0;shape=mxgraph.rack.f5.viprion_2400;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-5\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;21\&quot; width=\&quot;162\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-11\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;labelPosition=right;align=left;spacingLeft=15;shadow=0;dashed=0;outlineConnect=0;shape=mxgraph.rack.f5.arx_2500;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-5\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;90\&quot; width=\&quot;162\&quot; height=\&quot;20\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-12\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;labelPosition=right;align=left;spacingLeft=15;shadow=0;dashed=0;outlineConnect=0;shape=mxgraph.rack.f5.viprion_4400;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-5\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;130\&quot; width=\&quot;162\&quot; height=\&quot;120\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-10\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;labelPosition=right;align=left;spacingLeft=15;shadow=0;dashed=0;outlineConnect=0;shape=mxgraph.rack.dell.poweredge_r540;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-5\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;280\&quot; width=\&quot;162\&quot; height=\&quot;27\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-13\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;labelPosition=right;align=left;spacingLeft=15;shadow=0;dashed=0;outlineConnect=0;shape=mxgraph.rack.f5.viprion_4800;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-5\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;330\&quot; width=\&quot;162\&quot; height=\&quot;320\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-6\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;outlineConnect=0;shadow=0;dashed=0;shape=mxgraph.rackGeneral.rackCabinet3;fillColor2=#f4f4f4;container=1;collapsible=0;childLayout=rack;allowGaps=1;marginLeft=33;marginRight=9;marginTop=21;marginBottom=22;textColor=#666666;numDisp=ascend;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;280\&quot; y=\&quot;20\&quot; width=\&quot;204\&quot; height=\&quot;670\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-17\&quot; value=\&quot;\&quot; style=\&quot;shape=mxgraph.rack.cisco.cisco_physical_security_multiservice_platform_4u;html=1;labelPosition=right;align=left;spacingLeft=15;dashed=0;shadow=0;fillColor=#ffffff;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-6\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;70\&quot; width=\&quot;162\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-16\&quot; value=\&quot;\&quot; style=\&quot;html=1;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;shadow=0;dashed=0;shape=mxgraph.rack.hpe_aruba.switches.j9851a_5412r_zl2_switch;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-6\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;209\&quot; width=\&quot;162\&quot; height=\&quot;98\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-15\&quot; value=\&quot;\&quot; style=\&quot;html=1;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;shadow=0;dashed=0;shape=mxgraph.rack.hpe_aruba.switches.j9772a_2530_48g_poeplus_switch;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WjjXY7pV2XUCTyUB7Ve7-6\&quot;&gt;\n          &lt;mxGeometry x=\&quot;33\&quot; y=\&quot;500\&quot; width=\&quot;162\&quot; height=\&quot;15\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;WjjXY7pV2XUCTyUB7Ve7-7\&quot; value=\&quot;\&quot; style=\&quot;strokeColor=#666666;html=1;verticalLabelPosition=bottom;labelBackgroundColor=#ffffff;verticalAlign=top;outlineConnect=0;shadow=0;dashed=0;shape=mxgraph.rackGeneral.rackCabinet3;fillColor2=#f4f4f4;container=1;collapsible=0;childLayout=rack;allowGaps=1;marginLeft=33;marginRight=9;marginTop=21;marginBottom=22;textColor=#666666;numDisp=ascend;\&quot; vertex=\&quot;1\&quot; parent=\&quot;1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;500\&quot; y=\&quot;20\&quot; width=\&quot;204\&quot; height=\&quot;670\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n      &lt;/root&gt;\n    &lt;/mxGraphModel&gt;\n  &lt;/diagram&gt;\n&lt;/mxfile&gt;\n&quot;}"></div>
-<script type="text/javascript" src="https://viewer.diagrams.net/js/viewer-static.min.js"></script> -->
-
-
-        <!-- <img src="/home/sumit/Desktop/trinity-ood/rack/static/img/Lenovo-ThinkEdge.vssx" class="img-logo">
-        <img src="/home/sumit/Desktop/trinity-ood/rack/static/img/test4_connectors.vsdx" class="img-logo">
-
-
-        <object data="/home/sumit/Desktop/trinity-ood/rack/static/img/Lenovo-ThinkEdge.vssx" type="application/vnd.visio">
-          Your browser does not support Visio files. Please download the file to view it.
-        </object>
-
-        <object data="/home/sumit/Desktop/trinity-ood/rack/static/img/test4_connectors.vsdx" type="application/vnd.visio">
-          Your browser does not support Visio files. Please download the file to view it.
-        </object> -->
-
-
-
         <small class="text-muted float-end">Change Position here...</small>
         {% if rack_data %}
           <button style="float: right;" id="front-button" class="btn btn-sm btn-secondary" type="button" onclick="$('.front').show();$('.back').hide();$('#front-button').hide();$('#back-button').show();">Flip to Front View</button>
@@ -286,10 +147,41 @@
                   {% for each_device in value['devices'] %}
                     {% if each_device['orientation'] == 'front' %}
                       {% if each_device['position'] == each  %}
+
+                      {% if each_device['type'] == "switch" %}
+                        {% set vendor = "switch" %}
+                      {% else %}
+                        {% if each_device['vendor'] is none or each_device['vendor'] == '' or each_device['vendor'] == "None" or not each_device['vendor'] %}
+                        
+                          {% set vendor = "default" %}
+                        {% else %}
+                          {% if each_device['vendor'].lower() is not in ["dell", "hp", "lenovo", "gigabyte", "supermicro"] %}
+                          {% set vendor = "noname" %}
+                          {% else %}
+                            {% set vendor = each_device['vendor'].lower() %}
+                          {% endif %}
+                      {% endif %}
+                      {% endif %}
+
+                      {% set device_height = each_device['height']*30-2 %}
+
+                      {% if vendor == "noname" %}
+                          {% set image_class = "noname" %}
+                        {% elif vendor == "default" %}
+                          {% set image_class = "default" %}
+                        {% elif vendor == "switch" %}
+                          {% set image_class = "switch" %}
+                        {% else %}
+                          {% set image_class = vendor +"-" + each_device['height'] | string() %}
+                      {% endif %}
+
+
+                      
+
                         <div
                         id="{{ each_device['name'] }}"
-                        style="height: {{ each_device['height']*30-2 }}px;"
-                        class="draggable ui-widget-content right-click {{ each_device['type'] }} server-image"
+                        style="height: {{ device_height }}px;"
+                        class="draggable ui-widget-content right-click {{ each_device['type'] }} server-image {{ image_class }}"
                         data-bs-toggle="tooltip"
                         data-bs-html="true"
                         data-bs-placement="top"
@@ -299,7 +191,7 @@
                           <input type="hidden" name="rack" value="{{ key }}" />
                           <input type="hidden" name="position" value="{{ each }}" />
                           <input type="hidden" name="orientation" value="front" />
-                          <span class="server-image-text" style="color: white;">{{ each_device['name'] }}</span>
+                          <span style="color: white;">{{ each_device['vendor'] }} {{ image_class }} {{ each_device['name'] }}</span>
               
                         </div>
                         <script type="text/javascript">
@@ -339,7 +231,9 @@
                               snap: ".snaptarget"
                             }); 
                           });
-                          devices.push($("#{{ each_device['name'] }}").find("strong").html());
+                          //console.log(devices);
+                          //devices.push($("#{{ each_device['name'] }}").find("id").html());
+                          devices.push("{{ each_device['name'] }}");
                         </script>
                       {% endif %}
                     {% endif %}
@@ -447,8 +341,7 @@
          
             <script type="text/javascript">
               for (let i = 0; i < devices.length; i++) {
-                //$("#"+devices[i]).parent().addClass( "ui-state-highlight" ).find( "p" ).html();
-                //$("#"+devices[i]).parent().nextAll().slice(0, $("#"+devices[i]).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
+                $("#"+devices[i]).parent().nextAll().add($("#"+devices[i]).parent()).slice(0, $("#"+devices[i]).attr("size")).addClass("ui-state-highlight");
               }
             </script>
         
@@ -573,26 +466,24 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
             } else {
               var big_element = Number($(ui.draggable).attr("size"));
             }
-  
-            //var big_element = Number($(this).find("div").attr("size"));
+            if ($(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').hasClass("ui-state-highlight")){
+              $(ui.draggable).addClass('drag-revert');
+              console.log("not enough space");
+            } else {
 
-            //console.log($(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot'));
-            $(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').addClass("ui-state-highlight");          
-              
-            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-            $(ui.draggable).css('height', big_element*30-2);
-            $(ui.draggable).attr("size", big_element);
-  
-            $(this).find("div").css('height', big_element*30-2);
-            $(this).find("div").attr("size", big_element);
-  
-  
-           // var elm = $(this).parent().nextAll().add($(this).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot');
-           // $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-            //$(this).parent().nextAll().add($(this).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
-  
+              $(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').addClass("ui-state-highlight");          
+              $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+              $(ui.draggable).css('height', big_element*30-2);
+              $(ui.draggable).attr("size", big_element);
+              $(this).find("div").css('height', big_element*30-2);
+              $(this).find("div").attr("size", big_element);
   
             console.log("this another condition");
+
+            }
+
+  
+            
   
           } else {                 ///////// --> If Device height is Normal
   
