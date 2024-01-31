@@ -47,6 +47,7 @@ TABLE_CAP = 'Rack'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
+
 @app.route('/', methods=['GET'])
 def home():
     """
@@ -62,12 +63,6 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-    # if rack_data:
-    #     for key, value in rack_data.items():
-    #         device_list = []
-    #         for each_device in value['devices']:
-    #             print(each_device)
-
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
 
 

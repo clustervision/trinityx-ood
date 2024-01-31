@@ -110,12 +110,12 @@
         </div>
     
 
-        <script type="text/javascript">var devices = []; var source_rack, source_slot;</script>
         {% if rack_data %}
           {% for key, value in rack_data.items() %}
-
+         
           
-          <div class="col-3 front" id="{{ key }}front">
+          <div class="playground front" id="{{ key }}front">
+            <!-- <div class="col-2 front" id="{{ key }}front"> -->
             {% set rack_order = value['order'] | string() %}
                 {% if rack_order == 'ascending' %}
                   {% set rack_slots = range(1, value["size"]+1) %}
@@ -124,25 +124,31 @@
                 {% endif %}
 
        
-            <div class="row"><div class="rack-base-front"><strong>X================================X</strong></div></div>
+            <!-- <div class="row"><div class="rack-base-front"><strong>X=============================X</strong></div></div> -->
+            <div class="row"><div class="rack-base-front"><strong>&nbsp;</strong></div></div>
             <div class="row">
-              <div class="rack-pillar-front"><strong>| |</strong></div>
+              <div class="rack-pillar-front"></div>
+                <!-- <div class="rack-pillar-front"><strong>| |</strong></div> -->
+                <!-- <div class="rack-pillar-front"><strong>|</strong></div> -->
               <div class="rack-unit"><strong>U</strong></div>
               <div class="rack-name-front">
                 <span>
-                  <strong>{{ key }} Front View</strong>
+                  <strong>{{ key }} Front</strong>
                   <button   style="float: right;" onclick="extendview({{ key }}back);" class="btn btn-sm btn-dark" type="button">Back</button>
                 </span>
               </div>
               <div class="rack-unit"><strong>U</strong></div>
-              <div class="rack-pillar-front"><strong>| |</strong></div>
+              <div class="rack-pillar-front"></div>
+                <!-- <div class="rack-pillar-front"><strong>| |</strong></div> -->
             </div>
             {% for each in rack_slots %}
               {% set each_string = each | string() %}
               <div class="row">
-                <div class="rack-pillar-front"><strong>| |</strong></div>
+                <div class="rack-pillar-front"></div>
+                <!-- <div class="rack-pillar-front"><strong>| |</strong></div> -->
                 <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
-                <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable {{ each_string.zfill(2) }}-{{ key }}" rack="{{ key }}" slot="{{ each_string.zfill(2) }}" id="snaptarget">
+                <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable {{ each }}-{{ key }}" rack="{{ key }}" slot="{{ each }}" id="snaptarget">
+                  <!-- <div class="rack-slot ui-widget-header droppable snaptarget ui-droppable {{ each_string.zfill(2) }}-{{ key }}" rack="{{ key }}" slot="{{ each_string.zfill(2) }}" id="snaptarget"> -->
 
                   {% for each_device in value['devices'] %}
                     {% if each_device['orientation'] == 'front' %}
@@ -151,27 +157,29 @@
                       {% if each_device['type'] == "switch" %}
                         {% set vendor = "switch" %}
                       {% else %}
+
                         {% if each_device['vendor'] is none or each_device['vendor'] == '' or each_device['vendor'] == "None" or not each_device['vendor'] %}
-                        
                           {% set vendor = "default" %}
                         {% else %}
-                          {% if each_device['vendor'].lower() is not in ["dell", "hp", "lenovo", "gigabyte", "supermicro"] %}
-                          {% set vendor = "noname" %}
+                          {% if each_device['vendor'].lower() is not in ["dell", "hp", "lenovo", "gigabyte", "supermicro", "asus"] %}
+                            {% set vendor = "noname" %}
                           {% else %}
                             {% set vendor = each_device['vendor'].lower() %}
                           {% endif %}
+                        {% endif %}
+
                       {% endif %}
-                      {% endif %}
+
 
                       {% set device_height = each_device['height']*30-2 %}
 
                       {% if vendor == "noname" %}
                           {% set image_class = "noname" %}
-                        {% elif vendor == "default" %}
+                      {% elif vendor == "default" %}
                           {% set image_class = "default" %}
-                        {% elif vendor == "switch" %}
+                      {% elif vendor == "switch" %}
                           {% set image_class = "switch" %}
-                        {% else %}
+                      {% else %}
                           {% set image_class = vendor +"-" + each_device['height'] | string() %}
                       {% endif %}
 
@@ -181,7 +189,7 @@
                         <div
                         id="{{ each_device['name'] }}"
                         style="height: {{ device_height }}px;"
-                        class="draggable ui-widget-content right-click {{ each_device['type'] }} server-image {{ image_class }}"
+                        class="draggable ui-widget-content right-click {{ image_class }}"
                         data-bs-toggle="tooltip"
                         data-bs-html="true"
                         data-bs-placement="top"
@@ -191,24 +199,21 @@
                           <input type="hidden" name="rack" value="{{ key }}" />
                           <input type="hidden" name="position" value="{{ each }}" />
                           <input type="hidden" name="orientation" value="front" />
-                          <span style="color: white;">{{ each_device['vendor'] }} {{ image_class }} {{ each_device['name'] }}</span>
+                          <span>{{ each_device['name'] }}</span>
               
                         </div>
                         <script type="text/javascript">
                           $(function(){
-                            var device_height = Number({{ each_device['height'] }});
-                            var device_position = Number({{ each }});
-                            var till = device_height + device_position;
-
+                            var device_height = Number("{{ each_device['height'] }}");
+                            var device_position = Number("{{ each }}");
                             for (let index = 0; index < device_height; index++) {
                               var slot = Number(device_position+index);
                               $("."+slot+"-{{ key }}").addClass("ui-state-highlight");
                             }
+                            
 
                             $("#{{ each_device['name'] }}").draggable({
-                              //greedy: true,
                               start: function() { 
-                                //console.log($(this));
                                 source_rack = $(this).parent().attr('rack');
                                 source_slot = $(this).parent().attr('slot');
                                 if ($(this).attr("size") > 1){
@@ -216,39 +221,36 @@
                                 } else {
                                   $(this).parent().removeClass("ui-state-highlight");
                                 }
-                                //$(this).parent().css('zIndex', '99999');
                               },
                               revert: function() {
-                                $(this).parent().addClass( "ui-state-highlight" ).find( "p" ).html();
-                                $(this).parent().nextAll().slice(0, $(this).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
                                 if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
                             },
-                            stop: function(event, ui) {
-                             // $(this).parent().css('zIndex', '0');
-                            },
-                              cursor: "move",
-                              scroll: true,
-                              snap: ".snaptarget"
+                            stop: function(event, ui) { },
+                            cursor: "move",
+                            scroll: true,
+                            snap: ".snaptarget"
                             }); 
                           });
-                          //console.log(devices);
-                          //devices.push($("#{{ each_device['name'] }}").find("id").html());
-                          devices.push("{{ each_device['name'] }}");
                         </script>
                       {% endif %}
                     {% endif %}
                   {% endfor %}
                   
+                       
                 </div>
                 <div class="rack-unit"><strong>{{ each_string.zfill(2) }}</strong></div>
-                <div class="rack-pillar-front"><strong>| |</strong></div>
+                <div class="rack-pillar-front"></div>
+                <!-- <div class="rack-pillar-front"><strong>| |</strong></div> .children()-->
               </div>
             {% endfor %}
             
-            <div class="row"><div class="rack-base-front"><strong>X================================X</strong></div></div>
+            <!-- <div class="row"><div class="rack-base-front"><strong>X=============================X</strong></div></div> -->
+            <div class="row"><div class="rack-base-front"><strong>&nbsp;</strong></div></div>
           </div>
 
-
+          &nbsp;
+          &nbsp;
+          &nbsp;
               <!-- <div class="col-3 back" id="{{ key }}back">
                 {% set rack_order = value['order'] | string() %}
                     {% if rack_order == 'ascending' %}
@@ -339,12 +341,6 @@
             {% endfor %}
             {% endif %}
          
-            <script type="text/javascript">
-              for (let i = 0; i < devices.length; i++) {
-                $("#"+devices[i]).parent().nextAll().add($("#"+devices[i]).parent()).slice(0, $("#"+devices[i]).attr("size")).addClass("ui-state-highlight");
-              }
-            </script>
-        
           </div>
           
       </div>
@@ -421,68 +417,76 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 <script type="text/javascript">
   $(function() {
     $(".droppable").droppable({
-      // greedy: true,
-      // tolerance: true,
       classes: {
         "ui-droppable-active": "ui-state-active",
         "ui-droppable-hover": "ui-state-hover"
       },
       drop: function(event, ui) {
-        var exact_div;
+        var draggable_size = Number($(ui.draggable).attr("size"));
+        var owner_draggable_size = Number($(this).parent().prevAll().children().children("div.draggable:first").attr("size"));
+        var next_slot_count = Number($(this).parent().nextAll().length);
+        var exact_div = $(this).parent().prevAll().children().children("div.draggable:first").parent();
+        var big_element = Number($(this).find("div").attr("size"));
 
-       // console.log($(this).parent().nextAll());
-       // console.log($(ui.draggable).attr("size"));
-
-        if (Number($(this).parent().nextAll().length) < Number($(ui.draggable).attr("size"))){
+        if (next_slot_count < draggable_size){        /////////////// If rack dont have enough length 
           $(ui.draggable).addClass('drag-revert');
-        } 
-         else {
-
-
-          if ($(this).attr("class").includes("ui-state-highlight") && (Number($(this).children().length) == 0)){
-            console.log("this condition");
-      
-            exact_div = $(this).parent().prevAll().children().children("div.draggable:first").parent();
-            var big_element = Number($(this).parent().prevAll().children().children("div.draggable:first").attr("size"));
-            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
-            $(ui.draggable).css('height', big_element*30-2);
-            $(ui.draggable).attr("size", big_element);
-            
-            var total_elements = Number($(this).parent().prevAll().children().children("div.draggable:first").parent().find("div").length);
-            var each_width = 220 / total_elements;
-            each_width = String(each_width-2)+'px';
-            if (total_elements != 1){ $(this).parent().prevAll().children().children("div.draggable:first").parent().find("span").hide(); } else { $(this).parent().prevAll().children().children("div.draggable:first").parent().find("span").show(); }
-            $(this).parent().prevAll().children().children("div.draggable:first").parent().find("div").css('width', each_width);
-    
-           
-          }
-  
-          else {   
-  
-          if ($(ui.draggable).attr("size") > 1){                ///////// --> If Device height is bigger
-  
-            if(Number($(this).find("div").attr("size")) > $(ui.draggable).attr("size")){
-              var big_element = Number($(this).find("div").attr("size"));
-            } else {
-              var big_element = Number($(ui.draggable).attr("size"));
-            }
-            if ($(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').hasClass("ui-state-highlight")){
+        } else {
+          if ($(this).attr("class").includes("ui-state-highlight") && (Number($(this).children().length) == 0)){    ///////////////////// If slot is empty but tie up with some device
+            if(draggable_size > owner_draggable_size){                                                        /////////////// If device is bigger then the owner device
               $(ui.draggable).addClass('drag-revert');
-              console.log("not enough space");
             } else {
-
-              $(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').addClass("ui-state-highlight");          
-              $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-              $(ui.draggable).css('height', big_element*30-2);
-              $(ui.draggable).attr("size", big_element);
-              $(this).find("div").css('height', big_element*30-2);
-              $(this).find("div").attr("size", big_element);
-  
-            console.log("this another condition");
+              $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
+              $(ui.draggable).css('height', owner_draggable_size*30-2);
+              $(ui.draggable).attr("size", owner_draggable_size);
+              
+              var total_elements = Number(exact_div.find("div").length);
+              var each_width = 220 / total_elements;
+              each_width = String(each_width-2)+'px';
+              if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
+              exact_div.find("div").css('width', each_width);
 
             }
 
-  
+          } else {   
+            if (draggable_size > 1){                ///////// --> If Device height is bigger
+              
+             // console.log("Per big_element"+big_element);
+            //  console.log("Per draggable_size"+draggable_size);
+           //   if ((big_element !== big_element) || (big_element < draggable_size)){ 
+           //     var big_element = draggable_size;
+           //    }
+              //if (big_element < draggable_size){ var big_element = draggable_size; } else { var big_element = big_element; }
+
+              if (big_element > draggable_size){
+                var big_element = big_element;
+              } else {
+                var big_element = draggable_size;
+              }
+              console.log("POST big_element"+big_element);
+              console.log("POST draggable_size"+draggable_size);
+      
+              if(big_element < draggable_size){
+                $(ui.draggable).addClass('drag-revert');
+              } else {
+
+                /*  ----  Condition Remaining for same height merge, when height > 1   -----  */
+                if ($(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').hasClass("ui-state-highlight") && (big_element <= draggable_size)){ /////////////////////// Want to reach here ------------------------->>>>>>>>
+                  $(ui.draggable).addClass('drag-revert');
+           
+              } else {
+
+                $(this).parent().nextAll().add($(this).parent()).slice(0, big_element).find('.rack-slot').addClass("ui-state-highlight");          
+                $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+                $(ui.draggable).css('height', big_element*30-2);
+                $(ui.draggable).attr("size", big_element);
+                $(this).find("div").css('height', big_element*30-2);
+                $(this).find("div").attr("size", big_element);
+                
+                console.log("this another condition");
+
+              }
+
+            }
             
   
           } else {                 ///////// --> If Device height is Normal
@@ -501,12 +505,8 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
               console.log("this new condition");
             } else {                ///////// --> If Slot don't have Device
   
-              //console.log(big_element);
-              //console.log(big_element*30-2);
-              //console.log(total_elements);
   
               var source_size = Number($("."+source_slot+"-"+source_rack).children("div").attr("size"));
-              //console.log(source_size);
               $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
               $(ui.draggable).attr("size", big_element);
               $(ui.draggable).css('height', big_element*30-2);
@@ -518,30 +518,21 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           }
           
   
-          //$(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-          //$(this).addClass("ui-state-highlight" );
-         // $(this).parent().nextAll().slice(0, $(ui.draggable).attr("size") -1).addClass("ui-state-highlight");
-          var total_elements = Number($(this).find("div").length);
-          var each_width = 220 / total_elements;
-          each_width = String(each_width-2)+'px';
-          if (total_elements != 1){ $(this).find("span").hide(); } else { $(this).find("span").show(); }
-          $(this).find("div").css('width', each_width);
-  
-          
-             var source_div_length = Number($("."+source_slot+"-"+source_rack).children("div").length);
-            // console.log(source_div_length);
-            // console.log($("."+source_slot+"-"+source_rack).children("div").attr("size"));
-  
-             //$(ui.draggable).css('height', $("."+source_slot+"-"+source_rack).children("div").attr("size")*30-2);
-  
-  
-          if (source_div_length >= 1){
-            var each_div_width = 220 / source_div_length;
-            each_div_width = String(each_div_width-2)+'px';
+           
+            var total_elements = Number($(this).find("div").length);
+            var each_width = 220 / total_elements;
+            each_width = String(each_width-2)+'px';
+            if (total_elements != 1){ $(this).find("span").hide(); } else { $(this).find("span").show(); }
+            $(this).find("div").css('width', each_width);
+            var source_div_length = Number($("."+source_slot+"-"+source_rack).children("div").length);
+            if (source_div_length >= 1){
+              var each_div_width = 220 / source_div_length;
+              each_div_width = String(each_div_width-2)+'px';
+              if (source_div_length == 1){ $("."+source_slot+"-"+source_rack).children("div").find("span").show(); }
+              $("."+source_slot+"-"+source_rack).children("div").css('width', each_div_width);
+            }   
             
-          if (source_div_length == 1){ $("."+source_slot+"-"+source_rack).children("div").find("span").show(); }
-            $("."+source_slot+"-"+source_rack).children("div").css('width', each_div_width);
-          }    
+            
      
           }
   
@@ -567,7 +558,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
         else if ($(this).nextAll().slice(0, $(ui.draggable).attr("size")-1).hasClass("ui-state-highlight") ){
           $(ui.draggable).addClass('drag-revert');
         }
-        else if (Number($(this).parent().nextAll().length) < Number($(ui.draggable).attr("size"))){
+        else if (next_slot_count < draggable_size){
           $(ui.draggable).addClass('drag-revert');
         } else {
           if ($(ui.draggable).parent().attr("class").includes("ui-state-highlight")){

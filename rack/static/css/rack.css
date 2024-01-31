@@ -49,7 +49,9 @@
   overflow-x: auto;
   white-space: nowrap;
 }
-.col-3 {
+
+
+.playground {
   display: inline-block;
   float: none;
 }
@@ -72,12 +74,14 @@
 }
 
 .rack-pillar-front {
-  width: 40px;
+  width: 15px;
   background-color: #cecece;
   color:#000000;
+  padding: 1%;
 }
 .rack-base-front {
-  width: 380px;
+  width: 300px;
+  height: 15px;
   background-color: #cecece;
   color:#000000;
 }
@@ -88,10 +92,11 @@
 }
 
 .rack-unit {
-  width: 40px;
+  width: 25px;
   height: 30px;
   background-color: #aaaaaa;
   color:#000000;
+  padding: 1%;
 }
 .rack-slot {
   width: 220px;
@@ -106,59 +111,35 @@
   margin: 0;
 }
 
-:root {
-  --default: url(/img/gigabyte-1.png);
-  --switch: url(/img/switch.png);
-
-
-  --gigabyte-1: url(/img/gigabyte-1.png);
-  --gigabyte-2: url(/img/gigabyte-2.png);
-  --gigabyte-4: url(/img/gigabyte-4.png);
-
-  --hp-1: url(/img/hp-1.png);
-  --hp-2: url(/img/hp-2.png);
-  --hp-4: url(/img/hp-4.png);
-
-  --dell-1: url(/img/dell-1.png);
-  --dell-2: url(/img/dell-2.png);
-  --dell-4: url(/img/dell-4.png);
-
-  --lenovo-1: url(/img/lenovo-1.png);
-  --lenovo-2: url(/img/lenovo-2.png);
-  --lenovo-3: url(/img/lenovo-3.png);
-
-}
-
-.server-image {
-  background-image: var(--default);
-  background-size: 218px  58px;
-}
-
-.server-default {
-  background-image: var(--default);
-  background-size: 218px  28px;
-}
-
+/* Servers Skins Depends on the size and availability.  */
 
 .noname {
-  background-image: url(/img/default.png);
-  /* background-size: 218px  118px; */
+  background-image: url(/img/noname.png);
+}
+.noname span {
+  color: #ffffff;
 }
 
 
+.default {
+  background-image: url(/img/gigabyte-1.png);
+  background-size: 218px  28px;
+}
+.default span {
+  color: #ffffff;
+}
 
 .switch {
   background-image: url(/img/switch.png);
   background-size: 218px  28px;
 }
 .switch span {
-  color: #000000;
+  color: #ffffff;
 }
 
 .supermicro-1 {
   background-image: url(/img/supermicro-1.png);
   background-size: 218px  28px;
-  color: #000000;
 }
 
 .supermicro-2 {
@@ -197,7 +178,6 @@
 .asus-1 {
   background-image: url(/img/asus-1.png);
   background-size: 218px  28px;
-  color: #000000;
 }
 
 .asus-2 {
@@ -235,7 +215,6 @@
 .dell-1 {
   background-image: url(/img/dell-1.png);
   background-size: 218px  28px;
-  color: #000000;
 }
 
 .dell-2 {
@@ -264,7 +243,6 @@
 .gigabyte-1 {
   background-image: url(/img/gigabyte-1.png);
   background-size: 218px  28px;
-  color: #000000;
 }
 
 .gigabyte-2 {
@@ -293,7 +271,6 @@
 .hp-1 {
   background-image: url(/img/hp-1.png);
   background-size: 218px  28px;
-  color: #000000;
 }
 
 .hp-2 {
@@ -317,3 +294,6 @@
 .hp-4 span {
   color: #ffffff;
 }
+
+
+/* Servers Skins Depends on the size and availability.  */
