@@ -3,6 +3,8 @@
   height: 30px;
   padding: 0;
   margin: 0;
+  text-align: center;
+  /* float: left; */
 }
 
 
@@ -14,10 +16,23 @@
 
 
 #devices {
-  width: 100%;
-  height: 300px;
-  background-color: antiquewhite;
+  /* min-width: 180px; */
+  min-height: 200px;
+  width: 200%;
+  /* width: auto; */
+  
+  /* padding-left: 2px; padding-right: 2px; margin-left: 2px; margin-right: 2px; */
+  height: auto;
+  /* padding: 10px; */
+  /* float: right; */
+  /* background-color: antiquewhite; */
 }
+
+/* #devices .draggable {
+  margin: 10px;
+  float: left;
+  display: inline-block;
+} */
 
 .ui-state-hover {
   border: 1px solid #cccccc;
@@ -27,8 +42,9 @@
 }
 
 .scrollmenu {
-  overflow-x: auto;
-  white-space: nowrap;
+  /* overflow-x: scroll; */
+  /* overflow-y: auto; */
+  /* white-space: nowrap; */
 }
 
 .right-click {
@@ -36,22 +52,6 @@
   text-align: center;
 }
 
-/* 
-.controller {
-  background-color: #404dff;
-  color: #ffffff;
-}
-.node {
-  background-color: #d9e7eb;
-}
-.switch {
-  background-color: #c8f0d2;
-}
-.otherdevices {
-  background-color: #e7e693;
-}
-
-*/
 
 .row {
   flex-wrap: nowrap;
