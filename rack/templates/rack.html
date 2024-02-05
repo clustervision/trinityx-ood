@@ -602,10 +602,12 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
         //$(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
         console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        console.log(orientation);
         console.log($(ui.draggable));
         console.log($(ui.draggable).attr("class"));
         $(ui.draggable).removeClass('drag-revert');
         console.log($(ui.draggable).attr("class"));
+        console.log(Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length));
         console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         
     
@@ -625,6 +627,10 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           $("#"+source_slot+"-"+source_rack+source_orientation).find("div").css('width', each_width);
           $(ui.draggable).css('width', '218px');
           $(ui.draggable).find("span").show();
+          for (let index = 0; index < draggable_size; index++) {
+            var slot = Number(source_slot)+index;
+            $("#"+slot+"-"+source_rack+source_orientation).addClass("ui-state-highlight");
+          }
           
 
           
