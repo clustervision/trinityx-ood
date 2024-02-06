@@ -176,36 +176,48 @@ def edit(page=None, record=None):
         else:
             # request_data = { 'config': { TABLE: { "inventory": [{ payload['name']: payload }] } } }
             request_data = { 'config': { TABLE: { "inventory": [payload] } } }
+        
+            
         if page.lower() == "rack":
+            if payload['name'] in table_data['config'][TABLE]:
+                if 'devices' in table_data['config'][TABLE][payload['name']]:
+                    if table_data['config'][TABLE][payload['name']]['devices']:
+                        if table_data['config'][TABLE][payload['name']]['order'] != payload['order']:
+                            error = "Rack have devices, Kindly remove them before changing the Order of Rack"
+                            flash(error, "danger")
+                            return redirect(url_for('edit', page=page, record=record), code=302)
+                        if table_data['config'][TABLE][payload['name']]['size'] != payload['size']:
+                            error = "Rack have devices, Kindly remove them before changing the Size of Rack"
+                            flash(error, "danger")
+                            return redirect(url_for('edit', page=page, record=record), code=302)
+
             response = Rest().post_data(TABLE, payload['name'], request_data)
         else:
-            print("-----------------------------------------------------------------------")
-            print(TABLE)
-            print(f'{page}/{payload["name"]}')
-            print(request_data)
-            print("-----------------------------------------------------------------------")
+            configured = Rest().get_data(TABLE, "inventory/configured")
+            if 'config' in configured:
+                inventory = configured['config']['rack']['inventory']
+                for each in inventory:
+                    if each['name'] == payload['name'] and each['type'] == payload['type']:
+                        if int(each['height']) != int(payload['height']):
+                            error = "Inventory is configured in a Rack, Kindly remove it from there to change the height."
+                            flash(error, "danger")
+                            return redirect(url_for('edit', page=page, record=record), code=302)
+                        if each['orientation'] != payload['orientation']:
+                            error = "Inventory is configured in a Rack, Kindly remove it from there to change the orientation."
+                            flash(error, "danger")
+                            return redirect(url_for('edit', page=page, record=record), code=302)
             # response = Rest().post_data(TABLE, f'{page}/{payload["name"]}', request_data)
             response = Rest().post_data(TABLE, page, request_data)
-        print(TABLE)
-        print(page)
-        print(payload['name'])
-        print(request_data)
-        print(f'{response.status_code} -> {response.content}')
         LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 204:
             flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
+            flash(error, "danger")
         return redirect(url_for('edit', page=page, record=record), code=302)
     page_cap = page.capitalize()
-    return render_template("change.html",
-                           page=page_cap,
-                           record=record,
-                           data=data,
-                           site_list=site_list,
-                           error=error)
+    return render_template("change.html", page=page_cap, record=record, data=data, site_list=site_list, error=error)
 
 
 @app.route('/delete/<string:page>/<string:record>', methods=['GET'])
@@ -216,7 +228,8 @@ def delete(page=None, record=None, device=None):
     else:
         response = Rest().get_delete(TABLE, f'inventory/{record}/type/{device}')
     LOGGER.info(f'{response.status_code} -> {response.content}')
-    if response.status_code == 204:
+    print(f'{response.status_code} -> {response.content}')
+    if response.status_code in [204, 201]:
         flash(f'{TABLE_CAP}, {record} is deleted.', "success")
     else:
         flash('ERROR :: Something went wrong!', "error")

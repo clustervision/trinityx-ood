@@ -101,6 +101,7 @@
             <!-- <div id="devices" class="collapse ui-widget-header scrollmenu snaptarget"> -->
             <input type="hidden" name="devices" value="devices" />
             <input type="hidden" name="orientation" value="front" />
+            <input type="hidden" name="order" value="ascending" />
             {% if inventory %}
               {% for each in inventory %}
 
@@ -149,41 +150,31 @@
 
                           <script type="text/javascript">
                             $(function(){
+                              var rack_order = 'ascending';
                               $("#{{ each['name'] }}").draggable({
                                 containment: ".card-body",
-                                start: function() { 
+                                start: function(event, ui) { 
                                   source_rack = $(this).parent().attr('rack');
                                   source_slot = $(this).parent().attr('slot');
                                   source_orientation = 'front';
-  /*
-                                  console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-                                  console.log($(this).parent().attr('rack'));
-                                  console.log($(this).parent().attr('slot'));
-                                  console.log("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-                                  console.log($(this));
-                                  console.log($(this).parent());
-                                  console.log($(this).parent().parent());
-                                  console.log($(this).attr("class"));
-                                  console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-  
-  */
-                                  //if ($(this).attr("size") > 1){
-                                  //  $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
-                                  //} else {
-                                  //  $(this).parent().removeClass("ui-state-highlight");
-                                 // }
-  
-                                 if (!$(this).parent().attr("id").includes("devices")){
+                                  rack_order = rack_order;
                                   if ($(this).attr("size") > 1){
-                                    $(this).parent().nextAll().add($(this).parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
+                                    $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
                                   } else {
-                                    $(this).parent().addClass("ui-state-highlight");
+                                    $(this).parent().removeClass("ui-state-highlight");
                                   }
-                                }
+                                 
   
   
                                 },
                                 revert: function() {
+                                  if ($(this).parent().attr("id") != "devices"){
+                                    if ($(this).attr("size") > 1){
+                                      $(this).parent().nextAll().add($(this).parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
+                                    } else {
+                                      $(this).parent().addClass("ui-state-highlight");
+                                    }
+                                  }
                                   if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
                                 },
                                 stop: function(event, ui) { },
@@ -246,6 +237,7 @@
                     <input type="hidden" name="rack" value="{{ key }}" />
                     <input type="hidden" name="position" value="{{ each }}" />
                     <input type="hidden" name="orientation" value="front" />
+                    <input type="hidden" name="order" value="{{ rack_order }}" />
                   {% for each_device in value['devices'] %}
                     {% if each_device['orientation'] == 'front' %}
                       {% if each_device['position'] == each  %}
@@ -295,12 +287,12 @@
                             $(function(){
                               
                               var orientation = "{{ each_device['orientation'] }}";
+                              var device_height = Number("{{ each_device['height'] }}");
+                              var device_position = Number("{{ each }}");
+                              var rack_order = "{{ rack_order }}";
+                              var rack_name = "{{ key }}";
+
                               if (orientation == 'front'){
-                                var device_height = Number("{{ each_device['height'] }}");
-                                var device_position = Number("{{ each }}");
-                                var rack_order = "{{ rack_order }}";
-                                var rack_name = "{{ key }}";
-  
                                 var total_elements = Number($("#"+device_position+"-"+rack_name+"front").find("div").length);
                                 var each_width = 220 / total_elements;
                                 each_width = String(each_width-2)+'px';
@@ -321,10 +313,12 @@
   
                               $("#{{ each_device['name'] }}").draggable({
                                 containment: ".card-body",
-                                start: function() { 
+                                start: function(event, ui) { 
+                                  //$(ui.draggable).css('zIndex', '9999');
                                   source_rack = $(this).parent().attr('rack');
                                   source_slot = $(this).parent().attr('slot');
                                   source_orientation = orientation;
+                                  rack_order = rack_order;
                                   //$(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
                                   if ($(this).attr("size") > 1){
                                     $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
@@ -333,13 +327,6 @@
                                   }
                                 },
                                 revert: function() {
-                                 // console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-                                 // console.log($(this));
-                                 // console.log($(this).parent());
-                                //  console.log($(this).parent().parent());
-                               //   console.log($(this).attr("class"));
-                                //  console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-  
                                   if (!$(this).parent().attr("id").includes("devices")){
                                     if ($(this).attr("size") > 1){
                                       $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
@@ -348,8 +335,6 @@
                                     }
                                   }
   
-                                  
-                                  
                                   if ($(this).hasClass('drag-revert')) {
                                     //$(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
                                     
@@ -358,6 +343,7 @@
                                   } 
                                 },
                                 stop: function(event, ui) {
+                                  //$(ui.draggable).css('zIndex', '0');
                                  // $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
                                 },
                               cursor: "move",
@@ -416,6 +402,7 @@
                       <input type="hidden" name="rack" value="{{ key }}" />
                       <input type="hidden" name="position" value="{{ each }}" />
                       <input type="hidden" name="orientation" value="back" />
+                      <input type="hidden" name="order" value="{{ rack_order }}" />
                       
                       {% for each_device in value['devices'] %}
                         {% if each_device['orientation'] == 'back' %}
@@ -465,12 +452,12 @@
                               <script type="text/javascript">
                                 $(function(){
                                   var orientation = "{{ each_device['orientation'] }}";
-                                  if (orientation == 'back'){
-                                    var device_height = Number("{{ each_device['height'] }}");
-                                    var device_position = Number("{{ each }}");
-                                    var rack_order = "{{ rack_order }}";
-                                    var rack_name = "{{ key }}";
+                                  var device_height = Number("{{ each_device['height'] }}");
+                                  var device_position = Number("{{ each }}");
+                                  var rack_order = "{{ rack_order }}";
+                                  var rack_name = "{{ key }}";
 
+                                  if (orientation == 'back'){
                                     var total_elements = Number($("#"+device_position+"-"+rack_name+"front").find("div").length);
                                     var each_width = 220 / total_elements;
                                     each_width = String(each_width-2)+'px';
@@ -494,6 +481,7 @@
                                       source_rack = $(this).parent().attr('rack');
                                       source_slot = $(this).parent().attr('slot');
                                       source_orientation = orientation;
+                                      rack_order = rack_order;
                                       //$(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
                                       if ($(this).attr("size") > 1){
                                         $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
@@ -599,37 +587,58 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
         "ui-droppable-hover": "ui-state-hover"
       },
       drop: function( event, ui ) {
+        //var orientation = $(this).find("input[name='orientation']").val();
+        var orientation = $(ui.draggable).parent().find("input[name='orientation']").val();
+        var rack_order = $(ui.draggable).parent().find("input[name='order']").val();
+        var source_items = Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length);
 
         //$(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
         console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         console.log(orientation);
+        console.log(rack_order);
+        console.log(source_items);
         console.log($(ui.draggable));
         console.log($(ui.draggable).attr("class"));
         $(ui.draggable).removeClass('drag-revert');
         console.log($(ui.draggable).attr("class"));
-        console.log(Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length));
+        console.log(Number($("#"+source_slot+"-"+source_rack+orientation).children("div").length));
         console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         
     
         $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
         var draggable_size = Number($(ui.draggable).attr("size"));
-        var source_items = Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length);
+        var source_items = Number($("#"+source_slot+"-"+source_rack+orientation).children("div").length);
+        
         if (source_items == 0){
           for (let index = 0; index < draggable_size; index++) {
-            var slot = Number(source_slot)+index;
-            $("#"+slot+"-"+source_rack+source_orientation).removeClass("ui-state-highlight");
+            if (rack_order == 'ascending'){
+              var slot = Number(source_slot)+index;
+            } else {
+              var slot = Number(source_slot)-index;
+            }
+            //var slot = Number(source_slot)+index;
+            $("#"+slot+"-"+source_rack+orientation).removeClass("ui-state-highlight");
           }
 
         } else {
           var each_width = 220 / source_items;
           each_width = String(each_width-2)+'px';
-          if (source_items != 1){ $("#"+source_slot+"-"+source_rack+source_orientation).find("span").hide(); } else { $("#"+source_slot+"-"+source_rack+source_orientation).find("span").show(); }
-          $("#"+source_slot+"-"+source_rack+source_orientation).find("div").css('width', each_width);
+          if (source_items != 1){ $("#"+source_slot+"-"+source_rack+orientation).find("span").hide(); } else { $("#"+source_slot+"-"+source_rack+orientation).find("span").show(); }
+          $("#"+source_slot+"-"+source_rack+orientation).find("div").css('width', each_width);
           $(ui.draggable).css('width', '218px');
           $(ui.draggable).find("span").show();
           for (let index = 0; index < draggable_size; index++) {
-            var slot = Number(source_slot)+index;
-            $("#"+slot+"-"+source_rack+source_orientation).addClass("ui-state-highlight");
+            if (rack_order == 'ascending'){
+              var slot = Number(source_slot)+index;
+            } else {
+              var slot = Number(source_slot)-index;
+            }
+            console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            console.log(source_items);
+            console.log("#"+slot+"-"+source_rack+orientation);
+            console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            //var slot = Number(source_slot)+index;
+            $("#"+slot+"-"+source_rack+orientation).addClass("ui-state-highlight");
           }
           
 
@@ -669,14 +678,14 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           var height = $(ui.draggable).attr("size");
           console.log("height is: "+ height);
 
-          /* 
+          /*  */
 
           var result = update(name, type, rack, position, orientation);
           $(".toast-body").html();
           $(".toast-body").html(name + " Removed from Rack.");
           $("#rack-remove-toast").toast("show");
 
-           */
+          /*  */
       }
     });
   });
@@ -698,6 +707,11 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
         "ui-droppable-hover": "ui-state-hover"
       },
       drop: function(event, ui) {
+        
+
+        
+
+
         var dropped;
         var draggable_size = Number($(ui.draggable).attr("size"));
         var owner_draggable_size = Number($(this).parent().prevAll().children().children("div.draggable:first").attr("size"));
@@ -734,6 +748,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
           } else {
             console.log("When has class, but have draggable. "+ draggable_size);
+            
             if (draggable_size > 1){                ///////// --> If Device height is bigger
               
               if (Number.isNaN(big_element)){
@@ -760,7 +775,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                   }
                   
                 } else {
-
+                  
                   //console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
                   //console.log($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable"));
                   //console.log($(this).parent().prevAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable"));
@@ -784,16 +799,36 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                         console.log( "yes");
                         console.log($(this).attr("class"));
                         console.log( previous_ids);
+                        var check = 0;
+                          for (let index = 0; index < previous_ids.length; index++) {
+                            check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
+                          }
+                        if (check <= 1) {
+                          $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).find('.rack-slot').addClass("ui-state-highlight");          
+                          $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+                          $(ui.draggable).css('height', draggable_size*30-2);
+                          $(ui.draggable).attr("size", draggable_size);
+                          $(this).find("div").css('height', draggable_size*30-2);
+                          $(this).find("div").attr("size", draggable_size);
+                          dropped = true;
+                          position = Number($(this).attr("slot"));
+
+                        } else {
+                          $(ui.draggable).addClass('drag-revert');
+                        }
+                        
+
                       } else {
                         console.log( "no");
                         console.log( previous_ids);
+                        $(ui.draggable).addClass('drag-revert');
                       }
 
 
 
 
                       //if (($.inArray($(this).attr("id"), previous_ids) != -1) && ($(this).parent().hasClass("ui-state-highlight"))){
-                      if (($.inArray($(this).attr("id"), previous_ids) != -1)){
+                      /*        if (($.inArray($(this).attr("id"), previous_ids) != -1)){
                         $(ui.draggable).addClass('drag-revert');
                       } else {
 
@@ -807,12 +842,15 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                         position = Number($(this).attr("slot"));
 
                       }
+
+                      */
                       console.log("===================================================================");
 
                       console.log("two aaaaa"+ draggable_size);
                       
 
                     } else {
+                      
                       $(ui.draggable).addClass('drag-revert');
                     }
                     
@@ -828,7 +866,6 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
                         if (Number(exact_div.children("div.draggable").length) > 1){
                           var previous_ids = exact_div.parent().nextAll().add(exact_div.parent()).slice(0, Number(exact_div.children("div.draggable").attr("size"))).children("div.rack-slot").map(function() { return $(this).attr('id')});
-
                           if ($.inArray($(this).attr("id"), previous_ids) != -1){
                             $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
                             $(ui.draggable).css('height', owner_draggable_size*30-2);
@@ -844,10 +881,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                             dropped = true;
                             position = Number($(this).attr("slot"));
                           }
-
-
                         } else {   
-                          
                           $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
                           $(ui.draggable).css('height', draggable_size*30-2);
                           $(ui.draggable).attr("size", draggable_size);
@@ -861,8 +895,36 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
                       } else {
                         var previous_ids = exact_div.parent().nextAll().add(exact_div.parent()).slice(0, Number(exact_div.children("div.draggable").attr("size"))).children("div.rack-slot").map(function() { return $(this).attr('id')});
+
+                        
+
                         if ($.inArray($(this).attr("id"), previous_ids) != -1){
-                          $(ui.draggable).addClass('drag-revert');
+
+                          console.log("```````````````````````````````````````````````````````````````");
+                          console.log(previous_ids);
+                          console.log($(this).attr("id"));
+                          var check = 0;
+                          for (let index = 0; index < previous_ids.length; index++) {
+                            check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
+                          }
+                          if (check <= 1){
+                            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+                            $(ui.draggable).css('height', draggable_size*30-2);
+                            $(ui.draggable).attr("size", draggable_size);
+                            $(this).find("div").css('height', draggable_size*30-2);
+                            $(this).find("div").attr("size", draggable_size);
+                            dropped = true;
+                            position = Number($(this).attr("slot"));
+                          } else {
+                            $(ui.draggable).addClass('drag-revert');
+                          }
+          
+                          
+                          
+                          console.log("```````````````````````````````````````````````````````````````");
+
+
+                         // $(ui.draggable).addClass('drag-revert');
                         } else {
 
                           $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
@@ -873,13 +935,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                           dropped = true;
                           position = Number($(this).attr("slot"));
 
-                          console.log("```````````````````````````````````````````````````````````````");
-                        console.log("draggable_size "+ draggable_size);
-                        console.log(previous_ids);
-                        console.log($(this).attr("id"));
-                        console.log(exact_div);
-                        console.log("owner_draggable_size "+ owner_draggable_size);
-                        console.log("```````````````````````````````````````````````````````````````");
+                         
 
                      /*   if (draggable_size > owner_draggable_size){
 
@@ -1069,6 +1125,19 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
 
         if (dropped === true){
+
+          //if ($(ui.draggable).parent().attr("id") == "devices"){
+            console.log("FFFFFFFFFUUUUUUUUCCCCCCCCCKKKKKKKKKKKKKK");
+            console.log($(ui.draggable).parent().attr("id"));
+            console.log(ui);
+            console.log($(this).attr("id"));
+            console.log($(this).attr("class"));
+            console.log($(this).attr("rack"));
+            console.log($(this).attr("slot"));
+            console.log("FFFFFFFFFUUUUUUUUCCCCCCCCCKKKKKKKKKKKKKK");
+  
+          //}
+
           var name = $(ui.draggable).attr('id');
           var type = $(ui.draggable).find("input[name='type']").val();
           var orientation = $(this).find("input[name='orientation']").val();
@@ -1083,18 +1152,18 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           var height = $(ui.draggable).attr("size");
           console.log("height is: "+ height);
           
-     /*    
+          /*  */
           var result = update(name, type, rack, position, orientation, height);
           $(".toast-body").html();
           $(".toast-body").html(name + " Added to Rack "+ rack +".");
           $("#rack-toast").toast("show");
-                   */
+          /*  */
         } else {
           console.log("Dropped is: "+ dropped);
         }
         
         
-        //$(ui.draggable).css('zIndex', '0');
+        // $(ui.draggable).css('zIndex', '0');
         
 
         
