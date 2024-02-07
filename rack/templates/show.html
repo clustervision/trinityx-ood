@@ -150,10 +150,20 @@
                               $("#{{ each['name'] }}").draggable({
                                 containment: ".card-body",
                                 start: function(event, ui) { 
+                                  //source_rack = $(this).parent().attr('rack');
+                                  //source_slot = $(this).parent().attr('slot');
+                                  //source_orientation = 'front';
+                                  //rack_order = rack_order;
+
                                   source_rack = $(this).parent().attr('rack');
                                   source_slot = $(this).parent().attr('slot');
-                                  source_orientation = 'front';
-                                  rack_order = rack_order;
+                                  //source_orientation = orientation;
+                                  //rack_order = rack_order;
+                                  source_orientation = $("#{{ each['name'] }}").parent().find("input[name='orientation']").val();
+                                  rack_order = $("#{{ each['name'] }}").parent().find("input[name='order']").val();
+
+
+
                                   if ($(this).parent().attr("id") != "devices"){
                                   if ($(this).attr("size") > 1){
                                     $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
@@ -291,11 +301,28 @@
                           <script type="text/javascript">
                             $(function(){
                               
-                              var orientation = "{{ each_device['orientation'] }}";
+                              console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+                              //var name = $(ui.draggable).attr('id');
+                              //var type = $(ui.draggable).find("input[name='type']").val();
+                              //var orientation = $(this).find("input[name='orientation']").val();
+                             // var rack = $(this).find("input[name='rack']").val();
+
+                              console.log($(this));
+                              console.log("orientation " + $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val());
+                              console.log("order " + $("#{{ each_device['name'] }}").parent().find("input[name='order']").val());
+                              console.log("rack " + $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val());
+                             // console.log("rack " + $(this).find("div#{{ each_device['name'] }} input[name='rack']").val());
+
+                              console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+
+                              //var orientation = $(this).find("input[name='orientation']").val();
+                              var orientation = $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val();
                               var device_height = Number("{{ each_device['height'] }}");
                               var device_position = Number("{{ each }}");
-                              var rack_order = "{{ rack_order }}";
-                              var rack_name = "{{ rack_data['name'] }}";
+                              //var rack_order = "{{ rack_order }}";
+                              var rack_order = $("#{{ each_device['name'] }}").parent().find("input[name='order']").val();
+                              //var rack_name = "{{ key }}";
+                              var rack_name = $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val();
 
                               if (orientation == 'front'){
                                 var total_elements = Number($("#"+device_position+"-"+rack_name+"front").find("div").length);
@@ -315,14 +342,15 @@
   
                               }
                               
-  
                               $("#{{ each_device['name'] }}").draggable({
                                 containment: ".card-body",
                                 start: function(event, ui) { 
                                   source_rack = $(this).parent().attr('rack');
                                   source_slot = $(this).parent().attr('slot');
-                                  source_orientation = orientation;
-                                  rack_order = rack_order;
+                                  //source_orientation = orientation;
+                                  //rack_order = rack_order;
+                                  source_orientation = $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val();
+                                  rack_order = $("#{{ each_device['name'] }}").parent().find("input[name='order']").val();
                                   if ($(this).attr("size") > 1){
                                     $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
                                   } else {
@@ -444,11 +472,29 @@
 
                                 <script type="text/javascript">
                                   $(function(){
-                                    var orientation = "{{ each_device['orientation'] }}";
+
+                                    console.log("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+                                    //var name = $(ui.draggable).attr('id');
+                                    //var type = $(ui.draggable).find("input[name='type']").val();
+                                    //var orientation = $(this).find("input[name='orientation']").val();
+                                   // var rack = $(this).find("input[name='rack']").val();
+
+                                    console.log($(this));
+                                    console.log("orientation " + $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val());
+                                    console.log("order " + $("#{{ each_device['name'] }}").parent().find("input[name='order']").val());
+                                    console.log("rack " + $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val());
+                                   // console.log("rack " + $(this).find("div#{{ each_device['name'] }} input[name='rack']").val());
+
+                                    console.log("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+
+                                    //var orientation = $(this).find("input[name='orientation']").val();
+                                    var orientation = $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val();
                                     var device_height = Number("{{ each_device['height'] }}");
                                     var device_position = Number("{{ each }}");
-                                    var rack_order = "{{ rack_order }}";
-                                    var rack_name = "{{ rack_data['name'] }}";
+                                    //var rack_order = "{{ rack_order }}";
+                                    var rack_order = $("#{{ each_device['name'] }}").parent().find("input[name='order']").val();
+                                    //var rack_name = "{{ key }}";
+                                    var rack_name = $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val();
   
                                     if (orientation == 'back'){
                                       var total_elements = Number($("#"+device_position+"-"+rack_name+"back").find("div").length);
@@ -473,8 +519,10 @@
                                       start: function(event, ui) { 
                                         source_rack = $(this).parent().attr('rack');
                                         source_slot = $(this).parent().attr('slot');
-                                        source_orientation = orientation;
-                                        rack_order = rack_order;
+                                        //source_orientation = orientation;
+                                        //rack_order = rack_order;
+                                        source_orientation = $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val();
+                                        rack_order = $("#{{ each_device['name'] }}").parent().find("input[name='order']").val();
                                         if ($(this).attr("size") > 1){
                                           $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
                                         } else {
@@ -495,7 +543,7 @@
                                     cursor: "move",
                                     scroll: true,
                                     snap: ".snaptarget"
-                                    });  
+                                    }); 
                                   });
                                 </script>
 
@@ -1132,7 +1180,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
               if (source_div_length == 1){ $("#"+source_slot+"-"+source_rack+source_orientation).children("div").find("span").show(); }
               $("#"+source_slot+"-"+source_rack+source_orientation).children("div").css('width', each_div_width);
             }
-            
+
 
           }
 
