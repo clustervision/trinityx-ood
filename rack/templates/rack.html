@@ -307,19 +307,19 @@
                           <script type="text/javascript">
                             $(function(){
                               
-                              //console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+                              //// console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
                               //var name = $(ui.draggable).attr('id');
                               //var type = $(ui.draggable).find("input[name='type']").val();
                               //var orientation = $(this).find("input[name='orientation']").val();
                              // var rack = $(this).find("input[name='rack']").val();
 
-                             // console.log($(this));
-                             // console.log("orientation " + $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val());
-                             // console.log("order " + $("#{{ each_device['name'] }}").parent().find("input[name='order']").val());
-                             // console.log("rack " + $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val());
-                             // console.log("rack " + $(this).find("div#{{ each_device['name'] }} input[name='rack']").val());
+                             // // console.log($(this));
+                             // // console.log("orientation " + $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val());
+                             // // console.log("order " + $("#{{ each_device['name'] }}").parent().find("input[name='order']").val());
+                             // // console.log("rack " + $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val());
+                             // // console.log("rack " + $(this).find("div#{{ each_device['name'] }} input[name='rack']").val());
 
-                             // console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+                             // // console.log("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 
                               //var orientation = $(this).find("input[name='orientation']").val();
                               var orientation = $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val();
@@ -480,19 +480,19 @@
                                 <script type="text/javascript">
                                   $(function(){
 
-                                    //console.log("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+                                    //// console.log("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
                                     //var name = $(ui.draggable).attr('id');
                                     //var type = $(ui.draggable).find("input[name='type']").val();
                                     //var orientation = $(this).find("input[name='orientation']").val();
                                    // var rack = $(this).find("input[name='rack']").val();
 
-                                   // console.log($(this));
-                                  //  console.log("orientation " + $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val());
-                                   // console.log("order " + $("#{{ each_device['name'] }}").parent().find("input[name='order']").val());
-                                  //  console.log("rack " + $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val());
-                                   // console.log("rack " + $(this).find("div#{{ each_device['name'] }} input[name='rack']").val());
+                                   // // console.log($(this));
+                                  //  // console.log("orientation " + $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val());
+                                   // // console.log("order " + $("#{{ each_device['name'] }}").parent().find("input[name='order']").val());
+                                  //  // console.log("rack " + $("#{{ each_device['name'] }}").parent().find("input[name='rack']").val());
+                                   // // console.log("rack " + $(this).find("div#{{ each_device['name'] }} input[name='rack']").val());
 
-                                  //  console.log("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+                                  //  // console.log("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
 
                                     //var orientation = $(this).find("input[name='orientation']").val();
                                     var orientation = $("#{{ each_device['name'] }}").parent().find("input[name='orientation']").val();
@@ -601,12 +601,12 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
       contentType: 'application/json; charset=UTF-8',
       async: false,
       success: function(response_data) {
-          console.log(response_data);
+          // console.log(response_data);
           response = response_data
       }
   });
 
-  console.log(response);
+  // console.log(response);
   return response;
 }
 
@@ -626,16 +626,16 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
         var source_items = Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length);
 
         //$(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
-        console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-        console.log(orientation);
-        console.log(rack_order);
-        console.log(source_items);
-        console.log($(ui.draggable));
-        console.log($(ui.draggable).attr("class"));
+        // console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        // console.log(orientation);
+        // console.log(rack_order);
+        // console.log(source_items);
+        // console.log($(ui.draggable));
+        // console.log($(ui.draggable).attr("class"));
         $(ui.draggable).removeClass('drag-revert');
-        console.log($(ui.draggable).attr("class"));
-        console.log(Number($("#"+source_slot+"-"+source_rack+orientation).children("div").length));
-        console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+        // console.log($(ui.draggable).attr("class"));
+        // console.log(Number($("#"+source_slot+"-"+source_rack+orientation).children("div").length));
+        // console.log("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
         
     
         $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
@@ -674,9 +674,9 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           
         }
         
-        //console.log("--------------------------------------------------------------------------------------------");
+        //// console.log("--------------------------------------------------------------------------------------------");
         
-        console.log("--------------------------------------------------------------------------------------------");
+        // console.log("--------------------------------------------------------------------------------------------");
 
         /* 
 
@@ -698,13 +698,13 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
 
 
-          console.log("name is: "+ name);
-          console.log("type is: "+ type);
-          console.log("orientation is: "+ orientation);
-          console.log("rack is: "+ rack);
-          //console.log("====================================================>>>position is: "+ position);
+          // console.log("name is: "+ name);
+          // console.log("type is: "+ type);
+          // console.log("orientation is: "+ orientation);
+          // console.log("rack is: "+ rack);
+          //// console.log("====================================================>>>position is: "+ position);
           var height = $(ui.draggable).attr("size");
-          console.log("height is: "+ height);
+          // console.log("height is: "+ height);
 
           /* */ 
 
@@ -745,14 +745,14 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
         if (next_slot_count < draggable_size){        /////////////// If rack dont have enough length 
           $(ui.draggable).addClass('drag-revert');
-          console.log("When next slots less then the draggable size.");
+          // console.log("When next slots less then the draggable size.");
         } else {
-          console.log("When next slots are not less then the draggable size.");
+          // console.log("When next slots are not less then the draggable size.");
           if ($(this).attr("class").includes("ui-state-highlight") && (Number($(this).children().length) == 0)){    ///////////////////// If slot is empty but tie up with some device
-            console.log("When has class, but don't have draggable.");
+            // console.log("When has class, but don't have draggable.");
             if(draggable_size > owner_draggable_size){                                                        /////////////// If device is bigger then the owner device
               $(ui.draggable).addClass('drag-revert');
-              console.log("When draggable is bigger then owner.");
+              // console.log("When draggable is bigger then owner.");
             } else {
               $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
               $(ui.draggable).css('height', owner_draggable_size*30-2);
@@ -765,12 +765,12 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
               exact_div.find("div").css('width', each_width);
               dropped = true;
               position = Number(exact_div.attr("slot"));
-              console.log("When draggable is not bigger then owner [FIRST].");
+              // console.log("When draggable is not bigger then owner [FIRST].");
 
             }
 
           } else {
-            console.log("When has class, but have draggable. "+ draggable_size);
+            // console.log("When has class, but have draggable. "+ draggable_size);
             
             
             
@@ -783,7 +783,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                   if (!$(this).hasClass("ui-state-highlight")){
                     $(ui.draggable).addClass('drag-revert');
                   } else if (owner_draggable_size >= draggable_size){
-                    ///console.log("big_element "+ big_element);
+                    ///// console.log("big_element "+ big_element);
                     //exact_div.nextAll().add(exact_div).slice(0, draggable_size).find('.rack-slot').addClass("ui-state-highlight");          
                     $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
                     $(ui.draggable).css('height', owner_draggable_size*30-2);
@@ -801,7 +801,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
                   } else {
                     $(ui.draggable).addClass('drag-revert');
-                    console.log("THIS IS THE FUCKING CASE "+ big_element);
+                    // console.log("THIS IS THE FUCKING CASE "+ big_element);
                   }
                   
                 } else {
@@ -810,18 +810,18 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                   if ($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").length){
                     if ($(ui.draggable).attr("id") == $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").attr("id")){
 
-                      console.log("===================================================================");
-                      console.log( $(ui.draggable).attr("id"));
-                      console.log( $(ui.draggable).parent().attr("id"));
-                      console.log($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").attr("id"));
+                      // console.log("===================================================================");
+                      // console.log( $(ui.draggable).attr("id"));
+                      // console.log( $(ui.draggable).parent().attr("id"));
+                      // console.log($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").attr("id"));
                       var previous_ids = $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").map(function() { return $(this).attr('id')});
-                      console.log( previous_ids);
-                      console.log( $(this).attr("id"));
+                      // console.log( previous_ids);
+                      // console.log( $(this).attr("id"));
 
                       if ($.inArray($(this).attr("id"), previous_ids) != -1){
-                        console.log( "yes");
-                        console.log($(this).attr("class"));
-                        console.log( previous_ids);
+                        // console.log( "yes");
+                        // console.log($(this).attr("class"));
+                        // console.log( previous_ids);
                         var check = 0;
                           for (let index = 0; index < previous_ids.length; index++) {
                             check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
@@ -842,8 +842,8 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                         
 
                       } else {
-                        console.log( "no");
-                        console.log( previous_ids);
+                        // console.log( "no");
+                        // console.log( previous_ids);
                         $(ui.draggable).addClass('drag-revert');
                       }
 
@@ -867,9 +867,9 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                       }
 
                       */
-                      console.log("===================================================================");
+                      // console.log("===================================================================");
 
-                      console.log("two aaaaa"+ draggable_size);
+                      // console.log("two aaaaa"+ draggable_size);
                       
 
                     } else {
@@ -921,9 +921,9 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
                           
 
-                          console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-                          console.log(Number(exact_div.children("div.draggable").length));
-                          console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+                          // console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+                          // console.log(Number(exact_div.children("div.draggable").length));
+                          // console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
                         
                           $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
                           $(ui.draggable).css('height', draggable_size*30-2);
@@ -943,9 +943,9 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
                         if ($.inArray($(this).attr("id"), previous_ids) != -1){
 
-                          console.log("```````````````````````````````````````````````````````````````");
-                          console.log(previous_ids);
-                          console.log($(this).attr("id"));
+                          // console.log("```````````````````````````````````````````````````````````````");
+                          // console.log(previous_ids);
+                          // console.log($(this).attr("id"));
                           var check = 0;
                           for (let index = 0; index < previous_ids.length; index++) {
                             check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
@@ -964,7 +964,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           
                           
                           
-                          console.log("```````````````````````````````````````````````````````````````");
+                          // console.log("```````````````````````````````````````````````````````````````");
 
 
                          // $(ui.draggable).addClass('drag-revert');
@@ -1064,10 +1064,10 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                     position = Number($(this).attr("slot"));
                   } else {
 
-                    console.log("===================================================================");
-                    console.log(exact_div.children("div.draggable").length);
-                    console.log($(this).parent().prevAll().add($(this).parent()).slice(0, draggable_size));
-                    console.log("===================================================================");
+                    // console.log("===================================================================");
+                    // console.log(exact_div.children("div.draggable").length);
+                    // console.log($(this).parent().prevAll().add($(this).parent()).slice(0, draggable_size));
+                    // console.log("===================================================================");
 
                     $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
                     $(ui.draggable).css('height', owner_draggable_size*30-2);
@@ -1090,14 +1090,14 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                //   if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
                 //  exact_div.find("div").css('width', each_width);
                //   dropped = true;
-               //   console.log("When draggable is not bigger then owner.");
+               //   // console.log("When draggable is not bigger then owner.");
 
                 } else {
-                  console.log("FOUR");
+                  // console.log("FOUR");
                   
 
 
-                  console.log("draggable is big.");
+                  // console.log("draggable is big.");
                   var total_elements = Number($(this).find("div").length);
                   var big_element = Number($(this).find("div").attr("size"));
                   
@@ -1109,7 +1109,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                     $(ui.draggable).attr("size", big_element);
                     //$(this).addClass("ui-state-highlight" );
                     //$(ui.draggable).css('height', $("."+source_slot+"-"+source_rack).children("div").attr("size")*30-2);
-                    console.log("this new condition");
+                    // console.log("this new condition");
                     dropped = true;
                     position = Number($(this).attr("slot"));
                   } else {                ///////// --> If Slot don't have Device
@@ -1121,7 +1121,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                     //$(ui.draggable).css('height', big_element*30-2);
                     $(this).addClass("ui-state-highlight" );
                     
-                    console.log("this extra condition");
+                    // console.log("this extra condition");
                     dropped = true;
                     position = Number($(this).attr("slot"));
                   }
@@ -1150,18 +1150,18 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
             
      
           }
-          console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-          console.log("source_slot "+ source_slot);
-          console.log("source_rack "+ source_rack);
-          console.log("source_orientation "+ source_orientation);
-          console.log("big_element "+ big_element);
+          // console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+          // console.log("source_slot "+ source_slot);
+          // console.log("source_rack "+ source_rack);
+          // console.log("source_orientation "+ source_orientation);
+          // console.log("big_element "+ big_element);
           
-          console.log($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"));
+          // console.log($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"));
 
-          console.log($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val());
+          // console.log($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val());
 
           //$(this).parent().nextAll().add($(this).parent()).slice(1, big_element).find('.rack-slot').addClass("ui-state-highlight");
-          console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+          // console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 
           if (Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"))){
             
@@ -1222,14 +1222,14 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
 */
           //if ($(ui.draggable).parent().attr("id") == "devices"){
-            //console.log("FFFFFFFFFUUUUUUUUCCCCCCCCCKKKKKKKKKKKKKK");
-            //console.log($(ui.draggable).parent().attr("id"));
-            //console.log(ui);
-            //console.log($(this).attr("id"));
-           // console.log($(this).attr("class"));
-           // console.log($(this).attr("rack"));
-           // console.log($(this).attr("slot"));
-           // console.log("FFFFFFFFFUUUUUUUUCCCCCCCCCKKKKKKKKKKKKKK");
+            //// console.log("FFFFFFFFFUUUUUUUUCCCCCCCCCKKKKKKKKKKKKKK");
+            //// console.log($(ui.draggable).parent().attr("id"));
+            //// console.log(ui);
+            //// console.log($(this).attr("id"));
+           // // console.log($(this).attr("class"));
+           // // console.log($(this).attr("rack"));
+           // // console.log($(this).attr("slot"));
+           // // console.log("FFFFFFFFFUUUUUUUUCCCCCCCCCKKKKKKKKKKKKKK");
   
           //}
 
@@ -1239,13 +1239,13 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           var rack = $(this).find("input[name='rack']").val();
           //var position = Number($(this).find("input[name='position']").val());
 
-          console.log("name is: "+ name);
-          console.log("type is: "+ type);
-          console.log("orientation is: "+ orientation);
-          console.log("rack is: "+ rack);
-          console.log("====================================================>>>position is: "+ position);
+          // console.log("name is: "+ name);
+          // console.log("type is: "+ type);
+          // console.log("orientation is: "+ orientation);
+          // console.log("rack is: "+ rack);
+          // console.log("====================================================>>>position is: "+ position);
           var height = $(ui.draggable).attr("size");
-          console.log("height is: "+ height);
+          // console.log("height is: "+ height);
           
           /* */
           var result = update(name, type, rack, position, orientation, height);
@@ -1254,7 +1254,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           $("#rack-toast").toast("show");
           /* */
         } else {
-          console.log("Dropped is: "+ dropped);
+          // console.log("Dropped is: "+ dropped);
         }
         
         
@@ -1393,7 +1393,7 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
       rename = url+"trinity_otherdev/rename/"+device;
       clone = url+"trinity_otherdev/clone/"+device;
     }
-    console.log($(this));
+    // console.log($(this));
     var items =[
         {label:'Details',   icon:'/icons/application-detail.png',             action: function(e) { window.open(info, '_blank').focus(); }  },
         {label:'Edit',      icon:'/icons/edit.png',                action: function(e) { window.open(edit, '_blank').focus(); }  },

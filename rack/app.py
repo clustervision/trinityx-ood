@@ -128,7 +128,7 @@ def update():
         rack_name = request_data['rack']
         del request_data['rack']
         payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
-        print(payload)
+        # print(payload)
         uri = f'config/rack/{rack_name}'
         result = Rest().post_raw(uri, payload)
         # result = result.json()
@@ -229,7 +229,7 @@ def delete(page=None, record=None, device=None):
     else:
         response = Rest().get_delete(TABLE, f'inventory/{record}/type/{device}')
     LOGGER.info(f'{response.status_code} -> {response.content}')
-    print(f'{response.status_code} -> {response.content}')
+    # print(f'{response.status_code} -> {response.content}')
     if response.status_code in [204, 201]:
         flash(f'{TABLE_CAP}, {record} is deleted.', "success")
     else:
@@ -248,8 +248,8 @@ def perform(system=None, action=None, nodename=None):
     if system and action and nodename:
         uri = f'control/action/{system}/{nodename}/_{action}'
         result = Rest().get_raw(uri)
-        print(result.content)
-        print(result.status_code)
+        # print(result.content)
+        # print(result.status_code)
 
         if result.content:
             content = result.json()
@@ -294,5 +294,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=7059, debug=True)
-    # app.run()
+    # app.run(host='0.0.0.0', port=7059, debug=True)
+    app.run()
