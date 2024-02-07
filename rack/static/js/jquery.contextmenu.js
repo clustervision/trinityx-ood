@@ -29,6 +29,7 @@ jQuery.fn.contextPopup = function(menuData) {
 		gutterLineClass: 'gutterLine',
 		headerClass: 'header',
 		seperatorClass: 'divider',
+    extra: '',
 		title: '',
 		items: []
 	};
@@ -69,7 +70,7 @@ jQuery.fn.contextPopup = function(menuData) {
 
   // On contextmenu event (right click)
   this.bind('contextmenu', function(e) {
-
+    console.log($(this));
     // Create and show menu
     var menu = createMenu(e)
       .show()

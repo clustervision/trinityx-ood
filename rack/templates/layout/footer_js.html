@@ -7,8 +7,28 @@
 <script type="text/javascript">
     $('.back').hide();
     $('#front-button').hide();
-    //$('.backspace').hide()
+</script>
+<!--      http://192.168.20.129:7059/perform/power/status/node001                        -->
+<script type="text/javascript">
 
-    //$('.front').hide();
-    //$('#back-button').hide();
+    function control_action(system, action, device){
+        $.ajax({
+            url: window.location.href+'/perform/'+system+'/'+action+'/'+device,
+            //url:'/perform/'+system+'/'+action+'/'+device,   //-------------------------------------------------------------------->>>>> NEED TO REMOVE IT FOR PRODUCTION.
+            type: 'GET',
+            dataType: 'json',
+            //async: false,
+            contentType: 'application/json; charset=UTF-8',
+            success: function(response_data) {
+                result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
+                $('#ajax').html();
+                $('#ajax').html(result);
+                setTimeout(function(){ $('#ajax').html(''); }, 5000);  
+                
+            }
+        });
+
+    }
+
+
 </script>

@@ -75,6 +75,14 @@
   color: #ffffff;
 }
 
+.device-icon {
+  /* position: absolute; */
+  left: 3px;
+  margin-top: -2px;
+  width: 16px;
+  height: 16px;
+}
+
 .contextMenuPlugin > .gutterLine {
   position: absolute;
   border-left: 1px solid #e7e3e7;

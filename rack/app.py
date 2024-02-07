@@ -32,6 +32,7 @@ __status__      = 'Development'
 
 import os
 import json
+from textwrap import wrap
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect
 from rest import Rest
@@ -234,6 +235,47 @@ def delete(page=None, record=None, device=None):
     else:
         flash('ERROR :: Something went wrong!', "error")
     return redirect(url_for('manage', page=page), code=302)
+
+
+@app.route('/perform/<string:system>/<string:action>/<string:nodename>', methods=['GET'])
+def perform(system=None, action=None, nodename=None):
+    """
+    This is the main method of application.
+    It will list all Control which is available with daemon.
+    """
+    response = {"status": "danger", "message": ""}
+    message = ''
+    if system and action and nodename:
+        uri = f'control/action/{system}/{nodename}/_{action}'
+        result = Rest().get_raw(uri)
+        print(result.content)
+        print(result.status_code)
+
+        if result.content:
+            content = result.json()
+            if 'control' in content.keys():
+                message = content['control'][system]
+            elif 'message' in content.keys():
+                message = content['message']
+            else:
+                message = 'NO message received'
+        else:
+            message = action
+        if len(message) >= 150:
+            message = '<br />'.join(wrap(message, width=150))
+            message = f'<br />{message}'
+        if result.status_code in [200, 204]:
+            if 'off' in message:
+                response['status'] = "danger"
+                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+            else:
+                response['status'] = "success"
+                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+        else:
+            response['status'] = "warning"
+            response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
+    # response['message'] = message
+    return response
 
 
 @app.route('/license', methods=['GET'])
