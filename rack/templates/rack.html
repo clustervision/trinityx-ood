@@ -1257,76 +1257,13 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           // console.log("Dropped is: "+ dropped);
         }
         
-        
         // $(ui.draggable).css('zIndex', '0');
-        
-
-        
-
-      /*  if ($(this).attr("class").includes("ui-state-highlight") ){
-          $(ui.draggable).addClass('drag-revert');
-        }
-        else if ($(this).nextAll().slice(0, $(ui.draggable).attr("size")-1).hasClass("ui-state-highlight") ){
-          $(ui.draggable).addClass('drag-revert');
-        }
-        else if (next_slot_count < draggable_size){
-          $(ui.draggable).addClass('drag-revert');
-        } else {
-          if ($(ui.draggable).parent().attr("class").includes("ui-state-highlight")){
-            $(ui.draggable).parent().removeClass( "ui-state-highlight" ).find( "p" ).html();
-            $(ui.draggable).parent().nextAll().slice(0,$(ui.draggable).attr("size")-1).removeClass( "ui-state-highlight" ).find( "p" ).html();
-          } 
-          $(ui.draggable).detach().css({top: 0,left: 2}).appendTo(this);
-          $(this).addClass( "ui-state-highlight" ).find( "p" ).html();
-          $(this).nextAll().slice(0,$(ui.draggable).attr("size")-1).addClass( "ui-state-highlight" ).find( "p" ).html();
-          var name = $(ui.draggable).attr('id');
-          var type = $(ui.draggable).find("input[name='type']").val();
-          var orientation = $(this).find("input[name='orientation']").val();
-          var rack = $(this).find("input[name='rack']").val();
-          var position = Number($(this).find("input[name='position']").val());
-          var result = update(name, type, rack, position, orientation);
-          $(".toast-body").html();
-          $(".toast-body").html(name + " Added to Rack "+ rack +".");
-          $("#rack-toast").toast("show");
-        } */ 
+       
       }   
     });
   });
 
   </script>
-  <!-- 
-
-    Info URL:
-      https://rocky8.cluster:8080/pun/sys/trinity_cluster
-      https://rocky8.cluster:8080/pun/sys/trinity_node/show/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_switch/show/switch01
-      https://rocky8.cluster:8080/pun/sys/trinity_otherdev/show/camera01
-
-    Edit URL:
-      https://rocky8.cluster:8080/pun/sys/trinity_cluster/edit
-      https://rocky8.cluster:8080/pun/sys/trinity_node/edit/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_switch/edit/switch01
-      https://rocky8.cluster:8080/pun/sys/trinity_otherdev/edit/camera01
-
-    Node Power URL:
-      https://rocky8.cluster:8080/pun/sys/trinity_control
-      https://rocky8.cluster:8080/pun/sys/trinity_control/power/on/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_control/power/off/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_control/power/status/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_control/power/reset/node001
-
-      https://rocky8.cluster:8080/pun/sys/trinity_control/sel/list/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_control/sel/clear/node001
-
-      https://rocky8.cluster:8080/pun/sys/trinity_control/chassis/identify/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_control/chassis/noidentify/node001
-
-      https://rocky8.cluster:8080/pun/sys/trinity_control/refish/upload/node001
-      https://rocky8.cluster:8080/pun/sys/trinity_control/refish/setting/node001
-
-   -->
-
-
 
   <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.css') }}">
@@ -1357,67 +1294,73 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
 
   
   $('.right-click').bind('contextmenu', function(e) {
-    var url = window.location.href;
-    //url = 'https://rocky8.cluster:8080/pun/sys/trinity_rack/' //-------------------------------------------------------------------->>>>> NEED TO REMOVE IT FOR PRODUCTION.
-    url = url.replace('/trinity_rack/','');
+
+    var url = window.location.href
     url = url.replace('#','');
+    if  (url.includes('/show/rack/')){
+        url = url.split('/');
+        url.pop();
+        url.pop();
+        url.pop();
+        url = url.join("/");
+    }
+    if (url.slice(-1) == '/'){ url.slice(0,-1); }
+    var outside_url = url.replace('trinity_rack','');
+    console.log(url);
+    console.log(outside_url);
+
     var device = $(this).attr('id');
-    
-    
-    
-    
     var device_type = $(this).find("input[name='type']").val();
     var device_name = $(this).find("input[name='type']").val();
     var info, edit, rename, clone;
     if (device_type == "controller"){
-      var title = '<img class="device-icon" src="/icons/computer-network.png" />   <strong>'+device+' Settings</strong>';
-      info = url+"trinity_cluster"
-      edit = url+"trinity_cluster/edit"
-      rename = url+"trinity_cluster/rename"
+      var title = '<img class="device-icon" src="'+url+'/icons/computer-network.png" />   <strong>'+device+' Settings</strong>';
+      info = outside_url + 'trinity_cluster';
+      edit = outside_url + "trinity_cluster/edit";
+      rename = outside_url + "trinity_cluster/rename";
     } else if (device_type == "node"){
-      var title = '<img class="device-icon" src="/icons/processor.png" />   <strong>'+device+' Settings</strong>';
-      info = url+"trinity_node/show/"+device;
-      edit = url+"trinity_node/edit/"+device;
-      rename = url+"trinity_node/rename/"+device;
-      clone = url+"trinity_node/clone/"+device;
+      var title = '<img class="device-icon" src="'+url+'/icons/processor.png" />   <strong>'+device+' Settings</strong>';
+      info = outside_url + "trinity_node/show/"+device;
+      edit = outside_url + "trinity_node/edit/"+device;
+      rename = outside_url + "trinity_node/rename/"+device;
+      clone = outside_url + "trinity_node/clone/"+device;
     } else if (device_type == "switch"){
-      var title = '<img class="device-icon" src="/icons/switch-network.png" />   <strong>'+device+' Settings</strong>';
-      info = url+"trinity_switch/show/"+device;
-      edit = url+"trinity_switch/edit/"+device;
-      rename = url+"trinity_switch/rename/"+device;
-      clone = url+"trinity_switch/clone/"+device;
+      var title = '<img class="device-icon" src="'+url+'/icons/switch-network.png" />   <strong>'+device+' Settings</strong>';
+      info = outside_url + "trinity_switch/show/"+device;
+      edit = outside_url + "trinity_switch/edit/"+device;
+      rename = outside_url + "trinity_switch/rename/"+device;
+      clone = outside_url + "trinity_switch/clone/"+device;
     } else if (device_type == "otherdevices"){
-      var title = '<img class="device-icon" src="/icons/mobile-phone--plus.png" />   <strong>'+device+' Settings</strong>';
-      info = url+"trinity_otherdev/show/"+device;
-      edit = url+"trinity_otherdev/edit/"+device;
-      rename = url+"trinity_otherdev/rename/"+device;
-      clone = url+"trinity_otherdev/clone/"+device;
+      var title = '<img class="device-icon" src="'+url+'/icons/mobile-phone--plus.png" />   <strong>'+device+' Settings</strong>';
+      info = outside_url + "trinity_otherdev/show/"+device;
+      edit = outside_url + "trinity_otherdev/edit/"+device;
+      rename = outside_url + "trinity_otherdev/rename/"+device;
+      clone = outside_url + "trinity_otherdev/clone/"+device;
     }
-    // console.log($(this));
     var items =[
-        {label:'Details',   icon:'/icons/application-detail.png',             action: function(e) { window.open(info, '_blank').focus(); }  },
-        {label:'Edit',      icon:'/icons/edit.png',                action: function(e) { window.open(edit, '_blank').focus(); }  },
+        {label:'Details',   icon: url + '/icons/application-detail.png',             action: function(e) { window.open(info, '_blank').focus(); }  },
+        {label:'Edit',      icon: url + '/icons/edit.png',                action: function(e) { window.open(edit, '_blank').focus(); }  },
     ];
     if (device_type != "controller"){
-      items.push({label:'Rename',     icon:'/icons/pencil.png',             action: function(e) { window.open(rename, '_blank').focus(); }  });
-      items.push({label:'Clone',     icon:'/icons/applications-stack.png',           action: function(e) { window.open(clone, '_blank').focus(); }  });
+      items.push({label:'Rename',     icon: url + '/icons/pencil.png',             action: function(e) { window.open(rename, '_blank').focus(); }  });
+      items.push({label:'Clone',     icon: url + '/icons/applications-stack.png',           action: function(e) { window.open(clone, '_blank').focus(); }  });
     }
     if (device_type == "node"){
       items.push(
         null,
-        {label:'Power Status',     icon:'/icons/application-monitor.png',  action: function(e) { control_action('power', 'status', device); } },
-        {label:'Power Off',     icon:'/icons/network-status-busy.png',     action: function(e) { control_action('power', 'off', device); } },
-        {label:'Power ON',     icon:'/icons/network-status.png',      action: function(e) { control_action('power', 'on', device); } },
-        {label:'Power Reset',     icon:'/icons/network-status-away.png',   action: function(e) { control_action('power', 'reset', device); } },
+        {label:'Power Status',     icon: url + '/icons/application-monitor.png',  action: function(e) { control_action('power', 'status', device); } },
+        {label:'Power Off',     icon: url + '/icons/network-status-busy.png',     action: function(e) { control_action('power', 'off', device); } },
+        {label:'Power ON',     icon: url + '/icons/network-status.png',      action: function(e) { control_action('power', 'on', device); } },
+        {label:'Power Reset',     icon: url + '/icons/network-status-away.png',   action: function(e) { control_action('power', 'reset', device); } },
         null,
-        {label:'Sel List',     icon:'/icons/application.png',                action: function(e) { control_action('sel', 'list', device); } },
-        {label:'Sel Clear',     icon:'/icons/application--minus.png',        action: function(e) { control_action('sel', 'clear', device); } },
+        {label:'Sel List',     icon: url + '/icons/application.png',                action: function(e) { control_action('sel', 'list', device); } },
+        {label:'Sel Clear',     icon: url + '/icons/application--minus.png',        action: function(e) { control_action('sel', 'clear', device); } },
         null,
-        {label:'Chassis Identify',     icon:'/icons/television.png',             action: function(e) { control_action('chassis', 'identify', device); } },
-        {label:'Chassis No Identify',     icon:'/icons/television--exclamation.png',             action: function(e) { control_action('chassis', 'noidentify', device); } },
+        {label:'Chassis Identify',     icon: url + '/icons/television.png',             action: function(e) { control_action('chassis', 'identify', device); } },
+        {label:'Chassis No Identify',     icon: url + '/icons/television--exclamation.png',             action: function(e) { control_action('chassis', 'noidentify', device); } },
         // null,
-        // {label:'Redfish Upload',     icon:'/icons/application-table.png',             action: function(e) {control_action('redfish', 'upload', device); } },
-        // {label:'Redfish Setting',     icon:'/icons/application-table.png',             action: function(e) { control_action('redfish', 'setting', device); } },
+        // {label:'Redfish Upload',     icon: url + '/icons/application-table.png',             action: function(e) {control_action('redfish', 'upload', device); } },
+        // {label:'Redfish Setting',     icon: url + '/icons/application-table.png',             action: function(e) { control_action('redfish', 'setting', device); } },
       );
     }
     var menu = createMenu(e, title, items).show().css({zIndex:1000001, left:e.pageX + 5, top:e.pageY}).bind('contextmenu', function() { return false; });
