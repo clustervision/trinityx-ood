@@ -8,16 +8,25 @@
     $('.back').hide();
     $('#front-button').hide();
 </script>
-<!--      http://192.168.20.129:7059/perform/power/status/node001                        -->
+
 <script type="text/javascript">
 
     function control_action(system, action, device){
+        var url = window.location.href
+        url = url.replace('#','');
+        if  (url.includes('/show/rack/')){
+            url = url.split('/');
+            url.pop();
+            url.pop();
+            url.pop();
+            url = url.join("/");
+        } 
+        url = url+'/perform/'+system+'/'+action+'/'+device;
+        console.log(url);
         $.ajax({
-            url: window.location.href+'/perform/'+system+'/'+action+'/'+device,
-            //url:'/perform/'+system+'/'+action+'/'+device,   //-------------------------------------------------------------------->>>>> NEED TO REMOVE IT FOR PRODUCTION.
+            url: url,
             type: 'GET',
             dataType: 'json',
-            //async: false,
             contentType: 'application/json; charset=UTF-8',
             success: function(response_data) {
                 result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
@@ -27,8 +36,6 @@
                 
             }
         });
-
     }
-
 
 </script>
