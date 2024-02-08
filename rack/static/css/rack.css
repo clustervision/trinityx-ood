@@ -128,7 +128,7 @@
 /* Servers Skins Depends on the size and availability.  */
 
 .noname {
-  background-image: url(/img/noname.png);
+  background-image: url('../img/noname.png');
 }
 .noname span {
   color: #ffffff;
@@ -136,7 +136,7 @@
 
 
 .default {
-  background-image: url(/img/gigabyte-1.png);
+  background-image: url('../img/gigabyte-1.png');
   background-size: 218px  28px;
 }
 .default span {
@@ -144,7 +144,7 @@
 }
 
 .switch {
-  background-image: url(/img/switch.png);
+  background-image: url('../img/switch.png');
   background-size: 218px  28px;
 }
 .switch span {
@@ -152,22 +152,22 @@
 }
 
 .supermicro-1 {
-  background-image: url(/img/supermicro-1.png);
+  background-image: url('../img/supermicro-1.png');
   background-size: 218px  28px;
 }
 
 .supermicro-2 {
-  background-image: url(/img/supermicro-2.png);
+  background-image: url('../img/supermicro-2.png');
   background-size: 218px  58px;
 }
 
 .supermicro-3 {
-  background-image: url(/img/supermicro-3.png);
+  background-image: url('../img/supermicro-3.png');
   background-size: 218px  88px;
 }
 
 .supermicro-4 {
-  background-image: url(/img/supermicro-4.png);
+  background-image: url('/img/supermicro-4.png');
   background-size: 218px  118px;
 }
 
@@ -190,22 +190,22 @@
 
 
 .asus-1 {
-  background-image: url(/img/asus-1.png);
+  background-image: url('../img/asus-1.png');
   background-size: 218px  28px;
 }
 
 .asus-2 {
-  background-image: url(/img/asus-2.png);
+  background-image: url('../img/asus-2.png');
   background-size: 218px  58px;
 }
 
 .asus-3 {
-  background-image: url(/img/asus-3.png);
+  background-image: url('../img/asus-3.png');
   background-size: 218px  88px;
 }
 
 .asus-4 {
-  background-image: url(/img/asus-4.png);
+  background-image: url('../img/asus-4.png');
   background-size: 218px  118px;
 }
 
@@ -227,17 +227,17 @@
 
 
 .dell-1 {
-  background-image: url(/img/dell-1.png);
+  background-image: url('../img/dell-1.png');
   background-size: 218px  28px;
 }
 
 .dell-2 {
-  background-image: url(/img/dell-2.png);
+  background-image: url('../img/dell-2.png');
   background-size: 218px  58px;
 }
 
 .dell-4 {
-  background-image: url(/img/dell-4.png);
+  background-image: url('../img/dell-4.png');
   background-size: 218px  118px;
 }
 
@@ -255,17 +255,17 @@
 
 
 .gigabyte-1 {
-  background-image: url(/img/gigabyte-1.png);
+  background-image: url('../img/gigabyte-1.png');
   background-size: 218px  28px;
 }
 
 .gigabyte-2 {
-  background-image: url(/img/gigabyte-2.png);
+  background-image: url('../img/gigabyte-2.png');
   background-size: 218px  58px;
 }
 
 .gigabyte-4 {
-  background-image: url(/img/gigabyte-4.png);
+  background-image: url('../img/gigabyte-4.png');
   background-size: 218px  118px;
 }
 
@@ -283,17 +283,17 @@
 
 
 .hp-1 {
-  background-image: url(/img/hp-1.png);
+  background-image: url('../img/hp-1.png');
   background-size: 218px  28px;
 }
 
 .hp-2 {
-  background-image: url(/img/hp-2.png);
+  background-image: url('../img/hp-2.png');
   background-size: 218px  58px;
 }
 
 .hp-4 {
-  background-image: url(/img/hp-4.png);
+  background-image: url('../img/hp-4.png');
   background-size: 218px  118px;
 }
 
