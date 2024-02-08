@@ -1157,6 +1157,10 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
           // console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 
           if (Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"))){
+
+            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+            $(ui.draggable).css('height', Number($(ui.draggable).attr("size"))*30-2);
+            $(ui.draggable).attr("size", Number($(ui.draggable).attr("size")));
             
 
             for (let index = 0; index < Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size")); index++) {

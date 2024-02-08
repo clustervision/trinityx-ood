@@ -25,7 +25,7 @@
           
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label">name</label>
-            <div class="col-sm-10"><input type="text" name="name" onkeypress="return event.charCode != 32" class="form-control" maxlength="100" required="" id="id_name" value="{{ data['name'] }}" /></div>
+            <div class="col-sm-10"><input type="text" name="name" onkeypress="return event.charCode != 32" {% if data['name']  %}readonly{% endif %} class="form-control" maxlength="100" required="" id="id_name" value="{{ data['name'] }}" /></div>
           </div>
 
           {% if page == 'Site' %}
@@ -86,14 +86,7 @@
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">Select Type</label>
               <div class="col-sm-10">
-                <input type="hidden" name="type" value="{{ data['type'] }}" />
-                <select class="form-control" id="id_type" {% if data['type']  %}readonly{% endif %}>
-                  <option value=""> Select Inventory Type </option>
-                  <option value="node"{% if data['type'] == 'node' %}selected{% endif %}> Compute Node </option>
-                  <option value="switch"{% if data['type'] == 'switch' %}selected{% endif %}> Switch </option>
-                  <option value="otherdev"{% if data['type'] == 'otherdev' %}selected{% endif %}> Any Other Device </option>
-                  <option value="controller"{% if data['type'] == 'controller' %}selected{% endif %}> Controller (Head Node) </option>
-                </select>
+                <input type="text" name="type" readonly class="form-control" maxlength="100" required="" id="id_name" value="{{ data['type'] }}" />
               </div>
             </div>
 
