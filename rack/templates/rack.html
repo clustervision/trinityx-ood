@@ -743,14 +743,12 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
         var big_element = Number($(this).find("div").attr("size"));
         var position = Number($(this).attr("slot"));
 
-        if (next_slot_count < draggable_size){        /////////////// If rack dont have enough length 
+        if (next_slot_count < draggable_size){
           $(ui.draggable).addClass('drag-revert');
-          console.log("When next slots less then the draggable size.");
         } else {
-          console.log("When next slots are not less then the draggable size.");
-          if ($(this).attr("class").includes("ui-state-highlight") && (Number($(this).children().length) == 0)){    ///////////////////// If slot is empty but tie up with some device
+          if ($(this).attr("class").includes("ui-state-highlight") && (Number($(this).children().length) == 0)){
             console.log("When has class, but don't have draggable.");
-            if(draggable_size > owner_draggable_size){                                                        /////////////// If device is bigger then the owner device
+            if(draggable_size > owner_draggable_size){
               $(ui.draggable).addClass('drag-revert');
               console.log("When draggable is bigger then owner.");
             } else {
@@ -777,14 +775,10 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
             if (draggable_size > 1){                ///////// --> If Device height is bigger
               
               if (Number.isNaN(big_element)){
-
                 if ($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).find('.rack-slot').hasClass("ui-state-highlight")){
-                  
                   if (!$(this).hasClass("ui-state-highlight")){
                     $(ui.draggable).addClass('drag-revert');
                   } else if (owner_draggable_size >= draggable_size){
-                    ///console.log("big_element "+ big_element);
-                    //exact_div.nextAll().add(exact_div).slice(0, draggable_size).find('.rack-slot').addClass("ui-state-highlight");          
                     $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
                     $(ui.draggable).css('height', owner_draggable_size*30-2);
                     $(ui.draggable).attr("size", owner_draggable_size);
@@ -793,35 +787,17 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                     each_width = String(each_width-2)+'px';
                     if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
                     exact_div.find("div").css('width', each_width);
-
-                   // exact_div.nextAll().add(exact_div).slice(0, owner_draggable_size).find('.rack-slot').addClass("ui-state-highlight"); 
-
                     dropped = true;
                     position = Number(exact_div.attr("slot"));
-
                   } else {
                     $(ui.draggable).addClass('drag-revert');
                     console.log("THIS IS THE FUCKING CASE "+ big_element);
                   }
-                  
                 } else {
-                  
-
                   if ($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").length){
                     if ($(ui.draggable).attr("id") == $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").attr("id")){
-
-                      console.log("===================================================================");
-                      console.log( $(ui.draggable).attr("id"));
-                      console.log( $(ui.draggable).parent().attr("id"));
-                      console.log($(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").attr("id"));
                       var previous_ids = $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").map(function() { return $(this).attr('id')});
-                      console.log( previous_ids);
-                      console.log( $(this).attr("id"));
-
                       if ($.inArray($(this).attr("id"), previous_ids) != -1){
-                        console.log( "yes");
-                        console.log($(this).attr("class"));
-                        console.log( previous_ids);
                         var check = 0;
                           for (let index = 0; index < previous_ids.length; index++) {
                             check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
@@ -835,77 +811,31 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                           $(this).find("div").attr("size", draggable_size);
                           dropped = true;
                           position = Number($(this).attr("slot"));
-
                         } else {
                           $(ui.draggable).addClass('drag-revert');
                         }
-                        
-
                       } else {
-                        console.log( "no");
-                        console.log( previous_ids);
                         $(ui.draggable).addClass('drag-revert');
                       }
-
-
-
-
-                      //if (($.inArray($(this).attr("id"), previous_ids) != -1) && ($(this).parent().hasClass("ui-state-highlight"))){
-                      /*        if (($.inArray($(this).attr("id"), previous_ids) != -1)){
-                        $(ui.draggable).addClass('drag-revert');
-                      } else {
-
-                        $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).find('.rack-slot').addClass("ui-state-highlight");          
-                        $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-                        $(ui.draggable).css('height', draggable_size*30-2);
-                        $(ui.draggable).attr("size", draggable_size);
-                        $(this).find("div").css('height', draggable_size*30-2);
-                        $(this).find("div").attr("size", draggable_size);
-                        dropped = true;
-                        position = Number($(this).attr("slot"));
-
-                      }
-
-                      */
-                      console.log("===================================================================");
-
-                      console.log("two aaaaa"+ draggable_size);
-                      
-
                     } else {
                       
                       $(ui.draggable).addClass('drag-revert');
                     }
-                    
-                    
                   } else {
                     
-
-
-                    
-                  
-             
-
-
                     if (exact_div.length >= 1){
                       if (!Number($(this).parent().prevAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").children("div.draggable").length)){
-
-                        
-
                         if (Number(exact_div.children("div.draggable").length) >= 1){
                           var previous_ids = exact_div.parent().nextAll().add(exact_div.parent()).slice(0, Number(exact_div.children("div.draggable").attr("size"))).children("div.rack-slot").map(function() { return $(this).attr('id')});
                           if ($.inArray($(this).attr("id"), previous_ids) != -1){
                             $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
                             $(ui.draggable).css('height', owner_draggable_size*30-2);
                             $(ui.draggable).attr("size", owner_draggable_size);
-
                             var total_elements = Number(exact_div.find("div").length);
-                          var each_width = 220 / total_elements;
-                          each_width = String(each_width-2)+'px';
-                          if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
-                          exact_div.find("div").css('width', each_width);
-
-
+                            var each_width = 220 / total_elements;
+                            each_width = String(each_width-2)+'px';
+                            if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
+                            exact_div.find("div").css('width', each_width);
                             dropped = true;
                             position = Number(exact_div.attr("slot"));
                           } else {
@@ -918,12 +848,6 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                             position = Number($(this).attr("slot"));
                           }
                         } else {   
-
-                          
-
-                          console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-                          console.log(Number(exact_div.children("div.draggable").length));
-                          console.log("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
                         
                           $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
                           $(ui.draggable).css('height', draggable_size*30-2);
@@ -934,18 +858,10 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                           position = Number($(this).attr("slot"));
                         }
 
-                          
 
                       } else {
                         var previous_ids = exact_div.parent().nextAll().add(exact_div.parent()).slice(0, Number(exact_div.children("div.draggable").attr("size"))).children("div.rack-slot").map(function() { return $(this).attr('id')});
-
-                        
-
                         if ($.inArray($(this).attr("id"), previous_ids) != -1){
-
-                          console.log("```````````````````````````````````````````````````````````````");
-                          console.log(previous_ids);
-                          console.log($(this).attr("id"));
                           var check = 0;
                           for (let index = 0; index < previous_ids.length; index++) {
                             check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
@@ -958,18 +874,8 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                             $(this).find("div").attr("size", draggable_size);
                             dropped = true;
                             position = Number($(this).attr("slot"));
-                          } else {
-                            $(ui.draggable).addClass('drag-revert');
-                          }
-          
-                          
-                          
-                          console.log("```````````````````````````````````````````````````````````````");
-
-
-                         // $(ui.draggable).addClass('drag-revert');
+                          } else { $(ui.draggable).addClass('drag-revert'); }
                         } else {
-
                           $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
                           $(ui.draggable).css('height', draggable_size*30-2);
                           $(ui.draggable).attr("size", draggable_size);
@@ -977,42 +883,8 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                           $(this).find("div").attr("size", draggable_size);
                           dropped = true;
                           position = Number($(this).attr("slot"));
-
-                         
-
-                     /*   if (draggable_size > owner_draggable_size){
-
-                          $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-                          $(ui.draggable).css('height', draggable_size*30-2);
-                          $(ui.draggable).attr("size", draggable_size);
-                          $(this).find("div").css('height', draggable_size*30-2);
-                          $(this).find("div").attr("size", draggable_size);
-                          dropped = true;
-                          position = Number($(this).attr("slot"));
-
-                        } else {
-
-                          $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
-                          $(ui.draggable).css('height', owner_draggable_size*30-2);
-                          $(ui.draggable).attr("size", owner_draggable_size);
-                          dropped = true;
-                          //position = Number($(this).attr("slot"));
-                          position = Number(exact_div.attr("slot"));
-
                         }
-                        */
-
-
-                        }
-
-                        
-
-                        
-
                       }
-                      
-                        
-
                     } else {
 
                       $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).find('.rack-slot').addClass("ui-state-highlight");          
@@ -1023,13 +895,8 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                       $(this).find("div").attr("size", draggable_size);
                       dropped = true;
                       position = Number($(this).attr("slot"));
-
                     }
-                    
-                    
-                      
                   }
-                  
                 }
               } else {
                 if (big_element >= draggable_size){
@@ -1041,17 +908,9 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                   $(this).find("div").attr("size", big_element);
                   dropped = true;
                   position = Number($(this).attr("slot"));
-                } else {
-                  $(ui.draggable).addClass('drag-revert');
-                }
+                } else { $(ui.draggable).addClass('drag-revert'); }
               }
               
-
-
-
-
-
-
             } else {
 
                 if ($(this).hasClass("ui-state-highlight")){
@@ -1063,12 +922,6 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                     dropped = true;
                     position = Number($(this).attr("slot"));
                   } else {
-
-                    console.log("===================================================================");
-                    console.log(exact_div.children("div.draggable").length);
-                    console.log($(this).parent().prevAll().add($(this).parent()).slice(0, draggable_size));
-                    console.log("===================================================================");
-
                     $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(exact_div);
                     $(ui.draggable).css('height', owner_draggable_size*30-2);
                     $(ui.draggable).attr("size", owner_draggable_size);
@@ -1079,57 +932,26 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
                     exact_div.find("div").css('width', each_width);
                     dropped = true;
                     position = Number(exact_div.attr("slot"));
-
-                    //dropped = true;
-                   // position = Number($(this).attr("slot"));
                   }
- 
-                //  var total_elements = Number(exact_div.find("div").length);
-                //  var each_width = 220 / total_elements;
-                //  each_width = String(each_width-2)+'px';
-               //   if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
-                //  exact_div.find("div").css('width', each_width);
-               //   dropped = true;
-               //   console.log("When draggable is not bigger then owner.");
-
                 } else {
-                  console.log("FOUR");
-                  
-
-
-                  console.log("draggable is big.");
                   var total_elements = Number($(this).find("div").length);
                   var big_element = Number($(this).find("div").attr("size"));
-                  
-                  if (total_elements > 1){                ///////// --> If Slot has Device
-        
+                  if (total_elements > 1){
                     $(this).parent().nextAll().add($(this).parent()).slice(1, big_element).find('.rack-slot').addClass("ui-state-highlight");            
                     $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
                     $(ui.draggable).css('height', big_element*30-2);
                     $(ui.draggable).attr("size", big_element);
-                    //$(this).addClass("ui-state-highlight" );
-                    //$(ui.draggable).css('height', $("."+source_slot+"-"+source_rack).children("div").attr("size")*30-2);
-                    console.log("this new condition");
                     dropped = true;
                     position = Number($(this).attr("slot"));
-                  } else {                ///////// --> If Slot don't have Device
-        
-        
+                  } else {
                     var source_size = Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").attr("size"));
                     $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-                    //$(ui.draggable).attr("size", big_element);
-                    //$(ui.draggable).css('height', big_element*30-2);
                     $(this).addClass("ui-state-highlight" );
-                    
                     console.log("this extra condition");
                     dropped = true;
                     position = Number($(this).attr("slot"));
                   }
-
-
                 }
-
-              
             }
           
   
@@ -1147,23 +969,78 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
               $("#"+source_slot+"-"+source_rack+source_orientation).children("div").css('width', each_div_width);
             }   
             
-            
-     
           }
-          console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-          console.log("source_slot "+ source_slot);
-          console.log("source_rack "+ source_rack);
-          console.log("source_orientation "+ source_orientation);
-          console.log($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val());
-          console.log($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"));
-          console.log($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val());
-          console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 
-          if (Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"))){
+
+          
+
+                    var previous_ids = $(this).parent().nextAll().add($(this).parent()).slice(0, Number(draggable_size)).children("div.rack-slot").map(function() { return $(this).attr('id')});
+
+                    console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+                    console.log(dropped);
+                    console.log(previous_ids);
+                    console.log($(this).attr("id"));
+                    console.log($(this).parent().nextAll().add($(this).parent()).slice(0, Number(draggable_size)).children("div.rack-slot"));
+                    console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+                        if ($.inArray($(this).attr("id"), previous_ids) != -1){
+                          var check = 0;
+                          for (let index = 0; index < previous_ids.length; index++) {
+                            check = check + Number($("#"+previous_ids[index]).children("div.draggable").length);
+                          }
+                          console.log("check "+ check);
+                          if (check == 0){
+                            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+                            $(ui.draggable).css('height', draggable_size*30-2);
+                            $(ui.draggable).attr("size", draggable_size);
+                            $(this).find("div").css('height', draggable_size*30-2);
+                            $(this).find("div").attr("size", draggable_size);
+                            dropped = true;
+                            position = Number($(this).attr("slot"));
+                          } else {
+                            $(ui.draggable).addClass('drag-revert');
+                          }
+          
+                        } else {
+
+                          $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+                          $(ui.draggable).css('height', draggable_size*30-2);
+                          $(ui.draggable).attr("size", draggable_size);
+                          $(this).find("div").css('height', draggable_size*30-2);
+                          $(this).find("div").attr("size", draggable_size);
+                          dropped = true;
+                          position = Number($(this).attr("slot"));
+
+                        }
+
+
+         // console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+  
+         // console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+         // console.log($(this).attr("id"));
+          //var previous_ids = $(this).parent().nextAll().add($(this).parent()).slice(0, draggable_size).children("div.rack-slot").map(function() { return $(this).attr('id')});
+          ////var previous_ids = exact_div.parent().prevAll().add(exact_div.parent()).slice(0, Number(exact_div.children("div.draggable").attr("size"))).children("div.rack-slot").map(function() { return $(this).attr('id')});
+          //console.log(previous_ids);
+          //var next_ids = exact_div.parent().nextAll().add(exact_div.parent()).slice(0, Number(exact_div.children("div.draggable").attr("size"))).children("div.rack-slot").map(function() { return $(this).attr('id')});
+          //console.log(next_ids);
+          //if (Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size"))){
+/*
+            if ($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val() == 'ascending'){
+              if ($.inArray($(this).attr("id"), previous_ids) != -1){
+              }
+
+            } else {
+              if ($.inArray($(this).attr("id"), next_ids) != -1){
+                $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
+                $(ui.draggable).css('height', Number($(ui.draggable).attr("size"))*30-2);
+                $(ui.draggable).attr("size", Number($(ui.draggable).attr("size")));
+                dropped = true;
+                position = Number($(this).attr("slot"));
+              }
+              
+
+            }
             
-            $(ui.draggable).detach().css({top: 0,left: 0}).appendTo(this);
-            $(ui.draggable).css('height', Number($(ui.draggable).attr("size"))*30-2);
-            $(ui.draggable).attr("size", Number($(ui.draggable).attr("size")));
+            
 
             for (let index = 0; index < Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size")); index++) {
               if ($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val() == 'ascending'){
@@ -1186,23 +1063,11 @@ function update(name=null, type=null, rack=null, position=null, orientation=null
               if (source_div_length == 1){ $("#"+source_slot+"-"+source_rack+source_orientation).children("div").find("span").show(); }
               $("#"+source_slot+"-"+source_rack+source_orientation).children("div").css('width', each_div_width);
             }
-            
+         */   
 
-          }
-
-          
-
+          //}
 
           
-         // if ($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").length >= 1){
-         //   $("#"+source_slot+"-"+source_rack+source_orientation).addClass("ui-state-highlight");
-         //   $("#"+source_slot+"-"+source_rack+source_orientation).parent().nextAll().add($("#"+source_slot+"-"+source_rack+source_orientation).parent()).slice(1, $(ui.draggable).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
-        //  }
-
-          
-
-      
-
 
 
       }
