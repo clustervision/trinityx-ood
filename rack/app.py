@@ -128,17 +128,13 @@ def update():
         rack_name = request_data['rack']
         del request_data['rack']
         payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
-        # print(payload)
         uri = f'config/rack/{rack_name}'
         result = Rest().post_raw(uri, payload)
-        # result = result.json()
     else:
         uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
         result = Rest().get_delete(TABLE, uri)
         print(f'Response {result.content} & HTTP Code {result.status_code}')
-    
     response = json.dumps(payload)
-
     return response
 
 
@@ -146,13 +142,11 @@ def update():
 @app.route('/edit/<string:page>/<string:record>', methods=['GET', 'POST'])
 def edit(page=None, record=None):
     data, error = "", ""
-    # site_list = Model().get_list_options('network')
     site_list = ''
     if page.lower() == "rack":
         table_data = Rest().get_data(TABLE, record)
     else:
         table_data = Rest().get_data(TABLE, page)
-    # print(table_data)
     if table_data:
         if page.lower() == "rack":
             if record in table_data["config"]["rack"]:
@@ -175,22 +169,20 @@ def edit(page=None, record=None):
             payload['size'] = int(payload['size'])
             request_data = {'config': {TABLE: {payload['name']: payload}}}
         else:
-            # request_data = { 'config': { TABLE: { "inventory": [{ payload['name']: payload }] } } }
             request_data = { 'config': { TABLE: { "inventory": [payload] } } }
-        
-            
         if page.lower() == "rack":
-            if payload['name'] in table_data['config'][TABLE]:
-                if 'devices' in table_data['config'][TABLE][payload['name']]:
-                    if table_data['config'][TABLE][payload['name']]['devices']:
-                        if table_data['config'][TABLE][payload['name']]['order'] != payload['order']:
-                            error = "Rack have devices, Kindly remove them before changing the Order of Rack"
-                            flash(error, "danger")
-                            return redirect(url_for('edit', page=page, record=record), code=302)
-                        if table_data['config'][TABLE][payload['name']]['size'] != payload['size']:
-                            error = "Rack have devices, Kindly remove them before changing the Size of Rack"
-                            flash(error, "danger")
-                            return redirect(url_for('edit', page=page, record=record), code=302)
+            if table_data:
+                if payload['name'] in table_data['config'][TABLE]:
+                    if 'devices' in table_data['config'][TABLE][payload['name']]:
+                        if table_data['config'][TABLE][payload['name']]['devices']:
+                            if table_data['config'][TABLE][payload['name']]['order'] != payload['order']:
+                                error = "Rack have devices, Kindly remove them before changing the Order of Rack"
+                                flash(error, "danger")
+                                return redirect(url_for('edit', page=page, record=record), code=302)
+                            if table_data['config'][TABLE][payload['name']]['size'] != payload['size']:
+                                error = "Rack have devices, Kindly remove them before changing the Size of Rack"
+                                flash(error, "danger")
+                                return redirect(url_for('edit', page=page, record=record), code=302)
 
             response = Rest().post_data(TABLE, payload['name'], request_data)
         else:
@@ -207,7 +199,6 @@ def edit(page=None, record=None):
                             error = "Inventory is configured in a Rack, Kindly remove it from there to change the orientation."
                             flash(error, "danger")
                             return redirect(url_for('edit', page=page, record=record), code=302)
-            # response = Rest().post_data(TABLE, f'{page}/{payload["name"]}', request_data)
             response = Rest().post_data(TABLE, page, request_data)
         LOGGER.info(f'{response.status_code} -> {response.content}')
         if response.status_code == 204:
@@ -229,11 +220,14 @@ def delete(page=None, record=None, device=None):
     else:
         response = Rest().get_delete(TABLE, f'inventory/{record}/type/{device}')
     LOGGER.info(f'{response.status_code} -> {response.content}')
-    # print(f'{response.status_code} -> {response.content}')
-    if response.status_code in [204, 201]:
+    if response.status_code == 204:
         flash(f'{TABLE_CAP}, {record} is deleted.', "success")
+    elif response.status_code == 201:
+        response_json = response.json()
+        flash(response_json["message"], "success")
     else:
-        flash('ERROR :: Something went wrong!', "error")
+        response_json = response.json()
+        flash(f'ERROR {response.status_code} :: {response_json["message"]}', "danger")
     return redirect(url_for('manage', page=page), code=302)
 
 
@@ -248,9 +242,6 @@ def perform(system=None, action=None, nodename=None):
     if system and action and nodename:
         uri = f'control/action/{system}/{nodename}/_{action}'
         result = Rest().get_raw(uri)
-        # print(result.content)
-        # print(result.status_code)
-
         if result.content:
             content = result.json()
             if 'control' in content.keys():
@@ -274,7 +265,6 @@ def perform(system=None, action=None, nodename=None):
         else:
             response['status'] = "warning"
             response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
-    # response['message'] = message
     return response
 
 
@@ -294,5 +284,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7059, debug=True)
-    app.run()
+    app.run(host='0.0.0.0', port=7059, debug=True)
+    # app.run()
