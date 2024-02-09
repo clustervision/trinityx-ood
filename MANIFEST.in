@@ -274,8 +274,11 @@ include rack/static/img/*
 include rack/static/js
 include rack/static/js/*
 include rack/static/icons
-include rack/static/jsicons/*
+include rack/static/icons/*
 include rack/templates
 include rack/templates/*
 include rack/templates/layout
 include rack/templates/layout/*
+
+recursive-include rack *
+
