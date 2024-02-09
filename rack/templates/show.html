@@ -863,7 +863,7 @@
         url.pop();
         url = url.join("/");
     }
-    if (url.slice(-1) == '/'){ url.slice(0,-1); }
+    if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
     var outside_url = url.replace('trinity_rack','');
     console.log(url);
     console.log(outside_url);
