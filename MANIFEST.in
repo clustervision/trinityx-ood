@@ -260,3 +260,22 @@ recursive-include infiniband *
 recursive-include slurm *
 
 recursive-include sensu *
+
+include rack
+include rack/*
+include rack/static
+include rack/static/*
+include rack/static/css
+include rack/static/css/*
+include rack/static/fonts
+include rack/static/fonts/*
+include rack/static/img
+include rack/static/img/*
+include rack/static/js
+include rack/static/js/*
+include rack/static/icons
+include rack/static/jsicons/*
+include rack/templates
+include rack/templates/*
+include rack/templates/layout
+include rack/templates/layout/*
