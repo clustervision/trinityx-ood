@@ -350,7 +350,7 @@
                           <div
                             id="{{ each_device['name'] }}"
                             style="height: {{ device_height }}px;"
-                            class="draggable ui-widget-content right-click"
+                            class="draggable ui-widget-content right-click {{ image_class }}"
                             image_class="{{ image_class }}"
                             data-bs-toggle="tooltip"
                             data-bs-html="true"
@@ -812,14 +812,14 @@
           console.log("rack is: "+ rack);
           console.log("height is: "+ height);
           console.log("====================================================>>>position is: "+ position);
-
+          /*
           var image_class = $(ui.draggable).attr('image_class');
           if (orientation == 'back'){
             $(ui.draggable).removeClass(image_class);
           } else {
             $(ui.draggable).addClass(image_class);
           }
-          
+          */
           
           /* */
           var result = update(name, type, rack, position, orientation, height);
