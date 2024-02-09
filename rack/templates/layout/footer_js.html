@@ -1,0 +1,41 @@
+<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/menu.js') }}"></script>
+<script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script type="text/javascript">
+    $('.back').hide();
+    $('#front-button').hide();
+</script>
+
+<script type="text/javascript">
+
+    function control_action(system, action, device){
+        var url = window.location.href
+        url = url.replace('#','');
+        if  (url.includes('/show/rack/')){
+            url = url.split('/');
+            url.pop();
+            url.pop();
+            url.pop();
+            url = url.join("/");
+        } 
+        url = url+'/perform/'+system+'/'+action+'/'+device;
+        console.log(url);
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            contentType: 'application/json; charset=UTF-8',
+            success: function(response_data) {
+                result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
+                $('#ajax').html();
+                $('#ajax').html(result);
+                setTimeout(function(){ $('#ajax').html(''); }, 5000);  
+                
+            }
+        });
+    }
+
+</script>

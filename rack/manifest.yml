@@ -1,0 +1,10 @@
+name: Racks
+description: Rack View
+icon: fa://server
+category: Trinity
+subcategory: Luna
+
+tile:
+  title: "Rack View"
+  sub_caption: |
+   View Devices in Racks
