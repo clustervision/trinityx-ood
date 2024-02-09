@@ -88,6 +88,7 @@
                 id="{{ each['name'] }}"
                 style="height: {{ device_height }}px; width: 220px;"
                 class="draggable ui-widget-content right-click {{ image_class }}"
+                image_class="{{ image_class }}"
                 data-bs-toggle="tooltip"
                 data-bs-html="true"
                 data-bs-placement="top"
@@ -211,6 +212,7 @@
                           id="{{ each_device['name'] }}"
                           style="height: {{ device_height }}px;"
                           class="draggable ui-widget-content right-click {{ image_class }}"
+                          image_class="{{ image_class }}"
                           data-bs-toggle="tooltip"
                           data-bs-html="true"
                           data-bs-placement="top"
@@ -348,7 +350,8 @@
                           <div
                             id="{{ each_device['name'] }}"
                             style="height: {{ device_height }}px;"
-                            class="draggable ui-widget-content right-click "
+                            class="draggable ui-widget-content right-click"
+                            image_class="{{ image_class }}"
                             data-bs-toggle="tooltip"
                             data-bs-html="true"
                             data-bs-placement="top"
@@ -777,8 +780,6 @@
 
         if (dropped === true){
 
-          console.log(exact_div);
-          console.log(exact_div.children("div.draggable"));
 
           for (let index = 0; index < Number($("#"+source_slot+"-"+source_rack+source_orientation).find("div.draggable").attr("size")); index++) {
             if ($("#"+source_slot+"-"+source_rack+source_orientation).children("input[name='order']").val() == 'ascending'){
@@ -811,6 +812,13 @@
           console.log("rack is: "+ rack);
           console.log("height is: "+ height);
           console.log("====================================================>>>position is: "+ position);
+
+          var image_class = $(ui.draggable).attr('image_class');
+          if (orientation == 'back'){
+            $(ui.draggable).removeClass(image_class);
+          } else {
+            $(ui.draggable).addClass(image_class);
+          }
           
           
           /* */
