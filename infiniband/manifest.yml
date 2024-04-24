@@ -2,7 +2,7 @@ name: Infiniband
 description: View the infiniband connection network
 icon: fa://network-wired
 category: Monitoring
-
+new_window: false
 
 tile:
   title: Infiniband

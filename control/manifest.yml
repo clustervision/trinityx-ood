@@ -1,8 +1,7 @@
 name: Control
 description: Luna2 Control Operations
 icon: fa://bolt
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Control"

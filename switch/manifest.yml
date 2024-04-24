@@ -1,8 +1,7 @@
 name: Switch
 description: Luna2 Switch Operations
 icon: fa://draw-polygon
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: Switch

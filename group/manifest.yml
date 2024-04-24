@@ -1,8 +1,7 @@
 name: Groups
 description: Luna2 Groups Operations
 icon: fa://users
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Groups"

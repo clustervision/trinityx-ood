@@ -1,8 +1,7 @@
 name: Racks
 description: Rack View
 icon: fa://server
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Rack View"

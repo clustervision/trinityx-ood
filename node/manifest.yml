@@ -1,8 +1,7 @@
 name: Nodes
 description: Luna2 Nodes Operations
 icon: fa://cube
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Nodes"

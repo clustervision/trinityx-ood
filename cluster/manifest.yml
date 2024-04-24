@@ -1,8 +1,7 @@
 name: Cluster
 description: Luna2 Cluster Operations
 icon: fa://atom
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Cluster"

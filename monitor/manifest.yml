@@ -1,8 +1,7 @@
 name: Monitor Luna
 description: Monitor Luna Status and Queue
 icon: fa://robot
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Monitor Luna"

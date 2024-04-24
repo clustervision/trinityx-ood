@@ -1,8 +1,7 @@
 name: Other Devices
 description: Luna2 Other Devices Operations
 icon: fa://cogs
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "Other Devices"

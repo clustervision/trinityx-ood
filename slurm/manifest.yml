@@ -1,8 +1,7 @@
 name: Slurm
 description: Manage slurm partitions
 icon: fa://tasks
-category: Trinity
-subcategory: Utilities
+category: Utilities
 new_window: false
 
 tile:

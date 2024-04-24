@@ -1,8 +1,7 @@
 name: DNS Records
 description: DNS Records
 icon: fa://code-branch
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "DNS Records"
