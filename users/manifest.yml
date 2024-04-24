@@ -1,16 +1,8 @@
-name: Users
-
+name: System Users
 description: Manage LDAP users and groups
-
-
 icon: fa://user
-
-
-category: Trinity
-
-
-subcategory: Utilities
-
+category: Utilities
+new_window: false
 
 
 tile:

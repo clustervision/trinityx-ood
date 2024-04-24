@@ -1,8 +1,7 @@
 name: Service
 description: Luna2 Service Operations
 icon: fa://dice-d20
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: Service

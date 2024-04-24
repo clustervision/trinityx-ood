@@ -1,8 +1,7 @@
 name: OS Image Tag
 description: Luna2 OS Image Tags Operations
 icon: fa://tags
-category: Trinity
-subcategory: Luna
+category: Luna
 
 tile:
   title: "OS Image Tags"
