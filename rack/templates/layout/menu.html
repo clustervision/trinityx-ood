@@ -6,7 +6,7 @@
       <br />
       <br />
       <br />
-      <center><h5 class="app-brand-text demo text-body fw-bolder">Rack Manage</h5></center> 
+      <center><h5 class="app-brand-text demo text-body fw-bolder">Rack Layout</h5></center> 
   </div>
 
   <div class="menu-inner-shadow"></div>
@@ -16,37 +16,134 @@
     <li class="menu-item">
       <a href="{{ url_for('home') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bx-home-circle"></i>
-        <div data-i18n="Analytics">Home</div>
+        <div data-i18n="Analytics">Rack Representation</div>
       </a>
     </li>
-
-    <!-- <li class="menu-item">
-      <a href="/manage/site" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-hive"></i>
-        <div data-i18n="Analytics">Manage Sites</div>
-      </a>
-    </li>
-
-    <li class="menu-item">
-      <a href="/manage/room" class="menu-link">
-        <i class="menu-icon tf-icons bx bx-customize"></i>
-        <div data-i18n="Analytics">Manage Rooms</div>
-      </a>
-    </li> -->
 
     <li class="menu-item">
       <a href="{{ url_for('manage', page='rack') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bxs-component"></i>
-        <div data-i18n="Analytics">Manage Racks</div>
+        <div data-i18n="Analytics">Manage Rack Frames</div>
       </a>
     </li>
 
     <li class="menu-item">
       <a href="{{ url_for('manage', page='inventory') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bx-chip"></i>
-        <div data-i18n="Analytics">Manage Inventories</div>
+        <div data-i18n="Analytics">Manage Inventory</div>
       </a>
     </li>
+
+    {% if inventory %}
+    <li class="menu-item">
+      <a href="javascript:void(0)" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-server" style="color: blue;"></i>
+        <div data-i18n="Analytics" style="color: blue;">Unassigned Device Pool</div>
+      </a>
+    </li>
+    <li class="menu-item"></li>
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <!-- <div id="inventory">asdasd -->
+      <div id="devices">
+
+            <input type="hidden" name="devices" value="devices" />
+            <input type="hidden" name="orientation" value="front" />
+            <input type="hidden" name="order" value="ascending" />
+            {% if inventory %}
+              {% for each in inventory %}
+                {% if each['type'] == "switch" %}
+                  {% set vendor = "switch" %}
+                {% else %}
+                  {% if each['vendor'] is none or each['vendor'] == '' or each['vendor'] == "None" or not each['vendor'] %}
+                    {% set vendor = "default" %}
+                  {% else %}
+                    {% if each['vendor'].lower() is not in ["dell", "hp", "lenovo", "gigabyte", "supermicro", "asus"] %}
+                      {% set vendor = "noname" %}
+                    {% else %}
+                      {% set vendor = each['vendor'].lower() %}
+                    {% endif %}
+                  {% endif %}
+                {% endif %}
+                {% set device_height = each['height']*30-2 %}
+                {% if vendor == "noname" %}
+                    {% set image_class = "noname" %}
+                {% elif vendor == "default" %}
+                    {% set image_class = "default" %}
+                {% elif vendor == "switch" %}
+                    {% set image_class = "switch" %}
+                {% else %}
+                    {% set image_class = vendor +"-" + each['height'] | string() %}
+                {% endif %}
+                
+                <div
+                  id="{{ each['name'] }}"
+                  style="height: {{ device_height }}px; width: 220px;"
+                  class="draggable ui-widget-content right-click {{ image_class }}"
+                  image_class="{{ image_class }}"
+                  data-bs-toggle="tooltip"
+                  data-bs-html="true"
+                  data-bs-placement="top"
+                  title="<strong>{{ each['type'] }}:</strong> {{ each['name'] }}"
+                  size="{{ each['height'] }}"
+                  >
+                  <input type="hidden" name="type" value="{{ each['type'] }}" />
+                  <span>{{ each['name'] }}</span>
+                  <script type="text/javascript">
+                    $(function(){
+                      var rack_order = 'ascending';
+                      $("#{{ each['name'] }}").draggable({
+                        containment: ".layout-container",
+                        start: function(event, ui) {
+                          source_rack = $(this).parent().attr('rack');
+                          source_slot = $(this).parent().attr('slot');
+                          source_orientation = $("#{{ each['name'] }}").parent().find("input[name='orientation']").val();
+                          rack_order = $("#{{ each['name'] }}").parent().find("input[name='order']").val();
+                          if ($(this).parent().attr("id") != "devices"){
+                            if ($(this).attr("size") > 1){
+                              $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
+                            } else {
+                              $(this).parent().removeClass("ui-state-highlight");
+                            }
+                          }
+                          $(this).css("z-index", 9999);
+                        },
+                        revert: function() {
+                          if ($(this).parent().attr("id") != "devices"){
+                            if ($(this).attr("size") > 1){
+                              $(this).parent().nextAll().add($(this).parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
+                            } else {
+                              $(this).parent().addClass("ui-state-highlight");
+                            }
+                          }
+                          if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                          $(this).css("z-index", "");
+                        },
+                        stop: function(event, ui) {
+                          if ($(this).parent().attr("id") != "devices"){
+                            if ($(this).attr("size") > 1){
+                              $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
+                            } else {
+                              $(this).parent().parent().addClass("ui-state-highlight");
+                            }
+                          }
+                          $(this).css("z-index", "");
+                        },
+                        cursor: "move",
+                        scroll: true,
+                        snap: ".snaptarget"
+                      });
+                    });
+                  </script>
+                </div>
+              {% endfor %}
+            {% endif %}
+
+
+          <!-- </div> -->
+        </div>
+    </li>
+
+    {% endif %}
     
   </ul>
 </aside>

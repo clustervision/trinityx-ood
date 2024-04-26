@@ -72,6 +72,11 @@ def manage(page=None):
     """
     This is the main route to manage things.
     """
+    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
+    if table_data:
+        inventory = table_data["config"]["rack"]["inventory"]
+    else:
+        inventory = {}
     data, error = "", ""
     if page == "site":
         table_data = {"config": {"rack": {"site": [{"name": "ClusterVision Amsterdam", "rooms": 2}, {"name": "ClusterVision Schiphol", "rooms": 3}] } } }
@@ -98,7 +103,7 @@ def manage(page=None):
 
     if page in ["site", "room", "rack", "inventory"]:
         page_cap = page.capitalize()
-    return render_template("manage.html", page=page_cap, data=data, error=error)
+    return render_template("manage.html", page=page_cap, inventory=inventory, data=data, error=error)
 
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
@@ -209,7 +214,14 @@ def edit(page=None, record=None):
             flash(error, "danger")
         return redirect(url_for('edit', page=page, record=record), code=302)
     page_cap = page.capitalize()
-    return render_template("change.html", page=page_cap, record=record, data=data, site_list=site_list, error=error)
+
+    
+    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
+    if table_data:
+        inventory = table_data["config"]["rack"]["inventory"]
+    else:
+        inventory = {}
+    return render_template("change.html", page=page_cap, record=record, data=data, inventory=inventory, site_list=site_list, error=error)
 
 
 @app.route('/delete/<string:page>/<string:record>', methods=['GET'])

@@ -14,15 +14,26 @@
     color: #ffffff;
 }
 
+#devices {
+  background-color: rgb(203, 209, 209);
+  height: 100%;
+  width:90%;
+  margin-left: 5%;
+  margin-right: 5%; 
+}
+
+#devices .draggable{
+  margin: 2%;
+}
 
 #devices {
   /* min-width: 180px; */
-  min-height: 200px;
-  width: 200%;
+  /* min-height: 200px; */
+  /* width: 200%; */
   /* width: auto; */
   
   /* padding-left: 2px; padding-right: 2px; margin-left: 2px; margin-right: 2px; */
-  height: auto;
+  /* height: auto; */
   /* padding: 10px; */
   /* float: right; */
   /* background-color: antiquewhite; */
@@ -56,10 +67,20 @@
 .row {
   flex-wrap: nowrap;
 }
-.card-body { 
+/* .card-body { 
+  overflow-x: auto;
+  white-space: nowrap;sa
+} */
+
+/* .card-body { 
   overflow-x: auto;
   white-space: nowrap;
 }
+
+ .draggable { 
+  overflow-x: "visible";
+  white-space: "normal";
+} */
 
 
 .playground {
