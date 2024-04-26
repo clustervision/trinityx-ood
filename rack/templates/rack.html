@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="container-fluid flex-grow-1 container-p-y">
-  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Racks /</span> Visual Representation</h4>
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack /</span> Rack Representation</h4>
   <div id="ajax"></div>
   {% if messages %}
     {% for message in messages %}
@@ -10,7 +10,7 @@
     {% endfor %}
   {% endif %}
       
-  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <!-- <script src="https://code.jquery.com/jquery-3.6.0.js"></script> -->
   
   <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
     <div class="toast-header">
@@ -43,110 +43,7 @@
       {% endif %}
     </div>
 
-    <div class="card-body revert-back">
-      <div id="inventory">
-        <div class="row">
-          <div class="col col-6">
-            <strong>Available Devices to put in Rack(s) <i class="bx bx-sm bx-info-circle" style="color: #03c3ec;"></i></strong>
-          </div>
-          <div class="col col-6">
-            <button style="float: right;" class="btn btn-sm btn-info me-1 collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#devices" aria-expanded="false" aria-controls="devices">Devices</button>
-          </div>
-        </div>
-        <br />
-        <div id="devices" class="collapse ui-widget-header scrollmenu">
-          <input type="hidden" name="devices" value="devices" />
-          <input type="hidden" name="orientation" value="front" />
-          <input type="hidden" name="order" value="ascending" />
-          {% if inventory %}
-            {% for each in inventory %}
-              {% if each['type'] == "switch" %}
-                {% set vendor = "switch" %}
-              {% else %}
-                {% if each['vendor'] is none or each['vendor'] == '' or each['vendor'] == "None" or not each['vendor'] %}
-                  {% set vendor = "default" %}
-                {% else %}
-                  {% if each['vendor'].lower() is not in ["dell", "hp", "lenovo", "gigabyte", "supermicro", "asus"] %}
-                    {% set vendor = "noname" %}
-                  {% else %}
-                    {% set vendor = each['vendor'].lower() %}
-                  {% endif %}
-                {% endif %}
-              {% endif %}
-              {% set device_height = each['height']*30-2 %}
-              {% if vendor == "noname" %}
-                  {% set image_class = "noname" %}
-              {% elif vendor == "default" %}
-                  {% set image_class = "default" %}
-              {% elif vendor == "switch" %}
-                  {% set image_class = "switch" %}
-              {% else %}
-                  {% set image_class = vendor +"-" + each['height'] | string() %}
-              {% endif %}
-              
-              <div
-                id="{{ each['name'] }}"
-                style="height: {{ device_height }}px; width: 220px;"
-                class="draggable ui-widget-content right-click {{ image_class }}"
-                image_class="{{ image_class }}"
-                data-bs-toggle="tooltip"
-                data-bs-html="true"
-                data-bs-placement="top"
-                title="<strong>{{ each['type'] }}:</strong> {{ each['name'] }}"
-                size="{{ each['height'] }}"
-                >
-                <input type="hidden" name="type" value="{{ each['type'] }}" />
-                <span>{{ each['name'] }}</span>
-                <script type="text/javascript">
-                  $(function(){
-                    var rack_order = 'ascending';
-                    $("#{{ each['name'] }}").draggable({
-                      containment: ".card-body",
-                      start: function(event, ui) {
-                        source_rack = $(this).parent().attr('rack');
-                        source_slot = $(this).parent().attr('slot');
-                        source_orientation = $("#{{ each['name'] }}").parent().find("input[name='orientation']").val();
-                        rack_order = $("#{{ each['name'] }}").parent().find("input[name='order']").val();
-                        if ($(this).parent().attr("id") != "devices"){
-                          if ($(this).attr("size") > 1){
-                            $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').removeClass("ui-state-highlight");
-                          } else {
-                            $(this).parent().removeClass("ui-state-highlight");
-                          }
-                        }
-                      },
-                      revert: function() {
-                        if ($(this).parent().attr("id") != "devices"){
-                          if ($(this).attr("size") > 1){
-                            $(this).parent().nextAll().add($(this).parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
-                          } else {
-                            $(this).parent().addClass("ui-state-highlight");
-                          }
-                        }
-                        if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
-                      },
-                      stop: function(event, ui) {
-                        if ($(this).parent().attr("id") != "devices"){
-                          if ($(this).attr("size") > 1){
-                            $(this).parent().parent().nextAll().add($(this).parent().parent()).slice(0, $(this).attr("size")).find('.rack-slot').addClass("ui-state-highlight");
-                          } else {
-                            $(this).parent().parent().addClass("ui-state-highlight");
-                          }
-                        }
-                      },
-                      cursor: "move",
-                      scroll: true,
-                      snap: ".snaptarget"
-                    });
-                  });
-                </script>
-              </div>
-            {% endfor %}
-          {% endif %}
-        </div>
-        <br />
-      </div>
-      
+    <div class="card-body">
       {% if rack_data %}
         {% for key, value in rack_data.items() %}
 
@@ -245,7 +142,7 @@
                               }
 
                               $("#{{ each_device['name'] }}").draggable({
-                                containment: ".card-body",
+                                containment: ".layout-container",
                                 start: function(event, ui) { 
                                   source_rack = $(this).parent().attr('rack');
                                   source_slot = $(this).parent().attr('slot');
@@ -256,6 +153,7 @@
                                   } else {
                                     $(this).parent().removeClass("ui-state-highlight");
                                   }
+                                  $(this).css("z-index", 999999999);
                                 },
                                 revert: function() {
                                   if (!$(this).parent().attr("id").includes("devices")){
@@ -266,8 +164,11 @@
                                     }
                                   }
                                   if ($(this).hasClass('drag-revert')) { $(this).removeClass('drag-revert'); return true; } 
+                                  $(this).css("z-index", "");
                                 },
-                                stop: function(event, ui) { },
+                                stop: function(event, ui) { 
+                                  $(this).css("z-index", "");
+                                },
                                 cursor: "move",
                                 scroll: true,
                                 snap: ".snaptarget"
@@ -385,7 +286,7 @@
                                 }
   
                                 $("#{{ each_device['name'] }}").draggable({
-                                  containment: ".card-body",
+                                  containment: ".layout-container",
                                   start: function(event, ui) { 
                                     source_rack = $(this).parent().attr('rack');
                                     source_slot = $(this).parent().attr('slot');
