@@ -430,10 +430,8 @@ class Helper():
         """
         try:
             if content is not None:
-                content = content.replace("\n", "\\n")
-                content = content.replace("\r", "\\r")
-                content = content.replace("\t", "\\t")
-                content = base64.b64decode(content, validate=True).decode("utf-8")
+                content = base64.b64decode(content)
+                content = content.decode("utf-8")
         except binascii.Error:
             self.logger.debug(f'Base64 Decode Error => {content}')
         except UnicodeDecodeError:
@@ -473,24 +471,27 @@ class Helper():
         if value not in  [None, True, False] and isinstance(value, str):
             response = self.base64_decode(value)
         return response
-    
 
-    def nested_dict(self, dictionary=None):
+
+    def nested_dict(self, dictionary=None, limit=False):
         """
         This method will check the nested dictionary.
         """
         for key, value in dictionary.items():
             if isinstance(value, str):
-                doc = nested_alter({key : value}, key, self.callback)
-                dictionary[key] = doc[key]
+                if key in EDITOR_KEYS:
+                    doc = nested_alter({key : value}, key, self.callback)
+                    dictionary[key] = self.less_content(doc[key], limit)
+                else:
+                    dictionary[key] = value
             elif isinstance(value, dict):
-                return self.nested_dict(dictionary)
+                return self.nested_dict(dictionary, limit)
             elif isinstance(value, list):
-                return self.nested_list(dictionary, key, value)
+                return self.nested_list(dictionary, key, value, limit)
         return dictionary
 
 
-    def nested_list(self, dictionary=None, key=None, value=None):
+    def nested_list(self, dictionary=None, key=None, value=None, limit=False):
         """
         This method will check the list for a dictionary.
         """
@@ -498,58 +499,55 @@ class Helper():
         if value:
             for occurrence in value:
                 if isinstance(occurrence, str):
-                    doc = nested_alter({key : occurrence}, key, self.callback)
-                    response.append(doc[key])
+                    if key in EDITOR_KEYS:
+                        doc = nested_alter({key : occurrence}, key, self.callback)
+                        response.append(self.less_content(doc[key], limit))
+                    else:
+                        response.append(occurrence)
                 elif isinstance(occurrence, dict):
-                    response.append(self.nested_dict(occurrence))
+                    response.append(self.nested_dict(occurrence, limit))
         dictionary[key] = response
         return dictionary
+
+
+    def less_content(self, content=None, limit=False):
+        """
+        This method will reduce the length of the content.
+        """
+        if limit:
+            if content not in  [None, True, False] and isinstance(content, str):
+                if len(content) > 60:
+                    content = content[:60]+' ...'
+        return content
 
 
     def prepare_json(self, json_data=None, limit=False):
         """
         This method will decode the base 64 string.
         """
+        self.logger.debug(f'Data Limit => {limit}')
         if isinstance(json_data, dict):
             for key, value in json_data.items():
                 if isinstance(value, str):
-                    doc = nested_alter({key : value}, key, self.callback)
-                    json_data[key] = doc[key]
+                    if key in EDITOR_KEYS:
+                        doc = nested_alter({key : value}, key, self.callback)
+                        json_data[key] = self.less_content(doc[key], limit)
+                    else:
+                        json_data[key] = value
                 elif isinstance(value, dict):
-                    json_data[key] = self.nested_dict(value)
+                    json_data[key] = self.nested_dict(value, limit)
                 elif isinstance(value, list):
-                    alist = []
+                    final_list = []
                     if value:
                         for occurrence in value:
                             if isinstance(occurrence, str):
                                 doc = nested_alter({key : occurrence}, key, self.callback)
-                                alist.append(doc[key])
+                                final_list.append(self.less_content(doc[key], limit))
                             elif isinstance(occurrence, dict):
-                                alist.append(self.nested_dict(occurrence))
-                    json_data[key] = alist
+                                final_list.append(self.nested_dict(occurrence, limit))
+                    json_data[key] = final_list
         return json_data
 
-
-    # def prepare_json(self, json_data=None, limit=False):
-    #     """
-    #     This method will decode the base 64 string.
-    #     """
-    #     for key in EDITOR_KEYS:
-    #         content = nested_lookup(key, json_data)
-    #         if content:
-    #             if content[0] is not None:
-    #                 try:
-    #                     content = self.base64_decode(content[0])
-    #                     if limit:
-    #                         if len(content) and '<empty>' not in content:
-    #                             content = content[:60]
-    #                             if '\n' in content:
-    #                                 content = content.removesuffix('\n')
-    #                             content = f'{content}...'
-    #                     json_data = nested_update(json_data, key=key, value=content)
-    #                 except TypeError:
-    #                     self.logger.debug(f"Without any reason {content} is coming from api.")
-    #     return json_data
 
 
     def filter_data_col(self, table=None, data=None):
