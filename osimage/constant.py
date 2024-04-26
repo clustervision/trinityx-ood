@@ -32,7 +32,7 @@ INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript', 'grab_filesystems', 'grab_exclude', 'kerneloptions']
 
 
 def filter_columns(table=None):

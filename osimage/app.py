@@ -76,8 +76,8 @@ def show(record=None):
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE][record]
-        raw_data = Helper().prepare_json(raw_data)
-        fields, rows  = Helper().filter_data_col(TABLE, raw_data)
+        json_data = Helper().prepare_json(raw_data)
+        fields, rows  = Helper().filter_data_col(TABLE, json_data)
         data = Presenter().show_table_col(fields, rows)
         data = unescape(data)
     else:
