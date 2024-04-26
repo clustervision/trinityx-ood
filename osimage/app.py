@@ -158,7 +158,7 @@ def edit(record=None):
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(TABLE, payload)
-        if payload['tag'] == '' or payload['tag'] == 'default':
+        if data['tag'] == payload['tag']:
             del payload['tag']
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
@@ -205,7 +205,7 @@ def clone(record=None):
         for k, v in payload.items():
             if v == 'on':
                 payload[k] = True
-        if payload['tag'] == '' or payload['tag'] == 'default':
+        if data['tag'] == payload['tag']:
             del payload['tag']
         response = Helper().clone_record(TABLE, payload)
         LOGGER.info(f'{response.status_code} {response.content}')

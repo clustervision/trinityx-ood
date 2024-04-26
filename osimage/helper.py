@@ -511,29 +511,6 @@ class Helper():
         return json_data
 
 
-
-    # def prepare_json(self, json_data=None, limit=False):
-    #     """
-    #     This method will decode the base 64 string.
-    #     """
-    #     for key in EDITOR_KEYS:
-    #         content = nested_lookup(key, json_data)
-    #         if content:
-    #             if content[0] is not None:
-    #                 try:
-    #                     content = self.base64_decode(content[0])
-    #                     if limit:
-    #                         if len(content) and '<empty>' not in content:
-    #                             content = content[:60]
-    #                             if '\n' in content:
-    #                                 content = content.removesuffix('\n')
-    #                             content = f'{content}...'
-    #                     json_data = nested_update(json_data, key=key, value=content)
-    #                 except TypeError:
-    #                     self.logger.debug(f"Without any reason {content} is coming from api.")
-    #     return json_data
-
-
     def filter_data_col(self, table=None, data=None):
         """
         This method will generate the data as for
