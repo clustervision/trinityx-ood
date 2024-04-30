@@ -1,0 +1,14 @@
+
+<nav class="navbar navbar-light">
+    <ol class="breadcrumb bg-transparent d-flex align-items-center">
+        <img src="{{ url_for( 'static', filename='/img/logo.png') }}" class="img-logo">
+        <li class="breadcrumb-item">
+        <a class="align-middle" href="/">Home</a>
+        </li>
+        <li class="breadcrumb-item">
+        <a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a>
+        </li>
+    </ol>
+</nav>
+
+
