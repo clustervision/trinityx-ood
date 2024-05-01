@@ -1,14 +1,9 @@
 
-<nav class="navbar navbar-light">
+<nav class="navbar navbar-light" style="background-color: #e7e7e7;">
     <ol class="breadcrumb bg-transparent d-flex align-items-center">
         <img src="{{ url_for( 'static', filename='/img/logo.png') }}" class="img-logo">
-        <li class="breadcrumb-item">
-        <a class="align-middle" href="/">Home</a>
-        </li>
-        <li class="breadcrumb-item">
-        <a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a>
-        </li>
+        <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
+        <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a></li>
+        {% if data.name %}<li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ data.name }}</a></li>{% endif %}
     </ol>
 </nav>
-
-
