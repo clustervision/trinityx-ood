@@ -6,6 +6,12 @@
         </a>
         <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
         <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a></li>
-        {% if data.name %}<li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ data.name }}</a></li>{% endif %}
+        {% if record %}
+            <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, **request.view_args) }}">{{ request.endpoint | capitalize  }} {{ record }}</a></li>
+        {% elif data and data.name  %}
+            <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, record=data.name ) }}">{{ request.endpoint | capitalize  }} {{ data.name }}</a></li>
+        {% elif page  %}
+            <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint) }}">{{ request.endpoint | capitalize  }}</a></li>
+        {% endif %}
     </ol>
 </nav>
