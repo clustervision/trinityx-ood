@@ -62,7 +62,7 @@ def home():
     current_state['dns'] = service_status('dns', 'status')
     current_state['luna2'] = service_status('luna2', 'status')
     LOGGER.info(current_state)
-    return render_template("service.html", current_state=current_state, response=response)
+    return render_template("service.html", current_state=current_state, response=response, table=f'Manage {TABLE_CAP}', data=None)
 
 
 @app.route('/get_request/<string:status>/<string:service_name>/<string:action>', methods=['GET'])
