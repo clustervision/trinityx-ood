@@ -30,6 +30,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+import types
 import os
 from html import unescape
 from flask import Flask, request, render_template, flash, url_for, redirect
@@ -93,6 +94,8 @@ def add():
     """
     This Method will add a requested record.
     """
+    page = types.SimpleNamespace()
+    page.name = f"Add New {TABLE_CAP}"
     network_list = Model().get_list_options('network')
 
     if request.method == 'POST':
@@ -115,7 +118,7 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table=TABLE_CAP, network_list=network_list)
+        return render_template("add.html", table=TABLE_CAP, network_list=network_list, page=page)
 
 
 
