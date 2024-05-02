@@ -30,6 +30,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+import types
 import os
 from html import unescape
 from flask import Flask, json, request, render_template, flash, url_for, redirect
@@ -90,6 +91,8 @@ def add():
     """
     This Method will add a requested record.
     """
+    page = types.SimpleNamespace()
+    page.name = f"Add New {TABLE_CAP}"
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         table_data = Rest().get_data(TABLE, payload['name'])
@@ -111,7 +114,7 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table=TABLE_CAP)
+        return render_template("add.html", table=TABLE_CAP, page=page)
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
