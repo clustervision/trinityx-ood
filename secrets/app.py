@@ -83,7 +83,7 @@ def home(entity=None):
         if entity == 'node':
             group_secrets = ''
 
-    return render_template("inventory.html", table = table.capitalize(), secrets=secrets, group_secrets=group_secrets, node_secrets=node_secrets)
+    return render_template("inventory.html", table = table.capitalize(), secrets=secrets, group_secrets=group_secrets, node_secrets=node_secrets, data=None, entity=entity)
 
 
 @app.route('/show/<string:table>/<string:record>/<string:secret>', methods=['GET'])
@@ -109,7 +109,7 @@ def show(table=None, record=None, secret=None):
         data = unescape(data)
     else:
         error = f'{record} From {table.capitalize()} is Not available at this time'
-    return render_template("info.html", table = f'{entity.capitalize()} Secret', data = data, entity_name=entity_name, secret_name=secret_name)
+    return render_template("info.html", table = table.capitalize(), data = data, entity=entity, entity_name=entity_name, secret_name=secret_name, record=record)
 
 
 @app.route('/get_list/<string:table>', methods=['GET', 'POST'])
@@ -130,6 +130,7 @@ def add(table=None):
     """
     This Method will add a requested record.
     """
+    page = "Add New Secret"
     table_split = table.split('_')
     entity = table_split[0]
     table_name = table_split[1]
@@ -161,7 +162,7 @@ def add(table=None):
             flash(error, "error")
             return redirect(url_for('add', table=table), code=302)
     else:
-        return render_template("add.html", table = table_capital, entity=entity, select_list=select_list)
+        return render_template("add.html", table = table_name.capitalize(), entity=entity, select_list=select_list, page=page)
 
 
 @app.route('/edit/<string:table>/<string:record>/<string:secret>', methods=['GET', 'POST'])
@@ -198,7 +199,7 @@ def edit(table=None, record=None, secret=None):
             flash(error, "error")
         return redirect(url_for('edit', table=return_table, record=record, secret=secret), code=302)
     else:
-        return render_template("edit.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name)
+        return render_template("edit.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name, record=record)
 
 
 @app.route('/delete/<string:table>/<string:record>/<string:secret>', methods=['GET'])
