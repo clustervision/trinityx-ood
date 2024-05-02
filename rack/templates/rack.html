@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="container-fluid flex-grow-1 container-p-y">
-  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack /</span> Rack Representation</h4>
+  <!-- <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack /</span> Rack Representation</h4> -->
   <div id="ajax"></div>
   {% if messages %}
     {% for message in messages %}
@@ -35,7 +35,7 @@
   <div class="card mb-4">
 
     <div class="card-header d-flex align-items-center justify-content-between">
-      <h5 class="mb-0">Rack Position</h5>
+      <h5 class="mb-0">Rack Representation</h5>
       <small class="text-muted float-end">Change Position here...</small>
       {% if rack_data %}
         <button style="float: right;" id="front-button" class="btn btn-sm btn-secondary" type="button" onclick="$('.front').show();$('.back').hide();$('#front-button').hide();$('#back-button').show();">Flip to Front View</button>

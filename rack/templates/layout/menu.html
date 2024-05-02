@@ -1,33 +1,23 @@
 
-<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-  <div class="app-brand demo">
-      <br />
-      <br />
-      <br />
-      <br />
-      <br />
-      <center><h5 class="app-brand-text demo text-body fw-bolder">Rack Layout</h5></center> 
-  </div>
-
-  <div class="menu-inner-shadow"></div>
+<aside id="layout-menu" class="menu-vertical menu bg-menu-theme">
 
   <ul class="menu-inner py-1">
     <!-- Dashboard -->
-    <li class="menu-item">
+    <li class="menu-item {% if request.endpoint == 'home' %}active{% endif %}">
       <a href="{{ url_for('home') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bx-home-circle"></i>
         <div data-i18n="Analytics">Rack Representation</div>
       </a>
     </li>
 
-    <li class="menu-item">
+    <li class="menu-item {% if request.endpoint in ['manage', 'edit', 'show'] and page == 'Rack' %}active{% endif %}">
       <a href="{{ url_for('manage', page='rack') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bxs-component"></i>
         <div data-i18n="Analytics">Manage Rack Frames</div>
       </a>
     </li>
 
-    <li class="menu-item">
+    <li class="menu-item {% if request.endpoint in ['manage', 'edit'] and page == 'Inventory' %}active{% endif %}">
       <a href="{{ url_for('manage', page='inventory') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bx-chip"></i>
         <div data-i18n="Analytics">Manage Inventory</div>

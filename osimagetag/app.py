@@ -90,7 +90,7 @@ def show(osimage=None):
         if response.status_code == 204:
             flash(f'OS Image Tag {payload["tag"]}, added successfully on {payload["osimage"]}.', "success")
             return redirect(url_for('show', osimage=payload['osimage']), code=302)
-    return render_template("info.html", table=TABLE_CAP, data=data, error=error, osimage=osimage)
+    return render_template("info.html", table=TABLE_CAP, data=data, error=error, osimage=osimage, record=osimage)
 
 
 @app.route('/delete/<string:osimage>/<string:tag>', methods=['GET'])

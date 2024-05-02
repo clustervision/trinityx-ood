@@ -1,0 +1,26 @@
+
+<nav class="navbar shadow-sm navbar-light">
+    <ol class="breadcrumb bg-transparent d-flex align-items-center">
+        <a href="/" aria-current="page" role="menuitem">
+            <img src="{{ url_for( 'static', filename='/img/logo.png') }}" class="img-logo">
+        </a>
+        <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
+        <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a></li>
+        {% if record %}
+            {% if request.endpoint == 'edit' %}
+                <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, **request.view_args) }}">{% if record %}Update{% else %}Add{% endif %} {% if page == 'Rack' %} {{ page }} Frames{% else %} {{ page }}{% endif %} {{ record }}</a></li>
+            {% else %}
+                <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, **request.view_args) }}">{% if record %}Show{% else %}Add{% endif %} {% if page == 'Rack' %} {{ page }} Frames{% else %} {{ page }}{% endif %} {{ record }}</a></li>
+                {% endif %}
+            {% elif data and data.name  %}
+            <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, record=data.name ) }}">{{ request.endpoint | capitalize  }} {{ data.name }}</a></li>
+        {% elif page %}
+            {% if request.endpoint == 'edit' %}
+                <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, page=page| lower) }}">Add {% if page == 'Rack' %} {{ page }} Frames{% else %} {{ page }}{% endif %}</a></li>
+            {% else %}
+                <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, page=page| lower) }}">{{ request.endpoint | capitalize  }}{% if page == 'Rack' %} {{ page }} Frames{% else %} {{ page }}{% endif %}</a></li>
+            {% endif %}
+        {% endif %}
+    </ol>
+</nav>
+

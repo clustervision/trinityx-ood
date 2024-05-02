@@ -31,6 +31,7 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 
+import types
 import os
 import json
 from string import Template
@@ -104,6 +105,8 @@ def add():
     """
     This Method will add a requested record.
     """
+    page = types.SimpleNamespace()
+    page.name = f"Add New {TABLE_CAP}"
     group_list = Model().get_list_option_html('group')
     bmcsetup_list = Model().get_list_option_html('bmcsetup')
     switch_list = Model().get_list_option_html('switch')
@@ -135,7 +138,7 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table=TABLE_CAP, switch_list=switch_list, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list)
+        return render_template("add.html", table=TABLE_CAP, switch_list=switch_list, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, group_list=group_list, page=page)
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
