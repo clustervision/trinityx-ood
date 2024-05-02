@@ -1,8 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<div class="container-xxl flex-grow-1 container-p-y">
-  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Rack / Manage{% if page == 'Rack' %} {{ page }} Frames{% else %} {{ page }}{% endif %} /</span> {% if record %}Update{% else %}Add{% endif %} {{ page }}</h4>
+<div class="container-fluid flex-grow-1 container-p-y">
   
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}

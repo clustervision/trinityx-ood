@@ -30,6 +30,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+import types
 import os
 import json
 from textwrap import wrap
@@ -64,7 +65,7 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
+    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None)
 
 
 @app.route('/manage/<string:page>', methods=['GET'])
@@ -72,6 +73,8 @@ def manage(page=None):
     """
     This is the main route to manage things.
     """
+    # nav = types.SimpleNamespace()
+    # nav.name = f"Manage {TABLE_CAP}"
     table_data = Rest().get_data(TABLE, "inventory/unconfigured")
     if table_data:
         inventory = table_data["config"]["rack"]["inventory"]
@@ -103,7 +106,7 @@ def manage(page=None):
 
     if page in ["site", "room", "rack", "inventory"]:
         page_cap = page.capitalize()
-    return render_template("manage.html", page=page_cap, inventory=inventory, data=data, error=error)
+    return render_template("manage.html", table=TABLE_CAP, page=page_cap, inventory=inventory, data=data, error=error)
 
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
@@ -221,7 +224,7 @@ def edit(page=None, record=None):
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-    return render_template("change.html", page=page_cap, record=record, data=data, inventory=inventory, site_list=site_list, error=error)
+    return render_template("change.html", table=TABLE_CAP, page=page_cap, record=record, data=data, inventory=inventory, site_list=site_list, error=error)
 
 
 @app.route('/delete/<string:page>/<string:record>', methods=['GET'])
