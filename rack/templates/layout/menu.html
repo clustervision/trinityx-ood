@@ -95,7 +95,7 @@
                               $(this).parent().removeClass("ui-state-highlight");
                             }
                           }
-                          $(this).css("z-index", 9999);
+                          $(this).css("z-index", 999999999);
                         },
                         revert: function() {
                           if ($(this).parent().attr("id") != "devices"){
@@ -132,6 +132,15 @@
           <!-- </div> -->
         </div>
     </li>
+    {% else %}
+    <li class="menu-item">
+      <a href="javascript:void(0)" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-server" style="color: red;"></i>
+        <div data-i18n="Analytics" style="color: red;">Unassigned Device Pool</div>
+      </a>
+    </li>
+    <li class="menu-item"></li>
+    <div id="devices"></div>
 
     {% endif %}
     

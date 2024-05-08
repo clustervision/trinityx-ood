@@ -8826,7 +8826,7 @@ button.list-group-item-gray.active {
 }
 
 .overflow-auto {
-  overflow: auto !important;
+  /* overflow: auto !important; */
 }
 
 .overflow-hidden {
