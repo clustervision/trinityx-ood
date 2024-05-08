@@ -2,6 +2,7 @@ name: Other Devices
 description: Luna2 Other Devices Operations
 icon: fa://cogs
 category: Luna
+new_window: false
 
 tile:
   title: "Other Devices"

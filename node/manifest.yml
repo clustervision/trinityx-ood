@@ -2,6 +2,7 @@ name: Nodes
 description: Luna2 Nodes Operations
 icon: fa://cube
 category: Luna
+new_window: false
 
 tile:
   title: "Nodes"

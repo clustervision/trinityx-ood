@@ -2,6 +2,7 @@ name: Racks
 description: Rack View
 icon: fa://server
 category: Luna
+new_window: false
 
 tile:
   title: "Rack View"

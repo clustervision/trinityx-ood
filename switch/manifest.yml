@@ -2,6 +2,7 @@ name: Switch
 description: Luna2 Switch Operations
 icon: fa://draw-polygon
 category: Luna
+new_window: false
 
 tile:
   title: Switch

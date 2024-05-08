@@ -2,6 +2,7 @@ name: DNS Records
 description: DNS Records
 icon: fa://code-branch
 category: Luna
+new_window: false
 
 tile:
   title: "DNS Records"

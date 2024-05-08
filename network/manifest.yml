@@ -2,6 +2,7 @@ name: Networks
 description: Luna2 Network Operations
 icon: fa://bezier-curve
 category: Luna
+new_window: false
 
 tile:
   title: "Networks"
