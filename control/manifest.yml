@@ -2,6 +2,7 @@ name: Control
 description: Luna2 Control Operations
 icon: fa://bolt
 category: Luna
+new_window: false
 
 tile:
   title: "Control"

@@ -2,6 +2,7 @@ name: Groups
 description: Luna2 Groups Operations
 icon: fa://cubes
 category: Luna
+new_window: false
 
 tile:
   title: "Groups"

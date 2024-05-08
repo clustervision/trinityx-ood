@@ -2,6 +2,7 @@ name: Monitor Luna
 description: Monitor Luna Status and Queue
 icon: fa://robot
 category: Luna
+new_window: false
 
 tile:
   title: "Monitor Luna"

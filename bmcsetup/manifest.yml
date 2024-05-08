@@ -2,6 +2,7 @@ name: BMC Setup
 description: Luna2 BMC Setup Operations
 icon: fa://charging-station
 category: Luna
+new_window: false
 
 tile:
   title: "BMC Setup"

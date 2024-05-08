@@ -2,6 +2,7 @@ name: OS Image Tag
 description: Luna2 OS Image Tags Operations
 icon: fa://tags
 category: Luna
+new_window: false
 
 tile:
   title: "OS Image Tags"

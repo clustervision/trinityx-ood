@@ -2,6 +2,7 @@ name: Service
 description: Luna2 Service Operations
 icon: fa://dice-d20
 category: Luna
+new_window: false
 
 tile:
   title: Service
