@@ -1,6 +1,6 @@
 #layout-menu {
   /* margin-top: 4% !important; */
-  height: 88% !important;
+  /* height: 88% !important; */
 }
 .layout-menu-fixed:not(.layout-menu-collapsed) .layout-page, .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
   padding: 0rem;
@@ -20,6 +20,7 @@
 
 .ui-widget-content {
     /* border: 1px solid #dddddd; */
+    border: null;
     background: #363636;
     color: #ffffff;
 }

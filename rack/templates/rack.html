@@ -10,7 +10,7 @@
     {% endfor %}
   {% endif %}
       
-  <!-- <script src="https://code.jquery.com/jquery-3.6.0.js"></script> -->
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
   
   <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
     <div class="toast-header">
@@ -128,7 +128,7 @@
                               if (orientation == 'front'){
                                 var total_elements = Number($("#"+device_position+"-"+rack_name+"front").find("div").length);
                                 var each_width = 220 / total_elements;
-                                each_width = String(each_width-2)+'px';
+                                each_width = String(each_width-total_elements-2)+'px';
                                 if (total_elements != 1){ $("#"+device_position+"-"+rack_name+"front").find("span").hide(); } else { $("#"+device_position+"-"+rack_name+"front").find("span").show(); }
                                 $("#"+device_position+"-"+rack_name+"front").find("div").css('width', each_width);
                                 for (let index = 0; index < device_height; index++) {
@@ -272,7 +272,7 @@
                                 if (orientation == 'back'){
                                   var total_elements = Number($("#"+device_position+"-"+rack_name+"back").find("div").length);
                                   var each_width = 220 / total_elements;
-                                  each_width = String(each_width-2)+'px';
+                                  each_width = String(each_width-total_elements-2)+'px';
                                   if (total_elements != 1){ $("#"+device_position+"-"+rack_name+"back").find("span").hide(); } else { $("#"+device_position+"-"+rack_name+"back").find("span").show(); }
                                   $("#"+device_position+"-"+rack_name+"back").find("div").css('width', each_width);
                                   for (let index = 0; index < device_height; index++) {
@@ -398,7 +398,7 @@
           }
         } else {
           var each_width = 220 / source_items;
-          each_width = String(each_width-2)+'px';
+          each_width = String(each_width-source_items-2)+'px';
           if (source_items != 1){ $("#"+source_slot+"-"+source_rack+orientation).find("span").hide(); } else { $("#"+source_slot+"-"+source_rack+orientation).find("span").show(); }
           $("#"+source_slot+"-"+source_rack+orientation).find("div").css('width', each_width);
           $(ui.draggable).css('width', '218px');
@@ -460,7 +460,7 @@
               
               var total_elements = Number(exact_div.find("div").length);
               var each_width = 220 / total_elements;
-              each_width = String(each_width-2)+'px';
+              each_width = String(each_width-total_elements-2)+'px';
               if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
               exact_div.find("div").css('width', each_width);
               dropped = true;
@@ -484,7 +484,7 @@
                     $(ui.draggable).attr("size", owner_draggable_size);
                     var total_elements = Number(exact_div.find("div").length);
                     var each_width = 220 / total_elements;
-                    each_width = String(each_width-2)+'px';
+                    each_width = String(each_width-total_elements-2)+'px';
                     if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
                     exact_div.find("div").css('width', each_width);
                     dropped = true;
@@ -535,7 +535,7 @@
                             $(ui.draggable).attr("size", owner_draggable_size);
                             var total_elements = Number(exact_div.find("div").length);
                             var each_width = 220 / total_elements;
-                            each_width = String(each_width-2)+'px';
+                            each_width = String(each_width-total_elements-2)+'px';
                             if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
                             exact_div.find("div").css('width', each_width);
                             dropped = true;
@@ -630,7 +630,7 @@
                     $(ui.draggable).attr("size", owner_draggable_size);
                     var total_elements = Number(exact_div.find("div").length);
                     var each_width = 220 / total_elements;
-                    each_width = String(each_width-2)+'px';
+                    each_width = String(each_width-total_elements-2)+'px';
                     if (total_elements != 1){ exact_div.find("span").hide(); } else { exact_div.find("span").show(); }
                     exact_div.find("div").css('width', each_width);
                     dropped = true;
@@ -661,13 +661,13 @@
            
             var total_elements = Number($(this).find("div").length);
             var each_width = 220 / total_elements;
-            each_width = String(each_width-2)+'px';
+            each_width = String(each_width-total_elements-2)+'px';
             if (total_elements != 1){ $(this).find("span").hide(); } else { $(this).find("span").show(); }
             $(this).find("div").css('width', each_width);
             var source_div_length = Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length);
             if (source_div_length >= 1){
               var each_div_width = 220 / source_div_length;
-              each_div_width = String(each_div_width-2)+'px';
+              each_div_width = String(each_div_width-source_div_length-2)+'px';
               if (source_div_length == 1){ $("#"+source_slot+"-"+source_rack+source_orientation).children("div").find("span").show(); }
               $("#"+source_slot+"-"+source_rack+source_orientation).children("div").css('width', each_div_width);
             }   
@@ -694,7 +694,7 @@
           var source_div_length = Number($("#"+source_slot+"-"+source_rack+source_orientation).children("div").length);
             if (source_div_length >= 1){
               var each_div_width = 220 / source_div_length;
-              each_div_width = String(each_div_width-2)+'px';
+              each_div_width = String(each_div_width-source_div_length-2)+'px';
               if (source_div_length == 1){ $("#"+source_slot+"-"+source_rack+source_orientation).children("div").find("span").show(); }
               $("#"+source_slot+"-"+source_rack+source_orientation).children("div").css('width', each_div_width);
             }
@@ -766,6 +766,7 @@
     menu.find('.header').html(title);
     return menu;
   }
+
 
   
   $('.right-click').bind('contextmenu', function(e) {
