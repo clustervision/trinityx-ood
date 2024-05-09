@@ -43,4 +43,52 @@
     }
     
   </style>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+
+  <script type="text/javascript">
+
+    var url = window.location.href
+    url = url.replace('#','');
+    if  (url.includes('/show/rack/')){
+        url = url.split('/');
+        url.pop();
+        url.pop();
+        url.pop();
+        url = url.join("/");
+    }
+    if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
+
+    function sendScreenSize(){
+      var width;
+      var height;
+      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      var screenHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+      var payload = { "width": screenWidth, "height": screenHeight }
+      $.ajax({
+          url: url+"/get_screen_size",
+          type: 'POST',
+          data: JSON.stringify(payload),
+          dataType: 'json',
+          contentType: 'application/json; charset=UTF-8',
+          async: false,
+          success: function(response_data) {
+              width = response_data.width
+              height = response_data.height
+          }
+      });
+      return { width, height };
+    }
+
+    window.addEventListener('resize', function() {
+        // Call sendScreenSize function whenever window is resized
+        sendScreenSize();
+    });
+
+    console.log('Screenheight:', sendScreenSize().width);
+    console.log('Screenheight:', sendScreenSize().height);
+    console.log('============>>> Real response received from server:', sendScreenSize());
+
+  </script>
+
   

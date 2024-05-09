@@ -3,6 +3,7 @@
 
   <ul class="menu-inner py-1">
     <!-- Dashboard -->
+    <br />
     <li class="menu-item {% if request.endpoint == 'home' %}active{% endif %}">
       <a href="{{ url_for('home') }}" class="menu-link">
         <i class="menu-icon tf-icons bx bx-home-circle"></i>
@@ -32,8 +33,6 @@
       </a>
     </li>
     <li class="menu-item"></li>
-    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-    <!-- <div id="inventory">asdasd -->
       <div id="devices">
 
             <input type="hidden" name="devices" value="devices" />
@@ -67,7 +66,6 @@
                 
                 <div
                   id="{{ each['name'] }}"
-                  style="height: {{ device_height }}px; width: 220px;"
                   class="draggable ui-widget-content right-click {{ image_class }}"
                   image_class="{{ image_class }}"
                   data-bs-toggle="tooltip"
@@ -76,8 +74,14 @@
                   title="<strong>{{ each['type'] }}:</strong> {{ each['name'] }}"
                   size="{{ each['height'] }}"
                   >
+                  <script type="text/javascript">
+                    var screen_height = Number("{{ each['height'] }}")*Number(sendScreenSize().height)-2;
+                    screen_height = screen_height;
+                    $("#{{ each['name'] }}").css('height', screen_height);
+                    $("#{{ each['name'] }}").css('width', sendScreenSize().width);
+                  </script>
                   <input type="hidden" name="type" value="{{ each['type'] }}" />
-                  <span>{{ each['name'] }}</span>
+                  <span id="dev-name">{{ each['name'] }}</span>
                   <script type="text/javascript">
                     $(function(){
                       var rack_order = 'ascending';
@@ -127,16 +131,13 @@
                 </div>
               {% endfor %}
             {% endif %}
-
-
-          <!-- </div> -->
         </div>
     </li>
     {% else %}
     <li class="menu-item">
       <a href="javascript:void(0)" class="menu-link">
         <i class="menu-icon tf-icons bx bx-server" style="color: red;"></i>
-        <div data-i18n="Analytics" style="color: red;">Unassigned Device Pool</div>
+        <div data-i18n="Analytics" style="color: red;">Device Pool <strong>EMPTY</strong></div>
       </a>
     </li>
     <li class="menu-item"></li>
