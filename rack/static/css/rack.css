@@ -1,25 +1,27 @@
-#layout-menu {
-  /* margin-top: 4% !important; */
-  /* height: 88% !important; */
-}
+
 .layout-menu-fixed:not(.layout-menu-collapsed) .layout-page, .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
   padding: 0rem;
 }
 
+/* ------------ Introducing Media Query to Make Large and Small Layouts for Rack and it's components. ----------------- */
+
+/* ------------ Small Screen View ----------------- */
+
+
+@media only screen and (max-width: 1920px) {
+  .card-body {
+    background-color: lightblue;
+  }
 
 
 .draggable {
-  /* width: 218px; */
   height: 30px;
   padding: 0;
   margin: 0;
   text-align: center;
-  /* float: left; */
 }
 
-
 .ui-widget-content {
-    /* border: 1px solid #dddddd; */
     border: null;
     background: #363636;
     color: #ffffff;
@@ -37,24 +39,6 @@
   margin: 2%;
 }
 
-#devices {
-  /* min-width: 180px; */
-  /* min-height: 200px; */
-  /* width: 200%; */
-  /* width: auto; */
-  
-  /* padding-left: 2px; padding-right: 2px; margin-left: 2px; margin-right: 2px; */
-  /* height: auto; */
-  /* padding: 10px; */
-  /* float: right; */
-  /* background-color: antiquewhite; */
-}
-
-/* #devices .draggable {
-  margin: 10px;
-  float: left;
-  display: inline-block;
-} */
 
 .ui-state-hover {
   border: 1px solid #cccccc;
@@ -63,36 +47,15 @@
   color: #ffffff;
 }
 
-.scrollmenu {
-  /* overflow-x: scroll; */
-  /* overflow-y: auto; */
-  /* white-space: nowrap; */
-}
 
 .right-click {
   display: inline-block;
   text-align: center;
 }
 
-
 .row {
   flex-wrap: nowrap;
 }
-/* .card-body { 
-  overflow-x: auto;
-  white-space: nowrap;sa
-} */
-
-/* .card-body { 
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
- .draggable { 
-  overflow-x: "visible";
-  white-space: "normal";
-} */
-
 
 .playground {
   display: inline-block;
@@ -149,13 +112,134 @@
   height: 30px;
   padding: 0;
   margin: 0;
-  /* border: 0; */
-  /* background-color: #cacaca; */
   color:#ffffff;
 }
 .rack-slot p {
   margin: 0;
 }
+
+}
+
+/* ------------ Small Screen View ----------------- */
+
+
+/* ------------ Large Screen View ----------------- */
+@media only screen and (min-width: 1921px) {
+  .card-body {
+    background-color: palegreen;
+  }
+
+
+  .draggable {
+    height: 30px;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+  }
+  
+  .ui-widget-content {
+      border: null;
+      background: #363636;
+      color: #ffffff;
+  }
+  
+  #devices {
+    background-color: rgb(203, 209, 209);
+    height: 100%;
+    width:90%;
+    margin-left: 5%;
+    margin-right: 5%; 
+  }
+  
+  #devices .draggable{
+    margin: 2%;
+  }
+  
+  
+  .ui-state-hover {
+    border: 1px solid #cccccc;
+    background: #067a19;
+    font-weight:bolder;
+    color: #ffffff;
+  }
+  
+  
+  .right-click {
+    display: inline-block;
+    text-align: center;
+  }
+  
+  .row {
+    flex-wrap: nowrap;
+  }
+  
+  .playground {
+    display: inline-block;
+    float: none;
+    margin-right: 30px;
+  }
+  
+  
+  .rack-pillar {
+    width: 15px;
+    background-color: #3a3a3a;
+    color:#ffffff;
+    padding: 1%;
+  }
+  .rack-base {
+    width: 300px;
+    height: 15px;
+    background-color: #3a3a3a;
+    color:#ffffff;
+  }
+  .rack-name {
+    width: 220px;
+    background-color: #bebebe;
+    color:#000000;
+  }
+  
+  .rack-pillar-front {
+    width: 15px;
+    background-color: #cecece;
+    color:#000000;
+    padding: 1%;
+  }
+  .rack-base-front {
+    width: 300px;
+    height: 15px;
+    background-color: #cecece;
+    color:#000000;
+  }
+  .rack-name-front {
+    width: 220px;
+    background-color: #e7e7e7;
+    color:#000000;
+  }
+  
+  .rack-unit {
+    width: 25px;
+    height: 30px;
+    background-color: #aaaaaa;
+    color:#000000;
+    padding: 1%;
+  }
+  .rack-slot {
+    width: 220px;
+    height: 30px;
+    padding: 0;
+    margin: 0;
+    color:#ffffff;
+  }
+  .rack-slot p {
+    margin: 0;
+  }
+
+}
+
+/* ------------ Large Screen View ----------------- */
+
+/* ------------ Introducing Media Query to Make Large and Small Layouts for Rack and it's components. ----------------- */
+
 
 /* Servers Skins Depends on the size and availability.  */
 

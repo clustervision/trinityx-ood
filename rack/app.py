@@ -35,7 +35,7 @@ import os
 import json
 from textwrap import wrap
 from html import unescape
-from flask import Flask, render_template, request, flash, url_for, redirect
+from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
 from rest import Rest
 from constant import LICENSE
 from log import Log
@@ -66,6 +66,22 @@ def home():
     else:
         inventory = {}
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None)
+
+
+@app.route('/get_screen_size', methods=['POST'])
+def get_screen_size():
+    data = request.json
+    width = data['width']
+    if width >= 1921:
+        width = 220
+    else:
+        width = 120
+    height = data['height']
+    # Process screen size data as needed
+    print(f"Screen Width: {width}, Screen Height: {height}")
+    # return 'Screen size received successfully'
+    # return jsonify({'width': width})
+    return f'{width}'
 
 
 @app.route('/manage/<string:page>', methods=['GET'])

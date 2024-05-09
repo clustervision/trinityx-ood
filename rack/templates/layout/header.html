@@ -43,4 +43,98 @@
     }
     
   </style>
-  
+
+
+
+
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+
+
+
+
+
+  <script type="text/javascript">
+
+    var url = window.location.href
+    url = url.replace('#','');
+    if  (url.includes('/show/rack/')){
+        url = url.split('/');
+        url.pop();
+        url.pop();
+        url.pop();
+        url = url.join("/");
+    }
+    if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
+
+    function sendScreenSize(){
+      var response;
+      var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+      var screenHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+      var payload = { "width": screenWidth, "height": screenHeight }
+      $.ajax({
+          url: url+"/get_screen_size",
+          type: 'POST',
+          data: JSON.stringify(payload),
+          dataType: 'json',
+          contentType: 'application/json; charset=UTF-8',
+          async: false,
+          success: function(response_data) {
+              response = response_data
+          }
+      });
+      return response;
+    }
+    
+    console.log('============>>> Real response received from server:', sendScreenSize());
+
+
+  </script>
+
+
+
+
+  <!-- <script>
+    var real_width;
+    var url = window.location.href
+    url = url.replace('#','');
+    if  (url.includes('/show/rack/')){
+        url = url.split('/');
+        url.pop();
+        url.pop();
+        url.pop();
+        url = url.join("/");
+    }
+    if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
+
+    function sendScreenSize() {
+        // Get screen width and height
+        var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+        var screenHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+
+        // Send screen size to Flask server
+        fetch('/get_screen_size', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ width: screenWidth, height: screenHeight })
+        })
+        .then(response => response.json())
+        .then(data => {
+            real_width = data.width;
+            console.log('Width received from server:', data.width);
+            // Use width received from server as needed
+            return real_width;
+        });
+        return real_width;
+    }
+
+    // Initial call to send screen size
+    real_width = sendScreenSize();
+
+    // Event listener to trigger sendScreenSize() whenever the window is resized
+    //real_width =  window.addEventListener('resize', sendScreenSize);
+
+    //console.log('============>>> Real Width received from server:', real_width);
+
+</script> -->
