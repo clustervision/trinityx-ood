@@ -74,14 +74,12 @@ def get_screen_size():
     width = data['width']
     if width >= 1921:
         width = 220
+        height = 30
     else:
         width = 120
-    height = data['height']
-    # Process screen size data as needed
-    print(f"Screen Width: {width}, Screen Height: {height}")
-    # return 'Screen size received successfully'
-    # return jsonify({'width': width})
-    return f'{width}'
+        height = 20
+    # print(f"Screen Width: {width}, Screen Height: {height}")
+    return jsonify({'width': width, 'height': height})
 
 
 @app.route('/manage/<string:page>', methods=['GET'])
