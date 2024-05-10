@@ -50,12 +50,14 @@
 
     var url = window.location.href
     url = url.replace('#','');
-    if  (url.includes('/show/rack/')){
+    console.log(url);
+    if  (url.includes('/show/rack/') || url.includes('/manage/rack') || url.includes('/manage/inventory') || url.includes('/edit/')){
         url = url.split('/');
         url.pop();
         url.pop();
         url.pop();
         url = url.join("/");
+        console.log(url);
     }
     if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
 
