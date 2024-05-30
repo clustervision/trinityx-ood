@@ -129,7 +129,6 @@ def action(target, name, action):
         raise Exception(f'Invalid action {action}, should be either update or delete')
     if action in ['update', 'create']:
         data = request.get_json(force=True) or {}
-        print(data)
         if target == 'users':
             if 'uid' not in data:
                 raise Exception(f'Invalid data {data}, should contain username')
