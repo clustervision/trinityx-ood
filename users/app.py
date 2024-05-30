@@ -39,14 +39,8 @@ from json import loads, dumps
 app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
 fields = {
-    'table': {
-        'users': ['uid'],
-        'groups': ['gid']
-    },
-    'modal': {
-        'users': [ "uid", "cn", "sn", "givenName",  "uidNumber", "gidNumber", "homeDirectory", "loginShell", "telephoneNumber", "mail", "shadowExpire", "shadowLastChange", "userPassword", 'memberOf'],
-        'groups': ['cn', 'gidNumber', 'member']
-    }
+    'users': [ "uid", "cn", "sn", "givenName",  "uidNumber", "gidNumber", "homeDirectory", "loginShell", "telephoneNumber", "mail", "shadowExpire", "shadowLastChange", "userPassword", 'memberOf'],
+    'groups': ['cn', 'gidNumber', 'member']
 }
 
 
@@ -125,7 +119,7 @@ def modal(target, mode, name):
                            item=item,
                            all_users=all_users,
                            all_groups=all_groups,
-                           fields=fields['modal'][target])
+                           fields=fields[target])
 
 
 @app.route("/action/<target>/<name>/_<action>", methods=['GET', 'POST'])
@@ -135,26 +129,26 @@ def action(target, name, action):
         raise Exception(f'Invalid action {action}, should be either update or delete')
     if action in ['update', 'create']:
         data = request.get_json(force=True) or {}
+        print(data)
         if target == 'users':
-            if 'username' not in data:
+            if 'uid' not in data:
                 raise Exception(f'Invalid data {data}, should contain username')
             else:
-                name = data.pop('username')
+                name = data.pop('uid')
         if target == 'groups':
-            if 'groupname' not in data:
+            if 'cn' not in data:
                 raise Exception(f'Invalid data {data}, should contain groupname')
             else:
-                name = data.pop('groupname')
+                name = data.pop('cn')
     else:
         data = {}
     if name is None:
         raise Exception(f'Invalid name {name}, should be a valid name')
 
-    data = {k:(v or None) for k,v in data.items() if k not in ['last_change']}
+    data = {k:(v if v != '' else None) for k,v in data.items() if k not in ['lastChange']}
     try:
         old_data = handler.get(target, name)
         for key, old_value in old_data.items():
-            print(key, old_value)
             if data.get(key) == str(old_value):
                 data[key] = None
     except:

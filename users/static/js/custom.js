@@ -111,16 +111,16 @@ function handleSubmitButton(target, name, mode) {
 
     $("#modal-form input.form-entry").map(function () { formdata[$(this).attr('id')] = $(this).val() })
     if (target == 'groups') {
-        formdata['users'] = [];
+        formdata['member'] = [];
         $('#modal-form select.form-entry option:selected').each(function () {
-            formdata['users'].push($(this).val());
+            formdata['member'].push($(this).val());
         })
     }
 
     if (target == 'users') {
-        formdata['groups'] = [];
+        formdata['memberOf'] = [];
         $('#modal-form select.form-entry option:selected').each(function () {
-            formdata['groups'].push($(this).val());
+            formdata['memberOf'].push($(this).val());
         })
     }
 
