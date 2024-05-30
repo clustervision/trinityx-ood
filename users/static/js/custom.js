@@ -7,10 +7,10 @@ function renderNewUserButton(cell, formatterParams) {
     return "<button class='btn btn-primary' onclick='handle_new_button(\"users\")'>Add new user</button>"
 }
 function renderUpdateUserButton(cell, formatterParams) {
-    return "<button class='btn btn-primary' onclick='handleUpdateButton(\"users\", \"" + cell.getData().name + "\")'>Edit</button>"
+    return "<button class='btn btn-primary' onclick='handleUpdateButton(\"users\", \"" + cell.getData().uid + "\")'>Edit</button>"
 }
 function renderDeleteUserButton(cell, formatterParams) {
-    return "<button class='btn btn-danger' onclick='handleDeleteButton(\"users\", \"" + cell.getData().name + "\")'>Delete</button>"
+    return "<button class='btn btn-danger' onclick='handleDeleteButton(\"users\", \"" + cell.getData().uid + "\")'>Delete</button>"
 }
 function renderUserButtons(cell, formatterParams) {
     return renderUpdateUserButton(cell, formatterParams) + " " + renderDeleteUserButton(cell, formatterParams)
@@ -20,10 +20,10 @@ function renderNewGroupButton(cell, formatterParams) {
     return "<button class='btn btn-primary' onclick='handle_new_button(\"groups\")'>Add new Group</button>"
 }
 function renderUpdateGroupButton(cell, formatterParams) {
-    return "<button class='btn btn-primary' onclick='handleUpdateButton(\"groups\", \"" + cell.getData().name + "\")'>Edit</button>"
+    return "<button class='btn btn-primary' onclick='handleUpdateButton(\"groups\", \"" + cell.getData().cn + "\")'>Edit</button>"
 }
 function renderDeleteGroupButton(cell, formatterParams) {
-    return "<button class='btn btn-danger' onclick='handleDeleteButton(\"groups\", \"" + cell.getData().name + "\")'>Delete</button>"
+    return "<button class='btn btn-danger' onclick='handleDeleteButton(\"groups\", \"" + cell.getData().cn + "\")'>Delete</button>"
 }
 function renderGroupButtons(cell, formatterParams) {
     return renderUpdateGroupButton(cell, formatterParams) + " " + renderDeleteGroupButton(cell, formatterParams)
@@ -157,19 +157,21 @@ window.onload = function () {
         ajaxURL: currentUrl + '/users',
         columns: [
             { formatter:"responsiveCollapse", width:"10%", hozAlign:"center", headerSort:false},
-            { title: "Name", field: "name", sorter:"string", width:"40%", responsive: 0},
-            { title: "UID", field: "uid", sorter: "string",width:"10%", responsive: 0},
+            { title: "Name", field: "uid", sorter:"string", width:"40%", responsive: 0},
+            { title: "UID", field: "uidNumber", sorter: "string",width:"10%", responsive: 0},
             { title: "Actions", field: "actions", formatter: "html", width: 200, align: "center",width:"40%", responsive: 0, formatter: renderUserButtons },
-            { title: "GID", field: "gid", sorter: "string", responsive: 1},
-            { title: "Home", field: "homedir", sorter: "string", responsive: 1},
-            { title: "Shell", field: "shell", sorter: "string", responsive: 1},
-            { title: "Groups", field: "groups", sorter: "string", responsive: 1},
-            { title: "Password", field: "password", sorter: "string", responsive: 1},
-            { title: "Surname", field: "surname", sorter: "string", responsive: 1},
-            { title: "Given Name", field: "givenname", sorter: "string", responsive: 1},
-            { title: "Email", field: "email", sorter: "string", responsive: 1},
-            { title : "Expire", field: "expire", sorter: "string", responsive: 1},
-            { title: "Last Change", field: "last_change", sorter: "string", responsive: 1},
+            { title: "GID", field: "gidNumber", sorter: "string", responsive: 1},
+            { title: "Home", field: "homeDirectory", sorter: "string", responsive: 1},
+            { title: "Shell", field: "loginShell", sorter: "string", responsive: 1},
+            { title: "Groups", field: "memberOf", sorter: "string", responsive: 1},
+            { title: "Password", field: "userPassword", sorter: "string", responsive: 1},
+            { title: "Common Name", field: "cn", sorter: "string", responsive: 1},
+            { title: "Given Name", field: "givenName", sorter: "string", responsive: 1},
+            { title: "Surname", field: "sn", sorter: "string", responsive: 1},
+            { title: "Email", field: "mail", sorter: "string", responsive: 1},
+            { title: "Phone", field: "telephoneNumber", sorter: "string", responsive: 1},
+            { title: "Expire", field: "shadowExpire", sorter: "string", responsive: 1},
+            { title: "Last Change", field: "shadowLastChange", sorter: "string", responsive: 1},
         ],
         layout: "fitData",
         responsiveLayout:"collapse",
@@ -177,7 +179,7 @@ window.onload = function () {
         paginationSize: 10,
         paginationSizeSelector: [10, 20, 50, 100],
         initialSort: [
-            { column: "name", dir: "asc" },
+            { column: "uid", dir: "asc" },
         ],
         responsiveLayoutCollapseStartOpen:false,
     });
@@ -186,10 +188,10 @@ window.onload = function () {
         ajaxURL: currentUrl + '/groups',
         columns: [
             { formatter:"responsiveCollapse", width:"10%", hozAlign:"center", headerSort:false},
-            { title: "Name", field: "name", sorter:"string", width:"40%", responsive: 0},
-            { title: "GID", field: "gid", sorter: "string",width:"10%", responsive: 0},
+            { title: "Name", field: "cn", sorter:"string", width:"40%", responsive: 0},
+            { title: "GID", field: "gidNumber", sorter: "string",width:"10%", responsive: 0},
             { title: "Actions", field: "actions", formatter: "html", width: 200, align: "center",width:"40%", responsive: 0, formatter: renderGroupButtons },
-            { title: "Users", field: "users", sorter: "string", responsive: 1}
+            { title: "Users", field: "member", sorter: "string", responsive: 1}
         ],
         layout: "fitData",
         responsiveLayout:"collapse",
@@ -197,7 +199,7 @@ window.onload = function () {
         paginationSize: 10,
         paginationSizeSelector: [10, 20, 50, 100],
         initialSort: [
-            { column: "name", dir: "asc" },
+            { column: "cn", dir: "asc" },
         ],
         responsiveLayoutCollapseStartOpen:false,
     });

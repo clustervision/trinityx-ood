@@ -1,44 +1,46 @@
 {% set item = item or {} %}
 <form id="modal-form">
+  {{ item }}
   {% for field in fields %}
   <div class="form-group">
     <label for="{{field}}">{{field}}</label>
-    {% if field == 'users' %}
+    {% if field == 'member' %}
+    
     {% if mode in ['create','update'] %}
-
-    <select name="users" id="users-select" class="form-entry" multiple="multiple">
+    <select name="member" id="member-select" class="form-entry" multiple="multiple">
       {% for user in all_users %}
-      <option value="{{user.name}}" {{'selected' if user.name in item['users']}}>{{user.name}}</option>
+      <option value="{{user.uid}}" {{'selected' if user.uid in item['member']}}>{{user.uid}}</option>
       {% endfor %}
     </select>
     {% else %}
     <ul>
-      {% for user in item['users'] %}
-      <li>{{user.name}}</li>
+      {% for user in item['member'] %}
+      <li>{{user.uid}}</li>
       {% endfor %}
     </ul>
     {% endif %}
-    {% elif field == 'groups' %}
+    
+    {% elif field == 'memberOf' %}
     {% if mode in ['create','update'] %}
-    <select name="groups" id="groups-select" class="form-entry" multiple="multiple">
+    <select name="memberOf" id="memberOf-select" class="form-entry" multiple="multiple">
       {% for group in all_groups %}
-      <option value="{{group.name}}" {{'selected' if group.name in item['groups']}}>{{group.name}}</option>
+      <option value="{{group.cn}}" {{'selected' if group.cn in item['memberOf']}}>{{group.cn}}</option>
       {% endfor %}
     </select>
     {% else %}
     <ul>
-      {% for group in item['groups'] %}
-      <li>{{group.name}}</li>
+      {% for group in item['memberOf'] %}
+      <li>{{group.cn}}</li>
       {% endfor %}
     </ul>
     {% endif %}
     {% else %}
 
     <input type="text" class="form-control form-entry" id="{{field}}"
-      value="{% if field in  ['username', 'groupname'] %}{{name or ''}}{% elif field in ['password'] %}{{''}}{% else %}{{item[field] or ''}}{% endif %}"
+      value="{% if field in ['userPassword'] %}{{''}}{% else %}{{item[field] or ''}}{% endif %}"
       aria-describedby="{{field}}Help" placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
-      {{ 'disabled' if (mode=='show' ) or (mode=='update' and field in ['username', 'groupname' ]) }} {{ 'disabled' if
-      (mode=='update' ) and field in ['last_change', 'uid' , 'gid' ] }}>
+      {{ 'disabled' if (mode=='show' ) or (mode=='update' and ((target=='user' and field=='uid') or (target=='group' and field=='gid'))) }} {{ 'disabled' if
+      (mode=='update' ) and field in ['shadowLastChange', 'uidNumber' , 'gidNumber' ] }}>
     {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
   </div>
   {% endif %}
@@ -47,8 +49,8 @@
 </form>
 <script>
   $(document).ready(function () {
-    $('#users-select').multiselect();
-    $('#groups-select').multiselect();
+    $('#member-select').multiselect();
+    $('#memberOf-select').multiselect();
   });
 </script>
 <!-- </div> -->

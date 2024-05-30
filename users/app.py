@@ -44,8 +44,8 @@ fields = {
         'groups': ['gid']
     },
     'modal': {
-        'users': ['username', "uid", "gid", "homedir", "shell", "surname", "givenname", "phone", "email", "expire", "last_change", "password", 'groups'],
-        'groups': ['groupname', 'gid', 'users']
+        'users': [ "uid", "cn", "sn", "givenName",  "uidNumber", "gidNumber", "homeDirectory", "loginShell", "telephoneNumber", "mail", "shadowExpire", "shadowLastChange", "userPassword", 'memberOf'],
+        'groups': ['cn', 'gidNumber', 'member']
     }
 }
 
