@@ -144,7 +144,7 @@ def action(target, name, action):
     if name is None:
         raise Exception(f'Invalid name {name}, should be a valid name')
 
-    data = {k:(v if v != '' else None) for k,v in data.items() if k not in ['lastChange']}
+    data = {k:(v if v != '' else None) for k,v in data.items() if k not in ['shadowLastChange']}
     try:
         old_data = handler.get(target, name)
         for key, old_value in old_data.items():
