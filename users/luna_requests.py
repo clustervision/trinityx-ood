@@ -20,7 +20,9 @@
 import requests
 from base.config import settings, get_token, get_luna_url
 from multiprocessing.pool import ThreadPool
+import urllib3
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class LunaRequestHandler():
     endpoints = {
@@ -61,20 +63,18 @@ class LunaRequestHandler():
         elif resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {resp.text} while listing {target}, received status code {resp.status_code}")
         data = resp.json()['config'][f"os{target[:-1]}"]
-        data = [{'name': k, **v} for k, v in data.items()]
-
-
+        # data = [{'name': k, **v} for k, v in data.items()]
 
         # for item in data:
         #     additional_info = self.get(target, item['name'])
         #     item.update(additional_info)
 
-        tpool = ThreadPool(5)
-        additional_data = tpool.map(lambda x: self.get(target, x['name']), data)
-        tpool.close()
-        tpool.join()
-        for item, additional_info in zip(data, additional_data):
-            item.update(additional_info)
+        # tpool = ThreadPool(5)
+        # additional_data = tpool.map(lambda x: self.get(target, x['name']), data)
+        # tpool.close()
+        # tpool.join()
+        # for item, additional_info in zip(data, additional_data):
+        #     item.update(additional_info)
             
         return data
 
@@ -114,3 +114,9 @@ class LunaRequestHandler():
 
 if __name__ == "__main__":
     handler = LunaRequestHandler()
+    from pprint import pprint
+    pprint(handler.list('users'))
+    pprint(handler.list('groups'))
+    pprint(handler.get('users', 'test'))
+    pprint(handler.get('groups', 'test'))
+    
