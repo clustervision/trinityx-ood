@@ -39,9 +39,28 @@ from json import loads, dumps
 app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
 fields = {
-    'users': [ "uid", "cn", "sn", "givenName",  "uidNumber", "gidNumber", "homeDirectory", "loginShell", "telephoneNumber", "mail", "shadowExpire", "shadowLastChange", "userPassword", 'memberOf'],
-    'groups': ['cn', 'gidNumber', 'member']
-}
+    'users': { 
+        "uid": {"label": "Username"},
+        "cn": {"label": "Common Name"},
+        "sn": {"label": "Surname"},
+        "givenName": {"label": "Given Name"},
+        "uidNumber": {"label": "UID"},
+        "gidNumber": {"label": "GID"},
+        "homeDirectory": {"label": "Home Directory"},
+        "loginShell": {"label": "Login Shell"},
+        "telephoneNumber": {"label": "Telephone Number"},
+        "mail": {"label": "Email"},
+        "shadowExpire": {"label": "Password Expire"},
+        "shadowLastChange": {"label": "Last Change"},
+        "userPassword": {"label": "Password"},
+        'memberOf': {"label": "Groups"},
+        },
+    'groups': {
+        'cn': {},
+        'gidNumber': {},
+        'member' : {},
+        }
+    }
 
 
 @app.template_filter('get_names')

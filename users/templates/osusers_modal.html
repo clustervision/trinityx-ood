@@ -1,8 +1,8 @@
 {% set item = item or {} %}
 <form id="modal-form">
-  {% for field in fields %}
+  {% for field, props in fields.items() %}
   <div class="form-group">
-    <label for="{{field}}">{{field}}</label>
+    <label for="{{field}}">{{props.label}}</label>
     {% if field == 'member' %}
     
     {% if mode in ['create','update'] %}
@@ -35,11 +35,16 @@
     {% endif %}
     {% else %}
 
-    <input type="text" class="form-control form-entry" id="{{field}}"
+    <input 
+      type="text" \
+      class="form-control form-entry" 
+      id="{{field}}"
       value="{% if field in ['userPassword'] %}{{''}}{% else %}{{item[field] or ''}}{% endif %}"
-      aria-describedby="{{field}}Help" placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
-      {{ 'disabled' if (mode=='show' ) or (mode=='update' and ((target=='user' and field=='uid') or (target=='group' and field=='gid'))) }} {{ 'disabled' if
-      (mode=='update' ) and field in ['shadowLastChange', 'uidNumber' , 'gidNumber' ] }}>
+      aria-describedby="{{field}}Help" 
+      placeholder="{{ 'Enter ' + field if mode in ['create', 'update'] else ''}}"
+      {{ 'disabled' if (mode=='show') }} 
+      {{ 'disabled' if (mode=='update') and ((target=='user' and field=='uid') or (target=='group' and field=='gid')) }}
+      {{ 'disabled' if (mode=='update') and field in ['shadowLastChange', 'uidNumber' , 'gidNumber' ] }}>
     {# <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> #}
   </div>
   {% endif %}
