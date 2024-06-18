@@ -27,8 +27,6 @@ function linkStrokeWidth(l, highlighted) {
 function linkRotationAngle(d) {
     var angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x);
     var angleDeg = ((angle * 180 / Math.PI) + 360) % 360;
-    if (d.target.id == "S-ec0d9a0300ec8480" && d.source.id == "S-ec0d9a0300ec8200") {
-    }
     return angleDeg
 }
 function linkLabelTransform(d, type){
@@ -157,8 +155,6 @@ const Context = {
             return  d3.forceSimulation(this.nodes())
                     .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                     .on("tick", () => this.ticked())
-;
-r
         }
 
     },
@@ -336,7 +332,13 @@ r
         this.nodeContainerItems.on("mouseout", (e) => {
             this.unselected();
         });
-
+        this.linkContainerItems.on("mouseover", (e) => {
+            l = d3.select(e.target).datum();
+            this.linkselected(l.source.uid, l.target.uid)
+        });
+        this.linkContainerItems.on("mouseout", (e) => {
+            this.unselected();
+        });
 
 
         if (this.data.state){
@@ -347,9 +349,11 @@ r
                     d.y = nodePosition.y;
                 }
             });
+            if (this.data.state.zoom){
+                this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(this.data.state.zoom.x, this.data.state.zoom.y).scale(this.data.state.zoom.k));
+            }
             this.setSimulationType(this.data.state.simulationType);
             this.ticked()
-            this.fitzoom();
         } else {
             this._simulation = this.simulation()
         }
@@ -398,7 +402,7 @@ r
         $("#node-label-button").click(() => this.showlabel("node"));
         $("#link-label-button").click(() => this.showlabel("link"));
     },
-    initialized() {
+    async initialized() {
         this._containerInitialized();
         this._tableInitialized();
         this._graphInitialized();
@@ -475,29 +479,16 @@ r
         });
     },
     getState() {
+        var currentTransform = d3.zoomTransform(context.containerItem.node())
+
         var state = {
             simulationType: this.getSimulationType(),
-            nodePositions: this.nodes().map(d => { return {id: d.id, x: d.x, y: d.y} })
+            nodePositions: this.nodes().map(d => { return {id: d.id, x: d.x, y: d.y} }),
+            zoom: {x: currentTransform.x, y: currentTransform.y, k: currentTransform.k}
         }
         return state;
     },
-    fitzoom() {
-        var minX = d3.min(this.nodes(), d => d.x);
-        var maxX = d3.max(this.nodes(), d => d.x);
-        var minY = d3.min(this.nodes(), d => d.y);
-        var maxY = d3.max(this.nodes(), d => d.y);
-        var midX = (minX + maxX) / 2;
-        var midY = (minY + maxY) / 2;
 
-        var width = maxX - minX;
-        var height = maxY - minY;
-        var scale = 0.9 / Math.max(width / this.width(), height / this.height());
-        var translateX = this.width() / 2 - scale * midX;
-        var translateY = this.height() / 2 - scale * midY;
-
-        this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
-        
-    }
     
 }
 

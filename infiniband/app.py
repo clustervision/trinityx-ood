@@ -1,15 +1,21 @@
 import re
 import os
 import subprocess
+import requests
 from json import loads, dumps, JSONDecodeError
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 
 from base.config import settings
 
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
+
+STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
+PROMETHEUS_ENDPOINT = "https://localhost:9090"
+IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
+
 
 
 @app.errorhandler(Exception)
@@ -20,7 +26,6 @@ def wrap_errors(error):
     if app.debug:
         raise error
     return dumps({"message": str(error)}), 500
-
 
 def _compress_portrange(port_ids):
     port_ids = sorted(list(set(port_ids)))
@@ -40,7 +45,6 @@ def _compress_portrange(port_ids):
     if start is not None:
         port_ranges.append(f"{start}-{end}")
     return ",".join(port_ranges)
-
 
 def _compress_extlinks(extlinks):
     links_dict = {}
@@ -89,8 +93,7 @@ def _compress_extlinks(extlinks):
     ]
     return links
 
-
-def parse_graph(text):
+def _parse_graph(text):
     """
     This method will parse the ibnetdiscover output into a graph.
     """
@@ -98,7 +101,7 @@ def parse_graph(text):
     node_regex = r"(Switch|Ca)\s+([0-9]+)\s+\"([SH]-[0-9a-z]+)\".*#.*\"(.*)\".*\n?(\[[0-9]+\].*\n)*"
     link_regex = r"\[([0-9]+)\].*\"([SH]-[0-9a-z]+)\".*\[([0-9]+)\].*#.*\"(.*)\""
 
-    nodes = []
+    nodes_map = {}
     links = []
     extlinks = []
 
@@ -108,6 +111,7 @@ def parse_graph(text):
         ports = switch_match.group(2)
 
         node = {
+            "id": uid,
             "uid": uid,
             "name": name,
             "ports": ports,
@@ -115,7 +119,7 @@ def parse_graph(text):
             "_children": [],
         }
 
-        nodes.append(node)
+        nodes_map[uid] = node
 
         for link_match in re.finditer(link_regex, switch_match.group(0)):
             port_id = link_match.group(1)
@@ -134,10 +138,42 @@ def parse_graph(text):
 
             extlinks.append(link)
 
-    nodes = [{"id": n["uid"], **n} for n in nodes]
+
+    nodes = list(nodes_map.values())
     links = _compress_extlinks(extlinks)
     graph = {"nodes": nodes, "links": links, "extlinks": extlinks}
     return graph
+
+def get_graph_prometheus_data():
+    params = {
+        "query": "infiniband_hca_port_receive_data_bytes_total"
+    }
+    data = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
+    return data.json()
+
+def get_graph_state():
+    try:
+        if os.path.exists(STATE_PATH):
+            with open(STATE_PATH, "r") as f:
+                return loads(f.read())
+    except JSONDecodeError:
+        pass
+    return None
+
+def get_graph():
+    process = subprocess.run(
+        IBNETDISCOVER_CMD , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+    )
+    if process.returncode != 0:
+        raise Exception(
+            f"ibnetdiscover failed with code {process.returncode}:\n{process.stderr.decode('utf-8')}"
+        )
+
+    ibnetdiscover_output = process.stdout.decode("utf-8")
+    return _parse_graph(ibnetdiscover_output)
+
+
+
 
 
 @app.route("/")
@@ -148,34 +184,18 @@ def index_route():
 
     return render_template("index.html", content="", settings=settings)
 
-
-@app.route("/graph/get")
+@app.route("/graph/get", methods=["GET"])
 def graph_route():
     """
     Route to get the graph.
     """
 
-    process = subprocess.run(
-        ["ibnetdiscover"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    if process.returncode != 0:
-        raise Exception(
-            f"ibnetdiscover failed with code {process.returncode}:\n{process.stderr.decode('utf-8')}"
-        )
-
-    ibnetdiscover_output = process.stdout.decode("utf-8")
-    graph = parse_graph(ibnetdiscover_output)
-    state_path = os.path.join(os.path.dirname(__file__), "state.json")
-
-    try:
-        if os.path.exists(state_path):
-            with open(state_path, "r") as f:
-                graph["state"] = loads(f.read())
-    except JSONDecodeError:
-        pass
-    finally:
-        return dumps(graph)
-
+    graph = get_graph()
+    graph['state'] = get_graph_state()
+    graph['prometheus_data'] = get_graph_prometheus_data()
+    
+    return jsonify(graph)
+    
 
 @app.route("/graph/state/save", methods=["POST"])
 def save_route():
@@ -184,8 +204,14 @@ def save_route():
     """
 
     state = request.json
-    state_path = os.path.join(os.path.dirname(__file__), "state.json")
-    with open(state_path, "w") as f:
+    with open(STATE_PATH, "w") as f:
         f.write(dumps(state))
-    response = {"message": f"Saved state to {state_path}"}
+    response = {"message": f"Saved state to {STATE_PATH}"}
     return dumps(response)
+
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+    
+    pprint(get_graph_prometheus_data())

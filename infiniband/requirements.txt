@@ -1,3 +1,5 @@
+jwt
 flask
 dynaconf
 dynaconf[ini]
+requests
