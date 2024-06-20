@@ -14,8 +14,8 @@ app = Flask(
 
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 PROMETHEUS_ENDPOINT = "https://localhost:9090"
-# IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
-IBNETDISCOVER_CMD = "fake-ibnetdiscover"
+IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
+# IBNETDISCOVER_CMD = "fake-ibnetdiscover"
 
 
 @app.errorhandler(Exception)
@@ -94,11 +94,34 @@ def _parse_graph(text):
     return graph
 
 def get_prometheus_data():
+    series = [
+        "infiniband_hca_port_symbol_error_total",
+        "infiniband_hca_port_receive_errors_total",
+        "infiniband_hca_port_local_link_integrity_errors_total",
+        "infiniband_hca_port_receive_constraint_errors_total",
+        "infiniband_hca_port_transmit_constraint_errors_total" ]
+    
     params = {
-        "query": "infiniband_hca_port_receive_data_bytes_total"
+        "query": "max by (__name__, guid, port) ({__name__=~'" + "|".join(series) + "'})"
     }
-    data = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
-    return data.json()
+    print(params)
+    response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
+    
+    data = {}
+    for result in response.json()['data']['result']:
+        guid = result['metric']['guid']
+        port_id = result['metric']['port']
+        metric = result['metric']['__name__']
+        value = result['value'][1]
+        
+        if guid not in data:
+            data[guid] = {}
+        if port_id not in data[guid]:
+            data[guid][port_id] = {}
+        if int(value) > 0:
+            data[guid][port_id][metric] = "warning"       
+    
+    return data
 
 def save_graph_state(state):
     with open(STATE_PATH, "w") as f:
