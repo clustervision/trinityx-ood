@@ -57,20 +57,33 @@ def _parse_graph(text):
 
         for link_match in re.finditer(link_regex, switch_match.group(0)):
             port_id = link_match.group(1)
-            target_uid = link_match.group(2)
-            target_name = link_match.group(4)
-            target_port_id = link_match.group(3)
-            target_type = target_uid[0]
+            other_uid = link_match.group(2)
+            other_name = link_match.group(4)
+            other_port_id = link_match.group(3)
+            other_type = other_uid[0]
 
-            link_id = (uid, port_id, target_uid, target_port_id)
-
-            link =  {
-                "source_uid": uid,
-                "source_port_id": port_id,
-                "target_uid": target_uid,
-                "target_port_id": target_port_id,
-                "type": type + target_type,
-            }
+            
+            
+            if uid > other_uid:
+                link_id = (uid, port_id, other_uid, other_port_id)
+                link_type = type + other_type
+                link =  {
+                    "source_uid": uid,
+                    "source_port_id": port_id,
+                    "target_uid": other_uid,
+                    "target_port_id": other_port_id,
+                    "type": link_type,
+                }
+            else:
+                link_id = (other_uid, other_port_id, uid, port_id)
+                link_type = other_type + type
+                link =  {
+                    "source_uid": other_uid,
+                    "source_port_id": other_port_id,
+                    "target_uid": uid,
+                    "target_port_id": port_id,
+                    "type": link_type,
+                }
             
             links_map[link_id] = link
             
