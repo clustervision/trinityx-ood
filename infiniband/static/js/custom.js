@@ -419,9 +419,10 @@ const Context = {
             layout:"fitColumns",
             height:this.height()/2,
             columns:[                        //define the nodesTable columns
-                {title:"Name", field:"name"},
-                {title:"UID", field:"uid"},
-                {title:"Ports", field:"n_ports", width:10 },
+                {title: "Name", field: "name"},
+                {title: "Type", field: "type", width:10 },
+                {title: "UID",  field: "uid"},
+                {title: "Ports", field: "n_ports", width:10 },
             ],
             // dataTree:true,
         });
@@ -441,10 +442,11 @@ const Context = {
             layout:"fitColumns",
             height:this.height()/2,
             columns:[                        //define the linksTable columns
-                {title:"Source UID", field:"source_uid"},
-                {title:"Source Port", field:"source_port_id", width:10 },
-                {title:"Target UID", field:"target_uid"},
-                {title:"Target Port", field:"target_port_id", width:10 },
+                {title: "Source UID", field: "source_uid"},
+                {title: "Source Port", field: "source_port_id", width:10 },
+                {title: "Type", field: "type", width:10 },
+                {title: "Target UID", field: "target_uid"},
+                {title: "Target Port", field: "target_port_id", width:10 },
             ],
         });
 

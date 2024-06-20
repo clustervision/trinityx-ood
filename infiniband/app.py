@@ -40,10 +40,9 @@ def _parse_graph(text):
     links_map = {}
 
     for switch_match in re.finditer(node_regex, text, re.MULTILINE):
-        uid = switch_match.group(3)
+        type, uid  = switch_match.group(3).split("-")
         name = switch_match.group(4)
         n_ports = switch_match.group(2)
-        type =  uid[0]
 
         node_id = uid
         node = {
@@ -57,11 +56,9 @@ def _parse_graph(text):
 
         for link_match in re.finditer(link_regex, switch_match.group(0)):
             port_id = link_match.group(1)
-            other_uid = link_match.group(2)
+            other_type, other_uid = link_match.group(2).split("-")
             other_name = link_match.group(4)
             other_port_id = link_match.group(3)
-            other_type = other_uid[0]
-
             
             
             if uid > other_uid:
@@ -109,7 +106,7 @@ def get_prometheus_data():
     
     data = {}
     for result in response.json()['data']['result']:
-        guid = result['metric']['guid']
+        guid = result['metric']['guid'][2:]
         port_id = result['metric']['port']
         metric = result['metric']['__name__']
         value = result['value'][1]
