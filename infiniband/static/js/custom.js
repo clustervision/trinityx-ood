@@ -529,12 +529,20 @@ const Context = {
         }
         return state;
     },
-
-    
+    resized() {
+        console.log("Resized")
+        this.svg.attr("width", this.width())
+                .attr("height", this.height())
+                .attr("viewBox", [0, 0, this.width(), this.height()])
+        this.table.setHeight(this.height());
+    }
 }
 
 var context;
 window.onload = function () {
     context = Object.create(Context)
     context.load();
+    window.onresize = function () {
+        context.resized();
+    }
 }
