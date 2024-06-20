@@ -1,9 +1,9 @@
 function nodeRadius(node) {
     var baseRadius = Math.sqrt(node.n_ports);
     if (node.type == "S") {
-        return baseRadius + 16;
+        return baseRadius + 26;
     } else {
-        return baseRadius + 11;
+        return baseRadius + 21;
     }
 }
 function nodeImage(node) {
@@ -166,14 +166,14 @@ const Context = {
         if (simulationType == 'all') {
             return d3.forceSimulation(this.nodes())
                 .force("link", d3.forceLink(this.links()).id(d => d.uid))
-                .force("charge", d3.forceManyBody().strength( -600 ))
+                .force("charge", d3.forceManyBody().strength( -1600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .force("center", d3.forceCenter(this.width() / 2, this.height() / 2))
                 .on("tick", () => this.ticked());
         } else if (simulationType == 'compute') {
             return  d3.forceSimulation(this.nodes())
                 .force("link", d3.forceLink(this.links()).id(d => d.uid))
-                .force("charge", d3.forceManyBody().strength( -600 ))
+                .force("charge", d3.forceManyBody().strength( -1600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .on("tick", () => this.ticked());
 
@@ -356,7 +356,7 @@ const Context = {
 
 
 
-        this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
+        this.zoomItem = d3.zoom().scaleExtent([0.1, 4])
         this.dragItem = d3.drag()
 
         this.svg.call(this.zoomItem.on("zoom", ({transform}) => {
@@ -395,6 +395,8 @@ const Context = {
         }
         if (this.data?.state?.zoom){
             this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(this.data.state.zoom.x, this.data.state.zoom.y).scale(this.data.state.zoom.k));
+        } else {
+            this.svg.call(this.zoomItem.transform, d3.zoomIdentity.scale(0.5));
         }
 
         if (this.data.state?.simulationType){
