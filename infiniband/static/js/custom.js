@@ -280,11 +280,28 @@ const Context = {
 
     },
     async _graphInitialized() {
+        var legendKeys = [`Switches: ${this.switchNodes().length}`, `Nodes: ${this.computeNodes().length}`, `Links: ${this.links().length}`];
+
+
         this.svg = d3.select("#graph").append("svg")
             .attr("width", this.width())
             .attr("height", this.height())
             .attr("viewBox", [0, 0, this.width(), this.height()])
             .attr("style", "max-width: 100%; height: auto;")
+
+        this.svg.append('g')
+            .attr("class", "legend")
+            // .attr("transform", "translate(10, 10)")
+            .selectAll("text")
+            .data(legendKeys)
+            .enter()
+            .append("text")
+            .attr("x", 0)
+            .attr("y", (d, i) => (i+1) * 20)
+            .text(d => d)
+
+
+
 
         this.containerItem = this.svg.append("g")
             .attr("class", "container")
@@ -406,7 +423,6 @@ const Context = {
                 {title:"Port", field:"source_port_id"},
                 {title:"Target Port", field:"target_port_id"},
                 {title:"Target UID", field:"target_uid"},
-                
             ],
             dataTree:true,
         });
@@ -426,10 +442,6 @@ const Context = {
         });
     },
     async _menuInitialized() {
-        $('#n-switches').val(this.switchNodes().length);
-        $('#n-computes').val(this.computeNodes().length);
-        $('#n-links').val(this.links().length);
-
         $('#save-graph').click(() => this.saved());
 
         $("#all-label-button").click(() => this.showlabel("all"));
