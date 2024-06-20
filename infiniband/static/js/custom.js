@@ -1,21 +1,21 @@
-function nodeRadius(n) {
-    var baseRadius = Math.sqrt(n.ports);
-    if (n.type == "S") {
+function nodeRadius(node) {
+    var baseRadius = Math.sqrt(node.n_ports);
+    if (node.type == "S") {
         return baseRadius + 16;
     } else {
         return baseRadius + 11;
     }
 }
-function nodeImage(n) {
-    var imageName = (n.type == "S") ? "switch.png" : "host.png";
+function nodeImage(node) {
+    var imageName = (node.type == "S") ? "switch.png" : "host.png";
     var imageUrl = `${window.location.href}/assets/${imageName}`;
     return imageUrl;
 }
-function nodeText(n) {
-    if ((n.type == "S") && (n.name == 'SwitchIB Mellanox Technologies')) {
-        return Array.prototype.concat('SwitchIB', n.uid).join(" ");
+function nodeText(node) {
+    if ((node.type == "S") && (node.name == 'SwitchIB Mellanox Technologies')) {
+        return Array.prototype.concat('SwitchIB', node.uid).join(" ");
     } else {
-        return n.name;
+        return node.name;
     }
 }
 function nodeStrokeWidth(highlighted) {
@@ -87,6 +87,7 @@ const Context = {
 
     data: null,
     table: null,
+    showLabelTarget: null,
 
     width() {
         return $("#graph").parent().width();
@@ -96,6 +97,31 @@ const Context = {
     },
     links() {
         return this.data.links;
+    },
+    aggLinks() {
+        const _aggLinks = {}
+        for (const link of this.data.links) {
+            const key = `${link.source_uid}.${link.target_uid}`;
+            const sourcePortId = link.source_port_id;
+            const targetPortId = link.target_port_id;
+            if ( ! _aggLinks[key]) {
+                _aggLinks[key] = [];
+            }
+            _aggLinks[key].push({sourcePortId, targetPortId});
+        }
+        const aggLinks = Object.keys(_aggLinks).map((key) => {
+            var [sourceUid, targetUid] = key.split(".");
+            return {
+                source: this.data.nodes.find(n => n.uid == sourceUid),
+                target: this.data.nodes.find(n => n.uid == targetUid),
+                source_uid: sourceUid,
+                target_uid: targetUid,
+                source_port_ids: _aggLinks[key].map(l => l.sourcePortId),
+                target_port_ids: _aggLinks[key].map(l => l.targetPortId),
+                count: _aggLinks[key].length
+            }
+        });
+        return aggLinks;
     },
     nodes() {
         return this.data.nodes;
@@ -139,14 +165,14 @@ const Context = {
         
         if (simulationType == 'all') {
             return d3.forceSimulation(this.nodes())
-                .force("link", d3.forceLink(this.links()).id(d => d.id))
+                .force("link", d3.forceLink(this.links()).id(d => d.uid))
                 .force("charge", d3.forceManyBody().strength( -600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .force("center", d3.forceCenter(this.width() / 2, this.height() / 2))
                 .on("tick", () => this.ticked());
         } else if (simulationType == 'compute') {
             return  d3.forceSimulation(this.nodes())
-                .force("link", d3.forceLink(this.links()).id(d => d.id))
+                .force("link", d3.forceLink(this.links()).id(d => d.uid))
                 .force("charge", d3.forceManyBody().strength( -600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .on("tick", () => this.ticked());
@@ -158,17 +184,26 @@ const Context = {
         }
 
     },
-    nodeselected(uid) {
-        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.id == uid));
-        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.id == uid));
-        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == uid || l.target.id == uid));
-        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == uid || l.target.id == uid)));
+    nodeselected(uid, scrollToRow) {
+        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.uid == uid));
+        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.uid == uid));
+        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.uid == uid || l.target.uid == uid));
+        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.uid == uid || l.target.uid == uid)));
+        if (scrollToRow) {
+            const rows = this.table.searchRows([{field: 'uid', type: '=', value: uid}]);
+            this.table.scrollToRow(rows[0], "center", false);
+            this.table.selectRow(rows);
+        }
     },
-    linkselected(source_uid, target_uid) {
-        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.id == source_uid || n.id == target_uid));
-        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.id == source_uid || n.id == target_uid));
-        this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id)));
-        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id))));        
+    linkselected(source_uid, target_uid, scrollToRow) {
+        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.uid == source_uid || n.uid == target_uid));
+        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.uid == source_uid || n.uid == target_uid));
+        this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid)));
+        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid))));        
+        if (scrollToRow) {
+            const rows = this.table.searchRows([{field: 'source_uid', type: '=', value: source_uid}, {field: 'target_uid', type: '=', value: target_uid}]);
+            this.table.selectRow(rows);
+        }
     },
     unselected() {
         this.table.deselectRow();
@@ -178,12 +213,14 @@ const Context = {
         this.linkItems.style('stroke-width', l => linkStrokeWidth(l,false));
     },
     showlabel(target) {
-        var buttonIds = ["all-label-button", "node-label-button", "link-label-button"];
-
+        if (target) {
+            this.showLabelTarget = target;
+        }
+        var buttonIds = ["all-label-button", "node-label-button", "link-label-button", "none-label-buttons"];
 
         for (var i = 0; i < buttonIds.length; i++) {
             var buttonId = buttonIds[i];
-            if (buttonId == target + "-label-button") {
+            if (buttonId == this.showLabelTarget + "-label-button") {
                 $("#" + buttonId).removeClass("btn-outline-primary");
                 $("#" + buttonId).addClass("btn-primary");
                 $("#" + buttonId + " svg").attr("style", "");
@@ -194,16 +231,16 @@ const Context = {
             }
         }
 
-        if (target == "all") {
+        this.nodeLabelItems.attr("style", "display: none;");
+        this.linkSourceLabelItems.attr("style", "display: none;");
+        this.linkTargetLabelItems.attr("style", "display: none;");
+        if (this.showLabelTarget == "all") {
             this.nodeLabelItems.attr("style", "");
-            this.linkSourceLabelItems.attr("style", "");
-            this.linkTargetLabelItems.attr("style", "");
-        } else if (target == "node") {
+            this.linkSourceLabelItems.filter((d) => (d.source.type == "S") && (d.target.type == "S")).attr("style", "");
+            this.linkTargetLabelItems.filter((d) => (d.source.type == "S") && (d.target.type == "S")).attr("style", "");
+        } else if (this.showLabelTarget == "node") {
             this.nodeLabelItems.attr("style", "");
-            this.linkSourceLabelItems.attr("style", "display: none;");
-            this.linkTargetLabelItems.attr("style", "display: none;");
-        } else if (target == "link") {
-            this.nodeLabelItems.attr("style", "display: none;");
+        } else if (this.showLabelTarget == "link") {
             this.linkSourceLabelItems.attr("style", "");
             this.linkTargetLabelItems.attr("style", "");
         }
@@ -255,7 +292,7 @@ const Context = {
 
         this.linkContainerItems = this.containerItem.append("g")
             .selectAll()
-            .data(this.links())
+            .data(this.aggLinks())
             .join('g')
 
         this.linkItems = this.linkContainerItems.append("line")
@@ -265,19 +302,19 @@ const Context = {
 
         this.linkSourceLabelItems = this.linkContainerItems.append("text")
             .attr("text-anchor", "start")
-            // .attr("alignment-baseline", "middle")
             .attr("x", 0)
             .attr("y", 0)
             .attr("dy", 0)
-            .text( d => (d.source_name))
+            .text( d => d.source_port_ids)
+            .attr("style", "display: none;")
         
         this.linkTargetLabelItems = this.linkContainerItems.append("text")
             .attr("text-anchor", "end")
-            // .attr("alignment-baseline", "middle")
             .attr("x", 0)
             .attr("y", 0)
             .attr("dy", 0)
-            .text( d => (d.target_name))
+            .text( d => d.target_port_ids ) 
+            .attr("style", "display: none;")
         
 
         this.nodeContainerItems = this.containerItem.append("g")
@@ -307,6 +344,7 @@ const Context = {
             .attr("y", d => nodeRadius(d) + 12)
             .attr("dy", 0)
             .call(wrapText, 100)
+            .attr("style", "display: none;")
         
 
 
@@ -325,16 +363,14 @@ const Context = {
             
         this.nodeContainerItems.on("mouseover", (e) => {
             n = d3.select(e.target).datum();
-            this.table.scrollToRow(n.id, "center", false);
-            this.table.selectRow(n.id);
-            this.nodeselected(n.id);
+            this.nodeselected(n.uid, true);
         });
         this.nodeContainerItems.on("mouseout", (e) => {
             this.unselected();
         });
         this.linkContainerItems.on("mouseover", (e) => {
             l = d3.select(e.target).datum();
-            this.linkselected(l.source.uid, l.target.uid)
+            this.linkselected(l.source.uid, l.target.uid, true)
         });
         this.linkContainerItems.on("mouseout", (e) => {
             this.unselected();
@@ -343,7 +379,7 @@ const Context = {
 
         if (this.data.state){
             this.nodes().forEach((d) => {
-                var nodePosition = this.data.state.nodePositions.find(n => n.id == d.id);
+                var nodePosition = this.data.state.nodePositions.find(n => n.uid == d.uid);
                 if (nodePosition) {
                     d.x = nodePosition.x;
                     d.y = nodePosition.y;
@@ -365,11 +401,9 @@ const Context = {
             layout:"fitData",
             height:this.height(),
             columns:[                        //define the table columns
-                // {formatter:"rownum", hozAlign:"center", width:65},
                 {title:"Name", field:"name"},
-                {title:"UID", field:"uid"},
-                {title:"Port", field:"port_id"},
-                {title:"Target Name", field:"target_name"},
+                {title:"UID", field:"source_uid"},
+                {title:"Port", field:"source_port_id"},
                 {title:"Target Port", field:"target_port_id"},
                 {title:"Target UID", field:"target_uid"},
                 
@@ -380,10 +414,10 @@ const Context = {
         this.table.on("rowMouseOver", (e, row) =>{
             var data = row.getData();
 
-            if (data.target_name != undefined) { 
-                this.linkselected(data.uid, data.target_uid);
-            } else {
+            if (data.name != undefined) {
                 this.nodeselected(data.uid);
+            } else {
+                this.linkselected(data.source_uid, data.target_uid);
             }
         });
 
@@ -401,6 +435,7 @@ const Context = {
         $("#all-label-button").click(() => this.showlabel("all"));
         $("#node-label-button").click(() => this.showlabel("node"));
         $("#link-label-button").click(() => this.showlabel("link"));
+        $("#none-label-button").click(() => this.showlabel("none"));
     },
     async initialized() {
         this._containerInitialized();
@@ -408,18 +443,25 @@ const Context = {
         this._graphInitialized();
         this._menuInitialized();
     },
-    loaded(endpoint) {
+    load() {
         // Get the current url without any trailing slash
         var currentUrl = window.location.href.replace(/\/$/, "");
-        var url = `${currentUrl}${endpoint}`;
+        var url = `${currentUrl}/graph`;
         var successCallback = (data) => {
-            data.nodes.forEach((d) => {
-                d._children = [];
+            data.nodes.forEach((node) => {
+                node._children = [];
             });
-            data.extlinks.forEach((l) => {
-                var source = data.nodes.find(n => n.uid == l.uid);
-                source._children.push(l);
+            data.links.forEach((link) => {
+                var source = data.nodes.find(node => node.uid == link.source_uid);
+                var target = data.nodes.find(node => node.uid == link.target_uid);
+
+                link.source = source;
+                link.target = target;
+                source._children.push(link);
             });
+
+
+
             this.data = data
             this.initialized()
         }
@@ -428,7 +470,6 @@ const Context = {
             displayAlert("danger", response.message)
         }
 
-        // d3.json(url).then( successCallback, failureCallback);
         $.ajax({
             url: url,
             type: "GET",
@@ -458,7 +499,7 @@ const Context = {
         
     },
     saved() {
-        var url = `${window.location.href}/graph/state/save`;
+        var url = `${window.location.href}/graph/state`;
         var state = this.getState();
 
         var successCallback = (data) => { 
@@ -483,7 +524,7 @@ const Context = {
 
         var state = {
             simulationType: this.getSimulationType(),
-            nodePositions: this.nodes().map(d => { return {id: d.id, x: d.x, y: d.y} }),
+            nodePositions: this.nodes().map(d => { return {uid: d.uid, x: d.x, y: d.y} }),
             zoom: {x: currentTransform.x, y: currentTransform.y, k: currentTransform.k}
         }
         return state;
@@ -495,5 +536,5 @@ const Context = {
 var context;
 window.onload = function () {
     context = Object.create(Context)
-    context.loaded("/graph/get");
+    context.load();
 }
