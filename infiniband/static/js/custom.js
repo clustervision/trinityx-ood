@@ -86,7 +86,7 @@ const Context = {
     zoomItem: null,
 
     data: null,
-    table: null,
+    nodesTable: null,
     _simulation: null,
 
     width() {
@@ -199,9 +199,9 @@ const Context = {
         this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.uid == uid || l.target.uid == uid));
         this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.uid == uid || l.target.uid == uid)));
         if (scrollToRow) {
-            const rows = this.table.searchRows([{field: 'uid', type: '=', value: uid}]);
-            this.table.scrollToRow(rows[0], "center", false);
-            this.table.selectRow(rows);
+            const rows = this.nodesTable.searchRows([{field: 'uid', type: '=', value: uid}]);
+            this.nodesTable.scrollToRow(rows[0], "center", false);
+            this.nodesTable.selectRow(rows);
         }
     },
     linkselected(source_uid, target_uid, scrollToRow) {
@@ -210,12 +210,12 @@ const Context = {
         this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid)));
         this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid))));        
         if (scrollToRow) {
-            const rows = this.table.searchRows([{field: 'source_uid', type: '=', value: source_uid}, {field: 'target_uid', type: '=', value: target_uid}]);
-            this.table.selectRow(rows);
+            const rows = this.nodesTable.searchRows([{field: 'source_uid', type: '=', value: source_uid}, {field: 'target_uid', type: '=', value: target_uid}]);
+            this.nodesTable.selectRow(rows);
         }
     },
     unselected() {
-        this.table.deselectRow();
+        this.nodesTable.deselectRow();
         this.nodeItems.style('stroke-opacity', strokeOpacity(false));
         this.nodeItems.style('stroke-width', nodeStrokeWidth(false));
         this.linkItems.style('stroke-opacity', strokeOpacity(false));
@@ -410,22 +410,20 @@ const Context = {
         this.showlabel()
 
     },
-    async _tableInitialized() {
-        this.table = new Tabulator("#table", {
+    async _nodesTableInitialized() {
+        this.nodesTable = new Tabulator("#nodes-table", {
             data: this.data.nodes,           //load row data from array
             layout:"fitData",
-            height:this.height(),
-            columns:[                        //define the table columns
+            height:this.height()/2,
+            columns:[                        //define the nodesTable columns
                 {title:"Name", field:"name"},
-                {title:"UID", field:"source_uid"},
-                {title:"Port", field:"source_port_id"},
-                {title:"Target Port", field:"target_port_id"},
-                {title:"Target UID", field:"target_uid"},
+                {title:"UID", field:"uid"},
+                {title:"Ports", field:"n_ports"},
             ],
-            dataTree:true,
+            // dataTree:true,
         });
 
-        this.table.on("rowMouseOver", (e, row) =>{
+        this.nodesTable.on("rowMouseOver", (e, row) =>{
             var data = row.getData();
 
             if (data.name != undefined) {
@@ -435,7 +433,7 @@ const Context = {
             }
         });
 
-        this.table.on("rowMouseOut", () => {
+        this.nodesTable.on("rowMouseOut", () => {
             this.unselected()
         });
     },
@@ -451,7 +449,7 @@ const Context = {
     },
     async initialized() {
         this._containerInitialized();
-        this._tableInitialized();
+        this._nodesTableInitialized();
         this._graphInitialized();
         this._menuInitialized();
     },
@@ -547,7 +545,7 @@ const Context = {
         this.svg.attr("width", this.width())
                 .attr("height", this.height())
                 .attr("viewBox", [0, 0, this.width(), this.height()])
-        this.table.setHeight(this.height());
+        this.nodesTable.setHeight(this.height());
     }
 }
 
