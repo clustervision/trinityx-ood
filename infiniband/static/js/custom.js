@@ -87,7 +87,7 @@ const Context = {
 
     data: null,
     table: null,
-    showLabelTarget: null,
+    _simulation: null,
 
     width() {
         return $("#graph").parent().width();
@@ -135,12 +135,12 @@ const Context = {
     switchLinks() {
         return this.links().filter(d => d.source.type == "S" && d.target.type == "S");
     },
-    setSimulationType(type) {
-        $("#simulation-type").val(type);
-        this.onchangeSimulationType();
-    },
     getSimulationType() {
         return $("#simulation-type").val();
+    },
+    setSimulationType(type) {
+        $("#simulation-type").val(type);
+
     },
     onchangeSimulationType() {
         this._simulation = this.simulation();
@@ -184,6 +184,15 @@ const Context = {
         }
 
     },
+    getLabelType() {
+        return $("#label-type").val();
+    },
+    setLabelType(type) {
+        $("#label-type").val(type);
+    },
+    onchangeLabelType() {
+        this.showlabel();
+    },
     nodeselected(uid, scrollToRow) {
         this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.uid == uid));
         this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.uid == uid));
@@ -212,35 +221,20 @@ const Context = {
         this.linkItems.style('stroke-opacity', strokeOpacity(false));
         this.linkItems.style('stroke-width', l => linkStrokeWidth(l,false));
     },
-    showlabel(target) {
-        if (target) {
-            this.showLabelTarget = target;
-        }
-        var buttonIds = ["all-label-button", "node-label-button", "link-label-button", "none-label-buttons"];
-
-        for (var i = 0; i < buttonIds.length; i++) {
-            var buttonId = buttonIds[i];
-            if (buttonId == this.showLabelTarget + "-label-button") {
-                $("#" + buttonId).removeClass("btn-outline-primary");
-                $("#" + buttonId).addClass("btn-primary");
-                $("#" + buttonId + " svg").attr("style", "");
-            } else {
-                $("#" + buttonId).removeClass("btn-primary");
-                $("#" + buttonId).addClass("btn-outline-primary");
-                $("#" + buttonId + " svg").attr("style", "display: none;");
-            }
-        }
+    showlabel() {
+        var labelType = this.getLabelType();
 
         this.nodeLabelItems.attr("style", "display: none;");
         this.linkSourceLabelItems.attr("style", "display: none;");
         this.linkTargetLabelItems.attr("style", "display: none;");
-        if (this.showLabelTarget == "all") {
+
+        if (labelType == "all") {
             this.nodeLabelItems.attr("style", "");
             this.linkSourceLabelItems.filter((d) => (d.source.type == "S") && (d.target.type == "S")).attr("style", "");
             this.linkTargetLabelItems.filter((d) => (d.source.type == "S") && (d.target.type == "S")).attr("style", "");
-        } else if (this.showLabelTarget == "node") {
+        } else if (labelType == "nodes") {
             this.nodeLabelItems.attr("style", "");
-        } else if (this.showLabelTarget == "link") {
+        } else if (labelType == "links") {
             this.linkSourceLabelItems.attr("style", "");
             this.linkTargetLabelItems.attr("style", "");
         }
@@ -249,6 +243,7 @@ const Context = {
 
         if (this.getSimulationType() == 'all'){
             this.setSimulationType('compute');
+            this._simulation = this.simulation();
         }
 
         if (!event.active) this._simulation.alphaTarget(0.3).restart();
@@ -272,11 +267,6 @@ const Context = {
         // Set the container height to 80% of the window height
         var canvasHeight = window.innerHeight * 0.80;
         $("#app-container .row").height(canvasHeight);
-
-        // Register the event handler for the simulation type
-        $("#simulation-type").change(() => this.onchangeSimulationType());
-
-
 
     },
     async _graphInitialized() {
@@ -394,22 +384,28 @@ const Context = {
         });
 
 
-        if (this.data.state){
+        if (this.data?.state?.nodePositions){
             this.nodes().forEach((d) => {
                 var nodePosition = this.data.state.nodePositions.find(n => n.uid == d.uid);
                 if (nodePosition) {
                     d.x = nodePosition.x;
                     d.y = nodePosition.y;
                 }
-            });
-            if (this.data.state.zoom){
-                this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(this.data.state.zoom.x, this.data.state.zoom.y).scale(this.data.state.zoom.k));
-            }
-            this.setSimulationType(this.data.state.simulationType);
-            this.ticked()
-        } else {
-            this._simulation = this.simulation()
+            })
         }
+        if (this.data?.state?.zoom){
+            this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(this.data.state.zoom.x, this.data.state.zoom.y).scale(this.data.state.zoom.k));
+        }
+
+        if (this.data.state?.simulationType){
+            this.setSimulationType(this.data.state.simulationType);
+        }
+        this._simulation = this.simulation()
+
+        if (this.data.state?.labelType){
+            this.setLabelType(this.data.state.labelType);
+        }
+        this.showlabel()
 
     },
     async _tableInitialized() {
@@ -443,6 +439,8 @@ const Context = {
     },
     async _menuInitialized() {
         $('#save-graph').click(() => this.saved());
+        $("#simulation-type").change(() => this.onchangeSimulationType());
+        $("#label-type").change(() => this.onchangeLabelType());
 
         $("#all-label-button").click(() => this.showlabel("all"));
         $("#node-label-button").click(() => this.showlabel("node"));
@@ -536,6 +534,7 @@ const Context = {
 
         var state = {
             simulationType: this.getSimulationType(),
+            labelType: this.getLabelType(),
             nodePositions: this.nodes().map(d => { return {uid: d.uid, x: d.x, y: d.y} }),
             zoom: {x: currentTransform.x, y: currentTransform.y, k: currentTransform.k}
         }
