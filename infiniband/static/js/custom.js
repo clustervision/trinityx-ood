@@ -200,8 +200,8 @@ const Context = {
         this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.uid == uid || l.target.uid == uid)));
         if (scrollToRow) {
             const rows = this.nodesTable.searchRows([{field: 'uid', type: '=', value: uid}]);
-            this.nodesTable.scrollToRow(rows[0], "center", false);
             this.nodesTable.selectRow(rows);
+            this.nodesTable.scrollToRow(rows[0], "top", false);
         }
     },
     linkselected(source_uid, target_uid, scrollToRow) {
@@ -210,12 +210,14 @@ const Context = {
         this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid)));
         this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid))));        
         if (scrollToRow) {
-            const rows = this.nodesTable.searchRows([{field: 'source_uid', type: '=', value: source_uid}, {field: 'target_uid', type: '=', value: target_uid}]);
-            this.nodesTable.selectRow(rows);
+            const rows = this.linksTable.searchRows([{field: 'source_uid', type: '=', value: source_uid}, {field: 'target_uid', type: '=', value: target_uid}]);
+            this.linksTable.selectRow(rows);
+            this.linksTable.scrollToRow(rows[0], "top", false);
         }
     },
     unselected() {
         this.nodesTable.deselectRow();
+        this.linksTable.deselectRow();
         this.nodeItems.style('stroke-opacity', strokeOpacity(false));
         this.nodeItems.style('stroke-width', nodeStrokeWidth(false));
         this.linkItems.style('stroke-opacity', strokeOpacity(false));
@@ -378,6 +380,7 @@ const Context = {
         this.linkContainerItems.on("mouseover", (e) => {
             l = d3.select(e.target).datum();
             this.linkselected(l.source.uid, l.target.uid, true)
+
         });
         this.linkContainerItems.on("mouseout", (e) => {
             this.unselected();
@@ -413,27 +416,44 @@ const Context = {
     async _nodesTableInitialized() {
         this.nodesTable = new Tabulator("#nodes-table", {
             data: this.data.nodes,           //load row data from array
-            layout:"fitData",
+            layout:"fitColumns",
             height:this.height()/2,
             columns:[                        //define the nodesTable columns
                 {title:"Name", field:"name"},
                 {title:"UID", field:"uid"},
-                {title:"Ports", field:"n_ports"},
+                {title:"Ports", field:"n_ports", width:10 },
             ],
             // dataTree:true,
         });
 
         this.nodesTable.on("rowMouseOver", (e, row) =>{
             var data = row.getData();
-
-            if (data.name != undefined) {
-                this.nodeselected(data.uid);
-            } else {
-                this.linkselected(data.source_uid, data.target_uid);
-            }
+            this.nodeselected(data.uid);
         });
 
         this.nodesTable.on("rowMouseOut", () => {
+            this.unselected()
+        });
+    },
+    async _linksTableInitialized() {
+        this.linksTable = new Tabulator("#links-table", {
+            data: this.data.links,           //load row data from array
+            layout:"fitColumns",
+            height:this.height()/2,
+            columns:[                        //define the linksTable columns
+                {title:"Source UID", field:"source_uid"},
+                {title:"Source Port", field:"source_port_id", width:10 },
+                {title:"Target UID", field:"target_uid"},
+                {title:"Target Port", field:"target_port_id", width:10 },
+            ],
+        });
+
+        this.linksTable.on("rowMouseOver", (e, row) =>{
+            var data = row.getData();
+            this.linkselected(data.source_uid, data.target_uid);
+        });
+
+        this.linksTable.on("rowMouseOut", () => {
             this.unselected()
         });
     },
@@ -450,6 +470,7 @@ const Context = {
     async initialized() {
         this._containerInitialized();
         this._nodesTableInitialized();
+        this._linksTableInitialized();
         this._graphInitialized();
         this._menuInitialized();
     },
@@ -458,19 +479,14 @@ const Context = {
         var currentUrl = window.location.href.replace(/\/$/, "");
         var url = `${currentUrl}/graph`;
         var successCallback = (data) => {
-            data.nodes.forEach((node) => {
-                node._children = [];
-            });
+
             data.links.forEach((link) => {
                 var source = data.nodes.find(node => node.uid == link.source_uid);
                 var target = data.nodes.find(node => node.uid == link.target_uid);
 
                 link.source = source;
                 link.target = target;
-                source._children.push(link);
             });
-
-
 
             this.data = data
             this.initialized()
