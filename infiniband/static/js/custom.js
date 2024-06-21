@@ -27,10 +27,27 @@ function nodeStrokeWidth(highlighted) {
     return (highlighted) ? 3 : 1.5;
 }
 function linkStroke(l) {
-    if ( l.errors > 0 ) {
+    hasDanger = false
+    hasWarning = false
+
+
+    for (const errors of l.errors) {
+        Object.keys(errors).forEach((key) => {
+            if (errors[key] == "danger") {
+                hasDanger = true;
+            } else if (errors[key] == "warning") {
+                hasWarning = true;
+            }
+        }
+    )}
+
+    if (hasDanger) {
+        return RED;
+    }
+    if (hasWarning) {
         return ORANGE;
     }
-    return GREY
+    return GREY;
 }
 function linkStrokeWidth(l, highlighted) {
     return (highlighted) ? l.count + 3 : l.count + 1;
@@ -115,13 +132,11 @@ const Context = {
             const key = `${link.source_uid}.${link.target_uid}`;
             const sourcePortId = link.source_port_id;
             const targetPortId = link.target_port_id;
-            
-            // const errors = this.data?.prometheus_data?.[link.source_uid]?.[sourcePortId]
-
+            const errors = link.errors;
             if ( ! _aggLinks[key]) {
                 _aggLinks[key] = [];
             }
-            _aggLinks[key].push({sourcePortId, targetPortId});
+            _aggLinks[key].push({sourcePortId, targetPortId, errors});
         }
 
 
@@ -132,6 +147,7 @@ const Context = {
                 target: this.data.nodes.find(n => n.uid == targetUid),
                 source_uid: sourceUid,
                 target_uid: targetUid,
+                errors: _aggLinks[key].map(l => l.errors),
                 source_port_ids: _aggLinks[key].map(l => l.sourcePortId),
                 target_port_ids: _aggLinks[key].map(l => l.targetPortId),
                 count: _aggLinks[key].length
