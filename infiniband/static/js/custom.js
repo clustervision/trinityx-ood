@@ -33,9 +33,9 @@ function linkStroke(l) {
 
     for (const errors of l.errors) {
         Object.keys(errors).forEach((key) => {
-            if (errors[key] == "danger") {
+            if (errors[key][0] == "danger") {
                 hasDanger = true;
-            } else if (errors[key] == "warning") {
+            } else if (errors[key][0] == "warning") {
                 hasWarning = true;
             }
         }
@@ -490,11 +490,11 @@ const Context = {
                 
                 row.getElement().appendChild(holderElement);
                 holderElement.appendChild(listElement);
-                Object.keys(errors).forEach((key) => {
+                for ( const [severity, origin, metric, value] of errors) {
                     const listItem = document.createElement("li");
-                    listItem.textContent = key;
+                    listItem.textContent = `[${origin}] ${metric} (${value}) `;
                     
-                    switch (errors[key]) {
+                    switch (severity) {
                         case "danger":
                             listItem.style.color = RED;
                             break;
@@ -507,7 +507,7 @@ const Context = {
                     }
 
                     listElement.appendChild(listItem);
-                });
+                };
             },
         });
 

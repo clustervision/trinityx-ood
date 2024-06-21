@@ -17,6 +17,10 @@ PROMETHEUS_ENDPOINT = "https://localhost:9090"
 IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
 # IBNETDISCOVER_CMD = "fake-ibnetdiscover"
 
+def _parse_severity(metric_name):
+    if metric_name.startswith("delta_1h"):
+        return "danger"
+    return "warning"
 
 @app.errorhandler(Exception)
 def wrap_errors(error):
@@ -97,13 +101,10 @@ def _parse_graph(graph_data, prometheus_data):
         source_errors = prometheus_data.get(source_uid, {}).get(source_port_id, {})
         target_errors = prometheus_data.get(target_uid, {}).get(target_port_id, {})
         
-        merged_errors = source_errors
-        for key, value in target_errors.items():
-            if key not in merged_errors:
-                merged_errors[key] = value
-            elif value == "danger":
-                merged_errors[key] = value
+        source_errors_list = [(_parse_severity(k), "source", k, v) for k, v in source_errors.items()]
+        target_errors_list = [(_parse_severity(k), "target", k, v) for k, v in target_errors.items()]
         
+        merged_errors = source_errors_list + target_errors_list
         
         link['errors'] = merged_errors
         
@@ -121,19 +122,20 @@ def get_prometheus_data():
             "infiniband_hca_port_transmit_constraint_errors_total" ]
         
         queries = {
-            "warning":{ "query": "max by (metric_name, guid, port) (label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)'))"},
-            "danger": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[1h:]))"},
+            "":{ "query": "max by (metric_name, guid, port) (label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)'))"},
+            "delta_1h_": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[1h:]))"},
+            # "delta_2h": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[2h:]))"},
+
         }
         data = {}
         for query_type, params in queries.items():
 
             response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
-            print(params)
-            
+
             for result in response.json()['data']['result']:
                 guid = result['metric']['guid'][2:]
                 port_id = result['metric']['port']
-                metric = result['metric']['metric_name']
+                metric = query_type + result['metric']['metric_name'].replace("infiniband_hca_port_", "", 1)
                 value = result['value'][1]
                 
                 if guid not in data:
@@ -141,7 +143,7 @@ def get_prometheus_data():
                 if port_id not in data[guid]:
                     data[guid][port_id] = {}
                 if int(value) > 0:
-                    data[guid][port_id][metric] = query_type       
+                    data[guid][port_id][metric] = value
         
         return data
     except Exception as e:
