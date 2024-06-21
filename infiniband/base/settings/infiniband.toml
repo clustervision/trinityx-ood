@@ -1,1 +1,2 @@
-app_name = 'infiniband'
+prometheus_endpoint = "https://localhost:9090"
+ibnetdiscover_cmd = "ibnetdiscover"

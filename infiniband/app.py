@@ -13,9 +13,6 @@ app = Flask(
 )
 
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
-PROMETHEUS_ENDPOINT = "https://localhost:9090"
-IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
-# IBNETDISCOVER_CMD = "fake-ibnetdiscover"
 
 def _parse_severity(metric_name):
     if metric_name.startswith("delta_1h"):
@@ -130,7 +127,7 @@ def get_prometheus_data():
         data = {}
         for query_type, params in queries.items():
 
-            response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
+            response = requests.get(f"{settings.PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
 
             for result in response.json()['data']['result']:
                 guid = result['metric']['guid'][2:]
@@ -164,7 +161,7 @@ def get_graph_state():
 
 def get_graph_data():
     process = subprocess.run(
-        IBNETDISCOVER_CMD , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        settings.IBNETDISCOVER_CMD , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
     if process.returncode != 0:
         raise Exception(
