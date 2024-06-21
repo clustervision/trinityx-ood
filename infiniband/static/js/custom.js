@@ -121,7 +121,7 @@ const Context = {
         return $("#graph").parent().width();
     },
     height() {
-        return $("#graph").parent().height();
+        return window.innerHeight * 0.80;
     },
     links() {
         return this.data.links;
@@ -481,6 +481,34 @@ const Context = {
                 {title: "Target UID", field: "target_uid"},
                 {title: "Target Port", field: "target_port_id", width:10 },
             ],
+            rowFormatter:function(row){
+                //create and style holder elements
+                const errors = row.getData().errors;
+
+                const listElement = document.createElement("ul");
+                const holderElement = document.createElement("div");
+                
+                row.getElement().appendChild(holderElement);
+                holderElement.appendChild(listElement);
+                Object.keys(errors).forEach((key) => {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = key;
+                    
+                    switch (errors[key]) {
+                        case "danger":
+                            listItem.style.color = RED;
+                            break;
+                        case "warning":
+                            listItem.style.color = ORANGE;
+                            break;
+                        default:
+                            listItem.style.color = GREY;
+                            break;
+                    }
+
+                    listElement.appendChild(listItem);
+                });
+            },
         });
 
         this.linksTable.on("rowMouseOver", (e, row) =>{
@@ -592,11 +620,12 @@ const Context = {
         return state;
     },
     resized() {
-        console.log("Resized")
+        console.log(`Resized to ${this.width()} x ${this.height()}`)
         this.svg.attr("width", this.width())
                 .attr("height", this.height())
                 .attr("viewBox", [0, 0, this.width(), this.height()])
-        this.nodesTable.setHeight(this.height());
+        this.nodesTable.setHeight(this.height()/2);
+        this.linksTable.setHeight(this.height()/2);
     }
 }
 
