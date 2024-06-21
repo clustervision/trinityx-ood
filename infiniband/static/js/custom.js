@@ -1,3 +1,8 @@
+const RED = "#FF0000";
+const ORANGE = "#FFA500";
+const GREY = "#222"
+
+
 function nodeRadius(node) {
     var baseRadius = Math.sqrt(node.n_ports);
     if (node.type == "S") {
@@ -20,6 +25,12 @@ function nodeText(node) {
 }
 function nodeStrokeWidth(highlighted) {
     return (highlighted) ? 3 : 1.5;
+}
+function linkStroke(l) {
+    if ( l.errors > 0 ) {
+        return ORANGE;
+    }
+    return GREY
 }
 function linkStrokeWidth(l, highlighted) {
     return (highlighted) ? l.count + 3 : l.count + 1;
@@ -104,11 +115,16 @@ const Context = {
             const key = `${link.source_uid}.${link.target_uid}`;
             const sourcePortId = link.source_port_id;
             const targetPortId = link.target_port_id;
+            
+            // const errors = this.data?.prometheus_data?.[link.source_uid]?.[sourcePortId]
+
             if ( ! _aggLinks[key]) {
                 _aggLinks[key] = [];
             }
             _aggLinks[key].push({sourcePortId, targetPortId});
         }
+
+
         const aggLinks = Object.keys(_aggLinks).map((key) => {
             var [sourceUid, targetUid] = key.split(".");
             return {
@@ -121,6 +137,10 @@ const Context = {
                 count: _aggLinks[key].length
             }
         });
+
+        
+
+
         return aggLinks;
     },
     nodes() {
@@ -283,7 +303,6 @@ const Context = {
 
         this.svg.append('g')
             .attr("class", "legend")
-            // .attr("transform", "translate(10, 10)")
             .selectAll("text")
             .data(legendKeys)
             .enter()
@@ -291,8 +310,6 @@ const Context = {
             .attr("x", 0)
             .attr("y", (d, i) => (i+1) * 20)
             .text(d => d)
-
-
 
 
         this.containerItem = this.svg.append("g")
@@ -306,7 +323,7 @@ const Context = {
 
         this.linkItems = this.linkContainerItems.append("line")
             .attr("stroke-width", l => linkStrokeWidth(l, false))
-            .attr("stroke", "#222")
+            .attr("stroke", l => linkStroke(l))
             .attr("stroke-opacity", strokeOpacity(false))
 
         this.linkSourceLabelItems = this.linkContainerItems.append("text")

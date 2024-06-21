@@ -14,8 +14,8 @@ app = Flask(
 
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 PROMETHEUS_ENDPOINT = "https://localhost:9090"
-# IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
-IBNETDISCOVER_CMD = "fake-ibnetdiscover"
+IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
+# IBNETDISCOVER_CMD = "fake-ibnetdiscover"
 
 
 @app.errorhandler(Exception)
@@ -28,7 +28,7 @@ def wrap_errors(error):
     return dumps({"message": str(error)}), 500
 
 
-def _parse_graph(text):
+def _parse_graph(graph_data, prometheus_data):
     """
     This method will parse the ibnetdiscover output into a graph.
     """
@@ -39,7 +39,7 @@ def _parse_graph(text):
     nodes_map = {}
     links_map = {}
 
-    for switch_match in re.finditer(node_regex, text, re.MULTILINE):
+    for switch_match in re.finditer(node_regex, graph_data, re.MULTILINE):
         type, uid  = switch_match.group(3).split("-")
         name = switch_match.group(4)
         n_ports = switch_match.group(2)
@@ -87,41 +87,65 @@ def _parse_graph(text):
 
     nodes = list(nodes_map.values())
     links = list(links_map.values())
+    
+    for link in links:
+        source_uid = link['source_uid']
+        source_port_id = link['source_port_id']
+        target_uid = link['target_uid']
+        target_port_id = link['target_port_id']
+        
+        source_errors = prometheus_data.get(source_uid, {}).get(source_port_id, {})
+        target_errors = prometheus_data.get(target_uid, {}).get(target_port_id, {})
+        
+        merged_errors = source_errors
+        for key, value in target_errors.items():
+            if key not in merged_errors:
+                merged_errors[key] = value
+            elif value == "danger":
+                merged_errors[key] = value
+        
+        
+        link['errors'] = merged_errors
+        
+    
     graph = {"nodes": nodes, "links": links} 
     return graph
 
 def get_prometheus_data():
-    series = [
-        "infiniband_hca_port_symbol_error_total",
-        "infiniband_hca_port_receive_errors_total",
-        "infiniband_hca_port_local_link_integrity_errors_total",
-        "infiniband_hca_port_receive_constraint_errors_total",
-        "infiniband_hca_port_transmit_constraint_errors_total" ]
-    
-    queries = {
-        "warning":{ "query": "max by (metric_name, guid, port) (label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)'))"},
-        "danger": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[1h:]))"},
-    }
-    data = {}
-    for query_type, params in queries.items():
-
-        response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
-        print(params)
+    try:
+        series = [
+            "infiniband_hca_port_symbol_error_total",
+            "infiniband_hca_port_receive_errors_total",
+            "infiniband_hca_port_local_link_integrity_errors_total",
+            "infiniband_hca_port_receive_constraint_errors_total",
+            "infiniband_hca_port_transmit_constraint_errors_total" ]
         
-        for result in response.json()['data']['result']:
-            guid = result['metric']['guid'][2:]
-            port_id = result['metric']['port']
-            metric = result['metric']['metric_name']
-            value = result['value'][1]
+        queries = {
+            "warning":{ "query": "max by (metric_name, guid, port) (label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)'))"},
+            "danger": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[1h:]))"},
+        }
+        data = {}
+        for query_type, params in queries.items():
+
+            response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
+            print(params)
             
-            if guid not in data:
-                data[guid] = {}
-            if port_id not in data[guid]:
-                data[guid][port_id] = {}
-            if int(value) > 0:
-                data[guid][port_id][metric] = query_type       
-    
-    return data
+            for result in response.json()['data']['result']:
+                guid = result['metric']['guid'][2:]
+                port_id = result['metric']['port']
+                metric = result['metric']['metric_name']
+                value = result['value'][1]
+                
+                if guid not in data:
+                    data[guid] = {}
+                if port_id not in data[guid]:
+                    data[guid][port_id] = {}
+                if int(value) > 0:
+                    data[guid][port_id][metric] = query_type       
+        
+        return data
+    except Exception as e:
+        return {}
 
 def save_graph_state(state):
     with open(STATE_PATH, "w") as f:
@@ -136,7 +160,7 @@ def get_graph_state():
         pass
     return None
 
-def get_graph():
+def get_graph_data():
     process = subprocess.run(
         IBNETDISCOVER_CMD , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
@@ -145,8 +169,8 @@ def get_graph():
             f"ibnetdiscover failed with code {process.returncode}:\n{process.stderr.decode('utf-8')}"
         )
 
-    ibnetdiscover_output = process.stdout.decode("utf-8")
-    return _parse_graph(ibnetdiscover_output)
+    ibnetdiscover_output = process.stdout.decode("utf-8")    
+    return ibnetdiscover_output
 
 
 
@@ -166,9 +190,10 @@ def graph_route():
     Route to get the graph.
     """
 
-    graph = get_graph()
+    graph_data = get_graph_data()
+    prometheus_data = get_prometheus_data()
+    graph = _parse_graph(graph_data, prometheus_data)
     graph['state'] = get_graph_state()
-    graph['prometheus_data'] = get_prometheus_data()
     
     return jsonify(graph)
     
