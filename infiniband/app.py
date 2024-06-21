@@ -14,8 +14,8 @@ app = Flask(
 
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 PROMETHEUS_ENDPOINT = "https://localhost:9090"
-IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
-# IBNETDISCOVER_CMD = "fake-ibnetdiscover"
+# IBNETDISCOVER_CMD = "ssh node001 ibnetdiscover"
+IBNETDISCOVER_CMD = "fake-ibnetdiscover"
 
 
 @app.errorhandler(Exception)
@@ -98,25 +98,28 @@ def get_prometheus_data():
         "infiniband_hca_port_receive_constraint_errors_total",
         "infiniband_hca_port_transmit_constraint_errors_total" ]
     
-    params = {
-        "query": "max by (__name__, guid, port) ({__name__=~'" + "|".join(series) + "'})"
+    queries = {
+        "warning":{ "query": "max by (metric_name, guid, port) (label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)'))"},
+        "danger": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[1h:]))"},
     }
-    print(params)
-    response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
-    
     data = {}
-    for result in response.json()['data']['result']:
-        guid = result['metric']['guid'][2:]
-        port_id = result['metric']['port']
-        metric = result['metric']['__name__']
-        value = result['value'][1]
+    for query_type, params in queries.items():
+
+        response = requests.get(f"{PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
+        print(params)
         
-        if guid not in data:
-            data[guid] = {}
-        if port_id not in data[guid]:
-            data[guid][port_id] = {}
-        if int(value) > 0:
-            data[guid][port_id][metric] = "warning"       
+        for result in response.json()['data']['result']:
+            guid = result['metric']['guid'][2:]
+            port_id = result['metric']['port']
+            metric = result['metric']['metric_name']
+            value = result['value'][1]
+            
+            if guid not in data:
+                data[guid] = {}
+            if port_id not in data[guid]:
+                data[guid][port_id] = {}
+            if int(value) > 0:
+                data[guid][port_id][metric] = query_type       
     
     return data
 
