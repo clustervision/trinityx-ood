@@ -114,61 +114,10 @@ class Helper():
         for key in EDITOR_KEYS:
             content = nested_lookup(key, payload)
             if content:
-                if content[0] is True:
-                    if table:
-                        get_list = Rest().get_data(table, payload['name'])
-                        if get_list:
-                            value = nested_lookup(key, get_list)
-                            if value:
-                                content = self.open_editor(key, value[0], payload)
-                                payload = nested_update(payload, key=key, value=content)
-                    else:
-                        content = self.open_editor(key, None, payload)
-                        payload = nested_update(payload, key=key, value=content)
-                elif content[0] is False:
-                    payload = nested_delete(payload, key)
-                elif content[0]:
-                    if os.path.exists(content[0]):
-                        if os.path.isfile(content[0]):
-                            with open(content[0], 'rb') as file_data:
-                                content = self.base64_encode(file_data.read())
-                                payload = nested_update(payload, key=key, value=content)
-                        else:
-                            print(f'ERROR :: {content[0]} is a Invalid filepath.')
-                    else:
-                        content = self.base64_encode(bytes(content[0], 'utf-8'))
-                        payload = nested_update(payload, key=key, value=content)
+                if content[0]:
+                    content = self.base64_encode(bytes(content[0].replace('\r\n', '\n'), 'utf-8'))
+                    payload = nested_update(payload, key=key, value=content)
         return payload
-
-
-    def open_editor(self, key=None, value=None, payload=None):
-        """
-        This Method will open a default text editor to
-        write the multiline text for keys such as comment,
-        prescript, postscript, partscript, content etc. but
-        not limited to them only.
-        """
-        response = ''
-        editor = str(os.path.abspath(__file__)).replace('helper.py', 'editor.sh')
-        os.chmod(editor, 0o0755)
-        random_path = str(time())+str(randint(1001,9999))+str(getpid())
-        tmp_folder = f'/tmp/lunatmp-{random_path}'
-        os.mkdir(tmp_folder)
-        if key == 'content':
-            filename = f'/tmp/lunatmp-{random_path}/{payload["name"]}{key}'
-        else:
-            filename = f'/tmp/lunatmp-{random_path}/{key}'
-        temp_file = open(filename, "x", encoding='utf-8')
-        if value:
-            value = self.base64_decode(value)
-            temp_file.write(value)
-            temp_file.close()
-        subprocess.call([editor, filename])
-        with open(filename, 'rb') as file_data:
-            response = self.base64_encode(file_data.read())
-        os.remove(filename)
-        os.rmdir(tmp_folder)
-        return response
 
 
 
