@@ -204,6 +204,19 @@ window.onload = function () {
         responsiveLayoutCollapseStartOpen:false,
     });
 
+
+    tables['users'].on("dataLoadError", function(error){
+        error.text().then(errorMessage => {
+            displayAlert('danger', "Data load error " + error.status + ": " + error.statusText + " - " + errorMessage);
+        });
+    });
+
+    tables['groups'].on("dataLoadError", function(error){
+        error.text().then(errorMessage => {
+            displayAlert('danger', "Data load error " + error.status + ": " + error.statusText + " - " + errorMessage);
+        });
+    });
+
     $("#new-user-wrapper").html(renderNewUserButton());
     $("#new-group-wrapper").html(renderNewGroupButton());
 }
