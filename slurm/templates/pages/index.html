@@ -5,7 +5,6 @@
 {% block additional_js %}
 <script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
 <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
-<!-- <script src="{{ url_for('static', filename='js/drag-select.js') }}"></script> -->
 {% endblock %}
 <iframe id="download-iframe" style="display:none;"></iframe>
 
@@ -90,41 +89,4 @@
 </div>
 
 
-<!-- <div>  
-    <button id="add-hw-preset-button">Add Hardware Preset</button>
-    <button id="delete-hw-presets-button">Delete Selected Hardware Presets</button>
-    <table id="hw-presets-table"></table>
-    <br>
-    <button id="add-node-button">Add Node</button>
-    <button id="delete-nodes-button">Delete Selected Nodes</button>
-    <button id="import-nodes-button">Import From Luna</button>
-    <table id="nodes-table"></table>
-    <br>
-    <button id="add-partition-button">Add Partition</button>
-    <button id="delete-partitions-button">Delete Selected Partitions</button>
-    <table id="partitions-table"></table>
-</div> -->
-{#
-<div class="row">
-    <div class="col-6" id="nodes-menu-col">
-        {% include "components/nodes_card_add.html" %}
-        {% include "components/nodes_card_selected.html" %}
-
-    </div>
-    <div class="col-6" id="partitions-menu-col">
-        {% include "components/partition_card_add.html" %}
-    </div>
-</div>
-
-<div class="row" id="selectable-area">
-    <div class="col-6" id="nodes-col">
-        {% include "components/nodes_card_available.html" %}
-    </div>
-    <div class="col-6" id="partitions-col">
-        {% for partition in configuration.partitions %}
-        {% include "components/partition_card.html" %}
-        {% endfor %}
-    </div>
-</div>
-#}
 {% endblock %}

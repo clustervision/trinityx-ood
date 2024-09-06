@@ -79,6 +79,36 @@ function HWPresetColumnValidator(cell, value, parameters) {
     });
     return hw_presets.includes(value);
 }
+function HWPresetCellEdited(cell) {
+    console.log(cell.getValue())
+
+    if (cell.getValue() === ""){
+        cell.setValue(undefined)
+    }
+
+    console.log(cell.getValue())
+}
+function GresValidator(cell, value, parameters) {
+    // format: <name>[:<type>][:no_consume]:<number>[K|M|G]
+
+    if (!value) {
+        return true;
+    }
+
+    var gresRegex = /^[a-zA-Z0-9_\-]+(:[a-zA-Z0-9_\-]+)?(no_consume)?:[0-9]+[KMGTP]?$/;
+    var gresList = value.split(",");
+    var isValid = true;
+
+    gresList.forEach(function(gres) {
+        if (!gresRegex.test(gres)) {
+            isValid = false;
+        }
+    }
+    );
+
+    return isValid;
+}
+
 function NodesRowIsEditable(row) {
     return (!row.getData().group_name) || (row.getData().group_name == "");
 }
@@ -162,6 +192,7 @@ window.onload = function() {
                 {title:"# ThreadsPerCore", field:"properties.ThreadsPerCore", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"RealMemory (MB)", field:"properties.RealMemory", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"TmpDisk (MB)", field:"properties.TmpDisk", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
+                {title:"Generic Resources", field:"properties.Gres", sorter:"string", editor:"input", width:"15%", validator:[GresValidator], cellEdited: HWPresetCellEdited, cellEditCancelled:HWPresetCellEdited },
                 {title:"CpuBind", field:"properties.CpuBind", sorter:"string",  editor:"list", editorParams:{values:["socket", "ldom", "core", "thread"], clearable: true}},
             ]},
         ],

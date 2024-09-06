@@ -269,6 +269,7 @@ def test_configuration_route():
     )
 
     configuration_lines = node_lines + partition_lines
+    configuration_lines = [l for l in configuration_lines if not l.startswith("NodeSet=")]
     configuration_text = "".join(configuration_lines)
 
     res = lint(configuration_text)
