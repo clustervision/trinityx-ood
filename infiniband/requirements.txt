@@ -1,4 +1,3 @@
-jwt
 flask
 dynaconf
 dynaconf[ini]
