@@ -1,25 +1,53 @@
-function nodeRadius(n) {
-    var baseRadius = Math.sqrt(n.ports);
-    if (n.type == "S") {
-        return baseRadius + 16;
+const RED = "#FF0000";
+const ORANGE = "#FFA500";
+const GREY = "#222"
+
+
+function nodeRadius(node) {
+    var baseRadius = Math.sqrt(node.n_ports);
+    if (node.type == "S") {
+        return baseRadius + 26;
     } else {
-        return baseRadius + 11;
+        return baseRadius + 21;
     }
 }
-function nodeImage(n) {
-    var imageName = (n.type == "S") ? "switch.png" : "host.png";
+function nodeImage(node) {
+    var imageName = (node.type == "S") ? "switch.png" : "host.png";
     var imageUrl = `${window.location.href}/assets/${imageName}`;
     return imageUrl;
 }
-function nodeText(n) {
-    if ((n.type == "S") && (n.name == 'SwitchIB Mellanox Technologies')) {
-        return Array.prototype.concat('SwitchIB', n.uid).join(" ");
+function nodeText(node) {
+    if ((node.type == "S") && (node.name == 'SwitchIB Mellanox Technologies')) {
+        return Array.prototype.concat('SwitchIB', node.uid).join(" ");
     } else {
-        return n.name;
+        return node.name;
     }
 }
 function nodeStrokeWidth(highlighted) {
     return (highlighted) ? 3 : 1.5;
+}
+function linkStroke(l) {
+    hasDanger = false
+    hasWarning = false
+
+
+    for (const errors of l.errors) {
+        Object.keys(errors).forEach((key) => {
+            if (errors[key][0] == "danger") {
+                hasDanger = true;
+            } else if (errors[key][0] == "warning") {
+                hasWarning = true;
+            }
+        }
+    )}
+
+    if (hasDanger) {
+        return RED;
+    }
+    if (hasWarning) {
+        return ORANGE;
+    }
+    return GREY;
 }
 function linkStrokeWidth(l, highlighted) {
     return (highlighted) ? l.count + 3 : l.count + 1;
@@ -27,8 +55,6 @@ function linkStrokeWidth(l, highlighted) {
 function linkRotationAngle(d) {
     var angle = Math.atan2(d.target.y - d.source.y, d.target.x - d.source.x);
     var angleDeg = ((angle * 180 / Math.PI) + 360) % 360;
-    if (d.target.id == "S-ec0d9a0300ec8480" && d.source.id == "S-ec0d9a0300ec8200") {
-    }
     return angleDeg
 }
 function linkLabelTransform(d, type){
@@ -88,16 +114,50 @@ const Context = {
     zoomItem: null,
 
     data: null,
-    table: null,
+    nodesTable: null,
+    _simulation: null,
 
     width() {
         return $("#graph").parent().width();
     },
     height() {
-        return $("#graph").parent().height();
+        return window.innerHeight * 0.80;
     },
     links() {
         return this.data.links;
+    },
+    aggLinks() {
+        const _aggLinks = {}
+        for (const link of this.data.links) {
+            const key = `${link.source_uid}.${link.target_uid}`;
+            const sourcePortId = link.source_port_id;
+            const targetPortId = link.target_port_id;
+            const errors = link.errors;
+            if ( ! _aggLinks[key]) {
+                _aggLinks[key] = [];
+            }
+            _aggLinks[key].push({sourcePortId, targetPortId, errors});
+        }
+
+
+        const aggLinks = Object.keys(_aggLinks).map((key) => {
+            var [sourceUid, targetUid] = key.split(".");
+            return {
+                source: this.data.nodes.find(n => n.uid == sourceUid),
+                target: this.data.nodes.find(n => n.uid == targetUid),
+                source_uid: sourceUid,
+                target_uid: targetUid,
+                errors: _aggLinks[key].map(l => l.errors),
+                source_port_ids: _aggLinks[key].map(l => l.sourcePortId),
+                target_port_ids: _aggLinks[key].map(l => l.targetPortId),
+                count: _aggLinks[key].length
+            }
+        });
+
+        
+
+
+        return aggLinks;
     },
     nodes() {
         return this.data.nodes;
@@ -111,12 +171,12 @@ const Context = {
     switchLinks() {
         return this.links().filter(d => d.source.type == "S" && d.target.type == "S");
     },
-    setSimulationType(type) {
-        $("#simulation-type").val(type);
-        this.onchangeSimulationType();
-    },
     getSimulationType() {
         return $("#simulation-type").val();
+    },
+    setSimulationType(type) {
+        $("#simulation-type").val(type);
+
     },
     onchangeSimulationType() {
         this._simulation = this.simulation();
@@ -141,15 +201,15 @@ const Context = {
         
         if (simulationType == 'all') {
             return d3.forceSimulation(this.nodes())
-                .force("link", d3.forceLink(this.links()).id(d => d.id))
-                .force("charge", d3.forceManyBody().strength( -600 ))
+                .force("link", d3.forceLink(this.links()).id(d => d.uid))
+                .force("charge", d3.forceManyBody().strength( -1600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .force("center", d3.forceCenter(this.width() / 2, this.height() / 2))
                 .on("tick", () => this.ticked());
         } else if (simulationType == 'compute') {
             return  d3.forceSimulation(this.nodes())
-                .force("link", d3.forceLink(this.links()).id(d => d.id))
-                .force("charge", d3.forceManyBody().strength( -600 ))
+                .force("link", d3.forceLink(this.links()).id(d => d.uid))
+                .force("charge", d3.forceManyBody().strength( -1600 ))
                 .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                 .on("tick", () => this.ticked());
 
@@ -157,57 +217,62 @@ const Context = {
             return  d3.forceSimulation(this.nodes())
                     .force("collide", d3.forceCollide().radius(d => nodeRadius(d) + 30).strength(0.4))
                     .on("tick", () => this.ticked())
-;
-r
         }
 
     },
-    nodeselected(uid) {
-        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.id == uid));
-        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.id == uid));
-        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.id == uid || l.target.id == uid));
-        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.id == uid || l.target.id == uid)));
+    getLabelType() {
+        return $("#label-type").val();
     },
-    linkselected(source_uid, target_uid) {
-        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.id == source_uid || n.id == target_uid));
-        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.id == source_uid || n.id == target_uid));
-        this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id)));
-        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.id && target_uid == ol.target.id) || (source_uid == ol.target.id && target_uid == ol.source.id))));        
+    setLabelType(type) {
+        $("#label-type").val(type);
+    },
+    onchangeLabelType() {
+        this.showlabel();
+    },
+    nodeselected(uid, scrollToRow) {
+        this.nodeItems.style('stroke-opacity', on => strokeOpacity(on.uid == uid));
+        this.nodeItems.style('stroke-width', on =>  nodeStrokeWidth(on.uid == uid));
+        this.linkItems.style('stroke-opacity', l => strokeOpacity(l.source.uid == uid || l.target.uid == uid));
+        this.linkItems.style('stroke-width', l => linkStrokeWidth(l,(l.source.uid == uid || l.target.uid == uid)));
+        if (scrollToRow) {
+            const rows = this.nodesTable.searchRows([{field: 'uid', type: '=', value: uid}]);
+            this.nodesTable.selectRow(rows);
+            this.nodesTable.scrollToRow(rows[0], "top", false);
+        }
+    },
+    linkselected(source_uid, target_uid, scrollToRow) {
+        this.nodeItems.style('stroke-opacity', n => strokeOpacity(n.uid == source_uid || n.uid == target_uid));
+        this.nodeItems.style('stroke-width', n =>  nodeStrokeWidth(n.uid == source_uid || n.uid == target_uid));
+        this.linkItems.style('stroke-opacity', ol => strokeOpacity((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid)));
+        this.linkItems.style('stroke-width', ol => linkStrokeWidth(ol,((source_uid == ol.source.uid && target_uid == ol.target.uid) || (source_uid == ol.target.uid && target_uid == ol.source.uid))));        
+        if (scrollToRow) {
+            const rows = this.linksTable.searchRows([{field: 'source_uid', type: '=', value: source_uid}, {field: 'target_uid', type: '=', value: target_uid}]);
+            this.linksTable.selectRow(rows);
+            this.linksTable.scrollToRow(rows[0], "top", false);
+        }
     },
     unselected() {
-        this.table.deselectRow();
+        this.nodesTable.deselectRow();
+        this.linksTable.deselectRow();
         this.nodeItems.style('stroke-opacity', strokeOpacity(false));
         this.nodeItems.style('stroke-width', nodeStrokeWidth(false));
         this.linkItems.style('stroke-opacity', strokeOpacity(false));
         this.linkItems.style('stroke-width', l => linkStrokeWidth(l,false));
     },
-    showlabel(target) {
-        var buttonIds = ["all-label-button", "node-label-button", "link-label-button"];
+    showlabel() {
+        var labelType = this.getLabelType();
 
+        this.nodeLabelItems.attr("style", "display: none;");
+        this.linkSourceLabelItems.attr("style", "display: none;");
+        this.linkTargetLabelItems.attr("style", "display: none;");
 
-        for (var i = 0; i < buttonIds.length; i++) {
-            var buttonId = buttonIds[i];
-            if (buttonId == target + "-label-button") {
-                $("#" + buttonId).removeClass("btn-outline-primary");
-                $("#" + buttonId).addClass("btn-primary");
-                $("#" + buttonId + " svg").attr("style", "");
-            } else {
-                $("#" + buttonId).removeClass("btn-primary");
-                $("#" + buttonId).addClass("btn-outline-primary");
-                $("#" + buttonId + " svg").attr("style", "display: none;");
-            }
-        }
-
-        if (target == "all") {
+        if (labelType == "all") {
             this.nodeLabelItems.attr("style", "");
-            this.linkSourceLabelItems.attr("style", "");
-            this.linkTargetLabelItems.attr("style", "");
-        } else if (target == "node") {
+            this.linkSourceLabelItems.filter((d) => (d.source.type == "S") && (d.target.type == "S")).attr("style", "");
+            this.linkTargetLabelItems.filter((d) => (d.source.type == "S") && (d.target.type == "S")).attr("style", "");
+        } else if (labelType == "nodes") {
             this.nodeLabelItems.attr("style", "");
-            this.linkSourceLabelItems.attr("style", "display: none;");
-            this.linkTargetLabelItems.attr("style", "display: none;");
-        } else if (target == "link") {
-            this.nodeLabelItems.attr("style", "display: none;");
+        } else if (labelType == "links") {
             this.linkSourceLabelItems.attr("style", "");
             this.linkTargetLabelItems.attr("style", "");
         }
@@ -216,6 +281,7 @@ r
 
         if (this.getSimulationType() == 'all'){
             this.setSimulationType('compute');
+            this._simulation = this.simulation();
         }
 
         if (!event.active) this._simulation.alphaTarget(0.3).restart();
@@ -240,18 +306,27 @@ r
         var canvasHeight = window.innerHeight * 0.80;
         $("#app-container .row").height(canvasHeight);
 
-        // Register the event handler for the simulation type
-        $("#simulation-type").change(() => this.onchangeSimulationType());
-
-
-
     },
     async _graphInitialized() {
+        var legendKeys = [`Switches: ${this.switchNodes().length}`, `Nodes: ${this.computeNodes().length}`, `Links: ${this.links().length}`];
+
+
         this.svg = d3.select("#graph").append("svg")
             .attr("width", this.width())
             .attr("height", this.height())
             .attr("viewBox", [0, 0, this.width(), this.height()])
             .attr("style", "max-width: 100%; height: auto;")
+
+        this.svg.append('g')
+            .attr("class", "legend")
+            .selectAll("text")
+            .data(legendKeys)
+            .enter()
+            .append("text")
+            .attr("x", 0)
+            .attr("y", (d, i) => (i+1) * 20)
+            .text(d => d)
+
 
         this.containerItem = this.svg.append("g")
             .attr("class", "container")
@@ -259,29 +334,29 @@ r
 
         this.linkContainerItems = this.containerItem.append("g")
             .selectAll()
-            .data(this.links())
+            .data(this.aggLinks())
             .join('g')
 
         this.linkItems = this.linkContainerItems.append("line")
             .attr("stroke-width", l => linkStrokeWidth(l, false))
-            .attr("stroke", "#222")
+            .attr("stroke", l => linkStroke(l))
             .attr("stroke-opacity", strokeOpacity(false))
 
         this.linkSourceLabelItems = this.linkContainerItems.append("text")
             .attr("text-anchor", "start")
-            // .attr("alignment-baseline", "middle")
             .attr("x", 0)
             .attr("y", 0)
             .attr("dy", 0)
-            .text( d => (d.source_name))
+            .text( d => d.source_port_ids)
+            .attr("style", "display: none;")
         
         this.linkTargetLabelItems = this.linkContainerItems.append("text")
             .attr("text-anchor", "end")
-            // .attr("alignment-baseline", "middle")
             .attr("x", 0)
             .attr("y", 0)
             .attr("dy", 0)
-            .text( d => (d.target_name))
+            .text( d => d.target_port_ids ) 
+            .attr("style", "display: none;")
         
 
         this.nodeContainerItems = this.containerItem.append("g")
@@ -311,11 +386,12 @@ r
             .attr("y", d => nodeRadius(d) + 12)
             .attr("dy", 0)
             .call(wrapText, 100)
+            .attr("style", "display: none;")
         
 
 
 
-        this.zoomItem = d3.zoom().scaleExtent([0.5, 32])
+        this.zoomItem = d3.zoom().scaleExtent([0.1, 4])
         this.dragItem = d3.drag()
 
         this.svg.call(this.zoomItem.on("zoom", ({transform}) => {
@@ -329,93 +405,172 @@ r
             
         this.nodeContainerItems.on("mouseover", (e) => {
             n = d3.select(e.target).datum();
-            this.table.scrollToRow(n.id, "center", false);
-            this.table.selectRow(n.id);
-            this.nodeselected(n.id);
+            this.nodeselected(n.uid, true);
         });
         this.nodeContainerItems.on("mouseout", (e) => {
             this.unselected();
         });
+        this.linkContainerItems.on("mouseover", (e) => {
+            l = d3.select(e.target).datum();
+            this.linkselected(l.source.uid, l.target.uid, true)
+
+        });
+        this.linkContainerItems.on("mouseout", (e) => {
+            this.unselected();
+        });
 
 
-
-        if (this.data.state){
+        if (this.data?.state?.nodePositions){
             this.nodes().forEach((d) => {
-                var nodePosition = this.data.state.nodePositions.find(n => n.id == d.id);
+                var nodePosition = this.data.state.nodePositions.find(n => n.uid == d.uid);
                 if (nodePosition) {
                     d.x = nodePosition.x;
                     d.y = nodePosition.y;
                 }
-            });
-            this.setSimulationType(this.data.state.simulationType);
-            this.ticked()
-            this.fitzoom();
+            })
+        }
+        if (this.data?.state?.zoom){
+            this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(this.data.state.zoom.x, this.data.state.zoom.y).scale(this.data.state.zoom.k));
         } else {
-            this._simulation = this.simulation()
+            this.svg.call(this.zoomItem.transform, d3.zoomIdentity.scale(0.5));
         }
 
+        if (this.data.state?.simulationType){
+            this.setSimulationType(this.data.state.simulationType);
+        }
+        this._simulation = this.simulation()
+
+        if (this.data.state?.labelType){
+            this.setLabelType(this.data.state.labelType);
+        }
+        this.showlabel()
+
     },
-    async _tableInitialized() {
-        this.table = new Tabulator("#table", {
+    async _nodesTableInitialized() {
+        this.nodesTable = new Tabulator("#nodes-table", {
             data: this.data.nodes,           //load row data from array
-            layout:"fitData",
-            height:this.height(),
-            columns:[                        //define the table columns
-                // {formatter:"rownum", hozAlign:"center", width:65},
-                {title:"Name", field:"name"},
-                {title:"UID", field:"uid"},
-                {title:"Port", field:"port_id"},
-                {title:"Target Name", field:"target_name"},
-                {title:"Target Port", field:"target_port_id"},
-                {title:"Target UID", field:"target_uid"},
-                
+            layout:"fitColumns",
+            height:this.height()/2,
+            columns:[                        //define the nodesTable columns
+                {title: "Name", field: "name"},
+                {title: "Type", field: "type", width:10 },
+                {title: "UID",  field: "uid"},
+                {title: "Ports", field: "n_ports", width:10 },
             ],
-            dataTree:true,
+            // dataTree:true,
         });
 
-        this.table.on("rowMouseOver", (e, row) =>{
+        this.nodesTable.on("rowMouseOver", (e, row) =>{
             var data = row.getData();
-
-            if (data.target_name != undefined) { 
-                this.linkselected(data.uid, data.target_uid);
-            } else {
-                this.nodeselected(data.uid);
-            }
+            this.nodeselected(data.uid);
         });
 
-        this.table.on("rowMouseOut", () => {
+        this.nodesTable.on("rowMouseOut", () => {
+            this.unselected()
+        });
+    },
+    async _linksTableInitialized() {
+        this.linksTable = new Tabulator("#links-table", {
+            data: this.data.links,           //load row data from array
+            layout:"fitColumns",
+            height:this.height()/2,
+            columns:[                        //define the linksTable columns
+                {title: "Source UID", field: "source_uid"},
+                {title: "Source Port", field: "source_port_id", width:10 },
+                {title: "Type", field: "type", width:10 },
+                {title: "Target UID", field: "target_uid"},
+                {title: "Target Port", field: "target_port_id", width:10 },
+                {title: "E", field: "n_errors", width:10 },
+                {title: "W", field: "n_warnings", width:10 },
+            ],
+            initialSort:[
+                {column:"source_uid", dir:"asc"},
+                {column:"target_uid", dir:"asc"},
+                {column:"n_warnings", dir:"desc"},
+                {column:"n_errors", dir:"desc"},
+            ],
+            rowFormatter:function(row){
+                //create and style holder elements
+                const errors = row.getData().errors;
+
+                const listElement = document.createElement("ul");
+                const holderElement = document.createElement("div");
+                
+                row.getElement().appendChild(holderElement);
+                holderElement.appendChild(listElement);
+                for ( const [severity, origin, metric, value] of errors) {
+                    const listItem = document.createElement("li");
+                    listItem.textContent = `[${origin}] ${metric} (${value}) `;
+                    
+                    switch (severity) {
+                        case "danger":
+                            listItem.style.color = RED;
+                            break;
+                        case "warning":
+                            listItem.style.color = ORANGE;
+                            break;
+                        default:
+                            listItem.style.color = GREY;
+                            break;
+                    }
+
+                    listElement.appendChild(listItem);
+                };
+            },
+        });
+
+        this.linksTable.on("rowMouseOver", (e, row) =>{
+            var data = row.getData();
+            this.linkselected(data.source_uid, data.target_uid);
+        });
+
+        this.linksTable.on("rowMouseOut", () => {
             this.unselected()
         });
     },
     async _menuInitialized() {
-        $('#n-switches').val(this.switchNodes().length);
-        $('#n-computes').val(this.computeNodes().length);
-        $('#n-links').val(this.links().length);
-
         $('#save-graph').click(() => this.saved());
+        $("#simulation-type").change(() => this.onchangeSimulationType());
+        $("#label-type").change(() => this.onchangeLabelType());
 
         $("#all-label-button").click(() => this.showlabel("all"));
         $("#node-label-button").click(() => this.showlabel("node"));
         $("#link-label-button").click(() => this.showlabel("link"));
+        $("#none-label-button").click(() => this.showlabel("none"));
     },
-    initialized() {
+    async initialized() {
         this._containerInitialized();
-        this._tableInitialized();
+        this._nodesTableInitialized();
+        this._linksTableInitialized();
         this._graphInitialized();
         this._menuInitialized();
     },
-    loaded(endpoint) {
+    load() {
         // Get the current url without any trailing slash
         var currentUrl = window.location.href.replace(/\/$/, "");
-        var url = `${currentUrl}${endpoint}`;
+        var url = `${currentUrl}/graph`;
         var successCallback = (data) => {
-            data.nodes.forEach((d) => {
-                d._children = [];
+
+            data.links.forEach((link) => {
+                var source = data.nodes.find(node => node.uid == link.source_uid);
+                var target = data.nodes.find(node => node.uid == link.target_uid);
+                var n_errors = 0
+                var n_warnings = 0
+                link.errors.forEach((errors) => {
+                        if (errors[0] == "danger") {
+                            n_errors += 1;
+                        } else if (errors[0] == "warning") {
+                            n_warnings += 1;
+                        }
+                    });
+
+
+                link.source = source;
+                link.target = target;
+                link.n_errors = n_errors;
+                link.n_warnings = n_warnings;
             });
-            data.extlinks.forEach((l) => {
-                var source = data.nodes.find(n => n.uid == l.uid);
-                source._children.push(l);
-            });
+
             this.data = data
             this.initialized()
         }
@@ -424,7 +579,6 @@ r
             displayAlert("danger", response.message)
         }
 
-        // d3.json(url).then( successCallback, failureCallback);
         $.ajax({
             url: url,
             type: "GET",
@@ -454,7 +608,7 @@ r
         
     },
     saved() {
-        var url = `${window.location.href}/graph/state/save`;
+        var url = `${window.location.href}/graph/state`;
         var state = this.getState();
 
         var successCallback = (data) => { 
@@ -475,34 +629,31 @@ r
         });
     },
     getState() {
+        var currentTransform = d3.zoomTransform(context.containerItem.node())
+
         var state = {
             simulationType: this.getSimulationType(),
-            nodePositions: this.nodes().map(d => { return {id: d.id, x: d.x, y: d.y} })
+            labelType: this.getLabelType(),
+            nodePositions: this.nodes().map(d => { return {uid: d.uid, x: d.x, y: d.y} }),
+            zoom: {x: currentTransform.x, y: currentTransform.y, k: currentTransform.k}
         }
         return state;
     },
-    fitzoom() {
-        var minX = d3.min(this.nodes(), d => d.x);
-        var maxX = d3.max(this.nodes(), d => d.x);
-        var minY = d3.min(this.nodes(), d => d.y);
-        var maxY = d3.max(this.nodes(), d => d.y);
-        var midX = (minX + maxX) / 2;
-        var midY = (minY + maxY) / 2;
-
-        var width = maxX - minX;
-        var height = maxY - minY;
-        var scale = 0.9 / Math.max(width / this.width(), height / this.height());
-        var translateX = this.width() / 2 - scale * midX;
-        var translateY = this.height() / 2 - scale * midY;
-
-        this.svg.call(this.zoomItem.transform, d3.zoomIdentity.translate(translateX, translateY).scale(scale));
-        
+    resized() {
+        console.log(`Resized to ${this.width()} x ${this.height()}`)
+        this.svg.attr("width", this.width())
+                .attr("height", this.height())
+                .attr("viewBox", [0, 0, this.width(), this.height()])
+        this.nodesTable.setHeight(this.height()/2);
+        this.linksTable.setHeight(this.height()/2);
     }
-    
 }
 
 var context;
 window.onload = function () {
     context = Object.create(Context)
-    context.loaded("/graph/get");
+    context.load();
+    window.onresize = function () {
+        context.resized();
+    }
 }
