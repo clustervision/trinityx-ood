@@ -480,6 +480,14 @@ const Context = {
                 {title: "Type", field: "type", width:10 },
                 {title: "Target UID", field: "target_uid"},
                 {title: "Target Port", field: "target_port_id", width:10 },
+                {title: "E", field: "n_errors", width:10 },
+                {title: "W", field: "n_warnings", width:10 },
+            ],
+            initialSort:[
+                {column:"source_uid", dir:"asc"},
+                {column:"target_uid", dir:"asc"},
+                {column:"n_warnings", dir:"desc"},
+                {column:"n_errors", dir:"desc"},
             ],
             rowFormatter:function(row){
                 //create and style holder elements
@@ -546,9 +554,21 @@ const Context = {
             data.links.forEach((link) => {
                 var source = data.nodes.find(node => node.uid == link.source_uid);
                 var target = data.nodes.find(node => node.uid == link.target_uid);
+                var n_errors = 0
+                var n_warnings = 0
+                link.errors.forEach((errors) => {
+                        if (errors[0] == "danger") {
+                            n_errors += 1;
+                        } else if (errors[0] == "warning") {
+                            n_warnings += 1;
+                        }
+                    });
+
 
                 link.source = source;
                 link.target = target;
+                link.n_errors = n_errors;
+                link.n_warnings = n_warnings;
             });
 
             this.data = data
