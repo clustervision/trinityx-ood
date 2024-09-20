@@ -98,8 +98,8 @@ def _parse_graph(graph_data, prometheus_data):
         source_errors = prometheus_data.get(source_uid, {}).get(source_port_id, {})
         target_errors = prometheus_data.get(target_uid, {}).get(target_port_id, {})
         
-        source_errors_list = [(_parse_severity(k), "source", k, v) for k, v in source_errors.items()]
-        target_errors_list = [(_parse_severity(k), "target", k, v) for k, v in target_errors.items()]
+        source_errors_list = [(_parse_severity(k), f"{nodes_map[target_uid].get('name')} {source_uid}", k, v) for k, v in source_errors.items()]
+        target_errors_list = [(_parse_severity(k), f"{nodes_map[target_uid].get('name')} {target_uid}", k, v) for k, v in target_errors.items()]
         
         merged_errors = source_errors_list + target_errors_list
         
@@ -120,9 +120,7 @@ def get_prometheus_data():
         
         queries = {
             "":{ "query": "max by (metric_name, guid, port) (label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)'))"},
-            "delta_1h_": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[1h:]))"},
-            # "delta_2h": {"query": "max by (metric_name, guid, port) (delta(label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')[2h:]))"},
-
+            "delta_1h_": {"query": "max by (metric_name, guid, port) ((label_replace({__name__=~'" + "|".join(series) + "'}, 'metric_name', '$1', '__name__', '(.+)')- label_replace({__name__=~'" + "|".join(series) + "'} offset 1h, 'metric_name', '$1', '__name__', '(.+)')))"},
         }
         data = {}
         for query_type, params in queries.items():
