@@ -42,6 +42,18 @@
       {% endif %}
     </div>
 
+    <div class="row card-body">
+      <div class="col-1">Temp CPU0 0C</div>
+      <div class="col-10"><div class="grad">&nbsp;</div></div>
+      <div class="col-1">48.74 C</div>
+    </div>
+
+    <div class="row card-body">
+      <div class="col-1">Temp CPU1 0C</div>
+      <div class="col-10"><div class="grad">&nbsp;</div></div>
+      <div class="col-1">48.74 C</div>
+    </div>
+
     <div class="card-body">
       {% if rack_data %}
         {% for key, value in rack_data.items() %}
@@ -120,6 +132,7 @@
                             $("#{{ each_device['name'] }}").css('height', screen_height);
                           </script>
                           <input type="hidden" name="type" value="{{ each_device['type'] }}" />
+                          <span class="spinner-grow spinner-grow-sm text-success" style="float: right;"></span>
                           <span id="dev-name">{{ each_device['name'] }}</span>
                           <script type="text/javascript">
                             $(function(){
@@ -342,6 +355,25 @@
 <hr class="my-5" />
 
 <script type="text/javascript">
+
+  function get_temperature(){
+    var response;
+    $.ajax({
+        url: window.location.href+"/get_temperature",
+        type: 'GET',
+        dataType: 'json',
+        contentType: 'application/json; charset=UTF-8',
+        async: false,
+        success: function(response_data) {
+          console.log(response_data);
+          response = response_data;
+        }
+    });
+    return response;
+  }
+  get_temperature();
+
+
   function extendview(id){
     $(id).toggle();
   }

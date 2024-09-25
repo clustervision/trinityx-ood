@@ -2,12 +2,15 @@
 .layout-menu-fixed:not(.layout-menu-collapsed) .layout-page, .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
   padding: 0rem;
 }
+.grad {
+  background-image: linear-gradient(to right, blue, green, yellow, orange, red);
+}
 
 /* ------------ Introducing Media Query to Make Large and Small Layouts for Rack and it's components. ----------------- */
 
 /* ------------ Small Screen View ----------------- */
 
-
+/* 
 @media only screen and (max-width: 1920px) {
 
   .rack_button {
@@ -19,7 +22,6 @@
   height: 10px;
   padding: 0;
   margin: 0;
-  /* text-align: center; */
 }
 
 .ui-widget-content {
@@ -51,7 +53,6 @@
 
 .right-click {
   display: inline-block;
-  /* text-align: center; */
 }
 
 #dev-name {
@@ -127,11 +128,11 @@
 }
 .rack-slot p {
   margin: 0;
-}
+} */
 
 /* Servers Skins Depends on the size and availability.  */
 
-.noname {
+/* .noname {
   background-image: url('../img/noname.png');
 }
 .noname span {
@@ -312,19 +313,19 @@
 .hp-4 span {
   color: #ffffff;
 }
-
+ */
 
 /* Servers Skins Depends on the size and availability.  */
 
 
 
-}
+/* } */
 
 /* ------------ Small Screen View ----------------- */
 
 
 /* ------------ Large Screen View ----------------- */
-@media only screen and (min-width: 1921px) {
+/* @media only screen and (min-width: 1921px) { */
 
   .draggable {
     height: 30px;
@@ -620,7 +621,7 @@
 /* Servers Skins Depends on the size and availability.  */
 
 
-}
+/* } */
 
 /* ------------ Large Screen View ----------------- */
 

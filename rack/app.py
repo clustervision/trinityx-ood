@@ -37,7 +37,7 @@ from textwrap import wrap
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
 from rest import Rest
-from constant import LICENSE
+from constant import LICENSE, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL
 from log import Log
 from helper import Helper
 from presenter import Presenter
@@ -68,16 +68,99 @@ def home():
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None)
 
 
+def add_key_value(data, hostname, new_key, new_value):
+    for entry in data:
+        if entry['hostname'] == hostname:
+            entry[new_key] = new_value
+    return data
+
+
+@app.route('/get_temperature', methods=['GET'])
+def get_temperature():
+    """
+    This route will call the prometheus URL to collect the temperature for the machines.
+    """
+    temperature_check, result = False, []
+    temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
+    if temperature_data is not False:
+        data = temperature_data.json()
+        if data["status"] == "success":
+            for values in data["data"]["result"]:
+                hostname = values["metric"]["hostname"]
+                luna_group = values["metric"]["luna_group"]
+                value = values["value"]
+                if isinstance(value[0], float):
+                    # temperature_time = value[0]
+                    temperature = value[1]
+                else:
+                    # temperature_time = value[1]
+                    temperature = value[0]
+                # result.append({'hostname': hostname, 'type': luna_group, 'time': temperature_time, 'temperature': temperature})
+                result.append({'hostname': hostname, 'type': luna_group, 'temperature': temperature})
+                temperature_check = True
+            print(result)
+    
+    system_load_data = Rest().get_url_data(route=SYSTEM_LOAD_URL)
+    if system_load_data is not False:
+        system_data = system_load_data.json()
+        if system_data["status"] == "success":
+            for system_values in system_data["data"]["result"]:
+                hostname = system_values["metric"]["hostname"]
+                luna_group = system_values["metric"]["luna_group"]
+                value = system_values["value"]
+                if temperature_check is True:
+                    for check in result:
+                        if check['hostname'] == hostname:
+                            check["load"] = value[1]
+                else:
+                    if isinstance(value[0], float):
+                        # temperature_time = value[0]
+                        temperature = value[1]
+                    else:
+                        # temperature_time = value[1]
+                        temperature = value[0]
+                    # result.append({'hostname': hostname, 'type': luna_group, 'time': temperature_time, 'load': temperature})
+                    result.append({'hostname': hostname, 'type': luna_group, 'load': temperature})
+            print(result)
+    
+    power_data = Rest().get_url_data(route=POWER_URL)
+    if power_data is not False:
+        power_json = power_data.json()
+        if power_json["status"] == "success":
+            for power_values in power_json["data"]["result"]:
+                hostname = power_values["metric"]["hostname"]
+                luna_group = power_values["metric"]["luna_group"]
+                value = power_values["value"]
+                if temperature_check is True:
+                    for check in result:
+                        if check['hostname'] == hostname:
+                            check["power"] = value[1]
+                else:
+                    if isinstance(value[0], float):
+                        # temperature_time = value[0]
+                        temperature = value[1]
+                    else:
+                        # temperature_time = value[1]
+                        temperature = value[0]
+                    # result.append({'hostname': hostname, 'type': luna_group, 'time': temperature_time, 'power': temperature})
+                    result.append({'hostname': hostname, 'type': luna_group, 'power': temperature})
+            print(result)
+
+    return jsonify(result)
+
+
 @app.route('/get_screen_size', methods=['POST'])
 def get_screen_size():
     data = request.json
     width = data['width']
-    if width >= 1921:
-        width = 220
-        height = 30
-    else:
-        width = 120
-        height = 20
+    # if width >= 1921:
+    #     width = 220
+    #     height = 30
+    # else:
+    #     width = 120
+    #     height = 20
+    width = 220
+    height = 30
     # print(f"Screen Width: {width}, Screen Height: {height}")
     return jsonify({'width': width, 'height': height})
 
@@ -313,5 +396,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7059, debug=True)
-    app.run()
+    app.run(host='0.0.0.0', port=7059, debug=True)
+    # app.run()
