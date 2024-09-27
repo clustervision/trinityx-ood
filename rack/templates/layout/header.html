@@ -50,14 +50,12 @@
 
     var url = window.location.href
     url = url.replace('#','');
-    console.log(url);
     if  (url.includes('/show/rack/') || url.includes('/manage/rack') || url.includes('/manage/inventory') || url.includes('/edit/')){
         url = url.split('/');
         url.pop();
         url.pop();
         url.pop();
         url = url.join("/");
-        console.log(url);
     }
     if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
 
@@ -86,10 +84,6 @@
         // Call sendScreenSize function whenever window is resized
         sendScreenSize();
     });
-
-    console.log('Screenheight:', sendScreenSize().width);
-    console.log('Screenheight:', sendScreenSize().height);
-    console.log('============>>> Real response received from server:', sendScreenSize());
 
   </script>
 

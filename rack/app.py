@@ -55,6 +55,7 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
+    metric = get_temperature()
     table_data = Rest().get_data(TABLE)
     if table_data:
         rack_data = table_data["config"]["rack"]
@@ -65,7 +66,7 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None)
+    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
 
 
 def add_key_value(data, hostname, new_key, new_value):
@@ -89,16 +90,9 @@ def get_temperature():
                 hostname = values["metric"]["hostname"]
                 luna_group = values["metric"]["luna_group"]
                 value = values["value"]
-                if isinstance(value[0], float):
-                    # temperature_time = value[0]
-                    temperature = value[1]
-                else:
-                    # temperature_time = value[1]
-                    temperature = value[0]
-                # result.append({'hostname': hostname, 'type': luna_group, 'time': temperature_time, 'temperature': temperature})
+                temperature = value[1]
                 result.append({'hostname': hostname, 'type': luna_group, 'temperature': temperature})
                 temperature_check = True
-            print(result)
     
     system_load_data = Rest().get_url_data(route=SYSTEM_LOAD_URL)
     if system_load_data is not False:
@@ -113,15 +107,8 @@ def get_temperature():
                         if check['hostname'] == hostname:
                             check["load"] = value[1]
                 else:
-                    if isinstance(value[0], float):
-                        # temperature_time = value[0]
-                        temperature = value[1]
-                    else:
-                        # temperature_time = value[1]
-                        temperature = value[0]
-                    # result.append({'hostname': hostname, 'type': luna_group, 'time': temperature_time, 'load': temperature})
+                    temperature = value[1]
                     result.append({'hostname': hostname, 'type': luna_group, 'load': temperature})
-            print(result)
     
     power_data = Rest().get_url_data(route=POWER_URL)
     if power_data is not False:
@@ -136,16 +123,8 @@ def get_temperature():
                         if check['hostname'] == hostname:
                             check["power"] = value[1]
                 else:
-                    if isinstance(value[0], float):
-                        # temperature_time = value[0]
-                        temperature = value[1]
-                    else:
-                        # temperature_time = value[1]
-                        temperature = value[0]
-                    # result.append({'hostname': hostname, 'type': luna_group, 'time': temperature_time, 'power': temperature})
+                    temperature = value[1]
                     result.append({'hostname': hostname, 'type': luna_group, 'power': temperature})
-            print(result)
-
     return jsonify(result)
 
 
@@ -153,15 +132,13 @@ def get_temperature():
 def get_screen_size():
     data = request.json
     width = data['width']
-    # if width >= 1921:
-    #     width = 220
-    #     height = 30
-    # else:
-    #     width = 120
-    #     height = 20
-    width = 220
-    height = 30
-    # print(f"Screen Width: {width}, Screen Height: {height}")
+    if width >= 1921:
+        width = 220
+        height = 30
+    else:
+        width = 120
+        height = 20
+    print(f"Screen Width: {width}, Screen Height: {height}")
     return jsonify({'width': width, 'height': height})
 
 
@@ -396,5 +373,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=7059, debug=True)
-    # app.run()
+    # app.run(host='0.0.0.0', port=7059, debug=True)
+    app.run()

@@ -3,14 +3,22 @@
   padding: 0rem;
 }
 .grad {
-  background-image: linear-gradient(to right, blue, green, yellow, orange, red);
+  /* background-image: linear-gradient(to right, lightblue, green, yellow, orange, red); */
+  background: linear-gradient(to right, 
+      /* lightblue 0%,  */
+      blue 15%, 
+      green 25%, 
+      yellow 50%, 
+      orange 75%, 
+      red 100%);
+  width: 60%;
 }
 
 /* ------------ Introducing Media Query to Make Large and Small Layouts for Rack and it's components. ----------------- */
 
 /* ------------ Small Screen View ----------------- */
 
-/* 
+
 @media only screen and (max-width: 1920px) {
 
   .rack_button {
@@ -62,6 +70,20 @@
   margin-left: 40px;
 }
 
+
+.color_metric {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Clearfix to contain floated elements */
+}
+
+code {
+  font-size: 100%;
+  height: 10px;
+  padding: 0;
+  margin: 0;
+  display: inline-block; /* Ensure it behaves like a block while remaining inline */
+}
 .row {
   flex-wrap: nowrap;
 }
@@ -313,19 +335,19 @@
 .hp-4 span {
   color: #ffffff;
 }
- */
+ 
 
 /* Servers Skins Depends on the size and availability.  */
 
 
 
-/* } */
+}
 
 /* ------------ Small Screen View ----------------- */
 
 
 /* ------------ Large Screen View ----------------- */
-/* @media only screen and (min-width: 1921px) { */
+@media only screen and (min-width: 1921px) {
 
   .draggable {
     height: 30px;
@@ -621,7 +643,7 @@
 /* Servers Skins Depends on the size and availability.  */
 
 
-/* } */
+}
 
 /* ------------ Large Screen View ----------------- */
 

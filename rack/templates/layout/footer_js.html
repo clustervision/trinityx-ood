@@ -5,6 +5,38 @@
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 <script type="text/javascript">
+    // Function to toggle all scale scales
+    $(document).ready(function () {
+        function hideAllScales() {
+            $('#no_scale').hide();
+            $('#temp_scale').hide();
+            $('#load_scale').hide();
+            $('#power_scale').hide();
+            $('[class^="temperature-"], [class^="power-"], [class^="load-"]').hide();
+        }
+        hideAllScales();
+        $('.dropdown-item').click(function (event) {
+            event.preventDefault();
+            const targetId = $(this).data('target');
+            hideAllScales();
+            $(`#${targetId}`).show();
+
+            if (targetId === 'temp_scale') {
+                $('[class^="temperature-"]').show();
+            } else if (targetId === 'load_scale') {
+                $('[class^="load-"]').show();
+            } else if (targetId === 'power_scale') {
+                $('[class^="power-"]').show();
+            }
+        });
+    });
+
+
+
+    $(document).ready( function() {
+        $('.dropdown-toggle').dropdown();
+    });
+
     $('.back').hide();
     $('#front-button').hide();
 </script>
@@ -22,7 +54,6 @@
             url = url.join("/");
         } 
         url = url+'/perform/'+system+'/'+action+'/'+device;
-        console.log(url);
         $.ajax({
             url: url,
             type: 'GET',
@@ -38,4 +69,105 @@
         });
     }
 
+</script>
+
+<script type="text/javascript">
+  
+    function interpolateColor(percent, startColor, endColor) {
+        return Math.round(startColor + (endColor - startColor) * percent);
+    }
+
+    function perc2color(perc) {
+        const colors = [
+            { r: 0,   g: 0,   b: 255 }, // Blue
+            { r: 0,   g: 255, b: 0   }, // Green
+            { r: 255, g: 255, b: 0   }, // Yellow
+            { r: 255, g: 165, b: 0   }, // Orange
+            { r: 255, g: 0,   b: 0   }  // Red
+        ];
+        var segment = Math.floor(perc / 20);
+        var segmentPercent = (perc % 20) / 20;
+
+        if (segment >= colors.length - 1) {
+            segment = colors.length - 2;
+            segmentPercent = 1;
+        }
+        const r = interpolateColor(segmentPercent, colors[segment].r, colors[segment + 1].r);
+        const g = interpolateColor(segmentPercent, colors[segment].g, colors[segment + 1].g);
+        const b = interpolateColor(segmentPercent, colors[segment].b, colors[segment + 1].b);
+        return '#' + ('000000' + (r * 0x10000 + g * 0x100 + b).toString(16)).slice(-6);
+    }
+
+    function get_temperature(){
+        var response;
+        $.ajax({
+            url: url+"/get_temperature",
+            type: 'GET',
+            dataType: 'json',
+            contentType: 'application/json; charset=UTF-8',
+            async: false,
+            success: function(response_data) {
+                response = response_data;
+            }
+        });
+        return response;
+    }
+    var prometheus = get_temperature();
+
+    // Loop through each entry and update HTML
+    var total_load = 0;
+    var total_power = 0;
+    prometheus.forEach(function(device) {
+        var load = parseFloat(device.load);
+        var power = parseFloat(device.power);
+        if (power){
+            if (power > total_power){
+                total_power = power;
+            }
+        }
+        if (load){
+            if (load > total_load){
+                total_load += load;
+            }
+        }
+    });
+    document.getElementById("max_power").innerText = total_power + " watt";
+    document.getElementById("max_load").innerText = parseFloat(total_load).toFixed(2);
+
+    prometheus.forEach(function(device) {
+        var hostname = device.hostname;
+        var temperature = parseFloat(device.temperature);
+        var load = parseFloat(device.load);
+        var power = parseFloat(device.power);
+        var deviceName = hostname.split('.')[0];
+        var temperature_percentage = parseFloat((temperature / 90) * 100);
+        var power_percentage = parseFloat((power / total_power) * 100);
+        var load_percentage = parseFloat((load / total_load) * 100);
+
+        if (temperature){
+            document.querySelector(`.temperature-${deviceName}`).style.backgroundColor = perc2color(temperature_percentage);
+            document.querySelector(`.temperature-${deviceName}`).setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
+            const temperature_element = document.querySelector(`.temperature-${deviceName}`);
+            temperature_element.setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
+            temperature_element.setAttribute('data-bs-original-title', `<strong>Temperature:</strong> ${temperature}`); // For Bootstrap 5
+            new bootstrap.Tooltip(temperature_element); 
+        }
+        if (power){
+            document.querySelector(`.power-${deviceName}`).style.backgroundColor = perc2color(power_percentage);
+            document.querySelector(`.power-${deviceName}`).setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
+            const power_element = document.querySelector(`.power-${deviceName}`);
+            power_element.setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
+            power_element.setAttribute('data-bs-original-title', `<strong>Power Consumption:</strong> ${power}`); // For Bootstrap 5
+            new bootstrap.Tooltip(power_element);
+        }
+        if (load){
+            document.querySelector(`.load-${deviceName}`).style.backgroundColor = perc2color(load_percentage);
+            document.querySelector(`.load-${deviceName}`).setAttribute('title', `<strong>System Load:</strong> ${load}`);
+            const load_element = document.querySelector(`.load-${deviceName}`);
+            load_element.setAttribute('title', `<strong>System Load:</strong> ${load}`);
+            load_element.setAttribute('data-bs-original-title', `<strong>System Load:</strong> ${load}`); // For Bootstrap 5
+            new bootstrap.Tooltip(load_element); 
+        }
+
+    });
 </script>
