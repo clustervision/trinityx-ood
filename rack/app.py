@@ -33,6 +33,7 @@ __status__      = 'Development'
 import types
 import os
 import json
+import requests
 from textwrap import wrap
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
@@ -55,7 +56,11 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    metric = get_temperature()
+    temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
+    try:
+        metric = temperature_data.json()
+    except requests.exceptions.JSONDecodeError:
+        metric = None
     table_data = Rest().get_data(TABLE)
     if table_data:
         rack_data = table_data["config"]["rack"]
@@ -69,13 +74,6 @@ def home():
     return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
 
 
-def add_key_value(data, hostname, new_key, new_value):
-    for entry in data:
-        if entry['hostname'] == hostname:
-            entry[new_key] = new_value
-    return data
-
-
 @app.route('/get_temperature', methods=['GET'])
 def get_temperature():
     """
@@ -84,7 +82,10 @@ def get_temperature():
     temperature_check, result = False, []
     temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
     if temperature_data is not False:
-        data = temperature_data.json()
+        try:
+            data = temperature_data.json()
+        except requests.exceptions.JSONDecodeError:
+            data = {"status": "JSONDecodeError"}
         if data["status"] == "success":
             for values in data["data"]["result"]:
                 hostname = values["metric"]["hostname"]
@@ -96,7 +97,10 @@ def get_temperature():
     
     system_load_data = Rest().get_url_data(route=SYSTEM_LOAD_URL)
     if system_load_data is not False:
-        system_data = system_load_data.json()
+        try:
+            system_data = system_load_data.json()
+        except requests.exceptions.JSONDecodeError:
+            system_data = {"status": "JSONDecodeError"}
         if system_data["status"] == "success":
             for system_values in system_data["data"]["result"]:
                 hostname = system_values["metric"]["hostname"]
@@ -112,7 +116,10 @@ def get_temperature():
     
     power_data = Rest().get_url_data(route=POWER_URL)
     if power_data is not False:
-        power_json = power_data.json()
+        try:
+            power_json = power_data.json()
+        except requests.exceptions.JSONDecodeError:
+            power_json = {"status": "JSONDecodeError"}
         if power_json["status"] == "success":
             for power_values in power_json["data"]["result"]:
                 hostname = power_values["metric"]["hostname"]
@@ -373,5 +380,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7059, debug=True)
-    app.run()
+    app.run(host='0.0.0.0', port=7059, debug=True)
+    # app.run()
