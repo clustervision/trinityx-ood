@@ -32,10 +32,51 @@
   </div>
 
   <div class="card mb-4">
-    <div class="card-header d-flex align-items-center justify-content-between">
-      <h5 class="mb-0">{% if rack_data %}{{ rack_data['name'] }} Representation{% endif %}</h5>
-      <small class="text-muted float-end">Change Position here...</small>
-      <span style="float: right;"><a href="{{ url_for('manage', page='rack') }}" class="btn btn-warning">Back</a></span>
+    <div class="card-header">
+
+      <div class="row" style="flex-wrap: wrap !important;">
+        <div class="col col-2">
+          {% if metric %}
+          <div class="dropdown">
+            <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Metric</button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="" data-target="no_scale">No Scale</a>
+              <a class="dropdown-item" href="" data-target="temp_scale">Temperature</a>
+              <a class="dropdown-item" href="" data-target="load_scale">System Load</a>
+              <a class="dropdown-item" href="" data-target="power_scale">Power Consumption</a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+
+        <div class="col col-5">
+          <div id="no_scale" style="display: none;"></div>
+          <div id="temp_scale" style="display: none;">
+            <span style="display: inline-block;">0C </span>
+            <span class="grad" style="display: inline-block;">&nbsp;</span>
+            <span style="display: inline-block;"> 90 C</span>
+          </div>
+          <div id="load_scale" style="display: none;">
+            <span style="display: inline-block;">0 </span>
+            <span class="grad" style="display: inline-block;">&nbsp;</span>
+            <span id="max_load" style="display: inline-block;"> 100</span>
+          </div>
+          <div id="power_scale" style="display: none;">
+            <span style="display: inline-block;">0 Watt </span>
+            <span class="grad" style="display: inline-block;">&nbsp;</span>
+            <span id="max_power" style="display: inline-block;"> 200 watt</span>
+          </div>
+          
+        </div>
+
+        <div class="col col-3"></div>
+
+        <div class="col col-2" style="float: right;">
+          <span style="float: right;"><a href="{{ url_for('manage', page='rack') }}" class="btn btn-sm btn-warning">Back</a></span>
+        </div>
+
+      </div>
     </div>
 
     <div class="card-body revert-back">
@@ -113,7 +154,13 @@
                           $("#{{ each_device['name'] }}").css('height', screen_height);
                         </script>
                         <input type="hidden" name="type" value="{{ each_device['type'] }}" />
-                        <span id="dev-name">{{ each_device['name'] }}</span>
+                        <span id="dev-name" style="margin-left: -15px !important;">{{ each_device['name'] }}</span>
+
+                        <p class="color_metric" style="float: right;" >
+                          <code class="temperature-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+                          <code class="power-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+                          <code class="load-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+                        </p>
                         
                         <script type="text/javascript">
                           $(function(){
@@ -257,7 +304,13 @@
                             $("#{{ each_device['name'] }}").css('height', screen_height);
                           </script>
                             <input type="hidden" name="type" value="{{ each_device['type'] }}" />
-                            <span id="dev-name">{{ each_device['name'] }}</span>
+                            <span id="dev-name" style="margin-left: -15px !important;">{{ each_device['name'] }}</span>
+
+                            <p class="color_metric" style="float: right;" >
+                              <code class="temperature-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+                              <code class="power-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+                              <code class="load-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+                            </p>
                             
                             <script type="text/javascript">
                               $(function(){

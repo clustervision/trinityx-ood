@@ -192,6 +192,11 @@ def manage(page=None):
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
 def show(page=None, record=None):
+    temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
+    try:
+        metric = temperature_data.json()
+    except requests.exceptions.JSONDecodeError:
+        metric = None
     table_data = Rest().get_data(TABLE, record)
     if table_data:
         rack_data = table_data["config"]["rack"][record]
@@ -203,7 +208,7 @@ def show(page=None, record=None):
     else:
         inventory = {}
     page_cap = page.capitalize()
-    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
+    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', metric=metric)
 
 
 @app.route('/update', methods=['POST'])
