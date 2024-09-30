@@ -30,19 +30,16 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
-import types
 import os
 import json
-import requests
 from textwrap import wrap
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
 from rest import Rest
-from constant import LICENSE, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL
+from constant import LICENSE
 from log import Log
 from helper import Helper
 from presenter import Presenter
-from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'rack'
@@ -56,11 +53,7 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
-    try:
-        metric = temperature_data.json()
-    except requests.exceptions.JSONDecodeError:
-        metric = None
+    metric = Helper().get_metrics('temperature', data=[])
     table_data = Rest().get_data(TABLE)
     if table_data:
         rack_data = table_data["config"]["rack"]
@@ -79,60 +72,11 @@ def get_temperature():
     """
     This route will call the prometheus URL to collect the temperature for the machines.
     """
-    temperature_check, result = False, []
-    temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
-    if temperature_data is not False:
-        try:
-            data = temperature_data.json()
-        except requests.exceptions.JSONDecodeError:
-            data = {"status": "JSONDecodeError"}
-        if data["status"] == "success":
-            for values in data["data"]["result"]:
-                hostname = values["metric"]["hostname"]
-                luna_group = values["metric"]["luna_group"]
-                value = values["value"]
-                temperature = value[1]
-                result.append({'hostname': hostname, 'type': luna_group, 'temperature': temperature})
-                temperature_check = True
-    
-    system_load_data = Rest().get_url_data(route=SYSTEM_LOAD_URL)
-    if system_load_data is not False:
-        try:
-            system_data = system_load_data.json()
-        except requests.exceptions.JSONDecodeError:
-            system_data = {"status": "JSONDecodeError"}
-        if system_data["status"] == "success":
-            for system_values in system_data["data"]["result"]:
-                hostname = system_values["metric"]["hostname"]
-                luna_group = system_values["metric"]["luna_group"]
-                value = system_values["value"]
-                if temperature_check is True:
-                    for check in result:
-                        if check['hostname'] == hostname:
-                            check["load"] = value[1]
-                else:
-                    temperature = value[1]
-                    result.append({'hostname': hostname, 'type': luna_group, 'load': temperature})
-    
-    power_data = Rest().get_url_data(route=POWER_URL)
-    if power_data is not False:
-        try:
-            power_json = power_data.json()
-        except requests.exceptions.JSONDecodeError:
-            power_json = {"status": "JSONDecodeError"}
-        if power_json["status"] == "success":
-            for power_values in power_json["data"]["result"]:
-                hostname = power_values["metric"]["hostname"]
-                luna_group = power_values["metric"]["luna_group"]
-                value = power_values["value"]
-                if temperature_check is True:
-                    for check in result:
-                        if check['hostname'] == hostname:
-                            check["power"] = value[1]
-                else:
-                    temperature = value[1]
-                    result.append({'hostname': hostname, 'type': luna_group, 'power': temperature})
-    return jsonify(result)
+    response = []
+    response = Helper().get_metrics('temperature', data=response)
+    response = Helper().get_metrics('load', data=response)
+    response = Helper().get_metrics('power', data=response)
+    return jsonify(response)
 
 
 @app.route('/get_screen_size', methods=['POST'])
@@ -192,11 +136,7 @@ def manage(page=None):
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
 def show(page=None, record=None):
-    temperature_data = Rest().get_url_data(route=TEMPERATURE_URL)
-    try:
-        metric = temperature_data.json()
-    except requests.exceptions.JSONDecodeError:
-        metric = None
+    metric = Helper().get_metrics('temperature', data=[])
     table_data = Rest().get_data(TABLE, record)
     if table_data:
         rack_data = table_data["config"]["rack"][record]
@@ -227,7 +167,7 @@ def update():
     else:
         uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
         result = Rest().get_delete(TABLE, uri)
-        print(f'Response {result.content} & HTTP Code {result.status_code}')
+        LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
     response = json.dumps(payload)
     return response
 

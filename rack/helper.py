@@ -28,16 +28,12 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
-from time import time
 import base64
 import binascii
-import subprocess
-from random import randint
-from os import getpid
+import requests
 from flask import url_for
-from nested_lookup import nested_lookup, nested_update, nested_delete
-from constant import filter_columns, EDITOR_KEYS
+from nested_lookup import nested_lookup, nested_update
+from constant import filter_columns, EDITOR_KEYS, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL
 from rest import Rest
 from log import Log
 from constant import filter_columns
@@ -379,3 +375,46 @@ class Helper():
                     content = self.base64_encode(bytes(content[0].replace('\r\n', '\n'), 'utf-8'))
                     payload = nested_update(payload, key=key, value=content)
         return payload
+
+
+    def get_metrics(self, metric=None, data=None):
+        """
+        This method will retrieve the metrics from prometheus.
+        How to Use:
+        Add prometheus query URL in constants file and add one more elif condition in here.
+        In rack.html & show.html CTRL+F: <a class="dropdown-item" href="" data-target="power_scale">Power Consumption</a>
+        And add one more scale for new element.
+        Then find: <code class="load-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top">&nbsp;&nbsp;&nbsp;</code>
+        And add one more element for new entry. Now goto footer.js and modify prometheus.forEach(function(device) accordingly.
+        """
+        if metric == 'temperature':
+            metric_url = TEMPERATURE_URL
+        elif metric == 'load':
+            metric_url = SYSTEM_LOAD_URL
+        elif metric == 'power':
+            metric_url = POWER_URL
+        else:
+            metric_url = None
+        if metric_url:
+            get_data = Rest().get_url_data(route=metric_url)
+            if get_data is not False:
+                try:
+                    request_data = get_data.json()
+                except requests.exceptions.JSONDecodeError:
+                    request_data = {"status": "JSONDecodeError"}
+                if request_data["status"] == "success":
+                    for values in request_data["data"]["result"]:
+                        hostname = values["metric"]["hostname"]
+                        luna_group = values["metric"]["luna_group"]
+                        value = values["value"]
+                        metric_value = value[1]
+                        if data:
+                            for check in data:
+                                if check['hostname'] == hostname:
+                                    check[metric] = value[1]
+                                else:
+                                    data.append({'hostname': hostname, 'type': luna_group, metric: metric_value})
+                        else:
+                            data.append({'hostname': hostname, 'type': luna_group, metric: metric_value})
+        return data
+
