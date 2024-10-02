@@ -71,21 +71,6 @@
               </div>
 
               <div class="row mb-3">
-                <label class="col-sm-2 col-form-label">local install</label>
-                <div class="col-sm-10">
-                  {% if data.localinstall_source == 'node' %}
-                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true" {% if data.localinstall == True or data.localinstall == 'True' %}checked{% endif %} /> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"{% if data.localinstall == False or data.localinstall == 'False' %}checked{% endif %} />  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="" />  Inherit from Group
-                  {% else %}
-                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="true"/> Yes &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" value="false"/>  No &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <input type="radio" name="localinstall" class="form-check-input" id="id_localinstall" checked value="" />  {% if data.localinstall == True or data.localinstall == 'True' %}Yes{% else %}No{% endif %} ({{ data.localinstall_source }})
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">boot menu</label>
                 <div class="col-sm-10">
                   {% if data.bootmenu_source == 'node' %}
@@ -126,6 +111,23 @@
                 <label class="col-sm-2 col-form-label">asset tag</label>
                 <div class="col-sm-10"><input type="text" name="assettag" class="form-control" maxlength="100" id="id_assettag" value="{{ data.assettag }}" /></div>
               </div>
+
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">Cloud Name</label>
+                <div class="col-sm-10"><input type="text" name="cloud" class="form-control" maxlength="100" id="id_cloud" value="{{ data.cloud }}" /></div>
+              </div>
+  
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">Roles</label>
+                <div class="col-sm-10"><input type="text" name="roles" class="form-control" maxlength="100" id="id_roles" value="{{ data.roles }}" /></div>
+              </div>
+  
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">Scripts</label>
+                <div class="col-sm-10"><input type="text" name="scripts" class="form-control" maxlength="100" id="id_scripts" value="{{ data.scripts }}" /></div>
+              </div>
+              
             
               <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">pre script</label>

@@ -58,11 +58,11 @@ def sortby(table=None):
     response = False
     static = {
         'node': [
-            'name', 'hostname', 'group', 'osimage', 'osimagetag', 'interfaces', 'status', 'vendor', 'assettag',
-            'position', 'switch', 'switchport', 'setupbmc', 'bmcsetup', 'unmanaged_bmc_users', 'netboot',
-            'localinstall', 'bootmenu', 'roles', 'service', 'prescript', 'partscript',
-            'postscript','provision_interface', 'provision_method', 'provision_fallback',
-            'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment', 'macaddress'
+            'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
+            'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
+            'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles', 'scripts',
+            'prescript', 'partscript', 'postscript','provision_interface', 'provision_method',
+            'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',  'macaddress'
         ],
         'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network'],
         'nodesecrets': ['Node', 'name', 'path', 'content']
