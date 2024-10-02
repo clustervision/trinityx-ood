@@ -33,6 +33,12 @@ LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+# TEMPERATURE_URL = "https://192.168.100.38:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(ipmi_temperature_celsius{+name%3D~%22[cC][pP][uU].*[tT][eE][mM][pP].*%22+})"
+# SYSTEM_LOAD_URL = "https://192.168.100.38:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(node_load5)"
+# POWER_URL = "https://192.168.100.38:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(ipmi_dcmi_power_consumption_watts)"
+TEMPERATURE_URL = "https://localhost:9090/api/v1/query?query=max+by+(hostname%2C+luna_group)+(ipmi_temperature_celsius{+name%3D~%22[cC][pP][uU].*[tT][eE][mM][pP].*%22+})"
+SYSTEM_LOAD_URL = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(node_load5)"
+POWER_URL = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(ipmi_dcmi_power_consumption_watts)"
 
 
 def filter_columns(table=None):

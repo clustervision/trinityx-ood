@@ -342,4 +342,6 @@ class Rest():
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {route}')
+        except requests.exceptions.JSONDecodeError:
+            self.errors.append(f'JSON Decode Error {route}')
         return response

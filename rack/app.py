@@ -30,7 +30,6 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
-import types
 import os
 import json
 from textwrap import wrap
@@ -41,7 +40,6 @@ from constant import LICENSE
 from log import Log
 from helper import Helper
 from presenter import Presenter
-from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'rack'
@@ -55,6 +53,7 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
+    metric = Helper().get_metrics('temperature', data=[])
     table_data = Rest().get_data(TABLE)
     if table_data:
         rack_data = table_data["config"]["rack"]
@@ -65,7 +64,19 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None)
+    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
+
+
+@app.route('/get_temperature', methods=['GET'])
+def get_temperature():
+    """
+    This route will call the prometheus URL to collect the temperature for the machines.
+    """
+    response = []
+    response = Helper().get_metrics('temperature', data=response)
+    response = Helper().get_metrics('load', data=response)
+    response = Helper().get_metrics('power', data=response)
+    return jsonify(response)
 
 
 @app.route('/get_screen_size', methods=['POST'])
@@ -78,7 +89,7 @@ def get_screen_size():
     else:
         width = 120
         height = 20
-    # print(f"Screen Width: {width}, Screen Height: {height}")
+    print(f"Screen Width: {width}, Screen Height: {height}")
     return jsonify({'width': width, 'height': height})
 
 
@@ -125,6 +136,7 @@ def manage(page=None):
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
 def show(page=None, record=None):
+    metric = Helper().get_metrics('temperature', data=[])
     table_data = Rest().get_data(TABLE, record)
     if table_data:
         rack_data = table_data["config"]["rack"][record]
@@ -136,7 +148,7 @@ def show(page=None, record=None):
     else:
         inventory = {}
     page_cap = page.capitalize()
-    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status')
+    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', metric=metric)
 
 
 @app.route('/update', methods=['POST'])
@@ -155,7 +167,7 @@ def update():
     else:
         uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
         result = Rest().get_delete(TABLE, uri)
-        print(f'Response {result.content} & HTTP Code {result.status_code}')
+        LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
     response = json.dumps(payload)
     return response
 
