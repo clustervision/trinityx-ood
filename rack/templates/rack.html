@@ -9,7 +9,7 @@
     {% endfor %}
   {% endif %}
       
-  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="{{ url_for('static', filename='js/jquery-3.6.0.js') }}"></script>
   
   <div id="rack-toast" class="bs-toast toast toast-placement-ex m-2 fade  bg-success top-0 end-0 hide" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
     <div class="toast-header">
@@ -42,10 +42,10 @@
           <div class="dropdown">
             <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Metric</button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="" data-target="no_scale">No Scale</a>
-              <a class="dropdown-item" href="" data-target="temp_scale">Temperature</a>
-              <a class="dropdown-item" href="" data-target="load_scale">System Load</a>
-              <a class="dropdown-item" href="" data-target="power_scale">Power Consumption</a>
+              <a class="dropdown-item" href="#" data-target="no_scale">No Scale</a>
+              <a class="dropdown-item" href="#" data-target="temp_scale">Temperature</a>
+              <a class="dropdown-item" href="#" data-target="load_scale">System Load</a>
+              <a class="dropdown-item" href="#" data-target="power_scale">Power Consumption</a>
             </div>
           </div>
           {% endif %}
@@ -802,7 +802,7 @@
 
   </script>
 
-  <link rel="stylesheet" src="{{ url_for('static', filename='js/jquery-1.6.2.min') }}">
+  <link rel="stylesheet" src="{{ url_for('static', filename='js/jquery-1.6.2.min.js') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery.contextmenu.css') }}">
 
 <script type="text/javascript">
