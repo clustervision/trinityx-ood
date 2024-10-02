@@ -2,8 +2,24 @@
 <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/menu.js') }}"></script>
 <script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+    // Get all dropdown items
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    const dropdownButton = document.getElementById('dropdownMenuButton');
+
+    // Add event listener to each dropdown item
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', function(event) {
+            event.preventDefault();  // Prevent the default link behavior
+            const selectedText = item.textContent;  // Get the text of the selected item
+
+            // Update the button text with the selected item
+            dropdownButton.textContent = selectedText;
+        });
+    });
+</script>
 <script type="text/javascript">
     // Function to toggle all scale scales
     $(document).ready(function () {

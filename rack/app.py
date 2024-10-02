@@ -53,7 +53,10 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    metric = Helper().get_metrics('temperature', data=[])
+    metric = get_temperature()
+    metric_data = metric.get_data(as_text=True)
+    metric = json.loads(metric_data)
+    metric = True if metric else None
     table_data = Rest().get_data(TABLE)
     if table_data:
         rack_data = table_data["config"]["rack"]
@@ -136,7 +139,10 @@ def manage(page=None):
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
 def show(page=None, record=None):
-    metric = Helper().get_metrics('temperature', data=[])
+    metric = get_temperature()
+    metric_data = metric.get_data(as_text=True)
+    metric = json.loads(metric_data)
+    metric = True if metric else None
     table_data = Rest().get_data(TABLE, record)
     if table_data:
         rack_data = table_data["config"]["rack"][record]
