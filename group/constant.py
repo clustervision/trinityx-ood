@@ -58,9 +58,9 @@ def sortby(table=None):
     response = False
     static = {
         'group': [
-            'name', 'domain', 'osimage', 'osimagetag', 'interfaces', 'setupbmc', 'bmcsetupname',
-            'unmanaged_bmc_users', 'netboot', 'localinstall', 'bootmenu', 'roles', 'prescript',
-            'partscript', 'postscript', 'provision_interface', 'provision_method',
+            'name', 'domain', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces', 'setupbmc',
+            'bmcsetupname', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'roles', 'scripts',
+            'prescript', 'partscript', 'postscript', 'provision_interface', 'provision_method',
             'provision_fallback', 'comment'
         ],
         'groupinterface': ['interfacename', 'network'],
