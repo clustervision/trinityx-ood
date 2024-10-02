@@ -145,28 +145,35 @@
         var load_percentage = parseFloat((load / total_load) * 100);
 
         if (temperature){
-            document.querySelector(`.temperature-${deviceName}`).style.backgroundColor = perc2color(temperature_percentage);
-            document.querySelector(`.temperature-${deviceName}`).setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
             const temperature_element = document.querySelector(`.temperature-${deviceName}`);
-            temperature_element.setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
-            temperature_element.setAttribute('data-bs-original-title', `<strong>Temperature:</strong> ${temperature}`); // For Bootstrap 5
-            new bootstrap.Tooltip(temperature_element); 
+            if (temperature_element) {
+                temperature_element.style.backgroundColor = perc2color(temperature_percentage);
+                temperature_element.style.border = "2px solid white";
+                temperature_element.setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
+                temperature_element.setAttribute('data-bs-original-title', `<strong>Temperature:</strong> ${temperature}`); // For Bootstrap 5
+                new bootstrap.Tooltip(temperature_element); 
+            } 
         }
         if (power){
-            document.querySelector(`.power-${deviceName}`).style.backgroundColor = perc2color(power_percentage);
-            document.querySelector(`.power-${deviceName}`).setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
             const power_element = document.querySelector(`.power-${deviceName}`);
-            power_element.setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
-            power_element.setAttribute('data-bs-original-title', `<strong>Power Consumption:</strong> ${power}`); // For Bootstrap 5
-            new bootstrap.Tooltip(power_element);
+            if (power_element) {
+                power_element.style.backgroundColor = perc2color(power_percentage);
+                power_element.style.border = "2px solid white";
+                power_element.setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
+                power_element.setAttribute('data-bs-original-title', `<strong>Power Consumption:</strong> ${power}`); // For Bootstrap 5
+                new bootstrap.Tooltip(power_element);
+            }
         }
         if (load){
-            document.querySelector(`.load-${deviceName}`).style.backgroundColor = perc2color(load_percentage);
-            document.querySelector(`.load-${deviceName}`).setAttribute('title', `<strong>System Load:</strong> ${load}`);
             const load_element = document.querySelector(`.load-${deviceName}`);
-            load_element.setAttribute('title', `<strong>System Load:</strong> ${load}`);
-            load_element.setAttribute('data-bs-original-title', `<strong>System Load:</strong> ${load}`); // For Bootstrap 5
-            new bootstrap.Tooltip(load_element); 
+            if (load_element){
+                load_element.style.backgroundColor = perc2color(load_percentage);
+                load_element.style.border = "2px solid white";
+                load_element.setAttribute('title', `<strong>System Load:</strong> ${load}`);
+                load_element.setAttribute('data-bs-original-title', `<strong>System Load:</strong> ${load}`); // For Bootstrap 5
+                new bootstrap.Tooltip(load_element);
+            }
+             
         }
 
     });
