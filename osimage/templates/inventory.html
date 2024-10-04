@@ -29,6 +29,124 @@
 
   {% endif %}
 
+
+
+
+  <!-- <script src="/socket.io/socket.io.js"></script> -->
+  <div id="terminal"></div>
+
+    <!-- <style>
+      #terminal { font-family: monospace; background-color: black; color: white; }
+        #terminal { white-space: pre; }
+    </style>
+   -->
+  <script>
+
+     
+      
+      const term = new Terminal();
+      term.open(document.getElementById('terminal'));
+      term.focus();
+      term.write("You are inside the image: compute \r\n");
+
+      const socket = io();
+      let commandBuffer = '';  // To accumulate characters until Enter is pressed
+
+      // Enable typing into the terminal
+      term.onData(data => {
+          if (data === '\r') {  // Enter key (newline character)
+              console.log("Command to be sent:", commandBuffer);  // Log the full command
+
+              // Send the full command to the server with a newline
+              socket.emit('command', commandBuffer + '\n');
+              term.write('\r\n');  // Add newline after user types command
+              commandBuffer = '';  // Reset the buffer after sending
+          } else if (data === '\u007F') {  // Handle backspace (delete key)
+              if (commandBuffer.length > 0) {
+                  commandBuffer = commandBuffer.slice(0, -1);  // Remove last character
+                  term.write('\b \b');  // Erase character on terminal
+              }
+          } else {
+              commandBuffer += data;  // Accumulate input in buffer
+              term.write(data);  // Display typed characters in the terminal
+          }
+      });
+
+      // Handle server output
+      socket.on('output', data => {
+        if (data){
+          term.write(data);
+          
+
+        }
+        
+          console.log("Server output:", data);  // Log server response
+
+          // Write output to the terminal and ensure a newline at the end
+         // term.write(data + '\r\n');
+         
+      });
+      term.write("You are inside the image: compute \r\n");
+
+ /*     document.addEventListener('keydown', (event) => {
+          if (event.ctrlKey && event.key === 'l') {
+              event.preventDefault();  // Prevent default browser behavior
+              socket.emit('command', 'clear');  // Emit clear command to server
+          }
+      });
+*/
+
+      document.getElementById('terminal').addEventListener('keydown', function(event) {
+        console.log(event);
+        console.log(event.key);
+        // Clear the terminal with CTRL + L
+        if (event.ctrlKey && event.key === 'l') {
+            event.preventDefault(); // Prevent default action
+            document.getElementById('terminal').innerHTML = ''; // Clear the terminal
+
+            console.log("removed");
+        }
+
+        // Disable up arrow key functionality
+        if (event.key === 'ArrowUp') {
+            event.preventDefault(); // Prevent default action
+        }
+
+        if (event.key === 'Enter') {
+            const cmd = this.value;
+            socket.emit('command', cmd);
+            this.value = ''; // Clear the input
+        }
+    });
+
+
+  </script>
+    <!-- <input type="text" id="command" autofocus />
+    <script>
+        const socket = io();
+        const terminal = document.getElementById('terminal');
+        const commandInput = document.getElementById('command');
+
+        socket.on('output', function(data) {
+            terminal.textContent += data;  // Append the output to the terminal
+            terminal.scrollTop = terminal.scrollHeight;  // Scroll to the bottom
+        });
+
+        commandInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                const cmd = commandInput.value;
+                socket.emit('command', cmd);  // Send command to the server
+                commandInput.value = '';  // Clear the input
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === 'l') {
+                event.preventDefault();  // Prevent default behavior
+                socket.emit('command', 'clear');  // Emit clear command to server
+            }
+        });
+    </script> -->
 </div>
 <!-- / Content -->
 <hr class="my-5" />

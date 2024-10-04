@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Terminal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+</head>
+<body>
+    <div id="terminal"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+       
+        
+        const term = new Terminal();
+        term.open(document.getElementById('terminal'));
+        term.focus();
+        term.write("You are inside the image: compute \r\n");
+
+        const socket = io();
+        let commandBuffer = '';  // To accumulate characters until Enter is pressed
+
+        // Enable typing into the terminal
+        term.onData(data => {
+            if (data === '\r') {  // Enter key (newline character)
+                console.log("Command to be sent:", commandBuffer);  // Log the full command
+
+                // Send the full command to the server with a newline
+                socket.emit('command', commandBuffer + '\n');
+                term.write('\r\n');  // Add newline after user types command
+                commandBuffer = '';  // Reset the buffer after sending
+            } else if (data === '\u007F') {  // Handle backspace (delete key)
+                if (commandBuffer.length > 0) {
+                    commandBuffer = commandBuffer.slice(0, -1);  // Remove last character
+                    term.write('\b \b');  // Erase character on terminal
+                }
+            } else {
+                commandBuffer += data;  // Accumulate input in buffer
+                term.write(data);  // Display typed characters in the terminal
+            }
+        });
+
+        // Handle server output
+        socket.on('output', data => {
+            console.log("Server output:", data);  // Log server response
+
+            // Write output to the terminal and ensure a newline at the end
+           // term.write(data + '\r\n');
+           term.write(data);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === 'l') {
+                event.preventDefault();  // Prevent default browser behavior
+                socket.emit('command', 'clear');  // Emit clear command to server
+            }
+        });
+
+
+    </script>
+</body>
+</html>

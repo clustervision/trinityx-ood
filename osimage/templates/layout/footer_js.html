@@ -295,3 +295,69 @@
     }
     
 </script>
+
+
+
+<script type="text/javascript">
+    function chroot_osimage(osimage=null){
+        $('#logmodalLabel').empty();
+        $('#logmodalLabel').html('<span>You are inside the OS Image >> '+osimage+'...</span>');
+        spinner = '<div class="spinner-border spinner-border-lg text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+        $('#spinner').empty();
+        $('#spinner').html(spinner);
+        $('#run-time-logs').empty();
+        if  (osimage.length){
+            $.ajax({
+                url: window.location.href+"/get_request/osimage/"+osimage+"/_pack",
+                type: 'GET',
+                contentType: 'application/json; charset=UTF-8',
+                dataType: 'json',
+                success: function(request_data) {
+                    $('#logmodal').modal('show');
+                    var text = $('#run-time-logs').html();
+                    text += color_message(request_data.message);
+                    $('#run-time-logs').html(text);
+                    var run_time_div = document.getElementById("run-time-body");
+                    var url = window.location.href+"/check_status/config/status/"+request_data.request_id;
+                    var intervalId;
+                    intervalId = setInterval(function(){
+                        $.getJSON(url, function(data){
+                            if (data.message.includes("No data for this request")){
+                                text = $('#run-time-logs').html();
+                                text += color_message(data.message);
+                                $('#run-time-logs').html(text);
+                                $('#logmodalLabel').empty();
+                                $('#spinner').empty();
+                                $('#logmodalLabel').html('<span>OS Image Packed >> '+osimage+'...</span>');
+                                clearInterval(intervalId);
+                            } else {
+                                text = $('#run-time-logs').html();
+                                if  (data.message.length){
+                                    if  (data.message.includes(';;')){
+                                        const myArray = data.message.split(";;");
+                                        for (var i=0; i<myArray.length; i++) {
+                                            text += color_message(myArray[i]);
+                                        }
+                                    } else {
+                                        text += color_message(data.message);
+                                    }
+                                    $('#run-time-logs').html(text);
+                                }
+                                run_time_div.scrollTop = run_time_div.scrollHeight;
+                            }
+                        });
+                    }, 1000);
+                }
+            });
+        
+        } else {
+            var error_message = "Kindly select an OS Image to pack..."
+            $('#pack_alert').empty();
+            $('#pack_alert').append(error_message);
+            $('#pack_alert').show(); 
+                
+        }
+        
+    }
+    
+</script>

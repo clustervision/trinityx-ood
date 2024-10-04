@@ -28,19 +28,11 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
 from flask import url_for
-from datetime import datetime
-import urllib.parse
-from time import time
 import base64
 import binascii
-import subprocess
-from random import randrange, randint
-from os import getpid
 import hostlist
-from nested_lookup import nested_lookup, nested_update, nested_delete, nested_alter
-from nested_lookup import get_all_keys
+from nested_lookup import nested_lookup, nested_update, nested_alter
 from rest import Rest
 from log import Log
 from constant import filter_columns, EDITOR_KEYS, sortby
@@ -234,6 +226,8 @@ class Helper():
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
+            chroot_click = f'onclick="chroot_osimage(\'{name}\');"'
+            chroot = f'<button type="button" {chroot_click} class="{button}btn-dark">Lchroot Image</button>'
             info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
             edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
             delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
@@ -245,6 +239,13 @@ class Helper():
             pack = f'<button type="button" {pack_click} class="{button}btn-secondary">Pack</button>'
             kernel = f'<a href="/kernel/{table}/{name}" class="{button}btn-dark">Change Kernel</a>'
         elif item_type == 'icon':
+            chroot =  self.make_icon(
+                href=None,
+                onclick=f'chroot_osimage(\'{name}\');',
+                text=f'Lchroot {name}',
+                icon='bx-terminal',
+                color='#000000;'
+            )
             info =  self.make_icon(
                 href=url_for('show', record=name),
                 onclick=None,
@@ -295,6 +296,7 @@ class Helper():
                 color='#697a8d;'
             )
         else:
+            chroot = ''
             info = ''
             edit = ''
             delete = ''
@@ -303,7 +305,7 @@ class Helper():
             pack = ''
             kernel = ''
         action = {
-            'osimage':  [info, edit, delete, clone, member, pack, kernel]
+            'osimage':  [chroot, info, edit, delete, clone, member, pack, kernel]
         }
         response = "&nbsp;".join(action[table])
         return response
