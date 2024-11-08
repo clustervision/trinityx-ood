@@ -1,0 +1,11 @@
+name: Alert Configurator
+description: Node Health Check
+icon: fa://ghost
+# icon: fa://flag
+category: Monitoring
+new_window: false
+
+tile:
+  title: "Alert Configurator"
+  sub_caption: |
+   Node Health Check

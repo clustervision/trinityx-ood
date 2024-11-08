@@ -1,0 +1,31 @@
+<script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
+
+<script>
+    $("#btn-status").addClass("active");
+    function status(service=null){
+        $('#default').empty();
+        //$('#data').empty();
+        $('#title').empty();
+        $.ajax({
+            url: window.location.href+"/status/"+service,
+            type: 'GET',
+            contentType: 'application/json; charset=UTF-8',
+            //dataType: 'json',
+            success: function(request_data) {
+                console.log(request_data);
+                $('#default').html(request_data);
+                //const json_data = JSON.stringify(request_data, null, 4);
+                $('#title').append(service.charAt(0).toUpperCase() + service.slice(1));
+                //$('#data').append(json_data);
+                if (service === 'status'){
+                    $("#btn-status").addClass("active");
+                    $("#btn-queue").removeClass("active");
+                } else {
+                    $("#btn-status").removeClass("active");
+                    $("#btn-queue").addClass("active");
+                }
+            }
+        });
+    }
+</script>

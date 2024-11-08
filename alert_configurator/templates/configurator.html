@@ -1,0 +1,62 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+  <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light"> Monitoring /</span> {{ table }}</h4>
+  <!-- Bordered Table -->
+  <div class="card">
+    <h5 class="card-header">Rules</h5>
+    <div class="card-body">
+      <div class="table-responsive text-nowrap">
+        <div id="default">
+          <table class="table table-bordered table-striped table-hover table-responsive">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Rule</th>
+                <th scope="col">Status</th>
+                <th scope="col">NHC</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">1</th>
+                <td>90% of nodes are down</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td>
+                  <button>a button</button>
+                  <button>a button</button>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">2</th>
+                <td>NFS file system is full</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td>
+                  <button>a button</button>
+                  <button>a button</button>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">3</th>
+                <td>Local disk is full</td>
+                <td><input type="checkbox" /></td>
+                <td><input type="checkbox" /></td>
+                <td>
+                  <button>a button</button>
+                  <button>a button</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Bordered Table -->
+</div>
+<!-- / Content --><hr class="my-5" />
+{% endblock content %}
