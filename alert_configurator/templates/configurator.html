@@ -8,7 +8,6 @@
     <h5 class="card-header">Rules</h5>
     <div class="card-body">
       <div class="table-responsive text-nowrap">
-        <div id="default">
           <table class="table table-bordered table-striped table-hover table-responsive">
             <thead>
               <tr>
@@ -16,6 +15,7 @@
                 <th scope="col">Rule</th>
                 <th scope="col">Status</th>
                 <th scope="col">NHC</th>
+                <th scope="col">Priority</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -23,18 +23,64 @@
               <tr>
                 <th scope="row">1</th>
                 <td>90% of nodes are down</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
                 <td>
-                  <button>a button</button>
-                  <button>a button</button>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked="">
+                    <label class="form-check-label" for="flexSwitchCheckChecked">OFF</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked="">
+                    <label class="form-check-label" for="flexSwitchCheckChecked">ON</label>
+                  </div>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-info  dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Set Priority</button>
+                  <ul class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 40px);" data-popper-placement="bottom-start">
+                    <li><a class="dropdown-item" href="javascript:void(0);">Action</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);">Another action</a></li>
+                    <li><a class="dropdown-item disabled" href="javascript:void(0);">Something else here</a></li>
+                    <li>
+                      <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="javascript:void(0);">Separated link</a></li>
+                  </ul>
+                </td>
+                <td>
+                  <a href="/pun/sys/trinity_node/edit/node001" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Change in node001</span>"><i class="bx bx-md bx-edit" style="color: #696cff;"></i></a>
+                  <i class="bx bx-md bx-edit" style="color: #696cff;"></i>
+                  <a href="/pun/sys/trinity_node/delete/node001" onclick="return confirm('Are you sure you want to delete node001?');" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete node001</span>"><i class="bx bx-md bx-trash" style="color: red;"></i></a>
+                  <i class="bx bx-md bx-trash" style="color: red;"></i>
                 </td>
               </tr>
               <tr>
                 <th scope="row">2</th>
                 <td>NFS file system is full</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
+                <td>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked="">
+                    <label class="form-check-label" for="flexSwitchCheckChecked">OFF</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked="">
+                    <label class="form-check-label" for="flexSwitchCheckChecked">ON</label>
+                  </div>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-info  dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Set Priority</button>
+                  <ul class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 40px);" data-popper-placement="bottom-start">
+                    <li><a class="dropdown-item" href="javascript:void(0);">Action</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);">Another action</a></li>
+                    <li><a class="dropdown-item disabled" href="javascript:void(0);">Something else here</a></li>
+                    <li>
+                      <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="javascript:void(0);">Separated link</a></li>
+                  </ul>
+                </td>
                 <td>
                   <button>a button</button>
                   <button>a button</button>
@@ -43,8 +89,30 @@
               <tr>
                 <th scope="row">3</th>
                 <td>Local disk is full</td>
-                <td><input type="checkbox" /></td>
-                <td><input type="checkbox" /></td>
+                <td>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked="">
+                    <label class="form-check-label" for="flexSwitchCheckChecked">OFF</label>
+                  </div>
+                </td>
+                <td>
+                  <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked="">
+                    <label class="form-check-label" for="flexSwitchCheckChecked">ON</label>
+                  </div>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-info  dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Set Priority</button>
+                  <ul class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 40px);" data-popper-placement="bottom-start">
+                    <li><a class="dropdown-item" href="javascript:void(0);">Action</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0);">Another action</a></li>
+                    <li><a class="dropdown-item disabled" href="javascript:void(0);">Something else here</a></li>
+                    <li>
+                      <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item" href="javascript:void(0);">Separated link</a></li>
+                  </ul>
+                </td>
                 <td>
                   <button>a button</button>
                   <button>a button</button>
@@ -52,8 +120,49 @@
               </tr>
             </tbody>
           </table>
+      </div>
+
+
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exLargeModal">
+        Extra Large
+      </button>
+
+      <!-- Extra Large Modal -->
+      <div class="modal fade" id="exLargeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel4">Modal title</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row">
+                <div class="col mb-6">
+                  <label for="nameExLarge" class="form-label">Name</label>
+                  <input type="text" id="nameExLarge" class="form-control" placeholder="Enter Name">
+                </div>
+              </div>
+              <div class="row g-6">
+                <div class="col mb-0">
+                  <label for="emailExLarge" class="form-label">Email</label>
+                  <input type="email" id="emailExLarge" class="form-control" placeholder="xxxx@xxx.xx">
+                </div>
+                <div class="col mb-0">
+                  <label for="dobExLarge" class="form-label">DOB</label>
+                  <input type="date" id="dobExLarge" class="form-control">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+          </div>
         </div>
       </div>
+
+
+      
     </div>
   </div>
   <!--/ Bordered Table -->
