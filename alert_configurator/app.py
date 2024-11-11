@@ -87,11 +87,11 @@ def get_rules():
     This method to show the monitor status and queue.
     """
     configuration = Helper().load_yaml()
-    print(configuration)
-    print(type(configuration))
-    response = configuration["groups"][0]["rules"]
+    # print(configuration)
+    # print(type(configuration))
+    # response = configuration["groups"][0]["rules"]
     # return response
-    return jsonify(response), 200
+    return jsonify(configuration), 200
 
 
 
