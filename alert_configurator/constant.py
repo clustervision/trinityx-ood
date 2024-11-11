@@ -32,6 +32,9 @@ INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
+# TRIX_CONFIG = '/trinity/local/etc/prometheus_server/rules/trix.rules'
+TRIX_CONFIG = '/tmp/asd'
+
 
 def filter_columns(table=None):
     """

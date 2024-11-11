@@ -33,9 +33,9 @@ __status__      = 'Development'
 import os
 import json
 from html import unescape
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 from rest import Rest
-from constant import LICENSE
+from constant import LICENSE, TRIX_CONFIG
 from log import Log
 from helper import Helper
 from presenter import Presenter
@@ -51,38 +51,48 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    response = status('status')
-    return render_template("configurator.html", table=TABLE_CAP, data=response, title='Status')
+    # response = status('status')
+    return render_template("configurator.html", table=TABLE_CAP, title='Status', TRIX_CONFIG=TRIX_CONFIG)
 
 
-@app.route('/status/<string:service>', methods=['GET'])
-def status(service=None):
+@app.route('/edit_config', methods=['GET'])
+def edit_config():
     """
     This method to show the monitor status and queue.
     """
-    response = ''
-    data = Rest().get_raw('monitor', service)
-    if data.content:
-        data = data.content.decode("utf-8")
-        data = json.loads(data)
-        data = data['monitor'][service]
-        if data:
-            fields, rows  = Helper().filter_interface(service, data)
-            fields = list(map(lambda x: x.replace('username_initiator', 'Initiate By'), fields))
-            fields = list(map(lambda x: x.replace('request_id', 'Request ID'), fields))
-            fields = list(map(lambda x: x.replace('read', 'Read'), fields))
-            fields = list(map(lambda x: x.replace('message', 'Message'), fields))
-            fields = list(map(lambda x: x.replace('created', 'Created On'), fields))
-            fields = list(map(lambda x: x.replace('username_initiator', 'Initiate By'), fields))
-            fields = list(map(lambda x: x.replace('level', 'Level'), fields))
-            fields = list(map(lambda x: x.replace('status', 'Status'), fields))
-            fields = list(map(lambda x: x.replace('subsystem', 'Sub System'), fields))
-            fields = list(map(lambda x: x.replace('task', 'Task'), fields))
-            data = Presenter().show_table(fields, rows)
-            response = unescape(data)
-        else:
-            response = f'<center><strong style="color: blue;">Monitor {service} is empty.</strong></center>'
+    response = Helper().load_yaml()
     return response
+
+
+@app.route('/save_config', methods=['POST'])
+def save_config():
+    """
+    This method to show the monitor status and queue.
+    """
+    try:
+        yaml_data = request.json
+        print(yaml_data)
+        # yaml_data = Helper().json_to_yaml(json_data=data)
+        # print(yaml_data)
+        response = Helper().save_configuration(yaml_data=yaml_data)
+        print(response)
+    except Exception as exp:
+        return jsonify({"response": str(exp)}), 400
+    return jsonify({"response": "success"}), 200
+
+
+@app.route('/get_rules', methods=['GET'])
+def get_rules():
+    """
+    This method to show the monitor status and queue.
+    """
+    configuration = Helper().load_yaml()
+    print(configuration)
+    print(type(configuration))
+    response = configuration["groups"][0]["rules"]
+    # return response
+    return jsonify(response), 200
+
 
 
 @app.route('/license', methods=['GET'])
