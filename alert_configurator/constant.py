@@ -33,8 +33,9 @@ LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 # TRIX_CONFIG = '/trinity/local/etc/prometheus_server/rules/trix.rules'
+# TRIX_CONFIG_DISABLED = '/trinity/local/etc/prometheus_server/rules/trix.rules.disabled'
 TRIX_CONFIG = '/tmp/asd'
-
+TRIX_CONFIG_DISABLED = '/tmp/asd.disabled'
 
 def filter_columns(table=None):
     """

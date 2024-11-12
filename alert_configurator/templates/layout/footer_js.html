@@ -11,6 +11,168 @@
 
 <script>
 
+    let successToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-success top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
+        <div class="toast-header"> \
+          <i class="bx bx-bell me-2"></i> \
+          <div class="me-auto fw-medium">Configuration</div> \
+          <small>0 seconds ago</small> \
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
+        </div> \
+        <div class="toast-body">Configuration Saved successfully.</div> \
+      </div>');
+
+    let failedToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-danger top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
+        <div class="toast-header"> \
+          <i class="bx bx-bell me-2"></i> \
+          <div class="me-auto fw-medium">Configuration</div> \
+          <small>0 seconds ago</small> \
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
+        </div> \
+        <div class="toast-body"></div> \
+      </div>');
+
+    let warningToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-warning top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
+        <div class="toast-header"> \
+          <i class="bx bx-bell me-2"></i> \
+          <div class="me-auto fw-medium">Configuration</div> \
+          <small>0 seconds ago</small> \
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
+        </div> \
+        <div class="toast-body"></div> \
+      </div>');
+
+
+    var editor;
+    var editorInstances = {};
+
+    // Function to initialize or update the editor with given content and mode
+    function setupEditor(count, content, mode) {
+        if (!editorInstances[count]) {
+            editorInstances[count] = CodeMirror(document.getElementById('ruleEditor_' + count), {
+                theme: "material-darker",
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                tabSize: 2,
+                lineWrapping: false,
+                viewportMargin: Infinity
+            });
+            editorInstances[count].setSize(null, 300);
+        }
+        console.log("editorInstances content:", content);
+        // Set content and mode
+        editorInstances[count].setValue(content);
+        editorInstances[count].setOption("mode", mode);
+        editorInstances[count].refresh();
+    }
+
+
+    // Function to display warning messages
+    function displayWarning(message) {
+        warningToast.find('.toast-body').text(message);
+        $('body').append(warningToast);
+        warningToast.addClass('show');
+        setTimeout(function() {
+            warningToast.removeClass('show').addClass('fade');
+            warningToast.remove();
+        }, 10000);
+    }
+
+    function getLatestValues(count) {
+        let values = {
+            alert: $('#rule_name_' + count).val(),
+            annotations: {description: $('#rule_description_' + count).val()},
+            for: $('#rule_for_' + count).val(),
+            expr: $('#exprInput_' + count).val(),
+            labels: { _trix_status: $('#rule_status_' + count).is(':checked'), nhc: $('#rule_nhc_' + count).is(':checked')}
+        };
+        //console.log("Latest values:", values);
+        return values;
+    }
+    
+    // Attach events to each input to call getLatestValues on change
+    function setupEventListeners(count) {
+        // Use `input` for real-time updates on text inputs
+        $('#rule_name_' + count).on('input', function() { getLatestValues(count); });
+        $('#rule_description_' + count).on('input', function() { getLatestValues(count); });
+        $('#rule_for_' + count).on('input', function() { getLatestValues(count); });
+        $('#exprInput_' + count).on('input', function() { getLatestValues(count); });
+    
+        // Use `change` for checkboxes and dropdowns
+        $('#rule_status_' + count).on('change', function() { getLatestValues(count); });
+        $('#rule_nhc_' + count).on('change', function() { getLatestValues(count); });
+    }
+
+    // Function to Setup HTML Form Values
+    function setupHTML(count, jsonData) {
+        $('#rule_name_'+count).val(jsonData.alert);
+        $('#rule_description_'+count).val(jsonData.annotations.description);
+        $('#rule_for_'+count).val(jsonData.for);
+        $('#exprInput_'+count).val(jsonData.expr);
+        $('#rule_status_'+count).prop('checked', jsonData.labels._trix_status === true);
+        $('#rule_nhc_'+count).prop('checked', jsonData.labels.nhc === 'yes');
+        $('#rule_status_label_'+count).html(jsonData.labels._trix_status === true ? 'ON' : 'OFF');
+        $('#rule_nhc_label_'+count).html(jsonData.labels.nhc === 'yes'? 'ON' : 'OFF');
+        //editorInstances[count].setValue(content);
+       // setupEventListeners(count);
+        var content = getLatestValues(count);
+      //  console.log("content:", content);
+        setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
+    }
+
+
+
+    // When switching to HTML mode, format the content as JSON or YAML
+    function rule_modal_html(count, rule){
+        var ruleObject = JSON.parse(atob(rule));
+        $('#model-form_'+count).show();
+        $('#ruleEditor_'+count).hide();
+        try {
+            let currentContent = editorInstances[count] ? editorInstances[count].getValue() : JSON.stringify(ruleObject, null, 2);
+            let jsonData = jsyaml.load(currentContent);
+            setupHTML(count, jsonData);
+        } catch (e) {
+            displayWarning("Invalid JSON or YAML content:" + e);
+        }
+        var content = getLatestValues(count);
+        setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
+    }
+
+    // When switching to JSON mode, format the content as JSON
+    function rule_modal_json(count, rule){
+        var ruleObject = JSON.parse(atob(rule));
+        $('#model-form_' + count).hide();
+        $('#ruleEditor_' + count).show();
+        try {
+            let currentContent = editorInstances[count] ? editorInstances[count].getValue() : JSON.stringify(ruleObject, null, 2);
+            var content = getLatestValues(count);
+            let latestContent = content ? content : currentContent;
+            console.log(currentContent);
+            console.log(content);
+            console.log(JSON.parse(latestContent, null, 2));
+            let jsonData = jsyaml.load(latestContent);
+           // let jsonData = jsyaml.load(currentContent);
+            setupEditor(count, JSON.stringify(jsonData, null, 2), { name: "javascript", json: true });
+        } catch (e) {
+            displayWarning("Invalid YAML content:" + e);
+        }
+    }
+
+    // When switching to YAML mode, convert the content to YAML
+    function rule_modal_yaml(count, rule){
+        var ruleObject = JSON.parse(atob(rule));
+        $('#model-form_' + count).hide();
+        $('#ruleEditor_' + count).show();
+        try {
+            let currentContent = editorInstances[count] ? editorInstances[count].getValue() : jsyaml.dump(ruleObject);
+            let yamlContent = jsyaml.dump(JSON.parse(currentContent));
+            setupEditor(count, yamlContent, "yaml");
+        } catch (e) {
+            displayWarning("Invalid JSON content:" + e);
+        }
+    }
+      
+
     function get_rules(){
         $.ajax({
             url: '/get_rules',
@@ -28,8 +190,8 @@
                                 row += '<th scope="row">'+count+'</th>';
                                 row += '<td>'+group.name+'</td>';
                                 row += '<td><a href="" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'">'+rule.alert+'</a></td>';
-                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="rule_status" checked=""><label class="form-check-label" for="rule_status" id="rule_status_text">OFF</label></div></td>';
-                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="rule_nhc" ' + (rule.labels.nhc === 'yes' ? 'checked' : '') + '><label class="form-check-label" for="rule_nhc" id="rule_nhc_text">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></td>';
+                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="rule_status" '+(rule.labels._trix_status === true ? 'checked' : '')+'><label class="form-check-label" for="rule_status" id="rule_status_text">' + (rule.labels._trix_status === true ? 'ON' : 'OFF') + '</label></div></td>';
+                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="rule_nhc" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+'><label class="form-check-label" for="rule_nhc" id="rule_nhc_text">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></td>';
                                 row += '<td><button type="button" class="btn btn-sm btn-info  dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Set Priority</button> \
                                         <ul class="dropdown-menu" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(0px, 40px);" data-popper-placement="bottom-start"> \
                                         <li><a class="dropdown-item" href="javascript:void(0);">Unknown Option 1</a></li><li><a class="dropdown-item" href="javascript:void(0);">Unknown Option 2</a></li> \
@@ -45,24 +207,24 @@
                                     <div class="modal-header"><h5 class="modal-title" id="exampleModalLabel4">RULE: '+rule.alert+'</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div> \
                                     <div class="modal-body"> \
                                         <div class="row"><div class="col mb-12"> \
-                                            <button type="button" onclick="(function() { $(\'#model-form_' + count + '\').show(); $(\'#ruleEditor_' + count + '\').hide(); })();" class="btn btn-secondary btn-sm">Switch to HTML Mode</button> \
-                                            <button type="button" onclick="(function() { $(\'#model-form_' + count + '\').hide(); $(\'#ruleEditor_' + count + '\').show(); })();" class="btn btn-primary btn-sm">Switch to JSON Mode</button> \
-                                            <button type="button" onclick="(function() { $(\'#model-form_' + count + '\').hide(); $(\'#ruleEditor_' + count + '\').show(); })();" class="btn btn-warning btn-sm">Switch to YAML Mode</button> \
+                                            <button type="button" onclick="rule_modal_html('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button> \
+                                            <button type="button" onclick="rule_modal_json('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-primary btn-sm">Switch to JSON Mode</button> \
+                                            <button type="button" onclick="rule_modal_yaml('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> \
                                             <div id="ruleEditor_'+count+'" style="display: none; height: 300px; border: 1px solid #ddd;"></div></div></div> \
                                         <div id="model-form_'+count+'"> \
                                             <div class="row g-6"> \
-                                                <div class="col mb-0"><label for="emailExLarge" class="form-label">Rule Name</label><input type="text" id="emailExLarge" class="form-control" placeholder="Enter Name" readonly value="'+rule.alert+'"></div> \
+                                                <div class="col mb-0"><label for="rule_name_'+count+'" class="form-label">Rule Name</label><input type="text" id="rule_name_'+count+'" class="form-control" placeholder="Enter Name" readonly value="'+rule.alert+'"></div> \
                                             </div> \
                                             <div class="row"> \
-                                                <div class="col mb-6"><label for="nameExLarge" class="form-label">Rule Description</label><input type="text" id="nameExLarge" class="form-control" placeholder="Enter Name" value="'+rule.annotations.description+'"></div> \
+                                                <div class="col mb-6"><label for="rule_description_'+count+'" class="form-label">Rule Description</label><input type="text" id="rule_description_'+count+'" class="form-control" placeholder="Enter Name" value="'+rule.annotations.description+'"></div> \
                                             </div> \
                                             <div class="row"> \
-                                                <div class="col mb-0"><label for="dobExLarge" class="form-label">Rule For</label><input type="text" id="dobExLarge" class="form-control" placeholder="Enter For" value="'+rule.for+'"></div> \
-                                                <div class="col mb-6"><label for="nameExLarge" class="form-label">Rule Expr</label><input type="text" id="exprInput_' + count + '" class="form-control" placeholder="Enter Name" ></div> \
+                                                <div class="col mb-0"><label for="rule_for_'+count+'" class="form-label">Rule For</label><input type="text" id="rule_for_'+count+'" class="form-control" placeholder="Enter For" value="'+rule.for+'"></div> \
+                                                <div class="col mb-6"><label for="exprInput_'+count+'" class="form-label">Rule Expr</label><input type="text" id="exprInput_'+count+'" class="form-control" placeholder="Enter Name" ></div> \
                                             </div> \
                                             <div class="row"> \
-                                                <div class="col mb-0"><label for="dobExLarge" class="form-label">Rule For</label><input type="text" id="dobExLarge" class="form-control" placeholder="Enter For" value="'+rule.for+'"></div> \
-                                                <div class="col mb-6"><label for="nameExLarge" class="form-label">Rule NHC</label><input type="text" id="dobExLarge" class="form-control" placeholder="Enter NHC" value="'+(rule.labels.nhc || 'no')+'" ></div> \
+                                                <div class="col mb-0"><label for="rule_status_'+count+'" class="form-label">Enable</label><div class="form-check form-switch "><input type="checkbox" id="rule_status_'+count+'" class="form-check-input" '+(rule.labels._trix_status === true ? 'checked' : '')+'><label id="rule_status_label_'+count+'" for="rule_status_'+count+'" class="form-check-label">' + (rule.labels._trix_status === true ? 'ON' : 'OFF') + '</label></div></div> \
+                                                <div class="col mb-6"><label for="rule_nhc_'+count+'" class="form-label">Rule NHC</label><div class="form-check form-switch "><input type="checkbox" id="rule_nhc_'+count+'" class="form-check-input" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+' ><label id="rule_nhc_label_'+count+'" for="rule_nhc_'+count+'" class="form-check-label">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></div> \
                                             </div> \
                                         </div> \
                                     </div> \
@@ -70,21 +232,13 @@
                                 $('#modal-container').append(modal);
                                 document.getElementById('exprInput_' + count).value = rule.expr;
 
-                                var editor;
-                                if (!editor) {
-                                    editor = CodeMirror(document.getElementById('ruleEditor_'+count), {
-                                        mode: { name: "javascript", json: true },
-                                        theme: "material-darker",
-                                        lineNumbers: true,
-                                        autoCloseBrackets: true,
-                                        matchBrackets: true,
-                                        tabSize: 2,
-                                        lineWrapping: false,
-                                        viewportMargin: Infinity
-                                    });
-                                    editor.setSize(null, 300); 
-                                }
-                                editor.setValue(JSON.stringify(rule, null, 2));
+
+                                setupEventListeners(count);
+                                var content = getLatestValues(count);
+                                console.log("content:", content);
+                                setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
+
+                                
 
 
                                 count++; 
@@ -101,6 +255,56 @@
         }
 
     get_rules();
+
+
+    $('#save_model_configuration').click(function() {
+        //const editedData = editor.getValue();
+        var formattedJson;
+        try{
+            var currentContent = editor.getValue();
+            var jsonData = jsyaml.load(currentContent); 
+            var formattedJson = JSON.stringify(jsonData, null, 2);
+        } catch (e){
+            formattedJson = editor.getValue();
+        }
+
+
+        const editedData = formattedJson;
+
+        $.ajax({
+            url: '/save_config',
+            type: 'POST',
+            contentType: 'application/json',
+            data: editedData,
+            success: function(response) {
+                console.log(response);
+
+                $('body').append(successToast);
+                successToast.addClass('show');
+                setTimeout(function() {
+                    successToast.removeClass('show');
+                    successToast.addClass('fade');
+                    successToast.remove();
+                }, 10000);
+                $('#edit_config').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                console.error("Error saving data:", xhr);
+                console.error("Error saving data:", xhr.responseJSON.response);
+                console.error("Error saving data:", status);
+                console.error("Error saving data:", error);
+
+                failedToast.find('.toast-body').text("Error: " + xhr.responseJSON.response);
+                $('body').append(failedToast);
+                failedToast.addClass('show');
+                setTimeout(function() {
+                    failedToast.removeClass('show');
+                    failedToast.addClass('fade');
+                    failedToast.remove();
+                }, 10000);
+            }
+        });
+    });
 
    
     function toggleMode(showMode, count, rule) {
@@ -141,35 +345,7 @@
    
     $(document).ready(function() {
         let editor;
-        let successToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-success top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
-            <div class="toast-header"> \
-              <i class="bx bx-bell me-2"></i> \
-              <div class="me-auto fw-medium">Configuration</div> \
-              <small>0 seconds ago</small> \
-              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
-            </div> \
-            <div class="toast-body">Configuration Saved successfully.</div> \
-          </div>');
-
-        let failedToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-danger top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
-            <div class="toast-header"> \
-              <i class="bx bx-bell me-2"></i> \
-              <div class="me-auto fw-medium">Configuration</div> \
-              <small>0 seconds ago</small> \
-              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
-            </div> \
-            <div class="toast-body"></div> \
-          </div>');
-
-        let warningToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-warning top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
-            <div class="toast-header"> \
-              <i class="bx bx-bell me-2"></i> \
-              <div class="me-auto fw-medium">Configuration</div> \
-              <small>0 seconds ago</small> \
-              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
-            </div> \
-            <div class="toast-body"></div> \
-          </div>');
+        
 
         $('#edit_configuration').click(function() {
             $.ajax({
