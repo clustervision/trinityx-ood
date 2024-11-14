@@ -31,14 +31,10 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-import json
-from html import unescape
 from flask import Flask, render_template, request, jsonify
-from rest import Rest
 from constant import LICENSE, TRIX_CONFIG
 from log import Log
 from helper import Helper
-from presenter import Presenter
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
@@ -111,5 +107,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port= 7755, debug= True)
-    app.run()
+    app.run(host='0.0.0.0', port=7755, debug= True)
+    # app.run()

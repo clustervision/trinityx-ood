@@ -36,15 +36,3 @@ LOG_FILE = '/var/log/luna/luna2-web.log'
 # TRIX_CONFIG_DISABLED = '/trinity/local/etc/prometheus_server/rules/trix.rules.disabled'
 TRIX_CONFIG = '/tmp/asd'
 TRIX_CONFIG_DISABLED = '/tmp/asd.disabled'
-
-def filter_columns(table=None):
-    """
-    This method remove the unnecessary fields from the dataset.
-    """
-    response = False
-    static = {
-        'status': ['username_initiator', 'request_id', 'read', 'message', 'created'],
-        'queue': ['username_initiator', 'request_id', 'level', 'status', 'subsystem', 'task', 'created']
-    }
-    response = list(static[table])
-    return response

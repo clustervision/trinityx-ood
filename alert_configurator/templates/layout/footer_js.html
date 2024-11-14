@@ -1,12 +1,10 @@
 <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.9/mode/javascript/javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/yaml/yaml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-
-
+<script src="{{ url_for('static', filename='codemirror.min.js') }}"></script>
+<script src="{{ url_for('static', filename='javascript.min.js') }}"></script>
+<script src="{{ url_for('static', filename='yaml.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js-yaml.min.js') }}"></script>
 
 
 <script>
@@ -341,6 +339,7 @@
         */
 
     }
+    
 
    
     $(document).ready(function() {
