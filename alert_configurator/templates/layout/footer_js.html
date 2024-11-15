@@ -58,11 +58,20 @@
             });
             editorInstances[count].setSize(null, 300);
         }
-       // console.log("editorInstances content:", content);
-        // Set content and mode
         editorInstances[count].setValue(content);
         editorInstances[count].setOption("mode", mode);
         editorInstances[count].refresh();
+    }
+
+    function openEditor(count) {
+        if (editorInstances[count]) {
+            const editor = editorInstances[count];
+            editor.refresh();
+            return editor;
+        } else {
+            console.error("Editor instance does not exist for count:", count);
+            return null;
+        }
     }
 
 
@@ -126,6 +135,9 @@
         var ruleObject = JSON.parse(atob(rule));
         $('#model-form_'+count).show();
         $('#ruleEditor_'+count).hide();
+        $('#button_html_'+count).prop('disabled', true);
+        $('#button_json_'+count).prop('disabled', false);
+        $('#button_yaml_'+count).prop('disabled', false);
         try {
             let currentContent = editorInstances[count] ? editorInstances[count].getValue() : JSON.stringify(ruleObject, null, 2);
             let jsonData = jsyaml.load(currentContent);
@@ -142,19 +154,32 @@
         var ruleObject = JSON.parse(atob(rule));
         $('#model-form_' + count).hide();
         $('#ruleEditor_' + count).show();
+        $('#button_html_'+count).prop('disabled', false);
+        $('#button_json_'+count).prop('disabled', true);
+        $('#button_yaml_'+count).prop('disabled', false);
+        /*
+
+        TODO:  Need to open the same instance of editor and show with content of latest one strategy.
+
+        var content = getLatestValues(count);
+        editorInstances[count] = openEditor(count);
+        editorInstances[count].setValue(ruleObject);
+        editorInstances[count].refresh();
+       // console.log(asdasd);
+        //console.log(asdasd.getValue());
+        //console.log(ruleObject);
+       // console.log(content);
+       // openEditor(count);
+       */
         try {
             let currentContent = editorInstances[count] ? editorInstances[count].getValue() : JSON.stringify(ruleObject, null, 2);
             var content = getLatestValues(count);
             let latestContent = content ? content : currentContent;
-            //console.log(currentContent);
-            //console.log(content);
-           // console.log(JSON.parse(latestContent, null, 2));
-            let jsonData = jsyaml.load(latestContent);
-           // let jsonData = jsyaml.load(currentContent);
-            setupEditor(count, JSON.stringify(jsonData, null, 2), { name: "javascript", json: true });
+            setupEditor(count, JSON.stringify(latestContent, null, 2), { name: "javascript", json: true });
         } catch (e) {
             displayWarning("Invalid YAML content:" + e);
         }
+        
     }
 
     // When switching to YAML mode, convert the content to YAML
@@ -162,9 +187,21 @@
         var ruleObject = JSON.parse(atob(rule));
         $('#model-form_' + count).hide();
         $('#ruleEditor_' + count).show();
+        $('#button_html_'+count).prop('disabled', false);
+        $('#button_json_'+count).prop('disabled', false);
+        $('#button_yaml_'+count).prop('disabled', true);
+        
+        console.log(count);
+        console.log(ruleObject);
         try {
             let currentContent = editorInstances[count] ? editorInstances[count].getValue() : jsyaml.dump(ruleObject);
-            let yamlContent = jsyaml.dump(JSON.parse(currentContent));
+            console.log(currentContent);
+            var content = getLatestValues(count);
+            console.log(content);
+            let latestContent = content ? content : currentContent;
+            console.log(latestContent);
+            let yamlContent = jsyaml.dump(latestContent);
+            console.log(yamlContent);
             setupEditor(count, yamlContent, "yaml");
         } catch (e) {
             displayWarning("Invalid JSON content:" + e);
@@ -176,24 +213,21 @@
         const data = await $.ajax({
             url: '/get_rules',
             type: 'GET',
-            //async: false,
             success: function(data) {
                    var tableBody = $('#alert-table tbody');
                     tableBody.empty();
                     $('#modal-container').empty();
                     let count = 1;
                     data.groups.forEach(function(group) {
-                        //console.log(group.name);
                         group.rules.forEach(function(rule) {
-                            //console.log(rule.alert);
                             var row = '<tr>';
                                 row += '<th scope="row">'+count+'</th>';
                                 row += '<td>'+group.name+'</td>';
                                 row += '<td><a href="" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'">'+rule.alert+'</a></td>';
                                 row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_status" '+(rule.labels._trix_status === true ? 'checked' : '')+'><label class="form-check-label" for="rule_status" id="rule_status_text_'+count+'">' + (rule.labels._trix_status === true ? 'ON' : 'OFF') + '</label></div></td>';
                                 row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`nhc`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_nhc" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+'><label class="form-check-label" for="rule_nhc" id="rule_nhc_text_'+count+'">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></td>';
-                                row += '<td><select id="smallSelect" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary">Set Priority</option> \
-                                        <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Error</option> \
+                                row += '<td><select id="severity_'+count+'" onchange="update_configuration(`severity`, this, '+count+', `'+btoa(JSON.stringify(rule))+'`);" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary" value="">Set Priority</option> \
+                                        <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Danger</option> \
                                         <option class="btn-warning" value="warning" '+(rule.labels.severity === "warning" ? 'selected' : '')+'>Warning</option><option class="btn-info" value="info" '+(rule.labels.severity === "info" ? 'selected' : '')+'>Informational</option> \
                                         </select></td>';
                                 row += '<td> \
@@ -206,9 +240,9 @@
                                     <div class="modal-header"><h5 class="modal-title" id="exampleModalLabel4">RULE: '+rule.alert+'</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div> \
                                     <div class="modal-body"> \
                                         <div class="row"><div class="col mb-12"> \
-                                            <button type="button" onclick="rule_modal_html('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button> \
-                                            <button type="button" onclick="rule_modal_json('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-primary btn-sm">Switch to JSON Mode</button> \
-                                            <button type="button" onclick="rule_modal_yaml('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> \
+                                            <button type="button" id="button_html_'+count+'" onclick="rule_modal_html('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button> \
+                                            <button type="button" id="button_json_'+count+'" onclick="rule_modal_json('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-primary btn-sm">Switch to JSON Mode</button> \
+                                            <button type="button" id="button_yaml_'+count+'" onclick="rule_modal_yaml('+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> \
                                             <div id="ruleEditor_'+count+'" style="display: none; height: 300px; border: 1px solid #ddd;"></div></div></div> \
                                         <div id="model-form_'+count+'"> \
                                             <div class="row g-6"> \
@@ -225,8 +259,8 @@
                                                 <div class="col mb-0"><label for="rule_status_'+count+'" class="form-label">Enable</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_status_'+count+'" class="form-check-input" '+(rule.labels._trix_status === true ? 'checked' : '')+'><label id="rule_status_label_'+count+'" for="rule_status_'+count+'" class="form-check-label">' + (rule.labels._trix_status === true ? 'ON' : 'OFF') + '</label></div></div> \
                                                 <div class="col mb-6"><label for="rule_nhc_'+count+'" class="form-label">Rule NHC</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`nhc`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_nhc_'+count+'" class="form-check-input" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+' ><label id="rule_nhc_label_'+count+'" for="rule_nhc_'+count+'" class="form-check-label">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></div> \
                                                 <div class="col mb-6"><label for="rule_severity_'+count+'" class="form-label">Set Priority</label> \
-                                                    <select id="rule_severity_'+count+'" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary">Set Priority</option> \
-                                                    <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Error</option> \
+                                                    <select id="rule_severity_'+count+'" onchange="update_configuration(`severity`, this, '+count+', `'+btoa(JSON.stringify(rule))+'`);" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary">Set Priority</option> \
+                                                    <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Danger</option> \
                                                     <option class="btn-warning" value="warning" '+(rule.labels.severity === "warning" ? 'selected' : '')+'>Warning</option><option class="btn-info" value="info" '+(rule.labels.severity === "info" ? 'selected' : '')+'>Informational</option> \
                                                     </select></div>  \
                                             </div> \
@@ -237,10 +271,14 @@
                                 document.getElementById('exprInput_' + count).value = rule.expr;
 
 
-                                setupEventListeners(count);
-                                var content = getLatestValues(count);
+                                //  TODO:  Need to open the same instance of editor and show with content of latest one strategy.
+
+
+                              //  setupEventListeners(count);
+                            //    var content = getLatestValues(count);
                                 //console.log("content:", content);
-                                setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
+                             //   setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
+                             //   setupEditor(count, JSON.stringify(rule, null, 2), { name: "javascript", json: true });
 
                                 
 
@@ -277,33 +315,64 @@
             // });
 
             
-        function update_configuration(key, checkbox, count, form_rule){
+        function update_configuration(key, element, count, form_rule){
+            var update = false;
             var form_rule = JSON.parse(atob(form_rule));
             let count_configuration = 1;
+
+          //  if (!element.value || element.value.trim() === "") {
+          //      console.log("Value is empty, exiting the function");
+         //       return; // Exit the function immediately if value is empty
+         //   }
+
             configuration.groups.forEach(function(group) {
                 group.rules.forEach(function(rule) {
                     if (count_configuration === count){
                         if (key === 'status'){
-                            if (checkbox.checked === true){
-                                rule.labels._trix_status = true;
-                                document.getElementById("rule_status_text_"+count).innerHTML = "ON";
-                                document.getElementById("rule_status_label_"+count).innerHTML = "ON";
+                            if (element.checked === rule.labels._trix_status){
+                                console.log("No Need to update, both values are equal "+key+" >> "+element.checked+" >> "+rule.labels._trix_status+" ");
                             } else {
-                                rule.labels._trix_status = false;
-                                document.getElementById("rule_status_text_"+count).innerHTML = "OFF";
-                                document.getElementById("rule_status_label_"+count).innerHTML = "OFF";
+                                if (element.checked === true){
+                                    rule.labels._trix_status = true;
+                                    document.getElementById("rule_status_text_"+count).innerHTML = "ON";
+                                    document.getElementById("rule_status_label_"+count).innerHTML = "ON";
+                                } else {
+                                    rule.labels._trix_status = false;
+                                    document.getElementById("rule_status_text_"+count).innerHTML = "OFF";
+                                    document.getElementById("rule_status_label_"+count).innerHTML = "OFF";
+                                }
+                                update = true;
                             }
-                           
                         }
                         if (key === 'nhc'){
-                            if (checkbox.checked === true){
-                                rule.labels.nhc = "yes";
-                                document.getElementById("rule_nhc_text_"+count).innerHTML = "ON";
-                                document.getElementById("rule_nhc_label_"+count).innerHTML = "ON";
+                            if (((element.checked === true) && (rule.labels.nhc === "yes")) || ((element.checked === false) && (rule.labels.nhc === "no"))){
+                                console.log("No Need to update, both values are equal "+key+" >>  "+element.checked+" >> "+rule.labels.nhc+" ");
                             } else {
-                                rule.labels.nhc = "no";
-                                document.getElementById("rule_nhc_text_"+count).innerHTML = "OFF";
-                                document.getElementById("rule_nhc_label_"+count).innerHTML = "OFF";
+                                if (element.checked === true){
+                                    rule.labels.nhc = "yes";
+                                    document.getElementById("rule_nhc_text_"+count).innerHTML = "ON";
+                                    document.getElementById("rule_nhc_label_"+count).innerHTML = "ON";
+                                } else {
+                                    rule.labels.nhc = "no";
+                                    document.getElementById("rule_nhc_text_"+count).innerHTML = "OFF";
+                                    document.getElementById("rule_nhc_label_"+count).innerHTML = "OFF";
+                                }
+                                update = true;
+                            }
+                        }
+                        if (key === 'severity'){
+                            document.getElementById("severity_" + count).className = document.getElementById("severity_" + count).className.replace(/\bbtn-\S+/g, '').trim();
+                            document.getElementById("rule_severity_" + count).className = document.getElementById("severity_" + count).className.replace(/\bbtn-\S+/g, '').trim();
+
+                            if (!element.value || element.value.trim() === "") {
+                                document.getElementById("severity_"+count).classList.add("btn-primary");
+                                document.getElementById("rule_severity_"+count).classList.add("btn-primary");
+                                console.log("No Need to update, "+key+" >>  can't be empty, You have to select a level.");
+                            } else {
+                                rule.labels.severity = element.value;
+                                document.getElementById("severity_"+count).classList.add("btn-"+element.value);
+                                document.getElementById("rule_severity_"+count).classList.add("btn-"+element.value);
+                                update = true;
                             }
                         }
                     }
@@ -311,41 +380,33 @@
                 });
             });
             console.log(configuration);
+            if (update === true){
+                const spinnerOverlay = document.getElementById("spinner-overlay");
+                const body = document.body;
+                body.classList.add("spinner-active");
+                spinnerOverlay.style.display = "flex";
 
 
-            const spinnerOverlay = document.getElementById("spinner-overlay");
-            const body = document.body;
-            body.classList.add("spinner-active");
-            spinnerOverlay.style.display = "flex";
+                save_configuration();
+                setTimeout(function() {
+                    
+                    configuration = get_rules();
 
+                    spinnerOverlay.style.display = "none"; 
+                    body.classList.remove("spinner-active");
 
-            save_configuration();
-            setTimeout(function() {
-                
-                configuration = get_rules();
-                console.log("done", configuration);
+                    const modalElement = document.querySelector(".modal.show");
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) { modalInstance.hide(); }
+                    }
 
-                spinnerOverlay.style.display = "none"; 
-                body.classList.remove("spinner-active");
-                
-            }, 2000);
+                }, 2000);
+
+            }
+            
         }
 
-        /*
-        
-        document.addEventListener("DOMContentLoaded", function() {
-            const spinnerOverlay = document.getElementById("spinner-overlay");
-            const body = document.body;
-            body.classList.add("spinner-active");
-            spinnerOverlay.style.display = "flex";
-          
-            setTimeout(function() {
-              spinnerOverlay.style.display = "none"; 
-              body.classList.remove("spinner-active");
-            }, 2000);
-          });
-
-*/
 
     function save_configuration(){
         const formattedJson = JSON.stringify(configuration, null, 2);
@@ -434,27 +495,12 @@
         });
     });
 
-   
-    function toggleMode(showMode, count, rule) {
-        
-        
 
-        if(showMode === "form"){
-            $('#model-form_'+count).show();
-            $('#ruleEditor_'+count).hide();
-        } else if(showMode === "json"){
-            $('#ruleEditor_'+count).show();
-            $('#model-form_'+count).hide();
-        } else if(showMode === "yaml"){
-            $('#ruleEditor_'+count).show();
-            $('#model-form_'+count).hide();
-        } 
-        
-        /*   
-        var editor;
-        if (!editor) {
-            editor = CodeMirror(document.getElementById('ruleEditor_'+count), {
-                mode: { name: "javascript", json: true },
+
+    $('#edit_configuration').click(function() {
+        var count = 0;
+        if (!editorInstances[count]) {
+            editorInstances[count] = CodeMirror(document.getElementById('jsonEditor'), {
                 theme: "material-darker",
                 lineNumbers: true,
                 autoCloseBrackets: true,
@@ -463,161 +509,120 @@
                 lineWrapping: false,
                 viewportMargin: Infinity
             });
-            editor.setSize(null, 600); 
+            editorInstances[count].setSize(null, 600);
         }
-        editor.setValue(JSON.stringify(rule, null, 2));
-        */
-
-    }
+        let jsonData = jsyaml.load(configuration);
+        editorInstances[count].setValue(JSON.stringify(configuration, null, 2));
+        editorInstances[count].setOption("mode", { name: "javascript", json: true });
+        editorInstances[count].refresh();
+    });
     
 
-   
-    $(document).ready(function() {
-        let editor;
-        
-
-        $('#edit_configuration').click(function() {
-            $.ajax({
-                url: '/edit_config',
-                type: 'GET',
-                success: function(data) {
-                    if (!editor) {
-                        editor = CodeMirror(document.getElementById('jsonEditor'), {
-                            mode: { name: "javascript", json: true },
-                            theme: "material-darker",
-                            lineNumbers: true,
-                            autoCloseBrackets: true,
-                            matchBrackets: true,
-                            tabSize: 2,
-                            lineWrapping: false,
-                            viewportMargin: Infinity
-                        });
-                        
-
-
-
-
-
-                        // When switching to JSON mode, format the content as JSON
-                        $('#jsonModeBtn').click(function() {
-                            try {
-                                let currentContent = editor.getValue();
-                                let jsonData = jsyaml.load(currentContent);
-                                let formattedJson = JSON.stringify(jsonData, null, 2);
-                                editor.setValue(formattedJson);
-                            } catch (e) {
-                                warningToast.find('.toast-body').text("Invalid YAML content:" + e);
-                                $('body').append(warningToast);
-                                warningToast.addClass('show');
-                                setTimeout(function() {
-                                    warningToast.removeClass('show');
-                                    warningToast.addClass('fade');
-                                    warningToast.remove();
-                                }, 10000);
-                            }
-                            editor.setOption("mode", { name: "javascript", json: true });
-                            editor.refresh();
-                        });
-
-                        // When switching to YAML mode, convert the content to YAML
-                        $('#yamlModeBtn').click(function() {
-                            try {
-                                let currentContent = editor.getValue();
-                                let jsonData = JSON.parse(currentContent);
-                                let yamlContent = jsyaml.dump(jsonData);
-                                editor.setValue(yamlContent);
-                            } catch (e) {
-                                let currentContent = editor.getValue();
-                                if (jsyaml.load(currentContent)){
-                                    return;
-                                } else{
-                                    warningToast.find('.toast-body').text("Invalid JSON content:" + e);
-                                    $('body').append(warningToast);
-                                    warningToast.addClass('show');
-                                    setTimeout(function() {
-                                        warningToast.removeClass('show');
-                                        warningToast.addClass('fade');
-                                        warningToast.remove();
-                                    }, 10000);
-
-                                }
-                                
-                            }
-                            editor.setOption("mode", "yaml");
-                            editor.refresh();
-                        });
-
-
-
-
-
-                        editor.setSize(null, 600); 
-                    }
-                    editor.setValue(JSON.stringify(data, null, 2));
-                    $('#edit_config').modal('show');
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error fetching data:", error);
-                    alert("Failed to load configuration data.");
-                }
-            });
-        });
-
-        $('#edit_config').on('shown.bs.modal', function () {
-            if (editor) {
-                editor.refresh();
-            }
-        });
-
-        $('#save_configuration').click(function() {
-            //const editedData = editor.getValue();
-            var formattedJson;
-            try{
-                var currentContent = editor.getValue();
-                var jsonData = jsyaml.load(currentContent); 
-                var formattedJson = JSON.stringify(jsonData, null, 2);
-            } catch (e){
-                formattedJson = editor.getValue();
-            }
-
-
-            const editedData = formattedJson;
-
-            $.ajax({
-                url: '/save_config',
-                type: 'POST',
-                contentType: 'application/json',
-                data: editedData,
-                success: function(response) {
-                    //console.log(response);
-
-                    $('body').append(successToast);
-                    successToast.addClass('show');
-                    setTimeout(function() {
-                        successToast.removeClass('show');
-                        successToast.addClass('fade');
-                        successToast.remove();
-                    }, 10000);
-                    $('#edit_config').modal('hide');
-                },
-                error: function(xhr, status, error) {
-                    console.error("Error saving data:", xhr);
-                    console.error("Error saving data:", xhr.responseJSON.response);
-                    console.error("Error saving data:", status);
-                    console.error("Error saving data:", error);
-
-                    failedToast.find('.toast-body').text("Error: " + xhr.responseJSON.response);
-                    $('body').append(failedToast);
-                    failedToast.addClass('show');
-                    setTimeout(function() {
-                        failedToast.removeClass('show');
-                        failedToast.addClass('fade');
-                        failedToast.remove();
-                    }, 10000);
-                }
-            });
-        });
-
+    // When switching to JSON mode, format the content as JSON
+    $('#jsonModeBtn').click(function() {
+        var count = 0;
+        try {
+            let currentContent = editorInstances[count].getValue();
+            let jsonData = jsyaml.load(currentContent);
+            let formattedJson = JSON.stringify(jsonData, null, 2);
+            editorInstances[count].setValue(formattedJson);
+        } catch (e) {
+            warningToast.find('.toast-body').text("Invalid YAML content:" + e);
+            $('body').append(warningToast);
+            warningToast.addClass('show');
+            setTimeout(function() {
+                warningToast.removeClass('show');
+                warningToast.addClass('fade');
+                warningToast.remove();
+            }, 10000);
+        }
+        editorInstances[count].setOption("mode", { name: "javascript", json: true });
+        editorInstances[count].refresh();
     });
+
+    // When switching to YAML mode, convert the content to YAML
+    $('#yamlModeBtn').click(function() {
+        var count = 0;
+        try {
+            let currentContent = editorInstances[count].getValue();
+            let jsonData = JSON.parse(currentContent);
+            let yamlContent = jsyaml.dump(jsonData);
+            editorInstances[count].setValue(yamlContent);
+        } catch (e) {
+            let currentContent = editorInstances[count].getValue();
+            if (jsyaml.load(currentContent)){
+                return;
+            } else{
+                warningToast.find('.toast-body').text("Invalid JSON content:" + e);
+                $('body').append(warningToast);
+                warningToast.addClass('show');
+                setTimeout(function() {
+                    warningToast.removeClass('show');
+                    warningToast.addClass('fade');
+                    warningToast.remove();
+                }, 10000);
+            }
+        }
+        editorInstances[count].setOption("mode", "yaml");
+        editorInstances[count].refresh();
+    });
+
+
+
+    $('#edit_config').on('shown.bs.modal', function () {
+        var count = 0;
+        if (editorInstances[count]) { editorInstances[count].refresh(); }
+    });
+
+    $('#save_configuration').click(function() {
+        var count = 0;
+        var formattedJson;
+        try{
+            var currentContent = editorInstances[count].getValue();
+            var jsonData = jsyaml.load(currentContent); 
+            var formattedJson = JSON.stringify(jsonData, null, 2);
+        } catch (e){
+            formattedJson = editorInstances[count].getValue();
+        }
+
+
+        const editedData = formattedJson;
+
+        $.ajax({
+            url: '/save_config',
+            type: 'POST',
+            contentType: 'application/json',
+            data: editedData,
+            success: function(response) {
+                //console.log(response);
+
+                $('body').append(successToast);
+                successToast.addClass('show');
+                setTimeout(function() {
+                    successToast.removeClass('show');
+                    successToast.addClass('fade');
+                    successToast.remove();
+                }, 10000);
+                $('#edit_config').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                console.error("Error saving data:", xhr);
+                console.error("Error saving data:", xhr.responseJSON.response);
+                console.error("Error saving data:", status);
+                console.error("Error saving data:", error);
+
+                failedToast.find('.toast-body').text("Error: " + xhr.responseJSON.response);
+                $('body').append(failedToast);
+                failedToast.addClass('show');
+                setTimeout(function() {
+                    failedToast.removeClass('show');
+                    failedToast.addClass('fade');
+                    failedToast.remove();
+                }, 10000);
+            }
+        });
+    });
+
+  
 
 </script>
