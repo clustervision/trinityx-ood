@@ -53,7 +53,7 @@
                 autoCloseBrackets: true,
                 matchBrackets: true,
                 tabSize: 2,
-                lineWrapping: false,
+                lineWrapping: true,
                 viewportMargin: Infinity
             });
             editorInstances[count].setSize(null, 300);
@@ -64,13 +64,26 @@
     }
 
     function openEditor(count) {
+        const editorContainer = document.getElementById('ruleEditor_' + count);
+
+    // Ensure container visibility
+    if (editorContainer) {
+        editorContainer.style.display = 'block';
+        editorContainer.style.height = '300px';
+        editorContainer.style.width = '100%';
+    } else {
+        console.error("Editor container not found for count:", count);
+        return null;
+    }
+
         if (editorInstances[count]) {
             const editor = editorInstances[count];
             editor.refresh();
             return editor;
         } else {
             console.error("Editor instance does not exist for count:", count);
-            return null;
+            //return null;
+            return setupEditor(count, "", { name: "javascript", json: true });
         }
     }
 
@@ -151,45 +164,47 @@
 
     // When switching to JSON mode, format the content as JSON
     function rule_modal_json(count, rule){
-        var ruleObject = JSON.parse(atob(rule));
         $('#model-form_' + count).hide();
         $('#ruleEditor_' + count).show();
         $('#button_html_'+count).prop('disabled', false);
         $('#button_json_'+count).prop('disabled', true);
         $('#button_yaml_'+count).prop('disabled', false);
-        /*
 
-        TODO:  Need to open the same instance of editor and show with content of latest one strategy.
 
-        var content = getLatestValues(count);
-        editorInstances[count] = openEditor(count);
-        editorInstances[count].setValue(ruleObject);
-        editorInstances[count].refresh();
-       // console.log(asdasd);
-        //console.log(asdasd.getValue());
-        //console.log(ruleObject);
-       // console.log(content);
-       // openEditor(count);
-       */
-        try {
-            let currentContent = editorInstances[count] ? editorInstances[count].getValue() : JSON.stringify(ruleObject, null, 2);
-            var content = getLatestValues(count);
-            let latestContent = content ? content : currentContent;
-            setupEditor(count, JSON.stringify(latestContent, null, 2), { name: "javascript", json: true });
-        } catch (e) {
-            displayWarning("Invalid YAML content:" + e);
-        }
-        
+        // TODO: Figure out the solution for DOM editor, now use setupEditor with real configuration always.
+
+        let count_configuration = 1;
+        configuration.groups.forEach(function(group) {
+            group.rules.forEach(function(rule) {
+                if (count_configuration === count){
+                    setupEditor(count, JSON.stringify(rule, null, 2), { name: "javascript", json: true });
+                }
+                count_configuration++;
+            });
+        });
     }
 
     // When switching to YAML mode, convert the content to YAML
     function rule_modal_yaml(count, rule){
-        var ruleObject = JSON.parse(atob(rule));
         $('#model-form_' + count).hide();
         $('#ruleEditor_' + count).show();
         $('#button_html_'+count).prop('disabled', false);
         $('#button_json_'+count).prop('disabled', false);
         $('#button_yaml_'+count).prop('disabled', true);
+
+        /*   
+        
+        let count_configuration = 1;
+        configuration.groups.forEach(function(group) {
+            group.rules.forEach(function(rule) {
+                if (count_configuration === count){
+                    let yamlContent = jsyaml.dump(rule);
+                    setupEditor(count, yamlContent, "yaml");
+                }
+                count_configuration++;
+            });
+        });
+        */  
         
         console.log(count);
         console.log(ruleObject);
@@ -231,8 +246,8 @@
                                         <option class="btn-warning" value="warning" '+(rule.labels.severity === "warning" ? 'selected' : '')+'>Warning</option><option class="btn-info" value="info" '+(rule.labels.severity === "info" ? 'selected' : '')+'>Informational</option> \
                                         </select></td>';
                                 row += '<td> \
-                                    <a href="" class="tooltip-modal-link" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>Edit This Rule</span>"><i class="bx bx-md bx-edit" style="color: #696cff;"></i></a> \
-                                    <a href="" class="tooltip-modal-link" onclick="return confirm(\'Are you sure you want to delete this Rule?\');" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>Delete This Rule</span>"><i class="bx bx-md bx-trash" style="color: red;"></i></a> \
+                                    <button class="tooltip-modal-link" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>Edit This Rule</span>"><i class="bx bx-md bx-edit" style="color: #696cff;"></i></button> \
+                                    <button class="tooltip-modal-link" onclick="update_configuration(`delete`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>Delete This Rule</span>"><i class="bx bx-md bx-trash" style="color: red;"></i></button> \
                                   </td>';
                                 tableBody.append(row);
 
@@ -269,20 +284,6 @@
                                     <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-primary">Save Rule</button></div></div></div></div>';
                                 $('#modal-container').append(modal);
                                 document.getElementById('exprInput_' + count).value = rule.expr;
-
-
-                                //  TODO:  Need to open the same instance of editor and show with content of latest one strategy.
-
-
-                              //  setupEventListeners(count);
-                            //    var content = getLatestValues(count);
-                                //console.log("content:", content);
-                             //   setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
-                             //   setupEditor(count, JSON.stringify(rule, null, 2), { name: "javascript", json: true });
-
-                                
-
-
                                 count++; 
                         });
     
@@ -320,10 +321,105 @@
             var form_rule = JSON.parse(atob(form_rule));
             let count_configuration = 1;
 
-          //  if (!element.value || element.value.trim() === "") {
-          //      console.log("Value is empty, exiting the function");
-         //       return; // Exit the function immediately if value is empty
-         //   }
+            configuration.groups.forEach(function(group) {
+                group.rules.forEach(function(rule) {
+                    if (count_configuration === count){
+                        if (key === 'status'){
+                            if (element.checked === rule.labels._trix_status){
+                                console.log("No Need to update, both values are equal "+key+" >> "+element.checked+" >> "+rule.labels._trix_status+" ");
+                            } else {
+                                if (element.checked === true){
+                                    rule.labels._trix_status = true;
+                                    document.getElementById("rule_status_text_"+count).innerHTML = "ON";
+                                    document.getElementById("rule_status_label_"+count).innerHTML = "ON";
+                                } else {
+                                    rule.labels._trix_status = false;
+                                    document.getElementById("rule_status_text_"+count).innerHTML = "OFF";
+                                    document.getElementById("rule_status_label_"+count).innerHTML = "OFF";
+                                }
+                                update = true;
+                            }
+                        }
+                        if (key === 'nhc'){
+                            if (((element.checked === true) && (rule.labels.nhc === "yes")) || ((element.checked === false) && (rule.labels.nhc === "no"))){
+                                console.log("No Need to update, both values are equal "+key+" >>  "+element.checked+" >> "+rule.labels.nhc+" ");
+                            } else {
+                                if (element.checked === true){
+                                    rule.labels.nhc = "yes";
+                                    document.getElementById("rule_nhc_text_"+count).innerHTML = "ON";
+                                    document.getElementById("rule_nhc_label_"+count).innerHTML = "ON";
+                                } else {
+                                    rule.labels.nhc = "no";
+                                    document.getElementById("rule_nhc_text_"+count).innerHTML = "OFF";
+                                    document.getElementById("rule_nhc_label_"+count).innerHTML = "OFF";
+                                }
+                                update = true;
+                            }
+                        }
+                        if (key === 'severity'){
+                            document.getElementById("severity_" + count).className = document.getElementById("severity_" + count).className.replace(/\bbtn-\S+/g, '').trim();
+                            document.getElementById("rule_severity_" + count).className = document.getElementById("severity_" + count).className.replace(/\bbtn-\S+/g, '').trim();
+
+                            if (!element.value || element.value.trim() === "") {
+                                document.getElementById("severity_"+count).classList.add("btn-primary");
+                                document.getElementById("rule_severity_"+count).classList.add("btn-primary");
+                                console.log("No Need to update, "+key+" >>  can't be empty, You have to select a level.");
+                            } else {
+                                rule.labels.severity = element.value;
+                                document.getElementById("severity_"+count).classList.add("btn-"+element.value);
+                                document.getElementById("rule_severity_"+count).classList.add("btn-"+element.value);
+                                update = true;
+                            }
+                        }
+
+                        if (key === 'delete'){
+                            if (!confirm('Are you sure you want to delete this Rule?')) {
+                                //return false;
+                                update = false;
+                            } else {
+                                update = true;
+                                group.rules.splice(count-1, 1); 
+                                $(element).parent().parent().remove();
+                            }
+                        }
+                    }
+                    count_configuration++;
+                });
+
+            });
+            console.log("configuration",configuration);
+            if (update === true){
+                const spinnerOverlay = document.getElementById("spinner-overlay");
+                const body = document.body;
+                body.classList.add("spinner-active");
+                spinnerOverlay.style.display = "flex";
+
+
+                save_configuration();
+                setTimeout(function() {
+                    
+                    configuration = get_rules();
+
+                    spinnerOverlay.style.display = "none"; 
+                    body.classList.remove("spinner-active");
+
+                    const modalElement = document.querySelector(".modal.show");
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) { modalInstance.hide(); }
+                    }
+
+                }, 2000);
+
+            }
+            
+        }
+    
+
+        function delete_rule(key, element, count, form_rule){
+            var update = false;
+            var form_rule = JSON.parse(atob(form_rule));
+            let count_configuration = 1;
 
             configuration.groups.forEach(function(group) {
                 group.rules.forEach(function(rule) {
@@ -506,7 +602,7 @@
                 autoCloseBrackets: true,
                 matchBrackets: true,
                 tabSize: 2,
-                lineWrapping: false,
+                lineWrapping: true,
                 viewportMargin: Infinity
             });
             editorInstances[count].setSize(null, 600);
