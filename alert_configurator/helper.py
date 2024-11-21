@@ -28,9 +28,12 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
+
+import os
+import copy
 import yaml
 from log import Log
-from constant import TRIX_CONFIG
+from constant import TRIX_CONFIG, TRIX_CONFIG_DETAILS
 
 
 class Helper():
@@ -46,34 +49,99 @@ class Helper():
         self.response = None
 
 
+    def generate_details(self, details=None):
+        """
+        This method will generate the fresh new detailed file depending on the main file.
+        """
+        trix_data = ""
+        with open(TRIX_CONFIG, 'r') as trix_file:
+            trix_data = yaml.safe_load(trix_file)
+        
+        if trix_data:
+            if "groups" in trix_data:
+                for groups in trix_data["groups"]:
+                    group_rules = groups["rules"]
+                    for rule in group_rules:
+                        if details is True:
+                            rule["labels"]["_trix_status"] = True
+                        rule["labels"]["nhc"] = "yes"
+        file = TRIX_CONFIG_DETAILS if details is True else TRIX_CONFIG
+
+        self.logger.info(f'Updating File => {file}')
+        with open(file, "w") as detail_file:
+            yaml.dump(trix_data, detail_file, default_flow_style=False)
+        return True
+
+
+    def check_files(self):
+        """
+        This method will check both files with read & write permissions, and returns a list of
+        errors.
+        """
+        self.response = []
+        for file in [TRIX_CONFIG, TRIX_CONFIG_DETAILS]:
+            if os.path.exists(file):
+                self.logger.info(f"The file '{file}' exists.")
+                if os.access(file, os.R_OK):
+                    self.logger.info(f"The file '{file}' is readable.")
+                else:
+                    self.logger.info(f"The file '{file}' is not readable.")
+                    self.response.append(f"The file '{file}' is not readable.")
+                if os.access(file, os.W_OK):
+                    self.logger.info(f"The file '{file}' is writable.")
+                else:
+                    self.logger.info(f"The file '{file}' is not writable.")
+                    self.response.append(f"The file '{file}' is not writable.")
+                if file == TRIX_CONFIG_DETAILS and os.stat(file).st_size == 0:
+                    self.logger.info(f"The file '{file}' is empty.")
+                    self.generate_details(details=True)
+                    self.generate_details(details=False)
+                else:
+                    self.logger.info(f"The file '{file}' is not empty.")
+            else:
+                self.logger.info(f"The file '{file}' does not exist.")
+                self.response.append(f"The file '{file}' does not exist.")
+        return self.response
+
+
     def load_yaml(self):
         """
-        This method will generate the data as for
-        row format from the interface
+        This method will check the both files rules and detailed, and return the output from the
+        detailed file with status.
         """
-        self.logger.debug(f'Trix Config File => {TRIX_CONFIG}')
-        with open(TRIX_CONFIG, 'r') as file:
-            self.response = yaml.safe_load(file)
-        return self.response
+        self.response = self.check_files()
+        if self.response:
+            check = False
+        else:
+            self.logger.info(f'Loading Detailed File => {TRIX_CONFIG_DETAILS}')
+            check = True
+            with open(TRIX_CONFIG_DETAILS, 'r') as file:
+                self.response = yaml.safe_load(file)
+        return check, self.response
 
 
-    def json_to_yaml(self, json_data=None):
+    def save_configuration(self, json_data=None):
         """
-        This method will generate the data as for
-        row format from the interface
+        This method will save the both files rules and detailed, depending on the users validation.
         """
-        self.logger.debug(f'JSON Data => {json_data}')
-        self.response = yaml.dump(json_data, default_flow_style=False)
-        return self.response
+        trix_rules = copy.deepcopy(json_data)
+        if trix_rules:
+            if "groups" in trix_rules:
+                for groups in trix_rules["groups"]:
+                    group_rules = groups["rules"]
+                    for rule in group_rules:
+                        if rule["labels"]["_trix_status"] is False:
+                            group_rules.remove(rule)
+                        else:
+                            del rule["labels"]["_trix_status"]
 
-
-    def save_configuration(self, yaml_data=None):
-        """
-        This method will generate the data as for
-        row format from the interface
-        """
-        self.logger.debug(f'Trix Config File => {TRIX_CONFIG}')
+        self.logger.info(f'Saving Detailed File => {TRIX_CONFIG_DETAILS}')
+        with open(TRIX_CONFIG_DETAILS, 'w') as file:
+            yaml.dump(json_data, file, default_flow_style=False)
+        
+        self.logger.info(f'Saving Rules File => {TRIX_CONFIG}')
         with open(TRIX_CONFIG, 'w') as file:
-            yaml.dump(yaml_data, file, default_flow_style=False)
-            self.response = True
+            yaml.dump(trix_rules, file, default_flow_style=False)
+
+        self.response = True
         return self.response

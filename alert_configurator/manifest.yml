@@ -1,7 +1,6 @@
 name: Alert Configurator
 description: Node Health Check
 icon: fa://ghost
-# icon: fa://flag
 category: Monitoring
 new_window: false
 

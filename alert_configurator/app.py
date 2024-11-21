@@ -42,22 +42,13 @@ TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
+
 @app.route('/', methods=['GET'])
 def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    # response = status('status')
     return render_template("configurator.html", table=TABLE_CAP, title='Status', TRIX_CONFIG=TRIX_CONFIG)
-
-
-@app.route('/edit_config', methods=['GET'])
-def edit_config():
-    """
-    This method to show the monitor status and queue.
-    """
-    response = Helper().load_yaml()
-    return response
 
 
 @app.route('/save_config', methods=['POST'])
@@ -66,12 +57,8 @@ def save_config():
     This method to show the monitor status and queue.
     """
     try:
-        yaml_data = request.json
-        print(yaml_data)
-        # yaml_data = Helper().json_to_yaml(json_data=data)
-        # print(yaml_data)
-        response = Helper().save_configuration(yaml_data=yaml_data)
-        print(response)
+        json_data = request.json
+        Helper().save_configuration(json_data=json_data)
     except Exception as exp:
         return jsonify({"response": str(exp)}), 400
     return jsonify({"response": "success"}), 200
@@ -82,13 +69,11 @@ def get_rules():
     """
     This method to show the monitor status and queue.
     """
-    configuration = Helper().load_yaml()
-    # print(configuration)
-    # print(type(configuration))
-    # response = configuration["groups"][0]["rules"]
-    # return response
-    return jsonify(configuration), 200
-
+    check, configuration = Helper().load_yaml()
+    if check is True:
+        return jsonify(configuration), 200
+    else:
+        return jsonify(configuration), 400
 
 
 @app.route('/license', methods=['GET'])
@@ -107,5 +92,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=7755, debug= True)
-    # app.run()
+    # app.run(host='0.0.0.0', port=7755, debug= True)
+    app.run()

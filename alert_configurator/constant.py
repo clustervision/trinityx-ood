@@ -28,11 +28,10 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
+
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-# TRIX_CONFIG = '/trinity/local/etc/prometheus_server/rules/trix.rules'
-# TRIX_CONFIG_DISABLED = '/trinity/local/etc/prometheus_server/rules/trix.rules.disabled'
-TRIX_CONFIG = '/tmp/asd'
-TRIX_CONFIG_DISABLED = '/tmp/asd.disabled'
+TRIX_CONFIG = '/trinity/local/etc/prometheus_server/rules/trix.rules'
+TRIX_CONFIG_DETAILS = '/trinity/local/etc/prometheus_server/rules/trix.rules.details'
+

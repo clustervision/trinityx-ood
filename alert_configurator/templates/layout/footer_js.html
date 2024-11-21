@@ -19,6 +19,8 @@
         info: 'btn-info'
     };
 
+    let url = window.location.href
+        url = url.replace('#','');
 
     let successToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-success top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
         <div class="toast-header"> \
@@ -214,7 +216,7 @@
 
     async function get_rules(){
         const data = await $.ajax({
-            url: '/get_rules',
+            url: url+'/get_rules',
             type: 'GET',
             success: function(data) {
                    var tableBody = $('#alert-table tbody');
@@ -227,7 +229,7 @@
                                 row += '<th scope="row">'+count+'</th>';
                                 row += '<td>'+group.name+'</td>';
                                 row += '<td><a href="" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'">'+rule.alert+'</a></td>';
-                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_status" '+(rule.labels._trix_status === true ? 'checked' : '')+'><label class="form-check-label" for="rule_status" id="rule_status_text_'+count+'">' + (rule.labels._trix_status === true ? 'ON' : 'OFF') + '</label></div></td>';
+                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_status" '+(rule.labels._trix_status !== false ? 'checked' : '')+'><label class="form-check-label" for="rule_status" id="rule_status_text_'+count+'">' + (rule.labels._trix_status !== false ? 'ON' : 'OFF') + '</label></div></td>';
                                 row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`nhc`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_nhc" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+'><label class="form-check-label" for="rule_nhc" id="rule_nhc_text_'+count+'">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></td>';
                                 row += '<td><select id="severity_'+count+'" onchange="update_configuration(`severity`, this, '+count+', `'+btoa(JSON.stringify(rule))+'`);" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary" value="">Set Priority</option> \
                                         <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Danger</option> \
@@ -259,7 +261,7 @@
                                                 <div class="col mb-6"><label for="exprInput_'+count+'" class="form-label">Rule Expr</label><input type="text" id="exprInput_'+count+'" class="form-control" placeholder="Enter Name" ></div> \
                                             </div> \
                                             <div class="row"> \
-                                                <div class="col mb-0"><label for="rule_status_'+count+'" class="form-label">Enable</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_status_'+count+'" class="form-check-input" '+(rule.labels._trix_status === true ? 'checked' : '')+'><label id="rule_status_label_'+count+'" for="rule_status_'+count+'" class="form-check-label">' + (rule.labels._trix_status === true ? 'ON' : 'OFF') + '</label></div></div> \
+                                                <div class="col mb-0"><label for="rule_status_'+count+'" class="form-label">Enable</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_status_'+count+'" class="form-check-input" '+(rule.labels._trix_status !== false ? 'checked' : '')+'><label id="rule_status_label_'+count+'" for="rule_status_'+count+'" class="form-check-label">' + (rule.labels._trix_status !== false ? 'ON' : 'OFF') + '</label></div></div> \
                                                 <div class="col mb-6"><label for="rule_nhc_'+count+'" class="form-label">Rule NHC</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`nhc`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_nhc_'+count+'" class="form-check-input" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+' ><label id="rule_nhc_label_'+count+'" for="rule_nhc_'+count+'" class="form-check-label">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></div> \
                                                 <div class="col mb-6"><label for="rule_severity_'+count+'" class="form-label">Set Priority</label> \
                                                     <select id="rule_severity_'+count+'" onchange="update_configuration(`severity`, this, '+count+', `'+btoa(JSON.stringify(rule))+'`);" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary">Set Priority</option> \
@@ -317,13 +319,22 @@
                 },
                 error: function(xhr, status, error) {
                     console.error("Error fetching data:", error);
+                    console.error("Error saving data:", xhr);
+                    console.error("Error saving data:", xhr.responseJSON.response);
+                    console.error("Error saving data:", status);
+                    console.error("Error saving data:", error);
+
+                    failedToast.find('.toast-body').text("Error: " + xhr.responseJSON);
+                    $('body').append(failedToast);
+                    failedToast.addClass('show');
+
                 }
             });
             configuration = data;
             return configuration;
         }
 
-        configuration = get_rules();
+       // configuration = get_rules();  //############ Hits twice the API so commented.
 
         async function useGlobalVariable() {
             await get_rules();
@@ -331,7 +342,8 @@
         
         useGlobalVariable();
 
-        
+    
+    //console.log(configuration);
     $(document).on('hidden.bs.modal', '.modal', function () {
         activeButton = parseInt(1);
         previousButton = null;
@@ -361,60 +373,53 @@
                         if (!Array.isArray(group.rules)) {
                             group.rules = []; 
                         }
-
-                        if (document.getElementById("rule_nhc_"+count).checked === true){
-                            content.labels.nhc = "yes";
+                        const valid_alert_name = /[a-zA-Z0-9]/.test(content.alert);
+                        if (valid_alert_name){
+                            if (document.getElementById("rule_nhc_"+count).checked === true){
+                                content.labels.nhc = "yes";
+                            } else {
+                                content.labels.nhc = "no";
+                            }
+                            if (document.getElementById("rule_status_"+count).checked !== false){
+                                content.labels._trix_status = true;
+                            } else {
+                                content.labels._trix_status = false;
+                            }
+                            if (!document.getElementById("rule_severity_"+count).value || document.getElementById("rule_severity_"+count).value.trim() === "") {
+                                content.labels.severity = "";
+                            } else {
+                                content.labels.severity = document.getElementById("rule_severity_"+count).value;
+                            }
+                            group.rules.push(content);
+                            update = true;
                         } else {
-                            content.labels.nhc = "no";
+                            displayToast(failedToast, "A valid alert name is required, Expecting at least one alphabet or number");
                         }
-                        if (document.getElementById("rule_status_"+count).checked === true){
-                            content.labels._trix_status = true;
-                        } else {
-                            content.labels._trix_status = false;
-                        }
-                        if (!document.getElementById("rule_severity_"+count).value || document.getElementById("rule_severity_"+count).value.trim() === "") {
-                            content.labels.severity = "";
-                        } else {
-                            content.labels.severity = document.getElementById("rule_severity_"+count).value;
-                        }
-                        group.rules.push(content);
-                        update = true;
                     }
                 });
-                
             }
-   
              
             if (update === true){
                 const spinnerOverlay = document.getElementById("spinner-overlay");
                 const body = document.body;
                 body.classList.add("spinner-active");
                 spinnerOverlay.style.display = "flex";
-               
-
                 save_configuration();
                 setTimeout(function() {
-                    
                     configuration = get_rules();
-
                     spinnerOverlay.style.display = "none"; 
                     body.classList.remove("spinner-active");
-
                     const modalElement = document.querySelector(".modal.show");
                     if (modalElement) {
                         const modalInstance = bootstrap.Modal.getInstance(modalElement);
                         if (modalInstance) { modalInstance.hide(); }
                     }
-
                 }, 2000);
-               
-
             }
-            
-           
-
         }
+
         function update_configuration(key, element, count, form_rule){
+            //$('#rule_status_'+count).prop('checked', jsonData.labels._trix_status === true);
             var update = false;
            // var form_rule = JSON.parse(atob(form_rule));
             let count_configuration = 1;
@@ -492,8 +497,13 @@
                                 if (parseInt(activeButton) === 3){
                                     content = jsyaml.load(editorInstances[count].getValue());
                                 }
-                                group.rules[index] = content;
-                                update = true;
+                                const valid_alert_name = /[a-zA-Z0-9]/.test(content.alert);
+                                if (valid_alert_name){
+                                    group.rules[index] = content;
+                                    update = true;
+                                } else {
+                                    displayToast(failedToast, "A valid alert name is required, Expecting at least one alphabet or number");
+                                }
                             } catch (e){
                                 console.warn("ERROR :: ", e);
                                 displayToast(failedToast, "ERROR :: "+e);
@@ -538,7 +548,7 @@
     function save_configuration(){        
         const formattedJson = JSON.stringify(configuration, null, 2);
         $.ajax({
-            url: '/save_config',
+            url: url+'/save_config',
             type: 'POST',
             contentType: 'application/json',
             data: formattedJson,
@@ -584,7 +594,7 @@
 
         const editedData = formattedJson;
         $.ajax({
-            url: '/save_config',
+            url: url+'/save_config',
             type: 'POST',
             contentType: 'application/json',
             data: editedData,
@@ -709,7 +719,7 @@
         const editedData = formattedJson;
 
         $.ajax({
-            url: '/save_config',
+            url: url+'/save_config',
             type: 'POST',
             contentType: 'application/json',
             data: editedData,
