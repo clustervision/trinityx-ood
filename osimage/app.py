@@ -30,12 +30,17 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+
+import eventlet
+eventlet.monkey_patch()
+
 import types
 import os
 from html import unescape
 from flask import Flask, json, request, render_template, flash, url_for, redirect
 from flask_socketio import SocketIO
 from subprocess import Popen, check_output, PIPE
+import eventlet.green.subprocess as subprocess
 import os
 from rest import Rest
 from constant import LICENSE
@@ -43,13 +48,38 @@ from helper import Helper
 from presenter import Presenter
 from log import Log
 from model import Model
+import pty
+import threading
+
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'osimage'
 TABLE_CAP = 'OS Image'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-socketio = SocketIO(app)
+
+socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*", path = "/pun/sys/trinity_osimage/socket.io", manage_session = True)
+command = "rm -rf /trinity/images/compute/tmp/lchroot.lock && sudo sh /mnt/hgfs/clustervision/trinityx-demo/lchroot/lchroot.sh compute /trinity/images/compute 5.14.0-427.37.1.el9_4.x86_64"
+master_fd = None
+
+def run_shell():
+    global master_fd
+    master_fd, slave_fd = pty.openpty()
+    process = subprocess.Popen(command, shell=True, stdin=slave_fd, stdout=slave_fd, stderr=slave_fd, close_fds=True)
+    os.close(slave_fd)
+
+    try:
+        while True:
+            output = os.read(master_fd, 1024).decode('utf-8')
+            print(f"output: [{output}]")
+            if output:
+                socketio.emit('output', {'data': output}, namespace='/')
+    except OSError:
+        pass
+    finally:
+        os.close(master_fd)
+        process.wait()
+        master_fd = None 
 
 
 @app.route('/', methods=['GET'])
@@ -356,115 +386,41 @@ def get_prompt():
     return f"[{user}@{os.uname().nodename} {current_dir}]# "  # Format the prompt
 
 
+@socketio.on('input')
+def handle_input(data):
+    key = data['data']
+    print(f"data: [{data}]")
+    print(f"key: [{key}]")
+    if master_fd:
+        # os.write(master_fd, key.encode())
+        if key == "CTRL_C":
+            os.write(master_fd, b'\x03')
+        elif key == "CTRL_D":
+            os.write(master_fd, b'\x04')
+        else:
+            os.write(master_fd, key.encode())
+
+
 @socketio.on('connect')
 def handle_connect():
-    print('New client connected')
-    prompt = get_prompt()
-    socketio.emit('output', prompt)  # Send initial prompt to the client
-
-    shell = Popen(['bash'], stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True)
-
-   
-    @socketio.on('command')
-    def handle_command(cmd):
-        print("Received command: ", cmd)
-        if cmd.strip() == '':
-            # If command is empty or just spaces, send a new prompt
-            prompt = get_prompt()
-            socketio.emit('output', prompt)
-            return
-
-        if cmd.strip() == 'clear':
-            shell.stdin.write('clear\n')  # Send the clear command to the shell
-            shell.stdin.flush()
-            prompt = get_prompt()  # Get new prompt after clearing
-            socketio.emit('output', prompt)
-            return
-
-        shell.stdin.write(cmd + '\n')  # Write the command to the shell
-        shell.stdin.flush()
+    socketio.start_background_task(run_shell)
 
 
-         # Continuously read output until the process is done
-        while True:
-            output = shell.stdout.readline()  # Read one line at a time
-            print(shell.poll())
-            if output == '' and shell.poll() is not None:
-                break  # Exit loop if the process has ended
-            if output:  # If there is output, emit it to the client
-                socketio.emit('output', output.strip() + '\r\n')
-
-        # After the command finishes executing, send a new prompt
-        prompt = get_prompt()
-        socketio.emit('output', prompt)
 
 
-        # output = shell.stdout.readline()
-
-        # for line in iter(shell.stdout.readline, b''):
-        #     print(f"line : {line}   returncode : {shell.returncode}")
-        #     socketio.emit('output', f"{line.strip()}\r\n"),
-        # shell.stdout.close()
-        # shell.wait()
-        # prompt = get_prompt()
-        # socketio.emit('output', prompt)
+def run_socketio():
+    socketio.run(app) 
 
 
-        # def get_output(output=None):
-        # #     for line in iter(shell.stdout.readline, b''):
-        # #         socketio.emit('output', f"{line.strip()}\r\n"),
-        # #     shell.stdout.close()
-        # #     shell.wait()
-        # # prompt = get_prompt()
-        # # socketio.emit('output', prompt)
 
-        #     print(shell.returncode)
-        #     while True:
-        #         if not output:
-        #             break
-        #         else:
-        #             socketio.emit('output', f"{output.strip()}\r\n")
-        #             print(shell.pid)
-        #             if shell.poll() is not None:
-        #                 exit_code = shell.poll()
-        #                 if exit_code != 0:
-        #                     socketio.emit('error', f"Command exited with error code {exit_code}")
-        #                 break
-        #             return get_output(shell.stdout.readline())
-        
-        # get_output(output)
 
-            # print(f"While True: {output.strip()} and poll {shell.poll()}")
-            # if output == '':# and shell.poll() is not None:
-                # break
-            # else:
-            # if len(output) > 0:
-                # socketio.emit('output', f"{output.strip()}\r\n")  # Send command output to client
-                # output = shell.stdout.readline()
-                # prompt = get_prompt()
-                # socketio.emit('output', prompt)
-                # has_output = True  # Set flag to indicate output was sent
-            # output = shell.stdout.readline()
-            
-            # print(f"output ----------->> {output}")
-                # print("Received output: ", output)
-        # if has_output:
-            # prompt = get_prompt()
-            # socketio.emit('output', prompt)
-        # exit_code = shell.wait()   
-        # print(f"Process exited with code: {exit_code}")
-        # print("while finish")
-        # output = shell.stdout.readline()
-        # print("another check finish")
-        # # After processing the command, send a new prompt
-        # prompt = get_prompt()
-        # socketio.emit('output', prompt)
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
+
 
 
 if __name__ == "__main__":
-    app.run(host= '0.0.0.0', port= 7059, debug= True)
+    # app.run(host= '0.0.0.0', port= 7059, debug= True)
     # app.run()
+    # socketio.run(app, host="0.0.0.0", port=7755)
+    # socketio.run(app)
+    threading.Thread(target=run_socketio, daemon=True).start()

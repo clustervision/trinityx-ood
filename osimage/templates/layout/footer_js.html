@@ -361,3 +361,246 @@
     }
     
 </script>
+
+
+
+<script>
+        
+
+    
+    const terminalDiv = document.getElementById("terminal");
+    const terminal = new Terminal({
+        cursorBlink: true,
+        cols: 80,
+        rows: 24,
+        isTrusted: false
+    });
+    //terminal.open(terminalDiv);
+
+    // Attach to the DOM
+    const fitAddon = new FitAddon.FitAddon();
+    terminal.loadAddon(fitAddon);
+    terminal.open(terminalDiv);
+
+    // Fit the terminal to the container
+    fitAddon.fit();
+
+
+    // const socket = io(`wss://${window.location.hostname}:8080`, {
+    //     path: '/pun/sys/trinity_osimage/socket.io'
+    // });
+
+
+    const socket = io();
+    //const socket = io(`wss://${window.location.hostname}:8080/pun/sys/trinity_osimage`);
+   // const socket = io(`ws://https://vmware-controller1.cluster:8080`);
+
+    socket.on('output', (data) => {
+        terminal.write(data.data);
+    });
+
+    socket.onclose = () => {
+        terminal.write("Disconnected from SSH.\r\n");
+    };
+
+
+
+    const pasteButton = document.getElementById('pasteButton');
+    pasteButton.addEventListener('click', () => {
+        let pastedText = '';
+        const textarea = document.createElement('textarea');
+        document.body.appendChild(textarea);
+        textarea.focus();
+    
+        try {
+            document.execCommand('paste');
+            pastedText = textarea.value;
+            console.log(pastedText);
+            terminal.write(pastedText);
+        } catch (err) {
+            console.error('Failed to paste using execCommand:', err);
+        }
+    
+        document.body.removeChild(textarea);
+    });
+
+
+
+
+/*
+    const pasteButton = document.getElementById('pasteButton');
+
+    pasteButton.addEventListener('click', () => {
+        navigator.clipboard.readText().then(pastedText => {
+            terminal.write(pastedText);
+        }).catch(err => {
+            console.error('Failed to read clipboard contents: ', err);
+        });
+    });
+
+*/
+
+
+    terminal.attachCustomKeyEventHandler((event) => {
+        if (event.ctrlKey && event.code === 'KeyV') {
+            event.preventDefault();
+            console.log(event);
+            navigator.clipboard.readText().then(pastedText => {
+                terminal.write(pastedText); // Write pasted text to terminal
+            }).catch(err => {
+                console.error('Failed to read clipboard contents: ', err);
+            });
+
+            return false;
+        }
+        return true;
+    });
+
+
+    /*
+    terminalDiv.addEventListener('contextmenu', () => {
+        if (term.hasSelection()) {
+          document.execCommand('copy')
+          terminal.select(0, 0, 0)
+        } else {
+          ipcRenderer.send('terminal-data', clipboard.readText())
+        }
+      })
+
+
+
+
+    //const hiddenInput = document.getElementById('paste_data');
+    const hiddenInput = document.querySelector('.xterm-helper-textarea');
+    document.addEventListener('paste', (event) => {
+        event.preventDefault();
+        const pastedText = event.clipboardData.getData('text');
+        hiddenInput.value = pastedText;
+        console.log('Pasted content:', pastedText);
+    });
+*/
+
+
+    terminal.onKey(({ key, domEvent, event }) => {
+        const code = domEvent.code;
+        const isShiftPressed = domEvent.shiftKey;
+        const isCtrlPressed = domEvent.ctrlKey;
+        console.log(code);
+        console.log(domEvent);
+        console.log(event);
+        console.log(key);
+
+        switch (code) {
+            case "KeyL":
+                if (isCtrlPressed) {
+                    terminal.clear();
+                } else {
+                    socket.emit('input', { data: domEvent.key });
+                }
+                break;
+            case "KeyC":
+                if (isCtrlPressed) {
+                    socket.emit('input', { data: "CTRL_C" });
+                    //terminal.write('\r\n');
+                    console.log('Ctrl + C detected');
+                } else {
+                    socket.emit('input', { data: domEvent.key });
+                }
+                break;
+            
+            case "KeyD":
+                if (isCtrlPressed) {
+                    socket.emit('input', { data: "CTRL_D" });
+                    //terminal.write('\r\n');
+                    console.log('Ctrl + D detected');
+                } else {
+                    socket.emit('input', { data: domEvent.key });
+                }
+                break;
+
+             case "KeyV":
+                if (isCtrlPressed === true) {
+                    console.log('Ctrl + V detected');
+                    
+
+                    /*
+                    var hiddenInput = document.querySelector('.xterm-helper-textarea');
+                    console.log(hiddenInput);
+                    document.addEventListener('paste', (event) => {
+                        event.preventDefault();
+                        const pastedText = event.clipboardData.getData('text');
+                        hiddenInput.value = pastedText;
+                        console.log('Pasted content:', pastedText);
+                    });
+
+
+
+                  
+                    hiddenInput.focus();
+                    hiddenInput.select();
+                    document.execCommand('paste');
+
+                    hiddenInput.addEventListener('paste', (event) => {
+                        console.log('event:', event);
+                        const pastedText = event.clipboardData.getData('text');
+                        terminal.write(pastedText);
+                        console.log('Pasted content:', pastedText);
+                        //document.body.removeChild(hiddenInput);
+                        hiddenInput.innerHTML = '';
+                    });
+
+                    setTimeout(() => {
+                        const pastedText = hiddenInput.value; // Retrieve the pasted content from the textarea
+                        terminal.write(pastedText); // Write to the terminal
+                        console.log('Pasted content:', pastedText);
+            
+                        // Clean up by removing the hidden textarea
+                        //document.body.removeChild(hiddenInput);
+                    }, 100);
+                */
+
+                } else {
+                    socket.emit('input', { data: domEvent.key });
+                }
+                
+                break;
+                
+
+            case "Enter":
+                socket.emit('input', { data: "\r" });
+                break;
+            case "Backspace":
+                socket.emit('input', { data: "\b" });
+                //terminal.write('\b \b');
+                //terminal.write('\b');
+                break;
+            case "Tab":
+                socket.emit('input', { data: "\t" });
+                break;
+            case "ArrowUp":
+                socket.emit('input', { data: "\x1b[A" });
+                break;
+            case "ArrowDown":
+                socket.emit('input', { data: "\x1b[B" });
+                break;
+            case "ArrowRight":
+                socket.emit('input', { data: "\x1b[C" });
+                break;
+            case "ArrowLeft":
+                socket.emit('input', { data: "\x1b[D" });
+                break;
+            case "Escape":
+                socket.emit('input', { data: "\x1b" });
+                break;
+            case "Delete":
+                socket.emit('input', { data: "\x1b[3~" });
+                break;
+            default:
+                if (domEvent.key.length === 1) {
+                    socket.emit('input', { data: domEvent.key });
+                    //terminal.write(domEvent.key);
+                }
+                break;
+        }
+    });
+</script>
