@@ -124,7 +124,7 @@ class Helper():
         return response
 
 
-    def filter_data(self, table=None, data=None):
+    def filter_data(self, table=None, data=None, chroot_url=None):
         """
         This method will generate the data as for
         row format
@@ -179,7 +179,11 @@ class Helper():
             final_rows.append(tmp)
         rows = final_rows
         for row in rows:
-            action = self.action_items(table, row[0])
+            chroot_url = f"{chroot_url}/image={row[0]},path={row[4]},kernel_version={row[1]}"
+            self.logger.info(f'name => {row[0]}')
+            self.logger.info(f'path => {row[4]}')
+            self.logger.info(f'vers => {row[1]}')
+            action = self.action_items(table, row[0], chroot_url)
             row.insert(len(row), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
@@ -209,6 +213,8 @@ class Helper():
         data += 'data-bs-offset="0,4" '
         data += 'data-bs-placement="top" '
         data += 'data-bs-html="true" '
+        if icon == "bx-terminal":
+            data += 'target="_blank" ' 
         inner = f'<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>{text}</span>'
         data += f'data-bs-original-title="{inner}" '
         icon = f'<i class="bx bx-md {icon}" style="color: {color}"></i>'
@@ -216,7 +222,7 @@ class Helper():
         return item
 
 
-    def action_items(self, table=None, name=None):
+    def action_items(self, table=None, name=None, chroot_url=None):
         """
         This method provide the action items for the table. 
         """
@@ -226,8 +232,7 @@ class Helper():
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
-            chroot_click = f'onclick="chroot_osimage(\'{name}\');"'
-            chroot = f'<button type="button" {chroot_click} class="{button}btn-dark">Lchroot Image</button>'
+            chroot = f'<a href="{chroot_url}" class="{button}btn-dark">Lchroot Image</a>'
             info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
             edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
             delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
@@ -240,9 +245,9 @@ class Helper():
             kernel = f'<a href="/kernel/{table}/{name}" class="{button}btn-dark">Change Kernel</a>'
         elif item_type == 'icon':
             chroot =  self.make_icon(
-                href=None,
-                onclick=f'chroot_osimage(\'{name}\');',
-                text=f'Lchroot {name}',
+                href=chroot_url,
+                onclick=None,
+                text=f'LCHROOT {name}',
                 icon='bx-terminal',
                 color='#000000;'
             )

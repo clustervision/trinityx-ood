@@ -31,25 +31,16 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 
-import eventlet
-eventlet.monkey_patch()
-
 import types
 import os
 from html import unescape
 from flask import Flask, json, request, render_template, flash, url_for, redirect
-from flask_socketio import SocketIO
-from subprocess import Popen, check_output, PIPE
-import eventlet.green.subprocess as subprocess
-import os
 from rest import Rest
 from constant import LICENSE
 from helper import Helper
 from presenter import Presenter
 from log import Log
 from model import Model
-import pty
-import threading
 
 
 LOGGER = Log.init_log('INFO')
@@ -58,29 +49,6 @@ TABLE_CAP = 'OS Image'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-socketio = SocketIO(app, async_mode='eventlet', cors_allowed_origins="*", path = "/pun/sys/trinity_osimage/socket.io", manage_session = True)
-command = "rm -rf /trinity/images/compute/tmp/lchroot.lock && sudo sh /mnt/hgfs/clustervision/trinityx-demo/lchroot/lchroot.sh compute /trinity/images/compute 5.14.0-427.37.1.el9_4.x86_64"
-master_fd = None
-
-def run_shell():
-    global master_fd
-    master_fd, slave_fd = pty.openpty()
-    process = subprocess.Popen(command, shell=True, stdin=slave_fd, stdout=slave_fd, stderr=slave_fd, close_fds=True)
-    os.close(slave_fd)
-
-    try:
-        while True:
-            output = os.read(master_fd, 1024).decode('utf-8')
-            print(f"output: [{output}]")
-            if output:
-                socketio.emit('output', {'data': output}, namespace='/')
-    except OSError:
-        pass
-    finally:
-        os.close(master_fd)
-        process.wait()
-        master_fd = None 
-
 
 @app.route('/', methods=['GET'])
 def home():
@@ -88,13 +56,23 @@ def home():
     This is the main method of application.
     It will list all OS Images which is available with daemon.
     """
+    if request.headers:
+        if "X-Forwarded-Proto" in dict(request.headers):
+            scheme = dict(request.headers)["X-Forwarded-Proto"]
+        else:
+            scheme = request.scheme
+    else:
+        scheme = request.scheme
+    
+    chroot_url = f"{scheme}://{request.host}/pun/sys/shell/ssh/{request.host.split(':')[0]}"
+    LOGGER.info(f"chroot_Base_url: {chroot_url}")
     data, error = "", ""
     table_data = Rest().get_data(TABLE)
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE]
         raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data(TABLE, raw_data)
+        fields, rows  = Helper().filter_data(TABLE, raw_data, chroot_url)
         data = Presenter().show_table(fields, rows)
         data = unescape(data)
     else:
@@ -379,48 +357,7 @@ def license_info():
             response = '<br />'.join(response)
     return response
 
-# Function to get the current prompt (user and directory)
-def get_prompt():
-    user = os.getlogin()  # Get the current user
-    current_dir = check_output(['pwd']).decode('utf-8').strip()  # Get current directory
-    return f"[{user}@{os.uname().nodename} {current_dir}]# "  # Format the prompt
-
-
-@socketio.on('input')
-def handle_input(data):
-    key = data['data']
-    print(f"data: [{data}]")
-    print(f"key: [{key}]")
-    if master_fd:
-        # os.write(master_fd, key.encode())
-        if key == "CTRL_C":
-            os.write(master_fd, b'\x03')
-        elif key == "CTRL_D":
-            os.write(master_fd, b'\x04')
-        else:
-            os.write(master_fd, key.encode())
-
-
-@socketio.on('connect')
-def handle_connect():
-    socketio.start_background_task(run_shell)
-
-
-
-
-def run_socketio():
-    socketio.run(app) 
-
-
-
-
-
-
-
 
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)
-    # app.run()
-    # socketio.run(app, host="0.0.0.0", port=7755)
-    # socketio.run(app)
-    threading.Thread(target=run_socketio, daemon=True).start()
+    app.run()

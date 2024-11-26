@@ -2,7 +2,6 @@ name: OS Images
 description: Luna2 OS Images Operations
 icon: fa://database
 category: Luna
-role: shell
 new_window: false
 
 tile:

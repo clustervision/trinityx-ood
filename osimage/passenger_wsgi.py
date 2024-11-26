@@ -31,11 +31,3 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 from app import app as application
-from app import run_socketio
-import threading
-# from app import app as application
-# from app import th as application
-# from app import socketio as application
-# socketio.run(application)
-
-threading.Thread(target=run_socketio, daemon=True).start()
