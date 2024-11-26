@@ -121,6 +121,9 @@ include node/templates/layout/*
 
 include osimage
 include osimage/*
+include osimage/addons
+include osimage/addons/*
+include osimage/addons/chroot_wrapper.sh
 include osimage/static
 include osimage/static/*
 include osimage/static/css
