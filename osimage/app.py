@@ -30,6 +30,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
+
 import types
 import os
 from html import unescape
@@ -41,11 +42,13 @@ from presenter import Presenter
 from log import Log
 from model import Model
 
+
 LOGGER = Log.init_log('INFO')
 TABLE = 'osimage'
 TABLE_CAP = 'OS Image'
 app = Flask(__name__, static_url_path='/')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
 
 @app.route('/', methods=['GET'])
 def home():
@@ -53,13 +56,23 @@ def home():
     This is the main method of application.
     It will list all OS Images which is available with daemon.
     """
+    if request.headers:
+        if "X-Forwarded-Proto" in dict(request.headers):
+            scheme = dict(request.headers)["X-Forwarded-Proto"]
+        else:
+            scheme = request.scheme
+    else:
+        scheme = request.scheme
+    
+    chroot_url = f"{scheme}://{request.host}/pun/sys/shell/ssh/{request.host.split(':')[0]}"
+    LOGGER.info(f"chroot_Base_url: {chroot_url}")
     data, error = "", ""
     table_data = Rest().get_data(TABLE)
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE]
         raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data(TABLE, raw_data)
+        fields, rows  = Helper().filter_data(TABLE, raw_data, chroot_url)
         data = Presenter().show_table(fields, rows)
         data = unescape(data)
     else:
@@ -348,3 +361,5 @@ def license_info():
 if __name__ == "__main__":
     # app.run(host= '0.0.0.0', port= 7059, debug= True)
     app.run()
+
+

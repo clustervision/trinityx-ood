@@ -28,19 +28,11 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
 from flask import url_for
-from datetime import datetime
-import urllib.parse
-from time import time
 import base64
 import binascii
-import subprocess
-from random import randrange, randint
-from os import getpid
 import hostlist
-from nested_lookup import nested_lookup, nested_update, nested_delete, nested_alter
-from nested_lookup import get_all_keys
+from nested_lookup import nested_lookup, nested_update, nested_alter
 from rest import Rest
 from log import Log
 from constant import filter_columns, EDITOR_KEYS, sortby
@@ -132,7 +124,7 @@ class Helper():
         return response
 
 
-    def filter_data(self, table=None, data=None):
+    def filter_data(self, table=None, data=None, chroot_url=None):
         """
         This method will generate the data as for
         row format
@@ -187,7 +179,11 @@ class Helper():
             final_rows.append(tmp)
         rows = final_rows
         for row in rows:
-            action = self.action_items(table, row[0])
+            chroot_url = f"{chroot_url}/image={row[0]},path={row[4]},kernel_version={row[1]}"
+            self.logger.info(f'name => {row[0]}')
+            self.logger.info(f'path => {row[4]}')
+            self.logger.info(f'vers => {row[1]}')
+            action = self.action_items(table, row[0], chroot_url)
             row.insert(len(row), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
@@ -217,6 +213,8 @@ class Helper():
         data += 'data-bs-offset="0,4" '
         data += 'data-bs-placement="top" '
         data += 'data-bs-html="true" '
+        if icon == "bx-terminal":
+            data += 'target="_blank" ' 
         inner = f'<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>{text}</span>'
         data += f'data-bs-original-title="{inner}" '
         icon = f'<i class="bx bx-md {icon}" style="color: {color}"></i>'
@@ -224,7 +222,7 @@ class Helper():
         return item
 
 
-    def action_items(self, table=None, name=None):
+    def action_items(self, table=None, name=None, chroot_url=None):
         """
         This method provide the action items for the table. 
         """
@@ -234,6 +232,7 @@ class Helper():
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
+            chroot = f'<a href="{chroot_url}" class="{button}btn-dark">Lchroot Image</a>'
             info = f'<a href="/show/{name}" class="{button}btn-info">Info</a>'
             edit = f'<a href="/edit/{name}" class="{button}btn-primary">Edit</a>'
             delete = f'<a href="/delete/{name}" class="{button}btn-danger">Delete</a>'
@@ -245,6 +244,13 @@ class Helper():
             pack = f'<button type="button" {pack_click} class="{button}btn-secondary">Pack</button>'
             kernel = f'<a href="/kernel/{table}/{name}" class="{button}btn-dark">Change Kernel</a>'
         elif item_type == 'icon':
+            chroot =  self.make_icon(
+                href=chroot_url,
+                onclick=None,
+                text=f'LCHROOT {name}',
+                icon='bx-terminal',
+                color='#000000;'
+            )
             info =  self.make_icon(
                 href=url_for('show', record=name),
                 onclick=None,
@@ -295,6 +301,7 @@ class Helper():
                 color='#697a8d;'
             )
         else:
+            chroot = ''
             info = ''
             edit = ''
             delete = ''
@@ -303,7 +310,7 @@ class Helper():
             pack = ''
             kernel = ''
         action = {
-            'osimage':  [info, edit, delete, clone, member, pack, kernel]
+            'osimage':  [chroot, info, edit, delete, clone, member, pack, kernel]
         }
         response = "&nbsp;".join(action[table])
         return response
