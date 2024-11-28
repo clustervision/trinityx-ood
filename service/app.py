@@ -33,14 +33,26 @@ __status__      = 'Development'
 import os
 from flask import Flask, json, request, render_template, flash
 from rest import Rest
-from constant import LICENSE
+from constant import LICENSE, TOKEN_FILE
 from log import Log
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'service'
 TABLE_CAP = 'Service'
-app = Flask(__name__, static_url_path='/')
+app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    return None
 
 
 @app.route('/', methods=['GET', 'POST'])

@@ -36,10 +36,9 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
 import urllib3
-from flask import request
 from urllib3.util import Retry
 from log import Log
-from constant import INI_FILE
+from constant import INI_FILE, TOKEN_FILE
 
 
 class Rest():
@@ -52,13 +51,6 @@ class Rest():
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
         from luna.ini from Luna 2 Daemon.
         """
-        if 'X-Forwarded-User' in request.headers:
-            if len(request.headers["X-Forwarded-User"]) > 1:
-                self.token_file = f'/trinity/home/{request.headers["X-Forwarded-User"]}/.luna-token.dat'
-            else:
-                self.token_file = '/tmp/.luna-token.dat'
-        else:
-            self.token_file = '/tmp/.luna-token.dat'
         self.logger = Log.get_logger()
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
@@ -129,9 +121,9 @@ class Rest():
                 data = call.json()
                 if 'token' in data:
                     response = data['token']
-                    with open(self.token_file, 'w', encoding='utf-8') as file_data:
+                    with open(TOKEN_FILE, 'w', encoding='utf-8') as file_data:
                         file_data.write(response)
-                    os.chmod(self.token_file, mode=0o600)
+                    os.chmod(TOKEN_FILE, mode=0o600)
                 elif 'message' in data:
                     self.errors.append(data["message"])
             else:
@@ -151,8 +143,8 @@ class Rest():
         for further use.
         """
         response = False
-        if os.path.isfile(self.token_file):
-            with open(self.token_file, 'r', encoding='utf-8') as token:
+        if os.path.isfile(TOKEN_FILE):
+            with open(TOKEN_FILE, 'r', encoding='utf-8') as token:
                 token_data = token.read()
             try:
                 jwt.decode(token_data, self.secret_key, algorithms=['HS256'])
