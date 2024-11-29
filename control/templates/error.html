@@ -1,0 +1,14 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+
+  {% if error %}
+    <div class="alert alert-danger" role="alert">{{ error | safe }}</div>
+  {% endif %}
+
+</div>
+
+<hr class="my-5" />
+{% endblock content %}
+

@@ -44,20 +44,22 @@
     
   </style>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="{{ url_for('static', filename='js/jquery-3.6.0.js') }}"></script>
 
   <script type="text/javascript">
 
-    var url = window.location.href
-    url = url.replace('#','');
-    if  (url.includes('/show/rack/') || url.includes('/manage/rack') || url.includes('/manage/inventory') || url.includes('/edit/')){
-        url = url.split('/');
-        url.pop();
-        url.pop();
-        url.pop();
-        url = url.join("/");
+    function getBaseUrl(fullUrl) {
+        const url = new URL(fullUrl);
+        const pathSegments = url.pathname.split('/');
+        const punIndex = pathSegments.findIndex(segment => segment === 'pun');
+        if (punIndex !== -1) {
+            const basePath = pathSegments.slice(0, punIndex + 3).join('/');
+            return `${url.origin}${basePath}`;
+        }
+        return url.origin;
     }
-    if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
+
+    const url = getBaseUrl(window.location.href);
 
     function sendScreenSize(){
       var width;

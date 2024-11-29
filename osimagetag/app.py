@@ -34,7 +34,7 @@ import os
 from html import unescape
 from flask import Flask, json, request, render_template, flash, url_for, redirect
 from rest import Rest
-from constant import LICENSE
+from constant import LICENSE, TOKEN_FILE
 from helper import Helper
 from presenter import Presenter
 from log import Log
@@ -43,8 +43,21 @@ from model import Model
 LOGGER = Log.init_log('INFO')
 TABLE = 'osimagetag'
 TABLE_CAP = 'OS Image Tag'
-app = Flask(__name__, static_url_path='/')
+app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    return None
+
 
 @app.route('/', methods=['GET'])
 def home():

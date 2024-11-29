@@ -37,15 +37,27 @@ from html import unescape
 from flask import Flask,request, render_template, flash, url_for, redirect
 from log import Log
 from rest import Rest
-from constant import LICENSE
+from constant import LICENSE, TOKEN_FILE
 from helper import Helper
 from presenter import Presenter
 from model import Model
 
-# logger = Log.init_log('DEBUG')
 logger = Log.init_log('INFO')
-app = Flask(__name__, static_url_path='/')
+app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table="Secrets", data="", error=TOKEN_FILE["error"])
+    return None
+
 
 @app.route('/', methods=['GET'])
 @app.route('/<string:entity>', methods=['GET'])

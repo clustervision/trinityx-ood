@@ -28,6 +28,16 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
+import os
+
+home_dir = os.path.expanduser("~")
+if os.path.exists(home_dir) and os.access(home_dir, os.R_OK | os.W_OK):
+    TOKEN_FILE = f"{home_dir}/.luna-token.dat"
+else:
+    TOKEN_FILE = {
+        "error": f"The home directory '{home_dir}' does not exist or lacks read/write permissions."
+    }
+
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
