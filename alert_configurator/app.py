@@ -32,15 +32,27 @@ __status__      = 'Development'
 
 import os
 from flask import Flask, render_template, request, jsonify
-from constant import LICENSE, TRIX_CONFIG
+from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
 from log import Log
-from helper import Helper
+from rest import Rest
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_url_path='/')
+app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    return None
 
 
 @app.route('/', methods=['GET'])
@@ -56,12 +68,8 @@ def save_config():
     """
     This method to show the monitor status and queue.
     """
-    try:
-        json_data = request.json
-        Helper().save_configuration(json_data=json_data)
-    except Exception as exp:
-        return jsonify({"response": str(exp)}), 400
-    return jsonify({"response": "success"}), 200
+    status, response = Rest().post_rules(data=request.json)
+    return jsonify({"response": response}), status
 
 
 @app.route('/get_rules', methods=['GET'])
@@ -69,7 +77,7 @@ def get_rules():
     """
     This method to show the monitor status and queue.
     """
-    check, configuration = Helper().load_yaml()
+    check, configuration = Rest().get_rules()
     if check is True:
         return jsonify(configuration), 200
     else:

@@ -553,6 +553,7 @@
             contentType: 'application/json',
             data: formattedJson,
             success: function(response) {
+                successToast.find('.toast-body').text(response.response);
                 $('body').append(successToast);
                 successToast.addClass('show');
                 setTimeout(function() {
@@ -599,6 +600,7 @@
             contentType: 'application/json',
             data: editedData,
             success: function(response) {
+                successToast.find('.toast-body').text(response.response);
                 $('body').append(successToast);
                 successToast.addClass('show');
                 setTimeout(function() {
@@ -724,6 +726,7 @@
             contentType: 'application/json',
             data: editedData,
             success: function(response) {
+                successToast.find('.toast-body').text(response.response);
                 $('body').append(successToast);
                 successToast.addClass('show');
                 useGlobalVariable();
