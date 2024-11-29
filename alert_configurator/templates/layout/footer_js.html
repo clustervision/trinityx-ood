@@ -753,3 +753,116 @@
   
 
 </script>
+<!-- <script type="module"> import @prometheus-io/codemirror-promql from https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm </script>
+<script src="https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/autocomplete@6.18.3/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/language@6.10.6/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/lint@6.8.4/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/state@6.4.1/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/view@6.35.0/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@lezer/common@1.2.3/dist/index.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.20.0/dist/index.min.js"></script> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js"></script>
+<script type="module">
+    import {PromQLExtension} from 'https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js';
+    import {basicSetup} from 'https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.20.0/dist/index.min.js';
+    import {EditorState} from 'https://cdn.jsdelivr.net/npm/@codemirror/state@6.4.1/dist/index.min.js';
+    import {EditorView} from 'https://cdn.jsdelivr.net/npm/@codemirror/view@6.35.0/dist/index.min.js';
+  
+
+    const promQL = new PromQLExtension();
+    console.log(promQL);
+
+    new EditorView({
+        state: EditorState.create({
+        extensions: [basicSetup, promQL.asExtension()],
+        }),
+        parent: document.getElementById('editor-container'),
+  });
+</script> -->
+
+
+<!-- <script src="{{ url_for('static', filename='js/prometheus-query.umd.min.js') }}"></script> -->
+<!-- https://github.com/samber/prometheus-query-js?tab=readme-ov-file type="application/javacript"-->
+<!-- <script>
+    import { PrometheusDriver, Alert, Metric, QueryResult } from '../../';
+	const prom = new Prometheus.PrometheusDriver({endpoint: 'https://vmware-controller1.cluster:9090',});
+    const query = 'up{instance="demo.do.prometheus.io:9090",job="prometheus"}';
+    // const query = 'up{}';
+    
+    // last value
+    prom.instantQuery(query)
+        .then((res: QueryResult) => {
+            console.log("****************", "[instantQuery] Query:", query, "****************")
+            console.log("\n");
+    
+            const series = res.result;
+            series.forEach((serie) => {
+                console.log("[instantQuery] Serie:", serie.metric.toString());
+                console.log("[instantQuery] Time:", serie.value.time);
+                console.log("[instantQuery] Value:", serie.value.value);
+                console.log("\n");
+            });
+        })
+        .catch(console.error);
+</script> -->
+
+<!-- <script>
+    const prom = new Prometheus.PrometheusDriver({
+        endpoint: "https://vmware-controller1.cluster:9090",
+    });
+    
+    const query = window.prompt("Please write a Prometheus query here", "up{}")
+    
+    // last `up` value
+    prom.instantQuery(query)
+        .then((res) => {
+            console.log("****************", "[instantQuery] Query:", query, "****************")
+            console.log("\n");
+    
+            const series = res.result;
+            series.forEach((serie) => {
+                console.log("[instantQuery] Serie:", serie.metric.toString());
+                console.log("[instantQuery] Time:", serie.value.time);
+                console.log("[instantQuery] Value:", serie.value.value);
+                console.log("\n");
+            });
+        })
+        .catch(console.error);
+    
+    // up during past 24h, 1 point every 6 hours
+    prom.rangeQuery(query, new Date().getTime() - 24 * 60 * 60 * 1000, new Date(), 6 * 60 * 60)
+        .then((res) => {
+            console.log("****************", "[rangeQuery] Query:", query, "****************");
+            console.log("\n");
+    
+            const series = res.result;
+            series.forEach((serie) => {
+                console.log("[rangeQuery] Serie:", serie.metric.toString());
+                console.log("[rangeQuery] Values:\n" + serie.values.join('\n'));
+                console.log("\n");
+            });
+        })
+        .catch(console.error);
+    
+    // list series matching query
+    prom.series(query, new Date().getTime() - 24 * 60 * 60 * 1000, new Date())
+        .then((res) => {
+            console.log("****************", "[series] matching:", query, "****************");
+            console.log('[series] Series:');
+            console.log(res.join('\n'));
+            console.log("\n");
+        })
+        .catch(console.error);
+    
+    // list all active alerts
+    prom.alerts()
+        .then((res) => {
+            console.log("****************", "[alerts]", "****************");
+            console.log(res)
+            console.log("\n");
+        })
+        .catch(console.error);
+</script> -->
