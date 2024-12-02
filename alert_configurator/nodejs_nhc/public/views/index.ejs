@@ -1,0 +1,1158 @@
+<!--
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
+-->
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-assets-path="../assets/">
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+<title><%= table %> :: Luna</title>
+<meta name="description" content="" />
+<link rel="icon" type="image/x-icon" href="/static/img/favicon.ico" />
+<link rel="stylesheet" href="<%= basePath %>/static/fonts/boxicons.css" />
+<link rel="stylesheet" href="<%= basePath %>/static/css/core.css" class="template-customizer-core-css" />
+<link rel="stylesheet" href="<%= basePath %>/static/css/theme-default.css" class="template-customizer-theme-css" />
+
+<!-- CodeMirror CSS and JavaScript files -->
+<link href="<%= basePath %>/static/css/codemirror.min.css" rel="stylesheet" />
+<link href="<%= basePath %>/static/css/material-darker.min.css" rel="stylesheet" />
+
+<style>
+
+  button.tooltip-modal-link {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+  /* Overlay to block page interaction */
+  .spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent gray */
+    display: none; /* Initially hidden */
+    justify-content: center;
+    align-items: center; /* Center spinner both vertically and horizontally */
+    z-index: 9999999; /* Ensure overlay is above the content */
+  }
+  
+  /* Center spinner in the middle of the page */
+  #spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  body.spinner-active {
+    overflow: hidden; /* Disable scrolling */
+    padding-right: 17px; /* Same as when a Bootstrap modal is opened */
+  }
+
+  img.img-logo {
+      width: 40px;
+      height: 40px;
+      margin-right: 20px;
+      padding: 0rem;
+  }
+
+  .align-middle {
+      color: #007bff !important;
+      text-decoration: none;
+      background-color: transparent;
+  }
+  
+  .navbar {
+      background-color: #e7e7e7;
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      padding: .5rem 1rem;
+  }
+  .sub-navbar {
+    background-color: #563d7c;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: .5rem 1rem;
+    color: white;
+}
+.breadcrumb-item{
+  color: white;
+}
+  
+  .breadcrumb {
+      margin-bottom: 0rem;
+  }
+
+  .shadow-sm {
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  }
+  
+</style>
+
+<style>
+    .active {
+        box-shadow: 0px 0px 50px #28c45c;   
+    }
+
+    .alert-error {
+      background-color: #ffe0db;
+      border-color: #ffc5bb;
+      color: #ff3e1d;
+    }
+    
+    a:not([href]) {
+      color: white; 
+      text-decoration: none;
+    }
+  
+    .button_tooltip {
+      background: none!important;
+      border: none;
+      padding: 0!important;
+      /*optional*/
+      font-family: arial, sans-serif;
+      /*input has OS specific font-family*/
+      color: #069;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    
+    #run-time-body{
+      background-color: black;
+      color:antiquewhite
+    }
+      
+    .spinner {
+      margin: auto;
+      width: 50%;
+      padding: 10px;
+    }
+    
+    .datatable_length {
+      display: inline-block;
+    }
+    
+    .datatable_search {
+      margin-left: 55%;
+    }
+    
+    .datatable_filter {
+      margin-left: 55%;
+    }
+    
+    .datatable_paginate {
+      float: right;
+    }
+          
+    .datatable_paginate::before {
+      content: "\a";
+      white-space: pre;
+    }
+  
+    #datatable_info::before {
+      content: "\a";
+      white-space: pre;
+    }
+  </style>
+  </head>
+
+  <body>
+    <header>
+      
+<nav class="navbar shadow-sm navbar-light">
+    <ol class="breadcrumb bg-transparent d-flex align-items-center">
+      <a href="/" aria-current="page" role="menuitem">
+          <img src="<%= basePath %>/static/img/logo.png" class="img-logo">
+      </a>
+      <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
+      <li class="breadcrumb-item"><a class="align-middle" href="<%= basePath %>"><%= table_cap %></a></li>
+    </ol>
+  </nav>
+  
+  <div class="row sub-navbar">
+    <div class="col col-2">Manage Node Health Checks</div>
+    <div class="col col-1"><button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_">Add Alert Rule</button></div>
+    <div class="col col-1"><button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button></div>
+    <div class="col col-8"></div>
+  </div>
+  
+  <!-- Edit Configuration Modal -->
+  <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel4">Edit Configuration</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col mb-12">
+              <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important;"><%= TRIX_CONFIG %></span></label>
+              <button type="button" id="jsonModeBtn" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
+              <button type="button" id="yamlModeBtn" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
+              <div id="jsonEditor" style="height: 600px; border: 1px solid #ddd;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="save_configuration" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+    </header>
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+          <div class="content-wrapper">
+            <div id="spinner-overlay" class="spinner-overlay">
+                <div id="spinner" class="d-flex justify-content-center">
+                  <div class="spinner-border spinner-border-lg text-success" style="width: 10rem; height: 10rem;" role="status">
+                    <span class="visually-hidden">Saving Configuration...</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+                <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light"> Monitoring /</span> <%= table_cap %></h4>
+                <!-- Bordered Table -->
+                <div class="card">
+                  <h5 class="card-header">Rules</h5>
+                  <div class="card-body">
+                    <div class="table-responsive text-nowrap">
+                      <div id="modal-container"></div>
+                      <!-- <div id="editor-container"></div> -->
+              
+                      <table class="table table-bordered table-striped table-hover table-responsive" id="alert-table">
+                        <thead>
+                          <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Group</th>
+                            <th scope="col">Rule</th>
+                            <th scope="col">Enable</th>
+                            <th scope="col">NHC</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <!--/ Bordered Table -->
+              </div>
+              <!-- / Content --><hr class="my-5" />
+              <footer class="content-footer footer bg-footer-theme">
+                <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                  <div class="mb-2 mb-md-0">
+                    © 2023, made with ❤️ by
+                    <a href="https://clustervision.com/" target="_blank" class="footer-link fw-bolder">ClusterVision</a>
+                  </div>
+                  <div>
+                    <a href="/license_info" class="footer-link me-4" target="_blank">License</a>
+                    <a href="https://github.com/clustervision/trinityX" target="_blank" class="footer-link me-4">Documentation</a>
+                    <a href="https://support.clustervision.com/" target="_blank" class="footer-link me-4">Support</a>
+                  </div>
+                </div>
+              </footer>
+            <div class="content-backdrop fade"></div>
+          </div>
+      </div>
+      <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+    <script src="<%= basePath %>/static/js/jquery.js"></script>
+<script src="<%= basePath %>/static/js/bootstrap.js"></script>
+<script src="<%= basePath %>/static/js/main.js"></script>
+<script src="<%= basePath %>/static/js/codemirror.min.js"></script>
+<script src="<%= basePath %>/static/js/javascript.min.js"></script>
+<script src="<%= basePath %>/static/js/yaml.min.js"></script>
+<script src="<%= basePath %>/static/js/js-yaml.min.js"></script>
+
+
+<script>
+    let configuration;
+    let activeButton = 1;
+    let previousButton = null;
+
+    const classMap = {
+        critical: 'btn-dark',
+        danger: 'btn-danger',
+        warning: 'btn-warning',
+        info: 'btn-info'
+    };
+
+    let url = window.location.href
+        url = url.replace('#','');
+
+    let successToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-success top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
+        <div class="toast-header"> \
+          <i class="bx bx-bell me-2"></i> \
+          <div class="me-auto fw-medium">Configuration</div> \
+          <small>0 seconds ago</small> \
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
+        </div> \
+        <div class="toast-body">Configuration Saved successfully.</div> \
+      </div>');
+
+    let failedToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-danger top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
+        <div class="toast-header"> \
+          <i class="bx bx-bell me-2"></i> \
+          <div class="me-auto fw-medium">Configuration</div> \
+          <small>0 seconds ago</small> \
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
+        </div> \
+        <div class="toast-body"></div> \
+      </div>');
+
+    let warningToast = $('<div class="bs-toast toast toast-placement-ex m-2 fade bg-warning top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000"> \
+        <div class="toast-header"> \
+          <i class="bx bx-bell me-2"></i> \
+          <div class="me-auto fw-medium">Configuration</div> \
+          <small>0 seconds ago</small> \
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button> \
+        </div> \
+        <div class="toast-body"></div> \
+      </div>');
+
+
+    var editor;
+    var editorInstances = {};
+
+    // Function to initialize or update the editor with given content and mode
+    function setupEditor(count, content, mode) {
+        if (!editorInstances[count]) {
+            editorInstances[count] = CodeMirror(document.getElementById('ruleEditor_' + count), {
+                theme: "material-darker",
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                tabSize: 2,
+                lineWrapping: true,
+                viewportMargin: Infinity
+            });
+            editorInstances[count].setSize(null, 300);
+        }
+        editorInstances[count].setValue(content);
+        editorInstances[count].setOption("mode", mode);
+        editorInstances[count].refresh();
+    }
+
+    function openEditor(count) {
+        const editorContainer = document.getElementById('ruleEditor_' + count);
+
+    // Ensure container visibility
+    if (editorContainer) {
+        editorContainer.style.display = 'block';
+        editorContainer.style.height = '300px';
+        editorContainer.style.width = '100%';
+    } else {
+        console.error("Editor container not found for count:", count);
+        return null;
+    }
+
+        if (editorInstances[count]) {
+            const editor = editorInstances[count];
+            editor.refresh();
+            return editor;
+        } else {
+            console.error("Editor instance does not exist for count:", count);
+            return setupEditor(count, "", { name: "javascript", json: true });
+        }
+    }
+
+
+    // Function to display warning messages
+    function displayToast(toast, message) {
+        toast.find('.toast-body').text(message);
+        $('body').append(toast);
+        toast.addClass('show');
+        setTimeout(function() {
+            toast.removeClass('show').addClass('fade');
+            toast.remove();
+        }, 10000);
+    }
+
+
+    function getLatestValues(count) {
+        var nhc;
+        if ($('#rule_nhc_' + count).is(':checked') === true){ nhc = "yes"; } else { nhc = "no"; }
+        let values = {
+            alert:          $('#rule_name_' + count).val(),
+            annotations:    { description: $('#rule_description_' + count).val() },
+            for:            $('#rule_for_' + count).val(),
+            expr:           $('#exprInput_' + count).val(),
+            labels: {
+                _trix_status:   $('#rule_status_' + count).is(':checked'),
+                nhc:            nhc,
+                severity:       $('#rule_severity_' + count).val()
+            }
+        };
+        return values;
+    }
+
+
+    // Attach events to each input to call getLatestValues on change
+    function setupEventListeners(count) {
+        $('#rule_name_' + count).on('input', function() { getLatestValues(count); });
+        $('#rule_description_' + count).on('input', function() { getLatestValues(count); });
+        $('#rule_for_' + count).on('input', function() { getLatestValues(count); });
+        $('#exprInput_' + count).on('input', function() { getLatestValues(count); });
+        $('#rule_status_' + count).on('change', function() { getLatestValues(count); });
+        $('#rule_nhc_' + count).on('change', function() { getLatestValues(count); });
+    }
+
+
+    // Function to Setup HTML Form Values
+    function setupHTML(count, jsonData) {
+        $('#rule_name_'+count).val(jsonData.alert);
+        $('#rule_description_'+count).val(jsonData.annotations.description);
+        $('#rule_for_'+count).val(jsonData.for);
+        $('#exprInput_'+count).val(jsonData.expr);
+        $('#rule_status_'+count).prop('checked', jsonData.labels._trix_status === true);
+        $('#rule_nhc_'+count).prop('checked', jsonData.labels.nhc === 'yes');
+        $('#rule_status_label_'+count).html(jsonData.labels._trix_status === true ? 'ON' : 'OFF');
+        $('#rule_nhc_label_'+count).html(jsonData.labels.nhc === 'yes'? 'ON' : 'OFF');
+    }
+
+
+    // When switching to HTML mode, format the content as JSON or YAML
+    function rule_modal_html(count, buttonNumber){
+        $('#model-form_'+count).show();
+        $('#ruleEditor_'+count).hide();
+        $('#button_html_'+count).prop('disabled', true);
+        $('#button_json_'+count).prop('disabled', false);
+        $('#button_yaml_'+count).prop('disabled', false);
+        let jsonData = jsyaml.load(editorInstances[count].getValue());
+        let formattedJson = JSON.stringify(jsonData, null, 2);
+        let currentContent = JSON.parse(formattedJson);
+        setupHTML(count, currentContent);
+        previousButton = activeButton;
+        activeButton = buttonNumber;
+    }
+
+    // When switching to JSON mode, format the content as JSON
+    function rule_modal_json(count, buttonNumber){
+        $('#model-form_' + count).hide();
+        $('#ruleEditor_' + count).show();
+        $('#button_html_'+count).prop('disabled', false);
+        $('#button_json_'+count).prop('disabled', true);
+        $('#button_yaml_'+count).prop('disabled', false);
+        previousButton = parseInt(activeButton);
+        if (parseInt(previousButton) === 1){
+            var content = getLatestValues(count);
+            setupEditor(count, JSON.stringify(content, null, 2), { name: "javascript", json: true });
+        } else {
+            let jsonData = jsyaml.load(editorInstances[count].getValue());
+            setupEditor(count, JSON.stringify(jsonData, null, 2), { name: "javascript", json: true });
+        }
+        activeButton = buttonNumber;
+    }
+
+    // When switching to YAML mode, convert the content to YAML
+    function rule_modal_yaml(count, buttonNumber){
+        $('#model-form_' + count).hide();
+        $('#ruleEditor_' + count).show();
+        $('#button_html_'+count).prop('disabled', false);
+        $('#button_json_'+count).prop('disabled', false);
+        $('#button_yaml_'+count).prop('disabled', true);
+        previousButton = parseInt(activeButton);
+        if (parseInt(previousButton) === 1){
+            var content = getLatestValues(count);
+            let yamlContent = jsyaml.dump(content);
+            setupEditor(count, yamlContent, "yaml");
+        } else {
+            try {
+                let currentContent = editorInstances[count].getValue();
+                let jsonData = JSON.parse(currentContent);
+                let yamlContent = jsyaml.dump(jsonData);
+                setupEditor(count, yamlContent, "yaml");
+
+            } catch (e) {
+                let currentContent = editorInstances[count].getValue();
+                setupEditor(count, currentContent, "yaml");
+            }
+        }
+        activeButton = buttonNumber;
+    }
+
+
+    async function get_rules(){
+        const data = await $.ajax({
+            url: url+'/get_rules',
+            type: 'GET',
+            success: function(data) {
+                console.log(data);
+                   var tableBody = $('#alert-table tbody');
+                    tableBody.empty();
+                    $('#modal-container').empty();
+                    let count = 1;
+                    data.groups.forEach(function(group) {
+                        group.rules.forEach(function(rule) {
+                            var row = '<tr>';
+                                row += '<th scope="row">'+count+'</th>';
+                                row += '<td>'+group.name+'</td>';
+                                row += '<td><a href="" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'">'+rule.alert+'</a></td>';
+                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_status" '+(rule.labels._trix_status !== false ? 'checked' : '')+'><label class="form-check-label" for="rule_status" id="rule_status_text_'+count+'">' + (rule.labels._trix_status !== false ? 'ON' : 'OFF') + '</label></div></td>';
+                                row += '<td><div class="form-check form-switch mb-2"><input class="form-check-input" onclick="update_configuration(`nhc`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" type="checkbox" id="rule_nhc" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+'><label class="form-check-label" for="rule_nhc" id="rule_nhc_text_'+count+'">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></td>';
+                                row += '<td><select id="severity_'+count+'" onchange="update_configuration(`severity`, this, '+count+', `'+btoa(JSON.stringify(rule))+'`);" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary" value="">Set Priority</option> \
+                                        <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Danger</option> \
+                                        <option class="btn-warning" value="warning" '+(rule.labels.severity === "warning" ? 'selected' : '')+'>Warning</option><option class="btn-info" value="info" '+(rule.labels.severity === "info" ? 'selected' : '')+'>Informational</option> \
+                                        </select></td>';
+                                row += '<td> \
+                                    <button class="tooltip-modal-link" data-bs-toggle="modal" data-bs-target="#rule_modal_'+count+'" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>Edit This Rule</span>"><i class="bx bx-md bx-edit" style="color: #696cff;"></i></button> \
+                                    <button class="tooltip-modal-link" onclick="update_configuration(`delete`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=\'bx bxs-arrow-from-left bx-xs\'></i> <span>Delete This Rule</span>"><i class="bx bx-md bx-trash" style="color: red;"></i></button> \
+                                  </td>';
+                                tableBody.append(row);
+
+                                var modal = '<div class="modal fade" id="rule_modal_'+count+'" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"> \
+                                    <div class="modal-header"><h5 class="modal-title" id="exampleModalLabel4">RULE: '+rule.alert+'</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div> \
+                                    <div class="modal-body"> \
+                                        <div class="row"><div class="col mb-12"> \
+                                            <button type="button" id="button_html_'+count+'" onclick="rule_modal_html('+count+', `1`);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button> \
+                                            <button type="button" id="button_json_'+count+'" onclick="rule_modal_json('+count+', `2`);" class="btn btn-primary btn-sm">Switch to JSON Mode</button> \
+                                            <button type="button" id="button_yaml_'+count+'" onclick="rule_modal_yaml('+count+', `3`);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> \
+                                            <div id="ruleEditor_'+count+'" style="display: none; height: 300px; border: 1px solid #ddd;"></div></div></div> \
+                                        <div id="model-form_'+count+'"> \
+                                            <div class="row g-6"> \
+                                                <div class="col mb-0"><label for="rule_name_'+count+'" class="form-label">Rule Name</label><input type="text" id="rule_name_'+count+'" class="form-control" placeholder="Enter Name" value="'+rule.alert+'"></div> \
+                                            </div> \
+                                            <div class="row"> \
+                                                <div class="col mb-6"><label for="rule_description_'+count+'" class="form-label">Rule Description</label><input type="text" id="rule_description_'+count+'" class="form-control" placeholder="Enter Name" value="'+rule.annotations.description+'"></div> \
+                                            </div> \
+                                            <div class="row"> \
+                                                <div class="col mb-0"><label for="rule_for_'+count+'" class="form-label">Rule For</label><input type="text" id="rule_for_'+count+'" class="form-control" placeholder="Enter For" value="'+rule.for+'"></div> \
+                                                <div class="col mb-6"><label for="exprInput_'+count+'" class="form-label">Rule Expr</label><input type="text" id="exprInput_'+count+'" class="form-control" placeholder="Enter Name" ></div> \
+                                            </div> \
+                                            <div class="row"> \
+                                                <div class="col mb-0"><label for="rule_status_'+count+'" class="form-label">Enable</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`status`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_status_'+count+'" class="form-check-input" '+(rule.labels._trix_status !== false ? 'checked' : '')+'><label id="rule_status_label_'+count+'" for="rule_status_'+count+'" class="form-check-label">' + (rule.labels._trix_status !== false ? 'ON' : 'OFF') + '</label></div></div> \
+                                                <div class="col mb-6"><label for="rule_nhc_'+count+'" class="form-label">Rule NHC</label><div class="form-check form-switch "><input type="checkbox" onclick="update_configuration(`nhc`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" id="rule_nhc_'+count+'" class="form-check-input" '+(rule.labels.nhc === 'yes' ? 'checked' : '')+' ><label id="rule_nhc_label_'+count+'" for="rule_nhc_'+count+'" class="form-check-label">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label></div></div> \
+                                                <div class="col mb-6"><label for="rule_severity_'+count+'" class="form-label">Set Priority</label> \
+                                                    <select id="rule_severity_'+count+'" onchange="update_configuration(`severity`, this, '+count+', `'+btoa(JSON.stringify(rule))+'`);" class="form-select form-select-sm '+(rule.labels.severity === 'critical' ? 'btn-dark' : 'btn-'+rule.labels.severity)+'"><option class="btn-primary">Set Priority</option> \
+                                                    <option class="btn-dark" value="critical" '+(rule.labels.severity === "critical" ? 'selected' : '')+'>Critical</option><option class="btn-danger" value="danger" '+(rule.labels.severity === "danger" ? 'selected' : '')+'>Danger</option> \
+                                                    <option class="btn-warning" value="warning" '+(rule.labels.severity === "warning" ? 'selected' : '')+'>Warning</option><option class="btn-info" value="info" '+(rule.labels.severity === "info" ? 'selected' : '')+'>Informational</option> \
+                                                    </select></div>  \
+                                            </div> \
+                                        </div> \
+                                    </div> \
+                                    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button><button type="button" onclick="update_configuration(`save`, this,'+count+', `'+btoa(JSON.stringify(rule))+'`);" class="btn btn-primary">Save Rule</button></div></div></div></div>';
+                                $('#modal-container').append(modal);
+                                document.getElementById('exprInput_' + count).value = rule.expr;
+                                count++; 
+                        });
+                    });
+
+                 
+                    const add_count = count+1;
+                    var add_modal = '<div class="modal fade" id="rule_modal_" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-xl" role="document"><div class="modal-content"> \
+                        <div class="modal-header"><h5 class="modal-title" id="exampleModalLabel4">Add New Alert Rule</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div> \
+                        <div class="modal-body"> \
+                            <div class="row"><div class="col mb-12"> \
+                                <button type="button" id="button_html_'+add_count+'" onclick="rule_modal_html('+add_count+', `1`);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button> \
+                                <button type="button" id="button_json_'+add_count+'" onclick="rule_modal_json('+add_count+', `2`);" class="btn btn-primary btn-sm">Switch to JSON Mode</button> \
+                                <button type="button" id="button_yaml_'+add_count+'" onclick="rule_modal_yaml('+add_count+', `3`);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> \
+                                <div id="ruleEditor_'+add_count+'" style="display: none; height: 300px; border: 1px solid #ddd;"></div></div></div> \
+                            <div id="model-form_'+add_count+'"> \
+                                <div class="row g-6"> \
+                                    <div class="col mb-0"><label for="rule_name_'+add_count+'" class="form-label">Rule Name</label><input type="text" id="rule_name_'+add_count+'" class="form-control" placeholder="Enter Name" /></div> \
+                                </div> \
+                                <div class="row"> \
+                                    <div class="col mb-6"><label for="rule_description_'+add_count+'" class="form-label">Rule Description</label><input type="text" id="rule_description_'+add_count+'" class="form-control" placeholder="Enter Name" /></div> \
+                                </div> \
+                                <div class="row"> \
+                                    <div class="col mb-0"><label for="rule_for_'+add_count+'" class="form-label">Rule For</label><input type="text" id="rule_for_'+add_count+'" class="form-control" placeholder="Enter For" /></div> \
+                                    <div class="col mb-6"><label for="exprInput_'+add_count+'" class="form-label">Rule Expr</label><input type="text" id="exprInput_'+add_count+'" class="form-control" placeholder="Enter Name" ></div> \
+                                </div> \
+                                <div class="row"> \
+                                    <div class="col mb-0"><label for="rule_status_'+add_count+'" class="form-label">Enable</label><div class="form-check form-switch "><input type="checkbox" onchange="document.getElementById(`rule_status_label_'+add_count+'`).textContent = this.checked ? \'ON\' : \'OFF\';"  id="rule_status_'+add_count+'" class="form-check-input"><label id="rule_status_label_'+add_count+'" for="rule_status_'+add_count+'" class="form-check-label">OFF</label></div></div> \
+                                    <div class="col mb-6"><label for="rule_nhc_'+add_count+'" class="form-label">Rule NHC</label><div class="form-check form-switch "><input type="checkbox" onchange="document.getElementById(`rule_nhc_label_'+add_count+'`).textContent = this.checked ? \'ON\' : \'OFF\';" id="rule_nhc_'+add_count+'" class="form-check-input"><label id="rule_nhc_label_'+add_count+'" for="rule_nhc_'+add_count+'" class="form-check-label">OFF</label></div></div> \
+                                    <div class="col mb-6"><label for="rule_severity_'+add_count+'" class="form-label">Set Priority</label> \
+                                        <select id="rule_severity_'+add_count+'" onchange="this.classList.remove(`btn-primary`, `btn-dark`, `btn-danger`, `btn-warning`, `btn-info`); const selectedClass = classMap[this.value]; if (selectedClass) { this.classList.add(selectedClass); }" class="form-select form-select-sm"><option class="btn-primary">Set Priority</option> \
+                                        <option class="btn-dark" value="critical">Critical</option><option class="btn-danger" value="danger">Danger</option> \
+                                        <option class="btn-warning" value="warning">Warning</option><option class="btn-info" value="info">Informational</option> \
+                                        </select></div>  \
+                                </div> \
+                            </div> \
+                        </div> \
+                        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button><button type="button" onclick="add_rule(`save`, this,'+add_count+', `save`);" class="btn btn-primary">Save Rule</button></div></div></div></div>';
+                    $('#modal-container').append(add_modal);
+
+
+
+                    $('.tooltip-modal-link').tooltip();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error fetching data:", error);
+                    console.error("Error saving data:", xhr);
+                    console.error("Error saving data:", xhr.responseJSON.response);
+                    console.error("Error saving data:", status);
+                    console.error("Error saving data:", error);
+
+                    failedToast.find('.toast-body').text("Error: " + xhr.responseJSON);
+                    $('body').append(failedToast);
+                    failedToast.addClass('show');
+
+                }
+            });
+            configuration = data;
+            return configuration;
+        }
+
+       // configuration = get_rules();  //############ Hits twice the API so commented.
+
+        async function useGlobalVariable() {
+            await get_rules();
+        }
+        
+        useGlobalVariable();
+
+    
+    //console.log(configuration);
+    $(document).on('hidden.bs.modal', '.modal', function () {
+        activeButton = parseInt(1);
+        previousButton = null;
+        useGlobalVariable();
+        const modalId = $(this).attr('id');
+        const count = modalId.split('_')[2];
+        if (editorInstances[count]) {
+            delete editorInstances[count];
+        }
+    });
+      
+        function add_rule(key, element, count, form_rule){
+            var update;
+            if (form_rule === "save"){
+                configuration.groups.forEach(function(group) {
+                    var content;
+                    if (parseInt(activeButton) === 1){
+                        content = getLatestValues(count);
+                    } 
+                    if (parseInt(activeButton) === 2){
+                        content = jsyaml.load(editorInstances[count].getValue());
+                    }
+                    if (parseInt(activeButton) === 3){
+                        content = jsyaml.load(editorInstances[count].getValue());
+                    }
+                    if (content) {
+                        if (!Array.isArray(group.rules)) {
+                            group.rules = []; 
+                        }
+                        const valid_alert_name = /[a-zA-Z0-9]/.test(content.alert);
+                        if (valid_alert_name){
+                            if (document.getElementById("rule_nhc_"+count).checked === true){
+                                content.labels.nhc = "yes";
+                            } else {
+                                content.labels.nhc = "no";
+                            }
+                            if (document.getElementById("rule_status_"+count).checked !== false){
+                                content.labels._trix_status = true;
+                            } else {
+                                content.labels._trix_status = false;
+                            }
+                            if (!document.getElementById("rule_severity_"+count).value || document.getElementById("rule_severity_"+count).value.trim() === "") {
+                                content.labels.severity = "";
+                            } else {
+                                content.labels.severity = document.getElementById("rule_severity_"+count).value;
+                            }
+                            group.rules.push(content);
+                            update = true;
+                        } else {
+                            displayToast(failedToast, "A valid alert name is required, Expecting at least one alphabet or number");
+                        }
+                    }
+                });
+            }
+             
+            if (update === true){
+                const spinnerOverlay = document.getElementById("spinner-overlay");
+                const body = document.body;
+                body.classList.add("spinner-active");
+                spinnerOverlay.style.display = "flex";
+                save_configuration();
+                setTimeout(function() {
+                    configuration = get_rules();
+                    spinnerOverlay.style.display = "none"; 
+                    body.classList.remove("spinner-active");
+                    const modalElement = document.querySelector(".modal.show");
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) { modalInstance.hide(); }
+                    }
+                }, 2000);
+            }
+        }
+
+        function update_configuration(key, element, count, form_rule){
+            //$('#rule_status_'+count).prop('checked', jsonData.labels._trix_status === true);
+            var update = false;
+           // var form_rule = JSON.parse(atob(form_rule));
+            let count_configuration = 1;
+
+            configuration.groups.forEach(function(group) {
+                group.rules.forEach(function(rule, index) {
+                    if (count_configuration === count){
+                        if (key === 'status'){
+                            if (element.checked === rule.labels._trix_status){
+                                console.log("No Need to update, both values are equal "+key+" >> "+element.checked+" >> "+rule.labels._trix_status+" ");
+                            } else {
+                                if (element.checked === true){
+                                    rule.labels._trix_status = true;
+                                    document.getElementById("rule_status_text_"+count).innerHTML = "ON";
+                                    document.getElementById("rule_status_label_"+count).innerHTML = "ON";
+                                } else {
+                                    rule.labels._trix_status = false;
+                                    document.getElementById("rule_status_text_"+count).innerHTML = "OFF";
+                                    document.getElementById("rule_status_label_"+count).innerHTML = "OFF";
+                                }
+                                if ($(element).attr('id') === "rule_status"){ update = true; }
+                            }
+                        }
+                        if (key === 'nhc'){
+                            if (((element.checked === true) && (rule.labels.nhc === "yes")) || ((element.checked === false) && (rule.labels.nhc === "no"))){
+                                console.log("No Need to update, both values are equal "+key+" >>  "+element.checked+" >> "+rule.labels.nhc+" ");
+                            } else {
+                                if (element.checked === true){
+                                    rule.labels.nhc = "yes";
+                                    document.getElementById("rule_nhc_text_"+count).innerHTML = "ON";
+                                    document.getElementById("rule_nhc_label_"+count).innerHTML = "ON";
+                                } else {
+                                    rule.labels.nhc = "no";
+                                    document.getElementById("rule_nhc_text_"+count).innerHTML = "OFF";
+                                    document.getElementById("rule_nhc_label_"+count).innerHTML = "OFF";
+                                }
+                                if ($(element).attr('id') === "rule_nhc"){ update = true; }
+                            }
+                        }
+                        if (key === 'severity'){
+                            document.getElementById("severity_" + count).className = document.getElementById("severity_" + count).className.replace(/\bbtn-\S+/g, '').trim();
+                            document.getElementById("rule_severity_" + count).className = document.getElementById("severity_" + count).className.replace(/\bbtn-\S+/g, '').trim();
+
+                            if (!element.value || element.value.trim() === "") {
+                                document.getElementById("severity_"+count).classList.add("btn-primary");
+                                document.getElementById("rule_severity_"+count).classList.add("btn-primary");
+                                console.log("No Need to update, "+key+" >>  can't be empty, You have to select a level.");
+                            } else {
+                                rule.labels.severity = element.value;
+                                document.getElementById("severity_"+count).classList.add("btn-"+element.value);
+                                document.getElementById("rule_severity_"+count).classList.add("btn-"+element.value);
+                                if ($(element).attr('id') === "severity_"+count){ update = true; }
+                            }
+                        }
+
+                        if (key === 'delete'){
+                            if (!confirm('Are you sure you want to delete this Rule?')) {
+                                update = false;
+                            } else {
+                                update = true;
+                                group.rules.splice(count-1, 1); 
+                                $(element).parent().parent().remove();
+                            }
+                        }
+                        if ((key === 'save') || (form_rule === "save")){
+                            
+                            var content;
+                            try {
+                                if (parseInt(activeButton) === 1){
+                                    content = getLatestValues(count);
+                                } 
+                                if (parseInt(activeButton) === 2){
+                                    content = jsyaml.load(editorInstances[count].getValue());
+                                }
+                                if (parseInt(activeButton) === 3){
+                                    content = jsyaml.load(editorInstances[count].getValue());
+                                }
+                                const valid_alert_name = /[a-zA-Z0-9]/.test(content.alert);
+                                if (valid_alert_name){
+                                    group.rules[index] = content;
+                                    update = true;
+                                } else {
+                                    displayToast(failedToast, "A valid alert name is required, Expecting at least one alphabet or number");
+                                }
+                            } catch (e){
+                                console.warn("ERROR :: ", e);
+                                displayToast(failedToast, "ERROR :: "+e);
+                            }
+                           
+                        }
+                    }
+                    count_configuration++;
+                });
+
+            });
+      
+            if (update === true){
+                const spinnerOverlay = document.getElementById("spinner-overlay");
+                const body = document.body;
+                body.classList.add("spinner-active");
+                spinnerOverlay.style.display = "flex";
+
+
+                save_configuration();
+                setTimeout(function() {
+                    
+                    configuration = get_rules();
+
+                    spinnerOverlay.style.display = "none"; 
+                    body.classList.remove("spinner-active");
+
+                    const modalElement = document.querySelector(".modal.show");
+                    if (modalElement) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                        if (modalInstance) { modalInstance.hide(); }
+                    }
+
+                }, 2000);
+
+            }
+            
+        }
+    
+
+
+    function save_configuration(){        
+        const formattedJson = JSON.stringify(configuration, null, 2);
+        $.ajax({
+            url: url+'/save_config',
+            type: 'POST',
+            contentType: 'application/json',
+            data: formattedJson,
+            success: function(response) {
+                successToast.find('.toast-body').text(response.response);
+                $('body').append(successToast);
+                successToast.addClass('show');
+                setTimeout(function() {
+                    successToast.removeClass('show');
+                    successToast.addClass('fade');
+                    successToast.remove();
+                }, 10000);
+                $('#edit_config').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                console.error("Error saving data:", xhr);
+                console.error("Error saving data:", xhr.responseJSON.response);
+                console.error("Error saving data:", status);
+                console.error("Error saving data:", error);
+
+                failedToast.find('.toast-body').text("Error: " + xhr.responseJSON.response);
+                $('body').append(failedToast);
+                failedToast.addClass('show');
+                setTimeout(function() {
+                    failedToast.removeClass('show');
+                    failedToast.addClass('fade');
+                    failedToast.remove();
+                }, 10000);
+            }
+        });
+    
+    }
+        
+
+    $('#save_model_configuration').click(function() {
+        var formattedJson;
+        try{
+            var currentContent = editor.getValue();
+            var jsonData = jsyaml.load(currentContent); 
+            var formattedJson = JSON.stringify(jsonData, null, 2);
+        } catch (e){
+            formattedJson = editor.getValue();
+        }
+
+        const editedData = formattedJson;
+        $.ajax({
+            url: url+'/save_config',
+            type: 'POST',
+            contentType: 'application/json',
+            data: editedData,
+            success: function(response) {
+                successToast.find('.toast-body').text(response.response);
+                $('body').append(successToast);
+                successToast.addClass('show');
+                setTimeout(function() {
+                    successToast.removeClass('show');
+                    successToast.addClass('fade');
+                    successToast.remove();
+                }, 10000);
+                $('#edit_config').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                console.error("Error saving data:", xhr);
+                console.error("Error saving data:", xhr.responseJSON.response);
+                console.error("Error saving data:", status);
+                console.error("Error saving data:", error);
+
+                failedToast.find('.toast-body').text("Error: " + xhr.responseJSON.response);
+                $('body').append(failedToast);
+                failedToast.addClass('show');
+                setTimeout(function() {
+                    failedToast.removeClass('show');
+                    failedToast.addClass('fade');
+                    failedToast.remove();
+                }, 10000);
+            }
+        });
+    });
+
+
+
+    $('#edit_configuration').click(function() {
+        var count = 0;
+        if (!editorInstances[count]) {
+            editorInstances[count] = CodeMirror(document.getElementById('jsonEditor'), {
+                theme: "material-darker",
+                lineNumbers: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                tabSize: 2,
+                lineWrapping: true,
+                viewportMargin: Infinity
+            });
+            editorInstances[count].setSize(null, 600);
+        }
+        let jsonData = jsyaml.load(configuration);
+        editorInstances[count].setValue(JSON.stringify(configuration, null, 2));
+        editorInstances[count].setOption("mode", { name: "javascript", json: true });
+        editorInstances[count].refresh();
+    });
+    
+
+    // When switching to JSON mode, format the content as JSON
+    $('#jsonModeBtn').click(function() {
+        var count = 0;
+        try {
+            let currentContent = editorInstances[count].getValue();
+            let jsonData = jsyaml.load(currentContent);
+            let formattedJson = JSON.stringify(jsonData, null, 2);
+            editorInstances[count].setValue(formattedJson);
+        } catch (e) {
+            warningToast.find('.toast-body').text("Invalid YAML content:" + e);
+            $('body').append(warningToast);
+            warningToast.addClass('show');
+            setTimeout(function() {
+                warningToast.removeClass('show');
+                warningToast.addClass('fade');
+                warningToast.remove();
+            }, 10000);
+        }
+        editorInstances[count].setOption("mode", { name: "javascript", json: true });
+        editorInstances[count].refresh();
+    });
+
+    // When switching to YAML mode, convert the content to YAML
+    $('#yamlModeBtn').click(function() {
+        var count = 0;
+        try {
+            let currentContent = editorInstances[count].getValue();
+            let jsonData = JSON.parse(currentContent);
+            let yamlContent = jsyaml.dump(jsonData);
+            editorInstances[count].setValue(yamlContent);
+        } catch (e) {
+            let currentContent = editorInstances[count].getValue();
+            if (jsyaml.load(currentContent)){
+                return;
+            } else{
+                warningToast.find('.toast-body').text("Invalid JSON content:" + e);
+                $('body').append(warningToast);
+                warningToast.addClass('show');
+                setTimeout(function() {
+                    warningToast.removeClass('show');
+                    warningToast.addClass('fade');
+                    warningToast.remove();
+                }, 10000);
+            }
+        }
+        editorInstances[count].setOption("mode", "yaml");
+        editorInstances[count].refresh();
+    });
+
+
+
+    $('#edit_config').on('shown.bs.modal', function () {
+        var count = 0;
+        if (editorInstances[count]) { editorInstances[count].refresh(); }
+    });
+
+    $('#save_configuration').click(function() {
+        var count = 0;
+        var formattedJson;
+        try{
+            var currentContent = editorInstances[count].getValue();
+            var jsonData = jsyaml.load(currentContent); 
+            var formattedJson = JSON.stringify(jsonData, null, 2);
+        } catch (e){
+            formattedJson = editorInstances[count].getValue();
+        }
+
+        const editedData = formattedJson;
+
+        $.ajax({
+            url: url+'/save_config',
+            type: 'POST',
+            contentType: 'application/json',
+            data: editedData,
+            success: function(response) {
+                successToast.find('.toast-body').text(response.response);
+                $('body').append(successToast);
+                successToast.addClass('show');
+                useGlobalVariable();
+                setTimeout(function() {
+                    successToast.removeClass('show');
+                    successToast.addClass('fade');
+                    successToast.remove();
+                }, 10000);
+                $('#edit_config').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                failedToast.find('.toast-body').text("Error: " + xhr.responseJSON.response);
+                $('body').append(failedToast);
+                failedToast.addClass('show');
+                setTimeout(function() {
+                    failedToast.removeClass('show');
+                    failedToast.addClass('fade');
+                    failedToast.remove();
+                }, 10000);
+            }
+        });
+    });
+
+  
+
+</script>
+<!-- <script type="module"> import @prometheus-io/codemirror-promql from https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm </script>
+<script src="https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/autocomplete@6.18.3/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/language@6.10.6/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/lint@6.8.4/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/state@6.4.1/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/view@6.35.0/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@lezer/common@1.2.3/dist/index.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.20.0/dist/index.min.js"></script> -->
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js"></script>
+<script type="module">
+    import {PromQLExtension} from 'https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js';
+    import {basicSetup} from 'https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.20.0/dist/index.min.js';
+    import {EditorState} from 'https://cdn.jsdelivr.net/npm/@codemirror/state@6.4.1/dist/index.min.js';
+    import {EditorView} from 'https://cdn.jsdelivr.net/npm/@codemirror/view@6.35.0/dist/index.min.js';
+  
+
+    const promQL = new PromQLExtension();
+    console.log(promQL);
+
+    new EditorView({
+        state: EditorState.create({
+        extensions: [basicSetup, promQL.asExtension()],
+        }),
+        parent: document.getElementById('editor-container'),
+  });
+</script> -->
+
+
+<!-- <script src="/static/js/prometheus-query.umd.min.js/"></script> -->
+<!-- https://github.com/samber/prometheus-query-js?tab=readme-ov-file type="application/javacript"-->
+<!-- <script>
+    import { PrometheusDriver, Alert, Metric, QueryResult } from '../../';
+	const prom = new Prometheus.PrometheusDriver({endpoint: 'https://vmware-controller1.cluster:9090',});
+    const query = 'up{instance="demo.do.prometheus.io:9090",job="prometheus"}';
+    // const query = 'up{}';
+    
+    // last value
+    prom.instantQuery(query)
+        .then((res: QueryResult) => {
+            console.log("****************", "[instantQuery] Query:", query, "****************")
+            console.log("\n");
+    
+            const series = res.result;
+            series.forEach((serie) => {
+                console.log("[instantQuery] Serie:", serie.metric.toString());
+                console.log("[instantQuery] Time:", serie.value.time);
+                console.log("[instantQuery] Value:", serie.value.value);
+                console.log("\n");
+            });
+        })
+        .catch(console.error);
+</script> -->
+
+<!-- <script>
+    const prom = new Prometheus.PrometheusDriver({
+        endpoint: "https://vmware-controller1.cluster:9090",
+    });
+    
+    const query = window.prompt("Please write a Prometheus query here", "up{}")
+    
+    // last `up` value
+    prom.instantQuery(query)
+        .then((res) => {
+            console.log("****************", "[instantQuery] Query:", query, "****************")
+            console.log("\n");
+    
+            const series = res.result;
+            series.forEach((serie) => {
+                console.log("[instantQuery] Serie:", serie.metric.toString());
+                console.log("[instantQuery] Time:", serie.value.time);
+                console.log("[instantQuery] Value:", serie.value.value);
+                console.log("\n");
+            });
+        })
+        .catch(console.error);
+    
+    // up during past 24h, 1 point every 6 hours
+    prom.rangeQuery(query, new Date().getTime() - 24 * 60 * 60 * 1000, new Date(), 6 * 60 * 60)
+        .then((res) => {
+            console.log("****************", "[rangeQuery] Query:", query, "****************");
+            console.log("\n");
+    
+            const series = res.result;
+            series.forEach((serie) => {
+                console.log("[rangeQuery] Serie:", serie.metric.toString());
+                console.log("[rangeQuery] Values:\n" + serie.values.join('\n'));
+                console.log("\n");
+            });
+        })
+        .catch(console.error);
+    
+    // list series matching query
+    prom.series(query, new Date().getTime() - 24 * 60 * 60 * 1000, new Date())
+        .then((res) => {
+            console.log("****************", "[series] matching:", query, "****************");
+            console.log('[series] Series:');
+            console.log(res.join('\n'));
+            console.log("\n");
+        })
+        .catch(console.error);
+    
+    // list all active alerts
+    prom.alerts()
+        .then((res) => {
+            console.log("****************", "[alerts]", "****************");
+            console.log(res)
+            console.log("\n");
+        })
+        .catch(console.error);
+</script> -->
+  </body>
+</html>
