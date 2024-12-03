@@ -753,116 +753,136 @@
   
 
 </script>
-<!-- <script type="module"> import @prometheus-io/codemirror-promql from https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm </script>
-<script src="https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@codemirror/autocomplete@6.18.3/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@codemirror/language@6.10.6/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@codemirror/lint@6.8.4/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@codemirror/state@6.4.1/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@codemirror/view@6.35.0/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@lezer/common@1.2.3/dist/index.min.js"></script>
+<!-- <script type="module">
+    /*
+    import  'https://esm.run/@codemirror/autocomplete';
+    import  'https://esm.run/@codemirror/language';
+    import 'https://esm.run/@codemirror/lint';
+    import 'https://esm.run/@lezer/common';
+    */
 
-<script src="https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.20.0/dist/index.min.js"></script> -->
-<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js"></script>
-<script type="module">
-    import {PromQLExtension} from 'https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/dist/cjs/index.min.js';
-    import {basicSetup} from 'https://cdn.jsdelivr.net/npm/@codemirror/basic-setup@0.20.0/dist/index.min.js';
-    import {EditorState} from 'https://cdn.jsdelivr.net/npm/@codemirror/state@6.4.1/dist/index.min.js';
-    import {EditorView} from 'https://cdn.jsdelivr.net/npm/@codemirror/view@6.35.0/dist/index.min.js';
-  
+    import {PromQLExtension} from 'https://esm.run/@prometheus-io/codemirror-promql';
+    import {basicSetup} from 'https://esm.run/@codemirror/basic-setup@0.19.1';
+    import {EditorState, Prec, Compartment} from 'https://esm.run/@codemirror/state@0.19.0';
+    import {EditorView, highlightSpecialChars, keymap, ViewUpdate, placeholder} from 'https://esm.run/@codemirror/view@0.19.4';
+    //console.log(EditorState);
 
-    const promQL = new PromQLExtension();
+const promQL = new PromQLExtension({
+    cache: {
+      max: 100,
+      ttlAutopurge: true,
+    },
+  }).setComplete({
+    remote: {
+      url: 'https://vmware-controller1.cluster:9090',
+    },
+  });
+
     console.log(promQL);
-
-    new EditorView({
+    const startState = new EditorView({ //new
         state: EditorState.create({
-        extensions: [basicSetup, promQL.asExtension()],
+            extensions: [
+              //  highlightSpecialChars(),
+               // EditorState.allowMultipleSelections.of(true),
+              //  placeholder('Expression (press Shift+Enter for newlines)'),
+            ],
+                
+       //extensions: [basicSetup, promQL.asExtension()],
         }),
         parent: document.getElementById('editor-container'),
-  });
-</script> -->
-
-
-<!-- <script src="{{ url_for('static', filename='js/prometheus-query.umd.min.js') }}"></script> -->
-<!-- https://github.com/samber/prometheus-query-js?tab=readme-ov-file type="application/javacript"-->
-<!-- <script>
-    import { PrometheusDriver, Alert, Metric, QueryResult } from '../../';
-	const prom = new Prometheus.PrometheusDriver({endpoint: 'https://vmware-controller1.cluster:9090',});
-    const query = 'up{instance="demo.do.prometheus.io:9090",job="prometheus"}';
-    // const query = 'up{}';
-    
-    // last value
-    prom.instantQuery(query)
-        .then((res: QueryResult) => {
-            console.log("****************", "[instantQuery] Query:", query, "****************")
-            console.log("\n");
-    
-            const series = res.result;
-            series.forEach((serie) => {
-                console.log("[instantQuery] Serie:", serie.metric.toString());
-                console.log("[instantQuery] Time:", serie.value.time);
-                console.log("[instantQuery] Value:", serie.value.value);
-                console.log("\n");
-            });
-        })
-        .catch(console.error);
-</script> -->
-
-<!-- <script>
-    const prom = new Prometheus.PrometheusDriver({
-        endpoint: "https://vmware-controller1.cluster:9090",
     });
-    
-    const query = window.prompt("Please write a Prometheus query here", "up{}")
-    
-    // last `up` value
-    prom.instantQuery(query)
-        .then((res) => {
-            console.log("****************", "[instantQuery] Query:", query, "****************")
-            console.log("\n");
-    
-            const series = res.result;
-            series.forEach((serie) => {
-                console.log("[instantQuery] Serie:", serie.metric.toString());
-                console.log("[instantQuery] Time:", serie.value.time);
-                console.log("[instantQuery] Value:", serie.value.value);
-                console.log("\n");
-            });
-        })
-        .catch(console.error);
-    
-    // up during past 24h, 1 point every 6 hours
-    prom.rangeQuery(query, new Date().getTime() - 24 * 60 * 60 * 1000, new Date(), 6 * 60 * 60)
-        .then((res) => {
-            console.log("****************", "[rangeQuery] Query:", query, "****************");
-            console.log("\n");
-    
-            const series = res.result;
-            series.forEach((serie) => {
-                console.log("[rangeQuery] Serie:", serie.metric.toString());
-                console.log("[rangeQuery] Values:\n" + serie.values.join('\n'));
-                console.log("\n");
-            });
-        })
-        .catch(console.error);
-    
-    // list series matching query
-    prom.series(query, new Date().getTime() - 24 * 60 * 60 * 1000, new Date())
-        .then((res) => {
-            console.log("****************", "[series] matching:", query, "****************");
-            console.log('[series] Series:');
-            console.log(res.join('\n'));
-            console.log("\n");
-        })
-        .catch(console.error);
-    
-    // list all active alerts
-    prom.alerts()
-        .then((res) => {
-            console.log("****************", "[alerts]", "****************");
-            console.log(res)
-            console.log("\n");
-        })
-        .catch(console.error);
+
+startState.focus();
+
+/*
+
+import * as codemirrorautocomplete from 'https://esm.run/@codemirror/autocomplete';
+import * as codemirrorlanguage from 'https://esm.run/@codemirror/language';
+import * as codemirrorlint from 'https://esm.run/@codemirror/lint';
+import * as lezercommon from 'https://esm.run/@lezer/common';
+
+*/
 </script> -->
+
+
+<script type="module">
+
+    //import LRUCache from 'https://cdn.skypack.dev/lru-cache@11.0.2?min';
+    (async function () {
+ //     const { EditorState, Compartment } = await import('https://esm.sh/@codemirror/state@0.20.0');
+ //     const { EditorView, keymap, placeholder, highlightSpecialChars } = await import('https://esm.sh/@codemirror/view@0.20.0');
+ //     const { history, historyKeymap, defaultKeymap } = await import('https://esm.sh/@codemirror/commands@0.20.0');
+ //     const { autocompletion, completionKeymap } = await import('https://esm.sh/@codemirror/autocomplete@0.20.0');
+ //     //const { PromQLExtension } = await import('https://esm.sh/@prometheus-io/codemirror-promql@0.300.1');
+ //     const { PromQLExtension } = await import('https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm');
+      //import { PromQLExtension } from 'https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm';
+     // import { PromQLExtension } from 'https://cdn.skypack.dev/@prometheus-io/codemirror-promql';
+
+
+
+
+     
+
+
+     const { EditorState, Compartment } = await import('https://cdn.skypack.dev/@codemirror/state');
+     const { EditorView, keymap, placeholder, highlightSpecialChars } = await import('https://cdn.skypack.dev/@codemirror/view');
+     const { history, historyKeymap, defaultKeymap } = await import('https://cdn.skypack.dev/@codemirror/commands');
+     const { autocompletion, completionKeymap } = await import('https://cdn.skypack.dev/@codemirror/autocomplete');
+     const { PromQLExtension } = await import('https://cdn.skypack.dev/@prometheus-io/codemirror-promql');
+    // const { PromQLExtension } = await import('https://esm.sh/@prometheus-io/codemirror-promql');
+     //const { LRUCache } = await import('https://cdn.jsdelivr.net/npm/lru-cache@11.0.2/+esm');
+
+
+  
+      // Initialize PromQL extension
+      const promqlExtension = new PromQLExtension();
+     // PromQLExtension.setCache(new LRUCache({ max: 100 }));
+      promqlExtension.activateCompletion(true);
+      promqlExtension.activateLinter(true);
+      promqlExtension.setComplete({
+        remote: {
+          url: 'https://vmware-controller1.cluster:9090/api/v1/label/__name__/values',
+        },
+        fetch: async (query) => {
+            console.log('Fetching suggestions for query:', query);
+            const response = await fetch('https://vmware-controller1.cluster:9090/api/v1/label/__name__/values');
+            const data = await response.json();
+            console.log('Suggestions:', data);
+            return data;
+          },
+      });
+  
+      const dynamicConfigCompartment = new Compartment();
+      const editorContainer = document.getElementById('editor-container');
+      if (!editorContainer) throw new Error('Editor container not found!');
+  
+      const startState = EditorState.create({
+        doc: '',
+        extensions: [
+          history(),
+          highlightSpecialChars(),
+          autocompletion(),
+          keymap.of([...defaultKeymap, ...completionKeymap, ...historyKeymap]),
+          promqlExtension.asExtension(),
+          placeholder('Write your PromQL query here...'),
+          dynamicConfigCompartment.of([]),
+        ],
+      });
+  
+      const editorstartState = new EditorView({
+        state: startState,
+        parent: editorContainer,
+      });
+      editorstartState.focus();
+  
+      // Execute query function
+      function executeQuery() {
+        const query = editorstartState.state.doc.toString();
+        console.log('Executing query:', query);
+      }
+  
+      // Example usage: Call executeQuery() when needed
+      // executeQuery();
+    })();
+  </script>
+  
