@@ -35,12 +35,16 @@ from flask import Flask, render_template, request, jsonify
 from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
 from log import Log
 from rest import Rest
+from flask_cors import CORS
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+CORS(app, resources={r"/get_rules": {"origins": "http://vmware-controller1.cluster:5173"}})
+CORS(app, resources={r"/save_config": {"origins": "http://vmware-controller1.cluster:5173"}})
+CORS(app, resources={r"/license": {"origins": "http://vmware-controller1.cluster:5173"}})
 
 
 @app.before_request
@@ -100,5 +104,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7755, debug= True)
-    app.run()
+    app.run(host='0.0.0.0', port=7755, debug= True)
+    # app.run()
