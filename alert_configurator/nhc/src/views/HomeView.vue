@@ -1,14 +1,9 @@
-<script setup lang="ts">
-// import TheWelcome from '../components/TheWelcome.vue'
-</script>
+<!-- <script setup lang="ts">
+import NHC from '@/components/NHC.vue'
+</script> -->
 
-<!-- <template>
-  <main>
-    <TheWelcome />
-  </main>
-</template> -->
 <template>
-  <div>
+  <!-- <div>
     <b-input-group class="expression-input">
       <b-input-group-prepend>
         <b-input-group-text>
@@ -30,15 +25,15 @@
       </b-input-group-append>
     </b-input-group>
 
-    <MetricsExplorer
+    <NHC
       :show="showMetricsExplorer"
       @updateShow="showMetricsExplorer = $event"
       :metrics="metricNames"
       :insertAtCursor="insertAtCursor"
     />
-  </div>
+  </div> -->
 </template>
-
+<!--
 <script lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import {
@@ -65,14 +60,14 @@ import {
   CompletionResult,
 } from '@codemirror/autocomplete'
 import { theme, promqlHighlighter } from './CMTheme'
-import MetricsExplorer from './MetricsExplorer.vue'
+import NHC from '../components/NHC.vue'
 import { faSearch, faSpinner, faGlobeEurope } from '@fortawesome/free-solid-svg-icons'
 
 const promqlExtension = new PromQLExtension()
 const dynamicConfigCompartment = new Compartment()
 
 export default {
-  components: { MetricsExplorer },
+  components: { NHC },
 
   props: {
     value: String,
@@ -86,7 +81,7 @@ export default {
     enableLinter: Boolean,
   },
 
-  setup(props) {
+  setup(props : any) {
     const containerRef = ref(null)
     const viewRef = ref(null)
     const showMetricsExplorer = ref(false)
@@ -96,7 +91,8 @@ export default {
       promqlExtension.activateLinter(props.enableLinter)
       promqlExtension.setComplete({
         completeStrategy: new HistoryCompleteStrategy(
-          newCompleteStrategy({ remote: { url: props.pathPrefix } }),
+          newCompleteStrategy({ remote: { url: "https://vmware-controller1.cluster:9090" } }),
+          // newCompleteStrategy({ remote: { url: props.pathPrefix } }),
           props.queryHistory,
         ),
       })
@@ -218,4 +214,4 @@ export default {
   width: 100%;
   height: 100%;
 }
-</style>
+</style> -->
