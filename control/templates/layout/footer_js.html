@@ -242,9 +242,13 @@
             var count = (new_rows.match(/<tr>/g) || []).length;
             var url = window.location.href+'/check_status/'+power_request_id+'/'+sel_request_id+'/'+chassis_request_id;
             var intervalId;
+            var stop_me = {"power": false, "sel": false, "chassis": false};
             intervalId = setInterval(function(){
                 $.getJSON(url, function(data){
-                    if (data[2].message){
+                    if (data[0].message){ stop_me.power = true; }
+                    if (data[1].message){ stop_me.sel = true; }
+                    if (data[2].message){ stop_me.chassis = true; }
+                    if ((stop_me.power === true) && (stop_me.sel === true) && (stop_me.chassis === true)){
                         $('[data-bs-toggle="tooltip"]').tooltip();
                         clearInterval(intervalId);
                     } else {
