@@ -805,84 +805,31 @@ import * as lezercommon from 'https://esm.run/@lezer/common';
 </script> -->
 
 
-<script type="module">
+<script type="module" lang="ts">
+    const {PromQLExtension} = await import('https://esm.sh/@prometheus-io/codemirror-promql');
+    const {basicSetup} = await 'https://esm.run/@codemirror/basic-setup@0.19.1';
+    //const { basicSetup } = await import('https://cdn.skypack.dev/codemirror');
+    const { EditorState } = await import('https://cdn.skypack.dev/@codemirror/state');
+    const {EditorView} = await import('https://cdn.skypack.dev/@codemirror/view');
+    try {
+        const parentElement = document.getElementById('editor-container');
+        if (!parentElement) {
+            console.error("Element with ID 'editor-container' not found.");
+        }
 
-    //import LRUCache from 'https://cdn.skypack.dev/lru-cache@11.0.2?min';
-    (async function () {
- //     const { EditorState, Compartment } = await import('https://esm.sh/@codemirror/state@0.20.0');
- //     const { EditorView, keymap, placeholder, highlightSpecialChars } = await import('https://esm.sh/@codemirror/view@0.20.0');
- //     const { history, historyKeymap, defaultKeymap } = await import('https://esm.sh/@codemirror/commands@0.20.0');
- //     const { autocompletion, completionKeymap } = await import('https://esm.sh/@codemirror/autocomplete@0.20.0');
- //     //const { PromQLExtension } = await import('https://esm.sh/@prometheus-io/codemirror-promql@0.300.1');
- //     const { PromQLExtension } = await import('https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm');
-      //import { PromQLExtension } from 'https://cdn.jsdelivr.net/npm/@prometheus-io/codemirror-promql@0.300.1/+esm';
-     // import { PromQLExtension } from 'https://cdn.skypack.dev/@prometheus-io/codemirror-promql';
+        const promQL = new PromQLExtension();
+        promQL.setComplete({ maxMetricsMetadata: 10000, remote: {  httpMethod: 'GET', url: "https://vmware-controller1.cluster:9090" } });
 
+        new EditorView({
+            state: EditorState.create({
+            extensions: [basicSetup, promQL.asExtension()],
+            }),
+            parent: parentElement,
+        });
 
-
-
-     
-
-
-     const { EditorState, Compartment } = await import('https://cdn.skypack.dev/@codemirror/state');
-     const { EditorView, keymap, placeholder, highlightSpecialChars } = await import('https://cdn.skypack.dev/@codemirror/view');
-     const { history, historyKeymap, defaultKeymap } = await import('https://cdn.skypack.dev/@codemirror/commands');
-     const { autocompletion, completionKeymap } = await import('https://cdn.skypack.dev/@codemirror/autocomplete');
-     const { PromQLExtension } = await import('https://cdn.skypack.dev/@prometheus-io/codemirror-promql');
-    // const { PromQLExtension } = await import('https://esm.sh/@prometheus-io/codemirror-promql');
-     //const { LRUCache } = await import('https://cdn.jsdelivr.net/npm/lru-cache@11.0.2/+esm');
-
-
-  
-      // Initialize PromQL extension
-      const promqlExtension = new PromQLExtension();
-     // PromQLExtension.setCache(new LRUCache({ max: 100 }));
-      promqlExtension.activateCompletion(true);
-      promqlExtension.activateLinter(true);
-      promqlExtension.setComplete({
-        remote: {
-          url: 'https://vmware-controller1.cluster:9090/api/v1/label/__name__/values',
-        },
-        fetch: async (query) => {
-            console.log('Fetching suggestions for query:', query);
-            const response = await fetch('https://vmware-controller1.cluster:9090/api/v1/label/__name__/values');
-            const data = await response.json();
-            console.log('Suggestions:', data);
-            return data;
-          },
-      });
-  
-      const dynamicConfigCompartment = new Compartment();
-      const editorContainer = document.getElementById('editor-container');
-      if (!editorContainer) throw new Error('Editor container not found!');
-  
-      const startState = EditorState.create({
-        doc: '',
-        extensions: [
-          history(),
-          highlightSpecialChars(),
-          autocompletion(),
-          keymap.of([...defaultKeymap, ...completionKeymap, ...historyKeymap]),
-          promqlExtension.asExtension(),
-          placeholder('Write your PromQL query here...'),
-          dynamicConfigCompartment.of([]),
-        ],
-      });
-  
-      const editorstartState = new EditorView({
-        state: startState,
-        parent: editorContainer,
-      });
-      editorstartState.focus();
-  
-      // Execute query function
-      function executeQuery() {
-        const query = editorstartState.state.doc.toString();
-        console.log('Executing query:', query);
-      }
-  
-      // Example usage: Call executeQuery() when needed
-      // executeQuery();
-    })();
-  </script>
+        console.log("Editor initialized successfully.");
+    } catch (error) {
+      console.error("Error initializing the editor:", error);
+    }
+</script>
   

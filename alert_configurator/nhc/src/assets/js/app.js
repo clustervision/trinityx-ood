@@ -1,4 +1,4 @@
-let configuration
+  let configuration;
   let activeButton = 1
   let previousButton = null
 
@@ -356,9 +356,9 @@ let configuration
               '"></div> \
                                                 <div class="col mb-6"><label for="exprInput_' +
               count +
-              '" class="form-label">Rule Expr</label><input type="text" id="exprInput_' +
+              '" class="form-label">Rule Expr</label><div class="form-control promql"></div><input type="text" id="exprInput_' +
               count +
-              '" class="form-control" placeholder="Enter Name" ></div> \
+              '" class="form-control promql" placeholder="Enter Name" @keyup="handlePromql"  ></div> \
                                             </div> \
                                             <div class="row"> \
                                                 <div class="col mb-0"><label for="rule_status_' +
@@ -481,9 +481,9 @@ let configuration
           '" class="form-control" placeholder="Enter For" /></div> \
                                     <div class="col mb-6"><label for="exprInput_' +
           add_count +
-          '" class="form-label">Rule Expr</label><input type="text" id="exprInput_' +
+          '" class="form-label">Rule Expr</label><div class="form-control promql"></div><input type="text" id="exprInput_' +
           add_count +
-          '" class="form-control" placeholder="Enter Name" ></div> \
+          '" class="form-control promql" placeholder="Enter Name" @keyup="handlePromql" ></div> \
                                 </div> \
                                 <div class="row"> \
                                     <div class="col mb-0"><label for="rule_status_' +

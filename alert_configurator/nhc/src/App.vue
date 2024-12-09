@@ -1,126 +1,32 @@
 <script setup lang="ts">
+
 import './assets/fonts/boxicons.css';
 import './assets/css/core.css';
 import './assets/css/theme-default.css';
-
 import './assets/css/codemirror.min.css';
 import './assets/css/material-darker.min.css';
-
 import './assets/css/app.css';
-
-
 import './assets/js/jquery.js';
 import './assets/js/bootstrap.js';
 import './assets/js/main.js';
-
-
 import './assets/js/codemirror.min.js';
 import './assets/js/javascript.min.js';
 import './assets/js/yaml.min.js';
 import './assets/js/js-yaml.min.js';
-
 import './assets/js/app.js';
 
-
-
-// import HomeView from './views/HomeView.vue';
-
-
-
-
-
+import TopNavigation from '@/views/TopNavigation.vue';
+import SubNavigation from '@/views/SubNavigation.vue';
+import HomeView from '@/views/HomeView.vue';
+import FooterBar from '@/views/FooterBar.vue';
 </script>
 
 
 <template>
 
-  <!-- <div class="wrapper">
-    <NHC trix_config="/trinity/local/etc/prometheus_server/rules/trix.rules" />
-    <HomeView />
-  </div> -->
-
-
   <header>
-    <nav class="navbar shadow-sm navbar-light">
-      <ol class="breadcrumb bg-transparent d-flex align-items-center">
-        <a href="/" aria-current="page" role="menuitem">
-          <img src="@/assets/img/logo.png" class="img-logo" />
-        </a>
-        <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
-        <li class="breadcrumb-item"><a class="align-middle" href="/">Alert Configurator</a></li>
-      </ol>
-    </nav>
-
-    <div class="row sub-navbar">
-      <div class="col col-2">Manage Node Health Checks</div>
-      <div class="col col-1">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm"
-          id="add_rule"
-          data-bs-toggle="modal"
-          data-bs-target="#rule_modal_"
-        >
-          Add Alert Rule
-        </button>
-      </div>
-      <div class="col col-1">
-        <button
-          type="button"
-          class="btn btn-warning btn-sm"
-          id="edit_configuration"
-          data-bs-toggle="modal"
-          data-bs-target="#edit_config"
-        >
-          Edit Configuration
-        </button>
-      </div>
-      <div class="col col-8"></div>
-    </div>
-
-    <!-- Edit Configuration Modal -->
-    <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel4">Edit Configuration</h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="col mb-12">
-                <label for="configuration" class="form-label"
-                  >Configuration File:
-                  <span style="text-transform: lowercase; color: #007bff !important"
-                    >file path</span
-                  ></label
-                >
-                <button type="button" id="jsonModeBtn" class="btn btn-primary btn-sm">
-                  Switch to JSON Mode
-                </button>
-                <button type="button" id="yamlModeBtn" class="btn btn-warning btn-sm">
-                  Switch to YAML Mode
-                </button>
-                <div id="jsonEditor" style="height: 600px; border: 1px solid #ddd"></div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-              Close
-            </button>
-            <button type="button" id="save_configuration" class="btn btn-primary">
-              Save changes
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <TopNavigation />
+    <SubNavigation />
   </header>
 
 
@@ -149,7 +55,10 @@ import './assets/js/app.js';
             <div class="card-body">
               <div class="table-responsive text-nowrap">
                 <div id="modal-container"></div>
-                <div id="editor-container"></div>
+                <HomeView>
+                  <div class="promql"></div>
+                  <textarea class="promql"></textarea>
+                </HomeView>
 
                 <table
                   class="table table-bordered table-striped table-hover table-responsive"
@@ -174,35 +83,100 @@ import './assets/js/app.js';
           <!--/ Bordered Table -->
         </div>
         <!-- / Content -->
-        <hr class="my-5" />
-        <footer class="content-footer footer bg-footer-theme">
-          <div
-            class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column"
-          >
-            <div class="mb-2 mb-md-0">
-              © 2023, made with ❤️ by
-              <a href="https://clustervision.com/" target="_blank" class="footer-link fw-bolder"
-                >ClusterVision</a
-              >
-            </div>
-            <div>
-              <a href="/license_info" class="footer-link me-4" target="_blank">License</a>
-              <a
-                href="https://github.com/clustervision/trinityX"
-                target="_blank"
-                class="footer-link me-4"
-                >Documentation</a
-              >
-              <a href="https://support.clustervision.com/" target="_blank" class="footer-link me-4"
-                >Support</a
-              >
-            </div>
-          </div>
-        </footer>
+        <FooterBar />
         <div class="content-backdrop fade"></div>
       </div>
     </div>
     <div class="layout-overlay layout-menu-toggle"></div>
   </div>
 
+
+
+
+
+
+
+
+  <div v-if="showSuccessToast" class="bs-toast toast toast-placement-ex m-2 fade bg-success top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+    <div class="toast-header">
+      <i class="bx bx-bell me-2"></i>
+      <div class="me-auto fw-medium">Configuration</div>
+      <small>0 seconds ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">Configuration Saved successfully.</div>
+  </div>
+
+  <div v-if="showfailedToast" class="bs-toast toast toast-placement-ex m-2 fade bg-danger top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+    <div class="toast-header">
+      <i class="bx bx-bell me-2"></i>
+      <div class="me-auto fw-medium">Configuration</div>
+      <small>0 seconds ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body"></div>
+  </div>
+
+  <div v-if="showwarningToast" class="bs-toast toast toast-placement-ex m-2 fade bg-warning top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
+    <div class="toast-header">
+      <i class="bx bx-bell me-2"></i>
+      <div class="me-auto fw-medium">Configuration</div>
+      <small>0 seconds ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body"></div>
+  </div>
+
+
+
+
 </template>
+
+
+<script lang="ts">
+export default {
+  data() {
+    let url = window.location.href;
+    url = url.replace('#', '');
+    return {
+      configuration: null,
+      activeButton: 1,
+      previousButton: null,
+      classMap: {
+        critical: 'btn-dark',
+        danger: 'btn-danger',
+        warning: 'btn-warning',
+        info: 'btn-info',
+      },
+      url_real: url,
+      url: 'http://vmware-controller1.cluster:7755',
+      showSuccessToast: false,
+      showfailedToast: false,
+      showwarningToast: false,
+    };
+  },
+  methods: {
+    showSuccessToast() {
+      this.showSuccessToast = true;
+      setTimeout(() => {
+        this.showSuccessToast = false;
+      }, 2000);
+    },
+
+    showfailedToast() {
+      this.showfailedToast = true;
+      setTimeout(() => {
+        this.showfailedToast = false;
+      }, 2000);
+    },
+
+    showwarningToast() {
+      this.showwarningToast = true;
+      setTimeout(() => {
+        this.showwarningToast = false;
+      }, 2000);
+    },
+    // ... methods to show other toasts
+  },
+};
+</script>

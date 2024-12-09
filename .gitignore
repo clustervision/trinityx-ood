@@ -2,5 +2,5 @@ __pycache__/
 /config
 .vscode
 infiniband/state.json
-alert_configurator/nodejs_nhc/node_modules
-alert_configurator/nodejs_nhc/node_modules/*
+alert_configurator/nhc/node_modules
+alert_configurator/nhc/node_modules/*
