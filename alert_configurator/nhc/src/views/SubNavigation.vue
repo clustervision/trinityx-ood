@@ -3,26 +3,10 @@
   <div class="row sub-navbar">
       <div class="col col-2">Manage Node Health Checks</div>
       <div class="col col-1">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm"
-          id="add_rule"
-          data-bs-toggle="modal"
-          data-bs-target="#rule_modal_"
-        >
-          Add Alert Rule
-        </button>
+        <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_">Add Alert Rule</button>
       </div>
       <div class="col col-1">
-        <button
-          type="button"
-          class="btn btn-warning btn-sm"
-          id="edit_configuration"
-          data-bs-toggle="modal"
-          data-bs-target="#edit_config"
-        >
-          Edit Configuration
-        </button>
+        <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button>
       </div>
       <div class="col col-8"></div>
     </div>
