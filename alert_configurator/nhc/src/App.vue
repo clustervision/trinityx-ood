@@ -6,23 +6,28 @@ import './assets/css/theme-default.css';
 import './assets/css/codemirror.min.css';
 import './assets/css/material-darker.min.css';
 import './assets/css/app.css';
-import './assets/js/jquery.js';
+// import './assets/js/jquery.js';
 // import './assets/js/bootstrap.js';
 
 // import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
 
 import './assets/js/main.js';
-import './assets/js/codemirror.min.js';
-import './assets/js/javascript.min.js';
-import './assets/js/yaml.min.js';
-import './assets/js/js-yaml.min.js';
+// import './assets/js/codemirror.min.js';
+// import './assets/js/javascript.min.js';
+// import './assets/js/yaml.min.js';
+// import './assets/js/js-yaml.min.js';
 // import './assets/js/app.js';
 
 import TopNavigation from '@/views/TopNavigation.vue';
 import SubNavigation from '@/views/SubNavigation.vue';
-import HomeView from '@/views/HomeView.vue';
+// import HomeView from '@/views/HomeView.vue';
 import FooterBar from '@/views/FooterBar.vue';
+
+import PromQLEditor from '@/components/PromQLEditor.vue';
+
+import JsonEditor from '@/components/JsonEditor.vue';
+// import YamlEditor from '@/components/YamlEditor.vue';
 
 </script>
 
@@ -31,9 +36,14 @@ import FooterBar from '@/views/FooterBar.vue';
 
   <header>
     <TopNavigation />
-    <SubNavigation />
+    <SubNavigation 
+      :json-editor="JsonEditor"
+      :Content="Content"
+      :ContentType="ContentType"
+      @showErrorToast="failedToast"
+    />
   </header>
-
+  
 
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
@@ -100,7 +110,7 @@ import FooterBar from '@/views/FooterBar.vue';
                               <div class="col mb-6">
                                 <label :for="`exprInput_${row.id}`" class="form-label">Rule Expr</label>
                                 <div class="form-control promql"></div>
-                                <input type="text" :id="`exprInput_${row.id}`" class="form-control promql" placeholder="Enter Name" @keyup="handlePromql"  >
+                                <input type="text" :id="`exprInput_${row.id}`" class="form-control promql" placeholder="Enter Name"   >
                               </div>
                             </div>
                             <div class="row">
@@ -141,7 +151,7 @@ import FooterBar from '@/views/FooterBar.vue';
 
 
 
-
+                </div>
 
 
 
@@ -151,12 +161,21 @@ import FooterBar from '@/views/FooterBar.vue';
                       <div class="modal-content">
                         <div class="modal-header">
                           <h5 class="modal-title" id="exampleModalLabel4">Add New Alert Rule</h5>
+
+                                  <!-- <div>
+                                    <JsonEditor v-model="jsonContent" />
+                                  </div>
+
+                                  <div>
+                                    <YamlEditor v-model="yamlContent" />
+                                  </div> -->
+
+
+
+                          <!-- <PromQLEditor><div class="promql"></div></PromQLEditor> -->
                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-
-                          c<HomeView><div class="promql"></div></HomeView>c
-
                           <div class="row">
                             <div class="col mb-12">
                               <button type="button" :id="`button_html_${add_count}`" @click="rule_modal_html(add_count, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
@@ -204,8 +223,6 @@ import FooterBar from '@/views/FooterBar.vue';
                                   <label :id="`rule_nhc_label_${add_count}`" :for="`rule_nhc_${add_count}`" class="form-check-label">{{ isCheckedNHC ? 'ON' : 'OFF' }}</label>
                                 </div>
                               </div>
-
-                              <!-- @change="document.getElementById(`rule_status_label_${add_count}`).textContent = this.checked ? 'ON' : 'OFF';" @change="this.classList.remove(`btn-primary`, `btn-dark`, `btn-danger`, `btn-warning`, `btn-info`); const selectedClass = classMap[this.value]; if (selectedClass) { this.classList.add(selectedClass); }" class="form-select form-select-sm" -->
                               <div class="col mb-6">
                                 <label :for="`rule_severity_${add_count}`" class="form-label">Set Priority</label>
                                 <select :id="`rule_severity_${add_count}`" @change="updateClass" :class="['form-select', 'form-select-sm', selectedClass]">
@@ -228,20 +245,11 @@ import FooterBar from '@/views/FooterBar.vue';
                   </div>
 
 
-
-
-
-
-
-
-
-
-
-                </div>
-                <HomeView><div class="promql"></div></HomeView>
+               
+                <!-- <HomeView><div class="promql"></div></HomeView>
                 <div v-if="showModal">
                   <HomeView><div class="promql"></div></HomeView>
-                 </div>
+                 </div> -->
 
 
                 <table id="alert-table" class="table table-bordered table-striped table-hover table-responsive">
@@ -336,7 +344,7 @@ import FooterBar from '@/views/FooterBar.vue';
       <small>0 seconds ago</small>
       <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
-    <div class="toast-body"></div>
+    <div class="toast-body">{{ toastMessage }}</div>
   </div>
 
   <div v-if="showwarningToast" class="bs-toast toast toast-placement-ex m-2 fade bg-warning top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
@@ -358,7 +366,25 @@ import FooterBar from '@/views/FooterBar.vue';
 
 </template>
 
+<!-- <style lang="css">
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+}
+</style> -->
 <script lang="ts">
 
 import { ref, onMounted, onBeforeUnmount, reactive } from 'vue';
@@ -404,23 +430,57 @@ let url = window.location.href;
 url = url.replace('#', '');
 url = 'http://vmware-controller1.cluster:7755';
 
+async function fetchRules(url: URL) {
+  console.log(url);
+  const response = await axios.get(url + '/get_rules');
+  return response.data;
+}
+
+let configuration = await fetchRules(url);
+
+console.log(configuration);
+
 export default {
+
+  components: {
+    PromQLEditor,
+    SubNavigation,
+  },
+  // setup() {
+  //   const Content = JSON.stringify(configuration, null, 2);
+  //   const ContentType = "JSON";
+  //   // const yamlContent = jsyaml.dump(configuration);
+  //   return {
+  //     JsonEditor,
+  //     Content,
+  //     ContentType,
+  //   };
+  // },
+
   data() {
 
     return {
-      configuration: null,
+      // configuration: null,
       activeButton: 1,
       previousButton: null,
       showModal: false,
       showSuccessToast: false,
       showfailedToast: false,
+      toastMessage: '',
       showwarningToast: false,
+      Content: JSON.stringify(configuration, null, 2),
+      ContentType: "JSON",
+      JsonEditor,
+      // yamlContent: jsyaml.dump(configuration),
     };
   },
   async mounted() {
     try {
       const response = await axios.get(url+ '/get_rules');
       let count = 1;
+      // console.log(response.data);
+      // console.log('{\n  "key": "value"\n}');
+      // console.log(JSON.stringify(fetchRules(url)));
       response.data.groups.forEach((group) => {
         group.rules.forEach((rule) => {
           const row: TableRow = {
@@ -435,14 +495,14 @@ export default {
             severity: rule.labels.severity,
           }
           tableRows.value.push(row);
-          console.log(row);
+          // console.log(row);
 
           count++;
         })
       })
       add_count = count + 1;
-      console.log(count);
-      console.log(add_count);
+      // console.log(count);
+      // console.log(add_count);
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -458,7 +518,8 @@ export default {
       }, 2000);
     },
 
-    failedToast() {
+    failedToast(message) {
+      this.toastMessage = message;
       this.showfailedToast = true;
       setTimeout(() => {
         this.showfailedToast = false;
@@ -485,7 +546,6 @@ export default {
         console.log(parentElement);
       });
     },
-
 
     // ... methods to show other toasts
   },
@@ -563,23 +623,23 @@ const openEditor = (count: number) => {
   return setupEditor(count, '', javascript());
 };
 
-// Lifecycle hooks
-onMounted(() => {
-  // Example: Setup and open editors for the existing counts
-  editorCount.value.forEach((count) => openEditor(count));
+// // Lifecycle hooks
+// onMounted(() => {
+//   // Example: Setup and open editors for the existing counts
+//   editorCount.value.forEach((count) => openEditor(count));
 
 
-  const tooltipLinks = document.querySelectorAll('.tooltip-modal-link');
-  tooltipLinks.forEach(link => {
-    new bootstrap.Tooltip(link); // This will work after the type installation
-  });
-});
+//   // const tooltipLinks = document.querySelectorAll('.tooltip-modal-link');
+//   // tooltipLinks.forEach(link => {
+//   //   new bootstrap.Tooltip(link); // This will work after the type installation
+//   // });
+// });
 
-onBeforeUnmount(() => {
-  // Clean up editor instances
-  editorInstances.value.forEach((editor) => editor.destroy());
-  editorInstances.value.clear();
-});
+// onBeforeUnmount(() => {
+//   // Clean up editor instances
+//   editorInstances.value.forEach((editor) => editor.destroy());
+//   editorInstances.value.clear();
+// });
 
 function update_configuration(key, element, count, form_rule) {
   console.log(key);
@@ -588,105 +648,105 @@ function update_configuration(key, element, count, form_rule) {
   console.log(form_rule);
 }
 
-const toastMessage = ref<string>(''); // Reactive toast message
-const showToast = ref<boolean>(false); // Reactive visibility state for the toast
+// const toastMessage = ref<string>(''); // Reactive toast message
+// const showToast = ref<boolean>(false); // Reactive visibility state for the toast
 
-const displayToast = (message: string) => {
-  toastMessage.value = message;
-  showToast.value = true;
+// const displayToast = (message: string) => {
+//   toastMessage.value = message;
+//   showToast.value = true;
 
-  // Automatically hide the toast after 10 seconds
-  setTimeout(() => {
-    showToast.value = false;
-  }, 10000);
-};
-
-
-
-const formValues = reactive<Record<number, any>>({});
-
-function getLatestValues(count: number) {
-  return {
-    alert: formValues[count]?.ruleName || '',
-    annotations: { description: formValues[count]?.description || '' },
-    for: formValues[count]?.ruleFor || '',
-    expr: formValues[count]?.expr || '',
-    labels: {
-      _trix_status: formValues[count]?.ruleStatus || false,
-      nhc: formValues[count]?.nhc ? 'yes' : 'no',
-      severity: formValues[count]?.severity || '',
-    },
-  };
-}
-
-
-function setupEventListeners(count: number) {
-  const updateFormValues = (key: string, value: any) => {
-    if (!formValues[count]) {
-      formValues[count] = {};
-    }
-    formValues[count][key] = value;
-  };
-
-  // Attach Vue event listeners in your component's template for `v-model` bindings:
-  // Example: `<input v-model="formValues[count].ruleName" />`
-}
+//   // Automatically hide the toast after 10 seconds
+//   setTimeout(() => {
+//     showToast.value = false;
+//   }, 10000);
+// };
 
 
 
-function setupHTML(count: number, jsonData: any) {
-  if (!formValues[count]) {
-    formValues[count] = {};
-  }
+// const formValues = reactive<Record<number, any>>({});
 
-  formValues[count].ruleName = jsonData.alert || '';
-  formValues[count].description = jsonData.annotations?.description || '';
-  formValues[count].ruleFor = jsonData.for || '';
-  formValues[count].expr = jsonData.expr || '';
-  formValues[count].ruleStatus = jsonData.labels?._trix_status || false;
-  formValues[count].nhc = jsonData.labels?.nhc === 'yes';
-  formValues[count].severity = jsonData.labels?.severity || '';
-}
-
-
-
-function rule_modal_html(count: number, buttonNumber: number) {
-  const jsonData = jsyaml.load(editorInstances.value[count].state.doc.toString());
-  setupHTML(count, jsonData);
-  activeButton.value = buttonNumber;
-}
+// function getLatestValues(count: number) {
+//   return {
+//     alert: formValues[count]?.ruleName || '',
+//     annotations: { description: formValues[count]?.description || '' },
+//     for: formValues[count]?.ruleFor || '',
+//     expr: formValues[count]?.expr || '',
+//     labels: {
+//       _trix_status: formValues[count]?.ruleStatus || false,
+//       nhc: formValues[count]?.nhc ? 'yes' : 'no',
+//       severity: formValues[count]?.severity || '',
+//     },
+//   };
+// }
 
 
-function rule_modal_json(count: number, buttonNumber: number) {
-  if (previousButton.value === 1) {
-    const content = getLatestValues(count);
-    setupEditor(count, JSON.stringify(content, null, 2), javascript());
-  } else {
-    const jsonData = jsyaml.load(editorInstances.value[count].state.doc.toString());
-    setupEditor(count, JSON.stringify(jsonData, null, 2), javascript());
-  }
-  activeButton.value = buttonNumber;
-}
+// function setupEventListeners(count: number) {
+//   const updateFormValues = (key: string, value: any) => {
+//     if (!formValues[count]) {
+//       formValues[count] = {};
+//     }
+//     formValues[count][key] = value;
+//   };
+
+//   // Attach Vue event listeners in your component's template for `v-model` bindings:
+//   // Example: `<input v-model="formValues[count].ruleName" />`
+// }
 
 
-function rule_modal_yaml(count: number, buttonNumber: number) {
-  if (previousButton.value === 1) {
-    const content = getLatestValues(count);
-    const yamlContent = jsyaml.dump(content);
-    setupEditor(count, yamlContent, 'yaml');
-  } else {
-    try {
-      const currentContent = editorInstances.value[count].state.doc.toString();
-      const jsonData = JSON.parse(currentContent);
-      const yamlContent = jsyaml.dump(jsonData);
-      setupEditor(count, yamlContent, 'yaml');
-    } catch (e) {
-      const currentContent = editorInstances.value[count].state.doc.toString();
-      setupEditor(count, currentContent, 'yaml');
-    }
-  }
-  activeButton.value = buttonNumber;
-}
+
+// function setupHTML(count: number, jsonData: any) {
+//   if (!formValues[count]) {
+//     formValues[count] = {};
+//   }
+
+//   formValues[count].ruleName = jsonData.alert || '';
+//   formValues[count].description = jsonData.annotations?.description || '';
+//   formValues[count].ruleFor = jsonData.for || '';
+//   formValues[count].expr = jsonData.expr || '';
+//   formValues[count].ruleStatus = jsonData.labels?._trix_status || false;
+//   formValues[count].nhc = jsonData.labels?.nhc === 'yes';
+//   formValues[count].severity = jsonData.labels?.severity || '';
+// }
+
+
+
+// function rule_modal_html(count: number, buttonNumber: number) {
+//   const jsonData = jsyaml.load(editorInstances.value[count].state.doc.toString());
+//   setupHTML(count, jsonData);
+//   activeButton.value = buttonNumber;
+// }
+
+
+// function rule_modal_json(count: number, buttonNumber: number) {
+//   if (previousButton.value === 1) {
+//     const content = getLatestValues(count);
+//     setupEditor(count, JSON.stringify(content, null, 2), javascript());
+//   } else {
+//     const jsonData = jsyaml.load(editorInstances.value[count].state.doc.toString());
+//     setupEditor(count, JSON.stringify(jsonData, null, 2), javascript());
+//   }
+//   activeButton.value = buttonNumber;
+// }
+
+
+// function rule_modal_yaml(count: number, buttonNumber: number) {
+//   if (previousButton.value === 1) {
+//     const content = getLatestValues(count);
+//     const yamlContent = jsyaml.dump(content);
+//     setupEditor(count, yamlContent, 'yaml');
+//   } else {
+//     try {
+//       const currentContent = editorInstances.value[count].state.doc.toString();
+//       const jsonData = JSON.parse(currentContent);
+//       const yamlContent = jsyaml.dump(jsonData);
+//       setupEditor(count, yamlContent, 'yaml');
+//     } catch (e) {
+//       const currentContent = editorInstances.value[count].state.doc.toString();
+//       setupEditor(count, currentContent, 'yaml');
+//     }
+//   }
+//   activeButton.value = buttonNumber;
+// }
 
 // document.addEventListener('DOMContentLoaded', () => {
 //   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

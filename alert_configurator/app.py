@@ -32,10 +32,11 @@ __status__      = 'Development'
 
 import os
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
 from log import Log
 from rest import Rest
-from flask_cors import CORS
+
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
