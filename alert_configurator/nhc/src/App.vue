@@ -17,7 +17,7 @@ import SubNavigation from '@/views/SubNavigation.vue';
 import FooterBar from '@/views/FooterBar.vue';
 import PromQLEditor from '@/components/PromQLEditor.vue';
 // import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
-
+import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 
 
 import { onMounted, ref } from 'vue';
@@ -45,7 +45,21 @@ onMounted(() => {
   console.log('App mounted, ready for modals!');
 });
 
+// Reactive variable to keep track of the current mode
+const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
 
+// Method to handle switching modes
+const rule_modal_html = (id: string, mode: number) => {
+  currentMode.value = 'HTML';
+};
+
+const rule_modal_json = (id: string, mode: number) => {
+  currentMode.value = 'JSON';
+};
+
+const rule_modal_yaml = (id: string, mode: number) => {
+  currentMode.value = 'YAML';
+};
 </script>
 
 
@@ -60,8 +74,9 @@ onMounted(() => {
       @showErrorToast="failedToast"
     />
   </header>
+  <!-- <PromQLEditor appendTo=".modal-body"><div class="promql"></div></PromQLEditor> -->
 <!--  :CodeMirrorEditor="CodeMirrorEditor" -->
-  <PromQLEditor><div class="promql"></div></PromQLEditor>
+  <!-- <PromQLEditor><div class="promql"></div></PromQLEditor> -->
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
       <div class="content-wrapper">
@@ -100,34 +115,43 @@ onMounted(() => {
                         <div class="modal-body">
                           <div class="row">
                             <div class="col mb-12">
-                              <!-- <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
+                              <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
                               <button type="button" :id="`button_json_${row.id}`" @click="rule_modal_json(row.id, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
-                              <button type="button" :id="`button_yaml_${row.id}`" @click="rule_modal_yaml(row.id, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> -->
-                              <div :id="`ruleEditor_${row.id}`" style="display: none; height: 300px; border: 1px solid #ddd;"></div>
+                              <button type="button" :id="`button_yaml_${row.id}`" @click="rule_modal_yaml(row.id, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
                             </div>
                           </div>
+                          <!-- <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @showErrorToast="$emit('showErrorToast', $event)" /> -->
+                          <div v-if="currentMode === 'JSON'">
+                            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @showErrorToast="$emit('showErrorToast', $event)" />
+                          </div>
+                          <div v-if="currentMode === 'YAML'">
+                            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @showErrorToast="$emit('showErrorToast', $event)" />
+                          </div>
+                          <div v-if="currentMode === 'HTML'">
+
+
+
                           <div :id="`model-form_${row.id}`">
                             <div class="row g-6">
                               <div class="col mb-0">
                                 <label :for="`rule_name_${row.id}`" class="form-label">Rule Name</label>
-                                <input type="text" :id="`rule_name_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.alert}`">
+                                <input type="text" :id="`rule_name_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.alert}`" />
                               </div>
                             </div>
                             <div class="row">
                               <div class="col mb-6">
                                 <label :for="`rule_description_${row.id}`" class="form-label">Rule Description</label>
-                                <input type="text" :id="`rule_description_${row.id}`" class="form-control" placeholder="Enter Name" value="' + rule.annotations.description + '">
+                                <input type="text" :id="`rule_description_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.description}`" />
                               </div>
                             </div>
                             <div class="row">
                               <div class="col mb-0">
                                 <label :for="`rule_for_${row.id}`" class="form-label">Rule For</label>
-                                <input type="text" :id="`rule_for_${row.id}`" class="form-control" placeholder="Enter For"  :value="`${row.for}`">
+                                <input type="text" :id="`rule_for_${row.id}`" class="form-control" placeholder="Enter For" :value="`${row.for}`" />
                               </div>
                               <div class="col mb-6">
                                 <label :for="`exprInput_${row.id}`" class="form-label">Rule Expr</label>
-                                <div class="form-control promql"></div>
-                                <input type="text" :id="`exprInput_${row.id}`" class="form-control promql" placeholder="Enter Name"   >
+                                <PromQLEditor :editor-id="`editor_${row.id}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
                               </div>
                             </div>
                             <div class="row">
@@ -135,14 +159,14 @@ onMounted(() => {
                                 <label :for="`rule_status_${row.id}`" class="form-label">Enable</label>
                                 <div class="form-check form-switch ">
                                   <input type="checkbox" @click="update_configuration('status', $event.target, row.id, row.btoa_rule);" :id="`rule_status_${row.id}`" class="form-check-input" :checked="row._trix_status !== false">
-                                  <label :id="`rule_status_label_${row.id}`" :for="`rule_status_${row.id}`" class="form-check-label">' + (rule.labels._trix_status !== false ? 'ON' : 'OFF') + '</label>
+                                  <label :id="`rule_status_label_${row.id}`" :for="`rule_status_${row.id}`" class="form-check-label">{{ row._trix_status ? 'ON' : 'OFF' }}</label>
                                 </div>
                               </div>
                               <div class="col mb-6">
                                 <label :for="`rule_nhc_${row.id}`" class="form-label">Rule NHC</label>
                                 <div class="form-check form-switch ">
                                   <input type="checkbox" @click="update_configuration('nhc', $event.target, row.id, row.btoa_rule);" :id="`rule_nhc_${row.id}`" class="form-check-input" :checked="row.nhc === 'yes'" />
-                                  <label :id="`rule_nhc_label_${row.id}`" :for="`rule_nhc_${row.id}`" class="form-check-label">' + (rule.labels.nhc === 'yes' ? 'ON' : 'OFF') + '</label>
+                                  <label :id="`rule_nhc_label_${row.id}`" :for="`rule_nhc_${row.id}`" class="form-check-label">{{ row.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                                 </div>
                               </div>
                               <div class="col mb-6">
@@ -157,6 +181,9 @@ onMounted(() => {
                               </div>
                             </div>
                           </div>
+                        </div>
+
+
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -221,8 +248,7 @@ onMounted(() => {
                               </div>
                               <div class="col mb-6">
                                 <label :for="`exprInput_${add_count}`" class="form-label">Rule Expr</label>
-
-                                <input type="text" :id="`exprInput_${add_count}`" class="form-control promql" placeholder="Enter Name" @keyup="handlePromql" >
+                                <PromQLEditor :editor-id="`editor_${add_count}`" editor-rule=""><div class="promql"></div></PromQLEditor>
                               </div>
                             </div>
                             <div class="row">
@@ -282,6 +308,58 @@ onMounted(() => {
                     </tr>
                   </thead>
                   <tbody>
+
+<!--
+                    configuration.groups.forEach((group) => {
+                      group.rules.forEach((rule) => {
+                        const row: TableRow = {
+                          id: count,
+                          group: group.name,
+                          alert: rule.alert,
+                          description: rule.annotations.description,
+                          for: rule.for,
+                          expr: rule.expr,
+                          btoa_rule: btoa(JSON.stringify(rule)),
+                          _trix_status: rule.labels._trix_status,
+                          nhc: rule.labels.nhc,
+                          severity: rule.labels.severity,
+                        }
+                        tableRows.value.push(row);
+                        console.log(row);
+
+                        count++;
+                      })
+                    }) -->
+
+                    <span v-for="groups in configuration.groups" :key="groups">
+                      <!-- <td>{{ groups }}</td> -->
+                      <tr v-for="(rules, index) in groups" :key="rules">
+                        <td>{{ rules }}</td>
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ groups.name }}</td>
+                        <td>{{ rules.alert }}</td>
+
+                        <!-- <td v-for="(group, groupIndex) in row.configuration.groups" :key="groupIndex">
+                          <ul>
+                            <li v-for="(rule, ruleIndex) in group.rules" :key="ruleIndex">
+                              {{ rule.name }}
+                            </li>
+                          </ul>
+                        </td> -->
+                      </tr>
+
+                    </span>
+
+
+
+
+
+
+
+
+
+
+
                     <tr v-for="row in tableRows" :key="row.id">
                       <th scope="row">{{ row.id }}</th>
                       <td>{{ row.group }}</td>
@@ -297,7 +375,7 @@ onMounted(() => {
                       <td>
                         <div class="form-check form-switch mb-2">
                           <input class="form-check-input" @click="update_configuration('nhc', $event.target, row.id, row.btoa_rule);" type="checkbox" id="rule_nhc" :checked="row.nhc === 'yes'">
-                          <label class="form-check-label" for="rule_nhc" :id="`#rule_nhc_text_${row.id}`">{{ row.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                          <label class="form-check-label" for="rule_nhc" :id="`rule_nhc_text_${row.id}`">{{ row.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
 
@@ -422,6 +500,7 @@ interface TableRow {
   id: number;
   group: string;
   alert: string;
+  description: string;
   btoa_rule: string;
   for: string;
   expr: string;
@@ -461,6 +540,33 @@ let configuration = await fetchRules(url);
 
 console.log(configuration);
 
+const ruleRow = (row: any, mode: string) => {
+  let response;
+  const rule = {
+    "alert": row.alert,
+    "annotations": {
+      "description": row.description
+    },
+    "for": row.for,
+    "expr": row.expr,
+    "labels": {
+      "_trix_status": row._trix_status,
+      "nhc": row.nhc,
+      "severity": row.severity
+    }
+
+  };
+  if (mode === "JSON"){
+    response = JSON.stringify(rule, null, 2);
+  } else if (mode === "YAML"){
+    response = jsyaml.dump(rule);
+}
+  return response;
+};
+
+
+
+
 export default {
 
   components: {
@@ -473,6 +579,7 @@ export default {
 
     return {
       // configuration: null,
+      configuration,
       activeButton: 1,
       previousButton: null,
       // showModal: false,
@@ -481,8 +588,8 @@ export default {
       showfailedToast: false,
       toastMessage: '',
       showwarningToast: false,
-      // Content: JSON.stringify(configuration, null, 2),
-      Content: JSON.stringify({"key": "value"}, null, 2),
+      Content: JSON.stringify(configuration, null, 2),
+      // Content: JSON.stringify({"key": "value"}, null, 2),
       ContentType: "JSON",
       // CodeMirrorEditor,
       // yamlContent: jsyaml.dump(configuration),
@@ -490,26 +597,30 @@ export default {
   },
   async mounted() {
     try {
-      const response = await axios.get(url+ '/get_rules');
+      // configuration = await fetchRules(url);
+      // const response = await axios.get(url+ '/get_rules');
       let count = 1;
+      // console.log(configuration);
       // console.log(response.data);
       // console.log('{\n  "key": "value"\n}');
       // console.log(JSON.stringify(fetchRules(url)));
-      response.data.groups.forEach((group) => {
+      // response.data.groups.forEach((group) => {
+      configuration.groups.forEach((group) => {
         group.rules.forEach((rule) => {
           const row: TableRow = {
             id: count,
             group: group.name,
             alert: rule.alert,
-            for: rule.alert,
-            expr: rule.alert,
+            description: rule.annotations.description,
+            for: rule.for,
+            expr: rule.expr,
             btoa_rule: btoa(JSON.stringify(rule)),
             _trix_status: rule.labels._trix_status,
             nhc: rule.labels.nhc,
             severity: rule.labels.severity,
           }
           tableRows.value.push(row);
-          // console.log(row);
+          console.log(row);
 
           count++;
         })

@@ -1,9 +1,10 @@
 <!-- <script setup lang="ts"></script> -->
 
 <template>
-  <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>
-  <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button>
-  <div ref="editorContainer" class="editor-container"></div>
+  <!-- <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm" v-if="editorHeight === 300">HTML View</button> -->
+  <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm" v-if="editorHeight !== 300">JSON View</button>
+  <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm" v-if="editorHeight !== 300">YAML View</button>
+  <div ref="editorContainer" class="editor-container" :style="{ height: editorHeight + 'px' }"></div>
 </template>
 
 <script lang="ts">
@@ -27,6 +28,10 @@ export default {
       required: true,
       validator: (value: string) => ['JSON', 'YAML'].includes(value),
     },
+    editorHeight: {
+      type: Number,
+      required: true
+  },
   },
 
   emits: ['update:Content', 'showErrorToast'],
@@ -167,7 +172,7 @@ export default {
 <style>
 .editor-container {
   border: 1px solid #ccc;
-  height: 600px;
+  /* height: 600px; */
   overflow: auto;
 }
 </style>
