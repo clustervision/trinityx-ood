@@ -30,7 +30,7 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
                 <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button> :ContentType="currentContentType"-->
                 <div>
                   <!--  @showErrorToast="$emit('showErrorToast', $event)"  -->
-                  <CodeMirrorEditor :Content="Content" :ContentType="ContentType"/>
+                  <CodeMirrorEditor :Content="Content" :ContentType="ContentType" @showErrorToast="$emit('showErrorToast', $event)" />
 
                   <!-- <component :is="CodeMirrorEditor" :Content="Content"  @showErrorToast="$emit('showErrorToast', $event)"  /> -->
                 </div>

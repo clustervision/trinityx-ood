@@ -1,4 +1,4 @@
-<script setup lang="ts"></script>
+<!-- <script setup lang="ts"></script> -->
 
 <template>
   <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>
@@ -27,99 +27,120 @@ export default {
       required: true,
       validator: (value: string) => ['JSON', 'YAML'].includes(value),
     },
-    // onShowErrorToast: {
-    //   type: Function as PropType<(message: string) => void>,
-    //   required: true,
-    // },
   },
-
-  data() {
-    return {
-      currentContent: this.Content,
-      currentContentType: this.ContentType,
-    };
-  },
-  methods: {
-    switchMode(mode: string) {
-      console.log(`Mode>>>>>>>>> ${mode} Mode`);
-      console.log(`Mode>>>>>>>>> ${this.currentContentType} Mode`);
-      if (this.currentContentType !== mode) {
-        this.currentContentType = mode;
-        console.log(`Switched to ${mode} Mode`);
-        this.convertContent(mode);
-      } else {
-        console.log(`Already in ${mode} Mode, no conversion needed`);
-        this.$emit('showErrorToast', `Error: Already in ${mode} Mode, no conversion needed`);
-      }
-    },
-    convertContent(mode: string) {
-      if (mode === 'JSON') {
-        console.log('Converting to JSON...');
-      } else if (mode === 'YAML') {
-        console.log('Converting to YAML...');
-      }
-    }
-  },
-
-
 
   emits: ['update:Content', 'showErrorToast'],
-  setup(props, { emit }) {
-    const editorContainer = ref(null);
-    let editor = null;
 
-    const createEditorState = (content, contentType) => {
-      const langExtension = contentType === 'JSON' ? json() : yaml();
+  setup(props: { Content: string; ContentType: string; }, { emit }: any) {
+    const editorContainer = ref(null);
+    let editor: EditorView | null = null;
+    const createEditorState = (Content: string, ContentType: string) => {
+      const langExtension = ContentType === 'JSON' ? json() : yaml();
+      // console.log('update:Content', content);
       return EditorState.create({
-        doc: content,
+        doc: Content,
         extensions: [
           basicSetup,
           langExtension,
           oneDark,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-              emit('update:Content', editor.state.doc.toString());
+              emit('update:Content', editor?.state.doc.toString());
             }
           }),
         ],
       });
     };
 
-    const updateEditorLanguage = (contentType) => {
-      let newContent;
-      if (contentType === 'JSON') {
+
+    const switchMode = (mode: string) => {
+      console.log(`Mode>>>>>>>>> ${mode} Mode`);
+      updateEditorLanguage(mode);
+    };
+
+
+
+    const getContentType = (content: string): 'JSON' | 'YAML' | null => {
+      try {
+        JSON.parse(content);
+        return 'JSON';
+      } catch (e) {
         try {
-          newContent = JSON.stringify(jsyaml.load(editor.state.doc.toString()), null, 2);
+          jsyaml.load(content);
+          return 'YAML';
         } catch (err) {
-          console.error('Failed to parse YAML to JSON', err);
-          emit('showErrorToast', err.message);
-          return;
-        }
-      } else if (contentType === 'YAML') {
-        try {
-          newContent = jsyaml.dump(JSON.parse(editor.state.doc.toString()));
-        } catch (err) {
-          console.error('Failed to parse JSON to YAML', err);
-          emit('showErrorToast', err.message);
-          return;
+          return null;
         }
       }
+    };
 
-      editor.setState(createEditorState(newContent, contentType));
+
+    const updateEditorLanguage = (contentType: string) => {
+      let newContent: string;
+      console.warn('updateEditorLanguage contentType >>>>>>>>>>>', contentType);
+      if (editor) {
+        if (contentType === 'JSON') {
+          const docContentType = getContentType(editor.state.doc.toString());
+          console.warn('doccontentType >>>>>>>>>>>', docContentType);
+          if (docContentType === 'JSON') {
+            newContent = editor.state.doc.toString();
+            emit('showErrorToast', `Error: Already in ${docContentType} Mode, no conversion needed`);
+            return;
+          } else {
+            try {
+              newContent = JSON.stringify(jsyaml.load(editor.state.doc.toString()), null, 2);
+            } catch (err: unknown) {
+              if (err instanceof Error) {
+                console.error('Failed to parse YAML to JSON', err);
+                emit('showErrorToast', err.message);
+              } else {
+                console.error('An unknown error occurred', err);
+                emit('showErrorToast', 'An unknown error occurred');
+              }
+              return;
+            }
+          }
+        } else if (contentType === 'YAML') {
+          const docContentType = getContentType(editor.state.doc.toString());
+          console.warn('doccontentType >>>>>>>>>>>', docContentType);
+          if (docContentType === 'YAML') {
+            newContent = editor.state.doc.toString();
+            emit('showErrorToast', `Error: Already in ${docContentType} Mode, no conversion needed`);
+            return;
+          } else {
+            try {
+              newContent = jsyaml.dump(JSON.parse(editor.state.doc.toString()));
+            } catch (err: unknown) {
+              if (err instanceof Error) {
+                console.error('Failed to parse JSON to YAML', err);
+                emit('showErrorToast', err.message);
+              } else {
+                console.error('An unknown error occurred', err);
+                emit('showErrorToast', 'An unknown error occurred');
+              }
+              return;
+            }
+          }
+        }
+      }
+      editor?.setState(createEditorState(newContent, contentType));
     };
 
     onMounted(() => {
-      editor = new EditorView({
-        state: createEditorState(props.Content, props.ContentType),
-        parent: editorContainer.value,
-      });
+      if (editorContainer.value) {
+        editor = new EditorView({
+          state: createEditorState(props.Content, props.ContentType),
+          parent: editorContainer.value,
+        });
+      }
     });
 
     watch(
       () => props.Content,
       (newValue) => {
-        if (newValue !== editor.state.doc.toString()) {
-          editor.dispatch({
+        console.error('newValue', newValue);
+        if (newValue !== editor?.state.doc.toString()) {
+          editor?.dispatch({
             changes: {
               from: 0,
               to: editor.state.doc.length,
@@ -131,13 +152,14 @@ export default {
     );
 
     watch(
-      () => props.ContentType,
-      (newContentType) => {
+      [() => props.ContentType],
+      ([newContentType]) => {
+        console.error('newContentType', newContentType);
         updateEditorLanguage(newContentType);
       }
     );
 
-    return { editorContainer, };
+    return { editorContainer, switchMode, };
   },
 };
 </script>
