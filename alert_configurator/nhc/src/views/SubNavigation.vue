@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 </script>
 <template>
 
@@ -25,11 +25,14 @@
           <div class="modal-body">
             <div class="row">
               <div class="col mb-12">
-                <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">file path</span></label>
-                <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>
-                <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button>
+                <!-- <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">file path</span></label> -->
+                <!-- <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>
+                <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button> :ContentType="currentContentType"-->
                 <div>
-                  <component :is="jsonEditor" :Content="Content" :ContentType="currentContentType" @showErrorToast="$emit('showErrorToast', $event)"  />
+                  <!--  @showErrorToast="$emit('showErrorToast', $event)"  -->
+                  <CodeMirrorEditor :Content="Content" :ContentType="ContentType"/>
+
+                  <!-- <component :is="CodeMirrorEditor" :Content="Content"  @showErrorToast="$emit('showErrorToast', $event)"  /> -->
                 </div>
 
               </div>
@@ -50,10 +53,10 @@
 export default {
   name: "SubNavigation",
   props: {
-    jsonEditor: {
-      type: Object,
-      required: true,
-    },
+    // CodeMirrorEditor: {
+    //   type: Object,
+    //   required: true,
+    // },
     Content: {
       type: String,
       required: true,
@@ -64,29 +67,29 @@ export default {
     },
   },
   emits: ['showErrorToast'],
-  data() {
-    return {
-      currentContentType: this.ContentType,
-    };
-  },
-  methods: {
-    switchMode(mode: string) {
-      if (this.currentContentType !== mode) {
-        this.currentContentType = mode;
-        console.log(`Switched to ${mode} Mode`);
-        this.convertContent(mode);
-      } else {
-        console.log(`Already in ${mode} Mode, no conversion needed`);
-        this.$emit('showErrorToast', `Error: Already in ${mode} Mode, no conversion needed`);
-      }
-    },
-    convertContent(mode: string) {
-      if (mode === 'JSON') {
-        console.log('Converting to JSON...');
-      } else if (mode === 'YAML') {
-        console.log('Converting to YAML...');
-      }
-    }
-  },
+  // data() {
+  //   return {
+  //     currentContentType: this.ContentType,
+  //   };
+  // },
+  // methods: {
+  //   switchMode(mode: string) {
+  //     if (this.currentContentType !== mode) {
+  //       this.currentContentType = mode;
+  //       console.log(`Switched to ${mode} Mode`);
+  //       this.convertContent(mode);
+  //     } else {
+  //       console.log(`Already in ${mode} Mode, no conversion needed`);
+  //       this.$emit('showErrorToast', `Error: Already in ${mode} Mode, no conversion needed`);
+  //     }
+  //   },
+  //   convertContent(mode: string) {
+  //     if (mode === 'JSON') {
+  //       console.log('Converting to JSON...');
+  //     } else if (mode === 'YAML') {
+  //       console.log('Converting to YAML...');
+  //     }
+  //   }
+  // },
 };
 </script>

@@ -1,33 +1,20 @@
 <script setup lang="ts">
 
-import './assets/fonts/boxicons.css';
+import 'boxicons'
 import './assets/css/core.css';
 import './assets/css/theme-default.css';
-import './assets/css/codemirror.min.css';
-import './assets/css/material-darker.min.css';
 import './assets/css/app.css';
-// import './assets/js/jquery.js';
-// import './assets/js/bootstrap.js';
 
 // import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
-
 import './assets/js/main.js';
-// import './assets/js/codemirror.min.js';
-// import './assets/js/javascript.min.js';
-// import './assets/js/yaml.min.js';
-// import './assets/js/js-yaml.min.js';
 // import './assets/js/app.js';
 
 import TopNavigation from '@/views/TopNavigation.vue';
 import SubNavigation from '@/views/SubNavigation.vue';
-// import HomeView from '@/views/HomeView.vue';
 import FooterBar from '@/views/FooterBar.vue';
-
 import PromQLEditor from '@/components/PromQLEditor.vue';
-
-import JsonEditor from '@/components/JsonEditor.vue';
-// import YamlEditor from '@/components/YamlEditor.vue';
+// import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 
 </script>
 
@@ -36,15 +23,15 @@ import JsonEditor from '@/components/JsonEditor.vue';
 
   <header>
     <TopNavigation />
-    <SubNavigation 
-      :json-editor="JsonEditor"
+    <SubNavigation
+
       :Content="Content"
       :ContentType="ContentType"
       @showErrorToast="failedToast"
     />
   </header>
-  
-
+<!--  :CodeMirrorEditor="CodeMirrorEditor" -->
+  <PromQLEditor><div class="promql"></div></PromQLEditor>
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
       <div class="content-wrapper">
@@ -163,7 +150,7 @@ import JsonEditor from '@/components/JsonEditor.vue';
                           <h5 class="modal-title" id="exampleModalLabel4">Add New Alert Rule</h5>
 
                                   <!-- <div>
-                                    <JsonEditor v-model="jsonContent" />
+                                    <CodeMirrorEditor v-model="jsonContent" />
                                   </div>
 
                                   <div>
@@ -245,7 +232,7 @@ import JsonEditor from '@/components/JsonEditor.vue';
                   </div>
 
 
-               
+
                 <!-- <HomeView><div class="promql"></div></HomeView>
                 <div v-if="showModal">
                   <HomeView><div class="promql"></div></HomeView>
@@ -296,11 +283,11 @@ import JsonEditor from '@/components/JsonEditor.vue';
                       <td>
                         <div style="display: inline-block;" class="tooltip-wrapper" data-bs-toggle="tooltip" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Edit This Rule</span>">
                           <button class="tooltip-modal-link" id="actions" :data-bs-target="`#rule_modal_${row.id}`" data-bs-toggle="modal">
-                            <i class="bx bx-md bx-edit" style="color: #696cff;"></i>
+                            <box-icon name='edit' color="#696cff" size="md"></box-icon>
                           </button>
                         </div>
                         <button style="display: inline-block;" class="tooltip-modal-link" @click="update_configuration('delete', $event.target, row.id, row.btoa_rule);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
-                          <i class="bx bx-md bx-trash" style="color: red;"></i>
+                          <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
                       </td>
                     </tr>
@@ -470,7 +457,7 @@ export default {
       showwarningToast: false,
       Content: JSON.stringify(configuration, null, 2),
       ContentType: "JSON",
-      JsonEditor,
+      // CodeMirrorEditor,
       // yamlContent: jsyaml.dump(configuration),
     };
   },

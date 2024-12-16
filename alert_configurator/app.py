@@ -43,9 +43,9 @@ TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-CORS(app, resources={r"/get_rules": {"origins": "http://vmware-controller1.cluster:5173"}})
-CORS(app, resources={r"/save_config": {"origins": "http://vmware-controller1.cluster:5173"}})
-CORS(app, resources={r"/license": {"origins": "http://vmware-controller1.cluster:5173"}})
+CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
 
 
 @app.before_request
