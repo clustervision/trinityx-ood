@@ -18,6 +18,34 @@ import FooterBar from '@/views/FooterBar.vue';
 import PromQLEditor from '@/components/PromQLEditor.vue';
 // import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 
+
+
+import { onMounted, ref } from 'vue';
+import { Modal } from 'bootstrap';
+
+const uniqueModal = ref<Modal | null>(null);
+
+const showModal = (id: string) => {
+  console.log(id);
+  const dymodal = document.getElementById(`rule_modal_${id}`);
+  console.log(dymodal);
+
+  if (dymodal) {
+    uniqueModal.value = new Modal(dymodal, {
+      backdrop: true,
+    });
+    uniqueModal.value.show();
+    console.log(uniqueModal.value);
+  } else {
+    console.error(`Modal with ID rule_modal_${id} not found`);
+  }
+};
+
+onMounted(() => {
+  console.log('App mounted, ready for modals!');
+});
+
+
 </script>
 
 
@@ -62,7 +90,7 @@ import PromQLEditor from '@/components/PromQLEditor.vue';
 
 <!--  id="modal-container   v-bind:id="`rule_modal_${row.id}`"" -->
 
-                  <div class="modal fade" v-bind:id="`#rule_modal_${row.id}`" tabindex="-1" aria-hidden="true" >
+                  <div class="modal fade" v-bind:id="`rule_modal_${row.id}`" tabindex="-1" aria-hidden="true" >
                     <div class="modal-dialog modal-xl" role="document">
                       <div class="modal-content">
                         <div class="modal-header">
@@ -257,8 +285,8 @@ import PromQLEditor from '@/components/PromQLEditor.vue';
                     <tr v-for="row in tableRows" :key="row.id">
                       <th scope="row">{{ row.id }}</th>
                       <td>{{ row.group }}</td>
-                      <!--   @click="showModal(row.id)"           :data-bs-target="`#rule_modal_${row.id}`"                -->
-                      <td><a href="#" data-bs-toggle="modal"   @click="showModal(row.id)"   >{{ row.alert }}</a></td>
+                      <!--   @click="showModal(row.id)"     data-bs-toggle="modal"        :data-bs-target="`#rule_modal_${row.id}`"                -->
+                      <td><a href="#"  @click.prevent="showModal(row.id)"   >{{ row.alert }}</a></td>
                       <td>
                         <div class="form-check form-switch mb-2">
                           <input class="form-check-input" type="checkbox" :checked="row._trix_status !== false" @click="update_configuration('status', $event.target, row.id, row.btoa_rule);" id="rule_status">
@@ -385,7 +413,7 @@ import {basicSetup} from 'codemirror';
 import {EditorView} from '@codemirror/view';
 import jsyaml from 'js-yaml';
 import axios from 'axios';
-import { bootstrap, Modal, } from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+// import { bootstrap, Modal, } from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // import { bootstrap, Modal } from 'bootstrap';
 // console.log(bootstrap.Modal);
 // console.log(bootstrap.Modal);
@@ -448,7 +476,7 @@ export default {
       activeButton: 1,
       previousButton: null,
       // showModal: false,
-      uniqueModal: null,
+      // uniqueModal: null,
       showSuccessToast: false,
       showfailedToast: false,
       toastMessage: '',
@@ -510,11 +538,17 @@ export default {
     }
   },
   methods: {
-    showModal(id) {
-      console.log(id);
-      this.uniqueModal = new Modal(document.getElementById(`rule_modal_${id}`));
-      this.uniqueModal.show();
-    },
+//     showModal(id:string) {
+//       console.log(id);
+//       const dymodal  = document.getElementById(`rule_modal_${id}`);
+//       console.log(dymodal);
+//       // this.uniqueModal = new bootstrap.Modal(document.getElementById(`rule_modal_${id}`), {
+//         this.uniqueModal = new Modal(document.getElementById(`rule_modal_${id}`), {
+//         backdrop: true
+// });
+//       console.log( this.uniqueModal);
+//       this.uniqueModal.show();
+//     },
 
     successToast() {
       this.showSuccessToast = true;
@@ -560,85 +594,107 @@ export default {
 
 
 
-// Reactive storage for multiple editors
-const editorInstances = ref<Map<number, EditorView>>(new Map());
-const editorCount = ref<number[]>([1, 2]); // Example: Two editors (IDs: ruleEditor_1, ruleEditor_2)
+// // Reactive storage for multiple editors
+// const editorInstances = ref<Map<number, EditorView>>(new Map());
+// const editorCount = ref<number[]>([1, 2]); // Example: Two editors (IDs: ruleEditor_1, ruleEditor_2)
 
-// Function to initialize or update an editor
-const setupEditor = (count: number, content: string, mode: any) => {
-  const editorId = `ruleEditor_${count}`;
-  const editorElement = document.getElementById(editorId);
+// // Function to initialize or update an editor
+// const setupEditor = (count: number, content: string, mode: any) => {
+//   const editorId = `ruleEditor_${count}`;
+//   const editorElement = document.getElementById(editorId);
 
-  if (!editorElement) {
-    console.error(`Editor container with ID '${editorId}' not found.`);
-    return;
-  }
+//   if (!editorElement) {
+//     console.error(`Editor container with ID '${editorId}' not found.`);
+//     return;
+//   }
 
-  if (!editorInstances.value.has(count)) {
-    // Initialize a new CodeMirror instance
-    const state = EditorState.create({
-      doc: content,
-      extensions: [basicSetup, oneDark, mode],
-    });
+//   if (!editorInstances.value.has(count)) {
+//     // Initialize a new CodeMirror instance
+//     const state = EditorState.create({
+//       doc: content,
+//       extensions: [basicSetup, oneDark, mode],
+//     });
 
-    const editor = new EditorView({
-      state,
-      parent: editorElement,
-    });
+//     const editor = new EditorView({
+//       state,
+//       parent: editorElement,
+//     });
 
-    editorInstances.value.set(count, editor);
-  } else {
-    // Update existing editor instance
-    const editor = editorInstances.value.get(count);
-    if (editor) {
-      const state = EditorState.create({
-        doc: content,
-        extensions: [basicSetup, oneDark, mode],
-      });
-      editor.setState(state);
-    }
-  }
-  return editorInstances.value.get(count) || null;
-};
+//     editorInstances.value.set(count, editor);
+//   } else {
+//     // Update existing editor instance
+//     const editor = editorInstances.value.get(count);
+//     if (editor) {
+//       const state = EditorState.create({
+//         doc: content,
+//         extensions: [basicSetup, oneDark, mode],
+//       });
+//       editor.setState(state);
+//     }
+//   }
+//   return editorInstances.value.get(count) || null;
+// };
 
-// Function to open an editor by count
-const openEditor = (count: number) => {
-  const editorId = `ruleEditor_${count}`;
-  const editorContainer = document.getElementById(editorId);
+// // Function to open an editor by count
+// const openEditor = (count: number) => {
+//   const editorId = `ruleEditor_${count}`;
+//   const editorContainer = document.getElementById(editorId);
 
-  // Ensure container visibility
-  if (editorContainer) {
-    editorContainer.style.display = 'block';
-    editorContainer.style.height = '300px';
-    editorContainer.style.width = '100%';
-  } else {
-    console.error('Editor container not found for count:', count);
-    return null;
-  }
+//   // Ensure container visibility
+//   if (editorContainer) {
+//     editorContainer.style.display = 'block';
+//     editorContainer.style.height = '300px';
+//     editorContainer.style.width = '100%';
+//   } else {
+//     console.error('Editor container not found for count:', count);
+//     return null;
+//   }
 
-  if (editorInstances.value.has(count)) {
-    const editor = editorInstances.value.get(count);
-    if (editor) {
-      editor.focus(); // Focus the editor for usability
-      return editor;
-    }
-  }
+//   if (editorInstances.value.has(count)) {
+//     const editor = editorInstances.value.get(count);
+//     if (editor) {
+//       editor.focus(); // Focus the editor for usability
+//       return editor;
+//     }
+//   }
 
-  // If the editor doesn't exist, set it up
-  return setupEditor(count, '', javascript());
-};
+//   // If the editor doesn't exist, set it up
+//   return setupEditor(count, '', javascript());
+// };
 
 // // Lifecycle hooks
 // onMounted(() => {
-//   // Example: Setup and open editors for the existing counts
-//   editorCount.value.forEach((count) => openEditor(count));
+
+//   const uniqueModal = ref<Modal | null>(null);
+
+//     const showModal = (id: string) => {
+//       console.log(id);
+//       const dymodal = document.getElementById(`rule_modal_${id}`);
+//       console.log(dymodal);
+
+//       if (dymodal) {
+//         uniqueModal.value = new Modal(dymodal, {
+//           backdrop: true,
+//         });
+//         uniqueModal.value.show();
+//         console.log(uniqueModal.value);
+//       } else {
+//         console.error(`Modal with ID rule_modal_${id} not found`);
+//       }
+//     };
+//   });
+
+  // const dymodal = document.getElementById(`rule_modal_${id}`);
+  // console.log(dymodal);
+  // Example: Setup and open editors for the existing counts
+  // editorCount.value.forEach((count) => openEditor(count));
 
 
-//   // const tooltipLinks = document.querySelectorAll('.tooltip-modal-link');
-//   // tooltipLinks.forEach(link => {
-//   //   new bootstrap.Tooltip(link); // This will work after the type installation
-//   // });
-// });
+  // const tooltipLinks = document.querySelectorAll('.tooltip-modal-link');
+  // tooltipLinks.forEach(link => {
+  //   new bootstrap.Tooltip(link); // This will work after the type installation
+  // });
+
 
 // onBeforeUnmount(() => {
 //   // Clean up editor instances
