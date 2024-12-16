@@ -4,8 +4,10 @@ import 'boxicons'
 import './assets/css/core.css';
 import './assets/css/theme-default.css';
 import './assets/css/app.css';
+// import 'bootstrap';
 
 // import 'bootstrap/dist/css/bootstrap.css';
+// import {bootstrap} from 'bootstrap/dist/js/bootstrap.bundle.js';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
 import './assets/js/main.js';
 // import './assets/js/app.js';
@@ -56,11 +58,11 @@ import PromQLEditor from '@/components/PromQLEditor.vue';
             <h5 class="card-header">Rules</h5>
             <div class="card-body">
               <div class="table-responsive text-nowrap">
-                <div id="modal-container" v-for="row in tableRows" :key="row.id">
+                <div v-for="row in tableRows" :key="row.id">
 
+<!--  id="modal-container   v-bind:id="`rule_modal_${row.id}`"" -->
 
-
-                  <div class="modal fade" :id="`#rule_modal_${row.id}`" tabindex="-1" aria-hidden="true">
+                  <div class="modal fade" v-bind:id="`#rule_modal_${row.id}`" tabindex="-1" aria-hidden="true" >
                     <div class="modal-dialog modal-xl" role="document">
                       <div class="modal-content">
                         <div class="modal-header">
@@ -70,9 +72,9 @@ import PromQLEditor from '@/components/PromQLEditor.vue';
                         <div class="modal-body">
                           <div class="row">
                             <div class="col mb-12">
-                              <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
+                              <!-- <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
                               <button type="button" :id="`button_json_${row.id}`" @click="rule_modal_json(row.id, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
-                              <button type="button" :id="`button_yaml_${row.id}`" @click="rule_modal_yaml(row.id, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
+                              <button type="button" :id="`button_yaml_${row.id}`" @click="rule_modal_yaml(row.id, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button> -->
                               <div :id="`ruleEditor_${row.id}`" style="display: none; height: 300px; border: 1px solid #ddd;"></div>
                             </div>
                           </div>
@@ -255,7 +257,8 @@ import PromQLEditor from '@/components/PromQLEditor.vue';
                     <tr v-for="row in tableRows" :key="row.id">
                       <th scope="row">{{ row.id }}</th>
                       <td>{{ row.group }}</td>
-                      <td><a href="#" data-bs-toggle="modal" :data-bs-target="`#rule_modal_${row.id}`">{{ row.alert }}</a></td>
+                      <!--   @click="showModal(row.id)"           :data-bs-target="`#rule_modal_${row.id}`"                -->
+                      <td><a href="#" data-bs-toggle="modal"   @click="showModal(row.id)"   >{{ row.alert }}</a></td>
                       <td>
                         <div class="form-check form-switch mb-2">
                           <input class="form-check-input" type="checkbox" :checked="row._trix_status !== false" @click="update_configuration('status', $event.target, row.id, row.btoa_rule);" id="rule_status">
@@ -382,7 +385,10 @@ import {basicSetup} from 'codemirror';
 import {EditorView} from '@codemirror/view';
 import jsyaml from 'js-yaml';
 import axios from 'axios';
-
+import { bootstrap, Modal, } from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+// import { bootstrap, Modal } from 'bootstrap';
+// console.log(bootstrap.Modal);
+// console.log(bootstrap.Modal);
 
 interface TableRow {
   id: number;
@@ -433,16 +439,7 @@ export default {
     PromQLEditor,
     SubNavigation,
   },
-  // setup() {
-  //   const Content = JSON.stringify(configuration, null, 2);
-  //   const ContentType = "JSON";
-  //   // const yamlContent = jsyaml.dump(configuration);
-  //   return {
-  //     JsonEditor,
-  //     Content,
-  //     ContentType,
-  //   };
-  // },
+
 
   data() {
 
@@ -450,7 +447,8 @@ export default {
       // configuration: null,
       activeButton: 1,
       previousButton: null,
-      showModal: false,
+      // showModal: false,
+      uniqueModal: null,
       showSuccessToast: false,
       showfailedToast: false,
       toastMessage: '',
@@ -492,6 +490,19 @@ export default {
       // console.log(count);
       // console.log(add_count);
 
+    //   const modalTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="modal"]'));
+    // const modalList = modalTriggerList.map(modalTriggerEl => new bootstrap.Modal(modalTriggerEl));
+    // console.log(modalTriggerList);
+    // console.log(modalList);
+
+
+      // const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+      // const tooltipList = tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+      // const modalTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="modal"]'))
+      // const modalList = modalTriggerList.map(modalTriggerEl => new bootstrap.Modal(modalTriggerEl))
+
+
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -499,6 +510,12 @@ export default {
     }
   },
   methods: {
+    showModal(id) {
+      console.log(id);
+      this.uniqueModal = new Modal(document.getElementById(`rule_modal_${id}`));
+      this.uniqueModal.show();
+    },
+
     successToast() {
       this.showSuccessToast = true;
       setTimeout(() => {
@@ -521,19 +538,19 @@ export default {
       }, 2000);
     },
 
-    clearTable() {
-      this.tableRows = [];
-      this.$refs.modalContainer.innerHTML = '';
-    },
+    // clearTable() {
+    //   this.tableRows = [];
+    //   this.$refs.modalContainer.innerHTML = '';
+    // },
 
-    openModal() {
-      this.showModal = true;
-      this.$nextTick(() => {
-        const parentElement = document.querySelector('.promql');
-        console.log(this.showModal);
-        console.log(parentElement);
-      });
-    },
+    // openModal() {
+    //   this.showModal = true;
+    //   this.$nextTick(() => {
+    //     const parentElement = document.querySelector('.promql');
+    //     console.log(this.showModal);
+    //     console.log(parentElement);
+    //   });
+    // },
 
     // ... methods to show other toasts
   },

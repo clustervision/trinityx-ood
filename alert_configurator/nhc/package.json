@@ -20,6 +20,7 @@
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-yaml": "^6.1.2",
     "@codemirror/theme-one-dark": "^6.1.2",
+    "@popperjs/core": "^2.11.8",
     "@prometheus-io/codemirror-promql": "^0.300.1",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
