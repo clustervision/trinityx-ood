@@ -1,17 +1,47 @@
 <script setup lang="ts">
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
+
+interface Row {
+  alert: string;
+  annotations: {
+    description: string;
+  };
+  expr: string;
+  for: string;
+  labels: {
+    _trix_status: boolean;
+    nhc: string;
+    severity: string;
+  };
+}
+
 defineProps({
+  promQLurl: {
+    type: String,
+    required: true,
+  },
   update_configuration: Function,
-  base64String: Function,
-  currentMode: Function,
+  updateClass: Function,
+  base64String: {
+    type: Function,
+    required: true,
+  },
+  currentMode: String,
   rule_modal_html: Function,
   rule_modal_json: Function,
   rule_modal_yaml: Function,
   ruleRow: Function,
-  row: Object,
-  index: Number,
+  row: {
+    type: Object as () => Row,
+    required: true,
+  },
+  index: {
+    type: Number,
+    required: true
+  },
 });
+
 </script>
 
 <template>
@@ -31,10 +61,10 @@ defineProps({
             </div>
           </div>
           <div v-if="currentMode === 'JSON'">
-            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @showErrorToast="$emit('showErrorToast', $event)" />
+            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @Toast="$emit('Toast', $event)" />
           </div>
           <div v-if="currentMode === 'YAML'">
-            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @showErrorToast="$emit('showErrorToast', $event)" />
+            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @Toast="$emit('Toast', $event)" />
           </div>
           <div v-if="currentMode === 'HTML'">
             <div :id="`model-form_${index + 1}`">
@@ -57,7 +87,7 @@ defineProps({
                 </div>
                 <div class="col mb-6">
                   <label :for="`exprInput_${index + 1}`" class="form-label">Rule Expr</label>
-                  <PromQLEditor :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
+                  <PromQLEditor :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
                 </div>
               </div>
               <div class="row">
@@ -77,7 +107,7 @@ defineProps({
                 </div>
                 <div class="col mb-6">
                   <label :for="`rule_severity_${index + 1}`" class="form-label">Set Priority</label>
-                  <select :id="`rule_severity_${index + 1}`" @change="update_configuration('severity', $event.target, index + 1, base64String(row));" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
+                  <select :id="`rule_severity_${index + 1}`" @change="update_configuration('severity', $event.target, index + 1, base64String(row));" :v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
                     <option class="btn-primary">Set Priority</option>
                     <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
                     <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>

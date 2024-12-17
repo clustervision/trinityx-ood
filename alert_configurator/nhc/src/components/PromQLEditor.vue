@@ -5,13 +5,17 @@
  </template>
 
  <script setup lang="ts">
- import { ref, onMounted, watch } from 'vue';
+ import { onMounted } from 'vue';
  import {PromQLExtension} from '@prometheus-io/codemirror-promql';
  import {basicSetup} from 'codemirror';
  import {EditorState} from '@codemirror/state';
  import {EditorView} from '@codemirror/view';
 
  const props = defineProps({
+  promQLurl: {
+    type: String,
+    required: true,
+  },
   editorId: {
     type: String,
     required: true,
@@ -31,7 +35,7 @@ onMounted(() => {
     }
 
     const promQL = new PromQLExtension();
-    promQL.setComplete({ maxMetricsMetadata: 10000, remote: { httpErrorHandler: (error: string) => console.error(error), httpMethod: 'GET', url: "https://vmware-controller1.cluster:9090" } });
+    promQL.setComplete({ maxMetricsMetadata: 10000, remote: { httpErrorHandler: (error: string) => console.error(error), httpMethod: 'GET', url: props.promQLurl } });
 
     new EditorView({
       state: EditorState.create({
@@ -40,8 +44,6 @@ onMounted(() => {
       }),
       parent: parentElement,
     });
-
-    console.log('Editor initialized for:', props.editorId);
   } catch (error) {
     console.error("Error initializing the editor:", error);
   }
@@ -53,6 +55,6 @@ onMounted(() => {
 <style>
 .promql {
   position: relative !important;
-  z-index: 1055 !important; /* Bootstrap modal z-index */
+  z-index: 1055 !important;
 }
 </style>

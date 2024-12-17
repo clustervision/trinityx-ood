@@ -1,4 +1,3 @@
-<!-- <script setup lang="ts"></script> -->
 
 <template>
   <!-- <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm" v-if="editorHeight === 300">HTML View</button> -->
@@ -18,32 +17,6 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import jsyaml from 'js-yaml';
 
 
-const ruleRow = (row: any, mode: string) => {
-  let response;
-  const rule = {
-    "alert": row.alert,
-    "annotations": {
-      "description": row.description
-    },
-    "for": row.for,
-    "expr": row.expr,
-    "labels": {
-      "_trix_status": row._trix_status,
-      "nhc": row.nhc,
-      "severity": row.severity
-    }
-
-  };
-  if (mode === "JSON"){
-    response = JSON.stringify(rule, null, 2);
-  } else if (mode === "YAML"){
-    response = jsyaml.dump(rule);
-}
-  return response;
-};
-
-
-
 export default {
   props: {
     Content: {
@@ -58,17 +31,16 @@ export default {
     editorHeight: {
       type: Number,
       required: true
-  },
+    },
   },
 
-  emits: ['update:Content', 'showErrorToast'],
+  emits: ['update:Content', 'Toast'],
 
-  setup(props: { Content: object; ContentType: string; }, { emit }: any) {
+  setup(props: { Content: string; ContentType: string; }, { emit }: any) {
     const editorContainer = ref(null);
     let editor: EditorView | null = null;
     const createEditorState = (Content: string, ContentType: string) => {
       const langExtension = ContentType === 'JSON' ? json() : yaml();
-      // console.log('update:Content', content);
       return EditorState.create({
         doc: Content,
         extensions: [
@@ -84,13 +56,10 @@ export default {
       });
     };
 
-
     const switchMode = (mode: string) => {
       console.log(`Mode>>>>>>>>> ${mode} Mode`);
       updateEditorLanguage(mode);
     };
-
-
 
     const getContentType = (content: string): 'JSON' | 'YAML' | null => {
       try {
@@ -106,7 +75,6 @@ export default {
       }
     };
 
-
     const updateEditorLanguage = (contentType: string) => {
       let newContent: string;
       console.warn('updateEditorLanguage contentType >>>>>>>>>>>', contentType);
@@ -116,7 +84,7 @@ export default {
           console.warn('doccontentType >>>>>>>>>>>', docContentType);
           if (docContentType === 'JSON') {
             newContent = editor.state.doc.toString();
-            emit('showErrorToast', `Error: Already in ${docContentType} Mode, no conversion needed`);
+            emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
             return;
           } else {
             try {
@@ -124,10 +92,10 @@ export default {
             } catch (err: unknown) {
               if (err instanceof Error) {
                 console.error('Failed to parse YAML to JSON', err);
-                emit('showErrorToast', err.message);
+                emit('Toast', {message: err.message, toastClass: 'bg-danger'});
               } else {
                 console.error('An unknown error occurred', err);
-                emit('showErrorToast', 'An unknown error occurred');
+                emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
               }
               return;
             }
@@ -137,7 +105,7 @@ export default {
           console.warn('doccontentType >>>>>>>>>>>', docContentType);
           if (docContentType === 'YAML') {
             newContent = editor.state.doc.toString();
-            emit('showErrorToast', `Error: Already in ${docContentType} Mode, no conversion needed`);
+            emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
             return;
           } else {
             try {
@@ -145,10 +113,10 @@ export default {
             } catch (err: unknown) {
               if (err instanceof Error) {
                 console.error('Failed to parse JSON to YAML', err);
-                emit('showErrorToast', err.message);
+                emit('Toast', {message: err.message, toastClass: 'bg-danger'});
               } else {
                 console.error('An unknown error occurred', err);
-                emit('showErrorToast', 'An unknown error occurred');
+                emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
               }
               return;
             }

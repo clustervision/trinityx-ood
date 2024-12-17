@@ -29,7 +29,7 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
                 <!-- <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>
                 <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button> :ContentType="currentContentType"-->
                 <div>
-                  <CodeMirrorEditor :editorHeight="600"  :Content="Content" :ContentType="ContentType" @showErrorToast="$emit('showErrorToast', $event)" />
+                  <CodeMirrorEditor :editorHeight="600"  :Content="Content" :ContentType="ContentType" @Toast="$emit('Toast', $event)" />
                 </div>
 
               </div>
@@ -37,7 +37,7 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" id="save_configuration" class="btn btn-primary">Save changes</button>
+            <button type="button" @click.prevent="save_configuration()" id="save_configuration" class="btn btn-primary">Save changes</button>
           </div>
         </div>
       </div>
@@ -50,12 +50,12 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 export default {
   name: "SubNavigation",
   props: {
-    // CodeMirrorEditor: {
-    //   type: Object,
-    //   required: true,
-    // },
+    save_configuration: {
+      type: Function,
+      required: true,
+    },
     Content: {
-      type: Object,
+      type: String,
       required: true,
     },
     ContentType: {
@@ -63,30 +63,6 @@ export default {
       required: true,
     },
   },
-  emits: ['showErrorToast'],
-  // data() {
-  //   return {
-  //     currentContentType: this.ContentType,
-  //   };
-  // },
-  // methods: {
-  //   switchMode(mode: string) {
-  //     if (this.currentContentType !== mode) {
-  //       this.currentContentType = mode;
-  //       console.log(`Switched to ${mode} Mode`);
-  //       this.convertContent(mode);
-  //     } else {
-  //       console.log(`Already in ${mode} Mode, no conversion needed`);
-  //       this.$emit('showErrorToast', `Error: Already in ${mode} Mode, no conversion needed`);
-  //     }
-  //   },
-  //   convertContent(mode: string) {
-  //     if (mode === 'JSON') {
-  //       console.log('Converting to JSON...');
-  //     } else if (mode === 'YAML') {
-  //       console.log('Converting to YAML...');
-  //     }
-  //   }
-  // },
+  emits: ['Toast'],
 };
 </script>
