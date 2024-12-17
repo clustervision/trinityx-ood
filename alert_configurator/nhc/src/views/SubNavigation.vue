@@ -25,13 +25,8 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
           <div class="modal-body">
             <div class="row">
               <div class="col mb-12">
-                <!-- <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">file path</span></label> -->
-                <!-- <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>
-                <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button> :ContentType="currentContentType"-->
-                <div>
-                  <CodeMirrorEditor :editorHeight="600"  :Content="Content" :ContentType="ContentType" @Toast="$emit('Toast', $event)" />
-                </div>
-
+                <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">{{ rulesFile }}</span></label> &nbsp;&nbsp;
+                <CodeMirrorEditor editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('Toast', $event)" />
               </div>
             </div>
           </div>
@@ -50,6 +45,10 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 export default {
   name: "SubNavigation",
   props: {
+    rulesFile: {
+      type: String,
+      required: true,
+    },
     save_configuration: {
       type: Function,
       required: true,

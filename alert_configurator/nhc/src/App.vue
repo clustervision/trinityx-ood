@@ -17,7 +17,7 @@ import { Modal } from 'bootstrap';
 
 
 const promQLurl = ref("https://vmware-controller1.cluster:9090");
-
+const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 const uniqueModal = ref<Modal | null>(null);
 
 const showModal = (id: number) => {
@@ -53,7 +53,7 @@ const rule_modal_yaml = (id: number, mode: number) => {
   currentMode.value = 'YAML';
 };
 
-const base64String = (row) => {
+const base64String = (row: string) => {
   const encodedData = btoa(JSON.stringify(row));
   return encodedData;
 };
@@ -65,6 +65,7 @@ const base64String = (row) => {
   <header>
     <TopNavigation />
     <SubNavigation
+      :rulesFile = "rulesFile"
       :save_configuration = "save_configuration"
       :Content="Content"
       :ContentType="ContentType"
@@ -128,6 +129,8 @@ const base64String = (row) => {
                                 <label for="rule_for_0" class="form-label">Rule For</label>
                                 <input type="text" id="rule_for_0" class="form-control" placeholder="Enter For" />
                               </div>
+                            </div>
+                            <div class="row">
                               <div class="col mb-6">
                                 <label for="exprInput_0" class="form-label">Rule Expr</label>
                                 <PromQLEditor :promQLurl="promQLurl" editor-id="editor_0" editor-rule=""><div class="promql"></div></PromQLEditor>
@@ -257,37 +260,6 @@ const base64String = (row) => {
     <div class="toast-body">{{ toastMessage }}</div>
   </div>
 
-
-  <!-- <div v-if="showSuccessToast" class="bs-toast toast toast-placement-ex m-2 fade bg-success top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
-    <div class="toast-header">
-      <i class="bx bx-bell me-2"></i>
-      <div class="me-auto fw-medium">Configuration</div>
-      <small>0 seconds ago</small>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body">Configuration Saved successfully.</div>
-  </div>
-
-  <div v-if="showfailedToast" class="bs-toast toast toast-placement-ex m-2 fade bg-danger top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
-    <div class="toast-header">
-      <i class="bx bx-bell me-2"></i>
-      <div class="me-auto fw-medium">Configuration</div>
-      <small>0 seconds ago</small>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body">{{ toastMessage }}</div>
-  </div>
-
-  <div v-if="showwarningToast" class="bs-toast toast toast-placement-ex m-2 fade bg-warning top-0 end-0 show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
-    <div class="toast-header">
-      <i class="bx bx-bell me-2"></i>
-      <div class="me-auto fw-medium">Configuration</div>
-      <small>0 seconds ago</small>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body"></div>
-  </div> -->
-
 </template>
 
 <script lang="ts">
@@ -346,14 +318,14 @@ const ruleRow = (row: any, mode: string) => {
   const rule = {
     "alert": row.alert,
     "annotations": {
-      "description": row.description
+      "description": row.annotations.description
     },
     "for": row.for,
     "expr": row.expr,
     "labels": {
-      "_trix_status": row._trix_status,
-      "nhc": row.nhc,
-      "severity": row.severity
+      "_trix_status": row.labels._trix_status,
+      "nhc": row.labels.nhc,
+      "severity": row.labels.severity
     }
 
   };
@@ -402,7 +374,7 @@ export default {
     },
 
 
-    update_configuration(key: string, element: string, count: string, form_rule: string) {
+    update_configuration(key: string, element: Event, count: string, form_rule: string) {
       console.log(key);
       console.log(element);
       console.log(count);

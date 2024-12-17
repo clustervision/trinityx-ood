@@ -1,13 +1,27 @@
 
 <template>
   <!-- <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm" v-if="editorHeight === 300">HTML View</button> -->
-  <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm" v-if="editorHeight !== 300">JSON View</button>
-  <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm" v-if="editorHeight !== 300">YAML View</button>
-  <div ref="editorContainer" class="editor-container" :style="{ height: editorHeight + 'px' }"></div>
+  <button type="button" @click="switchMode('HTML')" class="btn btn-secondary btn-sm" v-if="editorHeight === '300'">HTML View</button>
+  <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>&nbsp;
+  <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button>
+  <div ref="editorContainer" class="editor-container"></div>
+  <HTMLForm
+    :promQLurl = "promQLurl"
+    :update_configuration="update_configuration"
+    :updateClass = "updateClass"
+    :base64String="base64String"
+    :currentMode="currentMode"
+    :rule_modal_html="rule_modal_html"
+    :rule_modal_json="rule_modal_json"
+    :rule_modal_yaml="rule_modal_yaml"
+    :ruleRow = "ruleRow"
+    :row = "row"
+    :index = index
+  />
 </template>
 
 <script lang="ts">
-import { ref, onMounted, watch, type PropType } from 'vue';
+import { ref, onMounted, watch, type PropType, type SetupContext } from 'vue';
 import { basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
@@ -15,7 +29,7 @@ import { json } from '@codemirror/lang-json';
 import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
 import jsyaml from 'js-yaml';
-
+import HTMLForm from './HTMLForm.vue';
 
 export default {
   props: {
@@ -29,16 +43,21 @@ export default {
       validator: (value: string) => ['JSON', 'YAML'].includes(value),
     },
     editorHeight: {
-      type: Number,
-      required: true
+      type: String,
+      required: true,
     },
   },
 
   emits: ['update:Content', 'Toast'],
 
-  setup(props: { Content: string; ContentType: string; }, { emit }: any) {
+  setup(props: { Content: string; ContentType: string; editorHeight: string; }, context: SetupContext) {
     const editorContainer = ref(null);
     let editor: EditorView | null = null;
+    const fixedHeightTheme = EditorView.theme({
+      '&': { height: props.editorHeight + 'px' },
+      '.cm-scroller': { overflow: 'auto' },
+    });
+
     const createEditorState = (Content: string, ContentType: string) => {
       const langExtension = ContentType === 'JSON' ? json() : yaml();
       return EditorState.create({
@@ -47,9 +66,10 @@ export default {
           basicSetup,
           langExtension,
           oneDark,
+          fixedHeightTheme,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
-              emit('update:Content', editor?.state.doc.toString());
+              context.emit('update:Content', editor?.state.doc.toString());
             }
           }),
         ],
@@ -65,18 +85,20 @@ export default {
       try {
         JSON.parse(content);
         return 'JSON';
-      } catch (e) {
+      } catch (e: unknown) {
+        console.log('Not a valid JSON', e);
         try {
           jsyaml.load(content);
           return 'YAML';
-        } catch (err) {
+        } catch (err: unknown) {
+          console.log('Not a valid content', err);
           return null;
         }
       }
     };
 
     const updateEditorLanguage = (contentType: string) => {
-      let newContent: string;
+      let newContent: string = '';;
       console.warn('updateEditorLanguage contentType >>>>>>>>>>>', contentType);
       if (editor) {
         if (contentType === 'JSON') {
@@ -84,7 +106,7 @@ export default {
           console.warn('doccontentType >>>>>>>>>>>', docContentType);
           if (docContentType === 'JSON') {
             newContent = editor.state.doc.toString();
-            emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
+            context.emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
             return;
           } else {
             try {
@@ -92,10 +114,10 @@ export default {
             } catch (err: unknown) {
               if (err instanceof Error) {
                 console.error('Failed to parse YAML to JSON', err);
-                emit('Toast', {message: err.message, toastClass: 'bg-danger'});
+                context.emit('Toast', {message: err.message, toastClass: 'bg-danger'});
               } else {
                 console.error('An unknown error occurred', err);
-                emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+                context.emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
               }
               return;
             }
@@ -105,7 +127,7 @@ export default {
           console.warn('doccontentType >>>>>>>>>>>', docContentType);
           if (docContentType === 'YAML') {
             newContent = editor.state.doc.toString();
-            emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
+            context.emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
             return;
           } else {
             try {
@@ -113,10 +135,32 @@ export default {
             } catch (err: unknown) {
               if (err instanceof Error) {
                 console.error('Failed to parse JSON to YAML', err);
-                emit('Toast', {message: err.message, toastClass: 'bg-danger'});
+                context.emit('Toast', {message: err.message, toastClass: 'bg-danger'});
               } else {
                 console.error('An unknown error occurred', err);
-                emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+                context.emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+              }
+              return;
+            }
+          }
+        } else if (contentType === 'HTML') {
+          const docContentType = getContentType(editor.state.doc.toString());
+          console.warn('doccontentType >>>>>>>>>>>', docContentType);
+          if (docContentType === 'JSON') {
+            newContent = editor.state.doc.toString();
+            console.log(newContent);
+            context.emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
+            return;
+          } else {
+            try {
+              newContent = JSON.stringify(jsyaml.load(editor.state.doc.toString()), null, 2);
+            } catch (err: unknown) {
+              if (err instanceof Error) {
+                console.error('Failed to parse YAML to JSON', err);
+                context.emit('Toast', {message: err.message, toastClass: 'bg-danger'});
+              } else {
+                console.error('An unknown error occurred', err);
+                context.emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
               }
               return;
             }
@@ -164,10 +208,3 @@ export default {
 };
 </script>
 
-<style>
-.editor-container {
-  border: 1px solid #ccc;
-  /* height: 600px; */
-  overflow: auto;
-}
-</style>

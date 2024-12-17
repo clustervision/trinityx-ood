@@ -61,10 +61,10 @@ defineProps({
             </div>
           </div>
           <div v-if="currentMode === 'JSON'">
-            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @Toast="$emit('Toast', $event)" />
+            <CodeMirrorEditor editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @Toast="$emit('Toast', $event)" />
           </div>
           <div v-if="currentMode === 'YAML'">
-            <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @Toast="$emit('Toast', $event)" />
+            <CodeMirrorEditor editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @Toast="$emit('Toast', $event)" />
           </div>
           <div v-if="currentMode === 'HTML'">
             <div :id="`model-form_${index + 1}`">
@@ -85,6 +85,8 @@ defineProps({
                   <label :for="`rule_for_${index + 1}`" class="form-label">Rule For</label>
                   <input type="text" :id="`rule_for_${index + 1}`" class="form-control" placeholder="Enter For" :value="`${row.for}`" />
                 </div>
+              </div>
+              <div class="row">
                 <div class="col mb-6">
                   <label :for="`exprInput_${index + 1}`" class="form-label">Rule Expr</label>
                   <PromQLEditor :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
