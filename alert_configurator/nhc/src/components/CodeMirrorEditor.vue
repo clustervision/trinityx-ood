@@ -1,23 +1,10 @@
 
 <template>
   <!-- <button type="button" :id="`button_html_${row.id}`" @click="rule_modal_html(row.id, 1);" class="btn btn-secondary btn-sm" v-if="editorHeight === 300">HTML View</button> -->
-  <button type="button" @click="switchMode('HTML')" class="btn btn-secondary btn-sm" v-if="editorHeight === '300'">HTML View</button>
+  <!-- <button type="button" @click="switchMode('HTML')" class="btn btn-secondary btn-sm" v-if="editorHeight === '300'">HTML View</button> -->
   <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>&nbsp;
   <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button>
   <div ref="editorContainer" class="editor-container"></div>
-  <HTMLForm
-    :promQLurl = "promQLurl"
-    :update_configuration="update_configuration"
-    :updateClass = "updateClass"
-    :base64String="base64String"
-    :currentMode="currentMode"
-    :rule_modal_html="rule_modal_html"
-    :rule_modal_json="rule_modal_json"
-    :rule_modal_yaml="rule_modal_yaml"
-    :ruleRow = "ruleRow"
-    :row = "row"
-    :index = index
-  />
 </template>
 
 <script lang="ts">
@@ -29,7 +16,7 @@ import { json } from '@codemirror/lang-json';
 import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
 import jsyaml from 'js-yaml';
-import HTMLForm from './HTMLForm.vue';
+// import HTMLForm from './HTMLForm.vue';
 
 export default {
   props: {
@@ -143,29 +130,30 @@ export default {
               return;
             }
           }
-        } else if (contentType === 'HTML') {
-          const docContentType = getContentType(editor.state.doc.toString());
-          console.warn('doccontentType >>>>>>>>>>>', docContentType);
-          if (docContentType === 'JSON') {
-            newContent = editor.state.doc.toString();
-            console.log(newContent);
-            context.emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
-            return;
-          } else {
-            try {
-              newContent = JSON.stringify(jsyaml.load(editor.state.doc.toString()), null, 2);
-            } catch (err: unknown) {
-              if (err instanceof Error) {
-                console.error('Failed to parse YAML to JSON', err);
-                context.emit('Toast', {message: err.message, toastClass: 'bg-danger'});
-              } else {
-                console.error('An unknown error occurred', err);
-                context.emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
-              }
-              return;
-            }
-          }
         }
+        // else if (contentType === 'HTML') {
+        //   const docContentType = getContentType(editor.state.doc.toString());
+        //   console.warn('doccontentType >>>>>>>>>>>', docContentType);
+        //   if (docContentType === 'JSON') {
+        //     newContent = editor.state.doc.toString();
+        //     console.log(newContent);
+        //     context.emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
+        //     return;
+        //   } else {
+        //     try {
+        //       newContent = JSON.stringify(jsyaml.load(editor.state.doc.toString()), null, 2);
+        //     } catch (err: unknown) {
+        //       if (err instanceof Error) {
+        //         console.error('Failed to parse YAML to JSON', err);
+        //         context.emit('Toast', {message: err.message, toastClass: 'bg-danger'});
+        //       } else {
+        //         console.error('An unknown error occurred', err);
+        //         context.emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+        //       }
+        //       return;
+        //     }
+        //   }
+        // }
       }
       editor?.setState(createEditorState(newContent, contentType));
     };
@@ -206,5 +194,6 @@ export default {
     return { editorContainer, switchMode, };
   },
 };
+
 </script>
 

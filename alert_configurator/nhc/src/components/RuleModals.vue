@@ -55,17 +55,12 @@ defineProps({
         <div class="modal-body">
           <div class="row">
             <div class="col mb-12">
-              <button type="button" :id="`button_html_${index + 1}`" @click="rule_modal_html(index + 1, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
-              <button type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
-              <button type="button" :id="`button_yaml_${index + 1}`" @click="rule_modal_yaml(index + 1, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
+              <button type="button" :id="`button_html_${index + 1}`" @click="rule_modal_html(index + 1, 1);" class="btn btn-secondary btn-sm">HTML View</button> &nbsp;
+              <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
+              <CodeMirrorEditor v-if="currentMode !== 'HTML'" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" />
             </div>
           </div>
-          <div v-if="currentMode === 'JSON'">
-            <CodeMirrorEditor editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @Toast="$emit('Toast', $event)" />
-          </div>
-          <div v-if="currentMode === 'YAML'">
-            <CodeMirrorEditor editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @Toast="$emit('Toast', $event)" />
-          </div>
+
           <div v-if="currentMode === 'HTML'">
             <div :id="`model-form_${index + 1}`">
               <div class="row g-6">
