@@ -17,6 +17,33 @@ import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
 import jsyaml from 'js-yaml';
 
+
+const ruleRow = (row: any, mode: string) => {
+  let response;
+  const rule = {
+    "alert": row.alert,
+    "annotations": {
+      "description": row.description
+    },
+    "for": row.for,
+    "expr": row.expr,
+    "labels": {
+      "_trix_status": row._trix_status,
+      "nhc": row.nhc,
+      "severity": row.severity
+    }
+
+  };
+  if (mode === "JSON"){
+    response = JSON.stringify(rule, null, 2);
+  } else if (mode === "YAML"){
+    response = jsyaml.dump(rule);
+}
+  return response;
+};
+
+
+
 export default {
   props: {
     Content: {
@@ -36,7 +63,7 @@ export default {
 
   emits: ['update:Content', 'showErrorToast'],
 
-  setup(props: { Content: string; ContentType: string; }, { emit }: any) {
+  setup(props: { Content: object; ContentType: string; }, { emit }: any) {
     const editorContainer = ref(null);
     let editor: EditorView | null = null;
     const createEditorState = (Content: string, ContentType: string) => {

@@ -18,6 +18,7 @@ import FooterBar from '@/views/FooterBar.vue';
 import PromQLEditor from '@/components/PromQLEditor.vue';
 // import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
+import RuleModals from './components/RuleModals.vue';
 
 
 import { onMounted, ref } from 'vue';
@@ -25,7 +26,7 @@ import { Modal } from 'bootstrap';
 
 const uniqueModal = ref<Modal | null>(null);
 
-const showModal = (id: string) => {
+const showModal = (id: number) => {
   console.log(id);
   const dymodal = document.getElementById(`rule_modal_${id}`);
   console.log(dymodal);
@@ -49,16 +50,21 @@ onMounted(() => {
 const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
 
 // Method to handle switching modes
-const rule_modal_html = (id: string, mode: number) => {
+const rule_modal_html = (id: number, mode: number) => {
   currentMode.value = 'HTML';
 };
 
-const rule_modal_json = (id: string, mode: number) => {
+const rule_modal_json = (id: number, mode: number) => {
   currentMode.value = 'JSON';
 };
 
-const rule_modal_yaml = (id: string, mode: number) => {
+const rule_modal_yaml = (id: number, mode: number) => {
   currentMode.value = 'YAML';
+};
+
+const base64String = (row) => {
+  const encodedData = btoa(JSON.stringify(row));
+  return encodedData;
 };
 </script>
 
@@ -96,15 +102,16 @@ const rule_modal_yaml = (id: string, mode: number) => {
           <h4 class="fw-bold py-3 mb-4">
             <span class="text-muted fw-light"> Monitoring /</span> Alert Configurator
           </h4>
-          <!-- Bordered Table -->
           <div class="card">
             <h5 class="card-header">Rules</h5>
             <div class="card-body">
               <div class="table-responsive text-nowrap">
-                <div v-for="row in tableRows" :key="row.id">
 
-<!--  id="modal-container   v-bind:id="`rule_modal_${row.id}`"" -->
 
+
+
+
+                <!-- <div v-for="row in tableRows" :key="row.id">
                   <div class="modal fade" v-bind:id="`rule_modal_${row.id}`" tabindex="-1" aria-hidden="true" >
                     <div class="modal-dialog modal-xl" role="document">
                       <div class="modal-content">
@@ -120,7 +127,6 @@ const rule_modal_yaml = (id: string, mode: number) => {
                               <button type="button" :id="`button_yaml_${row.id}`" @click="rule_modal_yaml(row.id, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
                             </div>
                           </div>
-                          <!-- <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @showErrorToast="$emit('showErrorToast', $event)" /> -->
                           <div v-if="currentMode === 'JSON'">
                             <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'JSON')" ContentType="JSON" @showErrorToast="$emit('showErrorToast', $event)" />
                           </div>
@@ -128,62 +134,57 @@ const rule_modal_yaml = (id: string, mode: number) => {
                             <CodeMirrorEditor :editorHeight="300" :Content="ruleRow(row, 'YAML')" ContentType="YAML" @showErrorToast="$emit('showErrorToast', $event)" />
                           </div>
                           <div v-if="currentMode === 'HTML'">
-
-
-
-                          <div :id="`model-form_${row.id}`">
-                            <div class="row g-6">
-                              <div class="col mb-0">
-                                <label :for="`rule_name_${row.id}`" class="form-label">Rule Name</label>
-                                <input type="text" :id="`rule_name_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.alert}`" />
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col mb-6">
-                                <label :for="`rule_description_${row.id}`" class="form-label">Rule Description</label>
-                                <input type="text" :id="`rule_description_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.description}`" />
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col mb-0">
-                                <label :for="`rule_for_${row.id}`" class="form-label">Rule For</label>
-                                <input type="text" :id="`rule_for_${row.id}`" class="form-control" placeholder="Enter For" :value="`${row.for}`" />
-                              </div>
-                              <div class="col mb-6">
-                                <label :for="`exprInput_${row.id}`" class="form-label">Rule Expr</label>
-                                <PromQLEditor :editor-id="`editor_${row.id}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col mb-0">
-                                <label :for="`rule_status_${row.id}`" class="form-label">Enable</label>
-                                <div class="form-check form-switch ">
-                                  <input type="checkbox" @click="update_configuration('status', $event.target, row.id, row.btoa_rule);" :id="`rule_status_${row.id}`" class="form-check-input" :checked="row._trix_status !== false">
-                                  <label :id="`rule_status_label_${row.id}`" :for="`rule_status_${row.id}`" class="form-check-label">{{ row._trix_status ? 'ON' : 'OFF' }}</label>
+                            <div :id="`model-form_${row.id}`">
+                              <div class="row g-6">
+                                <div class="col mb-0">
+                                  <label :for="`rule_name_${row.id}`" class="form-label">Rule Name</label>
+                                  <input type="text" :id="`rule_name_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.alert}`" />
                                 </div>
                               </div>
-                              <div class="col mb-6">
-                                <label :for="`rule_nhc_${row.id}`" class="form-label">Rule NHC</label>
-                                <div class="form-check form-switch ">
-                                  <input type="checkbox" @click="update_configuration('nhc', $event.target, row.id, row.btoa_rule);" :id="`rule_nhc_${row.id}`" class="form-check-input" :checked="row.nhc === 'yes'" />
-                                  <label :id="`rule_nhc_label_${row.id}`" :for="`rule_nhc_${row.id}`" class="form-check-label">{{ row.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                              <div class="row">
+                                <div class="col mb-6">
+                                  <label :for="`rule_description_${row.id}`" class="form-label">Rule Description</label>
+                                  <input type="text" :id="`rule_description_${row.id}`" class="form-control" placeholder="Enter Name" :value="`${row.description}`" />
                                 </div>
                               </div>
-                              <div class="col mb-6">
-                                <label :for="`rule_severity_${row.id}`" class="form-label">Set Priority</label>
-                                <select :id="`rule_severity_${row.id}`" @change="update_configuration('severity', $event.target, row.id, row.btoa_rule);" v-model="row.severity" :class="['form-select', 'form-select-sm', row.severity === 'critical' ? 'btn-dark' : 'btn-' + row.severity]">
-                                  <option class="btn-primary">Set Priority</option>
-                                  <option class="btn-dark" value="critical" :selected="row.severity === 'critical'">Critical</option>
-                                  <option class="btn-danger" value="danger" :selected="row.severity === 'danger'">Danger</option>
-                                  <option class="btn-warning" value="warning" :selected="row.severity === 'warning'">Warning</option>
-                                  <option class="btn-info" value="info" :selected="row.severity === 'info'">Informational</option>
-                                </select>
+                              <div class="row">
+                                <div class="col mb-0">
+                                  <label :for="`rule_for_${row.id}`" class="form-label">Rule For</label>
+                                  <input type="text" :id="`rule_for_${row.id}`" class="form-control" placeholder="Enter For" :value="`${row.for}`" />
+                                </div>
+                                <div class="col mb-6">
+                                  <label :for="`exprInput_${row.id}`" class="form-label">Rule Expr</label>
+                                  <PromQLEditor :editor-id="`editor_${row.id}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col mb-0">
+                                  <label :for="`rule_status_${row.id}`" class="form-label">Enable</label>
+                                  <div class="form-check form-switch ">
+                                    <input type="checkbox" @click="update_configuration('status', $event.target, row.id, row.btoa_rule);" :id="`rule_status_${row.id}`" class="form-check-input" :checked="row._trix_status !== false">
+                                    <label :id="`rule_status_label_${row.id}`" :for="`rule_status_${row.id}`" class="form-check-label">{{ row._trix_status ? 'ON' : 'OFF' }}</label>
+                                  </div>
+                                </div>
+                                <div class="col mb-6">
+                                  <label :for="`rule_nhc_${row.id}`" class="form-label">Rule NHC</label>
+                                  <div class="form-check form-switch ">
+                                    <input type="checkbox" @click="update_configuration('nhc', $event.target, row.id, row.btoa_rule);" :id="`rule_nhc_${row.id}`" class="form-check-input" :checked="row.nhc === 'yes'" />
+                                    <label :id="`rule_nhc_label_${row.id}`" :for="`rule_nhc_${row.id}`" class="form-check-label">{{ row.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                                  </div>
+                                </div>
+                                <div class="col mb-6">
+                                  <label :for="`rule_severity_${row.id}`" class="form-label">Set Priority</label>
+                                  <select :id="`rule_severity_${row.id}`" @change="update_configuration('severity', $event.target, row.id, row.btoa_rule);" v-model="row.severity" :class="['form-select', 'form-select-sm', row.severity === 'critical' ? 'btn-dark' : 'btn-' + row.severity]">
+                                    <option class="btn-primary">Set Priority</option>
+                                    <option class="btn-dark" value="critical" :selected="row.severity === 'critical'">Critical</option>
+                                    <option class="btn-danger" value="danger" :selected="row.severity === 'danger'">Danger</option>
+                                    <option class="btn-warning" value="warning" :selected="row.severity === 'warning'">Warning</option>
+                                    <option class="btn-info" value="info" :selected="row.severity === 'info'">Informational</option>
+                                  </select>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-
-
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
@@ -192,83 +193,68 @@ const rule_modal_yaml = (id: string, mode: number) => {
                       </div>
                     </div>
                   </div>
-
-
-
-                </div>
+                </div> -->
 
 
 
 
-                  <div v-if="add_count" class="modal fade" id="rule_modal_" tabindex="-1" aria-hidden="true">
+                  <div class="modal fade" id="add_rule_rule_modal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl" role="document">
                       <div class="modal-content">
                         <div class="modal-header">
                           <h5 class="modal-title" id="exampleModalLabel4">Add New Alert Rule</h5>
-
-                                  <!-- <div>
-                                    <CodeMirrorEditor v-model="jsonContent" />
-                                  </div>
-
-                                  <div>
-                                    <YamlEditor v-model="yamlContent" />
-                                  </div> -->
-
-
-
-                          <!-- <PromQLEditor><div class="promql"></div></PromQLEditor> -->
                           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                           <div class="row">
                             <div class="col mb-12">
-                              <button type="button" :id="`button_html_${add_count}`" @click="rule_modal_html(add_count, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
-                              <button type="button" :id="`button_json_${add_count}`" @click="rule_modal_json(add_count, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
-                              <button type="button" :id="`button_yaml_${add_count}`" @click="rule_modal_yaml(add_count, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
-                              <div :id="`ruleEditor_${add_count}`" style="display: none; height: 300px; border: 1px solid #ddd;"></div>
+                              <button type="button" id="button_html_0" @click="rule_modal_html(0, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
+                              <button type="button" id="button_json_0" @click="rule_modal_json(0, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
+                              <button type="button" id="button_yaml_0" @click="rule_modal_yaml(0, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
+                              <div id="ruleEditor_0" style="display: none; height: 300px; border: 1px solid #ddd;"></div>
                             </div>
                           </div>
-                          <div :id="`model-form_${add_count}`">
+                          <div id="model-form_0">
                             <div class="row g-6">
                               <div class="col mb-0">
-                                <label :for="`rule_name_${add_count}`" class="form-label">Rule Name</label>
-                                <input type="text" :id="`rule_name_${add_count}`" class="form-control" placeholder="Enter Name" />
+                                <label for="rule_name_0" class="form-label">Rule Name</label>
+                                <input type="text" id="rule_name_0" class="form-control" placeholder="Enter Name" />
                               </div>
                             </div>
                             <div class="row">
                               <div class="col mb-6">
-                                <label :for="`rule_description_${add_count}`" class="form-label">Rule Description</label>
-                                <input type="text" :id="`rule_description_${add_count}`" class="form-control" placeholder="Enter Name" />
+                                <label for="rule_description_0" class="form-label">Rule Description</label>
+                                <input type="text" id="rule_description_0" class="form-control" placeholder="Enter Name" />
                               </div>
                             </div>
                             <div class="row">
                               <div class="col mb-0">
-                                <label :for="`rule_for_${add_count}`" class="form-label">Rule For</label>
-                                <input type="text" :id="`rule_for_${add_count}`" class="form-control" placeholder="Enter For" />
+                                <label for="rule_for_0" class="form-label">Rule For</label>
+                                <input type="text" id="rule_for_0" class="form-control" placeholder="Enter For" />
                               </div>
                               <div class="col mb-6">
-                                <label :for="`exprInput_${add_count}`" class="form-label">Rule Expr</label>
-                                <PromQLEditor :editor-id="`editor_${add_count}`" editor-rule=""><div class="promql"></div></PromQLEditor>
+                                <label for="exprInput_0" class="form-label">Rule Expr</label>
+                                <PromQLEditor editor-id="editor_0" editor-rule=""><div class="promql"></div></PromQLEditor>
                               </div>
                             </div>
                             <div class="row">
                                <div class="col mb-0">
-                                <label :for="`rule_status_${add_count}`" class="form-label">Enable</label>
+                                <label for="rule_status_0" class="form-label">Enable</label>
                                 <div class="form-check form-switch ">
-                                  <input type="checkbox" v-model="isChecked" :id="`rule_status_${add_count}`" class="form-check-input">
-                                  <label :id="`rule_status_label_${add_count}`" :for="`rule_status_${add_count}`" class="form-check-label">{{ isChecked ? 'ON' : 'OFF' }}</label>
+                                  <input type="checkbox" v-model="isChecked" id="rule_status_0" class="form-check-input">
+                                  <label id="rule_status_label_0" for="rule_status_0" class="form-check-label">{{ isChecked ? 'ON' : 'OFF' }}</label>
                                 </div>
                               </div>
                               <div class="col mb-6">
-                                <label :for="`rule_nhc_${add_count}`" class="form-label">Rule NHC</label>
+                                <label for="rule_nhc_0" class="form-label">Rule NHC</label>
                                 <div class="form-check form-switch ">
-                                  <input type="checkbox" :id="`rule_nhc_${add_count}`" v-model="isCheckedNHC"  class="form-check-input">
-                                  <label :id="`rule_nhc_label_${add_count}`" :for="`rule_nhc_${add_count}`" class="form-check-label">{{ isCheckedNHC ? 'ON' : 'OFF' }}</label>
+                                  <input type="checkbox" id="rule_nhc_0" v-model="isCheckedNHC"  class="form-check-input">
+                                  <label id="rule_nhc_label_0" for="rule_nhc_0" class="form-check-label">{{ isCheckedNHC ? 'ON' : 'OFF' }}</label>
                                 </div>
                               </div>
                               <div class="col mb-6">
-                                <label :for="`rule_severity_${add_count}`" class="form-label">Set Priority</label>
-                                <select :id="`rule_severity_${add_count}`" @change="updateClass" :class="['form-select', 'form-select-sm', selectedClass]">
+                                <label for="rule_severity_0" class="form-label">Set Priority</label>
+                                <select id="rule_severity_0" @change="updateClass" :class="['form-select', 'form-select-sm', selectedClass]">
                                   <option class="btn-primary">Set Priority</option>
                                   <option class="btn-dark" value="critical">Critical</option>
                                   <option class="btn-danger" value="danger">Danger</option>
@@ -289,12 +275,6 @@ const rule_modal_yaml = (id: string, mode: number) => {
 
 
 
-                <!-- <HomeView><div class="promql"></div></HomeView>
-                <div v-if="showModal">
-                  <HomeView><div class="promql"></div></HomeView>
-                 </div> -->
-
-
                 <table id="alert-table" class="table table-bordered table-striped table-hover table-responsive">
                   <thead>
                     <tr>
@@ -307,101 +287,63 @@ const rule_modal_yaml = (id: string, mode: number) => {
                       <th scope="col">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
-
-<!--
-                    configuration.groups.forEach((group) => {
-                      group.rules.forEach((rule) => {
-                        const row: TableRow = {
-                          id: count,
-                          group: group.name,
-                          alert: rule.alert,
-                          description: rule.annotations.description,
-                          for: rule.for,
-                          expr: rule.expr,
-                          btoa_rule: btoa(JSON.stringify(rule)),
-                          _trix_status: rule.labels._trix_status,
-                          nhc: rule.labels.nhc,
-                          severity: rule.labels.severity,
-                        }
-                        tableRows.value.push(row);
-                        console.log(row);
-
-                        count++;
-                      })
-                    }) -->
-
-                    <span v-for="groups in configuration.groups" :key="groups">
-                      <!-- <td>{{ groups }}</td> -->
-                      <tr v-for="(rules, index) in groups" :key="rules">
-                        <td>{{ rules }}</td>
-                        <td>{{ index + 1 }}</td>
-                        <td>{{ groups.name }}</td>
-                        <td>{{ rules.alert }}</td>
-
-                        <!-- <td v-for="(group, groupIndex) in row.configuration.groups" :key="groupIndex">
-                          <ul>
-                            <li v-for="(rule, ruleIndex) in group.rules" :key="ruleIndex">
-                              {{ rule.name }}
-                            </li>
-                          </ul>
-                        </td> -->
-                      </tr>
-
-                    </span>
-
-
-
-
-
-
-
-
-
-
-
-                    <tr v-for="row in tableRows" :key="row.id">
-                      <th scope="row">{{ row.id }}</th>
-                      <td>{{ row.group }}</td>
-                      <!--   @click="showModal(row.id)"     data-bs-toggle="modal"        :data-bs-target="`#rule_modal_${row.id}`"                -->
-                      <td><a href="#"  @click.prevent="showModal(row.id)"   >{{ row.alert }}</a></td>
+                  <tbody v-for="groups in configuration.groups" :key="groups">
+                    <tr v-for="(row, index) in groups.rules" :key="index">
+                      <th scope="row">{{ index + 1 }}</th>
+                      <td>{{ groups.name }}</td>
+                      <td><a href="#"  @click.prevent="showModal(index + 1)"   >{{ row.alert }}</a></td>
                       <td>
                         <div class="form-check form-switch mb-2">
-                          <input class="form-check-input" type="checkbox" :checked="row._trix_status !== false" @click="update_configuration('status', $event.target, row.id, row.btoa_rule);" id="rule_status">
-                          <label class="form-check-label" for="rule_status" :id="`#rule_status_text_${row.id}`">{{ row._trix_status ? 'ON' : 'OFF' }}</label>
+                          <input class="form-check-input" type="checkbox" :checked="row.labels._trix_status !== false" @click="update_configuration('status', $event.target, index + 1, base64String(row));" id="rule_status">
+                          <label class="form-check-label" for="rule_status" :id="`#rule_status_text_${index + 1}`">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
-
                       <td>
                         <div class="form-check form-switch mb-2">
-                          <input class="form-check-input" @click="update_configuration('nhc', $event.target, row.id, row.btoa_rule);" type="checkbox" id="rule_nhc" :checked="row.nhc === 'yes'">
-                          <label class="form-check-label" for="rule_nhc" :id="`rule_nhc_text_${row.id}`">{{ row.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                          <input class="form-check-input" @click="update_configuration('nhc', $event.target, index + 1, base64String(row));" type="checkbox" id="rule_nhc" :checked="row.labels.nhc === 'yes'">
+                          <label class="form-check-label" for="rule_nhc" :id="`rule_nhc_text_${index + 1}`">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
-
                       <td>
-                        <select :id="`severity_${row.id}`" @click="update_configuration('severity', $event.target, row.id, row.btoa_rule);" v-model="row.severity" :class="['form-select', 'form-select-sm', row.severity === 'critical' ? 'btn-dark' : 'btn-' + row.severity]">
+                        <select :id="`severity_${index + 1}`" @click="update_configuration('severity', $event.target, index + 1, base64String(row));" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
                           <option class="btn-primary" value="">Set Priority</option>
-                          <option class="btn-dark" value="critical" :selected="row.severity === 'critical'">Critical</option>
-                          <option class="btn-danger" value="danger" :selected="row.severity === 'danger'">Danger</option>
-                          <option class="btn-warning" value="warning" :selected="row.severity === 'warning'">Warning</option>
-                          <option class="btn-info" value="info" :selected="row.severity === 'info'">Informational</option>
+                          <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
+                          <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>
+                          <option class="btn-warning" value="warning" :selected="row.labels.severity === 'warning'">Warning</option>
+                          <option class="btn-info" value="info" :selected="row.labels.severity === 'info'">Informational</option>
                         </select>
                       </td>
-
                       <td>
                         <div style="display: inline-block;" class="tooltip-wrapper" data-bs-toggle="tooltip" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Edit This Rule</span>">
-                          <button class="tooltip-modal-link" id="actions" :data-bs-target="`#rule_modal_${row.id}`" data-bs-toggle="modal">
+                          <button class="tooltip-modal-link" id="actions" :data-bs-target="`#rule_modal_${index + 1}`" data-bs-toggle="modal">
                             <box-icon name='edit' color="#696cff" size="md"></box-icon>
                           </button>
                         </div>
-                        <button style="display: inline-block;" class="tooltip-modal-link" @click="update_configuration('delete', $event.target, row.id, row.btoa_rule);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
+                        <button style="display: inline-block;" class="tooltip-modal-link" @click="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                           <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
+                        <RuleModals
+                          :update_configuration="update_configuration"
+                          :base64String="base64String"
+                          :currentMode="currentMode"
+                          :rule_modal_html="rule_modal_html"
+                          :rule_modal_json="rule_modal_json"
+                          :rule_modal_yaml="rule_modal_yaml"
+                          :ruleRow = "ruleRow"
+                          :row = "row"
+                          :index = index
+                           />
                       </td>
-                    </tr>
 
+
+                    </tr>
                   </tbody>
+
+
+
+
+
+
                 </table>
               </div>
             </div>
