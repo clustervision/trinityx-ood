@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 
@@ -16,7 +17,7 @@ interface Row {
   };
 }
 
-defineProps({
+const props = defineProps({
   promQLurl: {
     type: String,
     required: true,
@@ -42,6 +43,13 @@ defineProps({
   },
 });
 
+const codeMirrorRef = ref<InstanceType<typeof CodeMirrorEditor> | null>(null);
+// console.log('Editor Container:', codeMirrorRef.value?.editorContainer);
+
+const logEditorContainer = (props, ind, num) => {
+  console.log('Editor Container:', codeMirrorRef.value?.newContent);
+  props.rule_modal_json(ind, num);
+};
 </script>
 
 <template>
@@ -56,7 +64,8 @@ defineProps({
           <div class="row">
             <div class="col mb-12">
               <button type="button" :id="`button_html_${index + 1}`" @click="rule_modal_html(index + 1, 1);" class="btn btn-secondary btn-sm">HTML View</button> &nbsp;
-              <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
+              <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="logEditorContainer(props, index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
+              <!-- <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button> -->
               <CodeMirrorEditor v-if="currentMode !== 'HTML'" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" />
             </div>
           </div>
