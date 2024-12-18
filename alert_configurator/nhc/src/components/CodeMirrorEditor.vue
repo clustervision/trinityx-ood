@@ -14,7 +14,7 @@ import { json } from '@codemirror/lang-json';
 import { yaml } from '@codemirror/lang-yaml';
 import { oneDark } from '@codemirror/theme-one-dark';
 import jsyaml from 'js-yaml';
-
+// let newContent = ref('');
 const props = defineProps({
     Content: {
       type: String,
@@ -133,7 +133,7 @@ const props = defineProps({
         }
       }
       editor?.setState(createEditorState(newContent, contentType));
-      defineExpose({newContent });
+      
     };
 
     onMounted(() => {
@@ -148,7 +148,7 @@ const props = defineProps({
     watch(
       () => props.Content,
       (newValue) => {
-        console.error('newValue', newValue);
+        // console.error('newValue', newValue);
         if (newValue !== editor?.state.doc.toString()) {
           editor?.dispatch({
             changes: {
@@ -174,7 +174,7 @@ const props = defineProps({
 
  // },
 
-
+// defineExpose({newContent });
 
 
 

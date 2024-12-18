@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 
@@ -43,13 +43,58 @@ const props = defineProps({
   },
 });
 
-const codeMirrorRef = ref<InstanceType<typeof CodeMirrorEditor> | null>(null);
-// console.log('Editor Container:', codeMirrorRef.value?.editorContainer);
 
-const logEditorContainer = (props, ind, num) => {
-  console.log('Editor Container:', codeMirrorRef.value?.newContent);
-  props.rule_modal_json(ind, num);
+
+
+import jsyaml from 'js-yaml';
+
+// Centralized state for rule data
+const ruleData = ref({
+  // alert: '',row.alert
+  alert: props.row.alert,
+  annotations: { description: '' },
+  expr: '',
+  for: '',
+  labels: { _trix_status: false, nhc: 'no', severity: 'info' },
+});
+
+// Current mode (HTML, JSON, YAML)
+const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
+
+// Computed property to serialize ruleData into the appropriate format for CodeMirror
+const serializedRuleData = computed(() => {
+  if (currentMode.value === 'JSON') {
+    return JSON.stringify(ruleData.value, null, 2);
+  } else if (currentMode.value === 'YAML') {
+    return jsyaml.dump(ruleData.value);
+  }
+  return ''; // Empty for non-editor modes
+});
+
+// Synchronize data from the HTML form
+const syncFromHTML = () => {
+  // ruleData is already reactive and bound to the form inputs via v-model
 };
+
+// Synchronize data from the CodeMirror editor
+const syncFromCodeMirror = (content: string) => {
+  try {
+    if (currentMode.value === 'JSON') {
+      ruleData.value = JSON.parse(content);
+    } else if (currentMode.value === 'YAML') {
+      ruleData.value = jsyaml.load(content);
+    }
+  } catch (err) {
+    console.error('Failed to parse content:', err);
+    // $emit('Toast', { message: 'Error parsing content', toastClass: 'bg-danger' });
+  }
+};
+
+// Switch between modes
+const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
+  currentMode.value = mode;
+};
+
 </script>
 
 <template>
@@ -63,51 +108,61 @@ const logEditorContainer = (props, ind, num) => {
         <div class="modal-body">
           <div class="row">
             <div class="col mb-12">
+
+              <button @click="switchMode('HTML')">HTML View</button>
+              <button @click="switchMode('JSON')">JSON View</button>
+              <button @click="switchMode('YAML')">YAML View</button>
+
+
+              <!-- <CodeMirrorEditor  /> -->
               <button type="button" :id="`button_html_${index + 1}`" @click="rule_modal_html(index + 1, 1);" class="btn btn-secondary btn-sm">HTML View</button> &nbsp;
-              <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="logEditorContainer(props, index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
-              <!-- <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button> -->
-              <CodeMirrorEditor v-if="currentMode !== 'HTML'" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" />
+              <!-- <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="logEditorContainer(props, index + 1, 2);" class="btn btn-dark btn-sm">Raw</button> -->
+              <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
+              <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" />
             </div>
           </div>
 
-          <div v-if="currentMode === 'HTML'">
+          <form v-if="currentMode === 'HTML'" @input="syncFromHTML">
             <div :id="`model-form_${index + 1}`">
               <div class="row g-6">
                 <div class="col mb-0">
                   <label :for="`rule_name_${index + 1}`" class="form-label">Rule Name</label>
-                  <input type="text" :id="`rule_name_${index + 1}`" class="form-control" placeholder="Enter Name" :value="`${row.alert}`" />
+                  <!-- <input type="text" v-model="ruleData.alert" :id="`rule_name_${index + 1}`" class="form-control" placeholder="Enter Name" :value="`${row.alert}`" /> -->
+                  <input type="text" v-model="ruleData.alert" :id="`rule_name_${index + 1}`" class="form-control" placeholder="Enter Name"/>
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`rule_description_${index + 1}`" class="form-label">Rule Description</label>
-                  <input type="text" :id="`rule_description_${index + 1}`" class="form-control" placeholder="Enter Name" :value="`${row.annotations.description}`" />
+                  <!-- <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index + 1}`" class="form-control" placeholder="Enter Name" :value="`${row.annotations.description}`" /> -->
+                  <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index + 1}`" class="form-control" placeholder="Enter Name" />
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-0">
                   <label :for="`rule_for_${index + 1}`" class="form-label">Rule For</label>
-                  <input type="text" :id="`rule_for_${index + 1}`" class="form-control" placeholder="Enter For" :value="`${row.for}`" />
+                  <!-- <input type="text" v-model="ruleData.for" :id="`rule_for_${index + 1}`" class="form-control" placeholder="Enter For" :value="`${row.for}`" /> -->
+                  <input type="text" v-model="ruleData.for" :id="`rule_for_${index + 1}`" class="form-control" placeholder="Enter For"  />
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`exprInput_${index + 1}`" class="form-label">Rule Expr</label>
-                  <PromQLEditor :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
+                  <PromQLEditor v-model="ruleData.expr" :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-0">
                   <label :for="`rule_status_${index + 1}`" class="form-label">Enable</label>
                   <div class="form-check form-switch ">
-                    <input type="checkbox" @click="update_configuration('status', $event.target, index + 1, base64String(row));" :id="`rule_status_${index + 1}`" class="form-check-input" :checked="row.labels._trix_status !== false">
+                    <input v-model="ruleData.labels._trix_status" type="checkbox" @click="update_configuration('status', $event.target, index + 1, base64String(row));" :id="`rule_status_${index + 1}`" class="form-check-input" :checked="row.labels._trix_status !== false">
                     <label :id="`rule_status_label_${index + 1}`" :for="`rule_status_${index + 1}`" class="form-check-label">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
                 <div class="col mb-6">
                   <label :for="`rule_nhc_${index + 1}`" class="form-label">Rule NHC</label>
                   <div class="form-check form-switch ">
-                    <input type="checkbox" @click="update_configuration('nhc', $event.target, index + 1, base64String(row));" :id="`rule_nhc_${index + 1}`" class="form-check-input" :checked="row.labels.nhc === 'yes'" />
+                    <input v-model="ruleData.labels.nhc" type="checkbox" @click="update_configuration('nhc', $event.target, index + 1, base64String(row));" :id="`rule_nhc_${index + 1}`" class="form-check-input" :checked="row.labels.nhc === 'yes'" />
                     <label :id="`rule_nhc_label_${index + 1}`" :for="`rule_nhc_${index + 1}`" class="form-check-label">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
@@ -123,7 +178,7 @@ const logEditorContainer = (props, ind, num) => {
                 </div>
               </div>
             </div>
-          </div>
+          </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
