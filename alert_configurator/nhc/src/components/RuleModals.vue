@@ -49,40 +49,51 @@ const props = defineProps({
 import jsyaml from 'js-yaml';
 
 // Centralized state for rule data
-const ruleData = ref({
-  // alert: '',row.alert
+// const ruleData = ref({
+//   alert: '',
+//   annotations: { description: '' },
+//   expr: '',
+//   for: '',
+//   labels: { _trix_status: false, nhc: 'no', severity: 'info' },
+// });
+
+let ruleData = {
   alert: props.row.alert,
-  annotations: { description: '' },
-  expr: '',
-  for: '',
-  labels: { _trix_status: false, nhc: 'no', severity: 'info' },
-});
+  annotations: { description: props.row.annotations.description },
+  expr: props.row.expr,
+  for: props.row.for,
+  labels: { _trix_status: props.row.labels._trix_status, nhc: props.row.labels.nhc, severity: props.row.labels.severity },
+};
 
 // Current mode (HTML, JSON, YAML)
 const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
 
 // Computed property to serialize ruleData into the appropriate format for CodeMirror
-const serializedRuleData = computed(() => {
-  if (currentMode.value === 'JSON') {
-    return JSON.stringify(ruleData.value, null, 2);
-  } else if (currentMode.value === 'YAML') {
-    return jsyaml.dump(ruleData.value);
-  }
-  return ''; // Empty for non-editor modes
-});
+// const serializedRuleData = computed(() => {
+//   if (currentMode.value === 'JSON') {
+//     return JSON.stringify(ruleData.value, null, 2);
+//   } else if (currentMode.value === 'YAML') {
+//     return jsyaml.dump(ruleData.value);
+//   }
+//   return ''; // Empty for non-editor modes
+// });
 
 // Synchronize data from the HTML form
 const syncFromHTML = () => {
+  console.log('HTML Form updated:', ruleData);
   // ruleData is already reactive and bound to the form inputs via v-model
 };
 
 // Synchronize data from the CodeMirror editor
 const syncFromCodeMirror = (content: string) => {
+  console.warn('content:', content);
+  console.log('currentMode.value:', currentMode.value);
   try {
     if (currentMode.value === 'JSON') {
-      ruleData.value = JSON.parse(content);
+      // ruleData.value = JSON.parse(content);
+      ruleData = JSON.stringify(content, null, 2);
     } else if (currentMode.value === 'YAML') {
-      ruleData.value = jsyaml.load(content);
+      ruleData = jsyaml.load(content);
     }
   } catch (err) {
     console.error('Failed to parse content:', err);
@@ -118,11 +129,12 @@ const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
               <button type="button" :id="`button_html_${index + 1}`" @click="rule_modal_html(index + 1, 1);" class="btn btn-secondary btn-sm">HTML View</button> &nbsp;
               <!-- <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="logEditorContainer(props, index + 1, 2);" class="btn btn-dark btn-sm">Raw</button> -->
               <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
+              <!-- <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" /> -->
               <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" />
             </div>
           </div>
 
-          <form v-if="currentMode === 'HTML'" @input="syncFromHTML">
+          <form v-if="currentMode === 'HTML'" @input="syncFromHTML" >
             <div :id="`model-form_${index + 1}`">
               <div class="row g-6">
                 <div class="col mb-0">
@@ -148,7 +160,7 @@ const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`exprInput_${index + 1}`" class="form-label">Rule Expr</label>
-                  <PromQLEditor v-model="ruleData.expr" :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor>
+                  <!-- <PromQLEditor v-model="ruleData.expr" :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor> -->
                 </div>
               </div>
               <div class="row">

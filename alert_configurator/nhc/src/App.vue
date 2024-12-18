@@ -30,7 +30,7 @@ const showModal = (id: number) => {
       backdrop: true,
     });
     uniqueModal.value.show();
-    console.log(uniqueModal.value);
+    // console.log(uniqueModal.value);
   } else {
     console.error(`Modal with ID rule_modal_${id} not found`);
   }
