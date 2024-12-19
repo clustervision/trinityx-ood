@@ -78,11 +78,7 @@ const base64String = (row: string) => {
       <div class="content-wrapper">
         <div id="spinner-overlay" class="spinner-overlay">
           <div id="spinner" class="d-flex justify-content-center">
-            <div
-              class="spinner-border spinner-border-lg text-success"
-              style="width: 10rem; height: 10rem"
-              role="status"
-            >
+            <div class="spinner-border spinner-border-lg text-success" style="width: 10rem; height: 10rem" role="status">
               <span class="visually-hidden">Saving Configuration...</span>
             </div>
           </div>
@@ -106,9 +102,9 @@ const base64String = (row: string) => {
                         <div class="modal-body">
                           <div class="row">
                             <div class="col mb-12">
-                              <button type="button" id="button_html_0" @click="rule_modal_html(0, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
-                              <button type="button" id="button_json_0" @click="rule_modal_json(0, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
-                              <button type="button" id="button_yaml_0" @click="rule_modal_yaml(0, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
+                              <button type="button" id="button_html_0" @click.prevent="rule_modal_html(0, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
+                              <button type="button" id="button_json_0" @click.prevent="rule_modal_json(0, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
+                              <button type="button" id="button_yaml_0" @click.prevent="rule_modal_yaml(0, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
                             </div>
                           </div>
                           <div id="model-form_0">
@@ -166,7 +162,7 @@ const base64String = (row: string) => {
                         </div>
                         <div class="modal-footer">
                           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                          <button type="button" @click="add_rule('save', $event.target, 0, 'save');" class="btn btn-primary">Save Rule</button>
+                          <button type="button" @click.prevent="add_rule('save', $event.target, 0, 'save');" class="btn btn-primary">Save Rule</button>
                         </div>
                       </div>
                     </div>
@@ -193,18 +189,18 @@ const base64String = (row: string) => {
                       <td><a href="#"  @click.prevent="showModal(index + 1)"   >{{ row.alert }}</a></td>
                       <td>
                         <div class="form-check form-switch mb-2">
-                          <input class="form-check-input" type="checkbox" :checked="row.labels._trix_status !== false" @click="update_configuration('status', $event.target, index + 1, base64String(row));" id="rule_status">
+                          <input class="form-check-input" type="checkbox" :checked="row.labels._trix_status !== false" @click.prevent="update_configuration('status', $event.target, index + 1, base64String(row));" id="rule_status">
                           <label class="form-check-label" for="rule_status" :id="`#rule_status_text_${index + 1}`">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
                       <td>
                         <div class="form-check form-switch mb-2">
-                          <input class="form-check-input" @click="update_configuration('nhc', $event.target, index + 1, base64String(row));" type="checkbox" id="rule_nhc" :checked="row.labels.nhc === 'yes'">
+                          <input class="form-check-input" @click.prevent="update_configuration('nhc', $event.target, index + 1, base64String(row));" type="checkbox" id="rule_nhc" :checked="row.labels.nhc === 'yes'">
                           <label class="form-check-label" for="rule_nhc" :id="`rule_nhc_text_${index + 1}`">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
                       <td>
-                        <select :id="`severity_${index + 1}`" @click="update_configuration('severity', $event.target, index + 1, base64String(row));" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
+                        <select :id="`severity_${index + 1}`" @click.prevent="update_configuration('severity', $event.target, index + 1, base64String(row));" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
                           <option class="btn-primary" value="">Set Priority</option>
                           <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
                           <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>
@@ -218,7 +214,7 @@ const base64String = (row: string) => {
                             <box-icon name='edit' color="#696cff" size="md"></box-icon>
                           </button>
                         </div>
-                        <button style="display: inline-block;" class="tooltip-modal-link" @click="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
+                        <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                           <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
                         <!-- :currentMode="currentMode" @Toast="$emit('Toast', $event)" -->
@@ -279,14 +275,15 @@ const classMap = {
   danger: 'btn-danger',
   warning: 'btn-warning',
   info: 'btn-info',
-}
+} as const;
+type ClassMapKey = keyof typeof classMap;
 
 function updateClass(event: Event) {
-  if (event.target){
-    const value = event.target.value;
+  const target = event.target as HTMLInputElement;
+  if (target && target.value) {
+    const value: ClassMapKey = target.value as ClassMapKey;
     selectedClass.value = classMap[value] || 'btn-primary';
   }
-
 }
 
 let url: string
@@ -304,10 +301,17 @@ async function saveRules() {
     const response = await axios.post(url + '/save_config', configuration);
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
-    return {
-      status: error.response?.status || 500,
-      message: error.response?.data || 'An error occurred during the request.',
-    };
+    if (axios.isAxiosError(error)) {
+      return {
+        status: error.response?.status || 500,
+        message: error.response?.data || 'An error occurred during the request.',
+      };
+    } else {
+      return {
+        status: 500,
+        message: 'An unknown error occurred.',
+      };
+    }
   }
 }
 
@@ -316,7 +320,21 @@ const configuration = await fetchRules();
 
 // console.log(configuration);
 
-const ruleRow = (row: any, mode: string) => {
+interface RuleRow {
+  alert: string;
+  annotations: {
+    description: string;
+  };
+  expr: string;
+  for: string;
+  labels: {
+    _trix_status: boolean;
+    nhc: string;
+    severity: string;
+  };
+}
+
+const ruleRow = (row: RuleRow, mode: string) => {
   let response;
   const rule = {
     "alert": row.alert,
@@ -340,7 +358,7 @@ const ruleRow = (row: any, mode: string) => {
   return response;
 };
 
-
+const ContentType: 'JSON' | 'YAML' = 'JSON';
 
 
 export default {
@@ -357,7 +375,7 @@ export default {
       activeButton: 1,
       previousButton: null,
       Content: JSON.stringify(configuration, null, 2),
-      ContentType: "JSON",
+      ContentType,
     };
   },
   methods: {
@@ -367,9 +385,12 @@ export default {
       if (typeof message === 'string') {
         this.toastMessage = message;
         this.toastClass = toastClass;
+      } else if (typeof message === 'object' && message !== null && 'message' in message && 'toastClass' in message) {
+        this.toastMessage = (message as { message: string }).message;
+        this.toastClass = (message as { toastClass: string }).toastClass;
       } else {
-        this.toastMessage = message.message;
-        this.toastClass = message.toastClass;
+        this.toastMessage = 'Unknown message: '+message;
+        this.toastClass = 'bg-dark';
       }
       setTimeout(() => {
         this.showToast = false;
@@ -377,7 +398,14 @@ export default {
     },
 
 
-    update_configuration(key: string, element: Event, count: string, form_rule: string) {
+
+    update_configuration(key: string, element: EventTarget | null, count: number, form_rule: string) {
+      console.log(key);
+      console.log(element);
+      console.log(count);
+      console.log(form_rule);
+    },
+    add_rule(key: string, element: EventTarget | null, count: number, form_rule: string) {
       console.log(key);
       console.log(element);
       console.log(count);

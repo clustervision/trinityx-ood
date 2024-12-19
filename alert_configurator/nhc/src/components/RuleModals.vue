@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, defineEmits } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 import jsyaml from 'js-yaml';
@@ -60,8 +60,8 @@ const ruleData = reactive({
 
 // Current mode (HTML, JSON, YAML)
 const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
-// Synchronize data from the HTML form
 
+// Synchronize data from the HTML form
 const syncFromHTML = () => {
   // ruleData is already reactive and bound to the form inputs via v-model
 };
@@ -70,8 +70,6 @@ const emit = defineEmits(['toast']);
 
 // Synchronize data from the CodeMirror editor
 const syncFromCodeMirror = (content: string) => {
-  // console.warn('content:', content);
-  // console.log('currentMode.value:', currentMode.value);
   try {
     if (currentMode.value === 'JSON') {
       Object.assign(ruleData, JSON.parse(content));
@@ -89,16 +87,12 @@ const syncFromCodeMirror = (content: string) => {
 
 // Switch between modes
 const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
-  console.log(`mode ${mode} currentMode ${currentMode.value}`);
   if (mode === currentMode.value){
     emit('toast', {message: `Error: Already in ${mode} Mode, no conversion needed`, toastClass: 'bg-warning'});
   } else{
     currentMode.value = mode;
   }
-
-
 };
-
 
 const serializedContent = computed(() => {
   if (currentMode.value === 'JSON') {
@@ -108,11 +102,10 @@ const serializedContent = computed(() => {
   }
   return '';
 });
+
 const toggleNHC = () => {
   ruleData.labels.nhc = ruleData.labels.nhc === 'yes' ? 'no' : 'yes';
 };
-
-
 
 </script>
 
@@ -127,12 +120,12 @@ const toggleNHC = () => {
         <div class="modal-body">
           <div class="row">
             <div class="col mb-12">
-              <button type="button" class="btn btn-secondary btn-sm" @click="switchMode('HTML')">HTML View</button>&nbsp;
-              <button type="button" class="btn btn-primary btn-sm" @click="switchMode('JSON')">JSON View</button>&nbsp;
-              <button type="button" class="btn btn-warning btn-sm" @click="switchMode('YAML')">YAML View</button><br />
+              <button type="button" class="btn btn-secondary btn-sm" @click.prevent="switchMode('HTML')">HTML View</button>&nbsp;
+              <button type="button" class="btn btn-primary btn-sm" @click.prevent="switchMode('JSON')">JSON View</button>&nbsp;
+              <button type="button" class="btn btn-warning btn-sm" @click.prevent="switchMode('YAML')">YAML View</button><br />
             </div>
           </div>
-          <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="serializedContent" ContentType="JSON" @Toast="$emit('toast', $event)" />
+          <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="serializedContent" :ContentType="currentMode" @Toast="$emit('toast', $event)" />
           <form v-if="currentMode === 'HTML'" @input="syncFromHTML" >
             <div :id="`model-form_${index + 1}`">
               <div class="row g-6">
@@ -170,7 +163,7 @@ const toggleNHC = () => {
                 <div class="col mb-6">
                   <label :for="`rule_nhc_${index + 1}`" class="form-label">Rule NHC</label>
                   <div class="form-check form-switch ">
-                    <input type="checkbox" @click="toggleNHC" :id="`rule_nhc_${index + 1}`" class="form-check-input" :checked="ruleData.labels.nhc === 'yes'" />
+                    <input type="checkbox" @click.prevent="toggleNHC" :id="`rule_nhc_${index + 1}`" class="form-check-input" :checked="ruleData.labels.nhc === 'yes'" />
                     <label :id="`rule_nhc_label_${index + 1}`" :for="`rule_nhc_${index + 1}`" class="form-check-label">{{ ruleData.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
@@ -190,7 +183,7 @@ const toggleNHC = () => {
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click="update_configuration('save', $event.target, index + 1, base64String(ruleData));" class="btn btn-primary">Save Rule</button>
+          <button type="button" @click.prevent="update_configuration('save', $event.target, index + 1, base64String(ruleData));" class="btn btn-primary">Save Rule</button>
         </div>
       </div>
     </div>

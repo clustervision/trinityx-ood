@@ -73,14 +73,14 @@ defineProps({
       <div class="col mb-0">
         <label :for="`rule_status_${index + 1}`" class="form-label">Enable</label>
         <div class="form-check form-switch ">
-          <input type="checkbox" @click="update_configuration('status', $event.target, index + 1, base64String(row));" :id="`rule_status_${index + 1}`" class="form-check-input" :checked="row.labels._trix_status !== false">
+          <input type="checkbox" @click.prevent="update_configuration('status', $event.target, index + 1, base64String(row));" :id="`rule_status_${index + 1}`" class="form-check-input" :checked="row.labels._trix_status !== false">
           <label :id="`rule_status_label_${index + 1}`" :for="`rule_status_${index + 1}`" class="form-check-label">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
       <div class="col mb-6">
         <label :for="`rule_nhc_${index + 1}`" class="form-label">Rule NHC</label>
         <div class="form-check form-switch ">
-          <input type="checkbox" @click="update_configuration('nhc', $event.target, index + 1, base64String(row));" :id="`rule_nhc_${index + 1}`" class="form-check-input" :checked="row.labels.nhc === 'yes'" />
+          <input type="checkbox" @click.prevent="update_configuration('nhc', $event.target, index + 1, base64String(row));" :id="`rule_nhc_${index + 1}`" class="form-check-input" :checked="row.labels.nhc === 'yes'" />
           <label :id="`rule_nhc_label_${index + 1}`" :for="`rule_nhc_${index + 1}`" class="form-check-label">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
