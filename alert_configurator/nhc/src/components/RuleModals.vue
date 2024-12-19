@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive  } from 'vue';
+import { ref, computed, reactive, defineEmits } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 import jsyaml from 'js-yaml';
@@ -61,14 +61,17 @@ const ruleData = reactive({
 // Current mode (HTML, JSON, YAML)
 const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
 // Synchronize data from the HTML form
+
 const syncFromHTML = () => {
   // ruleData is already reactive and bound to the form inputs via v-model
 };
 
+const emit = defineEmits(['toast']);
+
 // Synchronize data from the CodeMirror editor
 const syncFromCodeMirror = (content: string) => {
-  console.warn('content:', content);
-  console.log('currentMode.value:', currentMode.value);
+  // console.warn('content:', content);
+  // console.log('currentMode.value:', currentMode.value);
   try {
     if (currentMode.value === 'JSON') {
       Object.assign(ruleData, JSON.parse(content));
@@ -76,17 +79,24 @@ const syncFromCodeMirror = (content: string) => {
       Object.assign(ruleData, jsyaml.load(content));
     }
   } catch (err: unknown) {
-    console.error('Failed to parse content:', err);
-    $emit('Toast', {message: err.message, toastClass: 'bg-danger'});
-    // $emit('Toast', { message: 'Error parsing content', toastClass: 'bg-danger' });
+    if (err instanceof Error) {
+    emit('toast', {message: err.message, toastClass: 'bg-danger'});
+    } else {
+      emit('toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+    }
   }
 };
 
 // Switch between modes
 const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
-  console.log('mode:', mode);
-  currentMode.value = mode;
-  console.log('currentMode.value:', currentMode.value);
+  console.log(`mode ${mode} currentMode ${currentMode.value}`);
+  if (mode === currentMode.value){
+    emit('toast', {message: `Error: Already in ${mode} Mode, no conversion needed`, toastClass: 'bg-warning'});
+  } else{
+    currentMode.value = mode;
+  }
+
+
 };
 
 
@@ -122,7 +132,7 @@ const toggleNHC = () => {
               <button type="button" class="btn btn-warning btn-sm" @click="switchMode('YAML')">YAML View</button><br />
             </div>
           </div>
-          <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="serializedContent" ContentType="JSON" @Toast="$emit('Toast', $event)" />
+          <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="serializedContent" ContentType="JSON" @Toast="$emit('toast', $event)" />
           <form v-if="currentMode === 'HTML'" @input="syncFromHTML" >
             <div :id="`model-form_${index + 1}`">
               <div class="row g-6">
@@ -186,9 +196,3 @@ const toggleNHC = () => {
     </div>
   </div>
 </template>
-<script lang="ts">
-
-export default {
-
- emits: ['Toast'],
-};</script>

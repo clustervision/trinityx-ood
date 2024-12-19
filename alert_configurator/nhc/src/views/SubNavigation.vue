@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { type PropType } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 </script>
 <template>
@@ -26,7 +27,7 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
             <div class="row">
               <div class="col mb-12">
                 <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">{{ rulesFile }}</span></label> &nbsp;&nbsp;
-                <CodeMirrorEditor editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('Toast', $event)" />
+                <CodeMirrorEditor editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('toast', $event)" />
               </div>
             </div>
           </div>
@@ -58,10 +59,10 @@ export default {
       required: true,
     },
     ContentType: {
-      type: String,
+      type: String as PropType<'JSON' | 'YAML'>,
       required: true,
     },
   },
-  emits: ['Toast'],
+  emits: ['toast'],
 };
 </script>

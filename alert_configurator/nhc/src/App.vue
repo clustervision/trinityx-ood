@@ -235,7 +235,7 @@ const base64String = (row: string) => {
                           :row = "row"
                           :index = index
                           :selectedClass="selectedClass"
-
+                          @Toast="Toast"
                         />
                       </td>
                     </tr>

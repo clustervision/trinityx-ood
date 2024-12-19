@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, type PropType, type SetupContext, defineExpose } from 'vue';
+import { ref, onMounted, watch, type PropType } from 'vue';
 import { basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
@@ -33,7 +33,7 @@ const props = defineProps({
   });
 
   // const emits = defineEmits(['update:Content', 'Toast']);
-  const emit = defineEmits(['update:Content', 'Toast']);
+  const emit = defineEmits(['update:Content', 'toast']);
 //   const attrs = useAttrs(); // Equivalent to context.attrs
 // const slots = useSlots();
   // const context: SetupContext;
@@ -93,7 +93,7 @@ const props = defineProps({
           console.warn('doccontentType >>>>>>>>>>>', docContentType);
           if (docContentType === 'JSON') {
             newContent = editor.state.doc.toString();
-            emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
+            emit('toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
             return;
           } else {
             try {
@@ -101,10 +101,10 @@ const props = defineProps({
             } catch (err: unknown) {
               if (err instanceof Error) {
                 console.error('Failed to parse YAML to JSON', err);
-                emit('Toast', {message: err.message, toastClass: 'bg-danger'});
+                emit('toast', {message: err.message, toastClass: 'bg-danger'});
               } else {
                 console.error('An unknown error occurred', err);
-                emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+                emit('toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
               }
               return;
             }
@@ -114,7 +114,7 @@ const props = defineProps({
           console.warn('doccontentType >>>>>>>>>>>', docContentType);
           if (docContentType === 'YAML') {
             newContent = editor.state.doc.toString();
-            emit('Toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
+            emit('toast', {message: `Error: Already in ${docContentType} Mode, no conversion needed`, toastClass: 'bg-warning'});
             return;
           } else {
             try {
@@ -122,10 +122,10 @@ const props = defineProps({
             } catch (err: unknown) {
               if (err instanceof Error) {
                 console.error('Failed to parse JSON to YAML', err);
-                emit('Toast', {message: err.message, toastClass: 'bg-danger'});
+                emit('toast', {message: err.message, toastClass: 'bg-danger'});
               } else {
                 console.error('An unknown error occurred', err);
-                emit('Toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
+                emit('toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
               }
               return;
             }
