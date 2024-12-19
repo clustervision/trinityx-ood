@@ -10,11 +10,8 @@ import './assets/js/main.js';
 import TopNavigation from '@/views/TopNavigation.vue';
 import SubNavigation from '@/views/SubNavigation.vue';
 import FooterBar from '@/views/FooterBar.vue';
-import PromQLEditor from '@/components/PromQLEditor.vue';
 import RuleModals from './components/RuleModals.vue';
-
 import { Modal } from 'bootstrap';
-
 
 const promQLurl = ref("https://vmware-controller1.cluster:9090");
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
@@ -40,25 +37,11 @@ onMounted(() => {
   // console.log('App mounted, ready for modals!');
 });
 
-const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
-const rule_modal_html = (id: number, mode: number) => {
-  currentMode.value = 'HTML';
-};
-
-const rule_modal_json = (id: number, mode: number) => {
-  currentMode.value = 'JSON';
-};
-
-const rule_modal_yaml = (id: number, mode: number) => {
-  currentMode.value = 'YAML';
-};
-
 const base64String = (row: string) => {
   const encodedData = btoa(JSON.stringify(row));
   return encodedData;
 };
 </script>
-
 
 <template>
 
@@ -92,84 +75,18 @@ const base64String = (row: string) => {
             <h5 class="card-header">Rules</h5>
             <div class="card-body">
               <div class="table-responsive text-nowrap">
-                  <div class="modal fade" id="add_rule_rule_modal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-xl" role="document">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <h5 class="modal-title" id="exampleModalLabel4">Add New Alert Rule</h5>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                          <div class="row">
-                            <div class="col mb-12">
-                              <button type="button" id="button_html_0" @click.prevent="rule_modal_html(0, 1);" class="btn btn-secondary btn-sm">Switch to HTML Mode</button>
-                              <button type="button" id="button_json_0" @click.prevent="rule_modal_json(0, 2);" class="btn btn-primary btn-sm">Switch to JSON Mode</button>
-                              <button type="button" id="button_yaml_0" @click.prevent="rule_modal_yaml(0, 3);" class="btn btn-warning btn-sm">Switch to YAML Mode</button>
-                            </div>
-                          </div>
-                          <div id="model-form_0">
-                            <div class="row g-6">
-                              <div class="col mb-0">
-                                <label for="rule_name_0" class="form-label">Rule Name</label>
-                                <input type="text" id="rule_name_0" class="form-control" placeholder="Enter Name" />
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col mb-6">
-                                <label for="rule_description_0" class="form-label">Rule Description</label>
-                                <input type="text" id="rule_description_0" class="form-control" placeholder="Enter Name" />
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col mb-0">
-                                <label for="rule_for_0" class="form-label">Rule For</label>
-                                <input type="text" id="rule_for_0" class="form-control" placeholder="Enter For" />
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col mb-6">
-                                <label for="exprInput_0" class="form-label">Rule Expr</label>
-                                <PromQLEditor :promQLurl="promQLurl" editor-id="editor_0" editor-rule=""><div class="promql"></div></PromQLEditor>
-                              </div>
-                            </div>
-                            <div class="row">
-                               <div class="col mb-0">
-                                <label for="rule_status_0" class="form-label">Enable</label>
-                                <div class="form-check form-switch ">
-                                  <input type="checkbox" v-model="isChecked" id="rule_status_0" class="form-check-input">
-                                  <label id="rule_status_label_0" for="rule_status_0" class="form-check-label">{{ isChecked ? 'ON' : 'OFF' }}</label>
-                                </div>
-                              </div>
-                              <div class="col mb-6">
-                                <label for="rule_nhc_0" class="form-label">Rule NHC</label>
-                                <div class="form-check form-switch ">
-                                  <input type="checkbox" id="rule_nhc_0" v-model="isCheckedNHC"  class="form-check-input">
-                                  <label id="rule_nhc_label_0" for="rule_nhc_0" class="form-check-label">{{ isCheckedNHC ? 'ON' : 'OFF' }}</label>
-                                </div>
-                              </div>
-                              <div class="col mb-6">
-                                <label for="rule_severity_0" class="form-label">Set Priority</label>
-                                <select id="rule_severity_0" @change="updateClass" :class="['form-select', 'form-select-sm', selectedClass]">
-                                  <option class="btn-primary">Set Priority</option>
-                                  <option class="btn-dark" value="critical">Critical</option>
-                                  <option class="btn-danger" value="danger">Danger</option>
-                                  <option class="btn-warning" value="warning">Warning</option>
-                                  <option class="btn-info" value="info">Informational</option>
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div class="modal-footer">
-                          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                          <button type="button" @click.prevent="add_rule('save', $event.target, 0, 'save');" class="btn btn-primary">Save Rule</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-
-
+                <RuleModals
+                  :promQLurl = "promQLurl"
+                  :update_configuration="update_configuration"
+                  :updateClass = "updateClass"
+                  :base64String="base64String"
+                  :ruleRow = "ruleRow"
+                  :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}}"
+                  :index = 0
+                  :selectedClass="selectedClass"
+                  @Toast="Toast"
+                />
                 <table id="alert-table" class="table table-bordered table-striped table-hover table-responsive">
                   <thead>
                     <tr>
@@ -217,19 +134,14 @@ const base64String = (row: string) => {
                         <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                           <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
-                        <!-- :currentMode="currentMode" @Toast="$emit('Toast', $event)" -->
                         <RuleModals
                           :promQLurl = "promQLurl"
                           :update_configuration="update_configuration"
                           :updateClass = "updateClass"
                           :base64String="base64String"
-
-                          :rule_modal_html="rule_modal_html"
-                          :rule_modal_json="rule_modal_json"
-                          :rule_modal_yaml="rule_modal_yaml"
                           :ruleRow = "ruleRow"
                           :row = "row"
-                          :index = index
+                          :index = index+1
                           :selectedClass="selectedClass"
                           @Toast="Toast"
                         />
@@ -267,8 +179,6 @@ import { ref, onMounted } from 'vue';
 import jsyaml from 'js-yaml';
 import axios from 'axios';
 
-const isChecked = ref(false);
-const isCheckedNHC = ref("no");
 const selectedClass = ref('btn-primary');
 const classMap = {
   critical: 'btn-dark',
@@ -316,10 +226,6 @@ async function saveRules(content: JSON) {
   }
 }
 
-
-
-// console.log(configuration);
-
 interface RuleRow {
   alert: string;
   annotations: {
@@ -348,7 +254,6 @@ const ruleRow = (row: RuleRow, mode: string) => {
       "nhc": row.labels.nhc,
       "severity": row.labels.severity
     }
-
   };
   if (mode === "JSON"){
     response = JSON.stringify(rule, null, 2);
@@ -363,7 +268,6 @@ const ContentType: 'JSON' | 'YAML' = 'JSON';
 
 export default {
   components: {
-    PromQLEditor,
     SubNavigation,
   },
   data() {
@@ -397,9 +301,70 @@ export default {
       }, 2000);
     },
 
-
-
     update_configuration(key: string, element: EventTarget | null, count: number, form_rule: string) {
+      if (count === 0){
+        console.log("Add Condition");
+        const alertElement = document.getElementById(`rule_name_${count}`);
+        const descriptionElement = document.getElementById(`rule_description_${count}`);
+        const forElement = document.getElementById(`rule_for_${count}`);
+        const editorElement = document.getElementById(`rule_editor__${count}`);
+        const statusElement = document.getElementById(`rule_status_${count}`);
+        const nhcElement = document.getElementById(`rule_nhc_${count}`);
+        const severityElement = document.getElementById(`rule_severity_${count}`);
+
+        if (alertElement) {
+          const alert = (alertElement as HTMLInputElement).value;
+          console.log(alert);
+        } else {
+          console.error('Element not found');
+        }
+
+        if (descriptionElement) {
+          const description = (descriptionElement as HTMLInputElement).value;
+          console.log(description);
+        } else {
+          console.error('Element not found');
+        }
+
+        if (forElement) {
+          const forel = (forElement as HTMLInputElement).value;
+          console.log(forel);
+        } else {
+          console.error('Element not found');
+        }
+
+        if (editorElement) {
+          console.log(editorElement);
+          const editorEl = (editorElement as HTMLInputElement).value;
+          console.log(editorEl);
+        } else {
+          console.error('Element not found');
+        }
+
+        if (statusElement) {
+          const status = (statusElement as HTMLInputElement).value;
+          console.log(status);
+        } else {
+          console.error('Element not found');
+        }
+
+        if (nhcElement) {
+          const nhc = (nhcElement as HTMLInputElement).value;
+          console.log(nhc);
+        } else {
+          console.error('Element not found');
+        }
+
+        if (severityElement) {
+          const severity = (severityElement as HTMLInputElement).value;
+          console.log(severity);
+        } else {
+          console.error('Element not found');
+        }
+        console.log(configuration);
+      } else {
+        console.log("Update Condition");
+      }
       console.log(key);
       console.log(element);
       console.log(count);
