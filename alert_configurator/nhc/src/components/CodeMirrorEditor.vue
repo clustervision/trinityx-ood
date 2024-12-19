@@ -1,7 +1,7 @@
 
 <template>
-  <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm">JSON View</button>&nbsp;
-  <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm">YAML View</button>
+  <button type="button" @click="switchMode('JSON')" class="btn btn-primary btn-sm" v-if="editorHeight !== '300'">JSON View</button>&nbsp;
+  <button type="button" @click="switchMode('YAML')" class="btn btn-warning btn-sm" v-if="editorHeight !== '300'">YAML View</button>
   <div ref="editorContainer" class="editor-container"></div>
 </template>
 
@@ -133,7 +133,7 @@ const props = defineProps({
         }
       }
       editor?.setState(createEditorState(newContent, contentType));
-      
+
     };
 
     onMounted(() => {

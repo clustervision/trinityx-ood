@@ -221,7 +221,7 @@ const base64String = (row: string) => {
                         <button style="display: inline-block;" class="tooltip-modal-link" @click="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                           <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
-                        <!-- :currentMode="currentMode" -->
+                        <!-- :currentMode="currentMode" @Toast="$emit('Toast', $event)" -->
                         <RuleModals
                           :promQLurl = "promQLurl"
                           :update_configuration="update_configuration"
@@ -234,6 +234,8 @@ const base64String = (row: string) => {
                           :ruleRow = "ruleRow"
                           :row = "row"
                           :index = index
+                          :selectedClass="selectedClass"
+
                         />
                       </td>
                     </tr>
