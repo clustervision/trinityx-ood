@@ -303,65 +303,35 @@ export default {
 
     update_configuration(key: string, element: EventTarget | null, count: number, form_rule: string) {
       if (count === 0){
-        console.log("Add Condition");
-        const alertElement = document.getElementById(`rule_name_${count}`);
-        const descriptionElement = document.getElementById(`rule_description_${count}`);
-        const forElement = document.getElementById(`rule_for_${count}`);
-        const editorElement = document.getElementById(`rule_editor__${count}`);
-        const statusElement = document.getElementById(`rule_status_${count}`);
-        const nhcElement = document.getElementById(`rule_nhc_${count}`);
-        const severityElement = document.getElementById(`rule_severity_${count}`);
-
-        if (alertElement) {
-          const alert = (alertElement as HTMLInputElement).value;
-          console.log(alert);
-        } else {
-          console.error('Element not found');
-        }
-
-        if (descriptionElement) {
-          const description = (descriptionElement as HTMLInputElement).value;
-          console.log(description);
-        } else {
-          console.error('Element not found');
-        }
-
-        if (forElement) {
-          const forel = (forElement as HTMLInputElement).value;
-          console.log(forel);
-        } else {
-          console.error('Element not found');
-        }
-
-        if (editorElement) {
-          console.log(editorElement);
-          const editorEl = (editorElement as HTMLInputElement).value;
-          console.log(editorEl);
-        } else {
-          console.error('Element not found');
-        }
-
-        if (statusElement) {
-          const status = (statusElement as HTMLInputElement).value;
-          console.log(status);
-        } else {
-          console.error('Element not found');
-        }
-
-        if (nhcElement) {
-          const nhc = (nhcElement as HTMLInputElement).value;
-          console.log(nhc);
-        } else {
-          console.error('Element not found');
-        }
-
-        if (severityElement) {
-          const severity = (severityElement as HTMLInputElement).value;
-          console.log(severity);
-        } else {
-          console.error('Element not found');
-        }
-        console.log(configuration);
+        const rule: RuleRow = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
+        const fields = [
+          { key: 'alert', elementId: `rule_name_${count}` },
+          { key: 'annotations.description', elementId: `rule_description_${count}` },
+          { key: 'for', elementId: `rule_for_${count}` },
+          { key: 'expr', elementId: `rule_editor__${count}` },
+          { key: 'labels._trix_status', elementId: `rule_status_${count}` },
+          { key: 'labels.nhc', elementId: `rule_nhc_${count}` },
+          { key: 'labels.severity', elementId: `rule_severity_${count}` }
+        ];
+        fields.forEach(({ key, elementId }) => {
+          const element = document.getElementById(elementId);
+          if (element) {
+            const value = (element as HTMLInputElement).value;
+            const keys = key.split('.');
+            let target: any = rule;
+            keys.forEach((k, index) => {
+            if (index === keys.length - 1) {
+              target[k] = value;
+            } else {
+              target = target[k] as any;
+            }
+          });
+          } else {
+            console.error(`Element not found for ${key}`);
+          }
+        });
+        console.log(rule);
+        // console.log(configuration);
       } else {
         console.log("Update Condition");
       }
