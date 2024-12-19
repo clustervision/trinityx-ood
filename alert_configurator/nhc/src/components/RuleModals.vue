@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, reactive  } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 
@@ -28,7 +28,7 @@ const props = defineProps({
     type: Function,
     required: true,
   },
-  currentMode: String,
+  // currentMode: String,
   rule_modal_html: Function,
   rule_modal_json: Function,
   rule_modal_yaml: Function,
@@ -49,34 +49,16 @@ const props = defineProps({
 import jsyaml from 'js-yaml';
 
 // Centralized state for rule data
-// const ruleData = ref({
-//   alert: '',
-//   annotations: { description: '' },
-//   expr: '',
-//   for: '',
-//   labels: { _trix_status: false, nhc: 'no', severity: 'info' },
-// });
-
-let ruleData = {
+const ruleData = reactive({
   alert: props.row.alert,
   annotations: { description: props.row.annotations.description },
   expr: props.row.expr,
   for: props.row.for,
   labels: { _trix_status: props.row.labels._trix_status, nhc: props.row.labels.nhc, severity: props.row.labels.severity },
-};
+});
 
 // Current mode (HTML, JSON, YAML)
 const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
-
-// Computed property to serialize ruleData into the appropriate format for CodeMirror
-// const serializedRuleData = computed(() => {
-//   if (currentMode.value === 'JSON') {
-//     return JSON.stringify(ruleData.value, null, 2);
-//   } else if (currentMode.value === 'YAML') {
-//     return jsyaml.dump(ruleData.value);
-//   }
-//   return ''; // Empty for non-editor modes
-// });
 
 // Synchronize data from the HTML form
 const syncFromHTML = () => {
@@ -90,10 +72,11 @@ const syncFromCodeMirror = (content: string) => {
   console.log('currentMode.value:', currentMode.value);
   try {
     if (currentMode.value === 'JSON') {
-      // ruleData.value = JSON.parse(content);
-      ruleData = JSON.stringify(content, null, 2);
+      Object.assign(ruleData, JSON.parse(content));
+      // ruleData = JSON.stringify(content, null, 2);
     } else if (currentMode.value === 'YAML') {
-      ruleData = jsyaml.load(content);
+      Object.assign(ruleData, jsyaml.load(content));
+      // ruleData = jsyaml.load(content);
     }
   } catch (err) {
     console.error('Failed to parse content:', err);
@@ -103,8 +86,20 @@ const syncFromCodeMirror = (content: string) => {
 
 // Switch between modes
 const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
+  console.log('mode:', mode);
   currentMode.value = mode;
+  console.log('currentMode.value:', currentMode.value);
 };
+
+
+const serializedContent = computed(() => {
+  if (currentMode.value === 'JSON') {
+    return JSON.stringify(ruleData, null, 2);
+  } else if (currentMode.value === 'YAML') {
+    return jsyaml.dump(ruleData);
+  }
+  return '';
+});
 
 </script>
 
@@ -130,7 +125,8 @@ const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
               <!-- <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="logEditorContainer(props, index + 1, 2);" class="btn btn-dark btn-sm">Raw</button> -->
               <button v-if="currentMode === 'HTML'" type="button" :id="`button_json_${index + 1}`" @click="rule_modal_json(index + 1, 2);" class="btn btn-dark btn-sm">Raw</button>
               <!-- <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" /> -->
-              <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="ruleRow(row, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" />
+              <!-- <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="ruleRow(ruleData, currentMode)" ContentType="JSON" @Toast="$emit('Toast', $event)" /> -->
+              <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="serializedContent" ContentType="JSON" @Toast="$emit('Toast', $event)" />
             </div>
           </div>
 
@@ -161,6 +157,7 @@ const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
                 <div class="col mb-6">
                   <label :for="`exprInput_${index + 1}`" class="form-label">Rule Expr</label>
                   <!-- <PromQLEditor v-model="ruleData.expr" :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" :editor-rule="`${row.expr}`"><div class="promql"></div></PromQLEditor> -->
+                  <PromQLEditor :promQLurl="promQLurl" :editor-id="`editor_${index + 1}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
                 </div>
               </div>
               <div class="row">
