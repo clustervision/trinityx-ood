@@ -28,7 +28,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="save_configuration(newContent)" id="save_configuration" class="btn btn-primary">Save changes</button>
+          <button type="button" @click.prevent="save_configuration(newContent, 'edit_config')" class="btn btn-primary">Save changes</button>
         </div>
       </div>
     </div>
@@ -40,7 +40,6 @@
 import { type PropType } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import { ref } from 'vue';
-// import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
   rulesFile: {

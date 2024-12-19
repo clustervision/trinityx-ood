@@ -317,19 +317,6 @@ async function saveRules(content: JSON) {
 }
 
 
-// const saveRules = async (content: Record<string, any>) => {
-//   try {
-//     const response = await axios.post(`${url}/save_config`, content);
-//     console.log('Response:', response.data);
-//     return response.data;
-//   } catch (error: any) {
-//     console.error('Error saving configuration:', error.response?.data || error.message);
-//     throw error;
-//   }
-// };
-
-
-
 
 // console.log(configuration);
 
@@ -425,7 +412,8 @@ export default {
       console.log(form_rule);
     },
 
-    async save_configuration(newContent: string) {
+    async save_configuration(newContent: string, modalID: string) {
+      console.log(modalID);
       let content;
       try {
         content = jsyaml.load(newContent);
@@ -446,20 +434,24 @@ export default {
           content = false;
         }
       }
-      console.log(typeof newContent);
-      console.log(content);
       if (content){
         const response = await saveRules(content);
         this.toastMessage = response.message;
         if (response.status === 200){
           this.toastClass = "bg-success";
+          const modal = document.getElementById(modalID);
+          if (modal){
+            const bootstrapModal = Modal.getInstance(modal);
+            bootstrapModal?.hide();
+          } else{
+            this.Toast(this.toastMessage=`Modal with ID '${modalID}' not found.`, this.toastClass='bg-danger');
+          }
         } else if (response.status === 400){
           this.toastClass = "bg-warning";
         } else{
           this.toastClass = "bg-danger";
         }
         this.Toast(this.toastMessage, this.toastClass);
-        console.log(response);
       }
   }
 
