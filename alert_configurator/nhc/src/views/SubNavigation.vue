@@ -1,7 +1,3 @@
-<script setup lang="ts">
-import { type PropType } from 'vue';
-import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
-</script>
 
 <template>
   <div class="row sub-navbar">
@@ -15,7 +11,6 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
     <div class="col col-8"></div>
   </div>
 
-
   <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
@@ -27,13 +22,13 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
           <div class="row">
             <div class="col mb-12">
               <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">{{ rulesFile }}</span></label> &nbsp;&nbsp;
-              <CodeMirrorEditor editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('toast', $event)" />
+              <CodeMirrorEditor @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('toast', $event)" />
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="save_configuration()" id="save_configuration" class="btn btn-primary">Save changes</button>
+          <button type="button" @click.prevent="save_configuration(newContent)" id="save_configuration" class="btn btn-primary">Save changes</button>
         </div>
       </div>
     </div>
@@ -41,29 +36,37 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 
 </template>
 
-<script lang="ts">
-export default {
-  name: "SubNavigation",
-  props: {
-    rulesFile: {
-      type: String,
-      required: true,
-    },
-    save_configuration: {
-      type: Function,
-      required: true,
-    },
-    Content: {
-      type: String,
-      required: true,
-    },
-    ContentType: {
-      type: String as PropType<'JSON' | 'YAML'>,
-      required: true,
-    },
+<script lang="ts" setup>
+import { type PropType } from 'vue';
+import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
+import { ref } from 'vue';
+// import { defineProps, defineEmits } from 'vue';
+
+const props = defineProps({
+  rulesFile: {
+    type: String,
+    required: true,
   },
-  emits: ['toast'],
+  save_configuration: {
+    type: Function,
+    required: true,
+  },
+  Content: {
+    type: String,
+    required: true,
+  },
+  ContentType: {
+    type: String as PropType<'JSON' | 'YAML'>,
+    required: true,
+  },
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const emit = defineEmits(['toast']);
+const newContent = ref(props.Content);
+
+const syncFromCodeMirror = (content: string) => {
+  newContent.value = content;
 };
+
 </script>
-
-

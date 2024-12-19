@@ -295,10 +295,11 @@ async function fetchRules() {
   const response = await axios.get(url + '/get_rules');
   return response.data;
 }
-
-async function saveRules() {
+let configuration = await fetchRules();
+async function saveRules(content: JSON) {
   try {
-    const response = await axios.post(url + '/save_config', configuration);
+    const response = await axios.post(url + '/save_config', content);
+    configuration = await fetchRules();
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -315,7 +316,19 @@ async function saveRules() {
   }
 }
 
-const configuration = await fetchRules();
+
+// const saveRules = async (content: Record<string, any>) => {
+//   try {
+//     const response = await axios.post(`${url}/save_config`, content);
+//     console.log('Response:', response.data);
+//     return response.data;
+//   } catch (error: any) {
+//     console.error('Error saving configuration:', error.response?.data || error.message);
+//     throw error;
+//   }
+// };
+
+
 
 
 // console.log(configuration);
@@ -412,19 +425,42 @@ export default {
       console.log(form_rule);
     },
 
-    async save_configuration() {
-      const response = await saveRules();
-      this.toastMessage = response.message;
-      if (response.status === 200){
-        this.toastClass = "bg-success";
-      } else if (response.status === 400){
-        this.toastClass = "bg-warning";
-      } else{
-        this.toastClass = "bg-danger";
+    async save_configuration(newContent: string) {
+      let content;
+      try {
+        content = jsyaml.load(newContent);
+      } catch(YAMLerror: unknown){
+        if (YAMLerror instanceof Error) {
+          this.Toast(this.toastMessage=YAMLerror.message, this.toastClass='bg-danger');
+        } else {
+          this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
+        }
+        try {
+          content = JSON.parse(newContent);
+        } catch(JSONerror: unknown){
+          if (JSONerror instanceof Error) {
+            this.Toast(this.toastMessage= JSONerror.message, this.toastClass='bg-danger');
+          } else {
+            this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
+          }
+          content = false;
+        }
       }
-      this.Toast(this.toastMessage, this.toastClass);
-      console.log(response);
-
+      console.log(typeof newContent);
+      console.log(content);
+      if (content){
+        const response = await saveRules(content);
+        this.toastMessage = response.message;
+        if (response.status === 200){
+          this.toastClass = "bg-success";
+        } else if (response.status === 400){
+          this.toastClass = "bg-warning";
+        } else{
+          this.toastClass = "bg-danger";
+        }
+        this.Toast(this.toastMessage, this.toastClass);
+        console.log(response);
+      }
   }
 
   },
