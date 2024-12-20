@@ -75,10 +75,11 @@ const base64String = (row: string) => {
             <h5 class="card-header">Rules</h5>
             <div class="card-body">
               <div class="table-responsive text-nowrap">
-
+                <!-- :update_configuration="update_configuration" -->
                 <RuleModals
                   :promQLurl = "promQLurl"
-                  :update_configuration="update_configuration"
+                  :configuration="configuration"
+                  :save_configuration = "save_configuration"
                   :updateClass = "updateClass"
                   :base64String="base64String"
                   :ruleRow = "ruleRow"
@@ -134,9 +135,11 @@ const base64String = (row: string) => {
                         <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                           <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
+                        <!-- :update_configuration="update_configuration" -->
                         <RuleModals
                           :promQLurl = "promQLurl"
-                          :update_configuration="update_configuration"
+                          :configuration="configuration"
+                          :save_configuration = "save_configuration"
                           :updateClass = "updateClass"
                           :base64String="base64String"
                           :ruleRow = "ruleRow"
@@ -340,54 +343,50 @@ export default {
       console.log(count);
       console.log(form_rule);
     },
-    add_rule(key: string, element: EventTarget | null, count: number, form_rule: string) {
-      console.log(key);
-      console.log(element);
-      console.log(count);
-      console.log(form_rule);
-    },
+
 
     async save_configuration(newContent: string, modalID: string) {
       console.log(modalID);
-      let content;
-      try {
-        content = jsyaml.load(newContent);
-      } catch(YAMLerror: unknown){
-        if (YAMLerror instanceof Error) {
-          this.Toast(this.toastMessage=YAMLerror.message, this.toastClass='bg-danger');
-        } else {
-          this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
-        }
-        try {
-          content = JSON.parse(newContent);
-        } catch(JSONerror: unknown){
-          if (JSONerror instanceof Error) {
-            this.Toast(this.toastMessage= JSONerror.message, this.toastClass='bg-danger');
-          } else {
-            this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
-          }
-          content = false;
-        }
-      }
-      if (content){
-        const response = await saveRules(content);
-        this.toastMessage = response.message;
-        if (response.status === 200){
-          this.toastClass = "bg-success";
-          const modal = document.getElementById(modalID);
-          if (modal){
-            const bootstrapModal = Modal.getInstance(modal);
-            bootstrapModal?.hide();
-          } else{
-            this.Toast(this.toastMessage=`Modal with ID '${modalID}' not found.`, this.toastClass='bg-danger');
-          }
-        } else if (response.status === 400){
-          this.toastClass = "bg-warning";
-        } else{
-          this.toastClass = "bg-danger";
-        }
-        this.Toast(this.toastMessage, this.toastClass);
-      }
+      console.log(newContent);
+      // let content;
+      // try {
+      //   content = jsyaml.load(newContent);
+      // } catch(YAMLerror: unknown){
+      //   if (YAMLerror instanceof Error) {
+      //     this.Toast(this.toastMessage=YAMLerror.message, this.toastClass='bg-danger');
+      //   } else {
+      //     this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
+      //   }
+      //   try {
+      //     content = JSON.parse(newContent);
+      //   } catch(JSONerror: unknown){
+      //     if (JSONerror instanceof Error) {
+      //       this.Toast(this.toastMessage= JSONerror.message, this.toastClass='bg-danger');
+      //     } else {
+      //       this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
+      //     }
+      //     content = false;
+      //   }
+      // }
+      // if (content){
+      //   const response = await saveRules(content);
+      //   this.toastMessage = response.message;
+      //   if (response.status === 200){
+      //     this.toastClass = "bg-success";
+      //     const modal = document.getElementById(modalID);
+      //     if (modal){
+      //       const bootstrapModal = Modal.getInstance(modal);
+      //       bootstrapModal?.hide();
+      //     } else{
+      //       this.Toast(this.toastMessage=`Modal with ID '${modalID}' not found.`, this.toastClass='bg-danger');
+      //     }
+      //   } else if (response.status === 400){
+      //     this.toastClass = "bg-warning";
+      //   } else{
+      //     this.toastClass = "bg-danger";
+      //   }
+      //   this.Toast(this.toastMessage, this.toastClass);
+      // }
   }
 
   },

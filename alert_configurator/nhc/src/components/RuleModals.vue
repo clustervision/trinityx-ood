@@ -23,7 +23,12 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  update_configuration: Function,
+  configuration: Object,
+  save_configuration: {
+    type: Function,
+    required: true,
+  },
+  // update_configuration: Function,
   updateClass: Function,
   base64String: {
     type: Function,
@@ -100,6 +105,63 @@ const serializedContent = computed(() => {
   return '';
 });
 
+const addRowToRules = (row: any) => {
+  if (props.configuration?.groups?.[0]?.rules) {
+    props.configuration.groups[0].rules.push(row);
+    console.log('Row added successfully:', row);
+  } else {
+    console.error('Cannot add row: Invalid configuration structure');
+  }
+};
+
+
+function update_configuration(count: number) {
+  if (count === 0){
+    const rule: Row = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
+    const fields = [
+      { key: 'alert', elementId: `rule_name_${count}` },
+      { key: 'annotations.description', elementId: `rule_description_${count}` },
+      { key: 'for', elementId: `rule_for_${count}` },
+      { key: 'expr', elementId: `rule_editor__${count}` },
+      { key: 'labels._trix_status', elementId: `rule_status_${count}` },
+      { key: 'labels.nhc', elementId: `rule_nhc_${count}` },
+      { key: 'labels.severity', elementId: `rule_severity_${count}` }
+    ];
+    fields.forEach(({ key, elementId }) => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        const value = (element as HTMLInputElement).value;
+        const keys = key.split('.');
+        let target: any = rule;
+        keys.forEach((k, index) => {
+        if (index === keys.length - 1) {
+          if (k === "_trix_status"){
+            if (value === "on"){ target[k] = true; } else { target[k] = false; }
+          } else if (k === "nhc"){
+            if (value === "on"){ target[k] = "yes"; } else { target[k] = "no"; }
+          } else {
+            target[k] = value;
+          }
+          // console.log(`key: ${k} Value: ${value}`);
+        } else {
+          target = target[k] as any;
+        }
+      });
+      } else {
+        console.error(`Element not found for ${key}`);
+      }
+    });
+    console.log(rule);
+    // console.log(props.configuration);
+    addRowToRules(rule);
+    console.log(props.configuration);
+    props.save_configuration(props.configuration, `rule_modal_${count}`)
+  } else {
+    console.log("Update Condition");
+  }
+  console.log(count);
+}
+
 </script>
 
 <template>
@@ -124,19 +186,19 @@ const serializedContent = computed(() => {
               <div class="row g-6">
                 <div class="col mb-0">
                   <label :for="`rule_name_${index}`" class="form-label">Rule Name</label>
-                  <input type="text" v-model="ruleData.alert" :id="`rule_name_${index}`" class="form-control" placeholder="Enter Name"/>
+                  <input type="text" v-model="ruleData.alert" :id="`rule_name_${index}`" class="form-control" placeholder="Enter Rule Name" required/>
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`rule_description_${index}`" class="form-label">Rule Description</label>
-                  <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index}`" class="form-control" placeholder="Enter Name" />
+                  <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index}`" class="form-control" placeholder="Enter Rule Description" />
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-0">
                   <label :for="`rule_for_${index}`" class="form-label">Rule For</label>
-                  <input type="text" v-model="ruleData.for" :id="`rule_for_${index}`" class="form-control" placeholder="Enter For"  />
+                  <input type="text" v-model="ruleData.for" :id="`rule_for_${index}`" class="form-control" placeholder="Enter Rule For"  />
                 </div>
               </div>
               <div class="row">
@@ -177,7 +239,8 @@ const serializedContent = computed(() => {
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="update_configuration('save', $event.target, index, base64String(ruleData));" class="btn btn-primary">Save Rule</button>
+          <button type="button" @click.prevent="update_configuration(index);" class="btn btn-primary">Save Rule</button>
+          <!-- <button type="button" @click.prevent="update_configuration('save', $event.target, index, base64String(ruleData));" class="btn btn-primary">Save Rule</button> -->
         </div>
       </div>
     </div>
