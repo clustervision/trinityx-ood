@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, toRaw } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 import jsyaml from 'js-yaml';
@@ -108,25 +108,35 @@ const serializedContent = computed(() => {
 const addRowToRules = (row: any) => {
   if (props.configuration?.groups?.[0]?.rules) {
     props.configuration.groups[0].rules.push(row);
-    console.log('Row added successfully:', row);
+    // console.log('Row added successfully:', row);
   } else {
     console.error('Cannot add row: Invalid configuration structure');
   }
 };
 
+const updateRow = (row: any, count: number) => {
+  if (props.configuration?.groups?.[0]?.rules && count >= 0 && count < props.configuration.groups[0].rules.length) {
+    props.configuration.groups[0].rules[count] = row;
+    // console.log('Row after update:', props.configuration.groups[0].rules[count]);
+  } else {
+    console.error('Invalid index or rules array not found');
+  }
+};
 
 function update_configuration(count: number) {
-  if (count === 0){
-    const rule: Row = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
-    const fields = [
-      { key: 'alert', elementId: `rule_name_${count}` },
-      { key: 'annotations.description', elementId: `rule_description_${count}` },
-      { key: 'for', elementId: `rule_for_${count}` },
-      { key: 'expr', elementId: `rule_editor__${count}` },
-      { key: 'labels._trix_status', elementId: `rule_status_${count}` },
-      { key: 'labels.nhc', elementId: `rule_nhc_${count}` },
-      { key: 'labels.severity', elementId: `rule_severity_${count}` }
-    ];
+  let error = false;
+  const rule: Row = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
+  const fields = [
+    { key: 'alert', elementId: `rule_name_${count}` },
+    { key: 'annotations.description', elementId: `rule_description_${count}` },
+    { key: 'for', elementId: `rule_for_${count}` },
+    { key: 'expr', elementId: `rule_editor__${count}` },
+    { key: 'labels._trix_status', elementId: `rule_status_${count}` },
+    { key: 'labels.nhc', elementId: `rule_nhc_${count}` },
+    { key: 'labels.severity', elementId: `rule_severity_${count}` }
+  ];
+  const checkData = document.getElementById(`rule_name_${count}`);
+  if (checkData){
     fields.forEach(({ key, elementId }) => {
       const element = document.getElementById(elementId);
       if (element) {
@@ -135,14 +145,20 @@ function update_configuration(count: number) {
         let target: any = rule;
         keys.forEach((k, index) => {
         if (index === keys.length - 1) {
-          if (k === "_trix_status"){
+          if (k === "alert"){
+            if (value === ""){
+              emit('toast', {message: 'Alert Name is required.', toastClass: 'bg-danger'});
+              error = true;
+            } else {
+              target[k] = value;
+            }
+          }  else if (k === "_trix_status"){
             if (value === "on"){ target[k] = true; } else { target[k] = false; }
           } else if (k === "nhc"){
             if (value === "on"){ target[k] = "yes"; } else { target[k] = "no"; }
           } else {
             target[k] = value;
           }
-          // console.log(`key: ${k} Value: ${value}`);
         } else {
           target = target[k] as any;
         }
@@ -151,15 +167,40 @@ function update_configuration(count: number) {
         console.error(`Element not found for ${key}`);
       }
     });
-    console.log(rule);
-    // console.log(props.configuration);
-    addRowToRules(rule);
-    console.log(props.configuration);
-    props.save_configuration(props.configuration, `rule_modal_${count}`)
+
   } else {
-    console.log("Update Condition");
+    const rawRow = toRaw(ruleData);
+    console.log(rawRow);
+    // console.log(rawRow.alert);
+    // for (const [key, value] of Object.entries(ruleData)) {
+    //   console.log(`Key "${key}" value: ${value}`);
+    //   console.log(key);
+    //   console.log(value);
+      
+    // }
+    console.log(rule);
+    // if (rawRow.alert === "alert"){
+    //   if (value === ""){
+    //     emit('toast', {message: 'Alert Name is required.', toastClass: 'bg-danger'});
+    //     error = true;
+    //   } else {
+    //     target[k] = value;
+    //   }
+    // }  else if (k === "_trix_status"){
+    //   if (value === "on"){ target[k] = true; } else { target[k] = false; }
+    // } else if (k === "nhc"){
+    //   if (value === "on"){ target[k] = "yes"; } else { target[k] = "no"; }
+    // } else {
+    //   target[k] = value;
+    // }
+    error = true;
   }
-  console.log(count);
+  
+  if (error === false){
+    if (count === 0){ addRowToRules(rule); } else { updateRow(rule, count-1); }
+    props.save_configuration(props.configuration, `rule_modal_${count}`)
+    // console.log(props.configuration);
+  }
 }
 
 </script>
@@ -180,6 +221,7 @@ function update_configuration(count: number) {
               <button type="button" class="btn btn-warning btn-sm" @click.prevent="switchMode('YAML')">YAML View</button><br />
             </div>
           </div>
+          {{ ruleData }}
           <CodeMirrorEditor v-if="currentMode !== 'HTML'" @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="300" :Content="serializedContent" :ContentType="currentMode" @Toast="$emit('toast', $event)" />
           <form v-if="currentMode === 'HTML'" @input="syncFromHTML" >
             <div :id="`model-form_${index}`">
