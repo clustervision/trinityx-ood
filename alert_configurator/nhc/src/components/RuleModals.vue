@@ -115,7 +115,6 @@ const addRowToRules = (row: any) => {
 };
 
 const updateRow = (row: any, count: number) => {
-  
   if (props.configuration?.groups?.[0]?.rules && count >= 0 && count < props.configuration.groups[0].rules.length) {
     props.configuration.groups[0].rules[count] = row;
     // console.log('Row after update:', props.configuration.groups[0].rules[count]);
@@ -138,13 +137,13 @@ function update_configuration(count: number) {
   ];
   const checkData = document.getElementById(`rule_name_${count}`);
   if (checkData){
-    const rule: Row = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
+    let ruleHTML: Row = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
     fields.forEach(({ key, elementId }) => {
       const element = document.getElementById(elementId);
       if (element) {
         const value = (element as HTMLInputElement).value;
         const keys = key.split('.');
-        let target: any = rule;
+        let target: any = ruleHTML;
         keys.forEach((k, index) => {
         if (index === keys.length - 1) {
           if (k === "alert"){
@@ -169,11 +168,10 @@ function update_configuration(count: number) {
         console.error(`Element not found for ${key}`);
       }
     });
-
+    rule = toRaw(ruleHTML);
   } else {
     rule = toRaw(ruleData);
   }
-
   if (error === false){
     if (count === 0){ addRowToRules(rule); } else { updateRow(rule, count-1); }
     props.save_configuration(props.configuration, `rule_modal_${count}`)

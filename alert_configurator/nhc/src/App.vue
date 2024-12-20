@@ -75,7 +75,6 @@ const base64String = (row: string) => {
             <h5 class="card-header">Rules</h5>
             <div class="card-body">
               <div class="table-responsive text-nowrap">
-                <!-- :update_configuration="update_configuration" -->
                 <RuleModals
                   :promQLurl = "promQLurl"
                   :configuration="configuration"
@@ -107,18 +106,18 @@ const base64String = (row: string) => {
                       <td><a href="#"  @click.prevent="showModal(index + 1)"   >{{ row.alert }}</a></td>
                       <td>
                         <div class="form-check form-switch mb-2">
-                          <input class="form-check-input" type="checkbox" :checked="row.labels._trix_status !== false" @click.prevent="update_configuration('status', $event.target, index + 1, base64String(row));" id="rule_status">
-                          <label class="form-check-label" for="rule_status" :id="`#rule_status_text_${index + 1}`">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
+                          <input class="form-check-input" type="checkbox" v-model="row.labels._trix_status" @click="update_configuration(index + 1);" :id="`rule_status_${index + 1}`" />
+                          <label class="form-check-label" :for="`rule_status_${index + 1}`">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
                       <td>
                         <div class="form-check form-switch mb-2">
-                          <input class="form-check-input" @click.prevent="update_configuration('nhc', $event.target, index + 1, base64String(row));" type="checkbox" id="rule_nhc" :checked="row.labels.nhc === 'yes'">
-                          <label class="form-check-label" for="rule_nhc" :id="`rule_nhc_text_${index + 1}`">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                          <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="update_configuration(index + 1);" :id="`rule_nhc_${index + 1}`" data-toggle="switch" :true-value="'yes'" false-value="no" />
+                          <label class="form-check-label" :for="`rule_nhc_${index + 1}`">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
                         </div>
                       </td>
                       <td>
-                        <select :id="`severity_${index + 1}`" @click.prevent="update_configuration('severity', $event.target, index + 1, base64String(row));" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
+                        <select :id="`severity_${index + 1}`" @change="update_configuration(index + 1);" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
                           <option class="btn-primary" value="">Set Priority</option>
                           <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
                           <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>
@@ -132,10 +131,9 @@ const base64String = (row: string) => {
                             <box-icon name='edit' color="#696cff" size="md"></box-icon>
                           </button>
                         </div>
-                        <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="update_configuration('delete', $event.target, index + 1, base64String(row));" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
+                        <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="deleteRule(index);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                           <box-icon name='trash' color="red" size="md" ></box-icon>
                         </button>
-                        <!-- :update_configuration="update_configuration" -->
                         <RuleModals
                           :promQLurl = "promQLurl"
                           :configuration="configuration"
@@ -178,7 +176,7 @@ const base64String = (row: string) => {
 
 <script lang="ts">
 
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive, toRaw } from 'vue';
 import jsyaml from 'js-yaml';
 import axios from 'axios';
 
@@ -208,11 +206,13 @@ async function fetchRules() {
   const response = await axios.get(url + '/get_rules');
   return response.data;
 }
-let configuration = await fetchRules();
+
+let configurationData = await fetchRules();
+let configuration = reactive(configurationData);
+
 async function saveRules(content: JSON) {
   try {
     const response = await axios.post(url + '/save_config', content);
-    configuration = await fetchRules();
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -304,89 +304,85 @@ export default {
       }, 2000);
     },
 
-    update_configuration(key: string, element: EventTarget | null, count: number, form_rule: string) {
-      if (count === 0){
-        const rule: RuleRow = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
-        const fields = [
-          { key: 'alert', elementId: `rule_name_${count}` },
-          { key: 'annotations.description', elementId: `rule_description_${count}` },
-          { key: 'for', elementId: `rule_for_${count}` },
-          { key: 'expr', elementId: `rule_editor__${count}` },
-          { key: 'labels._trix_status', elementId: `rule_status_${count}` },
-          { key: 'labels.nhc', elementId: `rule_nhc_${count}` },
-          { key: 'labels.severity', elementId: `rule_severity_${count}` }
-        ];
-        fields.forEach(({ key, elementId }) => {
-          const element = document.getElementById(elementId);
-          if (element) {
-            const value = (element as HTMLInputElement).value;
-            const keys = key.split('.');
-            let target: any = rule;
-            keys.forEach((k, index) => {
-            if (index === keys.length - 1) {
-              target[k] = value;
-            } else {
-              target = target[k] as any;
-            }
-          });
-          } else {
-            console.error(`Element not found for ${key}`);
-          }
-        });
-        console.log(rule);
-        // console.log(configuration);
-      } else {
-        console.log("Update Condition");
-      }
-      console.log(key);
-      console.log(element);
-      console.log(count);
-      console.log(form_rule);
+    deleteRule(count: number) {
+      configuration.groups[0].rules.splice(count, 1);
+      this.save_configuration(configuration, 'On Page')
     },
 
+    update_configuration(count: number) {
+      let status: any;
+      let nhc: any;
+      let severity: any;
+      const statusElement = document.getElementById(`rule_status_${count}`);
+      if (statusElement) { status = (statusElement as HTMLInputElement).checked; }
+      const nhcElement = document.getElementById(`rule_nhc_${count}`);
+      if (nhcElement) {
+        nhc = (nhcElement as HTMLInputElement).checked;
+        if(nhc === true){ nhc = 'yes'; } else { nhc = 'no'; }
+      }
+      const severityElement = document.getElementById(`severity_${count}`);
+      if (severityElement) { severity = (severityElement as HTMLInputElement).value; }
+      console.log(nhc);
+      const rule: RuleRow = {
+        'alert': configuration.groups[0].rules[count].alert,
+        'annotations': {'description': configuration.groups[0].rules[count].annotations.description},
+        'for': configuration.groups[0].rules[count].for,
+        'expr': configuration.groups[0].rules[count].expr,
+        'labels': {
+          '_trix_status': status,
+          'nhc': nhc,
+          'severity': severity,
+        }
+      };
+      console.log(rule);
+      this.save_configuration(configuration, 'On Page')
+    },
 
     async save_configuration(newContent: string, modalID: string) {
-      console.log(modalID);
       console.log(newContent);
-      // let content;
-      // try {
-      //   content = jsyaml.load(newContent);
-      // } catch(YAMLerror: unknown){
-      //   if (YAMLerror instanceof Error) {
-      //     this.Toast(this.toastMessage=YAMLerror.message, this.toastClass='bg-danger');
-      //   } else {
-      //     this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
-      //   }
-      //   try {
-      //     content = JSON.parse(newContent);
-      //   } catch(JSONerror: unknown){
-      //     if (JSONerror instanceof Error) {
-      //       this.Toast(this.toastMessage= JSONerror.message, this.toastClass='bg-danger');
-      //     } else {
-      //       this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
-      //     }
-      //     content = false;
-      //   }
-      // }
-      // if (content){
-      //   const response = await saveRules(content);
-      //   this.toastMessage = response.message;
-      //   if (response.status === 200){
-      //     this.toastClass = "bg-success";
-      //     const modal = document.getElementById(modalID);
-      //     if (modal){
-      //       const bootstrapModal = Modal.getInstance(modal);
-      //       bootstrapModal?.hide();
-      //     } else{
-      //       this.Toast(this.toastMessage=`Modal with ID '${modalID}' not found.`, this.toastClass='bg-danger');
-      //     }
-      //   } else if (response.status === 400){
-      //     this.toastClass = "bg-warning";
-      //   } else{
-      //     this.toastClass = "bg-danger";
-      //   }
-      //   this.Toast(this.toastMessage, this.toastClass);
-      // }
+      let content;
+      if (typeof newContent === 'object'){
+        newContent = toRaw(newContent);
+        content = JSON.stringify(newContent);
+      } else { content = newContent; }
+      try {
+        content = jsyaml.load(content);
+      } catch(YAMLerror: unknown){
+        if (YAMLerror instanceof Error) {
+          this.Toast(this.toastMessage=YAMLerror.message, this.toastClass='bg-danger');
+        } else {
+          this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
+        }
+        try {
+          content = JSON.parse(content);
+        } catch(JSONerror: unknown){
+          if (JSONerror instanceof Error) {
+            this.Toast(this.toastMessage= JSONerror.message, this.toastClass='bg-danger');
+          } else {
+            this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
+          }
+          content = false;
+        }
+      }
+      if (content){
+        const response = await saveRules(content);
+        this.toastMessage = response.message;
+        if (response.status === 200){
+          this.toastClass = "bg-success";
+          const modal = document.getElementById(modalID);
+          if (modal){
+            const bootstrapModal = Modal.getInstance(modal);
+            bootstrapModal?.hide();
+          } else {
+            // this.Toast(this.toastMessage=`Modal with ID '${modalID}' not found.`, this.toastClass='bg-danger');
+          }
+        } else if (response.status === 400){
+          this.toastClass = "bg-warning";
+        } else{
+          this.toastClass = "bg-danger";
+        }
+        this.Toast(this.toastMessage, this.toastClass);
+      }
   }
 
   },
