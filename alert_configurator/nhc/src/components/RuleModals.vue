@@ -28,7 +28,6 @@ const props = defineProps({
     type: Function,
     required: true,
   },
-  // update_configuration: Function,
   updateClass: Function,
   base64String: {
     type: Function,
@@ -45,6 +44,8 @@ const props = defineProps({
   },
   selectedClass: String,
 });
+
+const new_config = props.configuration;
 
 
 // Centralized state for rule data
@@ -105,19 +106,17 @@ const serializedContent = computed(() => {
   return '';
 });
 
-const addRowToRules = (row: any) => {
-  if (props.configuration?.groups?.[0]?.rules) {
-    props.configuration.groups[0].rules.push(row);
-    // console.log('Row added successfully:', row);
+const addRowToRules = (row: object) => {
+  if (new_config?.groups?.[0]?.rules) {
+    new_config.groups[0].rules.push(row);
   } else {
     console.error('Cannot add row: Invalid configuration structure');
   }
 };
 
-const updateRow = (row: any, count: number) => {
-  if (props.configuration?.groups?.[0]?.rules && count >= 0 && count < props.configuration.groups[0].rules.length) {
-    props.configuration.groups[0].rules[count] = row;
-    // console.log('Row after update:', props.configuration.groups[0].rules[count]);
+const updateRow = (row: object, count: number) => {
+  if (new_config?.groups?.[0]?.rules && count >= 0 && count < new_config.groups[0].rules.length) {
+    new_config.groups[0].rules[count] = row;
   } else {
     console.error('Invalid index or rules array not found');
   }
@@ -125,56 +124,15 @@ const updateRow = (row: any, count: number) => {
 
 function update_configuration(count: number) {
   let error = false;
-  let rule;
-  const fields = [
-    { key: 'alert', elementId: `rule_name_${count}` },
-    { key: 'annotations.description', elementId: `rule_description_${count}` },
-    { key: 'for', elementId: `rule_for_${count}` },
-    { key: 'expr', elementId: `rule_editor__${count}` },
-    { key: 'labels._trix_status', elementId: `rule_status_${count}` },
-    { key: 'labels.nhc', elementId: `rule_nhc_${count}` },
-    { key: 'labels.severity', elementId: `rule_severity_${count}` }
-  ];
-  const checkData = document.getElementById(`rule_name_${count}`);
-  if (checkData){
-    let ruleHTML: Row = {'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}};
-    fields.forEach(({ key, elementId }) => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        const value = (element as HTMLInputElement).value;
-        const keys = key.split('.');
-        let target: any = ruleHTML;
-        keys.forEach((k, index) => {
-        if (index === keys.length - 1) {
-          if (k === "alert"){
-            if (value === ""){
-              emit('toast', {message: 'Alert Name is required.', toastClass: 'bg-danger'});
-              error = true;
-            } else {
-              target[k] = value;
-            }
-          }  else if (k === "_trix_status"){
-            if (value === "on"){ target[k] = true; } else { target[k] = false; }
-          } else if (k === "nhc"){
-            if (value === "on"){ target[k] = "yes"; } else { target[k] = "no"; }
-          } else {
-            target[k] = value;
-          }
-        } else {
-          target = target[k] as any;
-        }
-      });
-      } else {
-        console.error(`Element not found for ${key}`);
-      }
-    });
-    rule = toRaw(ruleHTML);
-  } else {
-    rule = toRaw(ruleData);
+  if (ruleData.alert === ""){
+    emit('toast', {message: 'Alert Name is required.', toastClass: 'bg-danger'});
+    error = true;
   }
+
+  const rule = toRaw(ruleData);
   if (error === false){
     if (count === 0){ addRowToRules(rule); } else { updateRow(rule, count-1); }
-    props.save_configuration(props.configuration, `rule_modal_${count}`)
+    props.save_configuration(new_config, `rule_modal_${count}`)
   }
 
 }

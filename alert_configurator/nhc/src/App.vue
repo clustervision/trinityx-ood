@@ -27,14 +27,12 @@ const showModal = (id: number) => {
       backdrop: true,
     });
     uniqueModal.value.show();
-    // console.log(uniqueModal.value);
   } else {
     console.error(`Modal with ID rule_modal_${id} not found`);
   }
 };
 
 onMounted(() => {
-  // console.log('App mounted, ready for modals!');
 });
 
 const base64String = (row: string) => {
@@ -108,7 +106,7 @@ const base64String = (row: string) => {
                         <input type="hidden" :id="`rule_name_${index + 1}`" :value="`${row.alert}`" />
                         <input type="hidden" :id="`rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
                         <input type="hidden" :id="`rule_for_${index + 1}`" :value="`${row.for}`" />
-                        <input type="hidden" :id="`editor_${index + 1}`" :value="`${row.expr}`" />
+                        <input type="hidden" :id="`rule_editor_${index + 1}`" :value="`${row.expr}`" />
                       </td>
                       <td>
                         <div class="form-check form-switch mb-2">
@@ -213,16 +211,12 @@ async function fetchRules() {
   return response.data;
 }
 
-let configurationData = await fetchRules();
-let configuration = reactive(configurationData);
+const configurationData = await fetchRules();
+const configuration = reactive(configurationData);
 
 async function saveRules(content: JSON) {
   try {
     const response = await axios.post(url + '/save_config', content);
-    // console.log(url + '/save_config');
-    // console.log(content);
-    // console.log(response.status);
-    // console.log(response.data.response);
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -320,9 +314,9 @@ export default {
     },
 
     update_configuration(count: number) {
-      let status: any;
-      let nhc: any;
-      let severity: any;
+      let status: boolean = false;
+      let nhc: string =  "no";
+      let severity: string = "info";
 
       const alertElement = document.getElementById(`rule_name_${count}`);
       const alert = (alertElement as HTMLInputElement).value;
@@ -333,7 +327,7 @@ export default {
       const forElement = document.getElementById(`rule_for_${count}`);
       const for_val = (forElement as HTMLInputElement).value;
 
-      const exprElement = document.getElementById(`editor_${count}`);
+      const exprElement = document.getElementById(`rule_editor_${count}`);
       const expr = (exprElement as HTMLInputElement).value;
 
 
@@ -342,8 +336,8 @@ export default {
 
       const nhcElement = document.getElementById(`rule_nhc_${count}`);
       if (nhcElement) {
-        nhc = (nhcElement as HTMLInputElement).checked;
-        if(nhc === true){ nhc = 'yes'; } else { nhc = 'no'; }
+        const nhc_value = (nhcElement as HTMLInputElement).checked;
+        if(nhc_value === true){ nhc = 'yes'; } else { nhc = 'no'; }
       }
 
       const severityElement = document.getElementById(`severity_${count}`);
@@ -357,32 +351,19 @@ export default {
       configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
       configuration.groups[0].rules[count - 1].labels.severity          = severity;
 
-
-      // const rule: RuleRow = {
-      //   'alert': configuration.groups[0].rules[count - 1].alert,
-      //   'annotations': {'description': configuration.groups[0].rules[count - 1].annotations.description},
-      //   'for': configuration.groups[0].rules[count - 1].for,
-      //   'expr': configuration.groups[0].rules[count - 1].expr,
-      //   'labels': {
-      //     '_trix_status': status,
-      //     'nhc': nhc,
-      //     'severity': severity,
-      //   }
-      // };
-
-
-      // console.log(rule);
       this.save_configuration(configuration, 'On Page')
     },
 
     async save_configuration(newContent: string, modalID: string) {
-      let content;
+      let content: unknown;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
         content = JSON.stringify(newContent);
       } else { content = newContent; }
 
       try {
+        console.log(content);
+        console.log(typeof content);
         content = jsyaml.load(content);
       } catch(YAMLerror: unknown){
         if (YAMLerror instanceof Error) {
@@ -391,6 +372,8 @@ export default {
           this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
         }
         try {
+          console.log(content);
+           console.log(typeof content);
           content = JSON.parse(content);
         } catch(JSONerror: unknown){
           if (JSONerror instanceof Error) {
@@ -402,8 +385,7 @@ export default {
         }
       }
 
-      console.log(content);
-      console.log(typeof content);
+
       if (content){
         const response = await saveRules(content);
         this.toastMessage = response.message;
