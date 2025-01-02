@@ -103,7 +103,13 @@ const base64String = (row: string) => {
                     <tr v-for="(row, index) in groups.rules" :key="index">
                       <th scope="row">{{ index + 1 }}</th>
                       <td>{{ groups.name }}</td>
-                      <td><a href="#"  @click.prevent="showModal(index + 1)"   >{{ row.alert }}</a></td>
+                      <td>
+                        <a href="#"  @click.prevent="showModal(index + 1)">{{ row.alert }}</a>
+                        <input type="hidden" :id="`rule_name_${index + 1}`" :value="`${row.alert}`" />
+                        <input type="hidden" :id="`rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
+                        <input type="hidden" :id="`rule_for_${index + 1}`" :value="`${row.for}`" />
+                        <input type="hidden" :id="`editor_${index + 1}`" :value="`${row.expr}`" />
+                      </td>
                       <td>
                         <div class="form-check form-switch mb-2">
                           <input class="form-check-input" type="checkbox" v-model="row.labels._trix_status" @click="update_configuration(index + 1);" :id="`rule_status_${index + 1}`" />
@@ -213,6 +219,10 @@ let configuration = reactive(configurationData);
 async function saveRules(content: JSON) {
   try {
     const response = await axios.post(url + '/save_config', content);
+    // console.log(url + '/save_config');
+    // console.log(content);
+    // console.log(response.status);
+    // console.log(response.data.response);
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
@@ -313,38 +323,65 @@ export default {
       let status: any;
       let nhc: any;
       let severity: any;
+
+      const alertElement = document.getElementById(`rule_name_${count}`);
+      const alert = (alertElement as HTMLInputElement).value;
+
+      const descriptionElement = document.getElementById(`rule_description_${count}`);
+      const description = (descriptionElement as HTMLInputElement).value;
+
+      const forElement = document.getElementById(`rule_for_${count}`);
+      const for_val = (forElement as HTMLInputElement).value;
+
+      const exprElement = document.getElementById(`editor_${count}`);
+      const expr = (exprElement as HTMLInputElement).value;
+
+
       const statusElement = document.getElementById(`rule_status_${count}`);
       if (statusElement) { status = (statusElement as HTMLInputElement).checked; }
+
       const nhcElement = document.getElementById(`rule_nhc_${count}`);
       if (nhcElement) {
         nhc = (nhcElement as HTMLInputElement).checked;
         if(nhc === true){ nhc = 'yes'; } else { nhc = 'no'; }
       }
+
       const severityElement = document.getElementById(`severity_${count}`);
       if (severityElement) { severity = (severityElement as HTMLInputElement).value; }
-      console.log(nhc);
-      const rule: RuleRow = {
-        'alert': configuration.groups[0].rules[count].alert,
-        'annotations': {'description': configuration.groups[0].rules[count].annotations.description},
-        'for': configuration.groups[0].rules[count].for,
-        'expr': configuration.groups[0].rules[count].expr,
-        'labels': {
-          '_trix_status': status,
-          'nhc': nhc,
-          'severity': severity,
-        }
-      };
-      console.log(rule);
+
+      configuration.groups[0].rules[count - 1].alert                    = alert;
+      configuration.groups[0].rules[count - 1].annotations.description  = description;
+      configuration.groups[0].rules[count - 1].for                      = for_val;
+      configuration.groups[0].rules[count - 1].expr                     = expr;
+      configuration.groups[0].rules[count - 1].labels._trix_status      = status;
+      configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
+      configuration.groups[0].rules[count - 1].labels.severity          = severity;
+
+
+      // const rule: RuleRow = {
+      //   'alert': configuration.groups[0].rules[count - 1].alert,
+      //   'annotations': {'description': configuration.groups[0].rules[count - 1].annotations.description},
+      //   'for': configuration.groups[0].rules[count - 1].for,
+      //   'expr': configuration.groups[0].rules[count - 1].expr,
+      //   'labels': {
+      //     '_trix_status': status,
+      //     'nhc': nhc,
+      //     'severity': severity,
+      //   }
+      // };
+
+
+      // console.log(rule);
       this.save_configuration(configuration, 'On Page')
     },
 
     async save_configuration(newContent: string, modalID: string) {
-      console.log(newContent);
       let content;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
         content = JSON.stringify(newContent);
       } else { content = newContent; }
+
       try {
         content = jsyaml.load(content);
       } catch(YAMLerror: unknown){
@@ -364,6 +401,9 @@ export default {
           content = false;
         }
       }
+
+      console.log(content);
+      console.log(typeof content);
       if (content){
         const response = await saveRules(content);
         this.toastMessage = response.message;
