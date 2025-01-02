@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, toRaw } from 'vue';
+import { ref, computed, reactive, toRaw, watch } from 'vue';
 import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import PromQLEditor from './PromQLEditor.vue';
 import jsyaml from 'js-yaml';
@@ -47,7 +47,6 @@ const props = defineProps({
 
 const new_config = props.configuration;
 
-
 // Centralized state for rule data
 const ruleData = reactive({
   alert: props.row.alert,
@@ -60,6 +59,21 @@ const ruleData = reactive({
     severity: props.row.labels.severity
   },
 });
+
+watch(
+  () => props.row,
+  (newRow) => {
+    ruleData.alert = newRow.alert;
+    ruleData.annotations.description = newRow.annotations.description;
+    ruleData.expr = newRow.expr;
+    ruleData.for = newRow.for;
+    ruleData.labels._trix_status = newRow.labels._trix_status;
+    ruleData.labels.nhc = newRow.labels.nhc;
+    ruleData.labels.severity = newRow.labels.severity;
+  },
+  { deep: true, immediate: true } // Ensure deep watching and immediate reaction
+);
+
 
 // Current mode (HTML, JSON, YAML)
 const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');

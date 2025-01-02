@@ -18,10 +18,7 @@ const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 const uniqueModal = ref<Modal | null>(null);
 
 const showModal = (id: number) => {
-  console.log(id);
   const dymodal = document.getElementById(`rule_modal_${id}`);
-  console.log(dymodal);
-
   if (dymodal) {
     uniqueModal.value = new Modal(dymodal, {
       backdrop: true,
@@ -97,12 +94,13 @@ const base64String = (row: string) => {
                       <th scope="col">Actions</th>
                     </tr>
                   </thead>
-                  <tbody v-for="groups in configuration.groups" :key="groups">
+                  <tbody v-for="(groups, groupsIndex) in configuration.groups" :key="groups.name">
                     <tr v-for="(row, index) in groups.rules" :key="index">
                       <th scope="row">{{ index + 1 }}</th>
                       <td>{{ groups.name }}</td>
                       <td>
                         <a href="#"  @click.prevent="showModal(index + 1)">{{ row.alert }}</a>
+                        <input type="hidden" :id="`group_name_${groupsIndex + 1}`" :value="`${groups.name}`" />
                         <input type="hidden" :id="`rule_name_${index + 1}`" :value="`${row.alert}`" />
                         <input type="hidden" :id="`rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
                         <input type="hidden" :id="`rule_for_${index + 1}`" :value="`${row.for}`" />
@@ -140,15 +138,15 @@ const base64String = (row: string) => {
                         </button>
                         <RuleModals
                           :promQLurl = "promQLurl"
-                          :configuration="configuration"
+                          :configuration = "configuration"
                           :save_configuration = "save_configuration"
                           :updateClass = "updateClass"
-                          :base64String="base64String"
+                          :base64String = "base64String"
                           :ruleRow = "ruleRow"
                           :row = "row"
                           :index = index+1
-                          :selectedClass="selectedClass"
-                          @Toast="Toast"
+                          :selectedClass = "selectedClass"
+                          @Toast = "Toast"
                         />
                       </td>
                     </tr>
@@ -206,14 +204,6 @@ url = window.location.href;
 url = url.replace('#', '');
 url = 'http://vmware-controller1.cluster:7755';
 
-async function fetchRules() {
-  const response = await axios.get(url + '/get_rules');
-  return response.data;
-}
-
-const configurationData = await fetchRules();
-const configuration = reactive(configurationData);
-
 async function saveRules(content: JSON) {
   try {
     const response = await axios.post(url + '/save_config', content);
@@ -232,7 +222,24 @@ async function saveRules(content: JSON) {
     }
   }
 }
-
+interface Configuration {
+  groups: Array<{
+    name: string;
+    rules: Array<{
+      alert: string;
+      annotations: {
+        description: string;
+      };
+      expr: string;
+      for: string;
+      labels: {
+        _trix_status: boolean;
+        nhc: string;
+        severity: string;
+      };
+    }>;
+  }>;
+}
 interface RuleRow {
   alert: string;
   annotations: {
@@ -272,6 +279,7 @@ const ruleRow = (row: RuleRow, mode: string) => {
 
 const ContentType: 'JSON' | 'YAML' = 'JSON';
 
+console.log(window.location.href);
 
 export default {
   components: {
@@ -282,14 +290,27 @@ export default {
       showToast: false,
       toastClass: '',
       toastMessage: '',
-      configuration,
+      configuration: reactive<Configuration>({ groups: [] }),
       activeButton: 1,
       previousButton: null,
-      Content: JSON.stringify(configuration, null, 2),
+      Content: JSON.stringify({}, null, 2),
       ContentType,
+      isUpdating: false,
     };
   },
+  async created() {
+    await this.fetchRules();
+  },
+
   methods: {
+
+    async fetchRules() {
+      const response = await axios.get(url + '/get_rules');
+      this.configuration =  reactive(response.data);
+      this.configuration = { ...this.configuration };
+      this.Content = JSON.stringify({ ...this.configuration }, null, 2);
+      return this.configuration;
+    },
 
     Toast(message: unknown, toastClass: string) {
       this.showToast = true;
@@ -305,12 +326,13 @@ export default {
       }
       setTimeout(() => {
         this.showToast = false;
-      }, 2000);
+      }, 8000);
+
     },
 
     deleteRule(count: number) {
-      configuration.groups[0].rules.splice(count, 1);
-      this.save_configuration(configuration, 'On Page')
+      this.configuration.groups[0].rules.splice(count, 1);
+      this.save_configuration(this.configuration, 'On Page')
     },
 
     update_configuration(count: number) {
@@ -343,18 +365,18 @@ export default {
       const severityElement = document.getElementById(`severity_${count}`);
       if (severityElement) { severity = (severityElement as HTMLInputElement).value; }
 
-      configuration.groups[0].rules[count - 1].alert                    = alert;
-      configuration.groups[0].rules[count - 1].annotations.description  = description;
-      configuration.groups[0].rules[count - 1].for                      = for_val;
-      configuration.groups[0].rules[count - 1].expr                     = expr;
-      configuration.groups[0].rules[count - 1].labels._trix_status      = status;
-      configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
-      configuration.groups[0].rules[count - 1].labels.severity          = severity;
+      this.configuration.groups[0].rules[count - 1].alert                    = alert;
+      this.configuration.groups[0].rules[count - 1].annotations.description  = description;
+      this.configuration.groups[0].rules[count - 1].for                      = for_val;
+      this.configuration.groups[0].rules[count - 1].expr                     = expr;
+      this.configuration.groups[0].rules[count - 1].labels._trix_status      = status;
+      this.configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
+      this.configuration.groups[0].rules[count - 1].labels.severity          = severity;
 
-      this.save_configuration(configuration, 'On Page')
+      this.save_configuration(this.configuration, 'On Page')
     },
 
-    async save_configuration(newContent: string, modalID: string) {
+    async save_configuration(newContent: unknown, modalID: string) {
       let content: unknown;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
@@ -362,9 +384,7 @@ export default {
       } else { content = newContent; }
 
       try {
-        console.log(content);
-        console.log(typeof content);
-        content = jsyaml.load(content);
+        content = jsyaml.load(content as string);
       } catch(YAMLerror: unknown){
         if (YAMLerror instanceof Error) {
           this.Toast(this.toastMessage=YAMLerror.message, this.toastClass='bg-danger');
@@ -372,9 +392,7 @@ export default {
           this.Toast(this.toastMessage='An unknown error occurred', this.toastClass='bg-danger');
         }
         try {
-          console.log(content);
-           console.log(typeof content);
-          content = JSON.parse(content);
+          content = JSON.parse(content as string);
         } catch(JSONerror: unknown){
           if (JSONerror instanceof Error) {
             this.Toast(this.toastMessage= JSONerror.message, this.toastClass='bg-danger');
@@ -387,7 +405,7 @@ export default {
 
 
       if (content){
-        const response = await saveRules(content);
+        const response = await saveRules(content as JSON);
         this.toastMessage = response.message;
         if (response.status === 200){
           this.toastClass = "bg-success";
@@ -395,9 +413,8 @@ export default {
           if (modal){
             const bootstrapModal = Modal.getInstance(modal);
             bootstrapModal?.hide();
-          } else {
-            // this.Toast(this.toastMessage=`Modal with ID '${modalID}' not found.`, this.toastClass='bg-danger');
           }
+          this.fetchRules();
         } else if (response.status === 400){
           this.toastClass = "bg-warning";
         } else{
