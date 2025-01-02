@@ -5,7 +5,6 @@ import './assets/css/core.css';
 import './assets/css/theme-default.css';
 import './assets/css/app.css';
 import './assets/js/main.js';
-// import './assets/js/app.js';
 
 import TopNavigation from '@/views/TopNavigation.vue';
 import SubNavigation from '@/views/SubNavigation.vue';
@@ -13,8 +12,7 @@ import FooterBar from '@/views/FooterBar.vue';
 import RuleModals from './components/RuleModals.vue';
 import { Modal } from 'bootstrap';
 
-// const promQLurl = ref("https://vmware-controller1.cluster:9090");
-const promQLurl = ref(window.PROMQL_URL || "https://vmware-controller1.cluster:9090");
+const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 const uniqueModal = ref<Modal | null>(null);
 
@@ -39,6 +37,20 @@ const base64String = (row: string) => {
 };
 </script>
 
+<style lang="css">
+.spinner-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 1050; /* Ensure it appears above other elements */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>
 <template>
 
   <header>
@@ -203,8 +215,7 @@ function updateClass(event: Event) {
 let url: string
 url = window.location.href;
 url = url.replace('#', '');
-// url = 'http://vmware-controller1.cluster:7755';
-url = window.APP_URL || "http://vmware-controller1.cluster:7755";
+url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 async function saveRules(content: JSON) {
   try {
@@ -281,7 +292,7 @@ const ruleRow = (row: RuleRow, mode: string) => {
 
 const ContentType: 'JSON' | 'YAML' = 'JSON';
 
-console.log(window.location.href);
+
 
 export default {
   components: {
@@ -330,7 +341,7 @@ export default {
       setTimeout(() => {
         this.showToast = false;
         this.showSpinner = false;
-      }, 5000);
+      }, 3000);
 
     },
 
