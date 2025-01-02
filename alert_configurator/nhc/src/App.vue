@@ -13,7 +13,8 @@ import FooterBar from '@/views/FooterBar.vue';
 import RuleModals from './components/RuleModals.vue';
 import { Modal } from 'bootstrap';
 
-const promQLurl = ref("https://vmware-controller1.cluster:9090");
+// const promQLurl = ref("https://vmware-controller1.cluster:9090");
+const promQLurl = ref(window.PROMQL_URL || "https://vmware-controller1.cluster:9090");
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 const uniqueModal = ref<Modal | null>(null);
 
@@ -54,7 +55,7 @@ const base64String = (row: string) => {
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
       <div class="content-wrapper">
-        <div id="spinner-overlay" class="spinner-overlay">
+        <div v-if="showSpinner" id="spinner-overlay" class="spinner-overlay">
           <div id="spinner" class="d-flex justify-content-center">
             <div class="spinner-border spinner-border-lg text-success" style="width: 10rem; height: 10rem" role="status">
               <span class="visually-hidden">Saving Configuration...</span>
@@ -202,7 +203,8 @@ function updateClass(event: Event) {
 let url: string
 url = window.location.href;
 url = url.replace('#', '');
-url = 'http://vmware-controller1.cluster:7755';
+// url = 'http://vmware-controller1.cluster:7755';
+url = window.APP_URL || "http://vmware-controller1.cluster:7755";
 
 async function saveRules(content: JSON) {
   try {
@@ -295,7 +297,7 @@ export default {
       previousButton: null,
       Content: JSON.stringify({}, null, 2),
       ContentType,
-      isUpdating: false,
+      showSpinner: false,
     };
   },
   async created() {
@@ -314,6 +316,7 @@ export default {
 
     Toast(message: unknown, toastClass: string) {
       this.showToast = true;
+      this.showSpinner = true;
       if (typeof message === 'string') {
         this.toastMessage = message;
         this.toastClass = toastClass;
@@ -326,7 +329,8 @@ export default {
       }
       setTimeout(() => {
         this.showToast = false;
-      }, 8000);
+        this.showSpinner = false;
+      }, 5000);
 
     },
 

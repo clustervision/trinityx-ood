@@ -41,7 +41,7 @@ from rest import Rest
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="nhc/dist/assets", template_folder="nhc/dist")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
@@ -65,7 +65,9 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    return render_template("configurator.html", table=TABLE_CAP, title='Status', TRIX_CONFIG=TRIX_CONFIG)
+    promQLurl = "https://vmware-controller1.cluster:9090"
+    appUrl = "http://vmware-controller1.cluster:7755"
+    return render_template("index.html", promQLurl=promQLurl, appUrl=appUrl)
 
 
 @app.route('/save_config', methods=['POST'])
