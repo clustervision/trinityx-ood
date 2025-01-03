@@ -1,71 +1,279 @@
+<style>
 
+.node-box{
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+  padding-bottom: 0.2rem;
+  padding-top: 0.2rem;
+}
+</style>
 <template>
-  <div class="row sub-navbar">
-    <div class="col col-2">Manage Node Health Checks</div>
-    <div class="col col-1">
-      <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_0">Add Alert Rule</button>
-    </div>
-    <div class="col col-1">
-      <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button>
-    </div>
-    <div class="col col-8"></div>
+
+  <div class="demo-inline-spacing">
+    <button type="button" class="btn btn-primary">Show All Nodes</button> &nbsp;
+    <button type="button" class="btn btn-secondary">Show Failed Nodes</button> &nbsp;
+    <button type="button" class="btn btn-success">Select All Visible Nodes</button> &nbsp;
+    <button type="button" class="btn btn-danger">Reset Selected Nodes</button> &nbsp;
+    <button type="button" class="btn btn-warning">Filter</button> &nbsp;
+    <button type="button" class="btn btn-info">Info</button> &nbsp;
+    <button type="button" class="btn btn-dark">Dark</button>
   </div>
 
-  <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel4">Edit Configuration</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col mb-12">
-              <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">{{ rulesFile }}</span></label> &nbsp;&nbsp;
-              <CodeMirrorEditor @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('toast', $event)" />
-            </div>
+<br />
+
+
+    <div class="row">
+
+
+      <div class="node-box col-md-1">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node001</h5>
+            <p class="card-text">
+              System Power off
+            </p>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="save_configuration(newContent, 'edit_config')" class="btn btn-primary">Save changes</button>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-secondary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node002</h5>
+            <p class="card-text">
+              System Not reachable.
+            </p>
+          </div>
         </div>
       </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node003</h5>
+            <p class="card-text">
+              System Running.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-danger text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node004</h5>
+            <p class="card-text">
+              System Out Of Memory.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node005</h5>
+            <p class="card-text">
+              Network down.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node006</h5>
+            <p class="card-text">
+              unexpected.
+            </p>
+          </div>
+        </div>
+      </div>
+
+<div class="node-box col-md-1">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node001</h5>
+            <p class="card-text">
+              System Power off
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-secondary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node002</h5>
+            <p class="card-text">
+              System Not reachable.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node003</h5>
+            <p class="card-text">
+              System Running.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-danger text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node004</h5>
+            <p class="card-text">
+              System Out Of Memory.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node005</h5>
+            <p class="card-text">
+              Network down.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node006</h5>
+            <p class="card-text">
+              unexpected.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node001</h5>
+            <p class="card-text">
+              System Power off
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-secondary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node002</h5>
+            <p class="card-text">
+              System Not reachable.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node003</h5>
+            <p class="card-text">
+              System Running.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-danger text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node004</h5>
+            <p class="card-text">
+              System Out Of Memory.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node005</h5>
+            <p class="card-text">
+              Network down.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node006</h5>
+            <p class="card-text">
+              unexpected.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node001</h5>
+            <p class="card-text">
+              System Power off
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-secondary text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node002</h5>
+            <p class="card-text">
+              System Not reachable.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node003</h5>
+            <p class="card-text">
+              System Running.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-danger text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node004</h5>
+            <p class="card-text">
+              System Out Of Memory.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node005</h5>
+            <p class="card-text">
+              Network down.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="node-box col-md-1">
+        <div class="card bg-info text-white">
+          <div class="card-body">
+            <h5 class="card-title text-white">Node006</h5>
+            <p class="card-text">
+              unexpected.
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+
+
     </div>
-  </div>
 
 </template>
 
 <script lang="ts" setup>
-import { type PropType } from 'vue';
-import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
-import { ref } from 'vue';
-
-const props = defineProps({
-  rulesFile: {
-    type: String,
-    required: true,
-  },
-  save_configuration: {
-    type: Function,
-    required: true,
-  },
-  Content: {
-    type: String,
-    required: true,
-  },
-  ContentType: {
-    type: String as PropType<'JSON' | 'YAML'>,
-    required: true,
-  },
-});
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const emit = defineEmits(['toast']);
-const newContent = ref(props.Content);
-
-const syncFromCodeMirror = (content: string) => {
-  newContent.value = content;
-};
 
 </script>

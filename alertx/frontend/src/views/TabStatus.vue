@@ -1,71 +1,165 @@
 
 <template>
-  <div class="row sub-navbar">
-    <div class="col col-2">Manage Node Health Checks</div>
-    <div class="col col-1">
-      <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_0">Add Alert Rule</button>
-    </div>
-    <div class="col col-1">
-      <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button>
-    </div>
-    <div class="col col-8"></div>
-  </div>
+  <div class="row">
 
-  <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel4">Edit Configuration</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col mb-12">
-              <label for="configuration" class="form-label">Configuration File: <span style="text-transform: lowercase; color: #007bff !important">{{ rulesFile }}</span></label> &nbsp;&nbsp;
-              <CodeMirrorEditor @update:Content="syncFromCodeMirror" ref="codeMirrorRef" editorHeight="600" :Content="Content" :ContentType="ContentType" @Toast="$emit('toast', $event)" />
+    <div class="col-md">
+      <small class="text-light fw-medium">Basic Accordion</small>
+      <div class="accordion mt-4" id="accordionExample">
+        <div class="card accordion-item">
+          <h2 class="accordion-header" id="headingOne">
+            <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#accordionOne" aria-expanded="true" aria-controls="accordionOne">
+              Active (In Progress)
+            </button>
+          </h2>
+
+          <div id="accordionOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample" style="">
+            <div class="accordion-body">
+
+
+              <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Severity</th>
+                      <th>Rule</th>
+                      <th>Affected</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-primary me-1">Active</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-success me-1">Completed</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-info me-1">Scheduled</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>4</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-warning me-1">Pending</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>5</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-primary me-1">Active</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="save_configuration(newContent, 'edit_config')" class="btn btn-primary">Save changes</button>
+        <div class="card accordion-item">
+          <h2 class="accordion-header" id="headingTwo">
+            <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#accordionTwo" aria-expanded="false" aria-controls="accordionTwo">
+              History
+            </button>
+          </h2>
+          <div id="accordionTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample" style="">
+            <div class="accordion-body">
+
+
+              <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+                <table class="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Date</th>
+                      <th>Severity</th>
+                      <th>Rule</th>
+                      <th>Affected</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-primary me-1">Active</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-success me-1">Completed</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-info me-1">Scheduled</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>4</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-warning me-1">Pending</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                    <tr>
+                      <td>5</td>
+                      <td>03/01/2015 10:41:56</td>
+                      <td><span class="badge bg-label-primary me-1">Active</span></td>
+                      <td>Exporter</td>
+                      <td>Nothing</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+
+
+            </div>
+          </div>
         </div>
+        <!-- <div class="card accordion-item">
+          <h2 class="accordion-header" id="headingThree">
+            <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#accordionThree" aria-expanded="false" aria-controls="accordionThree">
+              Accordion Item 3
+            </button>
+          </h2>
+          <div id="accordionThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample" style="">
+            <div class="accordion-body">
+              Oat cake toffee chocolate bar jujubes. Marshmallow brownie lemon drops cheesecake. Bonbon gingerbread
+              marshmallow sweet jelly beans muffin. Sweet roll bear claw candy canes oat cake dragée caramels. Ice cream
+              wafer danish cookie caramels muffin.
+            </div>
+          </div>
+        </div> -->
       </div>
     </div>
+
   </div>
 
 </template>
 
 <script lang="ts" setup>
-import { type PropType } from 'vue';
-import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
-import { ref } from 'vue';
 
-const props = defineProps({
-  rulesFile: {
-    type: String,
-    required: true,
-  },
-  save_configuration: {
-    type: Function,
-    required: true,
-  },
-  Content: {
-    type: String,
-    required: true,
-  },
-  ContentType: {
-    type: String as PropType<'JSON' | 'YAML'>,
-    required: true,
-  },
-});
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const emit = defineEmits(['toast']);
-const newContent = ref(props.Content);
-
-const syncFromCodeMirror = (content: string) => {
-  newContent.value = content;
-};
 
 </script>

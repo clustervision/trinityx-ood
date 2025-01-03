@@ -7,35 +7,18 @@ import './assets/css/app.css';
 import './assets/js/main.js';
 
 import TopNavigation from '@/views/TopNavigation.vue';
-// import SubNavigation from '@/views/SubNavigation.vue';
+import TabStatus from './views/TabStatus.vue';
 import TabConfiguration from './views/TabConfiguration.vue';
+import TabNodes from './views/TabNodes.vue';
 import FooterBar from '@/views/FooterBar.vue';
-// import RuleModals from './components/RuleModals.vue';
 import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
-// const uniqueModal = ref<Modal | null>(null);
-
-// const showModal = (id: number) => {
-//   const dymodal = document.getElementById(`rule_modal_${id}`);
-//   if (dymodal) {
-//     uniqueModal.value = new Modal(dymodal, {
-//       backdrop: true,
-//     });
-//     uniqueModal.value.show();
-//   } else {
-//     console.error(`Modal with ID rule_modal_${id} not found`);
-//   }
-// };
 
 onMounted(() => {
 });
 
-const base64String = (row: string) => {
-  const encodedData = btoa(JSON.stringify(row));
-  return encodedData;
-};
 </script>
 
 <style lang="css">
@@ -69,11 +52,6 @@ const base64String = (row: string) => {
 .nav-pills .nav-link.active, .nav-pills .nav-link.active:hover, .nav-pills .nav-link.active:focus {
   font-weight: bold;
 }
-
-
-
-
-
 
 
 .tab-bar {
@@ -111,10 +89,6 @@ const base64String = (row: string) => {
           </div>
         </div>
 
-
-
-
-
       <div class="row">
         <div class="col-xl-12">
         <div class="nav-align-top mb-6">
@@ -140,16 +114,7 @@ const base64String = (row: string) => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <p>
-                Icing pastry pudding oat cake. Lemon drops cotton candy caramels cake caramels sesame snaps powder. Bear
-                claw
-                candy topping.
-              </p>
-              <p class="mb-0">
-                Tootsie roll fruitcake cookie. Dessert topping pie. Jujubes wafer carrot cake jelly. Bonbon jelly-o
-                jelly-o ice
-                cream jelly beans candy canes cake bonbon. Cookie jelly beans marshmallow jujubes sweet.
-              </p>
+              <TabStatus />
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
@@ -162,41 +127,18 @@ const base64String = (row: string) => {
                 :promQLurl = "promQLurl"
                 :configuration = "configuration"
                 :updateClass = "updateClass"
-                :base64String = "base64String"
                 :ruleRow = "ruleRow"
                 :selectedClass = "selectedClass"
               />
 
-
-
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
-              <p>
-                Oat cake chupa chups dragée donut toffee. Sweet cotton candy jelly beans macaroon gummies cupcake gummi
-                bears
-                cake chocolate.
-              </p>
-              <p class="mb-0">
-                Cake chocolate bar cotton candy apple pie tootsie roll ice cream apple pie brownie cake. Sweet roll icing
-                sesame snaps caramels danish toffee. Brownie biscuit dessert dessert. Pudding jelly jelly-o tart brownie
-                jelly.
-              </p>
+              <TabNodes />
             </div>
           </div>
         </div>
       </div>
     </div>
-
-
-
-
-
-
-
-
-
-
-
 
 
         <FooterBar />

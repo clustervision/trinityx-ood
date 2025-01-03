@@ -34,15 +34,7 @@ const props = defineProps({
   },
   configuration: Object,
   updateClass: Function,
-  base64String: {
-    type: Function,
-    required: true,
-  },
   ruleRow: Function,
-  // index: {
-  //   type: Number,
-  //   required: true
-  // },
   selectedClass: String,
 
 
@@ -103,7 +95,6 @@ function deleteRule(count: number) {
             :configuration="configuration"
             :save_configuration = "save_configuration"
             :updateClass = "updateClass"
-            :base64String="base64String"
             :ruleRow = "ruleRow"
             :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}}"
             :index = 0
@@ -169,7 +160,6 @@ function deleteRule(count: number) {
                     :configuration = "configuration"
                     :save_configuration = "save_configuration"
                     :updateClass = "updateClass"
-                    :base64String = "base64String"
                     :ruleRow = "ruleRow"
                     :row = "row"
                     :index = index+1

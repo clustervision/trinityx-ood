@@ -29,10 +29,6 @@ const props = defineProps({
     required: true,
   },
   updateClass: Function,
-  base64String: {
-    type: Function,
-    required: true,
-  },
   ruleRow: Function,
   row: {
     type: Object as () => Row,
