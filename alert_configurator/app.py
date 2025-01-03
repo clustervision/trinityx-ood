@@ -41,7 +41,7 @@ from rest import Rest
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_folder="nhc/dist/assets", template_folder="nhc/dist")
+app = Flask(__name__, static_folder="nhc/assets", template_folder="nhc")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
