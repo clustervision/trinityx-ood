@@ -94,6 +94,10 @@ If you have run out of energy or time for your project, put a note at the top of
 
 
 
+
+
+
+
 # nhc
 
 This template should help get you started developing with Vue 3 in Vite.
