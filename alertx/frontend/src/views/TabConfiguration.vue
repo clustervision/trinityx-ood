@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 import { type PropType } from 'vue';
-import SubNavigation from '@/views/SubNavigation.vue';
+import EditConfig from '@/views/EditConfig.vue';
 import RuleModals from '@/components/RuleModals.vue';
 import { ref } from 'vue';
 import { Modal } from 'bootstrap';
-
 
 const props = defineProps({
   rulesFile: {
@@ -42,11 +41,7 @@ const props = defineProps({
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emit = defineEmits(['toast']);
-// const newContent = ref(props.Content);
 
-// const syncFromCodeMirror = (content: string) => {
-//   newContent.value = content;
-// };
 const new_config = props.configuration;
 
 const uniqueModal = ref<Modal | null>(null);
@@ -74,18 +69,20 @@ function deleteRule(count: number) {
 
 <template>
 
-  <SubNavigation
-      :rulesFile = "rulesFile"
-      :save_configuration = "save_configuration"
-      :Content="Content"
-      :ContentType="ContentType"
-      @Toast="$emit('toast', $event)"
-    />
-
   <div class="container-xxl flex-grow-1 container-p-y" style="max-width: none">
+    <span style="float: right;">
+        <EditConfig
+          :rulesFile = "rulesFile"
+          :save_configuration = "save_configuration"
+          :Content="Content"
+          :ContentType="ContentType"
+          @Toast="$emit('toast', $event)"
+        />
+      </span>
     <h4 class="fw-bold py-3 mb-4">
       <span class="text-muted fw-light"> Monitoring /</span> Alert Configurator
     </h4>
+
     <div class="card">
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
@@ -174,6 +171,5 @@ function deleteRule(count: number) {
       </div>
     </div>
   </div>
-
 
 </template>

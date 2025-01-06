@@ -75,7 +75,6 @@ onMounted(() => {
 
   <header>
     <TopNavigation />
-
   </header>
 
   <div class="layout-wrapper layout-content-navbar">
