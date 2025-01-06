@@ -158,8 +158,70 @@
 
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
+// import { ref, onMounted, reactive, toRaw } from 'vue';
+import axios from 'axios';
 
 
+// interface StatusRow {
+//   lastEvaluation: string;
+//   name: string;
+//   labels: {
+//     severity: string;
+//   };
 
+//   annotations: {
+//     description: string;
+//   };
+//   expr: string;
+//   for: string;
+
+// }
+
+const props = defineProps({
+  statusAPI: {
+    type: String,
+    required: true,
+  },
+
+});
+
+
+async function fetchStatus() {
+  const response = await axios.get(props.statusAPI);
+  // this.configuration =  reactive(response.data);
+  // this.configuration = { ...this.configuration };
+  // this.Content = JSON.stringify({ ...this.configuration }, null, 2);
+  // return this.configuration;
+  console.log(response.status);
+  console.log(response.data);
+  if(response.status === 200){
+    return response.data;
+  } else {
+    return {"status": response.status, "message": response.data};
+  }
+
+}
+
+let statusLog;
+
+async function showStatus(){
+  const logs = await fetchStatus();
+  console.log(logs.data.groups[0].rules);
+  // console.log(logs.data.groups[0].rules[0]);
+  // console.log(logs.data.groups[0].rules[0].alerts);
+  // console.log(logs.data.groups[0].rules[0].state);
+  // console.log(logs.data.groups[0].rules[0].name);
+  // console.log(logs.data.groups[0].rules[0].lastEvaluation);
+  // console.log(logs.data.groups[0].rules[0].labels.severity);
+
+  for (let index = 0; index < logs.data.groups[0].rules.length; index++) {
+    console.log(index);
+    console.log(logs.data.groups[0].rules[index]);
+    for (let indexNested = 0; indexNested < logs.data.groups[0].rules[index].alerts.length; indexNested++) {
+    console.log(indexNested);
+    }
+  }
+}
+showStatus();
 </script>

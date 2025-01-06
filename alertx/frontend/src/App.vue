@@ -14,6 +14,7 @@ import FooterBar from '@/views/FooterBar.vue';
 import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
+const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 
 onMounted(() => {
@@ -113,7 +114,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <TabStatus />
+              <TabStatus :statusAPI = "statusAPI" />
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
