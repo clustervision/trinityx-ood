@@ -203,11 +203,11 @@ async function fetchStatus() {
 
 }
 
-let statusLog;
+let statusLog:Array = [];
 
 async function showStatus(){
   const logs = await fetchStatus();
-  console.log(logs.data.groups[0].rules);
+  // console.log(logs.data.groups[0].rules);
   // console.log(logs.data.groups[0].rules[0]);
   // console.log(logs.data.groups[0].rules[0].alerts);
   // console.log(logs.data.groups[0].rules[0].state);
@@ -216,12 +216,18 @@ async function showStatus(){
   // console.log(logs.data.groups[0].rules[0].labels.severity);
 
   for (let index = 0; index < logs.data.groups[0].rules.length; index++) {
-    console.log(index);
-    console.log(logs.data.groups[0].rules[index]);
+    // console.log(index);
+    // console.log(logs.data.groups[0].rules[index]);
     for (let indexNested = 0; indexNested < logs.data.groups[0].rules[index].alerts.length; indexNested++) {
-    console.log(indexNested);
+    // console.log(indexNested);
+    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.alertname);
+    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.hostname);
+    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].state);
+    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].activeAt);
+    statusLog.push(logs.data.groups[0].rules[index].alerts[indexNested])
     }
   }
 }
-showStatus();
+const getStatus = showStatus();
+console.log(getStatus);
 </script>
