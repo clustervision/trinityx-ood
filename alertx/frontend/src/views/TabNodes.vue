@@ -31,32 +31,42 @@
 .nav_head {
   font-weight: bold;
 }
+
+.node_pan {
+  background-color: antiquewhite;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+}
 </style>
 
 <script setup lang="ts">
 
-import { ref } from "vue";
+import { ref, computed } from "vue";
+
+const currentFilter = ref("all");
+const searchTerm = ref("");
+
 const nodes = ref([
   { name: "Node001", class: "primary" },
   { name: "Node002", class: "danger" },
-  { name: "Node003", class: "secondary" },
-  { name: "Node004", class: "dark" },
+  { name: "Node003", class: "primary" },
+  { name: "Node004", class: "danger" },
   { name: "Node005", class: "danger" },
   { name: "Node006", class: "primary" },
-  { name: "Node007", class: "dark" },
-  { name: "Node008", class: "secondary" },
-  { name: "Node009", class: "warning" },
+  { name: "Node007", class: "danger" },
+  { name: "Node008", class: "primary" },
+  { name: "Node009", class: "danger" },
   { name: "Node010", class: "danger" },
   { name: "Node011", class: "danger" },
-  { name: "Node012", class: "info" },
-  { name: "Node013", class: "secondary" },
-  { name: "Node014", class: "warning" },
+  { name: "Node012", class: "primary" },
+  { name: "Node013", class: "primary" },
+  { name: "Node014", class: "danger" },
   { name: "Node015", class: "danger" },
-  { name: "Node016", class: "info" },
-  { name: "Node017", class: "secondary" },
-  { name: "Node018", class: "warning" },
+  { name: "Node016", class: "primary" },
+  { name: "Node017", class: "primary" },
+  { name: "Node018", class: "danger" },
   { name: "Node019", class: "primary" },
-  { name: "Node020", class: "secondary" },
+  { name: "Node020", class: "danger" },
 ]);
 
 const selectedIndices = ref<number[]>([]);
@@ -83,6 +93,22 @@ const selectFailedNodes = () => {
     .map((node, index) => (node.class === "danger" ? index : -1))
     .filter((index) => index !== -1);
 };
+
+const filteredNodes = computed(() => {
+  if (searchTerm.value){
+    const term = searchTerm.value.toLowerCase();
+    return nodes.value.filter((node) => node.name.toLowerCase().includes(term));
+  }
+
+  if (currentFilter.value === "all") {
+    return nodes.value;
+  }
+  return nodes.value.filter((node) => node.class === currentFilter.value);
+});
+
+function filterNodes(filter: string) {
+  currentFilter.value = filter;
+};
 </script>
 
 <template>
@@ -94,23 +120,23 @@ const selectFailedNodes = () => {
     <div class="col-md-4">
       <div class="input-group input-group-sm">
           <span class="input-group-text"><box-icon name='search' color="blue" size="sm" ></box-icon></span>
-          <input type="text" class="form-control" placeholder="Search By Name" />
+          <input type="text" class="form-control" placeholder="Search By Name" v-model="searchTerm" />
         </div>
     </div>
-    <div class="col-md-2"><button type="button" class="btn btn-sm btn-secondary">Reset Selected Nodes</button></div>
+    <div class="col-md-2"><button type="button" class="btn btn-sm btn-success">Reset Selected Nodes</button><span style="color: red; font-weight: bold;"> ---- I AM A API</span></div>
   </div>
 
   <div class="row">
     <div class="col-md-1"><span class="nav_head">Show: </span></div>
-    <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="selectAllNodes">All</button></div>
-    <div class="col-md-1"><button type="button" class="btn btn-sm btn-warning" @click="selectFailedNodes">Failed</button></div>
+    <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="filterNodes('all')">All</button></div>
+    <div class="col-md-1"><button type="button" class="btn btn-sm btn-warning" @click="filterNodes('danger')">Failed</button></div>
   </div>
 
 <br />
 
-    <div class="row">
-
-      <div v-for="(node, index) in nodes" :key="index" class="col-md-1 node-box" :class="{ selected: selectedIndices.includes(index) }" @click="toggleSelect(index)">
+    <div class="row node_pan">
+      <span style="color: red; font-weight: bold;"> FAKE DATA; Need a API to show Data</span>
+      <div v-for="(node, index) in filteredNodes" :key="index" class="col-md-1 node-box" :class="{ selected: selectedIndices.includes(index) }" @click="toggleSelect(index)">
         <div class="card text-white" :class="`bg-${node.class}`">
           <div class="card-body node-body">
             <p class="card-text">{{ node.name }}</p>

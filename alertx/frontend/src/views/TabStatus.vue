@@ -8,7 +8,7 @@
         <div class="card accordion-item">
           <h2 class="accordion-header" id="headingOne">
             <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#accordionOne" aria-expanded="true" aria-controls="accordionOne">
-              Active (In Progress)
+              Active (In Progress)<span style="color: red; font-weight: bold;"> FAKE DATA; Need a API to show Data</span>
             </button>
           </h2>
 
@@ -74,7 +74,7 @@
         <div class="card accordion-item">
           <h2 class="accordion-header" id="headingTwo">
             <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#accordionTwo" aria-expanded="false" aria-controls="accordionTwo">
-              History
+              History<span style="color: red; font-weight: bold;"> FAKE DATA; Need a API to show Data</span>
             </button>
           </h2>
           <div id="accordionTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample" style="">
