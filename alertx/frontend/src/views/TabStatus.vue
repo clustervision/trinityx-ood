@@ -197,8 +197,8 @@ export default {
   },
   data() {
     return {
-      rules: [], // To store the fetched rules
-      alerts: [], // Placeholder for alerts, if needed
+      rules: [],
+      alerts: [],
     };
   },
   async mounted() {
@@ -215,78 +215,5 @@ export default {
   },
 };
 
-// interface StatusRow {
-//   lastEvaluation: string;
-//   name: string;
-//   labels: {
-//     severity: string;
-//   };
 
-//   annotations: {
-//     description: string;
-//   };
-//   expr: string;
-//   for: string;
-
-// }
-
-// const props = defineProps({
-//   statusAPI: {
-//     type: String,
-//     required: true,
-//   },
-
-// });
-
-
-// async function fetchStatus() {
-//   const response = await axios.get(props.statusAPI);
-//   if(response.status === 200){
-//     return response.data.groups[0].rules;
-//   } else {
-//     return {"status": response.status, "message": response.data};
-//   }
-// }
-
-
-// async function showStatus(){
-//   let statusLog:Array = [];
-
-//   const logs = await fetchStatus();
-//   // console.log(logs.data.groups[0].rules);
-//   // console.log(logs.data.groups[0].rules[0]);
-//   // console.log(logs.data.groups[0].rules[0].alerts);
-//   // console.log(logs.data.groups[0].rules[0].state);
-//   // console.log(logs.data.groups[0].rules[0].name);
-//   // console.log(logs.data.groups[0].rules[0].lastEvaluation);
-//   // console.log(logs.data.groups[0].rules[0].labels.severity);
-
-//   for (let index = 0; index < logs.data.groups[0].rules.length; index++) {
-//     // console.log(index);
-//     // console.log(logs.data.groups[0].rules[index]);
-//     console.log("==============================");
-//     console.log(logs.data.groups[0].rules[index].name);
-//     console.log(logs.data.groups[0].rules[index].labels.severity);
-//     console.log(logs.data.groups[0].rules[index].state);
-//     console.log(logs.data.groups[0].rules[index].lastEvaluation);
-//     // statusLog.push(logs.data.groups[0].rules[index].alerts[indexNested])
-//     console.log("==============================");
-
-//     for (let indexNested = 0; indexNested < logs.data.groups[0].rules[index].alerts.length; indexNested++) {
-//     // console.log(indexNested);
-//     console.log("++++++++++++++++++++++++++++++++++");
-//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.alertname);
-//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.hostname);
-//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].state);
-//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].activeAt);
-//     statusLog.push(logs.data.groups[0].rules[index].alerts[indexNested]);
-//     console.log("++++++++++++++++++++++++++++++++++");
-//     }
-//   }
-//   return statusLog;
-// }
-// showStatus();
-// const getStatus:Array = showStatus();
-// console.log(getStatus);
-// console.log(getStatus[0]);
 </script>
