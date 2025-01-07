@@ -1,4 +1,4 @@
-
+<script setup lang="ts"></script>
 <template>
   <div class="row">
 
@@ -28,6 +28,31 @@
                     </tr>
                   </thead>
                   <tbody>
+                  <tr v-for="(rule, ruleIndex) in rules" :key="ruleIndex" style="background-color: aquamarine;">
+                    <td>{{ ruleIndex }}</td>
+                    <td>{{ rule.name }}</td>
+                    <td>{{ rule.state }}</td>
+                    <td>{{ rule.labels.severity }}</td>
+                    <td>{{ rule.lastEvaluation }}</td>
+                    <!-- {{ ruleIndex }}
+                    {{ rule }} -->
+                    <tr v-for="(alert, alertIndex) in rule.alerts" :key="alertIndex" style="background-color:antiquewhite;">
+                      <!-- {{ alertIndex }}
+                      {{ alert }} -->
+
+                    <td>{{ alertIndex }}</td>
+                    <td>{{ alert.labels.alertname }}</td>
+                    <td>{{ alert.labels.exporter }}</td>
+                    <td>{{ alert.labels.hostname }}</td>
+                    <td>{{ alert.labels.instance }}</td>
+                    <td>{{ alert.labels.severity }}</td>
+                    <td>{{ alert.labels.nhc }}</td>
+
+                    </tr>
+                    </tr>
+                    
+                  </tbody>
+                  <!-- <tbody>
                     <tr>
                       <td>1</td>
                       <td>03/01/2015 10:41:56</td>
@@ -62,8 +87,8 @@
                       <td><span class="badge bg-label-primary me-1">Active</span></td>
                       <td>Exporter</td>
                       <td>Nothing</td>
-                    </tr>
-                  </tbody>
+                    </tr> -->
+                  <!-- </tbody> -->
                 </table>
               </div>
 
@@ -158,10 +183,37 @@
 
 </template>
 
-<script setup lang="ts">
+<script  lang="ts">
 // import { ref, onMounted, reactive, toRaw } from 'vue';
 import axios from 'axios';
 
+
+export default {
+  props: {
+    statusAPI: {
+      type: String,
+      required: true,
+    },
+  },
+  data() {
+    return {
+      rules: [], // To store the fetched rules
+      alerts: [], // Placeholder for alerts, if needed
+    };
+  },
+  async mounted() {
+    try {
+      const response = await axios.get(this.statusAPI);
+      if (response.status === 200) {
+        this.rules = response.data.data.groups[0].rules;
+      } else {
+        console.error("Error fetching rules:", response.status, response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching status:", error);
+    }
+  },
+};
 
 // interface StatusRow {
 //   lastEvaluation: string;
@@ -178,56 +230,63 @@ import axios from 'axios';
 
 // }
 
-const props = defineProps({
-  statusAPI: {
-    type: String,
-    required: true,
-  },
+// const props = defineProps({
+//   statusAPI: {
+//     type: String,
+//     required: true,
+//   },
 
-});
+// });
 
 
-async function fetchStatus() {
-  const response = await axios.get(props.statusAPI);
-  // this.configuration =  reactive(response.data);
-  // this.configuration = { ...this.configuration };
-  // this.Content = JSON.stringify({ ...this.configuration }, null, 2);
-  // return this.configuration;
-  console.log(response.status);
-  console.log(response.data);
-  if(response.status === 200){
-    return response.data;
-  } else {
-    return {"status": response.status, "message": response.data};
-  }
+// async function fetchStatus() {
+//   const response = await axios.get(props.statusAPI);
+//   if(response.status === 200){
+//     return response.data.groups[0].rules;
+//   } else {
+//     return {"status": response.status, "message": response.data};
+//   }
+// }
 
-}
 
-let statusLog:Array = [];
+// async function showStatus(){
+//   let statusLog:Array = [];
 
-async function showStatus(){
-  const logs = await fetchStatus();
-  // console.log(logs.data.groups[0].rules);
-  // console.log(logs.data.groups[0].rules[0]);
-  // console.log(logs.data.groups[0].rules[0].alerts);
-  // console.log(logs.data.groups[0].rules[0].state);
-  // console.log(logs.data.groups[0].rules[0].name);
-  // console.log(logs.data.groups[0].rules[0].lastEvaluation);
-  // console.log(logs.data.groups[0].rules[0].labels.severity);
+//   const logs = await fetchStatus();
+//   // console.log(logs.data.groups[0].rules);
+//   // console.log(logs.data.groups[0].rules[0]);
+//   // console.log(logs.data.groups[0].rules[0].alerts);
+//   // console.log(logs.data.groups[0].rules[0].state);
+//   // console.log(logs.data.groups[0].rules[0].name);
+//   // console.log(logs.data.groups[0].rules[0].lastEvaluation);
+//   // console.log(logs.data.groups[0].rules[0].labels.severity);
 
-  for (let index = 0; index < logs.data.groups[0].rules.length; index++) {
-    // console.log(index);
-    // console.log(logs.data.groups[0].rules[index]);
-    for (let indexNested = 0; indexNested < logs.data.groups[0].rules[index].alerts.length; indexNested++) {
-    // console.log(indexNested);
-    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.alertname);
-    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.hostname);
-    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].state);
-    // console.log(logs.data.groups[0].rules[index].alerts[indexNested].activeAt);
-    statusLog.push(logs.data.groups[0].rules[index].alerts[indexNested])
-    }
-  }
-}
-const getStatus = showStatus();
-console.log(getStatus);
+//   for (let index = 0; index < logs.data.groups[0].rules.length; index++) {
+//     // console.log(index);
+//     // console.log(logs.data.groups[0].rules[index]);
+//     console.log("==============================");
+//     console.log(logs.data.groups[0].rules[index].name);
+//     console.log(logs.data.groups[0].rules[index].labels.severity);
+//     console.log(logs.data.groups[0].rules[index].state);
+//     console.log(logs.data.groups[0].rules[index].lastEvaluation);
+//     // statusLog.push(logs.data.groups[0].rules[index].alerts[indexNested])
+//     console.log("==============================");
+
+//     for (let indexNested = 0; indexNested < logs.data.groups[0].rules[index].alerts.length; indexNested++) {
+//     // console.log(indexNested);
+//     console.log("++++++++++++++++++++++++++++++++++");
+//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.alertname);
+//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].labels.hostname);
+//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].state);
+//     console.log(logs.data.groups[0].rules[index].alerts[indexNested].activeAt);
+//     statusLog.push(logs.data.groups[0].rules[index].alerts[indexNested]);
+//     console.log("++++++++++++++++++++++++++++++++++");
+//     }
+//   }
+//   return statusLog;
+// }
+// showStatus();
+// const getStatus:Array = showStatus();
+// console.log(getStatus);
+// console.log(getStatus[0]);
 </script>
