@@ -27,8 +27,8 @@
                       <th>Affected</th>
                     </tr>
                   </thead>
-                  <tbody>
-                  <tr v-for="(rule, ruleIndex) in rules" :key="ruleIndex" style="background-color: aquamarine;">
+                  <!-- <tbody> -->
+                  <tbody v-for="(rule, ruleIndex) in rules" :key="ruleIndex" style="background-color: aquamarine;">
                     <td>{{ ruleIndex }}</td>
                     <td>{{ rule.name }}</td>
                     <td>{{ rule.state }}</td>
@@ -49,7 +49,7 @@
                     <td>{{ alert.labels.nhc }}</td>
 
                     </tr>
-                    </tr>
+                    <!-- </tr> -->
                     
                   </tbody>
                   <!-- <tbody>
