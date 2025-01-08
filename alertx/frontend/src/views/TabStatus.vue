@@ -3,12 +3,12 @@
   <div class="row">
 
     <div class="col-md">
-      <small class="text-light fw-medium">Basic Accordion</small>
+      <small class="text-light fw-medium">All Alerts</small>
       <div class="accordion mt-4" id="accordionExample">
         <div class="card accordion-item">
           <h2 class="accordion-header" id="headingOne">
             <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#accordionOne" aria-expanded="true" aria-controls="accordionOne">
-              Active (In Progress)<span style="color: red; font-weight: bold;"> FAKE DATA; Need a API to show Data</span>
+              Active (In Progress)
             </button>
           </h2>
 
@@ -118,20 +118,6 @@
             </div>
           </div>
         </div>
-        <!-- <div class="card accordion-item">
-          <h2 class="accordion-header" id="headingThree">
-            <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#accordionThree" aria-expanded="false" aria-controls="accordionThree">
-              Accordion Item 3
-            </button>
-          </h2>
-          <div id="accordionThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample" style="">
-            <div class="accordion-body">
-              Oat cake toffee chocolate bar jujubes. Marshmallow brownie lemon drops cheesecake. Bonbon gingerbread
-              marshmallow sweet jelly beans muffin. Sweet roll bear claw candy canes oat cake dragée caramels. Ice cream
-              wafer danish cookie caramels muffin.
-            </div>
-          </div>
-        </div> -->
       </div>
     </div>
 
@@ -188,11 +174,9 @@ export default {
       if (response.status === 200) {
         this.rules = response.data.data.groups[0].rules;
         let count_rows:number = 0;
-        console.log(this.rules);
         this.rules.forEach((rule) => {
           if (rule.alerts && rule.alerts.length > 0){
             rule.alerts.forEach((alert) => {
-              console.warn(alert);
               count_rows = count_rows + 1;
               const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
               this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": affected});
@@ -202,9 +186,6 @@ export default {
             this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
           }
         });
-
-
-        console.log(this.rows);
 
       } else {
         console.error("Error fetching rules:", response.status, response.data);
