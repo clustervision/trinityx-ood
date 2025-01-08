@@ -29,8 +29,7 @@
                     </tr>
                   </thead>
                   <tbody v-for="row in rows" :key="row.id">
-                    <tr >
-                      <!-- :class="{ 'table-danger': row.state === 'inactive', 'table-success': row.state === 'firing' }"   <tr :class="{ 'table-danger': typeof row.affected === 'string', 'table-success': typeof row.affected === 'string' }"> -->
+                    <tr>
                       <td>{{ row.id }}</td>
                       <td>{{ row.rule }}</td>
                       <td><span class="badge me-1" :class="{ 'bg-label-primary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing' }" >{{ row.state }}</span></td>
@@ -46,44 +45,6 @@
                       </td>
                     </tr>
                   </tbody>
-
-                  <!-- <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-primary me-1">Active</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>2</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-success me-1">Completed</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>3</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-info me-1">Scheduled</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>4</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-warning me-1">Pending</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>5</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-primary me-1">Active</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                </tbody> -->
                 </table>
               </div>
 
