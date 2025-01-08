@@ -1,134 +1,42 @@
 <script setup lang="ts"></script>
 <template>
-  <div class="row">
-
-    <div class="col-md">
-      <small class="text-light fw-medium">All Alerts</small>
-      <div class="accordion mt-4" id="accordionExample">
-        <div class="card accordion-item">
-          <h2 class="accordion-header" id="headingOne">
-            <button type="button" class="accordion-button" data-bs-toggle="collapse" data-bs-target="#accordionOne" aria-expanded="true" aria-controls="accordionOne">
-              Active (In Progress)
-            </button>
-          </h2>
-
-          <div id="accordionOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample" style="">
-            <div class="accordion-body">
-
-
-              <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
-                <table class="table table-bordered table-striped table-hover">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Rule</th>
-                      <th>State</th>
-                      <th>Severity</th>
-                      <th>Event Time</th>
-                      <th>Affected</th>
-                    </tr>
-                  </thead>
-                  <tbody v-for="row in rows" :key="row.id">
-                    <tr>
-                      <td>{{ row.id }}</td>
-                      <td>{{ row.rule }}</td>
-                      <td><span class="badge me-1" :class="{ 'bg-label-primary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing' }" >{{ row.state }}</span></td>
-                      <td><span class="badge me-1" :class="{ 'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
-                      <td>{{ row.eventTime }}</td>
-                      <td>
-                        <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>
-                        <template v-else-if="typeof row.affected === 'object' && row.affected !== null">
-                          <span v-for="(value, key, index) in row.affected" :key="index">
-                            <strong><span class="badge bg-label-primary me-1">{{ key }}: </span></strong> "{{ value }}"<span v-if="index < Object.keys(row.affected).length - 1">, </span>
-                          </span>
-                        </template>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-
-            </div>
-          </div>
-        </div>
-        <div class="card accordion-item">
-          <h2 class="accordion-header" id="headingTwo">
-            <button type="button" class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#accordionTwo" aria-expanded="false" aria-controls="accordionTwo">
-              History<span style="color: red; font-weight: bold;"> FAKE DATA; Need a API to show Data</span>
-            </button>
-          </h2>
-          <div id="accordionTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample" style="">
-            <div class="accordion-body">
-
-
-              <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
-                <table class="table table-bordered">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Date</th>
-                      <th>Severity</th>
-                      <th>Rule</th>
-                      <th>Affected</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-primary me-1">Active</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>2</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-success me-1">Completed</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>3</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-info me-1">Scheduled</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>4</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-warning me-1">Pending</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                    <tr>
-                      <td>5</td>
-                      <td>03/01/2015 10:41:56</td>
-                      <td><span class="badge bg-label-primary me-1">Active</span></td>
-                      <td>Exporter</td>
-                      <td>Nothing</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-
-
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+    <table class="table table-bordered table-striped table-hover caption-top">
+      <caption><h3 style="color: blue;">Alert Status</h3></caption>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Rule</th>
+          <th>State</th>
+          <th>Severity</th>
+          <th>Event Time</th>
+          <th>Affected</th>
+        </tr>
+      </thead>
+      <tbody v-for="row in rows" :key="row.id">
+        <tr>
+          <td>{{ row.id }}</td>
+          <td>{{ row.rule }}</td>
+          <td><span class="badge me-1" :class="{ 'bg-label-primary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing' }" >{{ row.state }}</span></td>
+          <td><span class="badge me-1" :class="{ 'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
+          <td>{{ row.eventTime }}</td>
+          <td>
+            <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>
+            <template v-else-if="typeof row.affected === 'object' && row.affected !== null">
+              <span v-for="(value, key, index) in row.affected" :key="index">
+                <strong><span class="badge bg-label-primary me-1">{{ key }}: </span></strong> "{{ value }}"<span v-if="index < Object.keys(row.affected).length - 1">, </span>
+              </span>
+            </template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
 </template>
 
 <script  lang="ts">
-// import { ref, onMounted, reactive, toRaw } from 'vue';
 import axios from 'axios';
-
 
 interface StatusAlert {
   duration: number;

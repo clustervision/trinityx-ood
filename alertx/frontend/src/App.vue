@@ -89,7 +89,6 @@ onMounted(() => {
           </div>
         </div>
 
-      <div class="row">
         <div class="col-xl-12">
         <div class="nav-align-top mb-6">
           <ul class="nav nav-pills mb-4 nav-fill tab-bar" role="tablist">
@@ -114,7 +113,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <TabStatus :statusAPI = "statusAPI" />
+              <TabStatus :statusAPI = "statusAPI"/>
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
@@ -138,7 +137,6 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
 
 
         <FooterBar />
