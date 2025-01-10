@@ -83,7 +83,6 @@ def get_nodes():
     if 'config' in response:
         for node in response["config"]["node"]:
             node_list.append(node)
-    print(node_list)
     if status is True:
         return jsonify(node_list), 200
     else:
