@@ -17,7 +17,7 @@
         <tr>
           <td>{{ row.id }}</td>
           <td>{{ row.rule }}</td>
-          <td><span class="badge me-1" :class="{ 'bg-label-primary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing' }" >{{ row.state }}</span></td>
+          <td><span class="badge me-1" :class="{ 'bg-label-primary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing' , 'bg-label-warning': row.state === 'pending' }" >{{ row.state }}</span></td>
           <td><span class="badge me-1" :class="{ 'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td>{{ row.eventTime }}</td>
           <td>
