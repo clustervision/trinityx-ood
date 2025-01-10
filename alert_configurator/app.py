@@ -45,6 +45,7 @@ app = Flask(__name__, static_folder="nhc/assets", template_folder="nhc")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
 
 
@@ -65,9 +66,29 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    promQLurl = "https://vmware-controller1.cluster:9090"
-    appUrl = "http://vmware-controller1.cluster:7755"
-    return render_template("index.html", promQLurl=promQLurl, appUrl=appUrl)
+    promQLurl   = "https://vmware-controller1.cluster:9090"
+    appUrl      = "http://vmware-controller1.cluster:7755"
+    statusAPI   = "https://vmware-controller1.cluster:9090/api/v1/rules"
+    ResetNode   = "https://vmware-controller1.cluster:7050/import/prometheus_nhc_rules"
+    return render_template("index.html", promQLurl=promQLurl, appUrl=appUrl, statusAPI=statusAPI, ResetNode=ResetNode)
+
+
+@app.route('/get_nodes', methods=['GET'])
+def get_nodes():
+    """
+    This method to show the monitor status and queue.
+    """
+    status, response = Rest().get_luna_nodes()
+    node_list = []
+    if 'config' in response:
+        for node in response["config"]["node"]:
+            node_list.append(node)
+    print(node_list)
+    if status is True:
+        return jsonify(node_list), 200
+    else:
+        return jsonify(node_list), 400
+    
 
 
 @app.route('/save_config', methods=['POST'])
@@ -89,6 +110,16 @@ def get_rules():
         return jsonify(configuration), 200
     else:
         return jsonify(configuration), 400
+
+
+@app.route('/save_nodes', methods=['POST'])
+def save_nodes():
+    """
+    This method save the Node hardware.
+    """
+    status, response = Rest().post_nodes(data=request.json)
+    return jsonify({"response": response}), status
+
 
 
 @app.route('/license', methods=['GET'])
