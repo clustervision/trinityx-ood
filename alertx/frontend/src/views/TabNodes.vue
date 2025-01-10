@@ -46,6 +46,18 @@
 import { ref, computed } from "vue";
 import axios from 'axios';
 
+
+interface node {
+  hostname: string;
+  status: string;
+  message: string;
+  class: string;
+};
+
+const currentFilter = ref("all");
+const searchTerm = ref("");
+const selectedIndices = ref<number[]>([]);
+
 export default {
   props: {
     url: {
@@ -54,37 +66,71 @@ export default {
     },
   },
 
+  // data() {
+  //   return {
+  //     nodes: [] as nodeHW[],
+  //     nodeList: [] as { hostname: string; status: string; message: string; class: string; }[],
+  //   //   selectedIndices,
+  //   // toggleSelect,
+  //   // selectAllNodes,
+  //   // searchTerm,
+  //   // revertSelection,
+  //   // selectFailedNodes,
+  //   // filteredNodes,
+  //   // resetSelectedNodes,
+  //   };
+  // },
+
+  // async mounted() {
+  //   try {
+  //     const response = await axios.get(this.url +"/get_nodes");
+  //     if (response.status === 200) {
+  //       console.log(response.status);
+  //       console.log(response.data);
+  //       this.nodeList.forEach((node) => {
+  //         this.nodes.push({hostname: node.hostname, status: node.status, message: node.message, class: node.status ? "primary" : "danger" });
+  //       });
+  //     } else {
+  //       console.error("Error fetching rules:", response.status, response.data);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching status:", error);
+  //   }
+  //   console.log(this.nodes);
+  // },
+
   setup(props) {
+    const nodes = ref<{ hostname: string; status: boolean; message: string; class: string }[]>([]);
+    const nodeList = ref<{ hostname: string; status: boolean; message: string }[]>([]);
 
-    const nodes = ref([
-      { name: "Node001", class: "primary" },
-      { name: "Node002", class: "danger" },
-      { name: "Node003", class: "primary" },
-      { name: "Node004", class: "danger" },
-      { name: "Node005", class: "danger" },
-      { name: "Node006", class: "primary" },
-      { name: "Node007", class: "danger" },
-      { name: "Node008", class: "primary" },
-      { name: "Node009", class: "danger" },
-      { name: "Node010", class: "danger" },
-      { name: "Node011", class: "danger" },
-      { name: "Node012", class: "primary" },
-      { name: "Node013", class: "primary" },
-      { name: "Node014", class: "danger" },
-      { name: "Node015", class: "danger" },
-      { name: "Node016", class: "primary" },
-      { name: "Node017", class: "primary" },
-      { name: "Node018", class: "danger" },
-      { name: "Node019", class: "primary" },
-      { name: "Node020", class: "danger" },
-    ]);
+    const fetchNodes = async () => {
+      try {
+        const response = await axios.get(`${props.url}/get_nodes`);
+        if (response.status === 200) {
+          nodeList.value = response.data;
+          nodes.value = nodeList.value.map((node) => ({
+            hostname: node.hostname,
+            status: node.status,
+            message: node.message,
+            class: node.status ? "primary" : "danger",
+          }));
+        } else {
+          console.error("Error fetching nodes:", response.status, response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching status:", error);
+      }
+      // console.log(nodes.value);
+    };
 
+    // Fetch nodes when the component is mounted
+    fetchNodes();
+    const asd = fetchNodes();
+    console.log(asd);
     // const emit = defineEmits(['toast']);
 
 
-    const currentFilter = ref("all");
-    const searchTerm = ref("");
-    const selectedIndices = ref<number[]>([]);
+
 
     function toggleSelect(index: number) {
       const currentIndex = selectedIndices.value.indexOf(index);
@@ -212,7 +258,7 @@ export default {
       <div v-for="(node, index) in filteredNodes" :key="index" class="col-md-1 node-box" :class="{ selected: selectedIndices.includes(index) }" @click="toggleSelect(index)">
         <div class="card text-white" :class="`bg-${node.class}`">
           <div class="card-body node-body">
-            <p class="card-text">{{ node.name }}</p>
+            <p class="card-text">{{ node.hostname }}</p>
           </div>
         </div>
       </div>
