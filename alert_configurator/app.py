@@ -46,6 +46,7 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
 CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
 
 
