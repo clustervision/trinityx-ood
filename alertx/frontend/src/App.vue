@@ -15,6 +15,7 @@ import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
+// const ResetNode = ref(window.ResetNode || import.meta.env.VITE_ResetNode);
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 
 onMounted(() => {
@@ -132,7 +133,7 @@ onMounted(() => {
 
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
-              <TabNodes />
+              <TabNodes :url = "url" @Toast="Toast" />
             </div>
           </div>
         </div>

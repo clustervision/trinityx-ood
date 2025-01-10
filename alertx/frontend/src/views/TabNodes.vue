@@ -44,9 +44,17 @@
 <script lang="ts">
 
 import { ref, computed } from "vue";
+import axios from 'axios';
 
 export default {
-  setup() {
+  props: {
+    url: {
+      type: String,
+      required: true,
+    },
+  },
+
+  setup(props) {
 
     const nodes = ref([
       { name: "Node001", class: "primary" },
@@ -70,6 +78,8 @@ export default {
       { name: "Node019", class: "primary" },
       { name: "Node020", class: "danger" },
     ]);
+
+    // const emit = defineEmits(['toast']);
 
 
     const currentFilter = ref("all");
@@ -115,19 +125,47 @@ export default {
     //   currentFilter.value = filter;
     // };
 
-    const resetSelectedNodes = () => {
+    const resetSelectedNodes = async () => {
       const selectedNodes = selectedIndices.value.map(
         (index) => nodes.value[index]
       );
+      const payload:Array<object> = [];
       console.log("Selected Nodes:", selectedNodes);
+      selectedNodes.forEach(node => {
+        console.log(" Nodes:", node.name);
+        payload.push({"hostname": node.name, "force": true })
+      });
+      console.log(" payload:", payload);
 
-      // Logic to process or send the selected nodes
-      // Example: send them to a server using an API
-      /*
-      axios.post('/reset-nodes', selectedNodes)
-        .then(response => console.log('Nodes reset successfully'))
-        .catch(error => console.error('Error resetting nodes:', error));
-      */
+      // const response = await saveNode(payload);
+      // if (response.status === 200){
+
+      //   response.message.forEach((host: object) => {
+      //     console.log(host.message);
+      //     emit('toast', {message: host.message, toastClass: 'bg-danger'});
+      //   });
+
+      // }
+      // console.log(response);
+    };
+
+    async function saveNode(payload: object) {
+      try {
+        const response = await axios.post(props.url +"/save_nodes", payload);
+        return {"status": response.status, "message": response.data.response};
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          return {
+            status: error.response?.status || 500,
+            message: error.response?.data || 'An error occurred during the request.',
+          };
+        } else {
+          return {
+            status: 500,
+            message: 'An unknown error occurred.',
+          };
+        }
+      }
     };
 
   return {
