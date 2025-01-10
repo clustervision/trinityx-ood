@@ -81,12 +81,15 @@ def get_nodes():
     status, response = Rest().get_luna_nodes()
     node_list = []
     if 'config' in response:
-        for node in response["config"]["node"]:
-            node_list.append(node)
+        for _, details in response["config"]["node"].items():
+            node_list.append(details["hostname"])
+        if (node_list):
+            node_list = ",".join(node_list)
+            status, response = Rest().get_node_hw(nodes = node_list)
     if status is True:
-        return jsonify(node_list), 200
+        return jsonify(response), 200
     else:
-        return jsonify(node_list), 400
+        return jsonify(response), 400
     
 
 
