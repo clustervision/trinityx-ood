@@ -1,3 +1,5 @@
+<!-- <script setup lang="ts"></script> -->
+
 <style>
 
 .node-box{
@@ -39,76 +41,109 @@
 }
 </style>
 
-<script setup lang="ts">
+<script lang="ts">
 
 import { ref, computed } from "vue";
 
-const currentFilter = ref("all");
-const searchTerm = ref("");
+export default {
+  setup() {
 
-const nodes = ref([
-  { name: "Node001", class: "primary" },
-  { name: "Node002", class: "danger" },
-  { name: "Node003", class: "primary" },
-  { name: "Node004", class: "danger" },
-  { name: "Node005", class: "danger" },
-  { name: "Node006", class: "primary" },
-  { name: "Node007", class: "danger" },
-  { name: "Node008", class: "primary" },
-  { name: "Node009", class: "danger" },
-  { name: "Node010", class: "danger" },
-  { name: "Node011", class: "danger" },
-  { name: "Node012", class: "primary" },
-  { name: "Node013", class: "primary" },
-  { name: "Node014", class: "danger" },
-  { name: "Node015", class: "danger" },
-  { name: "Node016", class: "primary" },
-  { name: "Node017", class: "primary" },
-  { name: "Node018", class: "danger" },
-  { name: "Node019", class: "primary" },
-  { name: "Node020", class: "danger" },
-]);
+    const nodes = ref([
+      { name: "Node001", class: "primary" },
+      { name: "Node002", class: "danger" },
+      { name: "Node003", class: "primary" },
+      { name: "Node004", class: "danger" },
+      { name: "Node005", class: "danger" },
+      { name: "Node006", class: "primary" },
+      { name: "Node007", class: "danger" },
+      { name: "Node008", class: "primary" },
+      { name: "Node009", class: "danger" },
+      { name: "Node010", class: "danger" },
+      { name: "Node011", class: "danger" },
+      { name: "Node012", class: "primary" },
+      { name: "Node013", class: "primary" },
+      { name: "Node014", class: "danger" },
+      { name: "Node015", class: "danger" },
+      { name: "Node016", class: "primary" },
+      { name: "Node017", class: "primary" },
+      { name: "Node018", class: "danger" },
+      { name: "Node019", class: "primary" },
+      { name: "Node020", class: "danger" },
+    ]);
 
-const selectedIndices = ref<number[]>([]);
 
-function toggleSelect(index: number) {
-  const currentIndex = selectedIndices.value.indexOf(index);
-  if (currentIndex === -1) {
-    selectedIndices.value.push(index);
-  } else {
-    selectedIndices.value.splice(currentIndex, 1);
-  }
-}
+    const currentFilter = ref("all");
+    const searchTerm = ref("");
+    const selectedIndices = ref<number[]>([]);
 
-const selectAllNodes = () => {
-  selectedIndices.value = nodes.value.map((_, index) => index);
+    function toggleSelect(index: number) {
+      const currentIndex = selectedIndices.value.indexOf(index);
+      if (currentIndex === -1) {
+        selectedIndices.value.push(index);
+      } else {
+        selectedIndices.value.splice(currentIndex, 1);
+      }
+    }
+
+    const selectAllNodes = () => {
+      selectedIndices.value = nodes.value.map((_, index) => index);
+    };
+
+    const revertSelection = () => {
+      selectedIndices.value = [];
+    };
+
+    const selectFailedNodes = () => {
+      selectedIndices.value = nodes.value
+        .map((node, index) => (node.class === "danger" ? index : -1))
+        .filter((index) => index !== -1);
+    };
+
+    const filteredNodes = computed(() => {
+      if (searchTerm.value){
+        const term = searchTerm.value.toLowerCase();
+        return nodes.value.filter((node) => node.name.toLowerCase().includes(term));
+      }
+
+      if (currentFilter.value === "all") {
+        return nodes.value;
+      }
+      return nodes.value.filter((node) => node.class === currentFilter.value);
+    });
+
+    // function filterNodes(filter: string) {
+    //   currentFilter.value = filter;
+    // };
+
+    const resetSelectedNodes = () => {
+      const selectedNodes = selectedIndices.value.map(
+        (index) => nodes.value[index]
+      );
+      console.log("Selected Nodes:", selectedNodes);
+
+      // Logic to process or send the selected nodes
+      // Example: send them to a server using an API
+      /*
+      axios.post('/reset-nodes', selectedNodes)
+        .then(response => console.log('Nodes reset successfully'))
+        .catch(error => console.error('Error resetting nodes:', error));
+      */
+    };
+
+  return {
+    nodes,
+    selectedIndices,
+    toggleSelect,
+    selectAllNodes,
+    searchTerm,
+    revertSelection,
+    selectFailedNodes,
+    filteredNodes,
+    resetSelectedNodes,
+  };
+},
 };
 
-const revertSelection = () => {
-  selectedIndices.value = [];
-};
-
-const selectFailedNodes = () => {
-  selectedIndices.value = nodes.value
-    .map((node, index) => (node.class === "danger" ? index : -1))
-    .filter((index) => index !== -1);
-};
-
-const filteredNodes = computed(() => {
-  if (searchTerm.value){
-    const term = searchTerm.value.toLowerCase();
-    return nodes.value.filter((node) => node.name.toLowerCase().includes(term));
-  }
-
-  if (currentFilter.value === "all") {
-    return nodes.value;
-  }
-  return nodes.value.filter((node) => node.class === currentFilter.value);
-});
-
-function filterNodes(filter: string) {
-  currentFilter.value = filter;
-};
 </script>
 
 <template>
@@ -123,14 +158,14 @@ function filterNodes(filter: string) {
           <input type="text" class="form-control" placeholder="Search By Name" v-model="searchTerm" />
         </div>
     </div>
-    <div class="col-md-2"><button type="button" class="btn btn-sm btn-success">Reset Selected Nodes</button><span style="color: red; font-weight: bold;"> ---- I AM A API</span></div>
+    <div class="col-md-2"><button type="button" class="btn btn-sm btn-success" @click="resetSelectedNodes">Reset Selected Nodes</button><span style="color: red; font-weight: bold;"> ---- I AM A API</span></div>
   </div>
 
-  <div class="row">
+  <!-- <div class="row">
     <div class="col-md-1"><span class="nav_head">Show: </span></div>
     <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="filterNodes('all')">All</button></div>
     <div class="col-md-1"><button type="button" class="btn btn-sm btn-warning" @click="filterNodes('danger')">Failed</button></div>
-  </div>
+  </div> -->
 
 <br />
 
