@@ -133,7 +133,8 @@ onMounted(() => {
 
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
-              <TabNodes :url = "url" @Toast="Toast" />
+              <!-- <TabNodes :url = "url" @Toast="Toast" /> -->
+              <TabNodes :url = "url" />
             </div>
           </div>
         </div>
