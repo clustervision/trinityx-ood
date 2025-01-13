@@ -139,7 +139,7 @@ onMounted(() => {
       </div>
 
 
-        <FooterBar />
+        <FooterBar :url = "url" />
         <div class="content-backdrop fade"></div>
       </div>
     </div>

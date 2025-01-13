@@ -7,7 +7,7 @@
         <a href="https://clustervision.com/" target="_blank" class="footer-link fw-bolder">ClusterVision</a>
       </div>
       <div>
-        <a href="/license_info" class="footer-link me-4" target="_blank">License</a>
+        <a :href="`${$props.url}/license`" class="footer-link me-4" target="_blank">License</a>
         <a href="https://github.com/clustervision/trinityX" target="_blank" class="footer-link me-4">Documentation</a>
         <a href="https://support.clustervision.com/" target="_blank" class="footer-link me-4">Support</a>
       </div>
@@ -19,6 +19,12 @@
 
 export default {
   name: "FooterBar",
+  props: {
+    url: {
+      type: String,
+      required: true,
+    },
+  },
 }
 
 </script>
