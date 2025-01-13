@@ -1,10 +1,10 @@
 <script setup lang="ts">
 
 import 'boxicons'
-import './assets/css/core.css';
-import './assets/css/theme-default.css';
-import './assets/css/app.css';
-import './assets/js/main.js';
+import './assets/core.css';
+import './assets/theme-default.css';
+import './assets/app.css';
+import './assets/main.js';
 
 import TopNavigation from '@/views/TopNavigation.vue';
 import TabStatus from './views/TabStatus.vue';
@@ -15,7 +15,7 @@ import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
-const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
+const rulesFile = ref(window.TRIX_CONFIG);
 
 onMounted(() => {
 });
@@ -75,7 +75,7 @@ onMounted(() => {
 <template>
 
   <header>
-    <TopNavigation />
+    <TopNavigation :url = "url" />
   </header>
 
   <div class="layout-wrapper layout-content-navbar">
@@ -113,7 +113,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <TabStatus :statusAPI = "statusAPI"/>
+              <TabStatus :statusAPI = "statusAPI" />
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
@@ -132,7 +132,6 @@ onMounted(() => {
 
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
-              <!-- <TabNodes :url = "url" @Toast="Toast" /> -->
               <TabNodes :url = "url" />
             </div>
           </div>

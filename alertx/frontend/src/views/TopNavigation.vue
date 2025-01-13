@@ -3,10 +3,10 @@
   <nav class="navbar shadow-sm navbar-light">
     <ol class="breadcrumb bg-transparent d-flex align-items-center">
       <a href="/" aria-current="page" role="menuitem">
-        <img src="@/assets/img/logo.png" class="img-logo" />
+        <img :src="`${$props.url}/assets/logo.png`" class="img-logo" />
       </a>
       <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
-      <li class="breadcrumb-item"><a class="align-middle" href="/">Alert Configurator</a></li>
+      <li class="breadcrumb-item"><a class="align-middle" :href="`${$props.url}`">Alert Configurator</a></li>
     </ol>
   </nav>
 </template>
@@ -15,6 +15,12 @@
 
 export default {
   name: "TopNavigation",
+  props: {
+    url: {
+      type: String,
+      required: true,
+    },
+  },
 }
 
 </script>

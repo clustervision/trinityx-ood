@@ -3,7 +3,7 @@
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Alert Status
   </h4>
-  <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+  <div v-if="rows.length" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
     <table class="table table-bordered table-striped table-hover caption-top">
       <thead>
         <tr>
@@ -34,6 +34,7 @@
       </tbody>
     </table>
   </div>
+    <div v-else class="alert alert-danger" role="alert">Error :: {{ noRows }}</div>
 
 </template>
 
@@ -76,11 +77,13 @@ export default {
       rows: [] as { id: number; rule: string; state: string; severity: string; eventTime: string; affected: unknown; }[],
       rules: [] as StatusAlert[],
       alerts: [],
+      noRows: '',
     };
   },
   async mounted() {
     try {
-      const response = await axios.get(this.statusAPI);
+      const axiosInstance = axios.create({baseURL: this.statusAPI, });
+      const response = await axiosInstance.get(this.statusAPI);
       if (response.status === 200) {
         this.rules = response.data.data.groups[0].rules;
         let count_rows:number = 0;
@@ -100,8 +103,11 @@ export default {
       } else {
         console.error("Error fetching rules:", response.status, response.data);
       }
-    } catch (error) {
-      console.error("Error fetching status:", error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.noRows = error.message;
+        console.error("Error fetching status:", error);
+        }
     }
   },
 };
