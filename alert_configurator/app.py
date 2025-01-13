@@ -31,8 +31,7 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
+from flask import Flask, render_template, request, jsonify, url_for
 from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
 from log import Log
 from rest import Rest
@@ -43,11 +42,6 @@ TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="nhc/assets", template_folder="nhc")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
-CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
-CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
-CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
 
 
 @app.before_request
@@ -67,11 +61,13 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    promQLurl   = "https://vmware-controller1.cluster:9090"
-    appUrl      = "http://vmware-controller1.cluster:7755"
-    statusAPI   = "https://vmware-controller1.cluster:9090/api/v1/rules"
-    ResetNode   = "https://vmware-controller1.cluster:7050/import/prometheus_nhc_rules"
-    return render_template("index.html", promQLurl=promQLurl, appUrl=appUrl, statusAPI=statusAPI, ResetNode=ResetNode)
+    full_url = f"https://{request.host}{request.path}"
+    full_url = full_url[:-1]
+    full_url_app = f"{full_url}{url_for('home')}"
+    APP_URL = full_url_app[:-1]
+    PROMQL_URL = full_url.replace("8080", "9090")
+    STATUS_API = f"{PROMQL_URL}/api/v1/rules"
+    return render_template("index.html", promQLurl=PROMQL_URL, appUrl=APP_URL, statusAPI=STATUS_API, TRIX_CONFIG=TRIX_CONFIG)
 
 
 @app.route('/get_nodes', methods=['GET'])
@@ -141,5 +137,5 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=7755, debug= True)
-    # app.run()
+    # app.run(host='0.0.0.0', port=7755, debug= True)
+    app.run()
