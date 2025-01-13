@@ -15,7 +15,6 @@ import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
-// const ResetNode = ref(window.ResetNode || import.meta.env.VITE_ResetNode);
 const rulesFile = ref("/trinity/local/etc/prometheus_server/rules/trix.rules");
 
 onMounted(() => {
@@ -184,10 +183,10 @@ function updateClass(event: Event) {
   }
 }
 
-let url: string
-url = window.location.href;
-url = url.replace('#', '');
-url = window.APP_URL || import.meta.env.VITE_APP_URL;
+// let url: string
+// url = window.location.href;
+// url = url.replace('#', '');
+const url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 async function saveRules(content: JSON) {
   try {
@@ -267,9 +266,7 @@ const ContentType: 'JSON' | 'YAML' = 'JSON';
 
 
 export default {
-  // components: {
-  //   SubNavigation,
-  // },
+
   data() {
     return {
       showToast: false,

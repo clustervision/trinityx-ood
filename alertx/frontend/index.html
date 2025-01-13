@@ -26,10 +26,11 @@
   <body>
     
     <div id="app"></div>
-    <!-- <script>
+    <script>
       window.PROMQL_URL = "{{ promQLurl }}";
       window.APP_URL = "{{ appUrl }}";
-    </script> -->
+      window.statusAPI = "{{ statusAPI }}";
+    </script>
     
     <script type="module" src="/src/main.ts"></script>
   </body>

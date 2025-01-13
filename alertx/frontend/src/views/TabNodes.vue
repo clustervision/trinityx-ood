@@ -40,6 +40,9 @@
 </style>
 
 <template>
+  <h4 class="fw-bold py-3 mb-4">
+    <span class="text-muted fw-light"> Monitoring /</span> Node Hardware
+  </h4>
   <div>
     <div class="row">
       <div class="col-md-1"><span class="nav_head">Filter:</span></div>
@@ -62,7 +65,7 @@
         <button type="button" class="btn btn-sm btn-success" @click="resetSelectedNodes">Reset Selected Nodes</button>
       </div>
     </div>
-
+    <br />
     <!-- <div class="row">
       <div class="col-md-1"><span class="nav_head">Show: </span></div>
       <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="filterNodes('all')">All</button></div>
@@ -155,7 +158,6 @@ export default {
       try {
         const response = await axios.get(`${props.url}/get_nodes`);
         if (response.status === 200) {
-          console.log(response.data);
           nodes.value = response.data.map((node: Node) => ({
             hostname: node.hostname,
             status: node.status,
@@ -220,7 +222,6 @@ export default {
       try {
         const response = await axios.post(`${props.url}/save_nodes`, payload);
         if (response.status === 200) {
-          console.log(response.data);
           response.data.response.forEach((result: resetObject) => {
             Toast(result.message, result.status ? "bg-success" : "bg-secondary");
           });

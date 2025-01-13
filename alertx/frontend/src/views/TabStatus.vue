@@ -1,8 +1,10 @@
 <script setup lang="ts"></script>
 <template>
+  <h4 class="fw-bold py-3 mb-4">
+    <span class="text-muted fw-light"> Monitoring /</span> Alert Status
+  </h4>
   <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
     <table class="table table-bordered table-striped table-hover caption-top">
-      <caption><h3 style="color: blue;">Alert Status</h3></caption>
       <thead>
         <tr>
           <th>#</th>
