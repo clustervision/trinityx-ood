@@ -266,6 +266,22 @@ def delete(record=None):
         flash('ERROR :: Something went wrong!', "error")
     return redirect(url_for('home'), code=302)
 
+@app.route('/remove/<string:record>/<string:interface>', methods=['GET'])
+def remove(record=None, interface=None):
+    """
+    This Method will delete a requested record.
+    """
+    result = {}
+    uri = record+'/interfaces/'+interface
+    response = Rest().get_delete(TABLE, uri)
+    LOGGER.info(f'{response.status_code} {response.content}')
+    if response.status_code == 204:
+        result['success'] = f'{interface} Deleted from {TABLE_CAP} {record}.'
+    else:
+        result['error'] = 'ERROR :: Something went wrong!'
+    result = json.dumps(result)
+    return result
+
 
 @app.route('/clone/<string:record>', methods=['GET', 'POST'])
 def clone(record=None):

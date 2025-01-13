@@ -217,9 +217,60 @@
     $("#add_nodeinterface").click(function () {
         $("#nodeinterface").append(group_interface);    
      });
+    // $('body').on('click', '#remove_nodeinterface', function() {
+    //    $(this).parent().prev().remove();
+    //    $(this).parent().remove()
+    //    
+    // });
+
+
+    function remove_interface(node, interface){
+        var response = {};
+
+        var url = window.location.href
+        url = url.replace(window.location.search,'');
+        url = url.split('/');
+        url.pop();
+        if (url.includes("edit") || url.includes("clone")){
+            url.pop();
+        }
+        url = url.join("/");
+        url = url+"/remove/"+node+"/"+interface;
+
+        $.ajax({
+            async: false,
+            global: false,
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                response = res;
+            }
+        });
+        return response;
+    }
+
      $('body').on('click', '#remove_nodeinterface', function() {
-        $(this).parent().prev().remove();
-        $(this).parent().remove()
+        var interface = $(this).parent().find('input[type="text"]').val();
+        var url = window.location.href;
+        url = url.split('/');
+        var node = url[url.length-1];
+        if (interface){
+            var response = remove_interface(node, interface);
+            if ('error' in response){
+                if ($(this).parent().next().next().children().is("span") || $(this).parent().next().next().next().length == 0){
+                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">'+response.error+'</p></div>');
+                }
+            }
+            if ('success' in response){
+                $(this).parent().after('<br /><div class="input-group"><p class="alert alert-success" role="alert">'+response.success+'</p></div>');
+                $(this).parent().prev().remove();
+                $(this).parent().remove()
+            }
+        } else {
+            $(this).parent().prev().remove();
+            $(this).parent().remove()
+        }
         
      });
 
