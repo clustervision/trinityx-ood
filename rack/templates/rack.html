@@ -844,7 +844,7 @@
     }
     if (url.slice(-1) == '/'){ url = url.slice(0,-1); }
     var outside_url = url.replace('trinity_rack','');
-    //console.log(url);
+    console.log(url);
     //console.log(outside_url);
 
     var device = $(this).attr('id');
@@ -852,53 +852,53 @@
     var device_name = $(this).find("input[name='type']").val();
     var info, edit, rename, clone;
     if (device_type == "controller"){
-      var title = '<img class="device-icon" src="'+url+'/icons/computer-network.png" />   <strong>'+device+' Settings</strong>';
+      var title = '<img class="device-icon" src="'+url+'/static/icons/computer-network.png" />   <strong>'+device+' Settings</strong>';
       info = outside_url + 'trinity_cluster';
       edit = outside_url + "trinity_cluster/edit";
       rename = outside_url + "trinity_cluster/rename";
     } else if (device_type == "node"){
-      var title = '<img class="device-icon" src="'+url+'/icons/processor.png" />   <strong>'+device+' Settings</strong>';
+      var title = '<img class="device-icon" src="'+url+'/static/icons/processor.png" />   <strong>'+device+' Settings</strong>';
       info = outside_url + "trinity_node/show/"+device;
       edit = outside_url + "trinity_node/edit/"+device;
       rename = outside_url + "trinity_node/rename/"+device;
       clone = outside_url + "trinity_node/clone/"+device;
     } else if (device_type == "switch"){
-      var title = '<img class="device-icon" src="'+url+'/icons/switch-network.png" />   <strong>'+device+' Settings</strong>';
+      var title = '<img class="device-icon" src="'+url+'/static/icons/switch-network.png" />   <strong>'+device+' Settings</strong>';
       info = outside_url + "trinity_switch/show/"+device;
       edit = outside_url + "trinity_switch/edit/"+device;
       rename = outside_url + "trinity_switch/rename/"+device;
       clone = outside_url + "trinity_switch/clone/"+device;
     } else if (device_type == "otherdevices"){
-      var title = '<img class="device-icon" src="'+url+'/icons/mobile-phone--plus.png" />   <strong>'+device+' Settings</strong>';
+      var title = '<img class="device-icon" src="'+url+'/static/icons/mobile-phone--plus.png" />   <strong>'+device+' Settings</strong>';
       info = outside_url + "trinity_otherdev/show/"+device;
       edit = outside_url + "trinity_otherdev/edit/"+device;
       rename = outside_url + "trinity_otherdev/rename/"+device;
       clone = outside_url + "trinity_otherdev/clone/"+device;
     }
     var items =[
-        {label:'Details',   icon: url + '/icons/application-detail.png',             action: function(e) { window.open(info, '_blank').focus(); }  },
-        {label:'Edit',      icon: url + '/icons/edit.png',                action: function(e) { window.open(edit, '_blank').focus(); }  },
+        {label:'Details',   icon: url + '/static/icons/application-detail.png',             action: function(e) { window.open(info, '_blank').focus(); }  },
+        {label:'Edit',      icon: url + '/static/icons/edit.png',                action: function(e) { window.open(edit, '_blank').focus(); }  },
     ];
     if (device_type != "controller"){
-      items.push({label:'Rename',     icon: url + '/icons/pencil.png',             action: function(e) { window.open(rename, '_blank').focus(); }  });
-      items.push({label:'Clone',     icon: url + '/icons/applications-stack.png',           action: function(e) { window.open(clone, '_blank').focus(); }  });
+      items.push({label:'Rename',     icon: url + '/static/icons/pencil.png',             action: function(e) { window.open(rename, '_blank').focus(); }  });
+      items.push({label:'Clone',     icon: url + '/static/icons/applications-stack.png',           action: function(e) { window.open(clone, '_blank').focus(); }  });
     }
     if (device_type == "node"){
       items.push(
         null,
-        {label:'Power Status',     icon: url + '/icons/application-monitor.png',  action: function(e) { control_action('power', 'status', device); } },
-        {label:'Power Off',     icon: url + '/icons/network-status-busy.png',     action: function(e) { control_action('power', 'off', device); } },
-        {label:'Power ON',     icon: url + '/icons/network-status.png',      action: function(e) { control_action('power', 'on', device); } },
-        {label:'Power Reset',     icon: url + '/icons/network-status-away.png',   action: function(e) { control_action('power', 'reset', device); } },
+        {label:'Power Status',     icon: url + '/static/icons/application-monitor.png',  action: function(e) { control_action('power', 'status', device); } },
+        {label:'Power Off',     icon: url + '/static/icons/network-status-busy.png',     action: function(e) { control_action('power', 'off', device); } },
+        {label:'Power ON',     icon: url + '/static/icons/network-status.png',      action: function(e) { control_action('power', 'on', device); } },
+        {label:'Power Reset',     icon: url + '/static/icons/network-status-away.png',   action: function(e) { control_action('power', 'reset', device); } },
         null,
-        {label:'Sel List',     icon: url + '/icons/application.png',                action: function(e) { control_action('sel', 'list', device); } },
-        {label:'Sel Clear',     icon: url + '/icons/application--minus.png',        action: function(e) { control_action('sel', 'clear', device); } },
+        {label:'Sel List',     icon: url + '/static/icons/application.png',                action: function(e) { control_action('sel', 'list', device); } },
+        {label:'Sel Clear',     icon: url + '/static/icons/application--minus.png',        action: function(e) { control_action('sel', 'clear', device); } },
         null,
-        {label:'Chassis Identify',     icon: url + '/icons/television.png',             action: function(e) { control_action('chassis', 'identify', device); } },
-        {label:'Chassis No Identify',     icon: url + '/icons/television--exclamation.png',             action: function(e) { control_action('chassis', 'noidentify', device); } },
+        {label:'Chassis Identify',     icon: url + '/static/icons/television.png',             action: function(e) { control_action('chassis', 'identify', device); } },
+        {label:'Chassis No Identify',     icon: url + '/static/icons/television--exclamation.png',             action: function(e) { control_action('chassis', 'noidentify', device); } },
         // null,
-        // {label:'Redfish Upload',     icon: url + '/icons/application-table.png',             action: function(e) {control_action('redfish', 'upload', device); } },
-        // {label:'Redfish Setting',     icon: url + '/icons/application-table.png',             action: function(e) { control_action('redfish', 'setting', device); } },
+        // {label:'Redfish Upload',     icon: url + '/static/icons/application-table.png',             action: function(e) {control_action('redfish', 'upload', device); } },
+        // {label:'Redfish Setting',     icon: url + '/static/icons/application-table.png',             action: function(e) { control_action('redfish', 'setting', device); } },
       );
     }
     var menu = createMenu(e, title, items).show().css({zIndex:1000001, left:e.pageX + 5, top:e.pageY}).bind('contextmenu', function() { return false; });
