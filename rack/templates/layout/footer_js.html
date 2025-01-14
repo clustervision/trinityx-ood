@@ -4,9 +4,64 @@
 <script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+
+<script type="text/javascript">
+
+    function get_nodes(rackName){
+        var url = window.location.href
+        url = url.replace('#','');
+        if  (url.includes('/show/rack/')){
+            url = url.split('/');
+            url.pop();
+            url.pop();
+            url.pop();
+            url = url.join("/");
+        } 
+        url = url+'/get_nodes/'+rackName;
+        var response;
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            contentType: 'application/json; charset=UTF-8',
+            async: false,
+            success: function(response_data) {
+                response = response_data;
+            }
+        });
+        return response;
+    }
+
+    $(document).ready(function () {
+        $('.rack_power').click(function (event) {
+            event.preventDefault();
+            const target = $(this).data('target');
+            const target_split = target.split('$$');
+            const action = target_split[0];
+            const rackName = target_split[1];
+            const node_list = get_nodes(rackName);
+            node_list.forEach(node => {
+                control_action('power', action, node);
+            });
+        });
+    });
+
+
+
+    $(document).ready( function() {
+        $('.dropdown-toggle').dropdown();
+    });
+
+    $('.back').hide();
+    $('#front-button').hide();
+</script>
+
+
+
 <script>
     // Get all dropdown items
-    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    const dropdownItems = document.querySelectorAll('.set-text');
     const dropdownButton = document.getElementById('dropdownMenuButton');
 
     // Add event listener to each dropdown item
@@ -31,7 +86,7 @@
             $('[class^="temperature-"], [class^="power-"], [class^="load-"]').hide();
         }
         hideAllScales();
-        $('.dropdown-item').click(function (event) {
+        $('.set-text').click(function (event) {
             event.preventDefault();
             const targetId = $(this).data('target');
             hideAllScales();
