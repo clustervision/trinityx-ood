@@ -40,10 +40,10 @@
           <div class="dropdown">
             <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Metric</button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="" data-target="no_scale">No Scale</a>
-              <a class="dropdown-item" href="" data-target="temp_scale">Temperature</a>
-              <a class="dropdown-item" href="" data-target="load_scale">System Load</a>
-              <a class="dropdown-item" href="" data-target="power_scale">Power Consumption</a>
+              <a class="dropdown-item set-text" href="" data-target="no_scale">No Scale</a>
+              <a class="dropdown-item set-text" href="" data-target="temp_scale">Temperature</a>
+              <a class="dropdown-item set-text" href="" data-target="load_scale">System Load</a>
+              <a class="dropdown-item set-text" href="" data-target="power_scale">Power Consumption</a>
             </div>
           </div>
           {% endif %}
@@ -72,8 +72,16 @@
 
         <div class="col col-3"></div>
 
-        <div class="col col-2" style="float: right;">
-          <span style="float: right;"><a href="{{ url_for('manage', page='rack') }}" class="btn btn-sm btn-warning">Back</a></span>
+        <div class="col col-2"  style="display: flex; align-items: center; float: right;">
+          <div class="dropdown">
+            <button class="btn btn-warning btn-sm dropdown-toggle rack_button" type="button" id="power_{{ rack_data['name'] }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Power</button>
+            <div class="dropdown-menu" aria-labelledby="power_{{ rack_data['name'] }}">
+              <a class="dropdown-item rack_power" href="#" data-target="on$${{ rack_data['name'] }}">Power ON</a>
+              <a class="dropdown-item rack_power" href="#" data-target="off$${{ rack_data['name'] }}">Power OFF</a>
+              <a class="dropdown-item rack_power" href="#" data-target="reset$${{ rack_data['name'] }}">Reset</a>
+            </div>
+          </div> &nbsp;&nbsp;
+          <span style="float: right;"><a href="{{ url_for('manage', page='rack') }}" class="btn btn-sm btn-secondary">Back</a></span>
         </div>
 
       </div>

@@ -429,6 +429,7 @@ code {
     width: 220px;
     background-color: #bebebe;
     color:#000000;
+    font-size:small;
   }
   
   .rack-pillar-front {
@@ -447,6 +448,7 @@ code {
     width: 220px;
     background-color: #e7e7e7;
     color:#000000;
+    font-size:small;
   }
   
   .rack-unit {

@@ -42,10 +42,10 @@
           <div class="dropdown">
             <button class="btn btn-info btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Metric</button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="#" data-target="no_scale">No Scale</a>
-              <a class="dropdown-item" href="#" data-target="temp_scale">Temperature</a>
-              <a class="dropdown-item" href="#" data-target="load_scale">System Load</a>
-              <a class="dropdown-item" href="#" data-target="power_scale">Power Consumption</a>
+              <a class="dropdown-item set-text" href="#" data-target="no_scale">No Scale</a>
+              <a class="dropdown-item set-text" href="#" data-target="temp_scale">Temperature</a>
+              <a class="dropdown-item set-text" href="#" data-target="load_scale">System Load</a>
+              <a class="dropdown-item set-text" href="#" data-target="power_scale">Power Consumption</a>
             </div>
           </div>
           {% endif %}
@@ -101,9 +101,17 @@
               <div class="rack-pillar-front"></div>
               <div class="rack-unit"><strong>U</strong></div>
               <div class="rack-name-front">
-                <span>
+                <span style="display: flex; align-items: center; justify-content: space-between;">
                   <strong>{{ key }} Front</strong>
-                  <button   style="float: right;" onclick="extendview({{ key }}back);" class="btn btn-sm btn-dark rack_button" type="button">Back</button>
+                  <div class="dropdown">
+                    <button class="btn btn-warning btn-xs dropdown-toggle rack_button" type="button" id="power_{{ key }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Power</button>
+                    <div class="dropdown-menu" aria-labelledby="power_{{ key }}">
+                      <a class="dropdown-item rack_power" href="#" data-target="on$${{ key }}">Power ON</a>
+                      <a class="dropdown-item rack_power" href="#" data-target="off$${{ key }}">Power OFF</a>
+                      <a class="dropdown-item rack_power" href="#" data-target="reset$${{ key }}">Reset</a>
+                    </div>
+                  </div>
+                  <button style="float: right;" onclick="extendview({{ key }}back);" class="btn btn-xs btn-dark rack_button" type="button">Back</button>
                 </span>
               </div>
               <div class="rack-unit"><strong>U</strong></div>
@@ -254,9 +262,17 @@
                 <div class="rack-pillar"></div>
                 <div class="rack-unit"><strong>U</strong></div>
                 <div class="rack-name">
-                  <span>
+                  <span style="display: flex; align-items: center; justify-content: space-between;">
                     <strong>{{ key }} Back</strong>
-                    <button   style="float: right;" onclick="extendview({{ key }}front);" class="btn btn-sm btn-secondary rack_button" type="button">Front</button>
+                    <div class="dropdown">
+                      <button class="btn btn-warning btn-xs dropdown-toggle rack_button" type="button" id="power_{{ key }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Power</button>
+                      <div class="dropdown-menu" aria-labelledby="power_{{ key }}">
+                        <a class="dropdown-item rack_power" href="#" data-target="on$${{ key }}">Power ON</a>
+                        <a class="dropdown-item rack_power" href="#" data-target="off$${{ key }}">Power OFF</a>
+                        <a class="dropdown-item rack_power" href="#" data-target="reset$${{ key }}">Reset</a>
+                      </div>
+                    </div>
+                    <button   style="float: right;" onclick="extendview({{ key }}front);" class="btn btn-xs btn-secondary rack_button" type="button">Front</button>
                   </span>
                 </div>
                 <div class="rack-unit"><strong>U</strong></div>
