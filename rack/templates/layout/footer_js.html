@@ -59,48 +59,80 @@
 
 
 
-<script>
+<script type="text/javascript">
     // Get all dropdown items
-    const dropdownItems = document.querySelectorAll('.set-text');
-    const dropdownButton = document.getElementById('dropdownMenuButton');
+    const first_metrix = document.querySelectorAll('.first_metrix');
+    const second_metrix = document.querySelectorAll('.second_metrix');
+    const Metric_first = document.getElementById('Metric_first');
+    const Metric_second = document.getElementById('Metric_second');
 
-    // Add event listener to each dropdown item
-    dropdownItems.forEach(item => {
+    first_metrix.forEach(item => {
         item.addEventListener('click', function(event) {
-            event.preventDefault();  // Prevent the default link behavior
-            const selectedText = item.textContent;  // Get the text of the selected item
-
-            // Update the button text with the selected item
-            dropdownButton.textContent = selectedText;
+            event.preventDefault();
+            const selectedText = item.textContent;
+            Metric_first.textContent = selectedText;
         });
     });
+
+    second_metrix.forEach(item => {
+        item.addEventListener('click', function(event) {
+            event.preventDefault();
+            const selectedText = item.textContent;
+            Metric_second.textContent = selectedText;
+        });
+    });
+
 </script>
 <script type="text/javascript">
     // Function to toggle all scale scales
     $(document).ready(function () {
-        function hideAllScales() {
-            $('#no_scale').hide();
-            $('#temp_scale').hide();
-            $('#load_scale').hide();
-            $('#power_scale').hide();
-            $('[class^="temperature-"], [class^="power-"], [class^="load-"]').hide();
+        function hideAllFirstScales() {
+            $('#no_scale_1').hide();
+            $('#temp_scale_1').hide();
+            $('#load_scale_1').hide();
+            $('#power_scale_1').hide();
+            $('[class^="temperature1-"], [class^="power1-"], [class^="load1-"]').hide();
         }
-        hideAllScales();
-        $('.set-text').click(function (event) {
+        function hideAllSecondScales() {
+            $('#no_scale_2').hide();
+            $('#temp_scale_2').hide();
+            $('#load_scale_2').hide();
+            $('#power_scale_2').hide();
+            $('[class^="temperature2-"], [class^="power2-"], [class^="load2-"]').hide();
+        }
+        hideAllFirstScales();
+        hideAllSecondScales();
+        $('.first_metrix').click(function (event) {
             event.preventDefault();
             const targetId = $(this).data('target');
-            hideAllScales();
+            hideAllFirstScales();
             $(`#${targetId}`).show();
 
-            if (targetId === 'temp_scale') {
-                $('[class^="temperature-"]').show();
-            } else if (targetId === 'load_scale') {
-                $('[class^="load-"]').show();
-            } else if (targetId === 'power_scale') {
-                $('[class^="power-"]').show();
+            if (targetId === 'temp_scale_1') {
+                $('[class^="temperature1-"]').show();
+            } else if (targetId === 'load_scale_1') {
+                $('[class^="load1-"]').show();
+            } else if (targetId === 'power_scale_1') {
+                $('[class^="power1-"]').show();
+            }
+        });
+
+        $('.second_metrix').click(function (event) {
+            event.preventDefault();
+            const targetId = $(this).data('target');
+            hideAllSecondScales();
+            $(`#${targetId}`).show();
+
+            if (targetId === 'temp_scale_2') {
+                $('[class^="temperature2-"]').show();
+            } else if (targetId === 'load_scale_2') {
+                $('[class^="load2-"]').show();
+            } else if (targetId === 'power_scale_2') {
+                $('[class^="power2-"]').show();
             }
         });
     });
+    
 
 
 
@@ -202,8 +234,10 @@
             }
         }
     });
-    document.getElementById("max_power").innerText = total_power + " watt";
-    document.getElementById("max_load").innerText = parseFloat(total_load).toFixed(2);
+    document.getElementById("max_power1").innerText = total_power + " watt";
+    document.getElementById("max_power2").innerText = total_power + " watt";
+    document.getElementById("max_load1").innerText = parseFloat(total_load).toFixed(2);
+    document.getElementById("max_load2").innerText = parseFloat(total_load).toFixed(2);
 
     prometheus.forEach(function(device) {
         var hostname = device.hostname;
@@ -216,35 +250,58 @@
         var load_percentage = parseFloat((load / total_load) * 100);
 
         if (temperature){
-            const temperature_element = document.querySelector(`.temperature-${deviceName}`);
-            if (temperature_element) {
-                temperature_element.style.backgroundColor = perc2color(temperature_percentage);
-                temperature_element.style.border = "2px solid white";
-                temperature_element.setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
-                temperature_element.setAttribute('data-bs-original-title', `<strong>Temperature:</strong> ${temperature}`); // For Bootstrap 5
-                new bootstrap.Tooltip(temperature_element); 
-            } 
+            const temperature_element1 = document.querySelector(`.temperature1-${deviceName}`);
+            const temperature_element2 = document.querySelector(`.temperature2-${deviceName}`);
+            if (temperature_element1) {
+                temperature_element1.style.backgroundColor = perc2color(temperature_percentage);
+                temperature_element1.style.border = "2px solid white";
+                temperature_element1.setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
+                temperature_element1.setAttribute('data-bs-original-title', `<strong>Temperature:</strong> ${temperature}`);
+                new bootstrap.Tooltip(temperature_element1); 
+            }
+            if (temperature_element2) {
+                temperature_element2.style.backgroundColor = perc2color(temperature_percentage);
+                temperature_element2.style.border = "2px solid white";
+                temperature_element2.setAttribute('title', `<strong>Temperature:</strong> ${temperature}`);
+                temperature_element2.setAttribute('data-bs-original-title', `<strong>Temperature:</strong> ${temperature}`);
+                new bootstrap.Tooltip(temperature_element2); 
+            }
         }
         if (power){
-            const power_element = document.querySelector(`.power-${deviceName}`);
-            if (power_element) {
-                power_element.style.backgroundColor = perc2color(power_percentage);
-                power_element.style.border = "2px solid white";
-                power_element.setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
-                power_element.setAttribute('data-bs-original-title', `<strong>Power Consumption:</strong> ${power}`); // For Bootstrap 5
-                new bootstrap.Tooltip(power_element);
+            const power_element1 = document.querySelector(`.power1-${deviceName}`);
+            const power_element2 = document.querySelector(`.power2-${deviceName}`);
+            if (power_element1) {
+                power_element1.style.backgroundColor = perc2color(power_percentage);
+                power_element1.style.border = "2px solid white";
+                power_element1.setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
+                power_element1.setAttribute('data-bs-original-title', `<strong>Power Consumption:</strong> ${power}`);
+                new bootstrap.Tooltip(power_element1);
+            }
+            if (power_element2) {
+                power_element2.style.backgroundColor = perc2color(power_percentage);
+                power_element2.style.border = "2px solid white";
+                power_element2.setAttribute('title', `<strong>Power Consumption:</strong> ${power}`);
+                power_element2.setAttribute('data-bs-original-title', `<strong>Power Consumption:</strong> ${power}`);
+                new bootstrap.Tooltip(power_element2);
             }
         }
         if (load){
-            const load_element = document.querySelector(`.load-${deviceName}`);
-            if (load_element){
-                load_element.style.backgroundColor = perc2color(load_percentage);
-                load_element.style.border = "2px solid white";
-                load_element.setAttribute('title', `<strong>System Load:</strong> ${load}`);
-                load_element.setAttribute('data-bs-original-title', `<strong>System Load:</strong> ${load}`); // For Bootstrap 5
-                new bootstrap.Tooltip(load_element);
+            const load_element1 = document.querySelector(`.load1-${deviceName}`);
+            const load_element2 = document.querySelector(`.load2-${deviceName}`);
+            if (load_element1){
+                load_element1.style.backgroundColor = perc2color(load_percentage);
+                load_element1.style.border = "2px solid white";
+                load_element1.setAttribute('title', `<strong>System Load:</strong> ${load}`);
+                load_element1.setAttribute('data-bs-original-title', `<strong>System Load:</strong> ${load}`);
+                new bootstrap.Tooltip(load_element1);
             }
-             
+            if (load_element2){
+                load_element2.style.backgroundColor = perc2color(load_percentage);
+                load_element2.style.border = "2px solid white";
+                load_element2.setAttribute('title', `<strong>System Load:</strong> ${load}`);
+                load_element2.setAttribute('data-bs-original-title', `<strong>System Load:</strong> ${load}`);
+                new bootstrap.Tooltip(load_element2);
+            }
         }
 
     });

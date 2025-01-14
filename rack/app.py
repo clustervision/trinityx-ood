@@ -118,7 +118,7 @@ def get_screen_size():
     else:
         width = 120
         height = 20
-    print(f"Screen Width: {width}, Screen Height: {height}")
+    # print(f"Screen Width: {width}, Screen Height: {height}")
     return jsonify({'width': width, 'height': height})
 
 
