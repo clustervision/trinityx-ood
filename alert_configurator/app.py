@@ -31,15 +31,16 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for
 from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
 from log import Log
 from rest import Rest
 
+
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="nhc/assets", template_folder="nhc")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 
@@ -60,7 +61,33 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    return render_template("configurator.html", table=TABLE_CAP, title='Status', TRIX_CONFIG=TRIX_CONFIG)
+    full_url = f"https://{request.host}{request.path}"
+    full_url = full_url[:-1]
+    full_url_app = f"{full_url}{url_for('home')}"
+    APP_URL = full_url_app[:-1]
+    PROMQL_URL = full_url.replace("8080", "9090")
+    STATUS_API = f"{PROMQL_URL}/api/v1/rules"
+    return render_template("index.html", promQLurl=PROMQL_URL, appUrl=APP_URL, statusAPI=STATUS_API, TRIX_CONFIG=TRIX_CONFIG)
+
+
+@app.route('/get_nodes', methods=['GET'])
+def get_nodes():
+    """
+    This method to show the monitor status and queue.
+    """
+    status, response = Rest().get_luna_nodes()
+    node_list = []
+    if 'config' in response:
+        for _, details in response["config"]["node"].items():
+            node_list.append(details["hostname"])
+        if (node_list):
+            node_list = ",".join(node_list)
+            status, response = Rest().get_node_hw(nodes = node_list)
+    if status is True:
+        return jsonify(response), 200
+    else:
+        return jsonify(response), 400
+    
 
 
 @app.route('/save_config', methods=['POST'])
@@ -82,6 +109,16 @@ def get_rules():
         return jsonify(configuration), 200
     else:
         return jsonify(configuration), 400
+
+
+@app.route('/save_nodes', methods=['POST'])
+def save_nodes():
+    """
+    This method save the Node hardware.
+    """
+    status, response = Rest().post_nodes(data=request.json)
+    return jsonify({"response": response}), status
+
 
 
 @app.route('/license', methods=['GET'])

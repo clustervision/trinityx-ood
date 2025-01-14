@@ -1,4 +1,7 @@
 __pycache__/
 /config
 .vscode
+.env
 infiniband/state.json
+alert_configurator/nhc/node_modules
+alert_configurator/nhc/node_modules/*

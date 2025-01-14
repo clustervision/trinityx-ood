@@ -288,18 +288,15 @@ recursive-include rack *
 
 include alert_configurator
 include alert_configurator/*
-include alert_configurator/static
-include alert_configurator/static/*
-include alert_configurator/static/css
-include alert_configurator/static/css/*
-include alert_configurator/static/fonts
-include alert_configurator/static/fonts/*
-include alert_configurator/static/img
-include alert_configurator/static/img/*
-include alert_configurator/static/js
-include alert_configurator/static/js/*
-include alert_configurator/templates
-include alert_configurator/templates/*
-include alert_configurator/templates/layout
-include alert_configurator/templates/layout/*
+include alert_configurator/nhc
+include alert_configurator/nhc/*
+include alert_configurator/nhc/assets
+include alert_configurator/nhc/assets/*
+
+
+
+
+
+
+
 
