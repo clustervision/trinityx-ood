@@ -44,6 +44,7 @@
               <a class="dropdown-item first_metrix" href="#" data-target="temp_scale_1">Temperature</a>
               <a class="dropdown-item first_metrix" href="#" data-target="load_scale_1">System Load</a>
               <a class="dropdown-item first_metrix" href="#" data-target="power_scale_1">Power Consumption</a>
+              <a class="dropdown-item first_metrix" href="#" data-target="gpu_scale_1">GPU Temperature</a>
             </div>
           </div>
           {% endif %}
@@ -67,10 +68,13 @@
             <span class="grad" style="display: inline-block;">&nbsp;</span>
             <span id="max_power1" style="display: inline-block;"> 200 watt</span>
           </div>
+          <div id="gpu_scale_1" style="display: none;">
+            <span style="display: inline-block;">0C </span>
+            <span class="grad" style="display: inline-block;">&nbsp;</span>
+            <span style="display: inline-block;"> 90 C</span>
+          </div>
         </div>
-
         <div class="col col-3"></div>
-
         <div class="col col-2" style="float: right;">
           {% if rack_data %}
             <button style="float: right;" id="front-button" class="btn btn-sm btn-secondary" type="button" onclick="$('.front').show();$('.back').hide();$('#front-button').hide();$('#back-button').show();">Flip to Front View</button>
@@ -78,7 +82,6 @@
           {% endif %}
         </div>
       </div>
-
       <br />
 
       <div class="row" style="flex-wrap: wrap !important;">
@@ -91,12 +94,11 @@
               <a class="dropdown-item second_metrix" href="#" data-target="temp_scale_2">Temperature</a>
               <a class="dropdown-item second_metrix" href="#" data-target="load_scale_2">System Load</a>
               <a class="dropdown-item second_metrix" href="#" data-target="power_scale_2">Power Consumption</a>
+              <a class="dropdown-item second_metrix" href="#" data-target="gpu_scale_2">GPU Temperature</a>
             </div>
           </div>
           {% endif %}
         </div>
-
-
         <div class="col col-5">
           <div id="no_scale_2" style="display: none;"></div>
           <div id="temp_scale_2" style="display: none;">
@@ -114,16 +116,16 @@
             <span class="grad" style="display: inline-block;">&nbsp;</span>
             <span id="max_power2" style="display: inline-block;"> 200 watt</span>
           </div>
-          
+          <div id="gpu_scale_2" style="display: none;">
+            <span style="display: inline-block;">0C </span>
+            <span class="grad" style="display: inline-block;">&nbsp;</span>
+            <span style="display: inline-block;"> 90 C</span>
+          </div>
         </div>
         <div class="col col-3"></div>
         <div class="col col-2" ></div>
       </div>
-
-
     </div>
-
-
     <div class="card-body">
       {% if rack_data %}
         {% for key, value in rack_data.items() %}
@@ -217,12 +219,14 @@
                               <code class="temperature1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                               <code class="power1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                               <code class="load1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
+                              <code class="gpu1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                             </p>
 
                             <p class="color_metric_2">
                               <code class="temperature2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                               <code class="power2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                               <code class="load2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
+                              <code class="gpu2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                             </p>
                         </span>
 
@@ -389,12 +393,14 @@
                                 <code class="temperature1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                                 <code class="power1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                                 <code class="load1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
+                                <code class="gpu1-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                               </p>
 
                               <p class="color_metric_2">
                                 <code class="temperature2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                                 <code class="power2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                                 <code class="load2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
+                                <code class="gpu2-{{ each_device['name'] }}" data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"></code>
                               </p>
                           </span>
 

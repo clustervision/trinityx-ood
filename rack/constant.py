@@ -38,14 +38,16 @@ else:
         "error": f"The home directory '{home_dir}' does not exist or lacks read/write permissions."
     }
 
-INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
-LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
-LOG_DIR = '/var/log/luna'
-LOG_FILE = '/var/log/luna/luna2-web.log'
+INI_FILE    = '/trinity/local/ondemand/3.0/config/luna.ini'
+LICENSE     = '/trinity/local/ondemand/3.0/LICENSE.txt'
+LOG_DIR     = '/var/log/luna'
+LOG_FILE    = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+
 TEMPERATURE_URL = "https://localhost:9090/api/v1/query?query=max+by+(hostname%2C+luna_group)+(ipmi_temperature_celsius{+name%3D~%22[cC][pP][uU].*[tT][eE][mM][pP].*%22+})"
 SYSTEM_LOAD_URL = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(node_load5)"
-POWER_URL = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(ipmi_dcmi_power_consumption_watts)"
+POWER_URL       = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(ipmi_dcmi_power_consumption_watts)"
+GPU_TEMP_URL    = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(nvidia_smi_temperature_gpu)"
 
 
 def filter_columns(table=None):
