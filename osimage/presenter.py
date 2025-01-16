@@ -68,8 +68,7 @@ class Presenter():
         self.logger.debug(f'Rows => {rows}')
         self.table.format = True
         self.table.field_names = fields
-        if '\\n' in str(rows):
-            self.table.align = "l"
+        self.table.align = "l"
         self.table.add_rows(rows)
         response = self.table.get_html_string(attributes={"id":"datatable", "class":table_class})
         return response

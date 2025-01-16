@@ -52,7 +52,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'osimage': ['name', 'kernelversion', 'kernelfile', 'imagefile', 'path', 'distribution', 'osrelease']
+        'osimage': ['name', 'kernelversion', 'kerneldetails', 'distribution', 'osrelease']
     }
     response = list(static[table])
     return response
