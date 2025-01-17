@@ -409,11 +409,11 @@ class Helper():
                         value = values["value"]
                         metric_value = value[1]
                         if data:
-                            for check in data:
-                                if check['hostname'] == hostname:
-                                    check[metric] = value[1]
-                                else:
-                                    data.append({'hostname': hostname, 'type': luna_group, metric: metric_value})
+                            result = next(filter(lambda x: x['hostname'] == hostname, data), None)
+                            if result:
+                                data = list(map(lambda x: {**x, metric: metric_value} if x['hostname'] == hostname else x, data))
+                            else:
+                                data.append({'hostname': hostname, 'type': luna_group, metric: metric_value})
                         else:
                             data.append({'hostname': hostname, 'type': luna_group, metric: metric_value})
         return data
