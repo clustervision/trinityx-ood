@@ -33,7 +33,7 @@ import binascii
 import requests
 from flask import url_for
 from nested_lookup import nested_lookup, nested_update
-from constant import filter_columns, EDITOR_KEYS, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL
+from constant import filter_columns, EDITOR_KEYS, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL, GPU_TEMP_URL
 from rest import Rest
 from log import Log
 from constant import filter_columns
@@ -393,6 +393,8 @@ class Helper():
             metric_url = SYSTEM_LOAD_URL
         elif metric == 'power':
             metric_url = POWER_URL
+        elif metric == 'gpu_temp':
+            metric_url = GPU_TEMP_URL
         else:
             metric_url = None
         if metric_url:

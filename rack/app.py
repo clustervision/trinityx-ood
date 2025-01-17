@@ -91,6 +91,7 @@ def get_temperature():
     response = Helper().get_metrics('temperature', data=response)
     response = Helper().get_metrics('load', data=response)
     response = Helper().get_metrics('power', data=response)
+    response = Helper().get_metrics('gpu_temp', data=response)
     return jsonify(response)
 
 

@@ -91,14 +91,16 @@
             $('#temp_scale_1').hide();
             $('#load_scale_1').hide();
             $('#power_scale_1').hide();
-            $('[class^="temperature1-"], [class^="power1-"], [class^="load1-"]').hide();
+            $('#gpu_scale_1').hide();
+            $('[class^="temperature1-"], [class^="power1-"], [class^="load1-"], [class^="gpu1-"]').hide();
         }
         function hideAllSecondScales() {
             $('#no_scale_2').hide();
             $('#temp_scale_2').hide();
             $('#load_scale_2').hide();
             $('#power_scale_2').hide();
-            $('[class^="temperature2-"], [class^="power2-"], [class^="load2-"]').hide();
+            $('#gpu_scale_2').hide();
+            $('[class^="temperature2-"], [class^="power2-"], [class^="load2-"], [class^="gpu2-"]').hide();
         }
         hideAllFirstScales();
         hideAllSecondScales();
@@ -114,6 +116,8 @@
                 $('[class^="load1-"]').show();
             } else if (targetId === 'power_scale_1') {
                 $('[class^="power1-"]').show();
+            } else if (targetId === 'gpu_scale_1') {
+                $('[class^="gpu1-"]').show();
             }
         });
 
@@ -129,6 +133,8 @@
                 $('[class^="load2-"]').show();
             } else if (targetId === 'power_scale_2') {
                 $('[class^="power2-"]').show();
+            } else if (targetId === 'gpu_scale_2') {
+                $('[class^="gpu2-"]').show();
             }
         });
     });
@@ -242,10 +248,12 @@
     prometheus.forEach(function(device) {
         var hostname = device.hostname;
         var temperature = parseFloat(device.temperature);
+        var gpu_temp = parseFloat(device.gpu_temp);
         var load = parseFloat(device.load);
         var power = parseFloat(device.power);
         var deviceName = hostname.split('.')[0];
         var temperature_percentage = parseFloat((temperature / 90) * 100);
+        var gpu_temp_percentage = parseFloat((gpu_temp / 90) * 100);
         var power_percentage = parseFloat((power / total_power) * 100);
         var load_percentage = parseFloat((load / total_load) * 100);
 
@@ -303,6 +311,23 @@
                 new bootstrap.Tooltip(load_element2);
             }
         }
-
+        if (gpu_temp){
+            const gpu_temp_element1 = document.querySelector(`.gpu1-${deviceName}`);
+            const gpu_temp_element2 = document.querySelector(`.gpu2-${deviceName}`);
+            if (gpu_temp_element1) {
+                gpu_temp_element1.style.backgroundColor = perc2color(gpu_temp_percentage);
+                gpu_temp_element1.style.border = "2px solid white";
+                gpu_temp_element1.setAttribute('title', `<strong>GPU Temperature:</strong> ${gpu_temp}`);
+                gpu_temp_element1.setAttribute('data-bs-original-title', `<strong>GPU Temperature:</strong> ${gpu_temp}`);
+                new bootstrap.Tooltip(gpu_temp_element1); 
+            }
+            if (gpu_temp_element2) {
+                gpu_temp_element2.style.backgroundColor = perc2color(gpu_temp_percentage);
+                gpu_temp_element2.style.border = "2px solid white";
+                gpu_temp_element2.setAttribute('title', `<strong>GPU Temperature:</strong> ${gpu_temp}`);
+                gpu_temp_element2.setAttribute('data-bs-original-title', `<strong>GPU Temperature:</strong> ${gpu_temp}`);
+                new bootstrap.Tooltip(gpu_temp_element2); 
+            }
+        }
     });
 </script>
