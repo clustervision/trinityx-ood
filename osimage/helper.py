@@ -129,13 +129,11 @@ class Helper():
         This method will generate the data as for
         row format
         """
-        # self.logger.debug(f'Table => {table}')
-        # self.logger.debug(f'Data => {data}')
         fields, rows, colored_fields = [], [], []
         fields = filter_columns(table)
-        # self.logger.debug(f'Fields => {fields}')
         for field_key in fields:
             val_row = []
+            kernel_details = {"Kernel File:": "", "Image File:": "","Path:": "",}
             for ele in data:
                 if field_key in list((data[ele].keys())):
                     if isinstance(data[ele][field_key], list):
@@ -145,8 +143,6 @@ class Helper():
                                 new_list.append(internal)
                             else:
                                 for internal_val in internal:
-                                    # self.logger.debug(f'Key => {internal_val}')
-                                    # self.logger.debug(f'Value => {internal[internal_val]}')
                                     in_key = internal_val
                                     in_val = internal[internal_val]
                                     new_list.append(f'{in_key} = {in_val} ')
@@ -165,9 +161,19 @@ class Helper():
                         else:
                             val_row.append(data[ele][field_key])
                 else:
-                    val_row.append(self.format_value(None))
+                    if field_key == 'kerneldetails':
+                        if 'initrdfile' in data[ele]:
+                            kernel_details["Initrd File:"] = data[ele]['initrdfile']
+                        if 'kernelfile' in data[ele]:
+                            kernel_details["Kernel File:"] = data[ele]['kernelfile']
+                        if 'imagefile' in data[ele]:
+                            kernel_details["Image File:"] = data[ele]['imagefile']
+                        if 'path' in data[ele]:
+                            kernel_details["Path:"] = data[ele]['path']
+                        val_row.append(self.format_kernel(kernel_details))
+                    else:
+                        val_row.append(self.format_value(None))
             rows.append(val_row)
-            # self.logger.debug(f'Each Row => {val_row}')
             val_row = []
             colored_fields.append(field_key)
         fields = colored_fields
@@ -328,6 +334,19 @@ class Helper():
         elif value in [None, '', 'None']:
             value = '<span class="badge bg-label-dark me-1">None</span>'
         return value
+
+
+    def format_kernel(self, kernel_detail=None):
+        """
+        This method will format the Kernel Details.
+        """
+        response = ""
+        initrd_file = f'<span><b>Initrd File:</b>&nbsp;&nbsp;&nbsp; <span>{kernel_detail["Initrd File:"]}</span></span><br />'
+        kernel_file = f'<span><b>Kernel File:</b>&nbsp; <span>{kernel_detail["Kernel File:"]}</span></span><br />'
+        image_file  = f'<span><b>Image File:</b>&nbsp; <span>{kernel_detail["Image File:"]}</span></span><br />'
+        path        = f'<span><b>Path:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>&nbsp;&nbsp;&nbsp;&nbsp; <span>{kernel_detail["Path:"]}</span></span>'
+        response = f'{initrd_file} {kernel_file} {image_file} {path}'
+        return response
 
 
     def base64_encode(self, content=None):
