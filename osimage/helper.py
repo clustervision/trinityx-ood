@@ -162,6 +162,8 @@ class Helper():
                             val_row.append(data[ele][field_key])
                 else:
                     if field_key == 'kerneldetails':
+                        if 'initrdfile' in data[ele]:
+                            kernel_details["Initrd File:"] = data[ele]['initrdfile']
                         if 'kernelfile' in data[ele]:
                             kernel_details["Kernel File:"] = data[ele]['kernelfile']
                         if 'imagefile' in data[ele]:
@@ -339,10 +341,11 @@ class Helper():
         This method will format the Kernel Details.
         """
         response = ""
-        kernel_file = f'<span class="row"><span class="col-2 badge bg-label-primary">Kernel File:</span> <span class="col-10">{kernel_detail["Kernel File:"]}</span></span>'
-        image_file  = f'<span class="row"><span class="col-2 badge bg-secondary">Image File:</span> <span class="col-10">{kernel_detail["Image File:"]}</span></span>'
-        path        = f'<span class="row"><span class="col-2 badge bg-dark">Path:</span> <span class="col-10">{kernel_detail["Path:"]}</span></span>'
-        response = f'{kernel_file} {image_file} {path}'
+        initrd_file = f'<span class="row"><b class="col-2">Initrd File:</b> <span class="col-10">{kernel_detail["Initrd File:"]}</span></span>'
+        kernel_file = f'<span class="row"><b class="col-2">Kernel File:</b> <span class="col-10">{kernel_detail["Kernel File:"]}</span></span>'
+        image_file  = f'<span class="row"><b class="col-2">Image File:</b> <span class="col-10">{kernel_detail["Image File:"]}</span></span>'
+        path        = f'<span class="row"><b class="col-2">Path:</b> <span class="col-10">{kernel_detail["Path:"]}</span></span>'
+        response = f'{initrd_file} {kernel_file} {image_file} {path}'
         return response
 
 
