@@ -341,10 +341,10 @@ class Helper():
         This method will format the Kernel Details.
         """
         response = ""
-        initrd_file = f'<span class="row"><b class="col-2">Initrd File:</b> <span class="col-10">{kernel_detail["Initrd File:"]}</span></span>'
-        kernel_file = f'<span class="row"><b class="col-2">Kernel File:</b> <span class="col-10">{kernel_detail["Kernel File:"]}</span></span>'
-        image_file  = f'<span class="row"><b class="col-2">Image File:</b> <span class="col-10">{kernel_detail["Image File:"]}</span></span>'
-        path        = f'<span class="row"><b class="col-2">Path:</b> <span class="col-10">{kernel_detail["Path:"]}</span></span>'
+        initrd_file = f'<span><b>Initrd File:</b>&nbsp;&nbsp;&nbsp; <span>{kernel_detail["Initrd File:"]}</span></span><br />'
+        kernel_file = f'<span><b>Kernel File:</b>&nbsp; <span>{kernel_detail["Kernel File:"]}</span></span><br />'
+        image_file  = f'<span><b>Image File:</b>&nbsp; <span>{kernel_detail["Image File:"]}</span></span><br />'
+        path        = f'<span><b>Path:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>&nbsp;&nbsp;&nbsp;&nbsp; <span>{kernel_detail["Path:"]}</span></span>'
         response = f'{initrd_file} {kernel_file} {image_file} {path}'
         return response
 
