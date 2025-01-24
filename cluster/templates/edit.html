@@ -56,7 +56,12 @@
             
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">create node on demand</label>
-              <div class="col-sm-10"><input type="checkbox" name="createnode_ondemand" class="form-check-input" id="id_createnode_ondemand"  {% if data.createnode_ondemand == True or data.createnode_ondemand == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10"><input type="checkbox" name="createnode_ondemand" class="form-check-input" id="id_createnode_ondemand"  {% if data.createnode_ondemand in [True, "True"] %}checked value="True" {% else %} value="False"{% endif %} /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">create node on macashost</label>
+              <div class="col-sm-10"><input type="checkbox" name="createnode_macashost" class="form-check-input" id="id_createnode_macashost"  {% if data.createnode_macashost in [True, "True"] %}checked value="True" {% else %} value="False"{% endif %} /></div>
             </div>
 
             <div class="row mb-3">
