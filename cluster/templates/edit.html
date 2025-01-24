@@ -56,22 +56,22 @@
             
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">create node on demand</label>
-              <div class="col-sm-10"><input type="checkbox" name="createnode_ondemand" class="form-check-input" id="id_createnode_ondemand"  {% if data.createnode_ondemand in [True, "True"] %}checked value="True" {% else %} value="False"{% endif %} /></div>
+              <div class="col-sm-10"><input type="checkbox" name="createnode_ondemand" class="form-check-input" id="id_createnode_ondemand"  {% if data.createnode_ondemand in [True, "True"] %}checked{% endif %} /></div>
             </div>
 
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">create node on macashost</label>
-              <div class="col-sm-10"><input type="checkbox" name="createnode_macashost" class="form-check-input" id="id_createnode_macashost"  {% if data.createnode_macashost in [True, "True"] %}checked value="True" {% else %} value="False"{% endif %} /></div>
+              <div class="col-sm-10"><input type="checkbox" name="createnode_macashost" class="form-check-input" id="id_createnode_macashost"  {% if data.createnode_macashost in [True, "True"] %}checked{% endif %} /></div>
             </div>
 
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">Nextnode discover</label>
-              <div class="col-sm-10"><input type="checkbox" name="nextnode_discover" class="form-check-input" id="id_nextnode_discover"  {% if data.nextnode_discover == True or data.nextnode_discover == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10"><input type="checkbox" name="nextnode_discover" class="form-check-input" id="id_nextnode_discover"  {% if data.nextnode_discover in [True, "True"] %}checked{% endif %} /></div>
             </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">security</label>
-              <div class="col-sm-10"><input type="checkbox" name="security" class="form-check-input" id="id_security" {% if data.security == True or data.security == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10"><input type="checkbox" name="security" class="form-check-input" id="id_security" {% if data.security in [True, "True"] %}checked{% endif %} /></div>
             </div>
           
             <div class="row mb-3">
@@ -81,7 +81,7 @@
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">debug</label>
-              <div class="col-sm-10"><input type="checkbox" name="debug" class="form-check-input" id="id_debug" {% if data.debug == True or data.debug == 'True' %}checked{% endif %} /></div>
+              <div class="col-sm-10"><input type="checkbox" name="debug" class="form-check-input" id="id_debug" {% if data.debug in [True, "True"] %}checked{% endif %} /></div>
             </div>
           
             <div class="row mb-3">
