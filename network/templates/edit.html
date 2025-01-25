@@ -84,10 +84,15 @@
                 <label class="col-sm-2 col-form-label">zone</label>
                 <div class="col-sm-10"><input type="text" name="zone" class="form-control" maxlength="100" id="id_zone"value="{{ data.zone }}" /></div>
               </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">dhcp nodes in pool</label>
+                <div class="col-sm-10"><input type="checkbox" name="dhcp_nodes_in_pool" class="form-check-input" id="id_dhcp_nodes_in_pool" {% if data.dhcp_nodes_in_pool == True %}checked{% endif %} /></div>
+              </div>
             
               <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">comment</label>
-                <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" id="id_comment">{{ data.comment }}</textarea></div>
+                <div class="col-sm-10"><textarea name="comment" cols="5" rows="3" class="form-control" id="id_comment" >{{ data.comment }}</textarea></div>
               </div>
               
               <div class="row justify-content-end">

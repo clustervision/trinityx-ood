@@ -108,6 +108,7 @@ def add():
     network_list = Model().get_list_options('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload["dhcp_nodes_in_pool"] = True if 'dhcp_nodes_in_pool' in payload else False
         table_data = Rest().get_data(TABLE, payload['name'])
         if table_data:
             if payload['name'] in table_data['config'][TABLE]:
@@ -173,6 +174,7 @@ def edit(record=None):
         data = Helper().prepare_json(data)
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
+        payload["dhcp_nodes_in_pool"] = True if 'dhcp_nodes_in_pool' in payload else False
         payload = Helper().prepare_payload(None, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)

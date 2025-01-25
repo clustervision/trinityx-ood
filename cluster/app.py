@@ -117,6 +117,11 @@ def edit():
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
+        payload["createnode_ondemand"] = True if 'createnode_ondemand' in payload else False
+        payload["createnode_macashost"] = True if 'createnode_macashost' in payload else False
+        payload["nextnode_discover"] = True if 'nextnode_discover' in payload else False
+        payload["security"] = True if 'security' in payload else False
+        payload["debug"] = True if 'debug' in payload else False
         cluster_name = payload['name']
         del payload['name']
         response = Helper().update_record(TABLE, payload)
