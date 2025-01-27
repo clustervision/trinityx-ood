@@ -52,9 +52,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid'],
-        'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network', 'options'],
-        'nodesecrets': ['Node', 'name', 'path', 'content']
+        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid', 'interfaces']
     }
     response = list(static[table])
     return response
