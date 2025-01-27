@@ -52,9 +52,7 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid'],
-        'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network', 'options'],
-        'nodesecrets': ['Node', 'name', 'path', 'content']
+        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid', 'interfaces']
     }
     response = list(static[table])
     return response
@@ -70,9 +68,11 @@ def sortby(table=None):
         'node': [
             'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
             'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
-            'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles', 'scripts',
-            'prescript', 'partscript', 'postscript','provision_interface', 'provision_method',
-            'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',  'macaddress'
+            'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles',
+            'scripts_source', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
+            'partscript', 'postscript_source', 'postscript', 'provision_interface',
+            'provision_method', 'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256',
+            'comment',  'macaddress'
         ],
         'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network'],
         'nodesecrets': ['Node', 'name', 'path', 'content']

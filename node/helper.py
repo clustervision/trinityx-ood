@@ -28,17 +28,12 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
-from time import time
 import base64
 import binascii
-import subprocess
-from random import randint
-from os import getpid
 from copy import deepcopy
 from flask import url_for
 import hostlist
-from nested_lookup import nested_lookup, nested_update, nested_delete, nested_alter
+from nested_lookup import nested_lookup, nested_update, nested_alter
 from rest import Rest
 from log import Log
 from constant import filter_columns, EDITOR_KEYS, sortby
@@ -56,7 +51,7 @@ class Helper():
         self.logger = Log.get_logger()
 
 
-    def filter_interfaces(self, request=None, table=None, payload=None, remove_ip=False):
+    def filter_interfaces(self, request=None, table=None, payload=None):
         """
         This method
         """
@@ -65,15 +60,16 @@ class Helper():
         macaddress = request.form.getlist('macaddress')
         network = request.form.getlist('network')
         options = request.form.getlist('options')
+        vlanid = request.form.getlist('vlanid')
+        dhcp = request.form.getlist('dhcp')
         interface_list = []
         if table == 'node':
-            zip_interface = zip(interface, ipaddress, macaddress, network, options)
-            for interface, ipaddress, macaddress, network, options in zip_interface:
+            zip_interface = zip(interface, ipaddress, macaddress, network, options, vlanid, dhcp)
+            for interface, ipaddress, macaddress, network, options, vlanid, dhcp in zip_interface:
                 tmp_interface = {}
                 if interface:
                     tmp_interface['interface'] = interface
                 if ipaddress:
-                    # if remove_ip is False:
                     tmp_interface['ipaddress'] = ipaddress
                 if macaddress:
                     tmp_interface['macaddress'] = macaddress
@@ -81,6 +77,10 @@ class Helper():
                     tmp_interface['network'] = network
                 if options:
                     tmp_interface['options'] = options
+                if vlanid and len(vlanid) > 0 and vlanid.strip():
+                    tmp_interface['vlanid'] = vlanid
+                if dhcp:
+                    tmp_interface['dhcp'] = True if dhcp.lower() == 'true' else False
                 if tmp_interface:
                     interface_list.append(tmp_interface)
         elif table =='group':
@@ -104,6 +104,10 @@ class Helper():
             del payload['network']
         if 'options' in payload:
             del payload['options']
+        if 'vlanid' in payload:
+            del payload['vlanid']
+        if 'dhcp' in payload:
+            del payload['dhcp']
         payload['interfaces'] = interface_list
         return payload
 
@@ -192,30 +196,70 @@ class Helper():
         fields, rows, colored_fields = [], [], []
         fields = filter_columns(table)
         # self.logger.debug(f'Fields => {fields}')
+        macaddress_row, ipaddress_row = [], []
+
+        datacopy=data.copy()
+        for ele in datacopy.keys():
+            if '_override' in datacopy[ele]:
+                if datacopy[ele]['_override'] and 'name' in datacopy[ele]:
+                    data[ele]['name'] = f"{data[ele]['name']} *"
+                del data[ele]['_override']
+                if '_override' in fields:
+                    fields.remove('_override')
+
         for field_key in fields:
             val_row = []
             for ele in data:
                 if field_key in list((data[ele].keys())):
                     if isinstance(data[ele][field_key], list):
                         new_list = []
-                        for internal in data[ele][field_key]:
-                            if isinstance(internal, str):
-                                new_list.append(internal)
-                            else:
-                                for internal_val in internal:
-                                    # self.logger.debug(f'Key => {internal_val}')
-                                    # self.logger.debug(f'Value => {internal[internal_val]}')
-                                    in_key = internal_val
-                                    in_val = internal[internal_val]
-                                    new_list.append(f'{in_key} = {in_val} ')
-                        new_list = '\n'.join(new_list)
-                        val_row.append(new_list)
-                        new_list = []
+                        if field_key == 'interfaces':
+                            internal_macaddress = []
+                            internal_ipaddress = []
+                            for internal in data[ele][field_key]:
+                                internal_interface, interface_details = None, ''
+                                if 'interface' in internal:
+                                    internal_interface = internal['interface']
+                                if 'macaddress' in internal:
+                                    mac_address = self.format_value(internal['macaddress']) if internal['macaddress'] in [None, '', 'None'] else internal['macaddress']
+                                    internal_macaddress.append(f"{internal_interface} = {mac_address}")
+                                if internal_interface:
+                                    for internal_val in ['ipaddress','ipaddress_ipv6']:
+                                        if internal_val in internal and internal[internal_val]:
+                                            in_key = internal_val
+                                            in_val = internal[internal_val]
+                                            interface_details += in_val + ' '
+                                    if 'dhcp' in internal and internal['dhcp']:
+                                        interface_details += ' [DHCP] '
+
+                                    ip_address = self.format_value(interface_details) if interface_details in [None, '', 'None'] else interface_details
+                                    internal_ipaddress.append(f'{internal_interface} = {ip_address} ')
+
+                            internal_macaddress = '\n'.join(internal_macaddress)
+                            internal_ipaddress = '\n'.join(internal_ipaddress)
+                            macaddress_row.append(internal_macaddress)
+                            ipaddress_row.append(internal_ipaddress)
+                        else:
+                            for internal in data[ele][field_key]:
+                                if isinstance(internal, str):
+                                    new_list.append(internal)
+                                else:
+                                    for internal_val in internal:
+                                        # self.logger.debug(f'Key => {internal_val}')
+                                        # self.logger.debug(f'Value => {internal[internal_val]}')
+                                        in_key = internal_val
+                                        in_val = internal[internal_val]
+                                        new_list.append(f'{in_key} = {in_val} ')
+                            new_list = '\n'.join(new_list)
+                            val_row.append(new_list)
+                            new_list = []
                     elif field_key == 'tpm_uuid':
                         if data[ele][field_key]:
-                            val_row.append(True)
+                            val_row.append(self.format_value(True))
+                            # val_row.append(True)
                         else:
-                            val_row.append(False)
+                            val_row.append(self.format_value(False))
+                            # val_row.append(False)
                     else:
                         if data[ele][field_key] in [True, False, None, '', 'None']:
                             value = self.format_value(data[ele][field_key])
@@ -228,6 +272,14 @@ class Helper():
             # self.logger.debug(f'Each Row => {val_row}')
             val_row = []
             colored_fields.append(field_key)
+        rows.append(macaddress_row)
+        rows.append(ipaddress_row)
+        colored_fields.append('MAC addresses')
+        colored_fields.append('IP addresses')
+        # removing the column for interfaces. it's empty at this stage anyways
+        index_for_interfaces = colored_fields.index('interfaces')
+        del colored_fields[index_for_interfaces]
+        del rows[index_for_interfaces]
         fields = colored_fields
         final_rows = []
         for array in range(len(rows[0])):
@@ -281,6 +333,9 @@ class Helper():
         ## Here we have two strategy to show action items. One with buttons and one with icons.
         ## I choose icons here with tooltips. If in future buttons are required instead of icons
         ## than set the value of items to button
+        if '*' in name:
+            name = name.replace(" ", "")
+            name = name.replace("*", "")
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "
@@ -351,9 +406,9 @@ class Helper():
         """
         This method will format true, false, and none in html format.
         """
-        if value is True:
+        if value in [True, 'True', 'true']:
             value = '<span class="badge bg-label-success me-1">True</span>'
-        elif value is False:
+        elif value in [False, 'False', 'false']:
             value = '<span class="badge bg-label-warning me-1">False</span>'
         # elif value is None or value == '' or 'None' in value:
         elif value in [None, '', 'None']:
@@ -563,7 +618,7 @@ class Helper():
         """
         response = deepcopy(data)
         for key, value in data.items():
-            if '_source' in key:
+            if '_source' in key and 'script' not in key:
                 raw_name = key.replace('_source', '')
                 if isinstance(data[raw_name], str):
                     default_value = data[raw_name].rstrip()

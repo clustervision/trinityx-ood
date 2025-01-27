@@ -127,6 +127,10 @@ def add():
     network_list = Model().get_list_option_html('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload["service"] = True if 'service' in payload else False
+        payload["setupbmc"] = True if 'setupbmc' in payload else False
+        payload["netboot"] = True if 'netboot' in payload else False
+        payload["bootmenu"] = True if 'bootmenu' in payload else False
         table_data = Rest().get_data(TABLE, payload['name'])
         if table_data:
             if payload['name'] in table_data['config'][TABLE]:
@@ -138,7 +142,7 @@ def add():
             if v == 'on':
                 payload[k] = True
         if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, TABLE, payload, False)
+            payload = Helper().filter_interfaces(request, TABLE, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
@@ -236,20 +240,25 @@ def edit(record=None):
             <div class="input-group">
                 <span class="input-group-text">Interface</span>
                 <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text btn btn-sm btn-success" id="raw_network">Ip address</span>
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
                 <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
-                <span class="input-group-text">Network</span>
-                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text">Options</span>
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+                <span class="input-group-text">VLAN ID</span>
+                <input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <span class="input-group-text">DHCP&nbsp;
+                    <input type="checkbox" class="form-check-input" id="id_dhcp" $dhcp_checked onclick="toggleDHCP(this)" />
+                    <input type="hidden" name="dhcp" value="$dhcp" />
+                </span>
                 $button
               </div><br />""")
         interface_html = ""
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
-            num = 0
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 ipaddress = interface_dict['ipaddress'] if 'ipaddress' in interface_dict else ""
@@ -257,16 +266,17 @@ def edit(record=None):
                 macaddress = "" if macaddress is None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, button=remove_button)
+                vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
+                dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
+                dhcp_checked = "checked" if dhcp is True else ""
+                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, vlanid=vlanid, dhcp_checked=dhcp_checked, dhcp=dhcp, button=remove_button)
         else:
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
+        payload["service"] = True if 'service' in payload else False
 
         if '(group)' in payload['osimage']:
             payload['osimage'] = ''
@@ -281,7 +291,7 @@ def edit(record=None):
                 payload['bmcsetup'] = payload['bmcsetup'].split('(', 1)[0]
 
         if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, TABLE, payload, False)
+            payload = Helper().filter_interfaces(request, TABLE, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
@@ -366,15 +376,20 @@ def clone(record=None):
             <div class="input-group">
                 <span class="input-group-text">Interface</span>
                 <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text btn btn-sm btn-success" id="raw_network" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Next Available IP Address </span>">Ip address</span>
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
                 <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="" />
-                <span class="input-group-text">Network</span>
-                <span class="input-group-text">Network</span>
-                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text">Options</span>
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+                <span class="input-group-text">VLAN ID</span>
+                <input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <span class="input-group-text">DHCP&nbsp;
+                    <input type="checkbox" class="form-check-input" id="id_dhcp" $dhcp_checked onclick="toggleDHCP(this)" />
+                    <input type="hidden" name="dhcp" value="$dhcp" />
+                </span>
                 $button
               </div><br />""")
         interface_html = ""
@@ -387,16 +402,17 @@ def clone(record=None):
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
                 ipaddress = nextip_network(interface_dict['network']) if 'ipaddress' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, network=network, options=options, button=remove_button)
+                vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
+                dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
+                dhcp_checked = "checked" if dhcp is True else ""
+                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, network=network, options=options, vlanid=vlanid, dhcp_checked=dhcp_checked, dhcp=dhcp, button=remove_button)
         else:
             interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+        payload["service"] = True if 'service' in payload else False
         payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
 
         if '(group)' in payload['osimage']:
             payload['osimage'] = ''
@@ -411,7 +427,7 @@ def clone(record=None):
                 payload['bmcsetup'] = payload['bmcsetup'].split('(', 1)[0]
 
         if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, TABLE, payload, True)
+            payload = Helper().filter_interfaces(request, TABLE, payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_clone(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
