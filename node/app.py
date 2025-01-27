@@ -240,12 +240,12 @@ def edit(record=None):
             <div class="input-group">
                 <span class="input-group-text">Interface</span>
                 <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text btn btn-sm btn-success" id="raw_network">Ip address</span>
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
                 <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
-                <span class="input-group-text">Network</span>
-                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text">Options</span>
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 <span class="input-group-text">VLAN ID</span>
@@ -376,13 +376,12 @@ def clone(record=None):
             <div class="input-group">
                 <span class="input-group-text">Interface</span>
                 <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text btn btn-sm btn-success" id="raw_network" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Next Available IP Address </span>">Ip address</span>
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
                 <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="" />
-                <span class="input-group-text">Network</span>
-                <span class="input-group-text">Network</span>
-                <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text">Options</span>
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 <span class="input-group-text">VLAN ID</span>
