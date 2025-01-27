@@ -202,6 +202,16 @@ class Helper():
         fields = filter_columns(table)
         # self.logger.debug(f'Fields => {fields}')
         macaddress_row, ipaddress_row = [], []
+
+        datacopy=data.copy()
+        for ele in datacopy.keys():
+            if '_override' in datacopy[ele]:
+                if datacopy[ele]['_override'] and 'name' in datacopy[ele]:
+                    data[ele]['name'] = f"{data[ele]['name']} *"
+                del data[ele]['_override']
+                if '_override' in fields:
+                    fields.remove('_override')
+
         for field_key in fields:
             val_row = []
             for ele in data:
@@ -328,6 +338,9 @@ class Helper():
         ## Here we have two strategy to show action items. One with buttons and one with icons.
         ## I choose icons here with tooltips. If in future buttons are required instead of icons
         ## than set the value of items to button
+        if '*' in name:
+            name = name.replace(" ", "")
+            name = name.replace("*", "")
         item_type = 'icon'
         if item_type == 'button':
             button = "btn btn-sm "

@@ -30,6 +30,7 @@ __status__      = "Development"
 
 import json
 from prettytable import PrettyTable
+from bs4 import BeautifulSoup
 from log import Log
 
 
@@ -56,10 +57,22 @@ class Presenter():
         return pretty
 
 
+    def add_class_to_tr_if_second_td_contains_star(self, html_table):
+        """
+        This method will find the * and apply a color on the tr.
+        """
+        soup = BeautifulSoup(html_table, 'html.parser')
+        for tr in soup.find_all('tr'):
+            tds = tr.find_all('td')
+            if len(tds) > 1 and '*' in tds[1].get_text():
+                tr['class'] = tr.get('class', []) + ['table-success']
+        return str(soup)
+
+
     def show_table(self, fields=None, rows=None, dark=None):
         """
         This method will fetch a records from
-        the Luna 2 Daemon Database
+        the Luna 2 Daemon Database class="table-success"
         """
         table_class = 'datatable table table-bordered table-hover table-striped'
         if dark:
@@ -70,9 +83,11 @@ class Presenter():
         self.table.field_names = fields
         if '\\n' in str(rows):
             self.table.align = "l"
-        self.table.add_rows(rows)
+        for row in rows:
+            self.table.add_row(row)
         response = self.table.get_html_string(attributes={"id":"datatable", "class":table_class})
-        return response
+        modified_html = self.add_class_to_tr_if_second_td_contains_star(response)
+        return modified_html
 
 
     def show_table_col(self, field=None, rows=None):
