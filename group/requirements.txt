@@ -8,3 +8,4 @@ python_hostlist==1.23.0
 requests==2.29.0
 setuptools==51.0.0
 urllib3==1.26.16
+beautifulsoup4==4.12.3
