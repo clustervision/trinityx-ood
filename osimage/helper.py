@@ -129,7 +129,7 @@ class Helper():
         This method will generate the data as for
         row format
         """
-        fields, rows, colored_fields = [], [], []
+        fields, rows, colored_fields, kernel_path = [], [], [], []
         fields = filter_columns(table)
         for field_key in fields:
             val_row = []
@@ -169,6 +169,7 @@ class Helper():
                         if 'imagefile' in data[ele]:
                             kernel_details["Image File:"] = data[ele]['imagefile']
                         if 'path' in data[ele]:
+                            kernel_path.append(data[ele]['path'])
                             kernel_details["Path:"] = data[ele]['path']
                         val_row.append(self.format_kernel(kernel_details))
                     else:
@@ -184,13 +185,14 @@ class Helper():
                 tmp.append(element[array])
             final_rows.append(tmp)
         rows = final_rows
-        for row in rows:
-            chroot_url = f"{chroot_url}/image={row[0]},path={row[4]},kernel_version={row[1]}"
-            self.logger.info(f'name => {row[0]}')
-            self.logger.info(f'path => {row[4]}')
-            self.logger.info(f'vers => {row[1]}')
-            action = self.action_items(table, row[0], chroot_url)
-            row.insert(len(row), action)
+        if rows and kernel_path:
+            for row, path in zip(rows, kernel_path):
+                chroot_url = f"{chroot_url}/image={row[0]},path={path},kernel_version={row[1]}"
+                self.logger.info(f'name => {row[0]}')
+                self.logger.info(f'path => {path}')
+                self.logger.info(f'vers => {row[1]}')
+                action = self.action_items(table, row[0], chroot_url)
+                row.insert(len(row), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
         fields.insert(len(fields),"Actions")
