@@ -69,8 +69,9 @@ def sortby(table=None):
     static = {
         'group': [
             'name', 'domain', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces', 'setupbmc',
-            'bmcsetupname', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'roles', 'scripts',
-            'prescript', 'partscript', 'postscript', 'provision_interface', 'provision_method',
+            'bmcsetupname', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'roles', 'scripts_source',
+            'scripts', 'prescript_source', 'prescript', 'partscript_source', 'partscript',
+            'postscript_source', 'postscript', 'provision_interface', 'provision_method',
             'provision_fallback', 'comment'
         ],
         'groupinterface': ['interfacename', 'network'],

@@ -30,6 +30,7 @@ __status__      = "Development"
 
 import json
 from prettytable import PrettyTable
+from bs4 import BeautifulSoup
 from log import Log
 
 
@@ -56,6 +57,40 @@ class Presenter():
         return pretty
 
 
+    def add_class_to_tr_if_second_td_contains_star(self, html_table):
+        """
+        This method will find the * and apply a color on the tr.
+        """
+        soup = BeautifulSoup(html_table, 'html.parser')
+        for tr in soup.find_all('tr'):
+            tds = tr.find_all('td')
+            if len(tds) > 1 and '*' in tds[1].get_text():
+                tr['class'] = tr.get('class', []) + ['table-success']
+        return str(soup)
+
+
+    def add_class_to_tr_if_script_is_not_default(self, html_table):
+        """
+        This method applies a color on the <tr> if specific conditions are met.
+        """
+        soup = BeautifulSoup(html_table, 'html.parser')
+        rows = soup.find_all('tr')
+        for i, tr in enumerate(rows):
+            tds = tr.find_all('td')
+            if len(tds) > 1:
+                key = tds[0].get_text().strip()
+                value = tds[1].get_text().strip()
+                if '_source' in key and value == 'group':
+                    tr['class'] = tr.get('class', []) + ['table-success']
+                    for related_key in ["partscript_source", "postscript_source", "prescript_source"]:
+                        if related_key == key:
+                            tr['class'] = tr.get('class', []) + ['table-success']
+                            if i + 1 < len(rows):
+                                next_row = rows[i + 1]
+                                next_row['class'] = next_row.get('class', []) + ['table-success']
+        return str(soup)
+
+
     def show_table(self, fields=None, rows=None, dark=None):
         """
         This method will fetch a records from
@@ -72,23 +107,29 @@ class Presenter():
             self.table.align = "l"
         self.table.add_rows(rows)
         response = self.table.get_html_string(attributes={"id":"datatable", "class":table_class})
-        return response
+        modified_html = self.add_class_to_tr_if_second_td_contains_star(response)
+        return modified_html
 
 
     def show_table_col(self, field=None, rows=None):
         """
-        This method will fetch a records from
-        the Luna 2 Daemon Database
+        This method will fetch a records from the Luna 2 Daemon Database
         """
         self.logger.debug(f'Fields => {field}')
         self.logger.debug(f'Rows => {rows}')
         self.table.format = True
-        self.table.add_column("Field", field)
-        self.table.add_column("Values", rows)
-        self.table.header = False
+        self.table.field_names = ['Key', 'Value']
+        override = False
+        for key, value in zip(field, rows):
+                if key != '_override':
+                    self.table.add_row([key, value])
+                if key == '_override' and value is True:
+                    override = True
         self.table.align = "l"
         attribute = {}
         attribute['id'] = "my_table"
         attribute['class'] = "table table-bordered table-hover table-striped"
         response = self.table.get_html_string(attributes=attribute)
+        if override is True:
+            response = self.add_class_to_tr_if_script_is_not_default(response)
         return response

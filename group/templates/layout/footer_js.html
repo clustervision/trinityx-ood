@@ -29,6 +29,16 @@
 <script src="{{ url_for('static', filename='js/jquery-3.6.0.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
 
+
+<script>
+    function toggleDHCP(checkbox) {
+        const textInput = checkbox.nextElementSibling;
+        if (textInput && textInput.type === "hidden") {
+            textInput.value = checkbox.checked ? "true" : "false";
+        }
+    }
+</script>
+
 <script>
     $(function() {
         var $form = $('#formAuthentication');
@@ -213,7 +223,7 @@
         return network;
     }
 
-    group_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />'+get_list("network", null)+'<span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
+    group_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />'+get_list("network", null)+'<span class="input-group-text">VLAN ID</span><input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" /><span class="input-group-text">DHCP&nbsp;<input type="checkbox" class="form-check-input" id="id_dhcp" onclick="toggleDHCP(this)"><input type="hidden" name="dhcp" value="false" /></span><span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
     $("#add_nodeinterface").click(function () {
         $("#nodeinterface").append(group_interface);    
      });

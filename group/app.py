@@ -131,9 +131,6 @@ def add():
                 flash(error, "error")
                 return redirect(url_for('add'), code=302)
         payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
@@ -206,12 +203,18 @@ def edit(record=None):
 
         raw_html = Template("""
             <div class="input-group">
-                  <span class="input-group-text">Interface</span>
-                  <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
-                  <span class="input-group-text">Network</span>
-                  <select name="network" class="form-control" id="id_network">$network</select>
-                  <span class="input-group-text">Options</span>
-                  <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+                <span class="input-group-text">Interface</span>
+                <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
+                <span class="input-group-text">VLAN ID</span>
+                <input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <span class="input-group-text">DHCP&nbsp;
+                    <input type="checkbox" class="form-check-input" id="id_dhcp" $dhcp_checked onclick="toggleDHCP(this)" />
+                    <input type="hidden" name="dhcp" value="$dhcp" />
+                </span>
+                <span class="input-group-text">Options</span>
+                <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 $button
               </div><br />""")
         interface_html = ""
@@ -221,14 +224,14 @@ def edit(record=None):
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
+                vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
+                dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
+                dhcp_checked = "checked" if dhcp is True else ""
+                interface_html += raw_html.safe_substitute(interface=interface, network=network, vlanid=vlanid, dhcp_checked=dhcp_checked, dhcp=dhcp, options=options, button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
             
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
@@ -265,6 +268,7 @@ def delete(record=None):
     else:
         flash('ERROR :: Something went wrong!', "error")
     return redirect(url_for('home'), code=302)
+
 
 @app.route('/remove/<string:record>/<string:interface>', methods=['GET'])
 def remove(record=None, interface=None):
@@ -307,12 +311,18 @@ def clone(record=None):
 
         raw_html = Template("""
             <div class="input-group">
-                  <span class="input-group-text">Interface</span>
-                  <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
-                  <span class="input-group-text">Network</span>
-                  <select name="network" class="form-control" id="id_network">$network</select>
-                  <span class="input-group-text">Options</span>
-                  <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+                <span class="input-group-text">Interface</span>
+                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <span class="input-group-text">Network</span>
+                <select name="network" class="form-control" id="id_network">$network</select>
+                <span class="input-group-text">VLAN ID</span>
+                <input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <span class="input-group-text">DHCP&nbsp;
+                    <input type="checkbox" class="form-check-input" id="id_dhcp" $dhcp_checked onclick="toggleDHCP(this)" />
+                    <input type="hidden" name="dhcp" value="$dhcp" />
+                </span>
+                <span class="input-group-text">Options</span>
+                <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 $button
               </div><br />""")
         interface_html = ""
@@ -322,14 +332,14 @@ def clone(record=None):
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
-                interface_html += raw_html.safe_substitute(interface=interface, network=network, options=options, button=remove_button)
+                vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
+                dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
+                dhcp_checked = "checked" if dhcp is True else ""
+                interface_html += raw_html.safe_substitute(interface=interface, network=network, vlanid=vlanid, dhcp_checked=dhcp_checked, dhcp=dhcp, options=options, button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(None, payload)
-        for k, v in payload.items():
-            if v == 'on':
-                payload[k] = True
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
