@@ -69,6 +69,24 @@ class Presenter():
         return str(soup)
 
 
+    def add_class_to_tr_if_script_is_not_default(self, html_table):
+        """
+        This method will find the * and apply a color on the tr.
+        """
+        soup = BeautifulSoup(html_table, 'html.parser')
+        for i, tr in enumerate(rows):
+        tds = tr.find_all('td')
+        if len(tds) > 1:
+            key = tds[0].get_text().strip()
+            value = tds[1].get_text().strip()
+
+            # Check if key has '_source' and value is 'node'
+            if '_source' in key and value == 'node':
+                tr['class'] = tr.get('class', []) + ['table-success']
+                tr['class'] = tr.get('class', []) + ['table-success']
+        return str(soup)
+
+
     def show_table(self, fields=None, rows=None, dark=None):
         """
         This method will fetch a records from
@@ -98,12 +116,23 @@ class Presenter():
         self.logger.debug(f'Fields => {field}')
         self.logger.debug(f'Rows => {rows}')
         self.table.format = True
-        self.table.add_column("Field", field)
-        self.table.add_column("Values", rows)
-        self.table.header = False
+        for key, value in zip(field, rows):
+            # if "script" in key:
+                # self.table.add_row([key, value])
+                # if key in ["partscript_source", "postscript_source", "prescript_source"] and value == "node":
+
+                # else:
+                #     self.table.add_row([key, value], divider=True)
+                # self.table.add_row(["", ""])
+            # else:
+                if key != '_override':
+                    self.table.add_row([key, value])
         self.table.align = "l"
         attribute = {}
         attribute['id'] = "my_table"
         attribute['class'] = "table table-bordered table-hover table-striped"
+        # response = self.table.get_html_string(attributes=attribute)
+        # return response
         response = self.table.get_html_string(attributes=attribute)
-        return response
+        modified_html = self.add_class_to_tr_if_script_is_not_default(response)
+        return modified_html

@@ -69,7 +69,8 @@ def sortby(table=None):
             'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
             'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
             'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles', 'scripts',
-            'prescript', 'partscript', 'postscript','provision_interface', 'provision_method',
+            'scripts_source', 'prescript', 'prescript_source', 'partscript', 'partscript_source',
+            'postscript', 'postscript_source','provision_interface', 'provision_method',
             'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',  'macaddress'
         ],
         'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network'],

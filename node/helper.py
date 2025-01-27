@@ -567,7 +567,7 @@ class Helper():
         self.logger.debug(f'Table => {table} and Data => {data}')
         defined_keys = sortby(table)
         self.logger.debug(f'Fields => {defined_keys}')
-        data = self.merge_source(data)
+        # data = self.merge_source(data)
         for new_key in list(data.keys()):
             if new_key not in defined_keys:
                 defined_keys.append(new_key)
@@ -623,7 +623,7 @@ class Helper():
         """
         response = deepcopy(data)
         for key, value in data.items():
-            if '_source' in key:
+            if '_source' in key and 'script' not in key:
                 raw_name = key.replace('_source', '')
                 if isinstance(data[raw_name], str):
                     default_value = data[raw_name].rstrip()
