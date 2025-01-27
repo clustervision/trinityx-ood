@@ -28,17 +28,12 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
-from time import time
 import base64
 import binascii
-import subprocess
-from random import randint
-from os import getpid
 from copy import deepcopy
 from flask import url_for
 import hostlist
-from nested_lookup import nested_lookup, nested_update, nested_delete, nested_alter
+from nested_lookup import nested_lookup, nested_update, nested_alter
 from rest import Rest
 from log import Log
 from constant import filter_columns, EDITOR_KEYS, sortby
@@ -567,7 +562,7 @@ class Helper():
         self.logger.debug(f'Table => {table} and Data => {data}')
         defined_keys = sortby(table)
         self.logger.debug(f'Fields => {defined_keys}')
-        # data = self.merge_source(data)
+        data = self.merge_source(data)
         for new_key in list(data.keys()):
             if new_key not in defined_keys:
                 defined_keys.append(new_key)

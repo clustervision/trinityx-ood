@@ -68,10 +68,11 @@ def sortby(table=None):
         'node': [
             'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
             'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
-            'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles', 'scripts',
-            'scripts_source', 'prescript', 'prescript_source', 'partscript', 'partscript_source',
-            'postscript', 'postscript_source','provision_interface', 'provision_method',
-            'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',  'macaddress'
+            'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles',
+            'scripts_source', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
+            'partscript', 'postscript_source', 'postscript', 'provision_interface',
+            'provision_method', 'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256',
+            'comment',  'macaddress'
         ],
         'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network'],
         'nodesecrets': ['Node', 'name', 'path', 'content']
