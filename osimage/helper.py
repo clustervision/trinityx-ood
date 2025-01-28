@@ -187,11 +187,12 @@ class Helper():
         rows = final_rows
         if rows and kernel_path:
             for row, path in zip(rows, kernel_path):
-                chroot_url = f"{chroot_url}/image={row[0]},path={path},kernel_version={row[1]}"
+                full_url = f"{chroot_url}/image={row[0]},path={path},kernel_version={row[1]}"
                 self.logger.info(f'name => {row[0]}')
                 self.logger.info(f'path => {path}')
                 self.logger.info(f'vers => {row[1]}')
-                action = self.action_items(table, row[0], chroot_url)
+                action = self.action_items(table, row[0], full_url)
+                full_url = ""
                 row.insert(len(row), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
