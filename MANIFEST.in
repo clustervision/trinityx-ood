@@ -286,15 +286,12 @@ include rack/templates/layout/*
 recursive-include rack *
 
 
-include alert_configurator
-include alert_configurator/*
-include alert_configurator/nhc
-include alert_configurator/nhc/*
-include alert_configurator/nhc/assets
-include alert_configurator/nhc/assets/*
-
-
-
+include alertx
+include alertx/*
+include alertx/app
+include alertx/app/*
+include alertx/app/assets
+include alertx/app/assets/*
 
 
 
