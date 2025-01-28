@@ -6,7 +6,7 @@
         <img :src="`${$props.url}/assets/logo.png`" class="img-logo" />
       </a>
       <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
-      <li class="breadcrumb-item"><a class="align-middle" :href="`${$props.url}`">Alert Configurator</a></li>
+      <li class="breadcrumb-item"><a class="align-middle" :href="`${$props.url}`">AlertX</a></li>
     </ol>
   </nav>
 </template>

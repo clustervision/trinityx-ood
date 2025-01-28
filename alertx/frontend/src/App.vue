@@ -15,7 +15,7 @@ import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
-const rulesFile = ref(window.TRIX_CONFIG);
+const rulesFile = ref(window.TRIX_CONFIG || "/trinity/local/etc/prometheus_server/rules/trix.rules");
 
 onMounted(() => {
 });
@@ -92,12 +92,9 @@ onMounted(() => {
         <div class="col-xl-12">
         <div class="nav-align-top mb-6">
           <ul class="nav nav-pills mb-4 nav-fill tab-bar" role="tablist">
-            <li class="manage-li">
-              <span class="d-none d-sm-block align-text-bottom">Manage Node Health Checks</span>
-            </li>
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
               <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-justified-home" aria-controls="navs-pills-justified-home" aria-selected="true">
-                <span class="d-none d-sm-block"><box-icon name='stats' class="align-text-bottom icon-color"></box-icon> Status</span>
+                <span class="d-none d-sm-block"><box-icon name='stats' class="align-text-bottom icon-color"></box-icon> Alerts</span>
               </button>
             </li>
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
@@ -113,7 +110,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <TabStatus :statusAPI = "statusAPI" />
+              <TabStatus :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
@@ -188,16 +185,19 @@ function updateClass(event: Event) {
 const url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 async function saveRules(content: JSON) {
+  console.log(`Config POST API :: ${url}/save_config`)
   try {
     const response = await axios.post(url + '/save_config', content);
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
+      console.log(error);
       return {
         status: error.response?.status || 500,
         message: error.response?.data || 'An error occurred during the request.',
       };
     } else {
+      console.log(error);
       return {
         status: 500,
         message: 'An unknown error occurred.',
@@ -313,6 +313,10 @@ export default {
 
     },
 
+    updateShowSpinner(value: boolean){
+      this.showSpinner = value;
+    },
+
     deleteRule(count: number) {
       this.configuration.groups[0].rules.splice(count, 1);
       this.save_configuration(this.configuration, 'On Page')
@@ -360,6 +364,7 @@ export default {
     },
 
     async save_configuration(newContent: unknown, modalID: string) {
+      console.log(newContent);
       let content: unknown;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
