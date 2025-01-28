@@ -23,4 +23,24 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  build: {
+    // Disable hash in filenames
+    rollupOptions: {
+      output: {
+        entryFileNames: 'index.js',  // Fixed name for JS file
+        chunkFileNames: 'index.js',  // Fixed name for chunk files
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name) {
+            if (/\.(png|jpe?g|gif|svg)$/.test(assetInfo.name)) {
+              return 'logo.png';  // Fixed name for image files
+            }
+            if (/\.css$/.test(assetInfo.name)) {
+              return 'index.css';  // Fixed name for CSS files
+            }
+          }
+          return '[name].[ext]';  // Default for other assets
+        },
+      },
+    },
+  },
 })

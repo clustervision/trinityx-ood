@@ -5,5 +5,7 @@ declare global {
     interface Window {
         PROMQL_URL: string;
         APP_URL: string;
+        statusAPI: string;
+        TRIX_CONFIG: string;
     }
 }

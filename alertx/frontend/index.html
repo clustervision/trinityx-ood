@@ -19,17 +19,19 @@
 <html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-assets-path="../assets/">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/img/favicon.ico" />
+    <link rel="icon" href="/assets/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <title>Alert Configurator :: Luna</title>
   </head>
   <body>
     
     <div id="app"></div>
-    <!-- <script>
+    <script>
       window.PROMQL_URL = "{{ promQLurl }}";
       window.APP_URL = "{{ appUrl }}";
-    </script> -->
+      window.statusAPI = "{{ statusAPI }}";
+      window.TRIX_CONFIG = "{{ TRIX_CONFIG }}";
+    </script>
     
     <script type="module" src="/src/main.ts"></script>
   </body>

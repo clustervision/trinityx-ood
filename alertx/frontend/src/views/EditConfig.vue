@@ -1,15 +1,7 @@
 
 <template>
-  <div class="row sub-navbar">
-    <div class="col col-2">Manage Node Health Checks</div>
-    <div class="col col-1">
-      <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_0">Add Alert Rule</button>
-    </div>
-    <div class="col col-1">
-      <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button>
-    </div>
-    <div class="col col-8"></div>
-  </div>
+  <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_0">Add Alert Rule</button> &nbsp;
+  <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button>
 
   <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
