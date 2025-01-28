@@ -47,13 +47,13 @@
     <div class="row">
       <div class="col-md-1"><span class="nav_head">Filter:</span></div>
       <div class="col-md-1">
-        <button type="button" class="btn btn-sm btn-dark" @click="revertSelection">Deselect All</button>
-      </div>
-      <div class="col-md-1">
         <button type="button" class="btn btn-sm btn-primary" @click="selectAllNodes">Select All</button>
       </div>
       <div class="col-md-1">
         <button type="button" class="btn btn-sm btn-secondary" @click="selectFailedNodes">Select Failed</button>
+      </div>
+      <div class="col-md-1">
+        <button type="button" class="btn btn-sm btn-dark" @click="revertSelection">Deselect All</button>
       </div>
       <div class="col-md-4">
         <div class="input-group input-group-sm">
@@ -155,6 +155,7 @@ export default {
     };
 
     const fetchNodes = async () => {
+      console.log(`Node GET API :: ${props.url}/get_nodes`)
       try {
         const response = await axios.get(`${props.url}/get_nodes`);
         if (response.status === 200) {
@@ -211,6 +212,7 @@ export default {
     };
 
     const resetSelectedNodes = async () => {
+      console.log(`Node POST API :: ${props.url}/save_nodes`)
       const selectedNodes = selectedIndices.value.map(
         (index) => nodes.value[index]
       );

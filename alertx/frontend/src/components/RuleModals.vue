@@ -116,13 +116,6 @@ const serializedContent = computed(() => {
   return '';
 });
 
-const addRowToRules = (row: object) => {
-  if (new_config?.groups?.[0]?.rules) {
-    new_config.groups[0].rules.push(row);
-  } else {
-    console.error('Cannot add row: Invalid configuration structure');
-  }
-};
 
 const updateRow = (row: object, count: number) => {
   if (new_config?.groups?.[0]?.rules && count >= 0 && count < new_config.groups[0].rules.length) {
@@ -141,8 +134,19 @@ function update_configuration(count: number) {
 
   const rule = toRaw(ruleData);
   if (error === false){
-    if (count === 0){ addRowToRules(rule); } else { updateRow(rule, count-1); }
-    props.save_configuration(new_config, `rule_modal_${count}`)
+    if (count === 0){
+      const add_rule_config = JSON.parse(JSON.stringify(props.configuration));
+      if (add_rule_config?.groups?.[0]?.rules) {
+        add_rule_config.groups[0].rules.push(rule);
+      } else {
+        console.error('Cannot add row: Invalid configuration structure');
+      }
+      props.save_configuration(add_rule_config, `rule_modal_${count}`)
+
+    } else {
+      updateRow(rule, count-1);
+      props.save_configuration(new_config, `rule_modal_${count}`)
+    }
   }
 
 }
@@ -209,9 +213,9 @@ function update_configuration(count: number) {
                   </div>
                 </div>
                 <div class="col mb-6">
-                  <label :for="`rule_severity_${index}`" class="form-label">Set Priority</label>
+                  <label :for="`rule_severity_${index}`" class="form-label">Set Severity</label>
                   <select v-model="ruleData.labels.severity" :id="`rule_severity_${index}`" :class="['form-select', 'form-select-sm', ruleData.labels.severity === 'critical' ? 'btn-dark' : ruleData.labels.severity ? 'btn-' + ruleData.labels.severity : 'btn-primary']">
-                    <option class="btn-primary" value="">Set Priority</option>
+                    <option class="btn-primary" value="">Set Severity</option>
                     <option class="btn-dark" value="critical" :selected="ruleData.labels.severity === 'critical'">Critical</option>
                     <option class="btn-danger" value="danger" :selected="ruleData.labels.severity === 'danger'">Danger</option>
                     <option class="btn-warning" value="warning" :selected="ruleData.labels.severity === 'warning'">Warning</option>

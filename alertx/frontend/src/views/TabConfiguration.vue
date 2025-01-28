@@ -42,8 +42,6 @@ const props = defineProps({
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const emit = defineEmits(['toast']);
 
-const new_config = props.configuration;
-
 const uniqueModal = ref<Modal | null>(null);
 const showModal = (id: number) => {
   const dymodal = document.getElementById(`rule_modal_${id}`);
@@ -59,9 +57,12 @@ const showModal = (id: number) => {
 
 
 function deleteRule(count: number) {
-  if (new_config?.groups?.[0]?.rules) {
-    new_config.groups[0].rules.splice(count, 1);
-    props.save_configuration(new_config, 'On Page')
+  if (window.confirm('Are you sure you want to delete this rule?')) {
+    const delete_config = JSON.parse(JSON.stringify(props.configuration));
+    if (delete_config?.groups?.[0]?.rules) {
+      delete_config.groups[0].rules.splice(count, 1);
+      props.save_configuration(delete_config, 'On Page')
+    }
   }
 }
 
@@ -80,7 +81,7 @@ function deleteRule(count: number) {
         />
       </span>
     <h4 class="fw-bold py-3 mb-4">
-      <span class="text-muted fw-light"> Monitoring /</span> Alert Configurator
+      <span class="text-muted fw-light"> Monitoring /</span> Configuration
     </h4>
 
     <div class="card">
@@ -93,7 +94,7 @@ function deleteRule(count: number) {
             :save_configuration = "save_configuration"
             :updateClass = "updateClass"
             :ruleRow = "ruleRow"
-            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}}"
+            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '0s', 'expr': 'vector(0)', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}}"
             :index = 0
             :selectedClass="selectedClass"
             @Toast="$emit('toast', $event)"
@@ -104,9 +105,10 @@ function deleteRule(count: number) {
                 <th scope="col">#</th>
                 <th scope="col">Group</th>
                 <th scope="col">Rule</th>
+                <th scope="col">Time</th>
                 <th scope="col">Enable</th>
                 <th scope="col">NHC</th>
-                <th scope="col">Priority</th>
+                <th scope="col">Severity</th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -122,6 +124,7 @@ function deleteRule(count: number) {
                   <input type="hidden" :id="`rule_for_${index + 1}`" :value="`${row.for}`" />
                   <input type="hidden" :id="`rule_editor_${index + 1}`" :value="`${row.expr}`" />
                 </td>
+                <td>{{ row.for }}</td>
                 <td>
                   <div class="form-check form-switch mb-2">
                     <input class="form-check-input" type="checkbox" v-model="row.labels._trix_status" @click="props.update_configuration(index + 1);" :id="`rule_status_${index + 1}`" />
