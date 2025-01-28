@@ -258,6 +258,7 @@ class Rest():
         self.logger.debug(f'POST DATA => {data}')
         try:
             http_response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            print(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
             self.logger.info(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
             content_type = http_response.headers.get("Content-Type", "")
             if "application/json" in content_type:

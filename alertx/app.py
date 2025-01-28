@@ -32,6 +32,7 @@ __status__      = 'Development'
 
 import os
 from flask import Flask, render_template, request, jsonify, url_for
+# from flask_cors import CORS # FOR Development Only
 from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
 from log import Log
 from rest import Rest
@@ -40,8 +41,13 @@ from rest import Rest
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_folder="nhc/assets", template_folder="nhc")
+app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+# CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})      # FOR Development Only
+# CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})    # FOR Development Only
+# CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})        # FOR Development Only
+# CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})        # FOR Development Only
+# CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})        # FOR Development Only
 
 
 @app.before_request
