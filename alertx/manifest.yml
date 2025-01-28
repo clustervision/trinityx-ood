@@ -1,10 +1,10 @@
-name: Alert Configurator
+name: AlertX
 description: Node Health Check
 icon: fa://ghost
 category: Monitoring
 new_window: false
 
 tile:
-  title: "Alert Configurator"
+  title: "AlertX"
   sub_caption: |
-   Node Health Check
+   Alert Configurations & Node Health Check
