@@ -213,9 +213,9 @@ function update_configuration(count: number) {
                   </div>
                 </div>
                 <div class="col mb-6">
-                  <label :for="`rule_severity_${index}`" class="form-label">Set Priority</label>
+                  <label :for="`rule_severity_${index}`" class="form-label">Set Severity</label>
                   <select v-model="ruleData.labels.severity" :id="`rule_severity_${index}`" :class="['form-select', 'form-select-sm', ruleData.labels.severity === 'critical' ? 'btn-dark' : ruleData.labels.severity ? 'btn-' + ruleData.labels.severity : 'btn-primary']">
-                    <option class="btn-primary" value="">Set Priority</option>
+                    <option class="btn-primary" value="">Set Severity</option>
                     <option class="btn-dark" value="critical" :selected="ruleData.labels.severity === 'critical'">Critical</option>
                     <option class="btn-danger" value="danger" :selected="ruleData.labels.severity === 'danger'">Danger</option>
                     <option class="btn-warning" value="warning" :selected="ruleData.labels.severity === 'warning'">Warning</option>
