@@ -45,6 +45,29 @@
   </h4>
   <div>
     <div class="row">
+      <div class="col-md-1"><span class="nav_head">Action: </span></div>
+
+      <div class="col-md-1 d-flex align-items-center">
+        <strong class="align-self-center">Enable</strong>
+        <div class="form-check form-switch mb-2 ms-5 align-self-center">
+          <input class="form-check-input" type="checkbox" checked data-toggle="switch" :id="`rule_status_`" />
+          <label class="form-check-label" :for="`rule_status_`">ON</label>
+        </div>
+      </div>
+      <div class="col-md-1"></div>
+      <div class="col-md-1 d-flex align-items-center">
+        <strong class="align-self-center">NHC</strong>
+        <div class="form-check form-switch mb-2 ms-5 align-self-center">
+          <input class="form-check-input" type="checkbox" data-toggle="switch" checked :true-value="'yes'" false-value="no" />
+          <label class="form-check-label" :for="`rule_nhc_`">ON</label>
+        </div>
+      </div>
+
+      <!-- <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="filterNodes('all')">All</button></div>
+      <div class="col-md-1"><button type="button" class="btn btn-sm btn-warning" @click="filterNodes('secondary')">Failed</button></div> -->
+    </div>
+    <br />
+    <div class="row">
       <div class="col-md-1"><span class="nav_head">Filter:</span></div>
       <div class="col-md-1">
         <button type="button" class="btn btn-sm btn-primary" @click="selectAllNodes">Select All</button>
@@ -64,6 +87,9 @@
       <div class="col-md-2">
         <button type="button" class="btn btn-sm btn-success" @click="resetSelectedNodes">Reset Selected Nodes</button>
       </div>
+      <!-- <div class="col-md-1">
+        <button type="button" class="btn btn-sm btn-info" @click="showRules">Show Rules</button>
+      </div> -->
     </div>
     <br />
     <!-- <div class="row">
@@ -155,7 +181,6 @@ export default {
     };
 
     const fetchNodes = async () => {
-      console.log(`Node GET API :: ${props.url}/get_nodes`)
       try {
         const response = await axios.get(`${props.url}/get_nodes`);
         if (response.status === 200) {
@@ -212,7 +237,6 @@ export default {
     };
 
     const resetSelectedNodes = async () => {
-      console.log(`Node POST API :: ${props.url}/save_nodes`)
       const selectedNodes = selectedIndices.value.map(
         (index) => nodes.value[index]
       );
@@ -235,6 +259,31 @@ export default {
       revertSelection();
     };
 
+    const showRules = () => {
+      console.log(selectedIndices.value);
+      console.log(selectedIndices.value.length);
+      if (selectedIndices.value.length === 0){
+        Toast("Please select at least one Node.", "bg-warning");
+      } else if (selectedIndices.value.length > 1){
+        Toast("One Node at a time.", "bg-warning");
+      } else {
+        Toast("See the Rule?? They aren't there, wait for the production Mode.", "bg-success");
+
+        const selectedNodes = selectedIndices.value.map(
+        (index) => nodes.value[index]
+      );
+        const payload = selectedNodes.map((node) => ({
+          hostname: node.hostname,
+          force: true,
+        }));
+        console.log(selectedNodes);
+        console.log(payload);
+
+      }
+      // selectedIndices.value = [];
+
+    };
+
     // Lifecycle hook
     onMounted(() => {
       fetchNodes();
@@ -254,6 +303,7 @@ export default {
       toastClass,
       toastMessage,
       processQueue,
+      showRules,
     };
   },
 };

@@ -9,3 +9,12 @@ declare global {
         TRIX_CONFIG: string;
     }
 }
+
+import jQuery from 'jquery';
+
+declare global {
+  interface Window {
+    $: typeof jQuery;
+    jQuery: typeof jQuery;
+  }
+}

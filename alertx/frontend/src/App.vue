@@ -185,7 +185,6 @@ function updateClass(event: Event) {
 const url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 async function saveRules(content: JSON) {
-  console.log(`Config POST API :: ${url}/save_config`)
   try {
     const response = await axios.post(url + '/save_config', content);
     return {"status": response.status, "message": response.data.response};
@@ -364,7 +363,6 @@ export default {
     },
 
     async save_configuration(newContent: unknown, modalID: string) {
-      console.log(newContent);
       let content: unknown;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
