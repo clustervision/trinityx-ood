@@ -334,6 +334,7 @@ export default {
       if (currentIndex === -1) {
         selectedIndices.value.push(index);
         showInventory(index);
+        showRules(index);
       } else {
         selectedIndices.value.splice(currentIndex, 1);
         if (selectedIndices.value.length === 0){
@@ -341,6 +342,7 @@ export default {
           hardware_message.value = ``;
         } else {
           showInventory(selectedIndices.value[selectedIndices.value.length - 1]);
+          showRules(selectedIndices.value[selectedIndices.value.length - 1]);
         }
       }
 
@@ -469,30 +471,32 @@ export default {
 
     const showRules = async (index: number) =>  {
       const hostname = nodes.value[index].hostname;
-      // const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
-      const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      // https://vmware-controller1.cluster:7050/export/prometheus_nhc_rules?hostnames=node001.cluster
+      // const inventoryURL = `${props.url}/export/prometheus_nhc_rules?hostnames=${hostname}`;
+      const inventoryURL = `https://vmware-controller1.cluster:7755/export/prometheus_nhc_rules?hostnames=${hostname}`;
       try {
-        const response = await axios.get(inventoryURL);
+        const response = await axios.get(inventoryURL, { httpsAgent: {rejectUnauthorized: false}  });
         if (response.status === 200) {
-          inventory.value = response.data.data.result.map((hwd: Hardware, index: number) => ({
-            id: index + 1,
-            luna_group:   hwd.metric.luna_group ? hwd.metric.luna_group : "N/A",
-            hostname:     hwd.metric.hostname ? hwd.metric.hostname : "N/A",
-            class:        hwd.metric.class ? hwd.metric.class : "N/A",
-            vendor:       hwd.metric.vendor ? hwd.metric.vendor : "N/A",
-            description:  hwd.metric.description ? hwd.metric.description : "N/A",
-            size:         hwd.metric.size ? hwd.metric.size : "N/A",
-            clock:        hwd.metric.clock ? hwd.metric.clock : "N/A",
-            serial:       hwd.metric.serial ? hwd.metric.serial : "N/A",
-            product:      hwd.metric.product ? hwd.metric.product : "N/A",
-            handle:       hwd.metric.handle ? hwd.metric.handle : "N/A",
-            physid:       hwd.metric.physid ? hwd.metric.physid : "N/A",
-            version:      hwd.metric.version ? hwd.metric.version : "N/A",
-            slot:         hwd.metric.slot ? hwd.metric.slot : "N/A",
-          }));
-          if (inventory.value.length === 0){
-            hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
-          }
+          console.log(response.data);
+          // inventory.value = response.data.data.result.map((hwd: Hardware, index: number) => ({
+          //   id: index + 1,
+          //   luna_group:   hwd.metric.luna_group ? hwd.metric.luna_group : "N/A",
+          //   hostname:     hwd.metric.hostname ? hwd.metric.hostname : "N/A",
+          //   class:        hwd.metric.class ? hwd.metric.class : "N/A",
+          //   vendor:       hwd.metric.vendor ? hwd.metric.vendor : "N/A",
+          //   description:  hwd.metric.description ? hwd.metric.description : "N/A",
+          //   size:         hwd.metric.size ? hwd.metric.size : "N/A",
+          //   clock:        hwd.metric.clock ? hwd.metric.clock : "N/A",
+          //   serial:       hwd.metric.serial ? hwd.metric.serial : "N/A",
+          //   product:      hwd.metric.product ? hwd.metric.product : "N/A",
+          //   handle:       hwd.metric.handle ? hwd.metric.handle : "N/A",
+          //   physid:       hwd.metric.physid ? hwd.metric.physid : "N/A",
+          //   version:      hwd.metric.version ? hwd.metric.version : "N/A",
+          //   slot:         hwd.metric.slot ? hwd.metric.slot : "N/A",
+          // }));
+          // if (inventory.value.length === 0){
+          //   hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
+          // }
         } else {
           Toast(`Error fetching Hardware: ${response.status}`, "bg-secondary");
           hardware_message.value = `Error fetching Hardware: ${response.status} `;
