@@ -457,13 +457,13 @@ export default {
             hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
           }
         } else {
-          Toast(`Error fetching nodes: ${response.status}`, "bg-secondary");
-          hardware_message.value = `Error fetching nodes: ${response.status}`;
+          Toast(`Error fetching Hardware: ${response.status}`, "bg-secondary");
+          hardware_message.value = `Error fetching Hardware: ${response.status} `;
         }
       } catch (error) {
-        Toast("Failed to fetch nodes.", "bg-secondary");
-        console.error("Error fetching nodes:", error);
-        hardware_message.value = `Error fetching nodes: ${error}`;
+        Toast("Failed to fetch URL.", "bg-secondary");
+        console.error("Error fetching URL:", error);
+        hardware_message.value = `Error fetching URL: ${error}`;
       }
     };
 
@@ -494,13 +494,13 @@ export default {
             hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
           }
         } else {
-          Toast(`Error fetching nodes: ${response.status}`, "bg-secondary");
-          hardware_message.value = `Error fetching nodes: ${response.status}`;
+          Toast(`Error fetching Hardware: ${response.status}`, "bg-secondary");
+          hardware_message.value = `Error fetching Hardware: ${response.status} `;
         }
       } catch (error) {
-        Toast("Failed to fetch nodes.", "bg-secondary");
-        console.error("Error fetching nodes:", error);
-        hardware_message.value = `Error fetching nodes: ${error}`;
+        Toast("Failed to fetch URL.", "bg-secondary");
+        console.error("Error fetching URL:", error);
+        hardware_message.value = `Error fetching URL: ${error}`;
       }
     };
 
