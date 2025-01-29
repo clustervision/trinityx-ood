@@ -50,7 +50,7 @@
       <div class="col-md-1 d-flex align-items-center">
         <strong class="align-self-center">Enable</strong>
         <div class="form-check form-switch mb-2 ms-5 align-self-center">
-          <input class="form-check-input" type="checkbox" checked data-toggle="switch" :id="`rule_status_`" v-model="nodeStatus" />
+          <input class="form-check-input" type="checkbox" checked data-toggle="switch" @change="triggerStatus()" v-model="nodeStatus" />
           <label class="form-check-label" :for="`rule_status_`">{{ nodeStatus ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
@@ -58,7 +58,7 @@
       <div class="col-md-1 d-flex align-items-center">
         <strong class="align-self-center">NHC</strong>
         <div class="form-check form-switch mb-2 ms-5 align-self-center">
-          <input class="form-check-input" type="checkbox" data-toggle="switch" @change="triggerNHC()" checked  v-model="nodeNHC" />
+          <input class="form-check-input" type="checkbox" checked data-toggle="switch" @change="triggerNHC()"  v-model="nodeNHC" />
           <label class="form-check-label" :for="`rule_nhc_`">{{ nodeNHC ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
@@ -269,7 +269,6 @@ export default {
         force: false,
         nhc: nodeNHC.value,
       }));
-      console.log(payload);
       try {
         const response = await axios.post(`${props.url}/save_nodes`, payload);
         if (response.status === 200) {
@@ -283,6 +282,32 @@ export default {
       }
     };
 
+    const triggerStatus = async () => {
+      let status = false;
+      if (nodeStatus.value === true){
+        status = false;
+      } else {
+        status = true;
+      }
+      const payload = nodes.value.map((node) => ({
+        hostname: node.hostname,
+        force: false,
+        disabled: status,
+      }));
+      console.log(payload);
+      try {
+        const response = await axios.post(`${props.url}/save_nodes`, payload);
+        if (response.status === 200) {
+          console.log(response.data.response);
+          response.data.response.forEach((result: resetObject) => {
+            Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+          });
+        }
+      } catch (error) {
+        Toast("Error saving selected nodes.", "bg-secondary");
+        console.error("Error saving nodes:", error);
+      }
+    };
 
     function showRules() {
       console.log(selectedIndices.value);
@@ -332,6 +357,7 @@ export default {
       nodeStatus,
       nodeNHC,
       triggerNHC,
+      triggerStatus,
     };
   },
 };
