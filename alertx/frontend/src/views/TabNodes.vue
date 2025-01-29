@@ -45,21 +45,21 @@
   </h4>
   <div>
     <div class="row">
-      <div class="col-md-1"><span class="nav_head">Action: </span></div>
+      <div class="col-md-1"><span class="nav_head">Global Settings: </span></div>
 
       <div class="col-md-1 d-flex align-items-center">
         <strong class="align-self-center">Enable</strong>
         <div class="form-check form-switch mb-2 ms-5 align-self-center">
-          <input class="form-check-input" type="checkbox" checked data-toggle="switch" :id="`rule_status_`" />
-          <label class="form-check-label" :for="`rule_status_`">ON</label>
+          <input class="form-check-input" type="checkbox" checked data-toggle="switch" :id="`rule_status_`" v-model="nodeStatus" />
+          <label class="form-check-label" :for="`rule_status_`">{{ nodeStatus ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
       <div class="col-md-1"></div>
       <div class="col-md-1 d-flex align-items-center">
         <strong class="align-self-center">NHC</strong>
         <div class="form-check form-switch mb-2 ms-5 align-self-center">
-          <input class="form-check-input" type="checkbox" data-toggle="switch" checked :true-value="'yes'" false-value="no" />
-          <label class="form-check-label" :for="`rule_nhc_`">ON</label>
+          <input class="form-check-input" type="checkbox" data-toggle="switch" @change="triggerNHC()" checked  v-model="nodeNHC" />
+          <label class="form-check-label" :for="`rule_nhc_`">{{ nodeNHC ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
 
@@ -149,6 +149,8 @@ export default {
   },
 
   setup(props) {
+    const nodeStatus = ref(true);
+    const nodeNHC = ref(true);
     const nodes = ref<Node[]>([]);
     const selectedIndices = ref<number[]>([]);
     const searchTerm = ref("");
@@ -214,12 +216,14 @@ export default {
     });
 
     const toggleSelect = (index: number) => {
+
       const currentIndex = selectedIndices.value.indexOf(index);
       if (currentIndex === -1) {
         selectedIndices.value.push(index);
       } else {
         selectedIndices.value.splice(currentIndex, 1);
       }
+      showRules();
     };
 
     const selectAllNodes = () => {
@@ -259,7 +263,28 @@ export default {
       revertSelection();
     };
 
-    const showRules = () => {
+    const triggerNHC = async () => {
+      const payload = nodes.value.map((node) => ({
+        hostname: node.hostname,
+        force: false,
+        nhc: nodeNHC.value,
+      }));
+      console.log(payload);
+      try {
+        const response = await axios.post(`${props.url}/save_nodes`, payload);
+        if (response.status === 200) {
+          response.data.response.forEach((result: resetObject) => {
+            Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+          });
+        }
+      } catch (error) {
+        Toast("Error saving selected nodes.", "bg-secondary");
+        console.error("Error saving nodes:", error);
+      }
+    };
+
+
+    function showRules() {
       console.log(selectedIndices.value);
       console.log(selectedIndices.value.length);
       if (selectedIndices.value.length === 0){
@@ -304,6 +329,9 @@ export default {
       toastMessage,
       processQueue,
       showRules,
+      nodeStatus,
+      nodeNHC,
+      triggerNHC,
     };
   },
 };
