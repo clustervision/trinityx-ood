@@ -129,7 +129,7 @@ onMounted(() => {
 
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
-              <TabNodes :url = "url" />
+              <TabNodes :url = "url" :promQLurl = "promQLurl" />
             </div>
           </div>
         </div>

@@ -87,16 +87,8 @@
       <div class="col-md-2">
         <button type="button" class="btn btn-sm btn-success" @click="resetSelectedNodes">Reset Selected Nodes</button>
       </div>
-      <!-- <div class="col-md-1">
-        <button type="button" class="btn btn-sm btn-info" @click="showRules">Show Rules</button>
-      </div> -->
     </div>
     <br />
-    <!-- <div class="row">
-      <div class="col-md-1"><span class="nav_head">Show: </span></div>
-      <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="filterNodes('all')">All</button></div>
-      <div class="col-md-1"><button type="button" class="btn btn-sm btn-warning" @click="filterNodes('secondary')">Failed</button></div>
-    </div> -->
 
     <div class="row node_pan">
       <div v-for="(node, index) in filteredNodes" :key="index" class="col-md-1 node-box" :class="{ selected: selectedIndices.includes(index) }" @click="toggleSelect(index)">
@@ -115,6 +107,84 @@
     </div>
     <div class="toast-body">{{ toastMessage }}</div>
   </div>
+
+<br />
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+        <table class="table table-bordered table-striped table-hover caption-top">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Rule</th>
+              <th>State</th>
+              <th>Severity</th>
+              <th>NHC</th>
+              <th>Event Time</th>
+              <th>Affected</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>asd</td>
+              <td>sdcsdc</td>
+              <td>dscsd</td>
+              <td>sdcsdc</td>
+              <td>sdcsdc</td>
+              <td>sdc</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+        <table class="table table-bordered table-striped table-hover caption-top">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Luna Group</th>
+              <th>Hostname</th>
+              <th>Class</th>
+              <th>Vendor</th>
+              <th>Description</th>
+              <th>Size</th>
+              <th>Clock</th>
+              <th>Serial</th>
+              <th>Product</th>
+              <th>Handle</th>
+              <th>Physid</th>
+              <th>Version</th>
+              <th>Slot</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="hwd in inventory" :key="hwd.id">
+              <td>{{ hwd.id }}</td>
+              <td>{{ hwd.luna_group }}</td>
+              <td>{{ hwd.hostname }}</td>
+              <td>{{ hwd.class }}</td>
+              <td>{{ hwd.vendor }}</td>
+              <td>{{ hwd.description }}</td>
+              <td>{{ hwd.size }}</td>
+              <td>{{ hwd.clock }}</td>
+              <td>{{ hwd.serial }}</td>
+              <td>{{ hwd.product }}</td>
+              <td>{{ hwd.handle }}</td>
+              <td>{{ hwd.physid }}</td>
+              <td>{{ hwd.version }}</td>
+              <td>{{ hwd.slot }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div v-else-if="hardware_message" class="alert alert-danger" role="alert">{{ hardware_message }}</div>
+    </div>
+  </div>
+
+
 
 </template>
 
@@ -139,10 +209,51 @@ interface Node {
   class: string;
 }
 
+interface HardwareMetric {
+  luna_group: string;
+  hostname: string;
+  class: string;
+  vendor: string;
+  description: string;
+  size: string;
+  clock: string;
+  serial: string;
+  product: string;
+  handle: string;
+  physid: string;
+  version: string;
+  slot: string;
+}
+
+interface InventoryItem {
+  id: number;
+  luna_group: string;
+  hostname: string;
+  class: string;
+  vendor: string;
+  description: string;
+  size: string;
+  clock: string;
+  serial: string;
+  product: string;
+  handle: string;
+  physid: string;
+  version: string;
+  slot: string;
+}
+
+interface Hardware {
+  metric: HardwareMetric;
+}
+
 export default {
 
   props: {
     url: {
+      type: String,
+      required: true,
+    },
+    promQLurl: {
       type: String,
       required: true,
     },
@@ -152,6 +263,8 @@ export default {
     const nodeStatus = ref(true);
     const nodeNHC = ref(true);
     const nodes = ref<Node[]>([]);
+    const inventory = ref<InventoryItem[]>([]);
+    const hardware_message = ref("");
     const selectedIndices = ref<number[]>([]);
     const searchTerm = ref("");
     const currentFilter = ref("all");
@@ -220,10 +333,18 @@ export default {
       const currentIndex = selectedIndices.value.indexOf(index);
       if (currentIndex === -1) {
         selectedIndices.value.push(index);
+        showInventory(index);
       } else {
         selectedIndices.value.splice(currentIndex, 1);
+        if (selectedIndices.value.length === 0){
+          inventory.value = [];
+          hardware_message.value = ``;
+        } else {
+          showInventory(selectedIndices.value[selectedIndices.value.length - 1]);
+        }
       }
-      showRules();
+
+      // Need a logic here inventory.value = [];
     };
 
     const selectAllNodes = () => {
@@ -309,29 +430,78 @@ export default {
       }
     };
 
-    function showRules() {
-      console.log(selectedIndices.value);
-      console.log(selectedIndices.value.length);
-      if (selectedIndices.value.length === 0){
-        Toast("Please select at least one Node.", "bg-warning");
-      } else if (selectedIndices.value.length > 1){
-        Toast("One Node at a time.", "bg-warning");
-      } else {
-        Toast("See the Rule?? They aren't there, wait for the production Mode.", "bg-success");
-
-        const selectedNodes = selectedIndices.value.map(
-        (index) => nodes.value[index]
-      );
-        const payload = selectedNodes.map((node) => ({
-          hostname: node.hostname,
-          force: true,
-        }));
-        console.log(selectedNodes);
-        console.log(payload);
-
+    const showInventory = async (index: number) =>  {
+      const hostname = nodes.value[index].hostname;
+      // const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      try {
+        const response = await axios.get(inventoryURL);
+        if (response.status === 200) {
+          inventory.value = response.data.data.result.map((hwd: Hardware, index: number) => ({
+            id: index + 1,
+            luna_group:   hwd.metric.luna_group ? hwd.metric.luna_group : "N/A",
+            hostname:     hwd.metric.hostname ? hwd.metric.hostname : "N/A",
+            class:        hwd.metric.class ? hwd.metric.class : "N/A",
+            vendor:       hwd.metric.vendor ? hwd.metric.vendor : "N/A",
+            description:  hwd.metric.description ? hwd.metric.description : "N/A",
+            size:         hwd.metric.size ? hwd.metric.size : "N/A",
+            clock:        hwd.metric.clock ? hwd.metric.clock : "N/A",
+            serial:       hwd.metric.serial ? hwd.metric.serial : "N/A",
+            product:      hwd.metric.product ? hwd.metric.product : "N/A",
+            handle:       hwd.metric.handle ? hwd.metric.handle : "N/A",
+            physid:       hwd.metric.physid ? hwd.metric.physid : "N/A",
+            version:      hwd.metric.version ? hwd.metric.version : "N/A",
+            slot:         hwd.metric.slot ? hwd.metric.slot : "N/A",
+          }));
+          if (inventory.value.length === 0){
+            hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
+          }
+        } else {
+          Toast(`Error fetching nodes: ${response.status}`, "bg-secondary");
+          hardware_message.value = `Error fetching nodes: ${response.status}`;
+        }
+      } catch (error) {
+        Toast("Failed to fetch nodes.", "bg-secondary");
+        console.error("Error fetching nodes:", error);
+        hardware_message.value = `Error fetching nodes: ${error}`;
       }
-      // selectedIndices.value = [];
+    };
 
+    const showRules = async (index: number) =>  {
+      const hostname = nodes.value[index].hostname;
+      // const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      try {
+        const response = await axios.get(inventoryURL);
+        if (response.status === 200) {
+          inventory.value = response.data.data.result.map((hwd: Hardware, index: number) => ({
+            id: index + 1,
+            luna_group:   hwd.metric.luna_group ? hwd.metric.luna_group : "N/A",
+            hostname:     hwd.metric.hostname ? hwd.metric.hostname : "N/A",
+            class:        hwd.metric.class ? hwd.metric.class : "N/A",
+            vendor:       hwd.metric.vendor ? hwd.metric.vendor : "N/A",
+            description:  hwd.metric.description ? hwd.metric.description : "N/A",
+            size:         hwd.metric.size ? hwd.metric.size : "N/A",
+            clock:        hwd.metric.clock ? hwd.metric.clock : "N/A",
+            serial:       hwd.metric.serial ? hwd.metric.serial : "N/A",
+            product:      hwd.metric.product ? hwd.metric.product : "N/A",
+            handle:       hwd.metric.handle ? hwd.metric.handle : "N/A",
+            physid:       hwd.metric.physid ? hwd.metric.physid : "N/A",
+            version:      hwd.metric.version ? hwd.metric.version : "N/A",
+            slot:         hwd.metric.slot ? hwd.metric.slot : "N/A",
+          }));
+          if (inventory.value.length === 0){
+            hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
+          }
+        } else {
+          Toast(`Error fetching nodes: ${response.status}`, "bg-secondary");
+          hardware_message.value = `Error fetching nodes: ${response.status}`;
+        }
+      } catch (error) {
+        Toast("Failed to fetch nodes.", "bg-secondary");
+        console.error("Error fetching nodes:", error);
+        hardware_message.value = `Error fetching nodes: ${error}`;
+      }
     };
 
     // Lifecycle hook
@@ -354,10 +524,13 @@ export default {
       toastMessage,
       processQueue,
       showRules,
+      showInventory,
       nodeStatus,
       nodeNHC,
       triggerNHC,
       triggerStatus,
+      inventory,
+      hardware_message,
     };
   },
 };
