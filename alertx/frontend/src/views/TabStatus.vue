@@ -52,9 +52,39 @@ export default defineComponent({
   },
 
   async mounted() {
+
+    // const username = 'admin';
+    // const password = 'drqPne9GaN5r9QGUzrRQ';
+
+    // const alert_manager = await axios.get(`https://${username}:${password}@vmware-controller1.cluster:9093/api/v2/alerts`, {
+    //   headers: {
+    //     "Access-Control-Allow-Origin": "*",
+    //     // 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    //     // "Access-Control-Allow-Origin": 'http://localhost:5173',
+    //     // 'Origin': 'http://localhost:5173',
+    //     // 'Authorization': 'Basic ' + btoa(username + ':' + password) // Encode credentials
+    //   }
+    // });
+    const alert_manager = await axios.get('/api/api/v2/alerts');
+    console.log(alert_manager.data); 
+
+
+//     const alert_manager = await axios.get("https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/api/v2/alerts");
+// //     const alert_manager = await axios.get("https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/api/v2/alerts", {
+// //   headers: {
+// //     'Authorization': 'Basic ' + btoa('admin:drqPne9GaN5r9QGUzrRQ')
+// //   }
+// // });
+// console.log("=====================================");
+//       console.log(alert_manager.status);
+//       console.log(alert_manager);
+//       console.log("=====================================");
     try {
       this.updateShowSpinner(true);
+      // https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/
+      
       const response = await axios.get(this.statusAPI);
+      // const response = await axios.get('/api/api/v2/alerts');
       if (response.status === 200) {
         response.data.data.groups.forEach((group: AlertGroup) => {
           if (group.name === "trinityx"){

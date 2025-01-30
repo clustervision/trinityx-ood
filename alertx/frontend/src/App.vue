@@ -14,8 +14,8 @@ import FooterBar from '@/views/FooterBar.vue';
 import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
-const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
-const rulesFile = ref(window.TRIX_CONFIG || "/trinity/local/etc/prometheus_server/rules/trix.rules");
+const statusAPI = promQLurl.value+'/api/v1/rules';
+const rulesFile = "/trinity/local/etc/prometheus_server/rules/trix.rules";
 
 onMounted(() => {
 });
