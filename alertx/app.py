@@ -18,12 +18,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-This File is a Main File Alert Configurator.
+This File is a Main File AlertX.
 This file will provide the functionality to configure and manage the monitoring alerts for nodes.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2025, TrinityX[AlertX]'
 __license__     = 'GPL'
 __version__     = '2.0'
 __maintainer__  = 'Sumit Sharma'
@@ -32,8 +32,7 @@ __status__      = 'Development'
 
 import os
 from flask import Flask, render_template, request, jsonify, url_for
-# from flask_cors import CORS # FOR Development Only
-from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
+from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG, APP_STATE
 from log import Log
 from rest import Rest
 
@@ -43,11 +42,13 @@ TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-# CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})      # FOR Development Only
-# CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})    # FOR Development Only
-# CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})        # FOR Development Only
-# CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})        # FOR Development Only
-# CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})        # FOR Development Only
+if APP_STATE is False: # FOR Development Only
+    from flask_cors import CORS 
+    CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
 
 
 @app.before_request
@@ -143,5 +144,7 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7755, debug= True)
-    app.run()
+    if APP_STATE is False: 
+        app.run(host='0.0.0.0', port=7755, debug= True)
+    else:
+        app.run()
