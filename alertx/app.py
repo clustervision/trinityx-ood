@@ -31,10 +31,11 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-from flask import Flask, render_template, request, jsonify, url_for
-from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG, APP_STATE
+from flask import Flask, render_template, request, jsonify
+from constant import LICENSE, APP_STATE
 from log import Log
 from rest import Rest
+from helper import Helper
 
 
 LOGGER = Log.init_log('INFO')
@@ -51,30 +52,13 @@ if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
 
 
-@app.before_request
-def validate_home_directory():
-    """
-    Validate the $HOME directory of the user before proceeding further.
-    """
-    if request.path.startswith('/static/'):
-        return
-    if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
-    return None
-
-
 @app.route('/', methods=['GET'])
 def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    full_url = f"https://{request.host}{request.path}"
-    full_url = full_url[:-1]
-    full_url_app = f"{full_url}{url_for('home')}"
-    APP_URL = full_url_app[:-1]
-    PROMQL_URL = full_url.replace("8080", "9090")
-    STATUS_API = f"{PROMQL_URL}/api/v1/rules"
-    return render_template("index.html", promQLurl=PROMQL_URL, appUrl=APP_URL, statusAPI=STATUS_API, TRIX_CONFIG=TRIX_CONFIG)
+    url = Helper().app_url(request)
+    return render_template("index.html", PROMQL_URL=url['PROMQL_URL'], APP_URL=['APP_URL'])
 
 
 @app.route('/get_nodes', methods=['GET'])
@@ -95,7 +79,6 @@ def get_nodes():
     else:
         return jsonify(response), 400
     
-
 
 @app.route('/save_config', methods=['POST'])
 def save_config():
@@ -125,7 +108,6 @@ def save_nodes():
     """
     status, response = Rest().post_nodes(data=request.json)
     return jsonify({"response": response}), status
-
 
 
 @app.route('/license', methods=['GET'])
