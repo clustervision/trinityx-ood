@@ -195,7 +195,7 @@ class Rest():
         status = False
         response = {}
         headers = {'x-access-tokens': self.get_token()}
-        daemon_url = f'{self.daemon}/export/prometheus_nhc_rules'
+        daemon_url = f'{self.daemon}/export/prometheus_hw_rules'
         if (nodes):
             daemon_url = f'{daemon_url}?hostnames={nodes}'
         self.logger.debug(f'GET URL => {daemon_url}')
@@ -258,7 +258,6 @@ class Rest():
         self.logger.debug(f'POST DATA => {data}')
         try:
             http_response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            print(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
             self.logger.info(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
             content_type = http_response.headers.get("Content-Type", "")
             if "application/json" in content_type:
@@ -287,7 +286,7 @@ class Rest():
         status = 400
         response = ""
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
-        daemon_url = f'{self.daemon}/import/prometheus_nhc_rules'
+        daemon_url = f'{self.daemon}/import/prometheus_hw_rules'
         self.logger.info(f'POST URL => {daemon_url}')
         self.logger.debug(f'POST DATA => {data}')
         try:
