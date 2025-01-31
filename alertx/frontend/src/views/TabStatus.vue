@@ -152,8 +152,6 @@ export default defineComponent({
         }
       }
     }
-
-
     this.updateShowSpinner(false);
     await nextTick();
     $("#dataTable").DataTable();
