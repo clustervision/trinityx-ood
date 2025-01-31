@@ -12,7 +12,7 @@ interface Row {
   expr: string;
   for: string;
   labels: {
-    _trix_status: boolean;
+    disabled: string;
     nhc: string;
     severity: string;
   };
@@ -50,7 +50,7 @@ const ruleData = reactive({
   expr: props.row.expr,
   for: props.row.for,
   labels: {
-    _trix_status: props.row.labels._trix_status,
+    disabled: props.row.labels.disabled || 'false',
     nhc: props.row.labels.nhc,
     severity: props.row.labels.severity
   },
@@ -63,7 +63,7 @@ watch(
     ruleData.annotations.description = newRow.annotations.description;
     ruleData.expr = newRow.expr;
     ruleData.for = newRow.for;
-    ruleData.labels._trix_status = newRow.labels._trix_status;
+    ruleData.labels.disabled = newRow.labels.disabled || 'false';
     ruleData.labels.nhc = newRow.labels.nhc;
     ruleData.labels.severity = newRow.labels.severity;
   },
@@ -151,6 +151,12 @@ function update_configuration(count: number) {
 
 }
 
+const getComputedDisabled = (status: string | undefined) => computed({
+  get: () => status !== 'true',
+  set: (value: boolean) => {
+    if (value) { status = 'false'; ruleData.labels.disabled = 'false'; } else { status = 'true'; ruleData.labels.disabled = 'true'; }
+  }
+});
 </script>
 
 <template>
@@ -201,8 +207,8 @@ function update_configuration(count: number) {
                 <div class="col mb-0">
                   <label :for="`rule_status_${index}`" class="form-label">Enable</label>
                   <div class="form-check form-switch ">
-                    <input v-model="ruleData.labels._trix_status" type="checkbox" :id="`rule_status_${index}`" class="form-check-input" :checked="ruleData.labels._trix_status !== false">
-                    <label :id="`rule_status_label_${index}`" :for="`rule_status_${index}`" class="form-check-label">{{ ruleData.labels._trix_status ? 'ON' : 'OFF' }}</label>
+                    <input v-model="getComputedDisabled(ruleData.labels.disabled).value" type="checkbox" :id="`rule_status_${index}`" class="form-check-input" >
+                    <label :id="`rule_status_label_${index}`" :for="`rule_status_${index}`" class="form-check-label">{{ ruleData.labels.disabled !== 'true' ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
                 <div class="col mb-6">

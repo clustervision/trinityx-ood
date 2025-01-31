@@ -2,7 +2,7 @@
 import { type PropType } from 'vue';
 import EditConfig from '@/views/EditConfig.vue';
 import RuleModals from '@/components/RuleModals.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Modal } from 'bootstrap';
 
 const props = defineProps({
@@ -66,6 +66,13 @@ function deleteRule(count: number) {
   }
 }
 
+const getComputedDisabled = (status: string | undefined) => computed({
+  get: () => status !== 'true',
+  set: (value: boolean) => {
+    if (value) { status = 'false'; } else { status = 'true'; }
+  }
+});
+
 </script>
 
 <template>
@@ -94,7 +101,7 @@ function deleteRule(count: number) {
             :save_configuration = "save_configuration"
             :updateClass = "updateClass"
             :ruleRow = "ruleRow"
-            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '0s', 'expr': 'vector(0)', 'labels': {'_trix_status': false, 'nhc': 'no', 'severity': 'info'}}"
+            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '0s', 'expr': 'vector(0)', 'labels': {'disabled': 'false', 'nhc': 'no', 'severity': 'info'}}"
             :index = 0
             :selectedClass="selectedClass"
             @Toast="$emit('toast', $event)"
@@ -127,8 +134,8 @@ function deleteRule(count: number) {
                 <td>{{ row.for }}</td>
                 <td>
                   <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" v-model="row.labels._trix_status" @click="props.update_configuration(index + 1);" :id="`rule_status_${index + 1}`" />
-                    <label class="form-check-label" :for="`rule_status_${index + 1}`">{{ row.labels._trix_status ? 'ON' : 'OFF' }}</label>
+                    <input class="form-check-input" type="checkbox" v-model="getComputedDisabled(row.labels.disabled).value" @click="props.update_configuration(index + 1);" :id="`rule_status_${index + 1}`" data-toggle="switch"  />
+                    <label class="form-check-label" :for="`rule_status_${index + 1}`">{{ row.labels.disabled !== 'true' ? 'ON' : 'OFF' }} </label>
                   </div>
                 </td>
                 <td>

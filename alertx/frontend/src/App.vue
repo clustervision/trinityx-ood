@@ -180,9 +180,6 @@ function updateClass(event: Event) {
   }
 }
 
-// let url: string
-// url = window.location.href;
-// url = url.replace('#', '');
 const url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 async function saveRules(content: JSON) {
@@ -205,6 +202,7 @@ async function saveRules(content: JSON) {
     }
   }
 }
+
 interface Configuration {
   groups: Array<{
     name: string;
@@ -216,13 +214,14 @@ interface Configuration {
       expr: string;
       for: string;
       labels: {
-        _trix_status: boolean;
+        disabled: string;
         nhc: string;
         severity: string;
       };
     }>;
   }>;
 }
+
 interface RuleRow {
   alert: string;
   annotations: {
@@ -231,7 +230,7 @@ interface RuleRow {
   expr: string;
   for: string;
   labels: {
-    _trix_status: boolean;
+    disabled: string;
     nhc: string;
     severity: string;
   };
@@ -247,7 +246,7 @@ const ruleRow = (row: RuleRow, mode: string) => {
     "for": row.for,
     "expr": row.expr,
     "labels": {
-      "_trix_status": row.labels._trix_status,
+      "disabled": row.labels.disabled,
       "nhc": row.labels.nhc,
       "severity": row.labels.severity
     }
@@ -323,7 +322,7 @@ export default {
     },
 
     update_configuration(count: number) {
-      let status: boolean = false;
+      let status: string = "false";
       let nhc: string =  "no";
       let severity: string = "info";
 
@@ -341,7 +340,10 @@ export default {
 
 
       const statusElement = document.getElementById(`rule_status_${count}`);
-      if (statusElement) { status = (statusElement as HTMLInputElement).checked; }
+      if (statusElement) {
+        const status_value = (statusElement as HTMLInputElement).checked;
+        if(status_value === true){ status = 'false'; } else { status = 'true'; }
+      }
 
       const nhcElement = document.getElementById(`rule_nhc_${count}`);
       if (nhcElement) {
@@ -356,7 +358,7 @@ export default {
       this.configuration.groups[0].rules[count - 1].annotations.description  = description;
       this.configuration.groups[0].rules[count - 1].for                      = for_val;
       this.configuration.groups[0].rules[count - 1].expr                     = expr;
-      this.configuration.groups[0].rules[count - 1].labels._trix_status      = status;
+      this.configuration.groups[0].rules[count - 1].labels.disabled          = status;
       this.configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
       this.configuration.groups[0].rules[count - 1].labels.severity          = severity;
 
