@@ -25,7 +25,7 @@ interface AlertRules {
   }>;
 };
 
-interface AlertGroup {
+interface Prometheus {
   evaluationTime: number;
   file: string;
   interval: number;
@@ -35,9 +35,38 @@ interface AlertGroup {
   rules: AlertRules[];
 };
 
+interface AlertManager {
+    annotations: {description: string;};
+    endsAt: string;
+    fingerprint: string;
+    receivers: [{name: string;}],
+    startsAt: string;
+    status: {
+        inhibitedBy: [];
+        silencedBy: [];
+        state: string;
+    },
+    updatedAt: string;
+    generatorURL: string;
+    labels: {
+        alertname: string;
+        cluster: string;
+        exporter: string;
+        hostname: string;
+        job: string;
+        luna_group: string;
+        nhc: string;
+        severity: string;
+    }
+};
+
 export default defineComponent({
   props: {
     statusAPI: {
+      type: String,
+      required: true,
+    },
+    alertURL: {
       type: String,
       required: true,
     },
@@ -52,74 +81,79 @@ export default defineComponent({
   },
 
   async mounted() {
-
-    // const username = 'admin';
-    // const password = 'drqPne9GaN5r9QGUzrRQ';
-
-    // const alert_manager = await axios.get(`https://${username}:${password}@vmware-controller1.cluster:9093/api/v2/alerts`, {
-    //   headers: {
-    //     "Access-Control-Allow-Origin": "*",
-    //     // 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    //     // "Access-Control-Allow-Origin": 'http://localhost:5173',
-    //     // 'Origin': 'http://localhost:5173',
-    //     // 'Authorization': 'Basic ' + btoa(username + ':' + password) // Encode credentials
-    //   }
-    // });
-    const alert_manager = await axios.get('/api/api/v2/alerts');
-    console.log(alert_manager.data); 
-
-
-//     const alert_manager = await axios.get("https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/api/v2/alerts");
-// //     const alert_manager = await axios.get("https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/api/v2/alerts", {
-// //   headers: {
-// //     'Authorization': 'Basic ' + btoa('admin:drqPne9GaN5r9QGUzrRQ')
-// //   }
-// // });
-// console.log("=====================================");
-//       console.log(alert_manager.status);
-//       console.log(alert_manager);
-//       console.log("=====================================");
-    try {
-      this.updateShowSpinner(true);
-      // https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/
-      
-      const response = await axios.get(this.statusAPI);
-      // const response = await axios.get('/api/api/v2/alerts');
-      if (response.status === 200) {
-        response.data.data.groups.forEach((group: AlertGroup) => {
-          if (group.name === "trinityx"){
-            let count_rows:number = 0;
-            group.rules.forEach((rule) => {
-              if (rule.alerts && rule.alerts.length > 0){
-                rule.alerts.forEach((alert) => {
-                  count_rows = count_rows + 1;
-                  const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                  this.rows.push({"id": count_rows, "rule": rule.name, "nhc": rule.labels.nhc, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": affected});
-                });
-              } // else {
-                // count_rows = count_rows + 1;
-                // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
-                // }
-            });
-            if (this.rows.length === 0){
-              this.noRows = `There is only inactive alerts for TrinityX Group.`;
-            }
-          }
-        });
-
-
-      } else {
-        console.error("Error fetching rules:", response.status, response.data);
+    let alertData = false;
+    this.updateShowSpinner(true);
+    if (this.alertURL.includes("http")) {
+      try {
+        // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
+        const alert_manager = await axios.get(this.alertURL);
+        if (alert_manager.status === 200) {
+          let alert_rows:number = 0;
+          alert_manager.data.forEach((alert: AlertManager) => {
+            alert_rows = alert_rows + 1;
+            const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+            this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
+          });
+          if (this.rows.length === 0){
+            this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
+          } else { alertData = true; }
+        } else {
+          this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
+          console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching Alerts:", error);
+        if (error instanceof Error) {
+          this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
+        } else {
+          this.noRows += `\nERROR[Alert Manager] :: ${error}`;
+        }
       }
+    } else {
+      this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
+    }
+    if (alertData === false) {
+      try {
+        const response = await axios.get(this.statusAPI);
+        if (response.status === 200) {
+          response.data.data.groups.forEach((group: Prometheus) => {
+            if (group.name === "trinityx"){
+              let count_rows:number = 0;
+              group.rules.forEach((rule) => {
+                if (rule.alerts && rule.alerts.length > 0){
+                  rule.alerts.forEach((alert) => {
+                    count_rows = count_rows + 1;
+                    const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+                    this.rows.push({"id": count_rows, "rule": rule.name, "nhc": rule.labels.nhc, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": affected});
+                  });
+                } // else {
+                  // count_rows = count_rows + 1;
+                  // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
+                  // }
+              });
+              if (this.rows.length === 0){
+                this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
+              }
+            }
+          });
 
-    } catch (error: unknown) {
-      console.error("Error fetching status:", error);
-      if (error instanceof Error) {
-        this.noRows = `${error.message}: ${error.stack}`;
-      } else {
-        this.noRows = `${error}`;
+
+        } else {
+          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
+          console.error("Error fetching rules:", response.status, response.data);
+        }
+
+      } catch (error: unknown) {
+        console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
+        if (error instanceof Error) {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
+        } else {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+        }
       }
     }
+
+
     this.updateShowSpinner(false);
     await nextTick();
     $("#dataTable").DataTable();
@@ -154,7 +188,7 @@ export default defineComponent({
         <tr v-for="row in rows" :key="row.id">
           <td>{{ row.id }}</td>
           <td>{{ row.rule }}</td>
-          <td><span class="badge me-1" :class="{ 'bg-label-primary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing' , 'bg-label-warning': row.state === 'pending' }" >{{ row.state }}</span></td>
+          <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
           <td><span class="badge me-1" :class="{ 'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{ 'bg-label-primary': row.nhc === 'yes', 'bg-label-warning': row.nhc === 'no' }" >{{ row.nhc }}</span></td>
           <td>{{ row.eventTime }}</td>
@@ -170,6 +204,6 @@ export default defineComponent({
       </tbody>
     </table>
   </div>
-    <div v-else-if="noRows" class="alert alert-danger" role="alert">{{ noRows }}</div>
+  <div v-else-if="noRows" class="alert alert-danger" role="alert"><pre>{{ noRows }}</pre></div>
 
 </template>
