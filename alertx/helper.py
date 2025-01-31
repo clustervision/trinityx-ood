@@ -29,6 +29,7 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 import os
+from urllib.parse import urlparse, urlunparse
 from constant import APP_STATE, ALERT_MANAGER_DIR
 from flask import url_for
 from log import Log
@@ -50,7 +51,7 @@ class Helper():
         """
         This method will provide the URL's for the frontend application.
         """
-        response = {"PROMQL_URL": "", "APP_URL": ""}
+        response = {"PROMQL_URL": "", "APP_URL": "", "ALERT_URL": ""}
         full_url = f"https://{request.host}{request.path}"
         full_url = full_url[:-1]
         full_url_app = f"{full_url}{url_for('home')}"
@@ -61,27 +62,44 @@ class Helper():
             PROMQL_URL = full_url.replace("8080", "9090")
         response['PROMQL_URL'] = PROMQL_URL
         response['APP_URL'] = APP_URL
+        response['ALERT_URL'] = APP_URL
+        credentials = self.get_alert_manager_credential()
+        if isinstance(credentials, dict):
+            raw_url = PROMQL_URL.replace("9090", "9093")
+            raw_url = f"{raw_url}/api/v2/alerts"
+            parsed_url = urlparse(raw_url)
+            ALERT_URL = urlunparse((
+                parsed_url.scheme,
+                f"{credentials['user']}:{credentials['password']}@{parsed_url.netloc}",
+                parsed_url.path,
+                parsed_url.params,
+                parsed_url.query,
+                parsed_url.fragment
+            ))
+            response['ALERT_URL'] = f"{ALERT_URL}/api/v2/alerts"
+        else:
+            response['ALERT_URL'] = f"ERROR :: {credentials}"
         return response
 
 
-    def get_alert_url(self):
+    def get_alert_manager_credential(self):
         """
-        This method will provide the alert manager url.
+        This method will provide the alert manager credentials.
         """
-        #  https://admin:drqPne9GaN5r9QGUzrRQ@vmware-controller1.cluster:9093/
+        credentials = ""
         if not os.path.isdir(ALERT_MANAGER_DIR):
-            return {"error": f"Directory '{ALERT_MANAGER_DIR}' does not exist."}
-        
-        # Get list of files in the directory
+            credentials = f"Directory '{ALERT_MANAGER_DIR}' does not exist."
         files = [f for f in os.listdir(ALERT_MANAGER_DIR) if os.path.isfile(os.path.join(ALERT_MANAGER_DIR, f))]
-        
-        # Check if exactly one file exists
         if len(files) == 1:
+            file_name, _ = os.path.splitext(files[0])
             file_path = os.path.join(ALERT_MANAGER_DIR, files[0])
             with open(file_path, 'r', encoding='utf-8') as file:
-                content = file.read()
-            return {"filename": files[0], "content": content}
+                content = file.read().strip()
+            if not content:
+                credentials = f"File '{file_path}' is empty."
+            else:
+                credentials =  {"user": file_name, "password": content}
         else:
-            return {"error": f"Expected 1 file, but found {len(files)} files in '{ALERT_MANAGER_DIR}'."}
-        return ALERT_MANAGER_DIR
+            credentials = f"Expected 1 file, but found {len(files)} files in '{ALERT_MANAGER_DIR}'."
+        return credentials
 
