@@ -112,32 +112,31 @@
 
   <div class="row">
     <div class="col-md-6">
-      <div class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+      <div v-if="nodes_rules.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
               <th>#</th>
               <th>Rule</th>
-              <th>State</th>
               <th>Severity</th>
-              <th>NHC</th>
-              <th>Event Time</th>
-              <th>Affected</th>
+              <th>For Time</th>
+              <th>Expr</th>
+              <th>Summary</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td>asd</td>
-              <td>sdcsdc</td>
-              <td>dscsd</td>
-              <td>sdcsdc</td>
-              <td>sdcsdc</td>
-              <td>sdc</td>
+            <tr v-for="Rule in nodes_rules" :key="Rule.id">
+              <td>{{ Rule.id }}</td>
+              <td>{{ Rule.rule }}</td>
+              <td>{{ Rule.severity }}</td>
+              <td>{{ Rule.time }}</td>
+              <td>{{ Rule.expr }}</td>
+              <td>{{ Rule.summary }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+      <div v-else-if="rule_message" class="alert alert-danger" role="alert">{{ rule_message }}</div>
     </div>
     <div class="col-md-6">
       <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
@@ -202,10 +201,29 @@ interface resetObject {
   status: string;
 }
 
+interface NodeRules {
+  id: number;
+  alert: string;
+  annotations: {summary: string;};
+  expr: string;
+  for: string;
+  labels: {severity: string;};
+}
+
+interface RuleTable {
+  id: number;
+  rule: string;
+  severity: string;
+  time: string;
+  expr: string;
+  summary: string
+}
+
 interface Node {
   hostname: string;
   status: boolean;
   message: string;
+  data: NodeRules[];
   class: string;
 }
 
@@ -263,7 +281,10 @@ export default {
     const nodeStatus = ref(true);
     const nodeNHC = ref(true);
     const nodes = ref<Node[]>([]);
+    // const nodes_rules: { id: number; rule: string; severity: string; time: string; expr: string; summary: string }[] = [];
+    const nodes_rules =  ref<RuleTable[]>([]);
     const inventory = ref<InventoryItem[]>([]);
+    const rule_message = ref("");
     const hardware_message = ref("");
     const selectedIndices = ref<number[]>([]);
     const searchTerm = ref("");
@@ -302,7 +323,8 @@ export default {
           nodes.value = response.data.map((node: Node) => ({
             hostname: node.hostname,
             status: node.status,
-            message: node.message,
+            message: node.status ? '' : node.message,
+            rules: node.data ? node.data.groups[0].rules : [],
             class: node.status ? "primary" : "secondary",
           }));
         } else {
@@ -340,6 +362,8 @@ export default {
         if (selectedIndices.value.length === 0){
           inventory.value = [];
           hardware_message.value = ``;
+          nodes_rules.value = [];
+          rule_message.value = ``;
         } else {
           showInventory(selectedIndices.value[selectedIndices.value.length - 1]);
           showRules(selectedIndices.value[selectedIndices.value.length - 1]);
@@ -417,11 +441,9 @@ export default {
         force: false,
         disabled: status,
       }));
-      console.log(payload);
       try {
         const response = await axios.post(`${props.url}/save_nodes`, payload);
         if (response.status === 200) {
-          console.log(response.data.response);
           response.data.response.forEach((result: resetObject) => {
             Toast(result.message, result.status ? "bg-success" : "bg-secondary");
           });
@@ -471,40 +493,21 @@ export default {
 
     const showRules = async (index: number) =>  {
       const hostname = nodes.value[index].hostname;
-      // https://vmware-controller1.cluster:7050/export/prometheus_nhc_rules?hostnames=node001.cluster
-      // const inventoryURL = `${props.url}/export/prometheus_nhc_rules?hostnames=${hostname}`;
-      const inventoryURL = `https://vmware-controller1.cluster:7755/export/prometheus_nhc_rules?hostnames=${hostname}`;
-      try {
-        const response = await axios.get(inventoryURL, { httpsAgent: {rejectUnauthorized: false}  });
-        if (response.status === 200) {
-          console.log(response.data);
-          // inventory.value = response.data.data.result.map((hwd: Hardware, index: number) => ({
-          //   id: index + 1,
-          //   luna_group:   hwd.metric.luna_group ? hwd.metric.luna_group : "N/A",
-          //   hostname:     hwd.metric.hostname ? hwd.metric.hostname : "N/A",
-          //   class:        hwd.metric.class ? hwd.metric.class : "N/A",
-          //   vendor:       hwd.metric.vendor ? hwd.metric.vendor : "N/A",
-          //   description:  hwd.metric.description ? hwd.metric.description : "N/A",
-          //   size:         hwd.metric.size ? hwd.metric.size : "N/A",
-          //   clock:        hwd.metric.clock ? hwd.metric.clock : "N/A",
-          //   serial:       hwd.metric.serial ? hwd.metric.serial : "N/A",
-          //   product:      hwd.metric.product ? hwd.metric.product : "N/A",
-          //   handle:       hwd.metric.handle ? hwd.metric.handle : "N/A",
-          //   physid:       hwd.metric.physid ? hwd.metric.physid : "N/A",
-          //   version:      hwd.metric.version ? hwd.metric.version : "N/A",
-          //   slot:         hwd.metric.slot ? hwd.metric.slot : "N/A",
-          // }));
-          // if (inventory.value.length === 0){
-          //   hardware_message.value = `There is no Hardware Configuration is available for ${hostname}.`;
-          // }
-        } else {
-          Toast(`Error fetching Hardware: ${response.status}`, "bg-secondary");
-          hardware_message.value = `Error fetching Hardware: ${response.status} `;
+      if (nodes.value[index].rules.length === 0){
+        rule_message.value = nodes.value[index].message;
+      } else {
+        const nodeRules = nodes.value[index].rules;
+        nodes_rules.value = nodeRules.map((Rule: NodeRules, index: number) => ({
+          id: index + 1,
+          rule: Rule.alert,
+          severity: Rule.labels.severity,
+          time: Rule.for,
+          expr: Rule.expr,
+          summary: Rule.annotations.summary,
+        }));
+        if (nodes_rules.value.length === 0){
+          rule_message.value = `There is no Rule Configuration is available for ${hostname}.`;
         }
-      } catch (error) {
-        Toast("Failed to fetch URL.", "bg-secondary");
-        console.error("Error fetching URL:", error);
-        hardware_message.value = `Error fetching URL: ${error}`;
       }
     };
 
@@ -535,6 +538,8 @@ export default {
       triggerStatus,
       inventory,
       hardware_message,
+      nodes_rules,
+      rule_message,
     };
   },
 };
