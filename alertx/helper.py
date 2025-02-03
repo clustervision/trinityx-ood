@@ -75,7 +75,7 @@ class Helper():
                 parsed_url.query,
                 parsed_url.fragment
             ))
-            response['ALERT_URL'] = f"{ALERT_URL}/api/v2/alerts"
+            response['ALERT_URL'] = ALERT_URL
         else:
             response['ALERT_URL'] = f"ERROR :: {credentials}"
         return response
