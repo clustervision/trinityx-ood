@@ -370,6 +370,10 @@ export default {
 
     const revertSelection = () => {
       selectedIndices.value = [];
+      inventory.value = [];
+      hardware_message.value = ``;
+      nodes_rules.value = [];
+      rule_message.value = ``;
     };
 
     const selectFailedNodes = () => {
