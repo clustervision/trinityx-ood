@@ -14,8 +14,9 @@ import FooterBar from '@/views/FooterBar.vue';
 import { Modal } from 'bootstrap';
 
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
-const statusAPI = ref(window.statusAPI || import.meta.env.VITE_statusAPI);
-const rulesFile = ref(window.TRIX_CONFIG || "/trinity/local/etc/prometheus_server/rules/trix.rules");
+const alertURL = ref(window.ALERT_URL || import.meta.env.VITE_ALERT_URL);
+const statusAPI = promQLurl.value+'/api/v1/rules';
+const rulesFile = "/trinity/local/etc/prometheus_server/rules/trix.rules";
 
 onMounted(() => {
 });
@@ -110,7 +111,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <TabStatus :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
+              <TabStatus :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
@@ -129,7 +130,7 @@ onMounted(() => {
 
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
-              <TabNodes :url = "url" />
+              <TabNodes :url = "url" :promQLurl = "promQLurl" />
             </div>
           </div>
         </div>
@@ -179,13 +180,9 @@ function updateClass(event: Event) {
   }
 }
 
-// let url: string
-// url = window.location.href;
-// url = url.replace('#', '');
 const url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 async function saveRules(content: JSON) {
-  console.log(`Config POST API :: ${url}/save_config`)
   try {
     const response = await axios.post(url + '/save_config', content);
     return {"status": response.status, "message": response.data.response};
@@ -205,6 +202,7 @@ async function saveRules(content: JSON) {
     }
   }
 }
+
 interface Configuration {
   groups: Array<{
     name: string;
@@ -216,13 +214,14 @@ interface Configuration {
       expr: string;
       for: string;
       labels: {
-        _trix_status: boolean;
+        disabled: string;
         nhc: string;
         severity: string;
       };
     }>;
   }>;
 }
+
 interface RuleRow {
   alert: string;
   annotations: {
@@ -231,7 +230,7 @@ interface RuleRow {
   expr: string;
   for: string;
   labels: {
-    _trix_status: boolean;
+    disabled: string;
     nhc: string;
     severity: string;
   };
@@ -247,7 +246,7 @@ const ruleRow = (row: RuleRow, mode: string) => {
     "for": row.for,
     "expr": row.expr,
     "labels": {
-      "_trix_status": row.labels._trix_status,
+      "disabled": row.labels.disabled,
       "nhc": row.labels.nhc,
       "severity": row.labels.severity
     }
@@ -323,7 +322,7 @@ export default {
     },
 
     update_configuration(count: number) {
-      let status: boolean = false;
+      let status: string = "false";
       let nhc: string =  "no";
       let severity: string = "info";
 
@@ -341,7 +340,10 @@ export default {
 
 
       const statusElement = document.getElementById(`rule_status_${count}`);
-      if (statusElement) { status = (statusElement as HTMLInputElement).checked; }
+      if (statusElement) {
+        const status_value = (statusElement as HTMLInputElement).checked;
+        if(status_value === true){ status = 'false'; } else { status = 'true'; }
+      }
 
       const nhcElement = document.getElementById(`rule_nhc_${count}`);
       if (nhcElement) {
@@ -356,7 +358,7 @@ export default {
       this.configuration.groups[0].rules[count - 1].annotations.description  = description;
       this.configuration.groups[0].rules[count - 1].for                      = for_val;
       this.configuration.groups[0].rules[count - 1].expr                     = expr;
-      this.configuration.groups[0].rules[count - 1].labels._trix_status      = status;
+      this.configuration.groups[0].rules[count - 1].labels.disabled          = status;
       this.configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
       this.configuration.groups[0].rules[count - 1].labels.severity          = severity;
 
@@ -364,7 +366,6 @@ export default {
     },
 
     async save_configuration(newContent: unknown, modalID: string) {
-      console.log(newContent);
       let content: unknown;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
