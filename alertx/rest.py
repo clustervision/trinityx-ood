@@ -159,64 +159,6 @@ class Rest():
         return response
 
 
-    def get_luna_nodes(self):
-        """
-        This method will call the export API to export the Trinity Rules from the Prometheus Server
-        Configuration file via Luna2 Daemon.
-        """
-        status = False
-        response = {}
-        headers = {'x-access-tokens': self.get_token()}
-        daemon_url = f'{self.daemon}/config/node'
-        self.logger.debug(f'GET URL => {daemon_url}')
-        try:
-            call = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.info(f'Response {call.content} & HTTP Code {call.status_code}')
-            response_json = call.json()
-            if 'message' in response_json:
-                self.errors.append(response_json["message"])
-            else:
-                response = response_json
-                status = True
-        except requests.exceptions.SSLError as ssl_loop_error:
-            self.errors.append(f'ERROR :: {ssl_loop_error}')
-        except requests.exceptions.ConnectionError:
-            self.errors.append(f'Request Timeout while {daemon_url}')
-        except requests.exceptions.JSONDecodeError:
-            self.errors.append(f'JSON Decode Error {daemon_url}')
-        return status, response
-
-
-    def get_node_hw(self, nodes=None):
-        """
-        This method will call the export API to export the Trinity Rules from the Prometheus Server
-        Configuration file via Luna2 Daemon.
-        """
-        status = False
-        response = {}
-        headers = {'x-access-tokens': self.get_token()}
-        daemon_url = f'{self.daemon}/export/prometheus_nhc_rules'
-        if (nodes):
-            daemon_url = f'{daemon_url}?hostnames={nodes}'
-        self.logger.debug(f'GET URL => {daemon_url}')
-        try:
-            call = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.info(f'Response {call.content} & HTTP Code {call.status_code}')
-            response_json = call.json()
-            if 'message' in response_json:
-                self.errors.append(response_json["message"])
-            else:
-                response = response_json
-                status = True
-        except requests.exceptions.SSLError as ssl_loop_error:
-            self.errors.append(f'ERROR :: {ssl_loop_error}')
-        except requests.exceptions.ConnectionError:
-            self.errors.append(f'Request Timeout while {daemon_url}')
-        except requests.exceptions.JSONDecodeError:
-            self.errors.append(f'JSON Decode Error {daemon_url}')
-        return status, response
-
-
     def get_rules(self):
         """
         This method will call the export API to export the Trinity Rules from the Prometheus Server
@@ -258,7 +200,6 @@ class Rest():
         self.logger.debug(f'POST DATA => {data}')
         try:
             http_response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            print(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
             self.logger.info(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
             content_type = http_response.headers.get("Content-Type", "")
             if "application/json" in content_type:
@@ -279,6 +220,64 @@ class Rest():
         return status, response
 
 
+    def get_luna_nodes(self):
+        """
+        This method will call the export API to export the Trinity Rules from the Prometheus Server
+        Configuration file via Luna2 Daemon.
+        """
+        status = False
+        response = {}
+        headers = {'x-access-tokens': self.get_token()}
+        daemon_url = f'{self.daemon}/config/node'
+        self.logger.debug(f'GET URL => {daemon_url}')
+        try:
+            call = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            self.logger.info(f'Response {call.content} & HTTP Code {call.status_code}')
+            response_json = call.json()
+            if 'message' in response_json:
+                self.errors.append(response_json["message"])
+            else:
+                response = response_json
+                status = True
+        except requests.exceptions.SSLError as ssl_loop_error:
+            self.errors.append(f'ERROR :: {ssl_loop_error}')
+        except requests.exceptions.ConnectionError:
+            self.errors.append(f'Request Timeout while {daemon_url}')
+        except requests.exceptions.JSONDecodeError:
+            self.errors.append(f'JSON Decode Error {daemon_url}')
+        return status, response
+
+
+    def get_node_hw(self, nodes=None):
+        """
+        This method will call the export API to export the Trinity Rules from the Prometheus Server
+        Configuration file via Luna2 Daemon.
+        """
+        status = False
+        response = {}
+        headers = {'x-access-tokens': self.get_token()}
+        daemon_url = f'{self.daemon}/export/prometheus_hw_rules'
+        if (nodes):
+            daemon_url = f'{daemon_url}?hostnames={nodes}'
+        self.logger.debug(f'GET URL => {daemon_url}')
+        try:
+            call = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            self.logger.info(f'Response {call.content} & HTTP Code {call.status_code}')
+            response_json = call.json()
+            if 'message' in response_json:
+                self.errors.append(response_json["message"])
+            else:
+                response = response_json
+                status = True
+        except requests.exceptions.SSLError as ssl_loop_error:
+            self.errors.append(f'ERROR :: {ssl_loop_error}')
+        except requests.exceptions.ConnectionError:
+            self.errors.append(f'Request Timeout while {daemon_url}')
+        except requests.exceptions.JSONDecodeError:
+            self.errors.append(f'JSON Decode Error {daemon_url}')
+        return status, response
+
+
     def post_nodes(self, data=None):
         """
         This method will call the import API to import the Trinity Rules from the Prometheus Server
@@ -287,7 +286,68 @@ class Rest():
         status = 400
         response = ""
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
-        daemon_url = f'{self.daemon}/import/prometheus_nhc_rules'
+        daemon_url = f'{self.daemon}/import/prometheus_hw_rules'
+        self.logger.info(f'POST URL => {daemon_url}')
+        self.logger.debug(f'POST DATA => {data}')
+        try:
+            http_response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            self.logger.info(f'Response {http_response.content} & HTTP Code {http_response.status_code}')
+            content_type = http_response.headers.get("Content-Type", "")
+            if "application/json" in content_type:
+                response_json = http_response.json()
+                if 'message' in response_json:
+                    response = response_json["message"]
+                else:
+                    response = response_json
+                    status = 200
+            else:
+                response = http_response.text
+        except requests.exceptions.SSLError as ssl_loop_error:
+            self.errors.append(f'ERROR :: {ssl_loop_error}')
+        except requests.exceptions.ConnectionError:
+            self.errors.append(f'Request Timeout while {daemon_url}')
+        except requests.exceptions.JSONDecodeError:
+            self.errors.append(f'JSON Decode Error {daemon_url}')
+        return status, response
+
+
+    def get_global_hw(self):
+        """
+        This method will call the export API to export the Trinity Rules from the Prometheus Server
+        Configuration file via Luna2 Daemon.
+        """
+        status = False
+        response = {}
+        headers = {'x-access-tokens': self.get_token()}
+        daemon_url = f'{self.daemon}/export/prometheus_rules_settings'
+        self.logger.debug(f'GET URL => {daemon_url}')
+        try:
+            call = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            self.logger.info(f'Response {call.content} & HTTP Code {call.status_code}')
+            response_json = call.json()
+            if 'message' in response_json:
+                self.errors.append(response_json["message"])
+            else:
+                response = response_json
+                status = True
+        except requests.exceptions.SSLError as ssl_loop_error:
+            self.errors.append(f'ERROR :: {ssl_loop_error}')
+        except requests.exceptions.ConnectionError:
+            self.errors.append(f'Request Timeout while {daemon_url}')
+        except requests.exceptions.JSONDecodeError:
+            self.errors.append(f'JSON Decode Error {daemon_url}')
+        return status, response
+
+
+    def post_global_hw(self, data=None):
+        """
+        This method will call the import API to import the Trinity Rules from the Prometheus Server
+        Configuration file via Luna2 Daemon.
+        """
+        status = 400
+        response = ""
+        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
+        daemon_url = f'{self.daemon}/import/prometheus_rules_settings'
         self.logger.info(f'POST URL => {daemon_url}')
         self.logger.debug(f'POST DATA => {data}')
         try:

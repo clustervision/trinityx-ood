@@ -18,12 +18,12 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-This File is a Main File Alert Configurator.
+This File is a Main File AlertX.
 This file will provide the functionality to configure and manage the monitoring alerts for nodes.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2025, TrinityX[AlertX]'
 __license__     = 'GPL'
 __version__     = '2.0'
 __maintainer__  = 'Sumit Sharma'
@@ -31,11 +31,11 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-from flask import Flask, render_template, request, jsonify, url_for
-# from flask_cors import CORS # FOR Development Only
-from constant import LICENSE, TOKEN_FILE, TRIX_CONFIG
+from flask import Flask, render_template, request, jsonify
+from constant import LICENSE, APP_STATE
 from log import Log
 from rest import Rest
+from helper import Helper
 
 
 LOGGER = Log.init_log('INFO')
@@ -43,23 +43,15 @@ TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-# CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})      # FOR Development Only
-# CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})    # FOR Development Only
-# CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})        # FOR Development Only
-# CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})        # FOR Development Only
-# CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})        # FOR Development Only
-
-
-@app.before_request
-def validate_home_directory():
-    """
-    Validate the $HOME directory of the user before proceeding further.
-    """
-    if request.path.startswith('/static/'):
-        return
-    if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
-    return None
+if APP_STATE is False: # FOR Development Only
+    from flask_cors import CORS 
+    CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/get_global": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/set_global": {"origins": "http://localhost:5173"}})
 
 
 @app.route('/', methods=['GET'])
@@ -67,13 +59,8 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    full_url = f"https://{request.host}{request.path}"
-    full_url = full_url[:-1]
-    full_url_app = f"{full_url}{url_for('home')}"
-    APP_URL = full_url_app[:-1]
-    PROMQL_URL = full_url.replace("8080", "9090")
-    STATUS_API = f"{PROMQL_URL}/api/v1/rules"
-    return render_template("index.html", promQLurl=PROMQL_URL, appUrl=APP_URL, statusAPI=STATUS_API, TRIX_CONFIG=TRIX_CONFIG)
+    url = Helper().app_url(request)
+    return render_template("index.html", PROMQL_URL=url['PROMQL_URL'], APP_URL=['APP_URL'])
 
 
 @app.route('/get_nodes', methods=['GET'])
@@ -94,7 +81,6 @@ def get_nodes():
     else:
         return jsonify(response), 400
     
-
 
 @app.route('/save_config', methods=['POST'])
 def save_config():
@@ -126,6 +112,26 @@ def save_nodes():
     return jsonify({"response": response}), status
 
 
+@app.route('/get_global', methods=['GET'])
+def get_global():
+    """
+    This method will get the global settings for the Node Hardware.
+    """
+    check, setting = Rest().get_global_hw()
+    if check is True:
+        return jsonify(setting), 200
+    else:
+        return jsonify(setting), 400
+
+
+@app.route('/set_global', methods=['POST'])
+def set_global():
+    """
+    This method will save the global settings for the Node Hardware.
+    """
+    status, response = Rest().post_global_hw(data=request.json)
+    return jsonify({"response": response}), status
+
 
 @app.route('/license', methods=['GET'])
 def license_info():
@@ -143,5 +149,7 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7755, debug= True)
-    app.run()
+    if APP_STATE is False: 
+        app.run(host='0.0.0.0', port=7755, debug= True)
+    else:
+        app.run()

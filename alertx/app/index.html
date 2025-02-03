@@ -23,19 +23,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <title>Alert Configurator :: Luna</title>
     <script type="module" crossorigin src="{{ url_for( 'static', filename='index.js') }}"></script>
-    <link rel="stylesheet" crossorigin href="{{ url_for( 'static', filename='index.css') }}">
+    <link rel="stylesheet" crossorigin href="{{ url_for( 'static', filename='index.css') }}" />
+    <script>
+      window.PROMQL_URL = "{{ PROMQL_URL }}";
+      window.APP_URL = "{{ APP_URL }}";
+      window.ALERT_URL = "{{ ALERT_URL }}";
+    </script>
+    <!-- <script>
+      window.PROMQL_URL = "https://vmware-controller1.cluster:9090";
+      window.APP_URL = "http://vmware-controller1.cluster:7755";
+      window.ALERT_URL = "https://admin:z80ea5dbbce33DZ2z420@vmware-controller1.cluster:9093/api/v2/alerts";
+    </script> -->
   </head>
   <body>
-    
     <div id="app"></div>
-    <script>
-      window.PROMQL_URL = "{{ promQLurl }}";
-      window.APP_URL = "{{ appUrl }}";
-      window.statusAPI = "{{ statusAPI }}";
-      window.TRIX_CONFIG = "{{ TRIX_CONFIG }}";
-    </script>
-    
-
   </body>
 </html>
 

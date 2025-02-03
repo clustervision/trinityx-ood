@@ -25,7 +25,7 @@ Logger Object have basic methods: debug, error, info, critical and warnings.
 
 """
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2025, TrinityX[AlertX]'
 __license__     = 'GPL'
 __version__     = '2.0'
 __maintainer__  = 'Sumit Sharma'
