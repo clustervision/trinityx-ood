@@ -110,6 +110,27 @@ def save_nodes():
     return jsonify({"response": response}), status
 
 
+@app.route('/get_global', methods=['GET'])
+def get_global():
+    """
+    This method will get the global settings for the Node Hardware.
+    """
+    check, setting = Rest().get_global_hw()
+    if check is True:
+        return jsonify(setting), 200
+    else:
+        return jsonify(setting), 400
+
+
+@app.route('/set_global', methods=['POST'])
+def set_global():
+    """
+    This method will save the global settings for the Node Hardware.
+    """
+    status, response = Rest().post_global_hw(data=request.json)
+    return jsonify({"response": response}), status
+
+
 @app.route('/license', methods=['GET'])
 def license_info():
     """
