@@ -85,8 +85,8 @@ export default defineComponent({
     this.updateShowSpinner(true);
     if (this.alertURL.includes("http")) {
       try {
-        const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
-        // const alert_manager = await axios.get(this.alertURL);
+        // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
+        const alert_manager = await axios.get(this.alertURL);
         if (alert_manager.status === 200) {
           let alert_rows:number = 0;
           alert_manager.data.forEach((alert: AlertManager) => {

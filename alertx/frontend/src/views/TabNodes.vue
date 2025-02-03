@@ -50,7 +50,7 @@
       <div class="col-md-1 d-flex align-items-center">
         <strong class="align-self-center">Enable</strong>
         <div class="form-check form-switch mb-2 ms-5 align-self-center">
-          <input class="form-check-input" type="checkbox" checked data-toggle="switch" @change="triggerStatus()" v-model="nodeStatus" />
+          <input class="form-check-input" type="checkbox" checked data-toggle="switch" name="disabled" @change="setGlobalSettings($event)" v-model="nodeStatus" />
           <label class="form-check-label" :for="`rule_status_`">{{ nodeStatus ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
@@ -58,7 +58,7 @@
       <div class="col-md-1 d-flex align-items-center">
         <strong class="align-self-center">NHC</strong>
         <div class="form-check form-switch mb-2 ms-5 align-self-center">
-          <input class="form-check-input" type="checkbox" checked data-toggle="switch" @change="triggerNHC()"  v-model="nodeNHC" />
+          <input class="form-check-input" type="checkbox" checked data-toggle="switch" name="nhc" @change="setGlobalSettings($event)"  v-model="nodeNHC" />
           <label class="form-check-label" :for="`rule_nhc_`">{{ nodeNHC ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
@@ -104,7 +104,7 @@
     </div>
     <div class="toast-body">{{ toastMessage }}</div>
   </div>
-<br />
+  <br />
 
   <div class="row">
     <div class="col-md-6">
@@ -191,8 +191,9 @@ interface ToastItem {
 }
 
 interface resetObject {
+  hostname: string;
   message: string;
-  status: string;
+  status: boolean;
 }
 
 interface NodeRules {
@@ -405,17 +406,57 @@ export default {
       revertSelection();
     };
 
-    const triggerNHC = async () => {
-      const payload = nodes.value.map((node) => ({
-        hostname: node.hostname,
-        force: false,
-        nhc: nodeNHC.value,
-      }));
+    const fetchGlobalSettings = async () => {
       try {
-        const response = await axios.post(`${props.url}/save_nodes`, payload);
+        const response = await axios.get(`${props.url}/get_global`);
+        if (response.status === 200) {
+          if (response.data.hw.disabled === false){
+            nodeStatus.value = true;
+          } else {
+            nodeStatus.value = false;
+          }
+          if (response.data.hw.nhc === true){
+            nodeNHC.value = true;
+          } else {
+            nodeNHC.value = false;
+          }
+        } else {
+          Toast(`ERROR[Global Settings] :: ${response.status}`, "bg-secondary");
+        }
+      } catch (error) {
+        Toast("Failed to fetch Global Settings.", "bg-secondary");
+        console.error("Error fetching nodes:", error);
+      }
+    };
+    fetchGlobalSettings();
+
+    const setGlobalSettings = async (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const checkboxName = target.name;
+      let isChecked = target.checked;
+      let name = "";
+      if (checkboxName === "disabled" && isChecked === true){
+          isChecked = false;
+          name = "Enable";
+      } else if (checkboxName === "disabled" && isChecked === false){
+          isChecked = true;
+          name = "Enable";
+      } else { name = "NHC";}
+      const payload = { hw: { [checkboxName]: isChecked } };
+      try {
+        const response = await axios.post(`${props.url}/set_global`, payload);
         if (response.status === 200) {
           response.data.response.forEach((result: resetObject) => {
-            Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+            let message: string = '';
+            let messageClass: string = '';
+            if (result.status){
+              message = `Global[${name}] for ${result.hostname} is set to Enabled.`;
+              messageClass ="bg-success";
+            } else {
+              message = `ERROR :: Global[${name}] for ${result.hostname} is ${result.message}.`;
+              messageClass ="bg-secondary";
+            }
+            Toast(message, messageClass);
           });
         }
       } catch (error) {
@@ -424,35 +465,11 @@ export default {
       }
     };
 
-    const triggerStatus = async () => {
-      let status = false;
-      if (nodeStatus.value === true){
-        status = false;
-      } else {
-        status = true;
-      }
-      const payload = nodes.value.map((node) => ({
-        hostname: node.hostname,
-        force: false,
-        disabled: status,
-      }));
-      try {
-        const response = await axios.post(`${props.url}/save_nodes`, payload);
-        if (response.status === 200) {
-          response.data.response.forEach((result: resetObject) => {
-            Toast(result.message, result.status ? "bg-success" : "bg-secondary");
-          });
-        }
-      } catch (error) {
-        Toast("Error saving selected nodes.", "bg-secondary");
-        console.error("Error saving nodes:", error);
-      }
-    };
 
     const showInventory = async (index: number) =>  {
       const hostname = nodes.value[index].hostname;
-      // const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
-      const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      // const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
       try {
         const response = await axios.get(inventoryURL);
         if (response.status === 200) {
@@ -525,12 +542,14 @@ export default {
       showInventory,
       nodeStatus,
       nodeNHC,
-      triggerNHC,
-      triggerStatus,
+      // triggerNHC,
+      // triggerStatus,
       inventory,
       hardware_message,
       nodes_rules,
       rule_message,
+      fetchGlobalSettings,
+      setGlobalSettings,
     };
   },
 };
