@@ -370,7 +370,6 @@ export default {
         }
       }
 
-      // Need a logic here inventory.value = [];
     };
 
     const selectAllNodes = () => {

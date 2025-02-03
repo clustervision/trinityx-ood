@@ -169,6 +169,7 @@ export default defineComponent({
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Alerts
   </h4>
+  <div v-if="noRows" class="alert alert-danger" role="alert"><pre>{{ noRows }}</pre></div>
   <div v-if="rows.length" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
     <table id="dataTable" class="table table-bordered table-striped table-hover caption-top">
       <thead>
@@ -202,6 +203,5 @@ export default defineComponent({
       </tbody>
     </table>
   </div>
-  <div v-else-if="noRows" class="alert alert-danger" role="alert"><pre>{{ noRows }}</pre></div>
 
 </template>
