@@ -50,6 +50,8 @@ if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/get_global": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/set_global": {"origins": "http://localhost:5173"}})
 
 
 @app.route('/', methods=['GET'])
