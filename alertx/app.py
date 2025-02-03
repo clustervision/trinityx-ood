@@ -60,7 +60,7 @@ def home():
     This is the main method of application. It will Show Monitor Options.
     """
     url = Helper().app_url(request)
-    return render_template("index.html", PROMQL_URL=url['PROMQL_URL'], APP_URL=['APP_URL'])
+    return render_template("index.html", PROMQL_URL=url['PROMQL_URL'], APP_URL=url['APP_URL'], ALERT_URL=url['ALERT_URL'])
 
 
 @app.route('/get_nodes', methods=['GET'])

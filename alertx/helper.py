@@ -62,7 +62,6 @@ class Helper():
             PROMQL_URL = full_url.replace("8080", "9090")
         response['PROMQL_URL'] = PROMQL_URL
         response['APP_URL'] = APP_URL
-        response['ALERT_URL'] = APP_URL
         credentials = self.get_alert_manager_credential()
         if isinstance(credentials, dict):
             raw_url = PROMQL_URL.replace("9090", "9093")
