@@ -62,9 +62,6 @@
           <label class="form-check-label" :for="`rule_nhc_`">{{ nodeNHC ? 'ON' : 'OFF' }}</label>
         </div>
       </div>
-
-      <!-- <div class="col-md-1"><button type="button" class="btn btn-sm btn-info" @click="filterNodes('all')">All</button></div>
-      <div class="col-md-1"><button type="button" class="btn btn-sm btn-warning" @click="filterNodes('secondary')">Failed</button></div> -->
     </div>
     <br />
     <div class="row">
@@ -107,7 +104,6 @@
     </div>
     <div class="toast-body">{{ toastMessage }}</div>
   </div>
-
 <br />
 
   <div class="row">
@@ -121,7 +117,7 @@
               <th>Severity</th>
               <th>For Time</th>
               <th>Expr</th>
-              <th>Summary</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
@@ -131,7 +127,7 @@
               <td>{{ Rule.severity }}</td>
               <td>{{ Rule.time }}</td>
               <td>{{ Rule.expr }}</td>
-              <td>{{ Rule.summary }}</td>
+              <td>{{ Rule.description }}</td>
             </tr>
           </tbody>
         </table>
@@ -183,8 +179,6 @@
     </div>
   </div>
 
-
-
 </template>
 
 <script lang="ts">
@@ -202,12 +196,11 @@ interface resetObject {
 }
 
 interface NodeRules {
-  id: number;
   alert: string;
-  annotations: {summary: string;};
+  annotations: { description: string; };
   expr: string;
-  for: string;
-  labels: {severity: string;};
+  for: string | null;
+  labels: { severity: string; };
 }
 
 interface RuleTable {
@@ -216,14 +209,15 @@ interface RuleTable {
   severity: string;
   time: string;
   expr: string;
-  summary: string
+  description: string;
 }
 
 interface Node {
   hostname: string;
   status: boolean;
   message: string;
-  data: NodeRules[];
+  data: {groups: [{rules: NodeRules[]}];};
+  rules: NodeRules[];
   class: string;
 }
 
@@ -281,7 +275,6 @@ export default {
     const nodeStatus = ref(true);
     const nodeNHC = ref(true);
     const nodes = ref<Node[]>([]);
-    // const nodes_rules: { id: number; rule: string; severity: string; time: string; expr: string; summary: string }[] = [];
     const nodes_rules =  ref<RuleTable[]>([]);
     const inventory = ref<InventoryItem[]>([]);
     const rule_message = ref("");
@@ -289,7 +282,6 @@ export default {
     const selectedIndices = ref<number[]>([]);
     const searchTerm = ref("");
     const currentFilter = ref("all");
-
     const toastQueue = ref<ToastItem[]>([]);
     const showToast = ref(false);
     const toastMessage = ref("");
@@ -490,25 +482,21 @@ export default {
       }
     };
 
-    const showRules = async (index: number) =>  {
-      const hostname = nodes.value[index].hostname;
-      if (nodes.value[index].rules.length === 0){
-        rule_message.value = nodes.value[index].message;
-      } else {
-        const nodeRules = nodes.value[index].rules;
-        nodes_rules.value = nodeRules.map((Rule: NodeRules, index: number) => ({
-          id: index + 1,
-          rule: Rule.alert,
-          severity: Rule.labels.severity,
-          time: Rule.for,
-          expr: Rule.expr,
-          summary: Rule.annotations.summary,
-        }));
-        if (nodes_rules.value.length === 0){
-          rule_message.value = `There is no Rule Configuration is available for ${hostname}.`;
-        }
-      }
-    };
+  const showRules = async (index: number) =>  {
+    const hostname = nodes.value[index].hostname;
+    const nodeRules = nodes.value[index].rules;
+    nodes_rules.value = nodeRules.map((Rule, index): RuleTable => ({
+      id: index + 1,
+      rule: Rule.alert,
+      severity: Rule.labels.severity,
+      time: Rule.for ?? "",
+      expr: Rule.expr,
+      description: Rule.annotations.description,
+    }));
+    if (nodes_rules.value.length === 0){
+      rule_message.value = `There is no Rule Configuration is available for ${hostname}.`;
+    }
+  };
 
     // Lifecycle hook
     onMounted(() => {
