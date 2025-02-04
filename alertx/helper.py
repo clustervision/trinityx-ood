@@ -85,17 +85,16 @@ class Helper():
         """
         This method will provide the alert manager credentials.
         """
-        file_check = False
         credentials = ""
         if not os.path.isdir(ALERT_MANAGER_DIR):
             credentials = f"Directory '{ALERT_MANAGER_DIR}' does not exist."
         try:
             files = [f for f in os.listdir(ALERT_MANAGER_DIR) if os.path.isfile(os.path.join(ALERT_MANAGER_DIR, f))]
-            file_check = True
         except Exception as e:
             files = []
             credentials = f"ERROR :: Unable to read the files in '{ALERT_MANAGER_DIR}' :: {str(e)}"
-        if len(files) == 1 and file_check is True:
+            return credentials
+        if len(files) == 1:
             file_name, _ = os.path.splitext(files[0])
             file_path = os.path.join(ALERT_MANAGER_DIR, files[0])
             with open(file_path, 'r', encoding='utf-8') as file:
