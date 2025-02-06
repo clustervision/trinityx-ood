@@ -13,27 +13,41 @@ stages:
   - development
 
 variables:
-  NODE_ENV: production
+  #NODE_ENV: production
   BUILD_DIR: dist
 
 production:
   stage: production
-  image: node:18-alpine
+  image: node:20-alpine
   only:
     - main
   script:
-    - npm ci
+    - npm install -g
+    - npm i typescript -g
+    - npm i vite -g
+    - npm i vue-tsc -g
+    - npm i npm-run-all -g
+    - npm ci --omit-dev
     - npm run build
+    - cd $BUILD_DIR
+    - tar -zcvf alertx-gui-1.0.latest.tar.gz *
     - apk add openssh-client sshpass
-    - sshpass -p $SSH_PASSWORD scp -r -oStrictHostKeyChecking=no $BUILD_DIR/* $SSH_USER@$IPADDRESS:$LOCATION
+    - sshpass -p $SSH_PASSWORD scp -r -oStrictHostKeyChecking=no alertx-gui-1.0.latest.tar.gz $SSH_USER@$IPADDRESS:$LOCATION
 
 development:
   stage: development
-  image: node:18-alpine
+  image: node:20-alpine
   only:
     - development
   script:
-    - npm ci
+    - npm install -g
+    - npm i typescript -g
+    - npm i vite -g
+    - npm i vue-tsc -g
+    - npm i npm-run-all -g
+    - npm ci --omit-dev
     - npm run build
+    - cd $BUILD_DIR
+    - tar -zcvf alertx-gui-1.0.latest.tar.gz *
     - apk add openssh-client sshpass
-    - sshpass -p $SSH_PASSWORD scp -r -oStrictHostKeyChecking=no $BUILD_DIR/* $SSH_USER@$IPADDRESS:$DEV_LOCATION
+    - sshpass -p $SSH_PASSWORD scp -r -oStrictHostKeyChecking=no alertx-gui-1.0.latest.tar.gz $SSH_USER@$IPADDRESS:$DEV_LOCATION
