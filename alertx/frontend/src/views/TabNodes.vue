@@ -109,7 +109,7 @@
   <div class="row">
     <div class="col-md-6">
       <div v-if="nodes_rules.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
-        <!-- <h3>Rules Configurations for {{ nodes_rules[nodes_rules.length - 1].hostname }}</h3> -->
+        <h3>Rules Configurations for {{ nodes_rules[nodes_rules.length - 1].hostname }}</h3>
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
@@ -137,7 +137,7 @@
     </div>
     <div class="col-md-6">
       <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
-        <!-- <h3>Hardware Inventory for {{ inventory[inventory.length - 1].hostname }}</h3> -->
+        <h3>Hardware Inventory for {{ inventory[inventory.length - 1].hostname }}</h3>
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
