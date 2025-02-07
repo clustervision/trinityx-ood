@@ -109,6 +109,7 @@
   <div class="row">
     <div class="col-md-6">
       <div v-if="nodes_rules.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+        <!-- <h3>Rules Configurations for {{ nodes_rules[nodes_rules.length - 1].hostname }}</h3> -->
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
@@ -136,6 +137,7 @@
     </div>
     <div class="col-md-6">
       <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+        <!-- <h3>Hardware Inventory for {{ inventory[inventory.length - 1].hostname }}</h3> -->
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
@@ -211,6 +213,7 @@ interface RuleTable {
   time: string;
   expr: string;
   description: string;
+  hostname: string;
 }
 
 interface Node {
@@ -468,8 +471,8 @@ export default {
 
     const showInventory = async (index: number) =>  {
       const hostname = nodes.value[index].hostname;
-      const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
-      // const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      // const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
       try {
         const response = await axios.get(inventoryURL);
         if (response.status === 200) {
@@ -513,6 +516,7 @@ export default {
       time: Rule.for ?? "",
       expr: Rule.expr,
       description: Rule.annotations.description,
+      hostname: hostname,
     }));
     if (nodes_rules.value.length === 0){
       rule_message.value = `There is no Rule Configuration is available for ${hostname}.`;
