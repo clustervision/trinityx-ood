@@ -461,6 +461,10 @@ export default {
       const payload = { hw: { [checkboxName]: isChecked } };
       try {
         const response = await axios.post(`${props.url}/set_global`, payload);
+        console.log(`${props.url}/set_global`);
+        console.log(payload);
+        console.log(response.status);
+        console.log(response.data.response);
         if (response.status === 200) {
           response.data.response.forEach((result: resetObject) => {
             let message: string = '';
@@ -472,10 +476,13 @@ export default {
               message = `ERROR :: Global[${name}] for ${result.hostname} is ${result.message}.`;
               messageClass ="bg-secondary";
             }
+            console.log(message);
+            console.log(messageClass);
             Toast(message, messageClass);
           });
         }
       } catch (error) {
+        console.log(error);
         Toast("Error saving selected nodes.", "bg-secondary");
         console.error("Error saving nodes:", error);
       }
