@@ -78,11 +78,19 @@
       <div class="col-md-4">
         <div class="input-group input-group-sm">
           <span class="input-group-text"><box-icon name="search" color="blue" size="sm"></box-icon></span>
-          <input type="text" class="form-control" placeholder="Search By Name" v-model="searchTerm" />
+          <input type="text" class="form-control" placeholder="Filter By Name" v-model="searchTerm" />
         </div>
       </div>
-      <div class="col-md-2">
-        <button type="button" class="btn btn-sm btn-success" @click="resetSelectedNodes">Reset Selected Nodes</button>
+    </div>
+    <br />
+    <div class="row">
+      <div class="col-md-1"><span class="nav_head">Actions: </span></div>
+
+      <div class="col-md-4 d-flex align-items-center">
+        <strong class="align-self-center">Reset Selected Nodes</strong>
+        <div class="form-check form-switch mb-2 ms-5 align-self-center">
+          <button type="button" class="btn btn-sm btn-warning" @click="resetSelectedNodes"><strong>Reset Nodes</strong></button>
+        </div>
       </div>
     </div>
     <br />
@@ -109,6 +117,7 @@
   <div class="row">
     <div class="col-md-6">
       <div v-if="nodes_rules.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+        <h3>Rules Configurations for {{ nodes_rules[nodes_rules.length - 1].hostname }}</h3>
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
@@ -136,6 +145,7 @@
     </div>
     <div class="col-md-6">
       <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+        <h3>Hardware Inventory for {{ inventory[inventory.length - 1].hostname }}</h3>
         <table class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
@@ -211,6 +221,7 @@ interface RuleTable {
   time: string;
   expr: string;
   description: string;
+  hostname: string;
 }
 
 interface Node {
@@ -384,26 +395,31 @@ export default {
     };
 
     const resetSelectedNodes = async () => {
-      const selectedNodes = selectedIndices.value.map(
-        (index) => nodes.value[index]
-      );
-      const payload = selectedNodes.map((node) => ({
-        hostname: node.hostname,
-        force: true,
-      }));
+      if (selectedIndices.value.length === 0){
+        Toast("Please select at least one node.", "bg-warning");
+      } else {
+        const selectedNodes = selectedIndices.value.map(
+          (index) => nodes.value[index]
+        );
+        const payload = selectedNodes.map((node) => ({
+          hostname: node.hostname,
+          force: true,
+        }));
 
-      try {
-        const response = await axios.post(`${props.url}/save_nodes`, payload);
-        if (response.status === 200) {
-          response.data.response.forEach((result: resetObject) => {
-            Toast(result.message, result.status ? "bg-success" : "bg-secondary");
-          });
+        try {
+          const response = await axios.post(`${props.url}/save_nodes`, payload);
+          if (response.status === 200) {
+            response.data.response.forEach((result: resetObject) => {
+              Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+            });
+          }
+        } catch (error) {
+          Toast("Error saving selected nodes.", "bg-secondary");
+          console.error("Error saving nodes:", error);
         }
-      } catch (error) {
-        Toast("Error saving selected nodes.", "bg-secondary");
-        console.error("Error saving nodes:", error);
+        revertSelection();
       }
-      revertSelection();
+
     };
 
     const fetchGlobalSettings = async () => {
@@ -468,8 +484,8 @@ export default {
 
     const showInventory = async (index: number) =>  {
       const hostname = nodes.value[index].hostname;
-      const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
-      // const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      // const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
       try {
         const response = await axios.get(inventoryURL);
         if (response.status === 200) {
@@ -513,6 +529,7 @@ export default {
       time: Rule.for ?? "",
       expr: Rule.expr,
       description: Rule.annotations.description,
+      hostname: hostname,
     }));
     if (nodes_rules.value.length === 0){
       rule_message.value = `There is no Rule Configuration is available for ${hostname}.`;

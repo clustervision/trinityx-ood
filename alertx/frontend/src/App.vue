@@ -182,19 +182,32 @@ function updateClass(event: Event) {
 
 const url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
+function deepClean(obj: unknown): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map(deepClean).filter((item) => item !== null);
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([_, value]) => value !== null && value !== "null")
+        .map(([key, value]) => [key, deepClean(value)])
+    );
+  }
+  return obj;
+}
+
 async function saveRules(content: JSON) {
+  const cleanedData = deepClean(content);
   try {
-    const response = await axios.post(url + '/save_config', content);
+    const response = await axios.post(url + '/save_config', cleanedData);
     return {"status": response.status, "message": response.data.response};
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       console.log(error);
       return {
         status: error.response?.status || 500,
-        message: error.response?.data || 'An error occurred during the request.',
+        message: error.response?.data.response || 'An error occurred during the request.',
       };
     } else {
-      console.log(error);
       return {
         status: 500,
         message: 'An unknown error occurred.',

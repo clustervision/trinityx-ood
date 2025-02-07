@@ -48,7 +48,7 @@ const ruleData = reactive({
   alert: props.row.alert,
   annotations: { description: props.row.annotations.description },
   expr: props.row.expr,
-  for: props.row.for,
+  for: props.row.for || '',
   labels: {
     disabled: props.row.labels.disabled || 'false',
     nhc: props.row.labels.nhc,
@@ -62,7 +62,7 @@ watch(
     ruleData.alert = newRow.alert;
     ruleData.annotations.description = newRow.annotations.description;
     ruleData.expr = newRow.expr;
-    ruleData.for = newRow.for;
+    ruleData.for = newRow.for || '';
     ruleData.labels.disabled = newRow.labels.disabled || 'false';
     ruleData.labels.nhc = newRow.labels.nhc;
     ruleData.labels.severity = newRow.labels.severity;
@@ -131,9 +131,18 @@ function update_configuration(count: number) {
     emit('toast', {message: 'Alert Name is required.', toastClass: 'bg-danger'});
     error = true;
   }
+  if (ruleData.annotations.description === ""){
+    emit('toast', {message: 'Alert Description is required.', toastClass: 'bg-danger'});
+    error = true;
+  }
+  if (ruleData.expr === ""){
+    emit('toast', {message: 'Alert Expression is required.', toastClass: 'bg-danger'});
+    error = true;
+  }
 
-  const rule = toRaw(ruleData);
   if (error === false){
+    if (ruleData.for === ""){ ruleData.for = "null"; }
+    const rule = toRaw(ruleData);
     if (count === 0){
       const add_rule_config = JSON.parse(JSON.stringify(props.configuration));
       if (add_rule_config?.groups?.[0]?.rules) {
@@ -187,7 +196,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`rule_description_${index}`" class="form-label">Rule Description</label>
-                  <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index}`" class="form-control" placeholder="Enter Rule Description" />
+                  <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index}`" class="form-control" required placeholder="Enter Rule Description" />
                 </div>
               </div>
               <div class="row">
@@ -200,7 +209,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
                 <div class="col mb-6">
                   <label :for="`exprInput_${index}`" class="form-label">Rule Expr</label>
                   <PromQLEditor :promQLurl="promQLurl" :editor-id="`editor_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
-                  <input type="hidden" v-model="ruleData.expr" :id="`rule_editor__${index}`" class="form-control" />
+                  <input type="hidden" v-model="ruleData.expr" :id="`rule_editor__${index}`" required class="form-control" />
                 </div>
               </div>
               <div class="row">

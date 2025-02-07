@@ -35,30 +35,30 @@ interface Prometheus {
   rules: AlertRules[];
 };
 
-interface AlertManager {
-    annotations: {description: string;};
-    endsAt: string;
-    fingerprint: string;
-    receivers: [{name: string;}],
-    startsAt: string;
-    status: {
-        inhibitedBy: [];
-        silencedBy: [];
-        state: string;
-    },
-    updatedAt: string;
-    generatorURL: string;
-    labels: {
-        alertname: string;
-        cluster: string;
-        exporter: string;
-        hostname: string;
-        job: string;
-        luna_group: string;
-        nhc: string;
-        severity: string;
-    }
-};
+// interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+//     annotations: {description: string;};
+//     endsAt: string;
+//     fingerprint: string;
+//     receivers: [{name: string;}],
+//     startsAt: string;
+//     status: {
+//         inhibitedBy: [];
+//         silencedBy: [];
+//         state: string;
+//     },
+//     updatedAt: string;
+//     generatorURL: string;
+//     labels: {
+//         alertname: string;
+//         cluster: string;
+//         exporter: string;
+//         hostname: string;
+//         job: string;
+//         luna_group: string;
+//         nhc: string;
+//         severity: string;
+//     }
+// }; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
 
 export default defineComponent({
   props: {
@@ -81,38 +81,38 @@ export default defineComponent({
   },
 
   async mounted() {
-    let alertData = false;
+    // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     this.updateShowSpinner(true);
     if (this.alertURL.includes("http")) {
-      try {
-        // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
-        const alert_manager = await axios.get(this.alertURL);
-        if (alert_manager.status === 200) {
-          let alert_rows:number = 0;
-          alert_manager.data.forEach((alert: AlertManager) => {
-            alert_rows = alert_rows + 1;
-            const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-            this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
-          });
-          if (this.rows.length === 0){
-            this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
-          } else { alertData = true; }
-        } else {
-          this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
-          console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
-        }
-      } catch (error: unknown) {
-        console.error("Error fetching Alerts:", error);
-        if (error instanceof Error) {
-          this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
-        } else {
-          this.noRows += `\nERROR[Alert Manager] :: ${error}`;
-        }
-      }
+      // try {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
+      //   const alert_manager = await axios.get(this.alertURL);
+      //   if (alert_manager.status === 200) {
+      //     let alert_rows:number = 0;
+      //     alert_manager.data.forEach((alert: AlertManager) => {
+      //       alert_rows = alert_rows + 1;
+      //       const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+      //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
+      //     });
+      //     if (this.rows.length === 0){
+      //       this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
+      //     } else { alertData = true; }
+      //   } else {
+      //     this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
+      //     console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
+      //   }
+      // } catch (error: unknown) {
+      //   console.error("Error fetching Alerts:", error);
+      //   if (error instanceof Error) {
+      //     this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
+      //   } else {
+      //     this.noRows += `\nERROR[Alert Manager] :: ${error}`;
+      //   }
+      // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     } else {
       this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
     }
-    if (alertData === false) {
+    // if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       try {
         const response = await axios.get(this.statusAPI);
         if (response.status === 200) {
@@ -151,7 +151,7 @@ export default defineComponent({
           this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
         }
       }
-    }
+    // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     this.updateShowSpinner(false);
     await nextTick();
     $("#dataTable").DataTable();

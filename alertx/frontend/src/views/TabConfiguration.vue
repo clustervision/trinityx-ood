@@ -101,7 +101,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
             :save_configuration = "save_configuration"
             :updateClass = "updateClass"
             :ruleRow = "ruleRow"
-            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '0s', 'expr': 'vector(0)', 'labels': {'disabled': 'false', 'nhc': 'no', 'severity': 'info'}}"
+            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'disabled': 'false', 'nhc': 'no', 'severity': 'info'}}"
             :index = 0
             :selectedClass="selectedClass"
             @Toast="$emit('toast', $event)"
