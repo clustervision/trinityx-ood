@@ -83,8 +83,8 @@ export default defineComponent({
   async mounted() {
     // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     this.updateShowSpinner(true);
-    if (this.alertURL.includes("http")) {
-      // try {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+    // if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      // try {
       //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
       //   const alert_manager = await axios.get(this.alertURL);
       //   if (alert_manager.status === 200) {
@@ -108,10 +108,10 @@ export default defineComponent({
       //   } else {
       //     this.noRows += `\nERROR[Alert Manager] :: ${error}`;
       //   }
-      // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-    } else {
-      this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
-    }
+      // }
+    // } else {
+      // this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
+    // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     // if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       try {
         const response = await axios.get(this.statusAPI);
