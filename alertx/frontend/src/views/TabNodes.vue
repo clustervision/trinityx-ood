@@ -78,11 +78,19 @@
       <div class="col-md-4">
         <div class="input-group input-group-sm">
           <span class="input-group-text"><box-icon name="search" color="blue" size="sm"></box-icon></span>
-          <input type="text" class="form-control" placeholder="Search By Name" v-model="searchTerm" />
+          <input type="text" class="form-control" placeholder="Filter By Name" v-model="searchTerm" />
         </div>
       </div>
-      <div class="col-md-2">
-        <button type="button" class="btn btn-sm btn-success" @click="resetSelectedNodes">Reset Selected Nodes</button>
+    </div>
+    <br />
+    <div class="row">
+      <div class="col-md-1"><span class="nav_head">Actions: </span></div>
+
+      <div class="col-md-4 d-flex align-items-center">
+        <strong class="align-self-center">Reset Selected Nodes</strong>
+        <div class="form-check form-switch mb-2 ms-5 align-self-center">
+          <button type="button" class="btn btn-sm btn-warning" @click="resetSelectedNodes"><strong>Reset Nodes</strong></button>
+        </div>
       </div>
     </div>
     <br />
@@ -387,26 +395,31 @@ export default {
     };
 
     const resetSelectedNodes = async () => {
-      const selectedNodes = selectedIndices.value.map(
-        (index) => nodes.value[index]
-      );
-      const payload = selectedNodes.map((node) => ({
-        hostname: node.hostname,
-        force: true,
-      }));
+      if (selectedIndices.value.length === 0){
+        Toast("Please select at least one node.", "bg-warning");
+      } else {
+        const selectedNodes = selectedIndices.value.map(
+          (index) => nodes.value[index]
+        );
+        const payload = selectedNodes.map((node) => ({
+          hostname: node.hostname,
+          force: true,
+        }));
 
-      try {
-        const response = await axios.post(`${props.url}/save_nodes`, payload);
-        if (response.status === 200) {
-          response.data.response.forEach((result: resetObject) => {
-            Toast(result.message, result.status ? "bg-success" : "bg-secondary");
-          });
+        try {
+          const response = await axios.post(`${props.url}/save_nodes`, payload);
+          if (response.status === 200) {
+            response.data.response.forEach((result: resetObject) => {
+              Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+            });
+          }
+        } catch (error) {
+          Toast("Error saving selected nodes.", "bg-secondary");
+          console.error("Error saving nodes:", error);
         }
-      } catch (error) {
-        Toast("Error saving selected nodes.", "bg-secondary");
-        console.error("Error saving nodes:", error);
+        revertSelection();
       }
-      revertSelection();
+
     };
 
     const fetchGlobalSettings = async () => {
