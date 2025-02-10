@@ -451,39 +451,41 @@ export default {
       const checkboxName = target.name;
       let isChecked = target.checked;
       let name = "";
+      let answer = false;
+      let error_str = "";
       if (checkboxName === "disabled" && isChecked === true){
           isChecked = false;
           name = "Enable";
+          answer = true;
       } else if (checkboxName === "disabled" && isChecked === false){
           isChecked = true;
           name = "Enable";
-      } else { name = "NHC";}
+          answer = false;
+      } else { name = "NHC"; answer = isChecked; }
       const payload = { hw: { [checkboxName]: isChecked } };
       try {
         const response = await axios.post(`${props.url}/set_global`, payload);
-        console.log(`${props.url}/set_global`);
-        console.log(payload);
-        console.log(response.status);
-        console.log(response.data.response);
         if (response.status === 200) {
-          response.data.response.forEach((result: resetObject) => {
-            let message: string = '';
-            let messageClass: string = '';
-            if (result.status){
-              message = `Global[${name}] for ${result.hostname} is set to Enabled.`;
-              messageClass ="bg-success";
-            } else {
-              message = `ERROR :: Global[${name}] for ${result.hostname} is ${result.message}.`;
-              messageClass ="bg-secondary";
-            }
-            console.log(message);
-            console.log(messageClass);
-            Toast(message, messageClass);
-          });
+          error_str = response.data.response;
+          if (response.data.response.length === 0){
+            Toast(`Global[${name}] is set to [${answer}] for All Nodes.`, "bg-success");
+          } else {
+            response.data.response.forEach((result: resetObject) => {
+              let message: string = '';
+              let messageClass: string = '';
+              if (result.status){
+                message = `Global[${name}] for ${result.hostname} is set to Enabled.`;
+                messageClass = "bg-success";
+              } else {
+                message = `ERROR :: Global[${name}] for ${result.hostname} is ${result.message}.`;
+                messageClass = "bg-secondary";
+              }
+              Toast(message, messageClass);
+            });
+          }
         }
       } catch (error) {
-        console.log(error);
-        Toast("Error saving selected nodes.", "bg-secondary");
+        Toast(`ERROR :: ${error_str} ${error}`, "bg-secondary");
         console.error("Error saving nodes:", error);
       }
     };
