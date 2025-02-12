@@ -474,7 +474,7 @@ export default {
               let message: string = '';
               let messageClass: string = '';
               if (result.status){
-                message = `Global[${name}] for ${result.hostname} is set to Enabled.`;
+                message = `Global[${name}] for ${result.hostname} is set to [${answer}].`;
                 messageClass = "bg-success";
               } else {
                 message = `ERROR :: Global[${name}] for ${result.hostname} is ${result.message}.`;
