@@ -30,8 +30,8 @@ __status__      = "Development"
 
 import os
 from urllib.parse import urlparse, urlunparse
-from constant import APP_STATE, ALERT_MANAGER_DIR
 from flask import url_for
+from constant import APP_STATE, ALERT_MANAGER_DIR
 from log import Log
 
 

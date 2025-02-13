@@ -31,12 +31,16 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
+import requests
+import urllib3
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from constant import LICENSE, APP_STATE
 from log import Log
 from rest import Rest
 from helper import Helper
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
@@ -44,7 +48,6 @@ TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 if APP_STATE is False: # FOR Development Only
-    from flask_cors import CORS 
     CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
@@ -52,6 +55,24 @@ if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/get_global": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/set_global": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/proxy": {"origins": "http://localhost:5173"}})
+
+
+@app.route('/proxy', methods=['GET'])
+def proxy():
+    """
+    This is AlertX application proxy pass, which can pass alert manager, Prometheus or any other
+    CORS related URL, and give back the clean response.
+    """
+    target_url = request.args.get('url')
+    if not target_url:
+        return jsonify({'error': 'URL parameter is required'}), 400
+    try:
+        response = requests.get(target_url, verify=False, timeout=5)
+        response.raise_for_status()
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/', methods=['GET'])
@@ -73,14 +94,14 @@ def get_nodes():
     if 'config' in response:
         for _, details in response["config"]["node"].items():
             node_list.append(details["hostname"])
-        if (node_list):
+        if node_list:
             node_list = ",".join(node_list)
             status, response = Rest().get_node_hw(nodes = node_list)
     if status is True:
         return jsonify(response), 200
     else:
         return jsonify(response), 400
-    
+
 
 @app.route('/save_config', methods=['POST'])
 def save_config():

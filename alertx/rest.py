@@ -257,7 +257,7 @@ class Rest():
         response = {}
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/export/prometheus_hw_rules'
-        if (nodes):
+        if nodes:
             daemon_url = f'{daemon_url}?hostnames={nodes}'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
