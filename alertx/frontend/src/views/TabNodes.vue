@@ -420,7 +420,8 @@ export default {
           if (response.status === 200) {
             response.data.response.forEach((result: resetObject) => {
               if (result.status === true){
-                Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+                // Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+                Toast(`SUCCESS[RESET] :: Node ${result.hostname} is Reset.`, "bg-success");
               } else {
                 error_message.value.push(result.message.replace(/(.{200})/g, "$1\n"));
               }
@@ -431,6 +432,7 @@ export default {
           console.error("Error saving nodes:", error);
         }
         revertSelection();
+        fetchNodes();
       }
 
     };
