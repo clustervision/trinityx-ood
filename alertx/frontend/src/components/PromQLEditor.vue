@@ -13,6 +13,10 @@ import { EditorView } from '@codemirror/view';
 
 // Define props
 const props = defineProps({
+  url: {
+    type: String,
+    required: true,
+  },
   promQLurl: {
     type: String,
     required: true,
@@ -48,7 +52,8 @@ onMounted(() => {
       remote: {
         httpErrorHandler: (error: string) => console.error(error),
         httpMethod: 'GET',
-        url: props.promQLurl,
+        // url: props.promQLurl,
+        url: `${props.url}/proxy?url=${props.promQLurl}`,
       },
     });
 

@@ -43,6 +43,13 @@
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Node Hardware
   </h4>
+  <div v-if="error_message.length">
+    <div v-for="message in error_message" :key="message" class="alert alert-danger alert-dismissible" role="alert">
+      <pre>{{ message }}</pre>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  </div>
+  
   <div>
     <div class="row">
       <div class="col-md-1"><span class="nav_head">Global Settings: </span></div>
@@ -297,6 +304,7 @@ export default {
     const toastQueue = ref<ToastItem[]>([]);
     const showToast = ref(false);
     const toastMessage = ref("");
+    const error_message = ref<string[]>([]);
     const toastClass = ref("");
 
     function Toast(message: string, toastClassName: string) {
@@ -395,6 +403,7 @@ export default {
     };
 
     const resetSelectedNodes = async () => {
+      error_message.value = [];
       if (selectedIndices.value.length === 0){
         Toast("Please select at least one node.", "bg-warning");
       } else {
@@ -410,7 +419,11 @@ export default {
           const response = await axios.post(`${props.url}/save_nodes`, payload);
           if (response.status === 200) {
             response.data.response.forEach((result: resetObject) => {
-              Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+              if (result.status === true){
+                Toast(result.message, result.status ? "bg-success" : "bg-secondary");
+              } else {
+                error_message.value.push(result.message.replace(/(.{200})/g, "$1\n"));
+              }
             });
           }
         } catch (error) {
@@ -447,6 +460,7 @@ export default {
     fetchGlobalSettings();
 
     const setGlobalSettings = async (event: Event) => {
+      error_message.value = [];
       const target = event.target as HTMLInputElement;
       const checkboxName = target.name;
       let isChecked = target.checked;
@@ -474,13 +488,15 @@ export default {
               let message: string = '';
               let messageClass: string = '';
               if (result.status){
-                message = `Global[${name}] for ${result.hostname} is set to Enabled.`;
+                message = `Global[${name}] for ${result.hostname} is set to [${answer}].`;
                 messageClass = "bg-success";
+                Toast(message, messageClass);
               } else {
                 message = `ERROR :: Global[${name}] for ${result.hostname} is ${result.message}.`;
                 messageClass = "bg-secondary";
+                error_message.value.push(message);
               }
-              Toast(message, messageClass);
+              
             });
           }
         }
@@ -493,7 +509,7 @@ export default {
 
     const showInventory = async (index: number) =>  {
       const hostname = nodes.value[index].hostname;
-      const inventoryURL = `${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
+      const inventoryURL = `${props.url}/proxy?url=${props.promQLurl}/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
       // const inventoryURL = `https://demo-controller1.cluster:9090/api/v1/query?query=lshw_device%7Bhostname%3D%7E%22${hostname}%22%2C+id%3D%7E%22cpu%7Cdisplay%7Cnetwork%7Cdisk%7Cbank%3A.*%22%7D`;
       try {
         const response = await axios.get(inventoryURL);
@@ -522,9 +538,9 @@ export default {
           hardware_message.value = `Error fetching Hardware: ${response.status} `;
         }
       } catch (error) {
-        Toast("Failed to fetch URL.", "bg-secondary");
+        // Toast(`Failed to fetch Hardware Inventory for ${hostname}.`, "bg-secondary");
         console.error("Error fetching URL:", error);
-        hardware_message.value = `Error fetching URL: ${error}`;
+        hardware_message.value = `Failed to fetch Hardware Inventory for ${hostname}: ${error}`;
       }
     };
 
@@ -568,14 +584,13 @@ export default {
       showInventory,
       nodeStatus,
       nodeNHC,
-      // triggerNHC,
-      // triggerStatus,
       inventory,
       hardware_message,
       nodes_rules,
       rule_message,
       fetchGlobalSettings,
       setGlobalSettings,
+      error_message,
     };
   },
 };

@@ -19,6 +19,10 @@ interface Row {
 }
 
 const props = defineProps({
+  url: {
+    type: String,
+    required: true,
+  },
   promQLurl: {
     type: String,
     required: true,
@@ -208,7 +212,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`exprInput_${index}`" class="form-label">Rule Expr</label>
-                  <PromQLEditor :promQLurl="promQLurl" :editor-id="`editor_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
+                  <PromQLEditor :url = "url" :promQLurl="promQLurl" :editor-id="`editor_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
                   <input type="hidden" v-model="ruleData.expr" :id="`rule_editor__${index}`" required class="form-control" />
                 </div>
               </div>

@@ -27,6 +27,10 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  url: {
+    type: String,
+    required: true,
+  },
   promQLurl: {
     type: String,
     required: true,
@@ -96,6 +100,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
       <div class="card-body">
         <div class="table-responsive text-nowrap">
           <RuleModals
+            :url = "url"
             :promQLurl = "promQLurl"
             :configuration="configuration"
             :save_configuration = "save_configuration"
@@ -163,6 +168,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
                     <box-icon name='trash' color="red" size="md" ></box-icon>
                   </button>
                   <RuleModals
+                    :url = "url"
                     :promQLurl = "promQLurl"
                     :configuration = "configuration"
                     :save_configuration = "save_configuration"

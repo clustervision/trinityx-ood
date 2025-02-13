@@ -62,6 +62,10 @@ interface Prometheus {
 
 export default defineComponent({
   props: {
+    url: {
+      type: String,
+      required: true,
+    },
     statusAPI: {
       type: String,
       required: true,
@@ -71,12 +75,12 @@ export default defineComponent({
       required: true,
     },
   },
-
   data() {
     return {
       rows: [] as { id: number; rule: string; nhc: string; state: string; severity: string; eventTime: string; affected: unknown; }[],
       alerts: [],
       noRows: '',
+      showPopup: false,
     };
   },
 
@@ -114,7 +118,9 @@ export default defineComponent({
     // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     // if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       try {
-        const response = await axios.get(this.statusAPI);
+        const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+        const response = await axios.get(proxyUrl);
+        // const response = await axios.get(this.statusAPI);
         if (response.status === 200) {
           response.data.data.groups.forEach((group: Prometheus) => {
             if (group.name === "trinityx"){
@@ -136,16 +142,14 @@ export default defineComponent({
               }
             }
           });
-
-
         } else {
           this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
           console.error("Error fetching rules:", response.status, response.data);
         }
-
       } catch (error: unknown) {
         console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
         if (error instanceof Error) {
+          // Need  a Pop up to accept that risk
           this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
         } else {
           this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
@@ -169,7 +173,10 @@ export default defineComponent({
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Alerts
   </h4>
-  <div v-if="noRows" class="alert alert-danger" role="alert"><pre>{{ noRows }}</pre></div>
+  <div v-if="noRows" class="alert alert-danger alert-dismissible" role="alert">
+    <pre>{{ noRows }}</pre>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
   <div v-if="rows.length" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
     <table id="dataTable" class="table table-bordered table-striped table-hover caption-top">
       <thead>
