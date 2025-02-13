@@ -111,7 +111,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
-              <TabStatus :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
+              <TabStatus :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
             </div>
             <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
               <TabConfiguration
@@ -121,6 +121,7 @@ onMounted(() => {
                 :Content="Content"
                 :ContentType="ContentType"
                 @Toast="Toast"
+                :url = "url"
                 :promQLurl = "promQLurl"
                 :configuration = "configuration"
                 :updateClass = "updateClass"
