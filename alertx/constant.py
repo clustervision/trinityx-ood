@@ -46,5 +46,3 @@ LOG_FILE = '/var/log/luna/luna2-web.log'
 TRIX_CONFIG = '/trinity/local/etc/prometheus_server/rules/trix.rules'
 ALERT_MANAGER_DIR = '/etc/trinity/passwords/prometheus'
 APP_STATE = True  # False for Development, True for Production
-
-
