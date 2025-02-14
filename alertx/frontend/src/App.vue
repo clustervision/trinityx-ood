@@ -100,7 +100,7 @@ onMounted(() => {
             </li>
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
               <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-justified-profile" aria-controls="navs-pills-justified-profile" aria-selected="false" tabindex="-1">
-                <span class="d-none d-sm-block"><box-icon name='bracket' class="align-text-bottom icon-color"></box-icon> Configuration</span>
+                <span class="d-none d-sm-block"><box-icon name='bracket' class="align-text-bottom icon-color"></box-icon> Generic Rules</span>
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -189,7 +189,7 @@ function deepClean(obj: unknown): unknown {
   } else if (obj !== null && typeof obj === "object") {
     return Object.fromEntries(
       Object.entries(obj)
-        .filter(([_, value]) => value !== null && value !== "null")
+        .filter(([, value]) => value !== null && value !== "null")
         .map(([key, value]) => [key, deepClean(value)])
     );
   }
@@ -198,6 +198,7 @@ function deepClean(obj: unknown): unknown {
 
 async function saveRules(content: JSON) {
   const cleanedData = deepClean(content);
+  console.log(cleanedData);
   try {
     const response = await axios.post(url + '/save_config', cleanedData);
     return {"status": response.status, "message": response.data.response};
@@ -228,8 +229,9 @@ interface Configuration {
       expr: string;
       for: string;
       labels: {
-        disabled: string;
-        nhc: string;
+        category: string;
+        disabled: boolean;
+        nhc: boolean;
         severity: string;
       };
     }>;
@@ -336,8 +338,8 @@ export default {
     },
 
     update_configuration(count: number) {
-      let status: string = "false";
-      let nhc: string =  "no";
+      let status: boolean =  false;
+      let nhc: boolean =  false;
       let severity: string = "info";
 
       const alertElement = document.getElementById(`rule_name_${count}`);
@@ -352,18 +354,18 @@ export default {
       const exprElement = document.getElementById(`rule_editor_${count}`);
       const expr = (exprElement as HTMLInputElement).value;
 
+      const categoryElement = document.getElementById(`rule_category_${count}`);
+      const category = (categoryElement as HTMLInputElement).value;
 
       const statusElement = document.getElementById(`rule_status_${count}`);
       if (statusElement) {
         const status_value = (statusElement as HTMLInputElement).checked;
-        if(status_value === true){ status = 'false'; } else { status = 'true'; }
+        if(status_value === true){ status = false; } else { status = true; }
       }
 
       const nhcElement = document.getElementById(`rule_nhc_${count}`);
-      if (nhcElement) {
-        const nhc_value = (nhcElement as HTMLInputElement).checked;
-        if(nhc_value === true){ nhc = 'yes'; } else { nhc = 'no'; }
-      }
+      nhc = (nhcElement as HTMLInputElement).checked;
+
 
       const severityElement = document.getElementById(`severity_${count}`);
       if (severityElement) { severity = (severityElement as HTMLInputElement).value; }
@@ -372,6 +374,7 @@ export default {
       this.configuration.groups[0].rules[count - 1].annotations.description  = description;
       this.configuration.groups[0].rules[count - 1].for                      = for_val;
       this.configuration.groups[0].rules[count - 1].expr                     = expr;
+      this.configuration.groups[0].rules[count - 1].labels.category          = category;
       this.configuration.groups[0].rules[count - 1].labels.disabled          = status;
       this.configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
       this.configuration.groups[0].rules[count - 1].labels.severity          = severity;

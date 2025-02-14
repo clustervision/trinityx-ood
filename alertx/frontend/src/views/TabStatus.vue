@@ -14,12 +14,12 @@ interface AlertRules {
   type: string;
   labels: {
     severity: string,
-    nhc: string,
+    nhc: boolean,
   };
   alerts: Array<{
     activeAt: string;
     annotations: {description: string};
-    labels: {alertname: string, exporter: string, hostname: string, instance: string, job: string, luna_group: string, nhc: string, severity: string};
+    labels: {alertname: string, exporter: string, hostname: string, instance: string, job: string, luna_group: string, nhc: boolean, severity: string};
     state: string;
     value: string;
   }>;
@@ -55,7 +55,7 @@ interface Prometheus {
 //         hostname: string;
 //         job: string;
 //         luna_group: string;
-//         nhc: string;
+//         nhc: boolean;
 //         severity: string;
 //     }
 // }; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
@@ -77,7 +77,7 @@ export default defineComponent({
   },
   data() {
     return {
-      rows: [] as { id: number; rule: string; nhc: string; state: string; severity: string; eventTime: string; affected: unknown; }[],
+      rows: [] as { id: number; rule: string; nhc: boolean; state: string; severity: string; eventTime: string; affected: unknown; }[],
       alerts: [],
       noRows: '',
       showPopup: false,
@@ -195,8 +195,8 @@ export default defineComponent({
           <td>{{ row.id }}</td>
           <td>{{ row.rule }}</td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
-          <td><span class="badge me-1" :class="{ 'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
-          <td><span class="badge me-1" :class="{ 'bg-label-primary': row.nhc === 'yes', 'bg-label-warning': row.nhc === 'no' }" >{{ row.nhc }}</span></td>
+          <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
+          <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" > {{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>
           <td>
             <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>
