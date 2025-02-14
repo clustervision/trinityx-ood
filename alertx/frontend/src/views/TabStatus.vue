@@ -130,7 +130,7 @@ export default defineComponent({
                   rule.alerts.forEach((alert) => {
                     count_rows = count_rows + 1;
                     const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                    this.rows.push({"id": count_rows, "rule": rule.name, "nhc": rule.labels.nhc, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": affected});
+                    this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
                   });
                 } // else {
                   // count_rows = count_rows + 1;
@@ -196,7 +196,7 @@ export default defineComponent({
           <td>{{ row.rule }}</td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
-          <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" > {{ row.nhc === true ? true : false }}</span></td>
+          <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>
           <td>
             <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>

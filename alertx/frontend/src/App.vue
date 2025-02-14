@@ -7,9 +7,11 @@ import './assets/app.css';
 import './assets/main.js';
 
 import TopNavigation from '@/views/TopNavigation.vue';
+import TabOverview from './views/TabOverview.vue';
 import TabStatus from './views/TabStatus.vue';
 import TabConfiguration from './views/TabConfiguration.vue';
 import TabNodes from './views/TabNodes.vue';
+import TabService from './views/TabService.vue';
 import FooterBar from '@/views/FooterBar.vue';
 import { Modal } from 'bootstrap';
 
@@ -94,26 +96,39 @@ onMounted(() => {
         <div class="nav-align-top mb-6">
           <ul class="nav nav-pills mb-4 nav-fill tab-bar" role="tablist">
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
-              <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-justified-home" aria-controls="navs-pills-justified-home" aria-selected="true">
+              <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#tab-overview" aria-controls="tab-overview" aria-selected="true">
+                <span class="d-none d-sm-block"><box-icon name='detail' class="align-text-bottom icon-color"></box-icon> Overview</span>
+              </button>
+            </li>
+            <li class="nav-item mb-1 mb-sm-0" role="presentation">
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-alerts" aria-controls="tab-alerts" aria-selected="true">
                 <span class="d-none d-sm-block"><box-icon name='stats' class="align-text-bottom icon-color"></box-icon> Alerts</span>
               </button>
             </li>
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
-              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-justified-profile" aria-controls="navs-pills-justified-profile" aria-selected="false" tabindex="-1">
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-rules" aria-controls="tab-rules" aria-selected="false" tabindex="-1">
                 <span class="d-none d-sm-block"><box-icon name='bracket' class="align-text-bottom icon-color"></box-icon> Generic Rules</span>
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-justified-messages" aria-controls="navs-pills-justified-messages" aria-selected="false" tabindex="-1">
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-hardware" aria-controls="tab-hardware" aria-selected="false" tabindex="-1">
                 <span class="d-none d-sm-block"><box-icon name='desktop' class="align-text-bottom icon-color"></box-icon> Node H/W</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-service" aria-controls="tab-service" aria-selected="false" tabindex="-1">
+                <span class="d-none d-sm-block"><box-icon name='wrench' class="align-text-bottom icon-color"></box-icon> Services</span>
               </button>
             </li>
           </ul>
           <div class="tab-content">
-            <div class="tab-pane fade active show" id="navs-pills-justified-home" role="tabpanel">
+            <div class="tab-pane fade active show" id="tab-overview" role="tabpanel">
+              <TabOverview :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
+            </div>
+            <div class="tab-pane fade" id="tab-alerts" role="tabpanel">
               <TabStatus :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
             </div>
-            <div class="tab-pane fade" id="navs-pills-justified-profile" role="tabpanel">
+            <div class="tab-pane fade" id="tab-rules" role="tabpanel">
               <TabConfiguration
                 :rulesFile = "rulesFile"
                 :save_configuration = "save_configuration"
@@ -130,8 +145,24 @@ onMounted(() => {
               />
 
             </div>
-            <div class="tab-pane fade" id="navs-pills-justified-messages" role="tabpanel">
+            <div class="tab-pane fade" id="tab-hardware" role="tabpanel">
               <TabNodes :url = "url" :promQLurl = "promQLurl" />
+            </div>
+            <div class="tab-pane fade" id="tab-service" role="tabpanel">
+              <TabService
+                :rulesFile = "rulesFile"
+                :save_configuration = "save_configuration"
+                :update_configuration = "update_configuration"
+                :Content="Content"
+                :ContentType="ContentType"
+                @Toast="Toast"
+                :url = "url"
+                :promQLurl = "promQLurl"
+                :configuration = "configuration"
+                :updateClass = "updateClass"
+                :ruleRow = "ruleRow"
+                :selectedClass = "selectedClass"
+              />
             </div>
           </div>
         </div>
@@ -198,7 +229,6 @@ function deepClean(obj: unknown): unknown {
 
 async function saveRules(content: JSON) {
   const cleanedData = deepClean(content);
-  console.log(cleanedData);
   try {
     const response = await axios.post(url + '/save_config', cleanedData);
     return {"status": response.status, "message": response.data.response};
