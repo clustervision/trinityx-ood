@@ -12,8 +12,9 @@ interface Row {
   expr: string;
   for: string;
   labels: {
-    disabled: string;
-    nhc: string;
+    category: string;
+    disabled: boolean;
+    nhc: boolean;
     severity: string;
   };
 }
@@ -54,7 +55,8 @@ const ruleData = reactive({
   expr: props.row.expr,
   for: props.row.for || '',
   labels: {
-    disabled: props.row.labels.disabled || 'false',
+    category: props.row.labels.category,
+    disabled: props.row.labels.disabled || false,
     nhc: props.row.labels.nhc,
     severity: props.row.labels.severity
   },
@@ -67,7 +69,7 @@ watch(
     ruleData.annotations.description = newRow.annotations.description;
     ruleData.expr = newRow.expr;
     ruleData.for = newRow.for || '';
-    ruleData.labels.disabled = newRow.labels.disabled || 'false';
+    ruleData.labels.disabled = newRow.labels.disabled || false;
     ruleData.labels.nhc = newRow.labels.nhc;
     ruleData.labels.severity = newRow.labels.severity;
   },
@@ -164,10 +166,10 @@ function update_configuration(count: number) {
 
 }
 
-const getComputedDisabled = (status: string | undefined) => computed({
-  get: () => status !== 'true',
+const getComputedDisabled = (status: boolean | undefined) => computed({
+  get: () => status !== true,
   set: (value: boolean) => {
-    if (value) { status = 'false'; ruleData.labels.disabled = 'false'; } else { status = 'true'; ruleData.labels.disabled = 'true'; }
+    if (value) { status = false; ruleData.labels.disabled = false; } else { status = true; ruleData.labels.disabled = true; }
   }
 });
 </script>
@@ -217,18 +219,34 @@ const getComputedDisabled = (status: string | undefined) => computed({
                 </div>
               </div>
               <div class="row">
+                <div class="col mb-6">
+                  <label :for="`rule_category_${index}`" class="form-label">Rule Category</label>
+                  <select v-model="ruleData.labels.category" disabled :id="`rule_category_${index}`" :class="[
+                      'form-select',
+                      'form-select-sm',
+                      ruleData.labels.category === 'generic' ? 'btn-info' :
+                      ruleData.labels.category === 'service' ? 'btn-warning' :
+                      ruleData.labels.category === 'hardware' ? 'btn-dark' :
+                      'btn-primary'
+                    ]">
+                    <option class="btn-primary" value="">Set Category</option>
+                    <option class="btn-info" value="generic" :selected="ruleData.labels.category === 'generic'">Generic</option>
+                    <option class="btn-warning" value="service" :selected="ruleData.labels.category === 'service'">Service</option>
+                    <option class="btn-dark" value="hardware" :selected="ruleData.labels.category === 'hardware'">Hardware</option>
+                  </select>
+                </div>
                 <div class="col mb-0">
                   <label :for="`rule_status_${index}`" class="form-label">Enable</label>
                   <div class="form-check form-switch ">
                     <input v-model="getComputedDisabled(ruleData.labels.disabled).value" type="checkbox" :id="`rule_status_${index}`" class="form-check-input" >
-                    <label :id="`rule_status_label_${index}`" :for="`rule_status_${index}`" class="form-check-label">{{ ruleData.labels.disabled !== 'true' ? 'ON' : 'OFF' }}</label>
+                    <label :id="`rule_status_label_${index}`" :for="`rule_status_${index}`" class="form-check-label">{{ ruleData.labels.disabled !== true ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
                 <div class="col mb-6">
                   <label :for="`rule_nhc_${index}`" class="form-label">Rule NHC</label>
                   <div class="form-check form-switch ">
-                    <input type="checkbox" v-model="ruleData.labels.nhc" :id="`rule_nhc_${index}`" class="form-check-input" data-toggle="switch" :true-value="'yes'" false-value="'no'" />
-                    <label :id="`rule_nhc_label_${index}`" :for="`rule_nhc_${index}`" class="form-check-label">{{ ruleData.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                    <input type="checkbox" v-model="ruleData.labels.nhc" :id="`rule_nhc_${index}`" class="form-check-input" data-toggle="switch" :true-value=true :false-value=false />
+                    <label :id="`rule_nhc_label_${index}`" :for="`rule_nhc_${index}`" class="form-check-label">{{ ruleData.labels.nhc === true ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
                 <div class="col mb-6">

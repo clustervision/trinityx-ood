@@ -70,10 +70,10 @@ function deleteRule(count: number) {
   }
 }
 
-const getComputedDisabled = (status: string | undefined) => computed({
-  get: () => status !== 'true',
+const getComputedDisabled = (status: boolean | undefined) => computed({
+  get: () => status !== true,
   set: (value: boolean) => {
-    if (value) { status = 'false'; } else { status = 'true'; }
+    if (value === true) { status = false; } else { status = true; }
   }
 });
 
@@ -92,7 +92,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
         />
       </span>
     <h4 class="fw-bold py-3 mb-4">
-      <span class="text-muted fw-light"> Monitoring /</span> Configuration
+      <span class="text-muted fw-light"> Monitoring /</span> Generic Rules
     </h4>
 
     <div class="card">
@@ -106,7 +106,7 @@ const getComputedDisabled = (status: string | undefined) => computed({
             :save_configuration = "save_configuration"
             :updateClass = "updateClass"
             :ruleRow = "ruleRow"
-            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'disabled': 'false', 'nhc': 'no', 'severity': 'info'}}"
+            :row = "{'alert': '', 'annotations': {'description': ''}, 'for': '', 'expr': '', 'labels': {'category': '', 'disabled': false, 'nhc': false, 'severity': 'info'}}"
             :index = 0
             :selectedClass="selectedClass"
             @Toast="$emit('toast', $event)"
@@ -135,18 +135,19 @@ const getComputedDisabled = (status: string | undefined) => computed({
                   <input type="hidden" :id="`rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
                   <input type="hidden" :id="`rule_for_${index + 1}`" :value="`${row.for}`" />
                   <input type="hidden" :id="`rule_editor_${index + 1}`" :value="`${row.expr}`" />
+                  <input type="hidden" :id="`rule_category_${index + 1}`" :value="`${row.labels.category}`" />
                 </td>
                 <td>{{ row.for }}</td>
                 <td>
                   <div class="form-check form-switch mb-2">
                     <input class="form-check-input" type="checkbox" v-model="getComputedDisabled(row.labels.disabled).value" @click="props.update_configuration(index + 1);" :id="`rule_status_${index + 1}`" data-toggle="switch"  />
-                    <label class="form-check-label" :for="`rule_status_${index + 1}`">{{ row.labels.disabled !== 'true' ? 'ON' : 'OFF' }} </label>
+                    <label class="form-check-label" :for="`rule_status_${index + 1}`">{{ row.labels.disabled !== true ? 'ON' : 'OFF' }} </label>
                   </div>
                 </td>
                 <td>
                   <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="props.update_configuration(index + 1);" :id="`rule_nhc_${index + 1}`" data-toggle="switch" :true-value="'yes'" false-value="no" />
-                    <label class="form-check-label" :for="`rule_nhc_${index + 1}`">{{ row.labels.nhc === 'yes' ? 'ON' : 'OFF' }}</label>
+                    <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="props.update_configuration(index + 1);" :id="`rule_nhc_${index + 1}`" data-toggle="switch" :true-value=true :false-value=false />
+                    <label class="form-check-label" :for="`rule_nhc_${index + 1}`">{{ row.labels.nhc === true ? 'ON' : 'OFF' }}</label>
                   </div>
                 </td>
                 <td>
