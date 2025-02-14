@@ -99,7 +99,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
         <div class="table-responsive text-nowrap">
-          <RuleModals
+          <!-- <RuleModals
             :url = "url"
             :promQLurl = "promQLurl"
             :configuration="configuration"
@@ -110,7 +110,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
             :index = 0
             :selectedClass="selectedClass"
             @Toast="$emit('toast', $event)"
-          />
+          /> -->
           <table id="alert-table" class="table table-bordered table-striped table-hover table-responsive">
             <thead>
               <tr>
@@ -168,7 +168,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
                   <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="deleteRule(index);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
                     <box-icon name='trash' color="red" size="md" ></box-icon>
                   </button>
-                  <RuleModals
+                  <!-- <RuleModals
                     :url = "url"
                     :promQLurl = "promQLurl"
                     :configuration = "configuration"
@@ -179,7 +179,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
                     :index = index+1
                     :selectedClass = "selectedClass"
                     @Toast = "$emit('toast', $event)"
-                  />
+                  /> -->
                 </td>
               </tr>
             </tbody>

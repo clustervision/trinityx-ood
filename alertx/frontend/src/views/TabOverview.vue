@@ -122,6 +122,7 @@ export default defineComponent({
         const response = await axios.get(proxyUrl);
         // const response = await axios.get(this.statusAPI);
         if (response.status === 200) {
+          console.log(response.data);
           response.data.data.groups.forEach((group: Prometheus) => {
             if (group.name === "trinityx"){
               let count_rows:number = 0;
@@ -129,8 +130,9 @@ export default defineComponent({
                 if (rule.alerts && rule.alerts.length > 0){
                   rule.alerts.forEach((alert) => {
                     count_rows = count_rows + 1;
-                    const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                    this.rows.push({"id": count_rows, "rule": rule.name, "nhc": rule.labels.nhc, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": affected});
+                    // const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+                    const affected:object = alert.labels;
+                    this.rows.push({id: count_rows, rule: rule.name, nhc: rule.labels.nhc, state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
                   });
                 } // else {
                   // count_rows = count_rows + 1;
@@ -195,8 +197,15 @@ export default defineComponent({
           <td>{{ row.rule }}</td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
-          <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" > {{ row.nhc === true ? true : false }}</span></td>
-          <td>{{ row.eventTime }}</td>
+          <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
+          <td>
+            <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>
+            <template v-else-if="typeof row.affected === 'object' && row.affected !== null">
+              <span v-for="(value, key, index) in row.affected" :key="index">
+                <strong><span class="badge bg-label-primary me-1">{{ key }}: </span></strong> "{{ value }}"<span v-if="index < Object.keys(row.affected).length - 1">, </span>
+              </span>
+            </template>
+          </td>
         </tr>
       </tbody>
     </table>
