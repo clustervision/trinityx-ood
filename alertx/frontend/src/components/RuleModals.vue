@@ -20,6 +20,10 @@ interface Row {
 }
 
 const props = defineProps({
+  configType: {
+    type: String,
+    required: true,
+  },
   url: {
     type: String,
     required: true,
@@ -156,11 +160,11 @@ function update_configuration(count: number) {
       } else {
         console.error('Cannot add row: Invalid configuration structure');
       }
-      props.save_configuration(add_rule_config, `rule_modal_${count}`)
+      props.save_configuration(add_rule_config, `rule_modal_${props.configType}_${count}`)
 
     } else {
       updateRow(rule, count-1);
-      props.save_configuration(new_config, `rule_modal_${count}`)
+      props.save_configuration(new_config, `rule_modal_${props.configType}_${count}`)
     }
   }
 
@@ -175,7 +179,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
 </script>
 
 <template>
-  <div class="modal fade" v-bind:id="`rule_modal_${index}`" tabindex="-1" aria-hidden="true" >
+  <div class="modal fade" v-bind:id="`rule_modal_${props.configType}_${index}`" tabindex="-1" aria-hidden="true" >
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -214,7 +218,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
               <div class="row">
                 <div class="col mb-6">
                   <label :for="`exprInput_${index}`" class="form-label">Rule Expr</label>
-                  <PromQLEditor :url = "url" :promQLurl="promQLurl" :editor-id="`editor_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
+                  <PromQLEditor :url = "url" :promQLurl="promQLurl" :editor-id="`editor_${props.configType}_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
                   <input type="hidden" v-model="ruleData.expr" :id="`rule_editor__${index}`" required class="form-control" />
                 </div>
               </div>
