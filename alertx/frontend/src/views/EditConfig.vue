@@ -1,9 +1,9 @@
 
 <template>
-  <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" data-bs-target="#rule_modal_0">Add Alert Rule</button> &nbsp;
-  <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" data-bs-target="#edit_config">Edit Configuration</button>
+  <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" :data-bs-target="`#rule_modal_${props.configType}_0`">Add Alert Rule</button> &nbsp;
+  <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" :data-bs-target="`#edit_${props.configType}_config`">Edit Configuration</button>
 
-  <div class="modal fade" id="edit_config" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" :id="`edit_${props.configType}_config`" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -20,7 +20,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="save_configuration(newContent, 'edit_config')" class="btn btn-primary">Save changes</button>
+          <button type="button" @click.prevent="save_configuration(newContent, `edit_${props.configType}_config`)" class="btn btn-primary">Save changes</button>
         </div>
       </div>
     </div>
@@ -34,6 +34,10 @@ import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
 import { ref } from 'vue';
 
 const props = defineProps({
+  configType: {
+    type: String,
+    required: true,
+  },
   rulesFile: {
     type: String,
     required: true,

@@ -84,7 +84,6 @@ export default defineComponent({
         const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
         const response = await axios.get(proxyUrl);
         if (response.status === 200) {
-          console.log(response.data);
           response.data.data.groups.forEach((group: Prometheus) => {
             if (group.name === "trinityx") {
               const uniqueOverviewMap = new Map<string, Overview>();
@@ -127,8 +126,6 @@ export default defineComponent({
               });
 
               this.overview = Array.from(uniqueOverviewMap.values());
-              // console.log(this.overview);
-
               if (this.overview.length === 0) {
                 this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
               }
