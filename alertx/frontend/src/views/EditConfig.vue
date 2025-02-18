@@ -20,7 +20,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" @click.prevent="save_configuration(newContent, `edit_${props.configType}_config`)" class="btn btn-primary">Save changes</button>
+          <button type="button" @click.prevent="save_configuration(props.configType, newContent, `edit_${props.configType}_config`)" class="btn btn-primary">Save changes</button>
         </div>
       </div>
     </div>

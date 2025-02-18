@@ -160,6 +160,7 @@ export default defineComponent({
 </script>
 
 <template>
+
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Overview
   </h4>
@@ -167,6 +168,8 @@ export default defineComponent({
     <pre>{{ noRows }}</pre>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
+  <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="card">
   <div class="alert alert-info alert-dismissible" role="alert">
     <div class="row">
       <div class="col col-1"><box-icon name="circle" type="solid" color="#198754"></box-icon></div>
@@ -183,6 +186,8 @@ export default defineComponent({
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   <div v-if="overview.length">
+
+
     <table id="dataTableOverview" class="table table-bordered table-striped table-hover caption-top">
       <thead>
         <tr>
@@ -191,7 +196,7 @@ export default defineComponent({
           <th>Generic Rules</th>
           <th>Services</th>
           <th>Node H/W</th>
-          <th style="color:#FFC107">IPMI Status (beta)<box-icon style="width: 10px;height: 10px;" name='star' type='solid' flip='horizontal' color='#FFC107' data-tippy-content="This is in BETA"></box-icon></th>
+          <!-- <th style="color:#FFC107">IPMI Status (beta)<box-icon style="width: 10px;height: 10px;" name='star' type='solid' flip='horizontal' color='#FFC107' data-tippy-content="This is in BETA"></box-icon></th> -->
         </tr>
       </thead>
       <tbody>
@@ -214,14 +219,18 @@ export default defineComponent({
             <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
             <box-icon v-else name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
           </td>
-          <td>
+          <!-- <td>
             <box-icon v-if="row.ipmi === true" name="circle" type="solid" color="#198754" data-tippy-content="This is in BETA"></box-icon>
             <box-icon v-else-if="row.ipmi === false" name="circle" type="solid" color="#DC3545" data-tippy-content="This is in BETA"></box-icon>
             <box-icon v-else name="circle" type="solid" color="#FFC107" data-tippy-content="This is in BETA"></box-icon>
-          </td>
+          </td> -->
         </tr>
       </tbody>
     </table>
   </div>
+
+  </div>
+</div>
+
 
 </template>

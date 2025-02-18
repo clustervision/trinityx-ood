@@ -158,7 +158,14 @@ export default defineComponent({
     // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
     this.updateShowSpinner(false);
     await nextTick();
-    $("#dataTable").DataTable();
+    // $("#dataTable").DataTable();
+        $("#dataTable").DataTable({
+        "order": [[3, 'asc']], // Assuming 'severity' is the 3rd column (index 4)
+        "columnDefs": [{
+            "targets": 2, // Adjust the column index if needed
+            "type": "string"
+        }]
+    });
   },
   methods: {
     updateShowSpinner(value: boolean) {

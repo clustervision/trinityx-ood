@@ -59,7 +59,7 @@ const ruleData = reactive({
   expr: props.row.expr,
   for: props.row.for || '',
   labels: {
-    category: props.row.labels.category,
+    category: props.configType === 'generic' ? 'generic' : 'service',
     disabled: props.row.labels.disabled || false,
     nhc: props.row.labels.nhc,
     severity: props.row.labels.severity
@@ -75,6 +75,7 @@ watch(
     ruleData.for = newRow.for || '';
     ruleData.labels.disabled = newRow.labels.disabled || false;
     ruleData.labels.nhc = newRow.labels.nhc;
+    ruleData.labels.category = newRow.labels.category || props.index === 0 ? (props.configType === 'generic' ? 'generic' : 'service') : props.row.labels.category;
     ruleData.labels.severity = newRow.labels.severity;
   },
   { deep: true, immediate: true } // Ensure deep watching and immediate reaction
@@ -160,11 +161,11 @@ function update_configuration(count: number) {
       } else {
         console.error('Cannot add row: Invalid configuration structure');
       }
-      props.save_configuration(add_rule_config, `rule_modal_${props.configType}_${count}`)
+      props.save_configuration(props.configType, add_rule_config, `rule_modal_${props.configType}_${count}`)
 
     } else {
       updateRow(rule, count-1);
-      props.save_configuration(new_config, `rule_modal_${props.configType}_${count}`)
+      props.save_configuration(props.configType, new_config, `rule_modal_${props.configType}_${count}`)
     }
   }
 
@@ -199,33 +200,33 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
             <div :id="`model-form_${index}`">
               <div class="row g-6">
                 <div class="col mb-0">
-                  <label :for="`rule_name_${index}`" class="form-label">Rule Name</label>
-                  <input type="text" v-model="ruleData.alert" :id="`rule_name_${index}`" class="form-control" placeholder="Enter Rule Name" required/>
+                  <label :for="`${props.configType}_rule_name_${index}`" class="form-label">Rule Name</label>
+                  <input type="text" v-model="ruleData.alert" :id="`${props.configType}_rule_name_${index}`" class="form-control" placeholder="Enter Rule Name" required/>
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-6">
-                  <label :for="`rule_description_${index}`" class="form-label">Rule Description</label>
-                  <input type="text" v-model="ruleData.annotations.description" :id="`rule_description_${index}`" class="form-control" required placeholder="Enter Rule Description" />
+                  <label :for="`${props.configType}_rule_description_${index}`" class="form-label">Rule Description</label>
+                  <input type="text" v-model="ruleData.annotations.description" :id="`${props.configType}_rule_description_${index}`" class="form-control" required placeholder="Enter Rule Description" />
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-0">
-                  <label :for="`rule_for_${index}`" class="form-label">Rule For</label>
-                  <input type="text" v-model="ruleData.for" :id="`rule_for_${index}`" class="form-control" placeholder="Enter Rule For"  />
+                  <label :for="`${props.configType}_rule_for_${index}`" class="form-label">Rule For</label>
+                  <input type="text" v-model="ruleData.for" :id="`${props.configType}_rule_for_${index}`" class="form-control" placeholder="Enter Rule For"  />
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-6">
-                  <label :for="`exprInput_${index}`" class="form-label">Rule Expr</label>
-                  <PromQLEditor :url = "url" :promQLurl="promQLurl" :editor-id="`editor_${props.configType}_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
-                  <input type="hidden" v-model="ruleData.expr" :id="`rule_editor__${index}`" required class="form-control" />
+                  <label :for="`${props.configType}_exprInput_${index}`" class="form-label">Rule Expr</label>
+                  <PromQLEditor :url = "url" :promQLurl="promQLurl" :editor-id="`${props.configType}_editor_${props.configType}_${index}`" v-model:editorRule="ruleData.expr"><div class="promql"></div></PromQLEditor>
+                  <input type="hidden" v-model="ruleData.expr" :id="`${props.configType}_rule_editor__${index}`" required class="form-control" />
                 </div>
               </div>
               <div class="row">
                 <div class="col mb-6">
-                  <label :for="`rule_category_${index}`" class="form-label">Rule Category</label>
-                  <select v-model="ruleData.labels.category" disabled :id="`rule_category_${index}`" :class="[
+                  <label :for="`${props.configType}_rule_category_${index}`" class="form-label">Rule Category</label>
+                  <select v-model="ruleData.labels.category" disabled :id="`${props.configType}_rule_category_${index}`" :class="[
                       'form-select',
                       'form-select-sm',
                       ruleData.labels.category === 'generic' ? 'btn-info' :
@@ -240,22 +241,22 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
                   </select>
                 </div>
                 <div class="col mb-0">
-                  <label :for="`rule_status_${index}`" class="form-label">Enable</label>
+                  <label :for="`${props.configType}_rule_status_${index}`" class="form-label">Enable</label>
                   <div class="form-check form-switch ">
-                    <input v-model="getComputedDisabled(ruleData.labels.disabled).value" type="checkbox" :id="`rule_status_${index}`" class="form-check-input" >
-                    <label :id="`rule_status_label_${index}`" :for="`rule_status_${index}`" class="form-check-label">{{ ruleData.labels.disabled !== true ? 'ON' : 'OFF' }}</label>
+                    <input v-model="getComputedDisabled(ruleData.labels.disabled).value" type="checkbox" :id="`${props.configType}_rule_status_${index}`" class="form-check-input" >
+                    <label :id="`${props.configType}_rule_status_label_${index}`" :for="`${props.configType}_rule_status_${index}`" class="form-check-label">{{ ruleData.labels.disabled !== true ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
                 <div class="col mb-6">
-                  <label :for="`rule_nhc_${index}`" class="form-label">Rule NHC</label>
+                  <label :for="`${props.configType}_rule_nhc_${index}`" class="form-label">Rule NHC</label>
                   <div class="form-check form-switch ">
-                    <input type="checkbox" v-model="ruleData.labels.nhc" :id="`rule_nhc_${index}`" class="form-check-input" data-toggle="switch" :true-value=true :false-value=false />
-                    <label :id="`rule_nhc_label_${index}`" :for="`rule_nhc_${index}`" class="form-check-label">{{ ruleData.labels.nhc === true ? 'ON' : 'OFF' }}</label>
+                    <input type="checkbox" v-model="ruleData.labels.nhc" :id="`${props.configType}_rule_nhc_${index}`" class="form-check-input" data-toggle="switch" :true-value=true :false-value=false />
+                    <label :id="`${props.configType}_rule_nhc_label_${index}`" :for="`${props.configType}_rule_nhc_${index}`" class="form-check-label">{{ ruleData.labels.nhc === true ? 'ON' : 'OFF' }}</label>
                   </div>
                 </div>
                 <div class="col mb-6">
-                  <label :for="`rule_severity_${index}`" class="form-label">Set Severity</label>
-                  <select v-model="ruleData.labels.severity" :id="`rule_severity_${index}`" :class="['form-select', 'form-select-sm', ruleData.labels.severity === 'critical' ? 'btn-dark' : ruleData.labels.severity ? 'btn-' + ruleData.labels.severity : 'btn-primary']">
+                  <label :for="`${props.configType}_rule_severity_${index}`" class="form-label">Set Severity</label>
+                  <select v-model="ruleData.labels.severity" :id="`${props.configType}_rule_severity_${index}`" :class="['form-select', 'form-select-sm', ruleData.labels.severity === 'critical' ? 'btn-dark' : ruleData.labels.severity ? 'btn-' + ruleData.labels.severity : 'btn-primary']">
                     <option class="btn-primary" value="">Set Severity</option>
                     <option class="btn-dark" value="critical" :selected="ruleData.labels.severity === 'critical'">Critical</option>
                     <option class="btn-danger" value="danger" :selected="ruleData.labels.severity === 'danger'">Danger</option>
