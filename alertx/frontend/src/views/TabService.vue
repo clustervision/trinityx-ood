@@ -77,31 +77,6 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
   }
 });
 
-
-// const getVisibleIndex = (groupIndex: number, rowIndex: number) => {
-//   let visibleIndex = 0;
-
-//   // Iterate over groups
-//   for (let g = 0; g <= groupIndex; g++) {
-//     const group = props.configuration?.groups[g];
-//     if (!group) continue;
-
-//     // Iterate over rules within the group
-//     for (let r = 0; r < group.rules.length; r++) {
-//       if (group.rules[r].labels.category === 'service') {
-//         visibleIndex++; // Increment only for "generic" rows
-//       }
-
-//       // Stop counting when reaching the current row
-//       if (g === groupIndex && r === rowIndex) {
-//         return visibleIndex;
-//       }
-//     }
-//   }
-
-//   return visibleIndex;
-// };
-
 </script>
 
 <template>
@@ -152,64 +127,73 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
               </tr>
             </thead>
             <tbody v-for="(groups, groupsIndex) in props.configuration?.groups" :key="groups.name">
-              <tr v-for="(row, index) in groups.rules" :key="index">
-                <th scope="row">{{ index + 1 }}</th>
-                <td>{{ groups.name }}</td>
-                <td>
-                  <a href="#"  @click.prevent="showModal(index + 1)">{{ row.alert }}</a>
-                  <input type="hidden" :id="`service_group_name_${groupsIndex + 1}`" :value="`${groups.name}`" />
-                  <input type="hidden" :id="`service_rule_name_${index + 1}`" :value="`${row.alert}`" />
-                  <input type="hidden" :id="`service_rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
-                  <input type="hidden" :id="`service_rule_for_${index + 1}`" :value="`${row.for}`" />
-                  <input type="hidden" :id="`service_rule_editor_${index + 1}`" :value="`${row.expr}`" />
-                  <input type="hidden" :id="`service_rule_category_${index + 1}`" :value="`${row.labels.category}`" />
-                </td>
-                <td>{{ row.for }}</td>
-                <td>
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" v-model="getComputedDisabled(row.labels.disabled).value" @click="props.update_configuration('service', index + 1);" :id="`service_rule_status_${index + 1}`" data-toggle="switch"  />
-                    <label class="form-check-label" :for="`service_rule_status_${index + 1}`">{{ row.labels.disabled !== true ? 'ON' : 'OFF' }} </label>
-                  </div>
-                </td>
-                <td>
-                  <div class="form-check form-switch mb-2">
-                    <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="props.update_configuration('service', index + 1);" :id="`service_rule_nhc_${index + 1}`" data-toggle="switch" :true-value=true :false-value=false />
-                    <label class="form-check-label" :for="`service_rule_nhc_${index + 1}`">{{ row.labels.nhc === true ? 'ON' : 'OFF' }}</label>
-                  </div>
-                </td>
-                <td>
-                  <select :id="`service_severity_${index + 1}`" @change="props.update_configuration('service', index + 1);" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
-                    <option class="btn-primary" value="">Set Priority</option>
-                    <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
-                    <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>
-                    <option class="btn-warning" value="warning" :selected="row.labels.severity === 'warning'">Warning</option>
-                    <option class="btn-info" value="info" :selected="row.labels.severity === 'info'">Informational</option>
-                  </select>
-                </td>
-                <td>
-                  <div style="display: inline-block;" class="tooltip-wrapper" data-bs-toggle="tooltip" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Edit This Rule</span>">
-                    <button class="tooltip-modal-link" id="actions" :data-bs-target="`#rule_modal_service_${index + 1}`" data-bs-toggle="modal">
-                      <box-icon name='edit' color="#696cff" size="md"></box-icon>
+              <template v-if="groups.rules && groups.rules.length > 0">
+                <tr v-for="(row, index) in groups.rules" :key="index">
+                  <th scope="row">{{ index + 1 }}</th>
+                  <td>{{ groups.name }}</td>
+                  <td>
+                    <a href="#"  @click.prevent="showModal(index + 1)">{{ row.alert }}</a>
+                    <input type="hidden" :id="`service_group_name_${groupsIndex + 1}`" :value="`${groups.name}`" />
+                    <input type="hidden" :id="`service_rule_name_${index + 1}`" :value="`${row.alert}`" />
+                    <input type="hidden" :id="`service_rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
+                    <input type="hidden" :id="`service_rule_for_${index + 1}`" :value="`${row.for}`" />
+                    <input type="hidden" :id="`service_rule_editor_${index + 1}`" :value="`${row.expr}`" />
+                    <input type="hidden" :id="`service_rule_category_${index + 1}`" :value="`${row.labels.category}`" />
+                  </td>
+                  <td>{{ row.for }}</td>
+                  <td>
+                    <div class="form-check form-switch mb-2">
+                      <input class="form-check-input" type="checkbox" v-model="getComputedDisabled(row.labels.disabled).value" @click="props.update_configuration('service', index + 1);" :id="`service_rule_status_${index + 1}`" data-toggle="switch"  />
+                      <label class="form-check-label" :for="`service_rule_status_${index + 1}`">{{ row.labels.disabled !== true ? 'ON' : 'OFF' }} </label>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="form-check form-switch mb-2">
+                      <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="props.update_configuration('service', index + 1);" :id="`service_rule_nhc_${index + 1}`" data-toggle="switch" :true-value=true :false-value=false />
+                      <label class="form-check-label" :for="`service_rule_nhc_${index + 1}`">{{ row.labels.nhc === true ? 'ON' : 'OFF' }}</label>
+                    </div>
+                  </td>
+                  <td>
+                    <select :id="`service_severity_${index + 1}`" @change="props.update_configuration('service', index + 1);" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
+                      <option class="btn-primary" value="">Set Priority</option>
+                      <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
+                      <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>
+                      <option class="btn-warning" value="warning" :selected="row.labels.severity === 'warning'">Warning</option>
+                      <option class="btn-info" value="info" :selected="row.labels.severity === 'info'">Informational</option>
+                    </select>
+                  </td>
+                  <td>
+                    <div style="display: inline-block;" class="tooltip-wrapper" data-bs-toggle="tooltip" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Edit This Rule</span>">
+                      <button class="tooltip-modal-link" id="actions" :data-bs-target="`#rule_modal_service_${index + 1}`" data-bs-toggle="modal">
+                        <box-icon name='edit' color="#696cff" size="md"></box-icon>
+                      </button>
+                    </div>
+                    <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="deleteRule(index);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
+                      <box-icon name='trash' color="red" size="md" ></box-icon>
                     </button>
-                  </div>
-                  <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="deleteRule(index);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
-                    <box-icon name='trash' color="red" size="md" ></box-icon>
-                  </button>
-                  <RuleModals
-                    configType = "service"
-                    :url = "url"
-                    :promQLurl = "promQLurl"
-                    :configuration = "configuration"
-                    :save_configuration = "save_configuration"
-                    :updateClass = "updateClass"
-                    :ruleRow = "ruleRow"
-                    :row = "row"
-                    :index = index+1
-                    :selectedClass = "selectedClass"
-                    @Toast = "$emit('toast', $event)"
-                  />
-                </td>
-              </tr>
+                    <RuleModals
+                      configType = "service"
+                      :url = "url"
+                      :promQLurl = "promQLurl"
+                      :configuration = "configuration"
+                      :save_configuration = "save_configuration"
+                      :updateClass = "updateClass"
+                      :ruleRow = "ruleRow"
+                      :row = "row"
+                      :index = index+1
+                      :selectedClass = "selectedClass"
+                      @Toast = "$emit('toast', $event)"
+                    />
+                  </td>
+                </tr>
+              </template>
+              <template v-else>
+                <tr>
+                  <td colspan="100%" style="text-align: center;">
+                    <span style="color: red; font-weight: bold; font-style: italic;"> --- No service rules available --- </span>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
