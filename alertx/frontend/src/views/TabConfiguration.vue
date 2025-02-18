@@ -65,7 +65,7 @@ function deleteRule(count: number) {
     const delete_config = JSON.parse(JSON.stringify(props.configuration));
     if (delete_config?.groups?.[0]?.rules) {
       delete_config.groups[0].rules.splice(count, 1);
-      props.save_configuration(delete_config, 'On Page')
+      props.save_configuration("generic", delete_config, 'On Page')
     }
   }
 }
@@ -78,29 +78,29 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
 });
 
 
-const getVisibleIndex = (groupIndex: number, rowIndex: number) => {
-  let visibleIndex = 0;
+// const getVisibleIndex = (groupIndex: number, rowIndex: number) => {
+//   let visibleIndex = 0;
 
-  // Iterate over groups
-  for (let g = 0; g <= groupIndex; g++) {
-    const group = props.configuration?.groups[g];
-    if (!group) continue;
+//   // Iterate over groups
+//   for (let g = 0; g <= groupIndex; g++) {
+//     const group = props.configuration?.groups[g];
+//     if (!group) continue;
 
-    // Iterate over rules within the group
-    for (let r = 0; r < group.rules.length; r++) {
-      if (group.rules[r].labels.category === 'generic') {
-        visibleIndex++; // Increment only for "generic" rows
-      }
+//     // Iterate over rules within the group
+//     for (let r = 0; r < group.rules.length; r++) {
+//       if (group.rules[r].labels.category === 'generic') {
+//         visibleIndex++; // Increment only for "generic" rows
+//       }
 
-      // Stop counting when reaching the current row
-      if (g === groupIndex && r === rowIndex) {
-        return visibleIndex;
-      }
-    }
-  }
+//       // Stop counting when reaching the current row
+//       if (g === groupIndex && r === rowIndex) {
+//         return visibleIndex;
+//       }
+//     }
+//   }
 
-  return visibleIndex;
-};
+//   return visibleIndex;
+// };
 
 </script>
 
@@ -152,35 +152,36 @@ const getVisibleIndex = (groupIndex: number, rowIndex: number) => {
               </tr>
             </thead>
             <tbody v-for="(groups, groupsIndex) in props.configuration?.groups" :key="groups.name">
-              <template v-for="(row, index) in groups.rules" :key="index">
-                <tr v-if="row.labels.category === 'generic'">
-                <!-- <tr v-for="(row, index) in groups.rules" :key="index"> -->
-                  <th scope="row">{{ getVisibleIndex(groupsIndex, index) }}</th>
+              <!-- <template v-for="(row, index) in groups.rules" :key="index"> -->
+                <!-- <tr v-if="row.labels.category === 'generic'"> -->
+                <tr v-for="(row, index) in groups.rules" :key="index">
+                  <!-- <th scope="row">{{ getVisibleIndex(groupsIndex, index) }}</th> -->
+                  <th scope="row">{{ index + 1 }}</th>
                   <td>{{ groups.name }}</td>
                   <td>
                     <a href="#"  @click.prevent="showModal(index + 1)">{{ row.alert }}</a>
-                    <input type="hidden" :id="`group_name_${groupsIndex + 1}`" :value="`${groups.name}`" />
-                    <input type="hidden" :id="`rule_name_${index + 1}`" :value="`${row.alert}`" />
-                    <input type="hidden" :id="`rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
-                    <input type="hidden" :id="`rule_for_${index + 1}`" :value="`${row.for}`" />
-                    <input type="hidden" :id="`rule_editor_${index + 1}`" :value="`${row.expr}`" />
-                    <input type="hidden" :id="`rule_category_${index + 1}`" :value="`${row.labels.category}`" />
+                    <input type="hidden" :id="`generic_group_name_${groupsIndex + 1}`" :value="`${groups.name}`" />
+                    <input type="hidden" :id="`generic_rule_name_${index + 1}`" :value="`${row.alert}`" />
+                    <input type="hidden" :id="`generic_rule_description_${index + 1}`" :value="`${row.annotations.description}`" />
+                    <input type="hidden" :id="`generic_rule_for_${index + 1}`" :value="`${row.for}`" />
+                    <input type="hidden" :id="`generic_rule_editor_${index + 1}`" :value="`${row.expr}`" />
+                    <input type="hidden" :id="`generic_rule_category_${index + 1}`" :value="`${row.labels.category}`" />
                   </td>
                   <td>{{ row.for }}</td>
                   <td>
                     <div class="form-check form-switch mb-2">
-                      <input class="form-check-input" type="checkbox" v-model="getComputedDisabled(row.labels.disabled).value" @click="props.update_configuration(index + 1);" :id="`rule_status_${index + 1}`" data-toggle="switch"  />
-                      <label class="form-check-label" :for="`rule_status_${index + 1}`">{{ row.labels.disabled !== true ? 'ON' : 'OFF' }} </label>
+                      <input class="form-check-input" type="checkbox" v-model="getComputedDisabled(row.labels.disabled).value" @click="props.update_configuration('generic', index + 1);" :id="`generic_rule_status_${index + 1}`" data-toggle="switch"  />
+                      <label class="form-check-label" :for="`generic_rule_status_${index + 1}`">{{ row.labels.disabled !== true ? 'ON' : 'OFF' }} </label>
                     </div>
                   </td>
                   <td>
                     <div class="form-check form-switch mb-2">
-                      <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="props.update_configuration(index + 1);" :id="`rule_nhc_${index + 1}`" data-toggle="switch" :true-value=true :false-value=false />
-                      <label class="form-check-label" :for="`rule_nhc_${index + 1}`">{{ row.labels.nhc === true ? 'ON' : 'OFF' }}</label>
+                      <input class="form-check-input" type="checkbox" v-model="row.labels.nhc" @click="props.update_configuration('generic', index + 1);" :id="`generic_rule_nhc_${index + 1}`" data-toggle="switch" :true-value=true :false-value=false />
+                      <label class="form-check-label" :for="`generic_rule_nhc_${index + 1}`">{{ row.labels.nhc === true ? 'ON' : 'OFF' }}</label>
                     </div>
                   </td>
                   <td>
-                    <select :id="`severity_${index + 1}`" @change="props.update_configuration(index + 1);" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
+                    <select :id="`generic_severity_${index + 1}`" @change="props.update_configuration('generic', index + 1);" v-model="row.labels.severity" :class="['form-select', 'form-select-sm', row.labels.severity === 'critical' ? 'btn-dark' : 'btn-' + row.labels.severity]">
                       <option class="btn-primary" value="">Set Priority</option>
                       <option class="btn-dark" value="critical" :selected="row.labels.severity === 'critical'">Critical</option>
                       <option class="btn-danger" value="danger" :selected="row.labels.severity === 'danger'">Danger</option>
@@ -212,7 +213,7 @@ const getVisibleIndex = (groupIndex: number, rowIndex: number) => {
                     />
                   </td>
                 </tr>
-              </template>
+              <!-- </template> -->
             </tbody>
           </table>
         </div>

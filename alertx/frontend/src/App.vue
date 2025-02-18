@@ -18,7 +18,8 @@ import { Modal } from 'bootstrap';
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const alertURL = ref(window.ALERT_URL || import.meta.env.VITE_ALERT_URL);
 const statusAPI = promQLurl.value+'/api/v1/rules';
-const rulesFile = "/trinity/local/etc/prometheus_server/rules/trix.rules";
+const GenericRulesFile = "/trinity/local/etc/prometheus_server/rules/trix.generic.rules";
+const ServiceRulesFile = "/trinity/local/etc/prometheus_server/rules/trix.service.rules";
 
 onMounted(() => {
 });
@@ -80,6 +81,8 @@ onMounted(() => {
   <header>
     <TopNavigation :url = "url" />
   </header>
+  <!-- <div class="container-xxl flex-grow-1 container-p-y">
+    <div class="card"> -->
 
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
@@ -130,15 +133,15 @@ onMounted(() => {
             </div>
             <div class="tab-pane fade" id="tab-rules" role="tabpanel">
               <TabConfiguration
-                :rulesFile = "rulesFile"
+                :rulesFile = "GenericRulesFile"
                 :save_configuration = "save_configuration"
                 :update_configuration = "update_configuration"
-                :Content="Content"
+                :Content="GenericContent"
                 :ContentType="ContentType"
                 @Toast="Toast"
                 :url = "url"
                 :promQLurl = "promQLurl"
-                :configuration = "configuration"
+                :configuration = "generic_config"
                 :updateClass = "updateClass"
                 :ruleRow = "ruleRow"
                 :selectedClass = "selectedClass"
@@ -150,15 +153,15 @@ onMounted(() => {
             </div>
             <div class="tab-pane fade" id="tab-service" role="tabpanel">
               <TabService
-                :rulesFile = "rulesFile"
+                :rulesFile = "ServiceRulesFile"
                 :save_configuration = "save_configuration"
                 :update_configuration = "update_configuration"
-                :Content="Content"
+                :Content="ServiceContent"
                 :ContentType="ContentType"
                 @Toast="Toast"
                 :url = "url"
                 :promQLurl = "promQLurl"
-                :configuration = "configuration"
+                :configuration = "service_config"
                 :updateClass = "updateClass"
                 :ruleRow = "ruleRow"
                 :selectedClass = "selectedClass"
@@ -176,7 +179,8 @@ onMounted(() => {
     <div class="layout-overlay layout-menu-toggle"></div>
   </div>
 
-
+<!-- </div>
+</div> -->
   <div v-if="showToast" :class="`bs-toast toast toast-placement-ex m-2 fade ${toastClass} top-0 end-0 show`" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2000">
     <div class="toast-header">
       <i class="bx bx-bell me-2"></i>
@@ -317,9 +321,13 @@ export default {
       toastClass: '',
       toastMessage: '',
       configuration: reactive<Configuration>({ groups: [] }),
+      generic_config: reactive<Configuration>({ groups: [] }),
+      service_config: reactive<Configuration>({ groups: [] }),
       activeButton: 1,
       previousButton: null,
       Content: JSON.stringify({}, null, 2),
+      GenericContent: JSON.stringify({}, null, 2),
+      ServiceContent: JSON.stringify({}, null, 2),
       ContentType,
       showSpinner: false,
     };
@@ -334,8 +342,35 @@ export default {
       const response = await axios.get(url + '/get_rules');
       this.configuration =  reactive(response.data);
       this.configuration = { ...this.configuration };
+      this.generic_config = this.splitConfiguration('generic');
+      this.service_config = this.splitConfiguration('service');
       this.Content = JSON.stringify({ ...this.configuration }, null, 2);
+      this.GenericContent = JSON.stringify({ ...this.generic_config }, null, 2);
+      this.ServiceContent = JSON.stringify({ ...this.service_config }, null, 2);
       return this.configuration;
+    },
+
+    splitConfiguration(category: string) {
+      return {
+        groups: this.configuration.groups
+          .map(group => ({
+            ...group,
+            rules: group.rules.filter(rule => rule.labels.category === category)
+          }))
+          .filter(group => group.rules.length > 0) // Remove empty groups
+      };
+    },
+
+    mergeConfigurations(generic_config: object, service_config: object) {
+      const configuration = {
+        groups: [
+          {
+            name: "trinityx",
+            rules: [...(generic_config as Configuration).groups[0].rules, ...(service_config as Configuration).groups[0].rules]
+          }
+        ]
+      };
+      return configuration;
     },
 
     Toast(message: unknown, toastClass: string) {
@@ -362,57 +397,84 @@ export default {
       this.showSpinner = value;
     },
 
-    deleteRule(count: number) {
-      this.configuration.groups[0].rules.splice(count, 1);
-      this.save_configuration(this.configuration, 'On Page')
-    },
+    // deleteRule(count: number) {
+    //   this.configuration.groups[0].rules.splice(count, 1);
+    //   this.save_configuration(this.configuration, 'On Page')
+    // },
 
-    update_configuration(count: number) {
+    update_configuration(configType:string, count: number) {
       let status: boolean =  false;
       let nhc: boolean =  false;
       let severity: string = "info";
 
-      const alertElement = document.getElementById(`rule_name_${count}`);
+      const alertElement = document.getElementById(`${configType}_rule_name_${count}`);
       const alert = (alertElement as HTMLInputElement).value;
 
-      const descriptionElement = document.getElementById(`rule_description_${count}`);
+      const descriptionElement = document.getElementById(`${configType}_rule_description_${count}`);
       const description = (descriptionElement as HTMLInputElement).value;
 
-      const forElement = document.getElementById(`rule_for_${count}`);
+      const forElement = document.getElementById(`${configType}_rule_for_${count}`);
       const for_val = (forElement as HTMLInputElement).value;
 
-      const exprElement = document.getElementById(`rule_editor_${count}`);
+      const exprElement = document.getElementById(`${configType}_rule_editor_${count}`);
       const expr = (exprElement as HTMLInputElement).value;
 
-      const categoryElement = document.getElementById(`rule_category_${count}`);
+      const categoryElement = document.getElementById(`${configType}_rule_category_${count}`);
       const category = (categoryElement as HTMLInputElement).value;
 
-      const statusElement = document.getElementById(`rule_status_${count}`);
+      const statusElement = document.getElementById(`${configType}_rule_status_${count}`);
       if (statusElement) {
         const status_value = (statusElement as HTMLInputElement).checked;
         if(status_value === true){ status = false; } else { status = true; }
       }
 
-      const nhcElement = document.getElementById(`rule_nhc_${count}`);
+      const nhcElement = document.getElementById(`${configType}_rule_nhc_${count}`);
       nhc = (nhcElement as HTMLInputElement).checked;
 
 
-      const severityElement = document.getElementById(`severity_${count}`);
+      const severityElement = document.getElementById(`${configType}_severity_${count}`);
       if (severityElement) { severity = (severityElement as HTMLInputElement).value; }
 
-      this.configuration.groups[0].rules[count - 1].alert                    = alert;
-      this.configuration.groups[0].rules[count - 1].annotations.description  = description;
-      this.configuration.groups[0].rules[count - 1].for                      = for_val;
-      this.configuration.groups[0].rules[count - 1].expr                     = expr;
-      this.configuration.groups[0].rules[count - 1].labels.category          = category;
-      this.configuration.groups[0].rules[count - 1].labels.disabled          = status;
-      this.configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
-      this.configuration.groups[0].rules[count - 1].labels.severity          = severity;
+      // this.configuration.groups[0].rules[count - 1].alert                    = alert;
+      // this.configuration.groups[0].rules[count - 1].annotations.description  = description;
+      // this.configuration.groups[0].rules[count - 1].for                      = for_val;
+      // this.configuration.groups[0].rules[count - 1].expr                     = expr;
+      // this.configuration.groups[0].rules[count - 1].labels.category          = category;
+      // this.configuration.groups[0].rules[count - 1].labels.disabled          = status;
+      // this.configuration.groups[0].rules[count - 1].labels.nhc               = nhc;
+      // this.configuration.groups[0].rules[count - 1].labels.severity          = severity;
 
-      this.save_configuration(this.configuration, 'On Page')
+      // this.save_configuration(configType, this.configuration, 'On Page')
+
+      if (configType === "generic"){
+        this.generic_config.groups[0].rules[count - 1].alert                    = alert;
+        this.generic_config.groups[0].rules[count - 1].annotations.description  = description;
+        this.generic_config.groups[0].rules[count - 1].for                      = for_val;
+        this.generic_config.groups[0].rules[count - 1].expr                     = expr;
+        this.generic_config.groups[0].rules[count - 1].labels.category          = category;
+        this.generic_config.groups[0].rules[count - 1].labels.disabled          = status;
+        this.generic_config.groups[0].rules[count - 1].labels.nhc               = nhc;
+        this.generic_config.groups[0].rules[count - 1].labels.severity          = severity;
+
+        this.save_configuration(configType, this.generic_config, 'On Page')
+
+      } else {
+
+        this.service_config.groups[0].rules[count - 1].alert                    = alert;
+        this.service_config.groups[0].rules[count - 1].annotations.description  = description;
+        this.service_config.groups[0].rules[count - 1].for                      = for_val;
+        this.service_config.groups[0].rules[count - 1].expr                     = expr;
+        this.service_config.groups[0].rules[count - 1].labels.category          = category;
+        this.service_config.groups[0].rules[count - 1].labels.disabled          = status;
+        this.service_config.groups[0].rules[count - 1].labels.nhc               = nhc;
+        this.service_config.groups[0].rules[count - 1].labels.severity          = severity;
+
+        this.save_configuration(configType, this.service_config, 'On Page')
+
+      }
     },
 
-    async save_configuration(newContent: unknown, modalID: string) {
+    async save_configuration(configType:string, newContent: unknown, modalID: string) {
       let content: unknown;
       if (typeof newContent === 'object'){
         newContent = toRaw(newContent);
@@ -439,8 +501,12 @@ export default {
         }
       }
 
-
       if (content){
+        if (configType === "generic"){
+          content = this.mergeConfigurations(content, JSON.parse(JSON.stringify(this.service_config)));
+        } else {
+          content = this.mergeConfigurations(JSON.parse(JSON.stringify(this.generic_config)), content);
+        }
         const response = await saveRules(content as JSON);
         this.toastMessage = response.message;
         if (response.status === 200){
