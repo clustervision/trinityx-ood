@@ -94,11 +94,11 @@ export default defineComponent({
                     let genericRules: boolean | null = true, services: boolean | null = true, hardware: boolean | null = true;
                     const nhc: boolean = String(rule.labels.nhc) === "true";
                     if (alert.labels.category === "generic") {
-                      if (nhc === true){ genericRules = null; } else { genericRules = false; }
+                      if (alert.state === "firing"){ if (nhc === true){ genericRules = null; } else { genericRules = false; } }
                     } else if (alert.labels.category === "service") {
-                      if (nhc === true){ services = null; } else { services = false; }
+                      if (alert.state === "firing"){ if (nhc === true){ services = null; } else { services = false; } }
                     } else if (alert.labels.category === "hardware") {
-                      if (nhc === true){ hardware = null; } else { hardware = false; }
+                      if (alert.state === "firing"){ if (nhc === true){ hardware = null; } else { hardware = false; } }
                     }
 
                     if (hostname !== undefined) {
@@ -122,14 +122,14 @@ export default defineComponent({
 
 
                   });
-                  this.overview = Array.from(uniqueOverviewMap.values());
+                  // this.overview = Array.from(uniqueOverviewMap.values());
                 } // else {
                 // count_rows = count_rows + 1;
                 // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
                 // }
 
               });
-              // this.overview = Array.from(uniqueOverviewMap.values());
+              this.overview = Array.from(uniqueOverviewMap.values());
               if (this.overview.length === 0) {
                 this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
               }
@@ -181,11 +181,11 @@ export default defineComponent({
     </div>
     <div class="row">
       <div class="col col-1"><box-icon name="circle" type="solid" color="#FFC107"></box-icon></div>
-      <div class="col col-11"><i>When Category is present and NHC is <strong>Enabled</strong>.</i></div>
+      <div class="col col-11"><i>When Firing and NHC is <strong>Disabled</strong>.</i></div>
     </div>
     <div class="row">
       <div class="col col-1"><box-icon name="circle" type="solid" color="#DC3545"></box-icon></div>
-      <div class="col col-11"><i>When Category is present and NHC is <strong>Disabled</strong>.</i></div>
+      <div class="col col-11"><i>When Firing and NHC is <strong>Enabled</strong>.</i></div>
     </div>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
@@ -209,19 +209,19 @@ export default defineComponent({
           <td>{{ row.hostname }}</td>
           <td>
             <box-icon v-if="row.genericRules === true" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Rules are OK.`"></box-icon>
-            <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-            <box-icon v-else name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+            <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
+            <box-icon v-else name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
 
           </td>
           <td>
             <box-icon v-if="row.services === true" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
-            <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
-            <box-icon v-else name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+            <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
+            <box-icon v-else name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
           </td>
           <td>
             <box-icon v-if="row.hardware === true" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
-            <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
-            <box-icon v-else name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+            <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
+            <box-icon v-else name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
           </td>
           <!-- <td>
             <box-icon v-if="row.ipmi === true" name="circle" type="solid" color="#198754" data-tippy-content="This is in BETA"></box-icon>
