@@ -357,7 +357,7 @@ export default {
             ...group,
             rules: group.rules.filter(rule => rule.labels.category === category)
           }))
-          .filter(group => group.rules.length > 0) // Remove empty groups
+          // .filter(group => group.rules.length > 0)
       };
     },
 
@@ -396,11 +396,6 @@ export default {
     updateShowSpinner(value: boolean){
       this.showSpinner = value;
     },
-
-    // deleteRule(count: number) {
-    //   this.configuration.groups[0].rules.splice(count, 1);
-    //   this.save_configuration(this.configuration, 'On Page')
-    // },
 
     update_configuration(configType:string, count: number) {
       let status: boolean =  false;

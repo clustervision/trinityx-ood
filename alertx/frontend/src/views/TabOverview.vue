@@ -116,16 +116,20 @@ export default defineComponent({
                           ipmi: true
                         });
                       }
+
+
                     }
 
+
                   });
+                  this.overview = Array.from(uniqueOverviewMap.values());
                 } // else {
                 // count_rows = count_rows + 1;
                 // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
                 // }
-              });
 
-              this.overview = Array.from(uniqueOverviewMap.values());
+              });
+              // this.overview = Array.from(uniqueOverviewMap.values());
               if (this.overview.length === 0) {
                 this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
               }
