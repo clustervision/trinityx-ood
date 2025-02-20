@@ -19,7 +19,17 @@ interface AlertRules {
   alerts: Array<{
     activeAt: string;
     annotations: {description: string};
-    labels: {alertname: string, exporter: string, hostname: string, instance: string, job: string, luna_group: string, nhc: boolean, severity: string};
+    labels: {
+      alertname: string,
+      exporter: string,
+      hostname: string,
+      instance: string,
+      job: string,
+      luna_group: string,
+      disabled: boolean | null,
+      nhc: boolean | null,
+      severity: string
+    };
     state: string;
     value: string;
   }>;
@@ -128,23 +138,27 @@ export default defineComponent({
               group.rules.forEach((rule) => {
                 if (rule.alerts && rule.alerts.length > 0){
                   rule.alerts.forEach((alert) => {
-                    count_rows = count_rows + 1;
-                    const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                    this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
+                    if (String(alert.labels.disabled) === 'false'){
+                      count_rows = count_rows + 1;
+                      const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+                      this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
+                    }
                   });
                 } // else {
                   // count_rows = count_rows + 1;
                   // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
                   // }
               });
-              if (this.rows.length === 0){
-                this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
-              }
+             
             }
           });
         } else {
           this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
           console.error("Error fetching rules:", response.status, response.data);
+        }
+
+        if (this.rows.length === 0){
+          this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
         }
       } catch (error: unknown) {
         console.error("ERROR[Prometheus Server] :: Error fetching status:", error);

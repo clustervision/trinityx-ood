@@ -47,7 +47,7 @@ interface Overview {
   genericRules: boolean | null;
   services: boolean | null;
   hardware: boolean | null;
-  ipmi: boolean;
+  ipmi: boolean | null;
 };
 
 
@@ -71,7 +71,7 @@ export default defineComponent({
   },
   data() {
     return {
-      overview: [] as { hostname: string; genericRules: boolean | null; services: boolean | null; hardware: boolean | null; ipmi: boolean; }[],
+      overview: [] as { hostname: string; genericRules: boolean | null; services: boolean | null; hardware: boolean | null; ipmi: boolean | null; }[],
       alerts: [],
       noRows: '',
       showPopup: false,
@@ -91,37 +91,62 @@ export default defineComponent({
                 if (rule.alerts && rule.alerts.length > 0) {
                   rule.alerts.forEach((alert) => {
                     const hostname = alert.labels.hostname;
-                    let genericRules: boolean | null = true, services: boolean | null = true, hardware: boolean | null = true;
+                    let genericRules: boolean | null = null;
+                    let services: boolean | null = null;
+                    let hardware: boolean | null = null;
                     const nhc: boolean = String(rule.labels.nhc) === "true";
-                    if (alert.labels.category === "generic") {
-                      if (alert.state === "firing"){ if (nhc === true){ genericRules = null; } else { genericRules = false; } }
-                    } else if (alert.labels.category === "service") {
-                      if (alert.state === "firing"){ if (nhc === true){ services = null; } else { services = false; } }
-                    } else if (alert.labels.category === "hardware") {
-                      if (alert.state === "firing"){ if (nhc === true){ hardware = null; } else { hardware = false; } }
-                    }
+
+                  
 
                     if (hostname !== undefined) {
+
+                      if (alert.state === "firing" && String(alert.labels.disabled) === 'false'){
+                      if (alert.labels.category === "generic") {
+                        genericRules = nhc ? true : (genericRules ?? false);
+                        // console.log(genericRules);
+                        // if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                        // console.log(`hostname ${hostname} NHC ${nhc} RULE: ${genericRules}`);
+                      }
+                      if (alert.labels.category === "service") {
+                        services = nhc ? true : (services ?? false);
+                        // if (nhc === true){ services = true; } else { services = false; }
+                      }
+                      if (alert.labels.category === "hardware") {
+                        hardware = nhc ? true : (hardware ?? false);
+                        // if (nhc === true){ hardware = true; } else { hardware = false; }
+                      }
+                    } 
+
+
                       if (uniqueOverviewMap.has(hostname)) {
                         const existing = uniqueOverviewMap.get(hostname)!;
+                        // existing.genericRules = existing.genericRules && genericRules;
+                        // existing.services = existing.services && services;
+                        // existing.hardware = existing.hardware && hardware;
+
+                        // existing.genericRules = existing.genericRules === true ? true : genericRules;
+                        // existing.services = existing.services === true ? true : services;
+                        // existing.hardware = existing.hardware === true ? true : hardware;
+
                         existing.genericRules = existing.genericRules && genericRules;
                         existing.services = existing.services && services;
                         existing.hardware = existing.hardware && hardware;
+
                       } else {
+                        // console.log(` RULE: ${genericRules} ==========+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++===`);
                         uniqueOverviewMap.set(hostname, {
                           hostname: hostname,
                           genericRules: genericRules,
                           services: services,
                           hardware: hardware,
-                          ipmi: true
+                          ipmi: null,
                         });
                       }
-
-
                     }
-
-
                   });
+                  if (this.overview.length === 0) {
+                    this.overview = Array.from(uniqueOverviewMap.values());
+                    }
                   // this.overview = Array.from(uniqueOverviewMap.values());
                 } // else {
                 // count_rows = count_rows + 1;
@@ -129,7 +154,8 @@ export default defineComponent({
                 // }
 
               });
-              this.overview = Array.from(uniqueOverviewMap.values());
+              
+              console.log(this.overview);
               if (this.overview.length === 0) {
                 this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
               }
@@ -208,20 +234,19 @@ export default defineComponent({
           <td>{{ index +1 }}</td>
           <td>{{ row.hostname }}</td>
           <td>
-            <box-icon v-if="row.genericRules === true" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Rules are OK.`"></box-icon>
+            <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Rules are OK.`"></box-icon>
             <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-            <box-icon v-else name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
-
+            <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
           </td>
           <td>
-            <box-icon v-if="row.services === true" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
+            <box-icon v-if="row.services === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
             <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
-            <box-icon v-else name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+            <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
           </td>
           <td>
-            <box-icon v-if="row.hardware === true" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
+            <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
             <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
-            <box-icon v-else name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+            <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
           </td>
           <!-- <td>
             <box-icon v-if="row.ipmi === true" name="circle" type="solid" color="#198754" data-tippy-content="This is in BETA"></box-icon>
