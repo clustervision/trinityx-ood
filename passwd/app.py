@@ -31,48 +31,15 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-import requests
-import urllib3
 from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
 from constant import LICENSE, APP_STATE
 from log import Log
 from rest import Rest
 from helper import Helper
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 LOGGER = Log.init_log('INFO')
-TABLE = 'monitor'
-TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_folder="app/assets", template_folder="app")
+app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-if APP_STATE is False: # FOR Development Only
-    CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/get_global": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/set_global": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/proxy": {"origins": "http://localhost:5173"}})
-
-
-@app.route('/proxy', methods=['GET'])
-def proxy():
-    """
-    This is AlertX application proxy pass, which can pass alert manager, Prometheus or any other
-    CORS related URL, and give back the clean response.
-    """
-    target_url = request.args.get('url')
-    if not target_url:
-        return jsonify({'error': 'URL parameter is required'}), 400
-    try:
-        response = requests.get(target_url, verify=False, timeout=5)
-        response.raise_for_status()
-        return jsonify(response.json()), response.status_code
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/', methods=['GET'])
@@ -80,78 +47,27 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    url = Helper().app_url(request)
-    return render_template("index.html", PROMQL_URL=url['PROMQL_URL'], APP_URL=url['APP_URL'], ALERT_URL=url['ALERT_URL'])
+    return render_template("index.html", table='Change Password')
 
 
-@app.route('/get_nodes', methods=['GET'])
-def get_nodes():
+@app.route('/update_password', methods=['POST'])
+def update_password():
     """
-    This method to show the monitor status and queue.
+    This method will update the password for the user.
     """
-    status, response = Rest().get_luna_nodes()
-    node_list = []
-    if 'config' in response:
-        for _, details in response["config"]["node"].items():
-            node_list.append(details["hostname"])
-        if node_list:
-            node_list = ",".join(node_list)
-            status, response = Rest().get_node_hw(nodes = node_list)
-    if status is True:
-        return jsonify(response), 200
-    else:
-        return jsonify(response), 400
-
-
-@app.route('/save_config', methods=['POST'])
-def save_config():
-    """
-    This method to show the monitor status and queue.
-    """
-    status, response = Rest().post_rules(data=request.json)
-    return jsonify({"response": response}), status
-
-
-@app.route('/get_rules', methods=['GET'])
-def get_rules():
-    """
-    This method to show the monitor status and queue.
-    """
-    check, configuration = Rest().get_rules()
-    if check is True:
-        return jsonify(configuration), 200
-    else:
-        return jsonify(configuration), 400
-
-
-@app.route('/save_nodes', methods=['POST'])
-def save_nodes():
-    """
-    This method save the Node hardware.
-    """
-    status, response = Rest().post_nodes(data=request.json)
-    return jsonify({"response": response}), status
-
-
-@app.route('/get_global', methods=['GET'])
-def get_global():
-    """
-    This method will get the global settings for the Node Hardware.
-    """
-    check, setting = Rest().get_global_hw()
-    if check is True:
-        return jsonify(setting), 200
-    else:
-        return jsonify(setting), 400
-
-
-@app.route('/set_global', methods=['POST'])
-def set_global():
-    """
-    This method will save the global settings for the Node Hardware.
-    """
-    status, response = Rest().post_global_hw(data=request.json)
-    return jsonify({"response": response}), status
+    response = {"status": False, "message": "Password Update Failed."}
+    if request.method == 'POST':
+        request_data = request.json
+        old_password = request_data['old_password']
+        new_password = request_data['new_password']
+        confirm_password = request_data['confirm_password']
+        if new_password == confirm_password:
+            status = Helper().update_password(old_password, new_password, confirm_password)
+            if status is True:
+                response = {"status": True, "message": "Password Updated Successfully."}
+        else:
+            response = {"status": False, "message": "New Password and Confirm Password should be same."}
+    return jsonify(response), 200
 
 
 @app.route('/license', methods=['GET'])

@@ -6,4 +6,4 @@ requests==2.29.0
 setuptools==51.0.0
 urllib3==1.26.16
 requests==2.29.0
-
+pexpect==4.9.0

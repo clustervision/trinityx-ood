@@ -1,0 +1,10 @@
+
+<nav class="navbar shadow-sm navbar-light">
+    <ol class="breadcrumb bg-transparent d-flex align-items-center">
+        <a href="/" aria-current="page" role="menuitem">
+            <img src="{{ url_for( 'static', filename='/img/logo.png') }}" class="img-logo">
+        </a>
+        <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
+        <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a></li>
+    </ol>
+</nav>
