@@ -1,10 +1,10 @@
 name: PASSWD
 description: Change Password
-icon: fa://ghost
+icon: fa://key
 category: Utilities
 new_window: false
 
 tile:
   title: "PASSWD"
   sub_caption: |
-   Alert Configurations & Node Health Check
+   Change Password
