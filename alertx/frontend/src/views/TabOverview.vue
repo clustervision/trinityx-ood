@@ -191,8 +191,8 @@ export default defineComponent({
       const table = $('#dataTableOverview');
       nextTick(() => {
           table.DataTable({
-          // order: [[1, 'asc']],
-          // columnDefs: [{ targets: 2, type: "string" }],
+          order: [[1, 'asc']],
+          columnDefs: [{ targets: 2, type: "string" }],
           pageLength: 25
         });
       });
