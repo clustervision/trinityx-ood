@@ -49,44 +49,37 @@ class Helper():
         self.logger = Log.get_logger()
 
 
-    def update_password(self, old_password=None, new_password=None, confirm_password=None):
+    def update_password(self, old_password=None, new_password=None):
         """
         This method will provide the URL's for the frontend application.
         """
-        print(old_password)
-        print(new_password)
-        print(confirm_password)
-        return True
-        
-
-    def validate_password(self, old_password=None, new_password=None, confirm_password=None):
-        """
-        """
+        response = {"status": False, "message": "Password Update Failed."}
         cur_password = old_password
-        child = pexpect.spawnu('/usr/bin/passwd')
+        child = pexpect.spawnu('/usr/bin/passwd') ########### Only for Testing Purpose Sumit@clustervision12
         child.expect('[Cc]urrent [Pp]assword:.*')
         child.sendline(cur_password)
         ret = child.expect(['.*[Nn]ew password:.*', '[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret > 0:
             print(f"{child.after}")
-            sys.exit(1)
+            # sys.exit(1)
         child.sendline(new_password)
         child.expect(['[Rr]etype [Nn]ew [Pp]assword:.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         child.sendline(new_password)
         ret = child.expect(['.*[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret == 0:
             print(f"{child.after}")
-            sys.exit(1)
+            # sys.exit(1)
         if ret > 0:
-            print("Password not changed due to unexpected EOF or timeout")
-            sys.exit(1)
+            response = {"status": False, "message": "Password not changed due to unexpected EOF or timeout"}
+            # sys.exit(1)
         child.sendline(new_password)
         ret = child.expect(['all authentication tokens updated successfully', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret == 0:
-            print("password change successfull")
-            sys.stdout.flush()
-            sys.exit(0)
+            response = {"status": True, "message": "Password Update Successfully."}
+            # sys.stdout.flush()
+            # sys.exit(0)
         print("Password not changed due to unexpected EOF or timeout")
 
-        sys.stdout.flush()
+        # sys.stdout.flush()
         child.interact()
+        return response

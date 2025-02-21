@@ -71,7 +71,7 @@ class Log:
             return cls.__logger
         except PermissionError:
             sys.stderr.write('ERROR :: Run this tool as a super user.\n')
-            sys.exit(1)
+            # sys.exit(1)
 
 
     @classmethod
