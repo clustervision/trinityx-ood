@@ -19,7 +19,17 @@ interface AlertRules {
   alerts: Array<{
     activeAt: string;
     annotations: {description: string};
-    labels: {alertname: string, exporter: string, hostname: string, instance: string, job: string, luna_group: string, nhc: boolean, severity: string};
+    labels: {
+      alertname: string,
+      exporter: string,
+      hostname: string,
+      instance: string,
+      job: string,
+      luna_group: string,
+      disabled: boolean | null,
+      nhc: boolean | null,
+      severity: string
+    };
     state: string;
     value: string;
   }>;
@@ -81,93 +91,133 @@ export default defineComponent({
       alerts: [],
       noRows: '',
       showPopup: false,
+      intervalId: null as number | null,
     };
   },
 
   async mounted() {
-    // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-    this.updateShowSpinner(true);
-    // if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-      // try {
-      //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
-      //   const alert_manager = await axios.get(this.alertURL);
-      //   if (alert_manager.status === 200) {
-      //     let alert_rows:number = 0;
-      //     alert_manager.data.forEach((alert: AlertManager) => {
-      //       alert_rows = alert_rows + 1;
-      //       const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-      //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
-      //     });
-      //     if (this.rows.length === 0){
-      //       this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
-      //     } else { alertData = true; }
-      //   } else {
-      //     this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
-      //     console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
-      //   }
-      // } catch (error: unknown) {
-      //   console.error("Error fetching Alerts:", error);
-      //   if (error instanceof Error) {
-      //     this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
-      //   } else {
-      //     this.noRows += `\nERROR[Alert Manager] :: ${error}`;
-      //   }
-      // }
-    // } else {
-      // this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
-    // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-    // if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-      try {
-        const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
-        const response = await axios.get(proxyUrl);
-        // const response = await axios.get(this.statusAPI);
-        if (response.status === 200) {
-          response.data.data.groups.forEach((group: Prometheus) => {
-            if (group.name === "trinityx"){
-              let count_rows:number = 0;
-              group.rules.forEach((rule) => {
-                if (rule.alerts && rule.alerts.length > 0){
-                  rule.alerts.forEach((alert) => {
-                    count_rows = count_rows + 1;
-                    const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                    this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
-                  });
-                } // else {
-                  // count_rows = count_rows + 1;
-                  // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
-                  // }
-              });
-              if (this.rows.length === 0){
-                this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
-              }
-            }
-          });
-        } else {
-          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
-          console.error("Error fetching rules:", response.status, response.data);
-        }
-      } catch (error: unknown) {
-        console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
-        if (error instanceof Error) {
-          // Need  a Pop up to accept that risk
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
-        } else {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
-        }
-      }
-    // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-    this.updateShowSpinner(false);
-    await nextTick();
-    // $("#dataTable").DataTable();
-        $("#dataTable").DataTable({
-        "order": [[3, 'asc']], // Assuming 'severity' is the 3rd column (index 4)
-        "columnDefs": [{
-            "targets": 2, // Adjust the column index if needed
-            "type": "string"
-        }]
-    });
+    await this.fetchAlerts(); // Initial fetch
+    this.intervalId = setInterval(this.fetchAlerts, 15000); // Poll every 15 seconds
+  },
+
+  beforeUnmount() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId); // Clear polling interval when component unmounts
+    }
   },
   methods: {
+    async fetchAlerts() {
+      // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      // this.updateShowSpinner(true);
+      this.rows = [];  // Clear the table before fetching new data
+    this.noRows = '';
+      // if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+        // try {
+        //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
+        //   const alert_manager = await axios.get(this.alertURL);
+        //   if (alert_manager.status === 200) {
+        //     let alert_rows:number = 0;
+        //     alert_manager.data.forEach((alert: AlertManager) => {
+        //       alert_rows = alert_rows + 1;
+        //       const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+        //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
+        //     });
+        //     if (this.rows.length === 0){
+        //       this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
+        //     } else { alertData = true; }
+        //   } else {
+        //     this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
+        //     console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
+        //   }
+        // } catch (error: unknown) {
+        //   console.error("Error fetching Alerts:", error);
+        //   if (error instanceof Error) {
+        //     this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
+        //   } else {
+        //     this.noRows += `\nERROR[Alert Manager] :: ${error}`;
+        //   }
+        // }
+      // } else {
+        // this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
+      // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      // if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+        try {
+          const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+          const response = await axios.get(proxyUrl);
+          // const response = await axios.get(this.statusAPI);
+          if (response.status === 200) {
+            response.data.data.groups.forEach((group: Prometheus) => {
+              if (group.name === "trinityx"){
+                let count_rows:number = 0;
+                group.rules.forEach((rule) => {
+                  if (rule.alerts && rule.alerts.length > 0){
+                    rule.alerts.forEach((alert) => {
+                      if (String(alert.labels.disabled) === 'false' || String(alert.labels.disabled) === undefined){
+                        count_rows = count_rows + 1;
+                        const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
+                        this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
+                      }
+                    });
+                  } // else {
+                    // count_rows = count_rows + 1;
+                    // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
+                    // }
+                });
+
+              }
+            });
+          } else {
+            this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
+            console.error("Error fetching rules:", response.status, response.data);
+          }
+
+          if (this.rows.length === 0){
+            this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
+          }
+        } catch (error: unknown) {
+          console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
+          if (error instanceof Error) {
+            // Need  a Pop up to accept that risk
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
+          } else {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+          }
+        }
+      // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      // this.updateShowSpinner(false);
+      await nextTick();
+      // $("#dataTable").DataTable();
+      //     $("#dataTable").DataTable({
+      //     "order": [[3, 'asc']], // Assuming 'severity' is the 3rd column (index 4)
+      //     "columnDefs": [{
+      //         "targets": 2, // Adjust the column index if needed
+      //         "type": "string"
+      //     }]
+      // });
+      this.refreshDataTable();
+    },
+
+    refreshDataTable() {
+      // $("#dataTable").DataTable();
+      //     $("#dataTable").DataTable({
+      //     "order": [[3, 'asc']], // Assuming 'severity' is the 3rd column (index 4)
+      //     "columnDefs": [{
+      //         "targets": 2, // Adjust the column index if needed
+      //         "type": "string"
+      //     }]
+      // });
+
+      const table = $('#dataTable');
+      // table.DataTable().clear().destroy(); // Clear and destroy the existing table
+      nextTick(() => {
+        // $("#dataTable").DataTable({
+          table.DataTable({
+          order: [[3, 'asc']],
+          columnDefs: [{ targets: 2, type: "string" }]
+        });
+      });
+    },
+
     updateShowSpinner(value: boolean) {
       this.$emit("update:showSpinner", value);
     },
