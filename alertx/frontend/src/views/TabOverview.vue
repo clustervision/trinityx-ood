@@ -226,7 +226,7 @@ export default defineComponent({
 
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Overview
-    <button style="float: right;" type="button" class="btn btn-primary btn-sm"  @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
+    <button style="float: right;" type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']"  @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
   </h4>
   <div v-if="noRows" class="alert alert-danger alert-dismissible" role="alert">
     <pre>{{ noRows }}</pre>
