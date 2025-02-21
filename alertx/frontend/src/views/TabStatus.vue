@@ -90,14 +90,15 @@ export default defineComponent({
       rows: [] as { id: number; rule: string; nhc: boolean; state: string; severity: string; eventTime: string; affected: unknown; }[],
       alerts: [],
       noRows: '',
+      noRowsType: false,
       showPopup: false,
       intervalId: null as number | null,
     };
   },
 
   async mounted() {
-    await this.fetchAlerts(); // Initial fetch
-    this.intervalId = setInterval(this.fetchAlerts, 15000); // Poll every 15 seconds
+    await this.fetchAlerts();
+    this.intervalId = setInterval(this.fetchAlerts, 15000);
   },
 
   beforeUnmount() {
@@ -152,16 +153,13 @@ export default defineComponent({
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
-                      if (String(alert.labels.disabled) === 'false' || String(alert.labels.disabled) === undefined){
+                      if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
                         count_rows = count_rows + 1;
                         const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
                         this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
                       }
                     });
-                  } // else {
-                    // count_rows = count_rows + 1;
-                    // this.rows.push({"id": count_rows, "rule": rule.name, "state": rule.state, "severity": rule.labels.severity, "eventTime": rule.lastEvaluation, "affected": "Nothing"});
-                    // }
+                  }
                 });
 
               }
@@ -170,9 +168,10 @@ export default defineComponent({
             this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
             console.error("Error fetching rules:", response.status, response.data);
           }
-
+          // this.rows = [];
           if (this.rows.length === 0){
-            this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
+            this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
+            this.noRowsType = true;
           }
         } catch (error: unknown) {
           console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
@@ -184,33 +183,13 @@ export default defineComponent({
           }
         }
       // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-      // this.updateShowSpinner(false);
       await nextTick();
-      // $("#dataTable").DataTable();
-      //     $("#dataTable").DataTable({
-      //     "order": [[3, 'asc']], // Assuming 'severity' is the 3rd column (index 4)
-      //     "columnDefs": [{
-      //         "targets": 2, // Adjust the column index if needed
-      //         "type": "string"
-      //     }]
-      // });
       this.refreshDataTable();
     },
 
     refreshDataTable() {
-      // $("#dataTable").DataTable();
-      //     $("#dataTable").DataTable({
-      //     "order": [[3, 'asc']], // Assuming 'severity' is the 3rd column (index 4)
-      //     "columnDefs": [{
-      //         "targets": 2, // Adjust the column index if needed
-      //         "type": "string"
-      //     }]
-      // });
-
       const table = $('#dataTable');
-      // table.DataTable().clear().destroy(); // Clear and destroy the existing table
       nextTick(() => {
-        // $("#dataTable").DataTable({
           table.DataTable({
           order: [[3, 'asc']],
           columnDefs: [{ targets: 2, type: "string" }]
@@ -230,8 +209,8 @@ export default defineComponent({
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Alerts
   </h4>
-  <div v-if="noRows" class="alert alert-danger alert-dismissible" role="alert">
-    <pre>{{ noRows }}</pre>
+  <div v-if="noRows" :class="['alert', noRowsType ? 'alert-success' : 'alert-danger', 'alert-dismissible']" role="alert">
+    <pre style="font-weight: bold; font-size: larger;">{{ noRows }}</pre>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   <div v-if="rows.length" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
