@@ -47,6 +47,7 @@ interface Overview {
   genericRules: boolean | null;
   services: boolean | null;
   hardware: boolean | null;
+  other: boolean | null;
   ipmi: boolean | null;
 };
 
@@ -71,7 +72,7 @@ export default defineComponent({
   },
   data() {
     return {
-      overview: [] as { hostname: string; genericRules: boolean | null; services: boolean | null; hardware: boolean | null; ipmi: boolean | null; }[],
+      overview: [] as { hostname: string; genericRules: boolean | null; services: boolean | null; hardware: boolean | null; other: boolean | null; ipmi: boolean | null; }[],
       alerts: [],
       noRows: '',
       showPopup: false,
@@ -94,32 +95,37 @@ export default defineComponent({
                     let genericRules: boolean | null = null;
                     let services: boolean | null = null;
                     let hardware: boolean | null = null;
+                    let other: boolean | null = null;
                     const nhc: boolean = String(rule.labels.nhc) === "true";
 
-                  
+
 
                     if (hostname !== undefined) {
 
                       if (alert.state === "firing" && String(alert.labels.disabled) === 'false'){
-                      if (alert.labels.category === "generic") {
-                        genericRules = nhc ? true : (genericRules ?? false);
-                        // console.log(genericRules);
-                        // if (nhc === true){ genericRules = true; } else { genericRules = false; }
-                        // console.log(`hostname ${hostname} NHC ${nhc} RULE: ${genericRules}`);
-                      }
-                      if (alert.labels.category === "service") {
-                        services = nhc ? true : (services ?? false);
-                        // if (nhc === true){ services = true; } else { services = false; }
-                      }
-                      if (alert.labels.category === "hardware") {
-                        hardware = nhc ? true : (hardware ?? false);
-                        // if (nhc === true){ hardware = true; } else { hardware = false; }
-                      }
-                    } 
+                        if (alert.labels.category === "generic") {
+                          // genericRules = nhc ? true : (genericRules ?? false);
+                          // console.log(genericRules);
+                          if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                          console.log(`hostname ${hostname} NHC ${nhc} RULE: ${genericRules}`);
+                        }
+                        if (alert.labels.category === "service") {
+                          // services = nhc ? true : (services ?? false);
+                          if (nhc === true){ services = true; } else { services = false; }
+                        }
+                        if (alert.labels.category === "hardware") {
+                          // hardware = nhc ? true : (hardware ?? false);
+                          if (nhc === true){ hardware = true; } else { hardware = false; }
+                        }
 
-
+                        if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
+                          // other = nhc ? true : (other ?? false);
+                          if (nhc === true){ other = true; } else { other = false; }
+                        }
+                      }
+                    // console.log(` RULE: ${genericRules} ==========+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++===`);
                       if (uniqueOverviewMap.has(hostname)) {
-                        const existing = uniqueOverviewMap.get(hostname)!;
+                        // const existing = uniqueOverviewMap.get(hostname)!;
                         // existing.genericRules = existing.genericRules && genericRules;
                         // existing.services = existing.services && services;
                         // existing.hardware = existing.hardware && hardware;
@@ -128,9 +134,10 @@ export default defineComponent({
                         // existing.services = existing.services === true ? true : services;
                         // existing.hardware = existing.hardware === true ? true : hardware;
 
-                        existing.genericRules = existing.genericRules && genericRules;
-                        existing.services = existing.services && services;
-                        existing.hardware = existing.hardware && hardware;
+                        // existing.genericRules = existing.genericRules && genericRules;
+                        // existing.services = existing.services && services;
+                        // existing.hardware = existing.hardware && hardware;
+                        // existing.other = existing.other && other;
 
                       } else {
                         // console.log(` RULE: ${genericRules} ==========+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++===`);
@@ -139,6 +146,7 @@ export default defineComponent({
                           genericRules: genericRules,
                           services: services,
                           hardware: hardware,
+                          other: other,
                           ipmi: null,
                         });
                       }
@@ -154,7 +162,7 @@ export default defineComponent({
                 // }
 
               });
-              
+
               console.log(this.overview);
               if (this.overview.length === 0) {
                 this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
@@ -226,6 +234,7 @@ export default defineComponent({
           <th>Generic Rules</th>
           <th>Services</th>
           <th>Node H/W</th>
+          <th>Other Rules</th>
           <!-- <th style="color:#FFC107">IPMI Status (beta)<box-icon style="width: 10px;height: 10px;" name='star' type='solid' flip='horizontal' color='#FFC107' data-tippy-content="This is in BETA"></box-icon></th> -->
         </tr>
       </thead>
@@ -247,6 +256,11 @@ export default defineComponent({
             <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
             <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
             <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+          </td>
+          <td>
+            <box-icon v-if="row.other === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
+            <box-icon v-else-if="row.other === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
+            <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
           </td>
           <!-- <td>
             <box-icon v-if="row.ipmi === true" name="circle" type="solid" color="#198754" data-tippy-content="This is in BETA"></box-icon>
