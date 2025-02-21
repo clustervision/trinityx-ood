@@ -113,7 +113,7 @@ export default defineComponent({
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
                       if (hostname !== undefined) {
-                        if (alert.state === "firing" && String(alert.labels.disabled) === 'false'){
+                        if (alert.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                           if (alert.labels.category === "generic") {
                             if (nhc === true){ genericRules = true; } else { genericRules = false; }
                           }
@@ -185,7 +185,8 @@ export default defineComponent({
       nextTick(() => {
           table.DataTable({
           order: [[1, 'asc']],
-          columnDefs: [{ targets: 2, type: "string" }]
+          columnDefs: [{ targets: 2, type: "string" }],
+          pageLength: 25
         });
       });
       tippy('[data-tippy-content]');

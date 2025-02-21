@@ -49,7 +49,7 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   </div>
-  
+
   <div>
     <div class="row">
       <div class="col-md-1"><span class="nav_head">Global Settings: </span></div>
@@ -122,79 +122,78 @@
   <br />
 
   <div class="row">
-    <div class="col-md-6">
-      <div v-if="nodes_rules.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
-        <h3>Rules Configurations for {{ nodes_rules[nodes_rules.length - 1].hostname }}</h3>
-        <table class="table table-bordered table-striped table-hover caption-top">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Rule</th>
-              <th>Severity</th>
-              <th>For Time</th>
-              <th>Expr</th>
-              <th>Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="Rule in nodes_rules" :key="Rule.id">
-              <td>{{ Rule.id }}</td>
-              <td>{{ Rule.rule }}</td>
-              <td>{{ Rule.severity }}</td>
-              <td>{{ Rule.time }}</td>
-              <td>{{ Rule.expr }}</td>
-              <td>{{ Rule.description }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else-if="rule_message" class="alert alert-danger" role="alert">{{ rule_message }}</div>
+    <div v-if="nodes_rules.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+      <h3>Rules Configurations for {{ nodes_rules[nodes_rules.length - 1].hostname }}</h3>
+      <table class="table table-bordered table-striped table-hover caption-top">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Rule</th>
+            <th>Severity</th>
+            <th>For Time</th>
+            <th>Expr</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="Rule in nodes_rules" :key="Rule.id">
+            <td>{{ Rule.id }}</td>
+            <td>{{ Rule.rule }}</td>
+            <td>{{ Rule.severity }}</td>
+            <td>{{ Rule.time }}</td>
+            <td>{{ Rule.expr }}</td>
+            <td>{{ Rule.description }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <div class="col-md-6">
-      <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
-        <h3>Hardware Inventory for {{ inventory[inventory.length - 1].hostname }}</h3>
-        <table class="table table-bordered table-striped table-hover caption-top">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Luna Group</th>
-              <th>Hostname</th>
-              <th>Class</th>
-              <th>Vendor</th>
-              <th>Description</th>
-              <th>Size</th>
-              <th>Clock</th>
-              <th>Serial</th>
-              <th>Product</th>
-              <th>Handle</th>
-              <th>Physid</th>
-              <th>Version</th>
-              <th>Slot</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="hwd in inventory" :key="hwd.id">
-              <td>{{ hwd.id }}</td>
-              <td>{{ hwd.luna_group }}</td>
-              <td>{{ hwd.hostname }}</td>
-              <td>{{ hwd.class }}</td>
-              <td>{{ hwd.vendor }}</td>
-              <td>{{ hwd.description }}</td>
-              <td>{{ hwd.size }}</td>
-              <td>{{ hwd.clock }}</td>
-              <td>{{ hwd.serial }}</td>
-              <td>{{ hwd.product }}</td>
-              <td>{{ hwd.handle }}</td>
-              <td>{{ hwd.physid }}</td>
-              <td>{{ hwd.version }}</td>
-              <td>{{ hwd.slot }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-else-if="hardware_message" class="alert alert-danger" role="alert">{{ hardware_message }}</div>
-    </div>
+    <div v-else-if="rule_message" class="alert alert-danger" role="alert">{{ rule_message }}</div>
   </div>
+  <div class="row">
+    <div v-if="inventory.length > 0" class="table table-bordered table-striped table-hover table-responsive text-nowrap">
+      <h3>Hardware Inventory for {{ inventory[inventory.length - 1].hostname }}</h3>
+      <table class="table table-bordered table-striped table-hover caption-top">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Luna Group</th>
+            <th>Hostname</th>
+            <th>Class</th>
+            <th>Vendor</th>
+            <th>Description</th>
+            <th>Size</th>
+            <th>Clock</th>
+            <th>Serial</th>
+            <th>Product</th>
+            <th>Handle</th>
+            <th>Physid</th>
+            <th>Version</th>
+            <th>Slot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="hwd in inventory" :key="hwd.id">
+            <td>{{ hwd.id }}</td>
+            <td>{{ hwd.luna_group }}</td>
+            <td>{{ hwd.hostname }}</td>
+            <td>{{ hwd.class }}</td>
+            <td>{{ hwd.vendor }}</td>
+            <td>{{ hwd.description }}</td>
+            <td>{{ hwd.size }}</td>
+            <td>{{ hwd.clock }}</td>
+            <td>{{ hwd.serial }}</td>
+            <td>{{ hwd.product }}</td>
+            <td>{{ hwd.handle }}</td>
+            <td>{{ hwd.physid }}</td>
+            <td>{{ hwd.version }}</td>
+            <td>{{ hwd.slot }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-else-if="hardware_message" class="alert alert-danger" role="alert">{{ hardware_message }}</div>
+</div>
+
 
 </template>
 
@@ -498,7 +497,7 @@ export default {
                 messageClass = "bg-secondary";
                 error_message.value.push(message);
               }
-              
+
             });
           }
         }

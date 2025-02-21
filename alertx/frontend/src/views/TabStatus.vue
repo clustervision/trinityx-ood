@@ -193,7 +193,8 @@ export default defineComponent({
       nextTick(() => {
           table.DataTable({
           order: [[3, 'asc']],
-          columnDefs: [{ targets: 2, type: "string" }]
+          columnDefs: [{ targets: 2, type: "string" }],
+          pageLength: 25
         });
       });
     },
