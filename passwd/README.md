@@ -16,4 +16,9 @@ In order to fully integrate this app inside OOD the following steps are required
 
 ## Usage
 - This application will help user to change the password
-- https://controller1:8080/pun/sys/trinityx_change_password
+- mkdir /etc/ood/config/apps/dashboard
+- vim /etc/ood/config/apps/dashboard/env
+- ADD --> OOD_DASHBOARD_PASSWD_URL=https://controller1:8080/pun/sys/trinityx_change_password
+- cd /opt/ood/ood-portal-generator/bin && ./generate
+- systemctl restart ondemand-dex.service httpd.service
+- Open Browser & Go To: https://controller1:8080/pun/sys/trinityx_change_password
