@@ -255,6 +255,10 @@ export default defineComponent({
           <div class="col col-1"><box-icon name="circle" type="solid" color="#DC3545"></box-icon></div>
           <div class="col col-11"><i>When Firing and NHC is <strong>Enabled</strong>.</i></div>
         </div>
+        <div class="row">
+          <div class="col col-1"><box-icon name="circle" type="solid" color="#000000"></box-icon></div>
+          <div class="col col-11"><i>When Host is <strong>Down</strong>.</i></div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
       <div v-if="overview.length">
