@@ -154,10 +154,6 @@ export default defineComponent({
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
-
-
-
-
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
                         count_rows = count_rows + 1;
                         const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
