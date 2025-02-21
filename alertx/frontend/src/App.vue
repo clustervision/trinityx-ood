@@ -339,14 +339,23 @@ export default {
   methods: {
 
     async fetchRules() {
-      const response = await axios.get(url + '/get_rules');
-      this.configuration =  reactive(response.data);
-      this.configuration = { ...this.configuration };
-      this.generic_config = this.splitConfiguration('generic');
-      this.service_config = this.splitConfiguration('service');
-      this.Content = JSON.stringify({ ...this.configuration }, null, 2);
-      this.GenericContent = JSON.stringify({ ...this.generic_config }, null, 2);
-      this.ServiceContent = JSON.stringify({ ...this.service_config }, null, 2);
+      try {
+        const response = await axios.get(url + '/get_rules');
+        this.configuration =  reactive(response.data);
+        this.configuration = { ...this.configuration };
+        this.generic_config = this.splitConfiguration('generic');
+        this.service_config = this.splitConfiguration('service');
+        this.Content = JSON.stringify({ ...this.configuration }, null, 2);
+        this.GenericContent = JSON.stringify({ ...this.generic_config }, null, 2);
+        this.ServiceContent = JSON.stringify({ ...this.service_config }, null, 2);
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          this.toastMessage = error.response?.data.response || error.message;
+        } else {
+          this.toastMessage = 'An unknown error occurred.';
+        }
+        this.Toast(`ERROR :: While Getting Rules ${this.toastMessage}`, "bg-danger");
+      }
       return this.configuration;
     },
 
