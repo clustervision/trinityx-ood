@@ -149,7 +149,7 @@ export default defineComponent({
           // const response = await axios.get(this.statusAPI);
           if (response.status === 200) {
             response.data.data.groups.forEach((group: Prometheus) => {
-              if (group.name === "trinityx"){
+              if (group.name === "trinityx" || group.name === "trinityx_hw"){
                 let count_rows:number = 0;
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0){

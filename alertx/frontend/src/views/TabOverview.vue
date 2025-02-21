@@ -101,7 +101,7 @@ export default defineComponent({
           const response = await axios.get(proxyUrl);
           if (response.status === 200) {
             response.data.data.groups.forEach((group: Prometheus) => {
-              if (group.name === "trinityx") {
+              if (group.name === "trinityx" || group.name === "trinityx_hw") {
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert) => {
