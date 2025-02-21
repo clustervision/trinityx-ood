@@ -114,13 +114,13 @@ onMounted(() => {
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-hardware" aria-controls="tab-hardware" aria-selected="false" tabindex="-1">
-                <span class="d-none d-sm-block"><box-icon name='desktop' class="align-text-bottom icon-color"></box-icon> Node H/W</span>
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-service" aria-controls="tab-service" aria-selected="false" tabindex="-1">
+                <span class="d-none d-sm-block"><box-icon name='wrench' class="align-text-bottom icon-color"></box-icon> Services</span>
               </button>
             </li>
             <li class="nav-item" role="presentation">
-              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-service" aria-controls="tab-service" aria-selected="false" tabindex="-1">
-                <span class="d-none d-sm-block"><box-icon name='wrench' class="align-text-bottom icon-color"></box-icon> Services</span>
+              <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-hardware" aria-controls="tab-hardware" aria-selected="false" tabindex="-1">
+                <span class="d-none d-sm-block"><box-icon name='desktop' class="align-text-bottom icon-color"></box-icon> Node H/W</span>
               </button>
             </li>
           </ul>
