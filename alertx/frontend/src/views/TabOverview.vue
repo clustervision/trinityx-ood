@@ -77,6 +77,7 @@ export default defineComponent({
       noRows: '',
       showPopup: false,
       intervalId: null as number | null,
+      autoReload: true,
     };
   },
 
@@ -193,6 +194,29 @@ export default defineComponent({
     updateShowSpinner(value: boolean) {
       this.$emit("update:showSpinner", value);
     },
+
+    startAutoReload() {
+      if (this.autoReload && !this.intervalId) {
+        this.intervalId = setInterval(this.fetchOverview, 15000);
+      }
+    },
+
+    stopAutoReload() {
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+      }
+    },
+
+    toggleAutoReload() {
+      this.autoReload = !this.autoReload;
+      if (this.autoReload) {
+        this.startAutoReload();
+      } else {
+        this.stopAutoReload();
+      }
+    },
+
   },
 });
 
@@ -202,6 +226,7 @@ export default defineComponent({
 
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Overview
+    <button style="float: right;" type="button" class="btn btn-primary btn-sm"  @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
   </h4>
   <div v-if="noRows" class="alert alert-danger alert-dismissible" role="alert">
     <pre>{{ noRows }}</pre>
