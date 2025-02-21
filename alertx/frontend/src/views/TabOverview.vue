@@ -43,6 +43,7 @@ interface Prometheus {
 
 
 interface Overview {
+  state: boolean;
   hostname: string;
   genericRules: boolean | null;
   services: boolean | null;
@@ -106,6 +107,7 @@ export default defineComponent({
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert) => {
                       const hostname = alert.labels.hostname;
+                      const state = true;
                       let genericRules: boolean | null = null;
                       let services: boolean | null = null;
                       let hardware: boolean | null = null;
@@ -126,6 +128,7 @@ export default defineComponent({
                           if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
                             if (nhc === true){ other = true; } else { other = false; }
                           }
+
                         }
 
                         const hostEntry = this.overview.find(item => item.hostname === hostname);
@@ -150,8 +153,12 @@ export default defineComponent({
                           } else if (other === false && hostEntry.other !== true){
                             hostEntry.other = other;
                           }
+                          if (alert.labels.alertname === "ServerDown") {
+                            hostEntry.state = false;
+                          }
                         } else {
-                          this.overview.push({hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+
+                          this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
                         }
                       }
                     });
@@ -184,8 +191,8 @@ export default defineComponent({
       const table = $('#dataTableOverview');
       nextTick(() => {
           table.DataTable({
-          order: [[1, 'asc']],
-          columnDefs: [{ targets: 2, type: "string" }],
+          // order: [[1, 'asc']],
+          // columnDefs: [{ targets: 2, type: "string" }],
           pageLength: 25
         });
       });
@@ -248,6 +255,10 @@ export default defineComponent({
           <div class="col col-1"><box-icon name="circle" type="solid" color="#DC3545"></box-icon></div>
           <div class="col col-11"><i>When Firing and NHC is <strong>Enabled</strong>.</i></div>
         </div>
+        <div class="row">
+          <div class="col col-1"><box-icon name="circle" type="solid" color="#000000"></box-icon></div>
+          <div class="col col-11"><i>When Host is <strong>Down</strong>.</i></div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
       <div v-if="overview.length">
@@ -266,26 +277,54 @@ export default defineComponent({
           <tbody>
             <tr v-for="(row, index) in overview" :key="row.hostname">
               <td>{{ index +1 }}</td>
-              <td>{{ row.hostname }}</td>
+              <td :class="{'text-danger': !row.state}" :data-tippy-content="!row.state ? `Node ${row.hostname} is Down.` : `Node ${row.hostname} is UP.`">{{ row.hostname }}</td>
               <td>
-                <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Rules are OK.`"></box-icon>
-                <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-                <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                <template v-if="row.state === false">
+                  <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                </template>
+                <template v-else>
+                  <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Rules are OK.`"></box-icon>
+                  <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                </template>
               </td>
               <td>
-                <box-icon v-if="row.services === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
-                <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
-                <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                <template v-if="row.state === false">
+                  <box-icon v-if="row.services === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                </template>
+                <template v-else>
+                  <box-icon v-if="row.services === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
+                  <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                </template>
               </td>
               <td>
-                <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
-                <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
-                <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                <template v-if="row.state === false">
+                  <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                </template>
+                <template v-else>
+                  <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
+                  <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                </template>
               </td>
               <td>
-                <box-icon v-if="row.other === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
-                <box-icon v-else-if="row.other === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
-                <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                <template v-if="row.state === false">
+                  <box-icon v-if="row.other === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.other === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                </template>
+                <template v-else>
+                  <box-icon v-if="row.other === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
+                  <box-icon v-else-if="row.other === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                </template>
               </td>
               <!-- <td>
                 <box-icon v-if="row.ipmi === true" name="circle" type="solid" color="#198754" data-tippy-content="This is in BETA"></box-icon>
