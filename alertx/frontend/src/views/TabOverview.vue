@@ -115,7 +115,7 @@ export default defineComponent({
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
                       if (hostname !== undefined) {
-                        if (alert.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
+                        if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                           if (alert.labels.category === "generic") {
                             if (nhc === true){ genericRules = true; } else { genericRules = false; }
                           }
