@@ -84,7 +84,7 @@ export default defineComponent({
 
   async mounted() {
     await this.fetchOverview(); // Initial fetch
-    this.intervalId = setInterval(this.fetchOverview, 15000); // Poll every 15 seconds
+    this.intervalId = setInterval(this.fetchOverview, 30000); // Poll every 15 seconds
   },
 
   beforeUnmount() {
@@ -129,37 +129,67 @@ export default defineComponent({
                             if (nhc === true){ other = true; } else { other = false; }
                           }
 
-                        }
+                          const hostEntry = this.overview.find(item => item.hostname === hostname);
+                          if (hostEntry) {
+                            if (genericRules === true){
+                              hostEntry.genericRules = genericRules;
+                            } else if (genericRules === false && hostEntry.genericRules !== true){
+                              hostEntry.genericRules = genericRules;
+                            }
+                            if (services === true){
+                              hostEntry.services = services;
+                            } else if (services === false && hostEntry.services !== true){
+                              hostEntry.services = services;
+                            }
+                            if (hardware === true){
+                              hostEntry.hardware = hardware;
+                            } else if (hardware === false && hostEntry.hardware !== true){
+                              hostEntry.hardware = hardware;
+                            }
+                            if (other === true){
+                              hostEntry.other = other;
+                            } else if (other === false && hostEntry.other !== true){
+                              hostEntry.other = other;
+                            }
+                            if (alert.labels.alertname === "ServerDown") {
+                              hostEntry.state = false;
+                            }
+                          } else {
+                            this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+                          }
 
-                        const hostEntry = this.overview.find(item => item.hostname === hostname);
-                        if (hostEntry) {
-                          if (genericRules === true){
-                            hostEntry.genericRules = genericRules;
-                          } else if (genericRules === false && hostEntry.genericRules !== true){
-                            hostEntry.genericRules = genericRules;
-                          }
-                          if (services === true){
-                            hostEntry.services = services;
-                          } else if (services === false && hostEntry.services !== true){
-                            hostEntry.services = services;
-                          }
-                          if (hardware === true){
-                            hostEntry.hardware = hardware;
-                          } else if (hardware === false && hostEntry.hardware !== true){
-                            hostEntry.hardware = hardware;
-                          }
-                          if (other === true){
-                            hostEntry.other = other;
-                          } else if (other === false && hostEntry.other !== true){
-                            hostEntry.other = other;
-                          }
-                          if (alert.labels.alertname === "ServerDown") {
-                            hostEntry.state = false;
-                          }
                         } else {
-
-                          this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+                          const hostEntry = this.overview.find(item => item.hostname === hostname);
+                          if (hostEntry) {
+                            if (genericRules === true){
+                              hostEntry.genericRules = genericRules;
+                            } else if (genericRules === false && hostEntry.genericRules !== true){
+                              hostEntry.genericRules = genericRules;
+                            }
+                            if (services === true){
+                              hostEntry.services = services;
+                            } else if (services === false && hostEntry.services !== true){
+                              hostEntry.services = services;
+                            }
+                            if (hardware === true){
+                              hostEntry.hardware = hardware;
+                            } else if (hardware === false && hostEntry.hardware !== true){
+                              hostEntry.hardware = hardware;
+                            }
+                            if (other === true){
+                              hostEntry.other = other;
+                            } else if (other === false && hostEntry.other !== true){
+                              hostEntry.other = other;
+                            }
+                            if (alert.labels.alertname === "ServerDown") {
+                              hostEntry.state = false;
+                            }
+                          } else {
+                            this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+                          }
                         }
+
+
                       }
                     });
                   }

@@ -205,7 +205,7 @@ export default defineComponent({
 
     startAutoReload() {
       if (this.autoReload && !this.intervalId) {
-        this.intervalId = setInterval(this.fetchAlerts, 15000);
+        this.intervalId = setInterval(this.fetchAlerts, 30000);
       }
     },
 
