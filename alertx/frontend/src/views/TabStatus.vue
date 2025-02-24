@@ -1,6 +1,30 @@
+<script setup lang="ts">
+import StatusAlerts from '@/components/StatusAlerts.vue';
+</script>
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
 import axios from 'axios';
+
+
+interface Alerts {
+  activeAt: string;
+    annotations: {description: string};
+    labels: {
+      alertname: string,
+      exporter: string,
+      hostname: string,
+      category: string;
+      class: string;
+      instance: string,
+      job: string,
+      luna_group: string,
+      disabled: boolean | null,
+      nhc: boolean | null,
+      severity: string
+    };
+    state: string;
+    value: string;
+  };
 
 interface AlertRules {
   duration: number;
@@ -33,6 +57,8 @@ interface AlertRules {
     state: string;
     value: string;
   }>;
+
+  // alerts: Alerts[];
 };
 
 interface Prometheus {
@@ -87,7 +113,7 @@ export default defineComponent({
   },
   data() {
     return {
-      rows: [] as { id: number; rule: string; nhc: boolean; state: string; severity: string; eventTime: string; affected: unknown; }[],
+      rows: [] as {rule: string; nhc: boolean; state: string; severity: string; eventTime: string; affected: unknown; alerts: Alerts[]; }[],
       alerts: [],
       noRows: '',
       noRowsType: false,
@@ -150,14 +176,14 @@ export default defineComponent({
           if (response.status === 200) {
             response.data.data.groups.forEach((group: Prometheus) => {
               if (group.name === "trinityx" || group.name === "trinityx_hw"){
-                let count_rows:number = 0;
+                // let count_rows:number = 0;
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
-                        count_rows = count_rows + 1;
+                        // count_rows = count_rows + 1;
                         const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                        this.rows.push({id: count_rows, rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected});
+                        this.rows.push({rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected, alerts: rule.alerts as Alerts[]});
                       }
                     });
                   }
@@ -253,9 +279,12 @@ export default defineComponent({
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in rows" :key="row.id">
-          <td>{{ row.id }}</td>
-          <td>{{ row.rule }}</td>
+        <tr v-for="(row, index) in rows" :key="row.state">
+          <td>{{ index +1 }}</td>
+          <td>
+            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+            <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.rule }}</a>
+          </td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
