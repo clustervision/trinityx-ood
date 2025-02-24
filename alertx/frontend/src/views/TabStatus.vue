@@ -99,7 +99,7 @@ export default defineComponent({
 
   async mounted() {
     await this.fetchAlerts();
-    this.intervalId = setInterval(this.fetchAlerts, 15000);
+    this.intervalId = setInterval(this.fetchAlerts, 30000);
   },
 
   beforeUnmount() {

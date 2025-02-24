@@ -46,12 +46,13 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from "vue";
 
 interface SpecificAlerts {
   activeAt: string;
-  annotations: {description: string};
+  annotations: { description: string };
   labels: {
-    alertname: string,
+    alertname: string;
     category: string;
     class: string;
     description: string;
@@ -70,15 +71,32 @@ interface SpecificAlerts {
   };
   state: string;
   value: string;
-};
+}
 
-const props = defineProps({
-  alerts: Array<SpecificAlerts>,
-  modalId: String,
-  hostname: String,
-  ruleType: String,
+const props = defineProps<{
+  alerts: SpecificAlerts[];
+  modalId: string;
+  hostname: string;
+  ruleType: string;
+}>();
+
+const emit = defineEmits(["modal-open", "modal-close"]);
+
+onMounted(() => {
+  const modalElement = document.getElementById(props.modalId);
+  if (modalElement) {
+    modalElement.addEventListener("shown.bs.modal", () => emit("modal-open"));
+    modalElement.addEventListener("hidden.bs.modal", () => emit("modal-close"));
+  }
 });
 
+onUnmounted(() => {
+  const modalElement = document.getElementById(props.modalId);
+  if (modalElement) {
+    modalElement.removeEventListener("shown.bs.modal", () => emit("modal-open"));
+    modalElement.removeEventListener("hidden.bs.modal", () => emit("modal-close"));
+  }
+});
 </script>
 
 <style scoped>
