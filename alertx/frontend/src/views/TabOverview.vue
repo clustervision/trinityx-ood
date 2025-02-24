@@ -84,7 +84,7 @@ export default defineComponent({
 
   async mounted() {
     await this.fetchOverview(); // Initial fetch
-    this.intervalId = setInterval(this.fetchOverview, 15000); // Poll every 15 seconds
+    this.intervalId = setInterval(this.fetchOverview, 30000); // Poll every 15 seconds
   },
 
   beforeUnmount() {
