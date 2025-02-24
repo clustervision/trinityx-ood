@@ -294,6 +294,26 @@ include alertx/app/assets
 include alertx/app/assets/*
 
 
+include passwd
+include passwd/*
+include passwd/static
+include passwd/static/*
+include passwd/static/css
+include passwd/static/css/*
+include passwd/static/fonts
+include passwd/static/fonts/*
+include passwd/static/img
+include passwd/static/img/*
+include passwd/static/js
+include passwd/static/js/*
+include passwd/static/icons
+include passwd/static/icons/*
+include passwd/templates
+include passwd/templates/*
+include passwd/templates/layout
+include passwd/templates/layout/*
+
+recursive-include passwd *
 
 
 
