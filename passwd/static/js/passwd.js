@@ -2,55 +2,12 @@
  * PASSWD FORM SCRIPTS
  * Description: Custom JS script to handle the password form
  */
-// document.addEventListener("DOMContentLoaded", function () {
-//   // Toggle password visibility
-//   document.querySelectorAll(".input-group-text").forEach(span => {
-//     span.addEventListener("click", function () {
-//       const input = this.previousElementSibling;
-//       console.log(input);
-//       if (input.type === "password") {
-//         input.type = "text";
-//         this.innerHTML = '<i class="bx bx-hide"></i>'; // Change icon
-//       } else {
-//         input.type = "password";
-//         this.innerHTML = '<i class="bx bx-show"></i>'; // Reset icon
-//       }
-//     });
-//   });
-
-//   // Navigate to home page on Cancel
-//   document.querySelector("button[type='cancel']").addEventListener("click", function () {
-//     window.location.href = window.location.href;
-//   });
-
-//   // Reset form fields
-//   document.querySelector("button[type='reset']").addEventListener("click", function () {
-//     document.getElementById("currentPassword").value = "";
-//     document.getElementById("NewPassword").value = "";
-//     document.getElementById("RepeatPassword").value = "";
-//   });
-// });
-
-
-function color_message(message=null){
-  if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
-      message = "<span style='color:red;'>" + message + "</span><br />";
-  } else {
-      message = "<span style='color:yellow;'>" + message + "</span><br />";
-  }
-  return message
-}
 
 function redirection(){
   window.location.href = window.location.href;
 }
 
-
-
-
-
-
-
+const dismissButton = '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
 
 $(document).ready(function () {
   // Toggle password visibility
@@ -68,17 +25,16 @@ $(document).ready(function () {
     let repeatPassword = $("#RepeatPassword").val().trim();
 
     if (!currentPassword || !newPassword || !repeatPassword) {
-      alert("All fields are required!");
+      $("#message").html(`<div class="alert alert-warning alert-dismissible fade show" role="alert"><strong>WARNING ::</strong> All fields are required! ${dismissButton}</div>`);
       return;
     }
 
     if (newPassword !== repeatPassword) {
-      alert("New password and repeat password must match!");
+      $("#message").html(`<div class="alert alert-warning alert-dismissible fade show" role="alert"><strong>WARNING ::</strong> New password and repeat password must match! ${dismissButton}</div>`);
       return;
     }
 
     $.ajax({
-      
       url: "/update_password",
       type: "POST",
       contentType: "application/json",
@@ -89,13 +45,14 @@ $(document).ready(function () {
       }),
       success: function (response) {
         console.log(currentPassword);
-      console.log(newPassword);
-      console.log(repeatPassword);
-        alert("Password updated successfully!");
+        console.log(newPassword);
+        console.log(repeatPassword);
+        console.log(response);
+        $("#message").html(`<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>SUCCESS ::</strong> Password updated successfully! ${dismissButton}</div>`);
         $("#CurrentPassword, #newPassword, #repeatPassword").val("");
       },
       error: function (xhr) {
-        alert("Error: " + (xhr.responseJSON?.message || "Failed to update password"));
+        $("#message").html(`<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>ERROR ::</strong> `+(xhr.responseJSON?.message || 'Failed to update password')+` ${dismissButton}</div>`);
       }
     });
   });
