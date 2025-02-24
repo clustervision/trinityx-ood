@@ -1,10 +1,13 @@
+<script setup lang="ts">
+import OverviewAlerts from '@/components/OverviewAlerts.vue';
+</script>
 <script lang="ts">
-
 import { defineComponent, nextTick } from "vue";
 import axios from 'axios';
 import BoxIcon from 'boxicons';
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
+
 
 interface AlertRules {
   duration: number;
@@ -22,13 +25,7 @@ interface AlertRules {
     disabled: boolean,
     category: string,
   };
-  alerts: Array<{
-    activeAt: string;
-    annotations: {description: string};
-    labels: {alertname: string, category: string; disabled: boolean; exporter: string, hostname: string, instance: string, job: string, luna_group: string, nhc: boolean, severity: string};
-    state: string;
-    value: string;
-  }>;
+  alerts: SpecificAlerts[];
 };
 
 interface Prometheus {
@@ -41,6 +38,31 @@ interface Prometheus {
   rules: AlertRules[];
 };
 
+interface SpecificAlerts {
+  activeAt: string;
+  annotations: {description: string};
+  labels: {
+    alertname: string,
+    category: string;
+    class: string;
+    description: string;
+    disabled: boolean;
+    exporter: string;
+    hostname: string;
+    instance: string;
+    job: string;
+    luna_group: string;
+    nhc: boolean;
+    severity: string;
+    path: string;
+    product: string;
+    serial: string;
+    vendor: string;
+  };
+  state: string;
+  value: string;
+};
+
 
 interface Overview {
   state: boolean;
@@ -50,13 +72,16 @@ interface Overview {
   hardware: boolean | null;
   other: boolean | null;
   ipmi: boolean | null;
+  genericAlerts: SpecificAlerts[];
+  servicesAlerts: SpecificAlerts[];
+  hardwareAlerts: SpecificAlerts[];
+  otherAlerts: SpecificAlerts[];
 };
 
 interface NodeList {
   metric: {hostname: string};
   value: [string, string];
 };
-
 
 export default defineComponent({
   props: {
@@ -112,7 +137,7 @@ export default defineComponent({
         if (nodeResponse.status === 200) {
           nodeResponse.data.data.result.forEach((node: NodeList) => {
             const hostname = node.metric.hostname;
-            this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, });
+            this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[]});
           });
         } else {
           this.noRows += `\nERROR[Prometheus Server] :: Error fetching Nodes from ${this.nodeListAPI} Status: ${nodeResponse.status}.`;
@@ -129,96 +154,85 @@ export default defineComponent({
         const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
         const response = await axios.get(proxyUrl);
         if (response.status === 200) {
+
           response.data.data.groups.forEach((group: Prometheus) => {
             if (group.name === "trinityx" || group.name === "trinityx_hw") {
               group.rules.forEach((rule) => {
                 if (rule.alerts && rule.alerts.length > 0) {
-                  rule.alerts.forEach((alert) => {
+                  rule.alerts.forEach((alert : SpecificAlerts) => {
                     const hostname = alert.labels.hostname;
                     const state = true;
                     let genericRules: boolean | null = null;
                     let services: boolean | null = null;
                     let hardware: boolean | null = null;
                     let other: boolean | null = null;
+
+                    const genericAlerts: SpecificAlerts[] = [];
+                    const servicesAlerts: SpecificAlerts[] = [];
+                    const hardwareAlerts: SpecificAlerts[] = [];
+                    const otherAlerts: SpecificAlerts[] = [];
+
                     const nhc: boolean = String(rule.labels.nhc) === "true";
 
                     if (hostname !== undefined) {
                       if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                         if (alert.labels.category === "generic") {
                           if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                          genericAlerts.push(alert);
                         }
                         if (alert.labels.category === "service") {
                           if (nhc === true){ services = true; } else { services = false; }
+                          servicesAlerts.push(alert);
                         }
                         if (alert.labels.category === "hardware") {
                           if (nhc === true){ hardware = true; } else { hardware = false; }
+                          hardwareAlerts.push(alert);
                         }
                         if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
                           if (nhc === true){ other = true; } else { other = false; }
+                          otherAlerts.push(alert);
                         }
 
                         const hostEntry = this.overview.find(item => item.hostname === hostname);
                         if (hostEntry) {
                           if (genericRules === true){
                             hostEntry.genericRules = genericRules;
+                            hostEntry.genericAlerts.push(...genericAlerts);
+
                           } else if (genericRules === false && hostEntry.genericRules !== true){
                             hostEntry.genericRules = genericRules;
+                            hostEntry.genericAlerts.push(...genericAlerts);
                           }
                           if (services === true){
                             hostEntry.services = services;
+                            hostEntry.servicesAlerts.push(...servicesAlerts);
                           } else if (services === false && hostEntry.services !== true){
                             hostEntry.services = services;
+                            hostEntry.servicesAlerts.push(...servicesAlerts);
                           }
                           if (hardware === true){
                             hostEntry.hardware = hardware;
+                            hostEntry.hardwareAlerts.push(...hardwareAlerts);
+                            console.log("Updating 1 to hardwareAlerts:", hostname, alert);
                           } else if (hardware === false && hostEntry.hardware !== true){
                             hostEntry.hardware = hardware;
+                            hostEntry.hardwareAlerts.push(...hardwareAlerts);
+                            console.log("Updating 2 to hardwareAlerts:", hostname, alert);
                           }
                           if (other === true){
                             hostEntry.other = other;
+                            hostEntry.otherAlerts.push(...otherAlerts);
                           } else if (other === false && hostEntry.other !== true){
                             hostEntry.other = other;
+                            hostEntry.otherAlerts.push(...otherAlerts);
                           }
                           if (alert.labels.alertname === "ServerDown") {
                             hostEntry.state = false;
                           }
                         } else {
-                          this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+                          this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, genericAlerts:[...genericAlerts], servicesAlerts:[...servicesAlerts], hardwareAlerts:[...hardwareAlerts], otherAlerts:[...otherAlerts], })
                         }
-
                       }
-                      // else {
-                      //   const hostEntry = this.overview.find(item => item.hostname === hostname);
-                      //   if (hostEntry) {
-                      //     if (genericRules === true){
-                      //       hostEntry.genericRules = genericRules;
-                      //     } else if (genericRules === false && hostEntry.genericRules !== true){
-                      //       hostEntry.genericRules = genericRules;
-                      //     }
-                      //     if (services === true){
-                      //       hostEntry.services = services;
-                      //     } else if (services === false && hostEntry.services !== true){
-                      //       hostEntry.services = services;
-                      //     }
-                      //     if (hardware === true){
-                      //       hostEntry.hardware = hardware;
-                      //     } else if (hardware === false && hostEntry.hardware !== true){
-                      //       hostEntry.hardware = hardware;
-                      //     }
-                      //     if (other === true){
-                      //       hostEntry.other = other;
-                      //     } else if (other === false && hostEntry.other !== true){
-                      //       hostEntry.other = other;
-                      //     }
-                      //     if (alert.labels.alertname === "ServerDown") {
-                      //       hostEntry.state = false;
-                      //     }
-                      //   } else {
-                      //     this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
-                      //   }
-                      // }
-
-
                     }
                   });
                 }
@@ -290,7 +304,6 @@ export default defineComponent({
 </script>
 
 <template>
-
   <h4 class="fw-bold py-3 mb-4">
     <span class="text-muted fw-light"> Monitoring /</span> Overview
     <button style="float: right;" type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']"  @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
@@ -344,9 +357,10 @@ export default defineComponent({
                   <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
                 <template v-else>
-                  <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Rules are OK.`"></box-icon>
-                  <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                  <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" />
+                  <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
+                  <box-icon v-else-if="row.genericRules === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
                 </template>
               </td>
               <td>
@@ -356,9 +370,10 @@ export default defineComponent({
                   <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
                 <template v-else>
+                  <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" />
                   <box-icon v-if="row.services === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
-                  <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                  <box-icon v-else-if="row.services === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
                 </template>
               </td>
               <td>
@@ -368,9 +383,10 @@ export default defineComponent({
                   <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
                 <template v-else>
+                  <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" />
                   <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
-                  <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                  <box-icon v-else-if="row.hardware === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
                 </template>
               </td>
               <td>
@@ -380,9 +396,10 @@ export default defineComponent({
                   <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
                 <template v-else>
+                  <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" />
                   <box-icon v-if="row.other === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
-                  <box-icon v-else-if="row.other === false" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                  <box-icon v-else-if="row.other === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
+                  <box-icon v-else-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
                 </template>
               </td>
               <!-- <td>
