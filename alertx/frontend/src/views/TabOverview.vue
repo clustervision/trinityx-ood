@@ -52,6 +52,11 @@ interface Overview {
   ipmi: boolean | null;
 };
 
+interface NodeList {
+  metric: {hostname: string};
+  value: [string, string];
+};
+
 
 export default defineComponent({
   props: {
@@ -60,6 +65,10 @@ export default defineComponent({
       required: true,
     },
     statusAPI: {
+      type: String,
+      required: true,
+    },
+    nodeListAPI: {
       type: String,
       required: true,
     },
@@ -97,121 +106,141 @@ export default defineComponent({
     async fetchOverview() {
       this.overview = [];
       this.updateShowSpinner(true);
-        try {
-          const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
-          const response = await axios.get(proxyUrl);
-          if (response.status === 200) {
-            response.data.data.groups.forEach((group: Prometheus) => {
-              if (group.name === "trinityx" || group.name === "trinityx_hw") {
-                group.rules.forEach((rule) => {
-                  if (rule.alerts && rule.alerts.length > 0) {
-                    rule.alerts.forEach((alert) => {
-                      const hostname = alert.labels.hostname;
-                      const state = true;
-                      let genericRules: boolean | null = null;
-                      let services: boolean | null = null;
-                      let hardware: boolean | null = null;
-                      let other: boolean | null = null;
-                      const nhc: boolean = String(rule.labels.nhc) === "true";
+      try {
+        const nodeList = `${this.url}/proxy?url=${this.nodeListAPI}`;
+        const nodeResponse = await axios.get(nodeList);
+        if (nodeResponse.status === 200) {
+          nodeResponse.data.data.result.forEach((node: NodeList) => {
+            const hostname = node.metric.hostname;
+            this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, });
+          });
+        } else {
+          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Nodes from ${this.nodeListAPI} Status: ${nodeResponse.status}.`;
+          console.error("Error fetching nodes:", nodeResponse.status, nodeResponse.data);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
+        } else {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+        }
+      }
+      try {
+        const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+        const response = await axios.get(proxyUrl);
+        if (response.status === 200) {
+          response.data.data.groups.forEach((group: Prometheus) => {
+            if (group.name === "trinityx" || group.name === "trinityx_hw") {
+              group.rules.forEach((rule) => {
+                if (rule.alerts && rule.alerts.length > 0) {
+                  rule.alerts.forEach((alert) => {
+                    const hostname = alert.labels.hostname;
+                    const state = true;
+                    let genericRules: boolean | null = null;
+                    let services: boolean | null = null;
+                    let hardware: boolean | null = null;
+                    let other: boolean | null = null;
+                    const nhc: boolean = String(rule.labels.nhc) === "true";
 
-                      if (hostname !== undefined) {
-                        if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
-                          if (alert.labels.category === "generic") {
-                            if (nhc === true){ genericRules = true; } else { genericRules = false; }
-                          }
-                          if (alert.labels.category === "service") {
-                            if (nhc === true){ services = true; } else { services = false; }
-                          }
-                          if (alert.labels.category === "hardware") {
-                            if (nhc === true){ hardware = true; } else { hardware = false; }
-                          }
-                          if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
-                            if (nhc === true){ other = true; } else { other = false; }
-                          }
-
-                          const hostEntry = this.overview.find(item => item.hostname === hostname);
-                          if (hostEntry) {
-                            if (genericRules === true){
-                              hostEntry.genericRules = genericRules;
-                            } else if (genericRules === false && hostEntry.genericRules !== true){
-                              hostEntry.genericRules = genericRules;
-                            }
-                            if (services === true){
-                              hostEntry.services = services;
-                            } else if (services === false && hostEntry.services !== true){
-                              hostEntry.services = services;
-                            }
-                            if (hardware === true){
-                              hostEntry.hardware = hardware;
-                            } else if (hardware === false && hostEntry.hardware !== true){
-                              hostEntry.hardware = hardware;
-                            }
-                            if (other === true){
-                              hostEntry.other = other;
-                            } else if (other === false && hostEntry.other !== true){
-                              hostEntry.other = other;
-                            }
-                            if (alert.labels.alertname === "ServerDown") {
-                              hostEntry.state = false;
-                            }
-                          } else {
-                            this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
-                          }
-
-                        } else {
-                          const hostEntry = this.overview.find(item => item.hostname === hostname);
-                          if (hostEntry) {
-                            if (genericRules === true){
-                              hostEntry.genericRules = genericRules;
-                            } else if (genericRules === false && hostEntry.genericRules !== true){
-                              hostEntry.genericRules = genericRules;
-                            }
-                            if (services === true){
-                              hostEntry.services = services;
-                            } else if (services === false && hostEntry.services !== true){
-                              hostEntry.services = services;
-                            }
-                            if (hardware === true){
-                              hostEntry.hardware = hardware;
-                            } else if (hardware === false && hostEntry.hardware !== true){
-                              hostEntry.hardware = hardware;
-                            }
-                            if (other === true){
-                              hostEntry.other = other;
-                            } else if (other === false && hostEntry.other !== true){
-                              hostEntry.other = other;
-                            }
-                            if (alert.labels.alertname === "ServerDown") {
-                              hostEntry.state = false;
-                            }
-                          } else {
-                            this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
-                          }
+                    if (hostname !== undefined) {
+                      if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
+                        if (alert.labels.category === "generic") {
+                          if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                        }
+                        if (alert.labels.category === "service") {
+                          if (nhc === true){ services = true; } else { services = false; }
+                        }
+                        if (alert.labels.category === "hardware") {
+                          if (nhc === true){ hardware = true; } else { hardware = false; }
+                        }
+                        if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
+                          if (nhc === true){ other = true; } else { other = false; }
                         }
 
+                        const hostEntry = this.overview.find(item => item.hostname === hostname);
+                        if (hostEntry) {
+                          if (genericRules === true){
+                            hostEntry.genericRules = genericRules;
+                          } else if (genericRules === false && hostEntry.genericRules !== true){
+                            hostEntry.genericRules = genericRules;
+                          }
+                          if (services === true){
+                            hostEntry.services = services;
+                          } else if (services === false && hostEntry.services !== true){
+                            hostEntry.services = services;
+                          }
+                          if (hardware === true){
+                            hostEntry.hardware = hardware;
+                          } else if (hardware === false && hostEntry.hardware !== true){
+                            hostEntry.hardware = hardware;
+                          }
+                          if (other === true){
+                            hostEntry.other = other;
+                          } else if (other === false && hostEntry.other !== true){
+                            hostEntry.other = other;
+                          }
+                          if (alert.labels.alertname === "ServerDown") {
+                            hostEntry.state = false;
+                          }
+                        } else {
+                          this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+                        }
 
                       }
-                    });
-                  }
-                });
-                if (this.overview.length === 0) {
-                  this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
-                }
-              }
-            });
+                      // else {
+                      //   const hostEntry = this.overview.find(item => item.hostname === hostname);
+                      //   if (hostEntry) {
+                      //     if (genericRules === true){
+                      //       hostEntry.genericRules = genericRules;
+                      //     } else if (genericRules === false && hostEntry.genericRules !== true){
+                      //       hostEntry.genericRules = genericRules;
+                      //     }
+                      //     if (services === true){
+                      //       hostEntry.services = services;
+                      //     } else if (services === false && hostEntry.services !== true){
+                      //       hostEntry.services = services;
+                      //     }
+                      //     if (hardware === true){
+                      //       hostEntry.hardware = hardware;
+                      //     } else if (hardware === false && hostEntry.hardware !== true){
+                      //       hostEntry.hardware = hardware;
+                      //     }
+                      //     if (other === true){
+                      //       hostEntry.other = other;
+                      //     } else if (other === false && hostEntry.other !== true){
+                      //       hostEntry.other = other;
+                      //     }
+                      //     if (alert.labels.alertname === "ServerDown") {
+                      //       hostEntry.state = false;
+                      //     }
+                      //   } else {
+                      //     this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, })
+                      //   }
+                      // }
 
-          } else {
-            this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
-            console.error("Error fetching rules:", response.status, response.data);
-          }
-        } catch (error: unknown) {
-          console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
-          if (error instanceof Error) {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
-          } else {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
-          }
+
+                    }
+                  });
+                }
+              });
+              if (this.overview.length === 0) {
+                this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
+              }
+            }
+          });
+
+        } else {
+          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
+          console.error("Error fetching rules:", response.status, response.data);
         }
+      } catch (error: unknown) {
+        console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
+        if (error instanceof Error) {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
+        } else {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+        }
+      }
       this.updateShowSpinner(false);
       await nextTick();
       this.refreshDataTable();
