@@ -18,6 +18,7 @@ import { Modal } from 'bootstrap';
 const promQLurl = ref(window.PROMQL_URL || import.meta.env.VITE_PROMQL_URL);
 const alertURL = ref(window.ALERT_URL || import.meta.env.VITE_ALERT_URL);
 const statusAPI = promQLurl.value+'/api/v1/rules';
+const nodeListAPI = promQLurl.value+'/api/v1/query?query=max+by%28hostname%29+%28up%29';
 const GenericRulesFile = "/trinity/local/etc/prometheus_server/rules/trix.generic.rules";
 const ServiceRulesFile = "/trinity/local/etc/prometheus_server/rules/trix.service.rules";
 
@@ -126,7 +127,7 @@ onMounted(() => {
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="tab-overview" role="tabpanel">
-              <TabOverview :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
+              <TabOverview :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" :nodeListAPI = "nodeListAPI" @update:showSpinner="updateShowSpinner" />
             </div>
             <div class="tab-pane fade" id="tab-alerts" role="tabpanel">
               <TabStatus :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" @update:showSpinner="updateShowSpinner" />
