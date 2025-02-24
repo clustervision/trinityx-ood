@@ -1,0 +1,54 @@
+{% extends "layout/base.html" %}
+{% block content %}
+
+<div class="container-xxl flex-grow-1 container-p-y">
+  <div id="message"></div>
+
+  <!-- Bordered Table -->
+  <div class="card">
+    <h5 class="card-header">Change Your Password</h5>
+    <div class="card-body">
+
+      <div class="mb-4">
+        <div class="form-password-toggle">
+          <label class="form-label" for="currentPassword">Current Password</label>
+          <div class="input-group">
+            <input type="password" autofocus autocomplete="off" class="form-control" id="CurrentPassword" placeholder="********" aria-describedby="currentPassword2">
+            <span id="currentPassword2" class="input-group-text cursor-pointer toggle-password"><i class="bx bx-hide"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="form-password-toggle">
+          <label class="form-label" for="NewPassword">New Password</label>
+          <div class="input-group">
+            <input type="password" autofocus autocomplete="off" class="form-control" id="NewPassword" placeholder="********" aria-describedby="NewPassword2">
+            <span id="NewPassword2" class="input-group-text cursor-pointer toggle-password"><i class="bx bx-hide"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <div class="form-password-toggle">
+          <label class="form-label" for="RepeatPassword">Repeat Password</label>
+          <div class="input-group">
+            <input type="password" autofocus autocomplete="off" class="form-control" id="RepeatPassword" placeholder="********" aria-describedby="RepeatPassword2">
+            <span id="RepeatPassword2" class="input-group-text cursor-pointer toggle-password"><i class="bx bx-hide"></i></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <button type="submit" id="UpdatePassword" class="btn btn-primary me-3">Update Password</button>
+        <button type="cancel" id="CancelPassword" class="btn btn-outline-secondary">Cancel</button>
+        <button type="reset" id="ResetPassword" class="btn btn-outline-secondary">Reset</button>
+      </div>
+      
+    </div>
+  </div>
+  <!--/ Bordered Table -->
+</div>
+<!-- / Content -->
+<hr class="my-5" />
+{% endblock content %}

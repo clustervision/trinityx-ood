@@ -1,0 +1,10 @@
+name: PASSWD
+description: Change Password
+icon: fa://key
+category: Utilities
+new_window: false
+
+tile:
+  title: "PASSWD"
+  sub_caption: |
+   Change Password
