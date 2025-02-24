@@ -213,11 +213,9 @@ export default defineComponent({
                           if (hardware === true){
                             hostEntry.hardware = hardware;
                             hostEntry.hardwareAlerts.push(...hardwareAlerts);
-                            console.log("Updating 1 to hardwareAlerts:", hostname, alert);
                           } else if (hardware === false && hostEntry.hardware !== true){
                             hostEntry.hardware = hardware;
                             hostEntry.hardwareAlerts.push(...hardwareAlerts);
-                            console.log("Updating 2 to hardwareAlerts:", hostname, alert);
                           }
                           if (other === true){
                             hostEntry.other = other;
