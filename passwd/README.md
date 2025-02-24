@@ -20,5 +20,5 @@ In order to fully integrate this app inside OOD the following steps are required
 - vim /etc/ood/config/apps/dashboard/env
 - ADD --> OOD_DASHBOARD_PASSWD_URL=https://controller1:8080/pun/sys/trinityx_passwd
 - cd /opt/ood/ood-portal-generator/bin && ./generate
-- systemctl restart ondemand-dex.service httpd.service
+- systemctl restart ondemand-dex.service httpd.service nginx.service
 - Open Browser & Go To: https://controller1:8080/pun/sys/trinityx_passwd

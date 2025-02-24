@@ -32,14 +32,25 @@ __status__      = 'Development'
 
 import os
 from flask import Flask, render_template, request, jsonify
-from constant import LICENSE, APP_STATE
+from constant import LICENSE, APP_STATE, TOKEN_FILE
 from log import Log
-from rest import Rest
 from helper import Helper
 
 LOGGER = Log.init_log('INFO')
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table='Change Password', data="", error=TOKEN_FILE["error"])
+    return None
 
 
 @app.route('/', methods=['GET'])
@@ -63,10 +74,6 @@ def update_password():
         confirm_password = request_data['confirm_password']
         if new_password == confirm_password:
             response = Helper().update_password(old_password, new_password)
-            # if response["status"] is True:
-            #     response = {"status": True, "message": "Password Updated Successfully."}
-            # else:
-            #     response = {"status": False, "message": response["message"]}
         else:
             response = {"status": False, "message": "New Password and Confirm Password should be same."}
     else:

@@ -18,7 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-Helper Class for the AlertX.
+Helper Class for the PASSWD Application.
 """
 __author__      = "Sumit Sharma"
 __copyright__   = "Copyright 2025, TrinityX[PASSWD]"
@@ -28,12 +28,8 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-# import os
-import sys
+
 import pexpect
-# from urllib.parse import urlparse, urlunparse
-# from flask import url_for
-# from constant import APP_STATE, ALERT_MANAGER_DIR
 from log import Log
 
 
@@ -51,28 +47,33 @@ class Helper():
 
     def update_password(self, old_password=None, new_password=None):
         """
-        This method will provide the URL's for the frontend application.
+        This method will use pexpect and update the user Password.
         """
         response = {"status": False, "message": "Password Update Failed."}
-        cur_password = old_password
-        child = pexpect.spawnu('/usr/bin/passwd') ########### Only for Testing Purpose Sumit@clustervision12
+        child = pexpect.spawnu('/usr/bin/passwd')
         child.expect('[Cc]urrent [Pp]assword:.*')
-        child.sendline(cur_password)
+        child.sendline(old_password)
         ret = child.expect(['.*[Nn]ew password:.*', '[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret > 0:
             response["message"] = f"{child.after}"
-        child.sendline(new_password)
-        child.expect(['[Rr]etype [Nn]ew [Pp]assword:.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
-        child.sendline(new_password)
-        ret = child.expect(['.*[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
-        if ret == 0:
-            response["status"] = True
-            response["message"] = f"{child.after}"
-        if ret > 0:
-            response["message"] = "Password not changed due to unexpected EOF or timeout"
-        child.sendline(new_password)
-        ret = child.expect(['all authentication tokens updated successfully', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
-        if ret == 0:
-            response = {"status": True, "message": "Password Update Successfully."}
+            self.logger.info(f"ERROR :: {child.after}")
+        else:
+            child.sendline(new_password)
+            child.expect(['[Rr]etype [Nn]ew [Pp]assword:.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
+            child.sendline(new_password)
+            ret = child.expect(['.*[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
+            if ret > 0:
+                if "all authentication tokens updated successfully" in str(child.before).strip():
+                    response["status"] = True
+                    response["message"] = "Password Update Successfully."
+                    self.logger.info(f"SUCCESS :: Password Update Successfully. {ret} {child.before} {child.after}")
+                else:
+                    response["message"] = f"Password not changed due to unexpected EOF or timeout. {child.after}"
+                    self.logger.info(f"ERROR :: {child.after}")
+            if ret == 0:
+                response["message"] = f"{child.after}"
+                self.logger.info(f"ERROR :: {child.after}")
         child.interact()
+        child.close()
         return response
+
