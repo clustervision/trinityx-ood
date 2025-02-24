@@ -50,30 +50,29 @@ class Helper():
         This method will use pexpect and update the user Password.
         """
         response = {"status": False, "message": "Password Update Failed."}
-        child = pexpect.spawnu('/usr/bin/passwd')
-        child.expect('[Cc]urrent [Pp]assword:.*')
-        child.sendline(old_password)
-        ret = child.expect(['.*[Nn]ew password:.*', '[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
-        if ret > 0:
-            response["message"] = f"{child.after}"
-            self.logger.info(f"ERROR :: {child.after}")
-        else:
-            child.sendline(new_password)
-            child.expect(['[Rr]etype [Nn]ew [Pp]assword:.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
-            child.sendline(new_password)
-            ret = child.expect(['.*[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
-            if ret > 0:
-                if "all authentication tokens updated successfully" in str(child.before).strip():
+        try:
+            child = pexpect.spawnu('/usr/bin/passwd')
+            child.expect('[Cc]urrent [Pp]assword:.*')
+            child.sendline(old_password)
+            ret = child.expect(['.*[Nn]ew password:.*', '[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
+            if ret > 0: # password change failed, OEF or timeout
+                response["message"] = f"{child.after}"
+                self.logger.info(f"ERROR :: ret={ret} {response}")
+            else: # current password ok
+                child.sendline(new_password)
+                child.expect(['[Rr]etype [Nn]ew [Pp]assword:.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
+                child.sendline(new_password)
+                ret = child.expect(['[Aa]ll authentication tokens updated successfully', '.*[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
+                if ret == 0: # password change success
                     response["status"] = True
                     response["message"] = "Password Update Successfully."
-                    self.logger.info(f"SUCCESS :: Password Update Successfully. {ret} {child.before} {child.after}")
-                else:
-                    response["message"] = f"Password not changed due to unexpected EOF or timeout. {child.after}"
-                    self.logger.info(f"ERROR :: {child.after}")
-            if ret == 0:
-                response["message"] = f"{child.after}"
-                self.logger.info(f"ERROR :: {child.after}")
-        child.interact()
-        child.close()
+                    self.logger.info(f"SUCCESS :: Password Update Successfully. {child.before} {child.after}")
+                else: # password change failed
+                    response["message"] = f"{child.after}"
+                    self.logger.info(f"ERROR :: ret={ret} {response}")
+            child.close()
+        except Exception as exp:
+            self.logger.info(f"ERROR :: {exp}")
+            response["message"] = f"Unexpected error occured: {exp}"
         return response
 
