@@ -63,12 +63,14 @@ def update_password():
         confirm_password = request_data['confirm_password']
         if new_password == confirm_password:
             response = Helper().update_password(old_password, new_password)
-            if response["status"] is True:
-                response = {"status": True, "message": "Password Updated Successfully."}
-            else:
-                response = {"status": True, "message": response["message"]}
+            # if response["status"] is True:
+            #     response = {"status": True, "message": "Password Updated Successfully."}
+            # else:
+            #     response = {"status": False, "message": response["message"]}
         else:
             response = {"status": False, "message": "New Password and Confirm Password should be same."}
+    else:
+        response = {"status": False, "message": "This method is not supported."}
     return jsonify(response), 200
 
 

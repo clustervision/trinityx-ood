@@ -60,26 +60,19 @@ class Helper():
         child.sendline(cur_password)
         ret = child.expect(['.*[Nn]ew password:.*', '[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret > 0:
-            print(f"{child.after}")
-            # sys.exit(1)
+            response["message"] = f"{child.after}"
         child.sendline(new_password)
         child.expect(['[Rr]etype [Nn]ew [Pp]assword:.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         child.sendline(new_password)
         ret = child.expect(['.*[Pp]assword change failed.*', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret == 0:
-            print(f"{child.after}")
-            # sys.exit(1)
+            response["status"] = True
+            response["message"] = f"{child.after}"
         if ret > 0:
-            response = {"status": False, "message": "Password not changed due to unexpected EOF or timeout"}
-            # sys.exit(1)
+            response["message"] = "Password not changed due to unexpected EOF or timeout"
         child.sendline(new_password)
         ret = child.expect(['all authentication tokens updated successfully', pexpect.EOF, pexpect.TIMEOUT], timeout=3)
         if ret == 0:
             response = {"status": True, "message": "Password Update Successfully."}
-            # sys.stdout.flush()
-            # sys.exit(0)
-        print("Password not changed due to unexpected EOF or timeout")
-
-        # sys.stdout.flush()
         child.interact()
         return response

@@ -48,7 +48,11 @@ $(document).ready(function () {
         console.log(newPassword);
         console.log(repeatPassword);
         console.log(response);
-        $("#message").html(`<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>SUCCESS ::</strong> Password updated successfully! ${dismissButton}</div>`);
+        if (response.status === true) {
+          $("#message").html(`<div class="alert alert-success alert-dismissible fade show" role="alert"><strong>SUCCESS ::</strong> ${response.message} ${dismissButton}</div>`);
+        } else {
+          $("#message").html(`<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>ERROR ::</strong> ${response.message} ${dismissButton}</div>`);
+        }
         $("#CurrentPassword, #newPassword, #repeatPassword").val("");
       },
       error: function (xhr) {
