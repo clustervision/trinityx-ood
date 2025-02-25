@@ -43,6 +43,23 @@ LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+APP_STATE = True  # False for Development, True for Production
+
+
+def overrides(table=None):
+    """
+    This method has information regarding what could be an override for what table: node, group, cluster, etc
+    """
+    response = False
+    static = {
+        'group': [
+            'provision_method', 'provision_interface', 'provision_fallback', 'kerneloptions', 'osimagetag'
+        ]
+    }
+    if table and table in static:
+        response = list(static[table])
+    return response
+
 
 
 def filter_columns(table=None):
@@ -68,7 +85,7 @@ def sortby(table=None):
     response = False
     static = {
         'group': [
-            'name', 'domain', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces', 'setupbmc',
+            'info', 'name', 'domain', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces', 'setupbmc',
             'bmcsetupname', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'roles', 'scripts_source',
             'scripts', 'prescript_source', 'prescript', 'partscript_source', 'partscript',
             'postscript_source', 'postscript', 'provision_interface', 'provision_method',
