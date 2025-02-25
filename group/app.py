@@ -37,7 +37,7 @@ from string import Template
 from html import unescape
 from flask import Flask, request, render_template, flash, url_for, redirect
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE
+from constant import LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from presenter import Presenter
 from log import Log
@@ -457,5 +457,8 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host= '0.0.0.0', port= 7059, debug= True)
-    app.run()
+    if APP_STATE is False: 
+        app.run(host='0.0.0.0', port=7755, debug= True)
+    else:
+        app.run()
+
