@@ -28,20 +28,15 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
-from time import time
 import base64
 import binascii
-import subprocess
-from random import randint
-from os import getpid
 from copy import deepcopy
 import hostlist
 from flask import url_for
-from nested_lookup import nested_lookup, nested_update, nested_delete, nested_alter
+from nested_lookup import nested_lookup, nested_update, nested_alter
 from rest import Rest
 from log import Log
-from constant import filter_columns, EDITOR_KEYS, sortby
+from constant import filter_columns, EDITOR_KEYS, sortby, overrides
 
 
 class Helper():
@@ -116,7 +111,7 @@ class Helper():
         return payload
 
 
-    def prepare_payload(self, table=None, raw_data=None):
+    def prepare_payload(self, raw_data=None):
         """
         This method will prepare the payload.
         """
@@ -137,7 +132,7 @@ class Helper():
         """
         for remove in ['verbose', 'command', 'action']:
             data.pop(remove, None)
-        payload = self.prepare_payload(None, data)
+        payload = self.prepare_payload(data)
         request_data = {'config':{table:{payload['name']: payload}}}
         self.logger.debug(f'Payload => {request_data}')
         response = Rest().post_data(table, payload['name'], request_data)
@@ -153,7 +148,7 @@ class Helper():
             data.pop(remove, None)
         if 'raw' in data:
             data.pop('raw', None)
-        payload = self.prepare_payload(table, data)
+        payload = self.prepare_payload(data)
         name = None
         if 'name' in payload and 'cluster' not in table:
             name = payload['name']
@@ -171,7 +166,7 @@ class Helper():
         """
         for remove in ['verbose', 'command', 'action']:
             data.pop(remove, None)
-        payload = self.prepare_payload(table, data)
+        payload = self.prepare_payload(data)
         request_data = {'config':{table:{payload['name']: payload}}}
         self.logger.debug(f'Payload => {request_data}')
         response = Rest().post_clone(table, payload['name'], request_data)
@@ -528,7 +523,14 @@ class Helper():
         self.logger.debug(f'Table => {table} and Data => {data}')
         defined_keys = sortby(table)
         self.logger.debug(f'Fields => {defined_keys}')
-        data = self.merge_source(table, data)
+        merge_exception = None
+        data, override = self.merge_source(table, data, merge_exception)
+        datacopy = data.copy()
+        for key in datacopy.keys():
+            if key == '_override':
+                if data[key]:
+                    data['info'] = "Config differs from parent - local overrides"
+                del data[key]
         for new_key in list(data.keys()):
             if new_key not in defined_keys:
                 defined_keys.append(new_key)
@@ -537,8 +539,10 @@ class Helper():
         self.logger.debug(f'Sorted Data => {data}')
         fields, rows = [], []
         for key in data:
-            # fields.append(f"<strong>{key[0].capitalize()}</strong>")
-            fields.append(key[0])
+            key_name = key[0]
+            if key_name in override:
+                key_name += ' *'
+            fields.append(key_name)
             if isinstance(key[1], list):
                 new_list = []
                 for internal in key[1]:
@@ -579,27 +583,49 @@ class Helper():
         return fields, rows
 
 
-    def merge_source(self, table=None, data=None):
+    def merge_source(self, table=None, data=None, exception=None):
         """
         This method will merge *_source field to the real field with braces and remove the
         *_source keys from the output.
         """
         response = deepcopy(data)
+        override = overrides(table)
+        resp_overrides = []
         for key, value in data.items():
-            if '_source' in key and 'script' not in key:
+            script = True if 'part' in key or 'post' in key or 'pre' in key else False
+            if '_source' in key:
                 raw_name = key.replace('_source', '')
+                if table == value:
+                    if raw_name in override:
+                        resp_overrides.append(raw_name)
+                if exception and raw_name in exception:
+                    default_value = data[key]
+                    response[key] = f'({default_value})'
+                    default_value = data[raw_name].rstrip()
+                    if len(default_value) == 0:
+                        response[raw_name] = '<empty>'
+                    else:
+                        response[raw_name] = default_value
+                    continue
                 if isinstance(data[raw_name], str):
                     default_value = data[raw_name].rstrip()
-                    if len(default_value) == 0 :
-                        default_value = '<EMPTY>'
+                    if len(default_value) == 0:
+                        default_value = '<empty>'
                 else:
                     default_value = data[raw_name]
                 if value in data:
-                    response[raw_name] = f'{default_value} ({data[value]})'
+                    if script is True and default_value != '<empty>':
+                        response[raw_name] = f'({data[value]}) {default_value}'
+                    else:
+                        response[raw_name] = f'{default_value} ({data[value]})'
                 else:
                     if str(value) == str(table):
                         response[raw_name] = f'{default_value}'
                     else:
-                        response[raw_name] = f'{default_value} ({value})'
+                        if script is True and default_value != '<empty>':
+                            response[raw_name] = f'({value}) {default_value}'
+                        else:
+                            response[raw_name] = f'{default_value} ({value})'
                 del response[key]
-        return response
+        return response, resp_overrides
+

@@ -49,6 +49,10 @@ TABLE_CAP = 'Group'
 app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
+if APP_STATE is False: 
+    app.config["DEBUG"] = True
+    os.environ["FLASK_ENV"] = "development"
+
 
 @app.before_request
 def validate_home_directory():
@@ -130,7 +134,7 @@ def add():
                 error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
                 flash(error, "error")
                 return redirect(url_for('add'), code=302)
-        payload = Helper().prepare_payload(None, payload)
+        payload = Helper().prepare_payload(payload)
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
@@ -231,7 +235,7 @@ def edit(record=None):
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
-        payload = Helper().prepare_payload(None, payload)
+        payload = Helper().prepare_payload(payload)
             
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
@@ -339,7 +343,7 @@ def clone(record=None):
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
-        payload = Helper().prepare_payload(None, payload)
+        payload = Helper().prepare_payload(payload)
 
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
@@ -458,7 +462,7 @@ def license_info():
 
 if __name__ == "__main__":
     if APP_STATE is False: 
-        app.run(host='0.0.0.0', port=7755, debug= True)
+        app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
 
