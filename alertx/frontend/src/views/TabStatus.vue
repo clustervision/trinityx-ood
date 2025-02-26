@@ -134,6 +134,51 @@ export default defineComponent({
     }
   },
   methods: {
+    parseTimestamp(timestampStr: string) {
+      try {
+        if (!timestampStr) return "";
+        if (timestampStr.includes("Z00:00Z")){ timestampStr = timestampStr.replace("Z00:00Z", "Z"); }
+        if (timestampStr.endsWith("Z")){ timestampStr = timestampStr.replace("Z", "+00:00"); }
+        if (timestampStr.includes(".")){
+          const datePart = timestampStr.split(".")[0];
+          let fractionPart = timestampStr.split(".")[1];
+          fractionPart = fractionPart.replace(/Z$/, ""); // Remove trailing Z if exists
+
+          if (fractionPart.includes("+") || fractionPart.includes("-")){
+              let fraction = fractionPart.split(/[+-]/)[0];
+              const tz = fractionPart.split(/[+-]/)[1];
+              fraction = fraction.substring(0, 6); // Trim to 6 digits
+              timestampStr = `${datePart}.${fraction}+${tz}`;
+          } else {
+              timestampStr = `${datePart}.${fractionPart.substring(0, 6)}`;
+          }
+        }
+
+        const dateObj = new Date(timestampStr);
+
+        // For UTC TimeZone uncomment this block and comment out the Dynamic block
+        // const offsetMinutes = dateObj.getTimezoneOffset();
+        // const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
+        // const offsetMins = Math.abs(offsetMinutes % 60);
+        // const sign = offsetMinutes > 0 ? "-" : "+";
+        // const utcOffset = `UTC${sign}${String(offsetHours).padStart(2, "0")}:${String(offsetMins).padStart(2, "0")}`;
+        // const formattedDate = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+        // const formattedTime = dateObj.toTimeString().split(" ")[0]; // "HH:MM:SS"
+        // return `${formattedDate} ${formattedTime} ${utcOffset}`;
+        // For UTC TimeZone uncomment this block and comment out the Dynamic block
+
+        // For Dynamic TimeZone
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const formattedDate = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+        const formattedTime = dateObj.toTimeString().split(" ")[0]; // "HH:MM:SS"
+        return `${formattedDate} ${formattedTime} ${timeZone}`;
+        // For Dynamic TimeZone
+
+      } catch (error) {
+          console.error("Invalid timestamp:", timestampStr, error);
+          return "";
+      }
+  },
     async fetchAlerts() {
       // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       // this.updateShowSpinner(true);
@@ -186,7 +231,8 @@ export default defineComponent({
                           nhc: String(rule.labels.nhc) === 'true',
                           state: rule.state,
                           severity: rule.labels.severity,
-                          eventTime: rule.lastEvaluation,
+                          // eventTime: rule.lastEvaluation,
+                          eventTime: this.parseTimestamp(rule.lastEvaluation),
                           hostname: alert.labels.hostname,
                           exporter: alert.labels.exporter,
                           job: alert.labels.job,
