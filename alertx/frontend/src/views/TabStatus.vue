@@ -113,7 +113,7 @@ export default defineComponent({
   },
   data() {
     return {
-      rows: [] as {rule: string; nhc: boolean; state: string; severity: string; eventTime: string; affected: unknown; alerts: Alerts[]; }[],
+      rows: [] as {rule: string; nhc: boolean; state: string; severity: string; eventTime: string; hostname: string; exporter: string; job: string; alerts: Alerts[]; }[],
       alerts: [],
       noRows: '',
       noRowsType: false,
@@ -147,8 +147,7 @@ export default defineComponent({
         //     let alert_rows:number = 0;
         //     alert_manager.data.forEach((alert: AlertManager) => {
         //       alert_rows = alert_rows + 1;
-        //       const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-        //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
+        //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "hostname": alert.labels.hostname, "exporter": alert.labels.exporter, "job": alert.labels.job});
         //     });
         //     if (this.rows.length === 0){
         //       this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
@@ -182,8 +181,16 @@ export default defineComponent({
                     rule.alerts.forEach((alert) => {
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
                         // count_rows = count_rows + 1;
-                        const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                        this.rows.push({rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected, alerts: rule.alerts as Alerts[]});
+                        this.rows.push({
+                          rule: rule.name,
+                          nhc: String(rule.labels.nhc) === 'true',
+                          state: rule.state,
+                          severity: rule.labels.severity,
+                          eventTime: rule.lastEvaluation,
+                          hostname: alert.labels.hostname,
+                          exporter: alert.labels.exporter,
+                          job: alert.labels.job,
+                          alerts: rule.alerts as Alerts[]});
                       }
                     });
                   }
@@ -275,7 +282,9 @@ export default defineComponent({
           <th>Severity</th>
           <th>NHC</th>
           <th>Event Time</th>
-          <th>Affected</th>
+          <th>Hostname</th>
+          <th>Exporter</th>
+          <th>Job</th>
         </tr>
       </thead>
       <tbody>
@@ -289,14 +298,9 @@ export default defineComponent({
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>
-          <td>
-            <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>
-            <template v-else-if="typeof row.affected === 'object' && row.affected !== null">
-              <span v-for="(value, key, index) in row.affected" :key="index">
-                <strong><span class="badge bg-label-primary me-1">{{ key }}: </span></strong> "{{ value }}"<span v-if="index < Object.keys(row.affected).length - 1">, </span>
-              </span>
-            </template>
-          </td>
+          <td>{{ row.hostname }}</td>
+          <td>{{ row.exporter }}</td>
+          <td>{{ row.job }}</td>
         </tr>
       </tbody>
     </table>
