@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import StatusAlerts from '@/components/StatusAlerts.vue';
 </script>
+
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
-import axios from 'axios';
-
+import axios, { AxiosError } from 'axios';
 
 interface Alerts {
   activeAt: string;
@@ -57,8 +57,6 @@ interface AlertRules {
     state: string;
     value: string;
   }>;
-
-  // alerts: Alerts[];
 };
 
 interface Prometheus {
@@ -96,6 +94,8 @@ interface Prometheus {
 //     }
 // }; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
 
+const severity_order = { 'critical': 1, 'danger': 2, 'warning': 3, 'info': 4, 'none': 5 };
+
 export default defineComponent({
   props: {
     url: {
@@ -111,9 +111,10 @@ export default defineComponent({
       required: true,
     },
   },
+
   data() {
     return {
-      rows: [] as {rule: string; nhc: boolean; state: string; severity: string; eventTime: string; hostname: string; exporter: string; job: string; alerts: Alerts[]; }[],
+      rows: [] as {rule: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; alerts: Alerts[]; }[],
       alerts: [],
       noRows: '',
       noRowsType: false,
@@ -133,7 +134,9 @@ export default defineComponent({
       clearInterval(this.intervalId); // Clear polling interval when component unmounts
     }
   },
+
   methods: {
+
     parseTimestamp(timestampStr: string) {
       try {
         if (!timestampStr) return "";
@@ -145,15 +148,14 @@ export default defineComponent({
           fractionPart = fractionPart.replace(/Z$/, ""); // Remove trailing Z if exists
 
           if (fractionPart.includes("+") || fractionPart.includes("-")){
-              let fraction = fractionPart.split(/[+-]/)[0];
-              const tz = fractionPart.split(/[+-]/)[1];
-              fraction = fraction.substring(0, 6); // Trim to 6 digits
-              timestampStr = `${datePart}.${fraction}+${tz}`;
+            let fraction = fractionPart.split(/[+-]/)[0];
+            const tz = fractionPart.split(/[+-]/)[1];
+            fraction = fraction.substring(0, 6); // Trim to 6 digits
+            timestampStr = `${datePart}.${fraction}+${tz}`;
           } else {
-              timestampStr = `${datePart}.${fractionPart.substring(0, 6)}`;
+            timestampStr = `${datePart}.${fractionPart.substring(0, 6)}`;
           }
         }
-
         const dateObj = new Date(timestampStr);
 
         // For UTC TimeZone uncomment this block and comment out the Dynamic block
@@ -181,9 +183,6 @@ export default defineComponent({
     },
 
     hostnameParser(hostname: string | Array<string> | null) {
-      /**
-       * This method checks if hostname is a string or array, then returns a stringified hostname.
-       */
       let cleanHostname = "";
       if (Array.isArray(hostname)) {
         cleanHostname = hostname.join("<br />");
@@ -201,12 +200,20 @@ export default defineComponent({
       return cleanHostname;
     },
 
+    sortRowsBySeverity() {
+      this.rows.sort((a, b) => {
+        const severityA = severity_order[a.severity as keyof typeof severity_order] || 5;
+        const severityB = severity_order[b.severity as keyof typeof severity_order] || 5;
+        return severityA - severityB;
+      });
+    },
+
 
     async fetchAlerts() {
       // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       // this.updateShowSpinner(true);
       this.rows = [];  // Clear the table before fetching new data
-    this.noRows = '';
+      this.noRows = '';
       // if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
         // try {
         //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
@@ -251,7 +258,7 @@ export default defineComponent({
                           rule: rule.name,
                           nhc: String(rule.labels.nhc) === 'true',
                           state: rule.state,
-                          severity: rule.labels.severity,
+                          severity: rule.labels.severity as keyof typeof severity_order,
                           eventTime: this.parseTimestamp(rule.lastEvaluation),
                           hostname: this.hostnameParser(alert.labels.hostname),
                           exporter: alert.labels.exporter,
@@ -261,7 +268,6 @@ export default defineComponent({
                     });
                   }
                 });
-
               }
             });
           } else {
@@ -271,13 +277,15 @@ export default defineComponent({
           if (this.rows.length === 0){
             this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
             this.noRowsType = true;
+          } else {
+            this.sortRowsBySeverity();
           }
         } catch (error: unknown) {
-          console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
-          if (error instanceof Error) {
-            // Need  a Pop up to accept that risk
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
-          } else {
+          if (error instanceof AxiosError) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          } else if (error instanceof Error) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          }else {
             this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
           }
         }
@@ -288,18 +296,12 @@ export default defineComponent({
 
     refreshDataTable() {
       const table = $('#dataTable');
-      nextTick(() => {
+      // nextTick(() => {
           table.DataTable({
-          order: [[3, 'asc']],
-          columnDefs: [{ targets: 2, type: "string" }],
           pageLength: 25
         });
-      });
+      // });
     },
-
-    // updateShowSpinner(value: boolean) {
-    //   this.$emit("update:showSpinner", value);
-    // },
 
     startAutoReload() {
       if (this.autoReload && !this.intervalId) {
