@@ -26,7 +26,7 @@
                   <td>{{ alert.labels.category }}</td>
                   <td>{{ alert.labels.class }}</td>
                   <td>{{ alert.labels.exporter }}</td>
-                  <td>{{ alert.labels.hostname }}</td>
+                  <td v-html="hostList[index]"></td>
                   <td>{{ alert.annotations.description }}</td>
                 </tr>
               </tbody>
@@ -42,35 +42,61 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from "vue";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 
 interface Alerts {
   activeAt: string;
-    annotations: {description: string};
-    labels: {
-      alertname: string,
-      exporter: string,
-      hostname: string,
-      category: string,
-      class: string,
-      instance: string,
-      job: string,
-      luna_group: string,
-      disabled: boolean | null,
-      nhc: boolean | null,
-      severity: string
-    };
-    state: string;
-    value: string;
+  annotations: { description: string };
+  labels: {
+    alertname: string;
+    exporter: string;
+    hostname: string;
+    category: string;
+    class: string;
+    instance: string;
+    job: string;
+    luna_group: string;
+    disabled: boolean | null;
+    nhc: boolean | null;
+    severity: string;
   };
+  state: string;
+  value: string;
+}
+
 const props = defineProps<{
   alerts: Alerts[];
   modalId: string;
   ruleName: string;
 }>();
 
+const emit = defineEmits(["html", "modal-open", "modal-close"]);
 
-const emit = defineEmits(["modal-open", "modal-close"]);
+const hostList = ref<string[]>([]);
+
+watch(
+  () => props.alerts,
+  async (alerts) => {
+    try {
+      hostList.value = [];
+      for (const alert of alerts) {
+        if (!alert?.labels?.hostname) {
+          // console.warn("Missing hostname in alert:", alert);
+          hostList.value.push(""); // Push an empty string for missing hostnames
+          continue;
+        }
+        const parsedHostname = await new Promise<string>((resolve) => {
+          emit("html", alert.labels.hostname, resolve);
+        });
+        hostList.value.push(parsedHostname);
+      }
+    } catch (error) {
+      console.error("Error parsing hostnames:", error);
+      hostList.value = []; // Fallback to an empty array
+    }
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
   const modalElement = document.getElementById(props.modalId);

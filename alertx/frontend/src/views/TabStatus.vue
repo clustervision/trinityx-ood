@@ -175,10 +175,33 @@ export default defineComponent({
         // For Dynamic TimeZone
 
       } catch (error) {
-          console.error("Invalid timestamp:", timestampStr, error);
-          return "";
+        console.error("Invalid timestamp:", timestampStr, error);
+        return "";
       }
-  },
+    },
+
+    hostnameParser(hostname: string | Array<string> | null) {
+      /**
+       * This method checks if hostname is a string or array, then returns a stringified hostname.
+       */
+      let cleanHostname = "";
+      if (Array.isArray(hostname)) {
+        cleanHostname = hostname.join("<br />");
+      } else if (typeof hostname === "string") {
+        if (hostname.includes(",") || hostname.includes(";")) {
+          hostname = hostname.replace(/\[|\]|\s/g, ""); // Remove brackets and spaces
+          cleanHostname = hostname.split(",").join("<br>");
+        } else {
+          cleanHostname = hostname;
+        }
+      } else {
+        cleanHostname = "";
+      }
+
+      return cleanHostname;
+    },
+
+
     async fetchAlerts() {
       // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       // this.updateShowSpinner(true);
@@ -220,20 +243,17 @@ export default defineComponent({
           if (response.status === 200) {
             response.data.data.groups.forEach((group: Prometheus) => {
               if (group.name === "trinityx" || group.name === "trinityx_hw"){
-                // let count_rows:number = 0;
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
-                        // count_rows = count_rows + 1;
                         this.rows.push({
                           rule: rule.name,
                           nhc: String(rule.labels.nhc) === 'true',
                           state: rule.state,
                           severity: rule.labels.severity,
-                          // eventTime: rule.lastEvaluation,
                           eventTime: this.parseTimestamp(rule.lastEvaluation),
-                          hostname: alert.labels.hostname,
+                          hostname: this.hostnameParser(alert.labels.hostname),
                           exporter: alert.labels.exporter,
                           job: alert.labels.job,
                           alerts: rule.alerts as Alerts[]});
@@ -248,7 +268,6 @@ export default defineComponent({
             this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
             console.error("Error fetching rules:", response.status, response.data);
           }
-          // this.rows = [];
           if (this.rows.length === 0){
             this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
             this.noRowsType = true;
@@ -337,14 +356,14 @@ export default defineComponent({
         <tr v-for="(row, index) in rows" :key="row.state">
           <td>{{ index +1 }}</td>
           <td>
-            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
             <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.rule }}</a>
           </td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>
-          <td>{{ row.hostname }}</td>
+          <td v-html="row.hostname"></td>
           <td>{{ row.exporter }}</td>
           <td>{{ row.job }}</td>
         </tr>
