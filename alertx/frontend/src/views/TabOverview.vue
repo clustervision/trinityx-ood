@@ -3,7 +3,7 @@ import OverviewAlerts from '@/components/OverviewAlerts.vue';
 </script>
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import BoxIcon from 'boxicons';
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
@@ -144,115 +144,120 @@ export default defineComponent({
           console.error("Error fetching nodes:", nodeResponse.status, nodeResponse.data);
         }
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
-        } else {
+        if (error instanceof AxiosError) {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+        } else if (error instanceof Error) {
+          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+        }else {
           this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
         }
       }
-      try {
-        const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
-        const response = await axios.get(proxyUrl);
-        if (response.status === 200) {
+      if (!this.noRows){
+        try {
+          const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+          const response = await axios.get(proxyUrl);
+          if (response.status === 200) {
 
-          response.data.data.groups.forEach((group: Prometheus) => {
-            if (group.name === "trinityx" || group.name === "trinityx_hw") {
-              group.rules.forEach((rule) => {
-                if (rule.alerts && rule.alerts.length > 0) {
-                  rule.alerts.forEach((alert : SpecificAlerts) => {
-                    const hostname = alert.labels.hostname;
-                    const state = true;
-                    let genericRules: boolean | null = null;
-                    let services: boolean | null = null;
-                    let hardware: boolean | null = null;
-                    let other: boolean | null = null;
+            response.data.data.groups.forEach((group: Prometheus) => {
+              if (group.name === "trinityx" || group.name === "trinityx_hw") {
+                group.rules.forEach((rule) => {
+                  if (rule.alerts && rule.alerts.length > 0) {
+                    rule.alerts.forEach((alert : SpecificAlerts) => {
+                      const hostname = alert.labels.hostname;
+                      const state = true;
+                      let genericRules: boolean | null = null;
+                      let services: boolean | null = null;
+                      let hardware: boolean | null = null;
+                      let other: boolean | null = null;
 
-                    const genericAlerts: SpecificAlerts[] = [];
-                    const servicesAlerts: SpecificAlerts[] = [];
-                    const hardwareAlerts: SpecificAlerts[] = [];
-                    const otherAlerts: SpecificAlerts[] = [];
+                      const genericAlerts: SpecificAlerts[] = [];
+                      const servicesAlerts: SpecificAlerts[] = [];
+                      const hardwareAlerts: SpecificAlerts[] = [];
+                      const otherAlerts: SpecificAlerts[] = [];
 
-                    const nhc: boolean = String(rule.labels.nhc) === "true";
+                      const nhc: boolean = String(rule.labels.nhc) === "true";
 
-                    if (hostname !== undefined) {
-                      if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
-                        if (alert.labels.category === "generic") {
-                          if (nhc === true){ genericRules = true; } else { genericRules = false; }
-                          genericAlerts.push(alert);
-                        }
-                        if (alert.labels.category === "service") {
-                          if (nhc === true){ services = true; } else { services = false; }
-                          servicesAlerts.push(alert);
-                        }
-                        if (alert.labels.category === "hardware") {
-                          if (nhc === true){ hardware = true; } else { hardware = false; }
-                          hardwareAlerts.push(alert);
-                        }
-                        if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
-                          if (nhc === true){ other = true; } else { other = false; }
-                          otherAlerts.push(alert);
-                        }
-
-                        const hostEntry = this.overview.find(item => item.hostname === hostname);
-                        if (hostEntry) {
-                          if (genericRules === true){
-                            hostEntry.genericRules = genericRules;
-                            hostEntry.genericAlerts.push(...genericAlerts);
-
-                          } else if (genericRules === false && hostEntry.genericRules !== true){
-                            hostEntry.genericRules = genericRules;
-                            hostEntry.genericAlerts.push(...genericAlerts);
+                      if (hostname !== undefined) {
+                        if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
+                          if (alert.labels.category === "generic") {
+                            if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                            genericAlerts.push(alert);
                           }
-                          if (services === true){
-                            hostEntry.services = services;
-                            hostEntry.servicesAlerts.push(...servicesAlerts);
-                          } else if (services === false && hostEntry.services !== true){
-                            hostEntry.services = services;
-                            hostEntry.servicesAlerts.push(...servicesAlerts);
+                          if (alert.labels.category === "service") {
+                            if (nhc === true){ services = true; } else { services = false; }
+                            servicesAlerts.push(alert);
                           }
-                          if (hardware === true){
-                            hostEntry.hardware = hardware;
-                            hostEntry.hardwareAlerts.push(...hardwareAlerts);
-                          } else if (hardware === false && hostEntry.hardware !== true){
-                            hostEntry.hardware = hardware;
-                            hostEntry.hardwareAlerts.push(...hardwareAlerts);
+                          if (alert.labels.category === "hardware") {
+                            if (nhc === true){ hardware = true; } else { hardware = false; }
+                            hardwareAlerts.push(alert);
                           }
-                          if (other === true){
-                            hostEntry.other = other;
-                            hostEntry.otherAlerts.push(...otherAlerts);
-                          } else if (other === false && hostEntry.other !== true){
-                            hostEntry.other = other;
-                            hostEntry.otherAlerts.push(...otherAlerts);
+                          if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
+                            if (nhc === true){ other = true; } else { other = false; }
+                            otherAlerts.push(alert);
                           }
-                          if (alert.labels.alertname === "ServerDown") {
-                            hostEntry.state = false;
+
+                          const hostEntry = this.overview.find(item => item.hostname === hostname);
+                          if (hostEntry) {
+                            if (genericRules === true){
+                              hostEntry.genericRules = genericRules;
+                              hostEntry.genericAlerts.push(...genericAlerts);
+
+                            } else if (genericRules === false && hostEntry.genericRules !== true){
+                              hostEntry.genericRules = genericRules;
+                              hostEntry.genericAlerts.push(...genericAlerts);
+                            }
+                            if (services === true){
+                              hostEntry.services = services;
+                              hostEntry.servicesAlerts.push(...servicesAlerts);
+                            } else if (services === false && hostEntry.services !== true){
+                              hostEntry.services = services;
+                              hostEntry.servicesAlerts.push(...servicesAlerts);
+                            }
+                            if (hardware === true){
+                              hostEntry.hardware = hardware;
+                              hostEntry.hardwareAlerts.push(...hardwareAlerts);
+                            } else if (hardware === false && hostEntry.hardware !== true){
+                              hostEntry.hardware = hardware;
+                              hostEntry.hardwareAlerts.push(...hardwareAlerts);
+                            }
+                            if (other === true){
+                              hostEntry.other = other;
+                              hostEntry.otherAlerts.push(...otherAlerts);
+                            } else if (other === false && hostEntry.other !== true){
+                              hostEntry.other = other;
+                              hostEntry.otherAlerts.push(...otherAlerts);
+                            }
+                            if (alert.labels.alertname === "ServerDown") {
+                              hostEntry.state = false;
+                            }
+                          } else {
+                            this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, genericAlerts:[...genericAlerts], servicesAlerts:[...servicesAlerts], hardwareAlerts:[...hardwareAlerts], otherAlerts:[...otherAlerts], })
                           }
-                        } else {
-                          this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, genericAlerts:[...genericAlerts], servicesAlerts:[...servicesAlerts], hardwareAlerts:[...hardwareAlerts], otherAlerts:[...otherAlerts], })
                         }
                       }
-                    }
-                  });
+                    });
+                  }
+                });
+                if (this.overview.length === 0) {
+                  this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
                 }
-              });
-              if (this.overview.length === 0) {
-                this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
               }
-            }
-          });
+            });
 
-        } else {
-          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
-          console.error("Error fetching rules:", response.status, response.data);
+          } else {
+            this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
+            console.error("Error fetching rules:", response.status, response.data);
+          }
+        } catch (error: unknown) {
+          if (error instanceof AxiosError) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          } else if (error instanceof Error) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          }else {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+          }
         }
-      } catch (error: unknown) {
-        console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
-        if (error instanceof Error) {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
-        } else {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
-        }
-      }
+    }
       this.updateShowSpinner(false);
       await nextTick();
       this.refreshDataTable();

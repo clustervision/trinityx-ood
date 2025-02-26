@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import StatusAlerts from '@/components/StatusAlerts.vue';
 </script>
+
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
-import axios from 'axios';
-
+import axios, { AxiosError } from 'axios';
 
 interface Alerts {
   activeAt: string;
@@ -57,8 +57,6 @@ interface AlertRules {
     state: string;
     value: string;
   }>;
-
-  // alerts: Alerts[];
 };
 
 interface Prometheus {
@@ -96,6 +94,8 @@ interface Prometheus {
 //     }
 // }; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
 
+const severity_order = { 'critical': 1, 'danger': 2, 'warning': 3, 'info': 4, 'none': 5 };
+
 export default defineComponent({
   props: {
     url: {
@@ -111,9 +111,10 @@ export default defineComponent({
       required: true,
     },
   },
+
   data() {
     return {
-      rows: [] as {rule: string; nhc: boolean; state: string; severity: string; eventTime: string; affected: unknown; alerts: Alerts[]; }[],
+      rows: [] as {rule: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; alerts: Alerts[]; }[],
       alerts: [],
       noRows: '',
       noRowsType: false,
@@ -133,12 +134,86 @@ export default defineComponent({
       clearInterval(this.intervalId); // Clear polling interval when component unmounts
     }
   },
+
   methods: {
+
+    parseTimestamp(timestampStr: string) {
+      try {
+        if (!timestampStr) return "";
+        if (timestampStr.includes("Z00:00Z")){ timestampStr = timestampStr.replace("Z00:00Z", "Z"); }
+        if (timestampStr.endsWith("Z")){ timestampStr = timestampStr.replace("Z", "+00:00"); }
+        if (timestampStr.includes(".")){
+          const datePart = timestampStr.split(".")[0];
+          let fractionPart = timestampStr.split(".")[1];
+          fractionPart = fractionPart.replace(/Z$/, ""); // Remove trailing Z if exists
+
+          if (fractionPart.includes("+") || fractionPart.includes("-")){
+            let fraction = fractionPart.split(/[+-]/)[0];
+            const tz = fractionPart.split(/[+-]/)[1];
+            fraction = fraction.substring(0, 6); // Trim to 6 digits
+            timestampStr = `${datePart}.${fraction}+${tz}`;
+          } else {
+            timestampStr = `${datePart}.${fractionPart.substring(0, 6)}`;
+          }
+        }
+        const dateObj = new Date(timestampStr);
+
+        // For UTC TimeZone uncomment this block and comment out the Dynamic block
+        // const offsetMinutes = dateObj.getTimezoneOffset();
+        // const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
+        // const offsetMins = Math.abs(offsetMinutes % 60);
+        // const sign = offsetMinutes > 0 ? "-" : "+";
+        // const utcOffset = `UTC${sign}${String(offsetHours).padStart(2, "0")}:${String(offsetMins).padStart(2, "0")}`;
+        // const formattedDate = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+        // const formattedTime = dateObj.toTimeString().split(" ")[0]; // "HH:MM:SS"
+        // return `${formattedDate} ${formattedTime} ${utcOffset}`;
+        // For UTC TimeZone uncomment this block and comment out the Dynamic block
+
+        // For Dynamic TimeZone
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const formattedDate = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+        const formattedTime = dateObj.toTimeString().split(" ")[0]; // "HH:MM:SS"
+        return `${formattedDate} ${formattedTime} ${timeZone}`;
+        // For Dynamic TimeZone
+
+      } catch (error) {
+        console.error("Invalid timestamp:", timestampStr, error);
+        return "";
+      }
+    },
+
+    hostnameParser(hostname: string | Array<string> | null) {
+      let cleanHostname = "";
+      if (Array.isArray(hostname)) {
+        cleanHostname = hostname.join("<br />");
+      } else if (typeof hostname === "string") {
+        if (hostname.includes(",") || hostname.includes(";")) {
+          hostname = hostname.replace(/\[|\]|\s/g, ""); // Remove brackets and spaces
+          cleanHostname = hostname.split(",").join("<br>");
+        } else {
+          cleanHostname = hostname;
+        }
+      } else {
+        cleanHostname = "";
+      }
+
+      return cleanHostname;
+    },
+
+    sortRowsBySeverity() {
+      this.rows.sort((a, b) => {
+        const severityA = severity_order[a.severity as keyof typeof severity_order] || 5;
+        const severityB = severity_order[b.severity as keyof typeof severity_order] || 5;
+        return severityA - severityB;
+      });
+    },
+
+
     async fetchAlerts() {
       // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       // this.updateShowSpinner(true);
       this.rows = [];  // Clear the table before fetching new data
-    this.noRows = '';
+      this.noRows = '';
       // if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
         // try {
         //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
@@ -147,8 +222,7 @@ export default defineComponent({
         //     let alert_rows:number = 0;
         //     alert_manager.data.forEach((alert: AlertManager) => {
         //       alert_rows = alert_rows + 1;
-        //       const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-        //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "affected": affected});
+        //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "hostname": alert.labels.hostname, "exporter": alert.labels.exporter, "job": alert.labels.job});
         //     });
         //     if (this.rows.length === 0){
         //       this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
@@ -176,36 +250,42 @@ export default defineComponent({
           if (response.status === 200) {
             response.data.data.groups.forEach((group: Prometheus) => {
               if (group.name === "trinityx" || group.name === "trinityx_hw"){
-                // let count_rows:number = 0;
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
-                        // count_rows = count_rows + 1;
-                        const affected:object = {"hostname":  alert.labels.hostname, "exporter":  alert.labels.exporter, "job":  alert.labels.job};
-                        this.rows.push({rule: rule.name, nhc: String(rule.labels.nhc) === 'true', state: rule.state, severity: rule.labels.severity, eventTime: rule.lastEvaluation, affected: affected, alerts: rule.alerts as Alerts[]});
+                        this.rows.push({
+                          rule: rule.name,
+                          nhc: String(rule.labels.nhc) === 'true',
+                          state: rule.state,
+                          severity: rule.labels.severity as keyof typeof severity_order,
+                          eventTime: this.parseTimestamp(rule.lastEvaluation),
+                          hostname: this.hostnameParser(alert.labels.hostname),
+                          exporter: alert.labels.exporter,
+                          job: alert.labels.job,
+                          alerts: rule.alerts as Alerts[]});
                       }
                     });
                   }
                 });
-
               }
             });
           } else {
             this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
             console.error("Error fetching rules:", response.status, response.data);
           }
-          // this.rows = [];
           if (this.rows.length === 0){
             this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
             this.noRowsType = true;
+          } else {
+            this.sortRowsBySeverity();
           }
         } catch (error: unknown) {
-          console.error("ERROR[Prometheus Server] :: Error fetching status:", error);
-          if (error instanceof Error) {
-            // Need  a Pop up to accept that risk
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: ${error.stack}`;
-          } else {
+          if (error instanceof AxiosError) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          } else if (error instanceof Error) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          }else {
             this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
           }
         }
@@ -216,18 +296,12 @@ export default defineComponent({
 
     refreshDataTable() {
       const table = $('#dataTable');
-      nextTick(() => {
+      // nextTick(() => {
           table.DataTable({
-          order: [[3, 'asc']],
-          columnDefs: [{ targets: 2, type: "string" }],
           pageLength: 25
         });
-      });
+      // });
     },
-
-    // updateShowSpinner(value: boolean) {
-    //   this.$emit("update:showSpinner", value);
-    // },
 
     startAutoReload() {
       if (this.autoReload && !this.intervalId) {
@@ -275,28 +349,25 @@ export default defineComponent({
           <th>Severity</th>
           <th>NHC</th>
           <th>Event Time</th>
-          <th>Affected</th>
+          <th>Hostname</th>
+          <th>Exporter</th>
+          <th>Job</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="(row, index) in rows" :key="row.state">
           <td>{{ index +1 }}</td>
           <td>
-            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
             <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.rule }}</a>
           </td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>
-          <td>
-            <strong v-if="typeof row.affected === 'string'"><span class="badge bg-label-secondary me-1">{{ row.affected }}</span></strong>
-            <template v-else-if="typeof row.affected === 'object' && row.affected !== null">
-              <span v-for="(value, key, index) in row.affected" :key="index">
-                <strong><span class="badge bg-label-primary me-1">{{ key }}: </span></strong> "{{ value }}"<span v-if="index < Object.keys(row.affected).length - 1">, </span>
-              </span>
-            </template>
-          </td>
+          <td v-html="row.hostname"></td>
+          <td>{{ row.exporter }}</td>
+          <td>{{ row.job }}</td>
         </tr>
       </tbody>
     </table>
