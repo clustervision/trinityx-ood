@@ -34,7 +34,7 @@ import os
 from textwrap import wrap
 from flask import Flask, json, request, render_template, flash, url_for, redirect
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE
+from constant import LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 
@@ -42,6 +42,10 @@ LOGGER = Log.init_log('INFO')
 TABLE = 'Control Nodes'
 app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+if APP_STATE is False: 
+    app.config["DEBUG"] = True
+    os.environ["FLASK_ENV"] = "development"
 
 
 @app.before_request
@@ -54,6 +58,14 @@ def validate_home_directory():
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE, data="", error=TOKEN_FILE["error"])
     return None
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """
+    This method will redirect to error Template Page with Error Message on 404.
+    """
+    return render_template("error.html", table="Control Nodes", data="", error=f"ERROR :: {e}"), 200
 
 
 @app.route('/', methods=['GET'])
@@ -192,5 +204,7 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host= '0.0.0.0', port= 7059, debug= True)
-    app.run()
+    if APP_STATE is False: 
+        app.run(host='0.0.0.0', port=7755, debug=True)
+    else:
+        app.run()

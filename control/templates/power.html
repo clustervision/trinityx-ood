@@ -11,8 +11,7 @@
     {% endif %}
   {% endwith %}
 
-  <div class="alert alert-danger" role="alert" id="power_alert" style="display: none;"></div>
-  <div class="alert alert-success" role="alert" id="spinner_alert" style="display: none;"></div>
+  <div id="alert_messages"></div>
 
 {% if payload %}
   <!-- Bordered Table -->
@@ -47,8 +46,8 @@
     </div>
     <div class="card-body">
       <div id='payload' style="display: None;">{{ payload }}</div>
-      <div class="table-responsive text-nowrap" id='power_table'>
-      </div>
+      <div id='power_table'></div>
+      <div id="spinner"><div class="spinner-border spinner-border-lg text-success" role="status"><span class="visually-hidden">Loading Node...</span></div></div>
     </div>
   </form>
   </div>
