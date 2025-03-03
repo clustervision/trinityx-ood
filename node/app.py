@@ -54,6 +54,7 @@ if APP_STATE is False:
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
 
+
 @app.before_request
 def validate_home_directory():
     """
@@ -64,6 +65,14 @@ def validate_home_directory():
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
     return None
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """
+    This method will redirect to error Template Page with Error Message on 404.
+    """
+    return render_template("error.html", table=TABLE_CAP, data="", error=f"ERROR :: {e}"), 200
 
 
 @app.route('/', methods=['GET'])
