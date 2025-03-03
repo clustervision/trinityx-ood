@@ -69,25 +69,17 @@ class Presenter():
         return str(soup)
 
 
-    def add_class_to_tr_if_script_is_not_default(self, html_table):
+    def add_class_to_tr_if_first_td_contains_star(self, html_table):
         """
-        This method applies a color on the <tr> if specific conditions are met.
+        This method finds <tr> elements where the first <td> contains '*'
+        and adds the class 'table-success' to those <tr> elements.
         """
         soup = BeautifulSoup(html_table, 'html.parser')
-        rows = soup.find_all('tr')
-        for i, tr in enumerate(rows):
+        for tr in soup.find_all('tr'):
             tds = tr.find_all('td')
-            if len(tds) > 1:
-                key = tds[0].get_text().strip()
-                value = tds[1].get_text().strip()
-                if '_source' in key and value == 'node':
-                    tr['class'] = tr.get('class', []) + ['table-success']
-                    for related_key in ["partscript_source", "postscript_source", "prescript_source"]:
-                        if related_key == key:
-                            tr['class'] = tr.get('class', []) + ['table-success']
-                            if i + 1 < len(rows):
-                                next_row = rows[i + 1]
-                                next_row['class'] = next_row.get('class', []) + ['table-success']
+            if tds and ('*' in tds[0].get_text(strip=True) or 'info' == tds[0].get_text(strip=True)):
+                existing_classes = tr.get('class', [])  
+                tr['class'] = list(set(existing_classes + ['table-success']))
         return str(soup)
 
 
@@ -114,20 +106,20 @@ class Presenter():
 
     def show_table_col(self, field=None, rows=None):
         """
-        This method will fetch a records from
-        the Luna 2 Daemon Database
+        This method will fetch a records from the Luna 2 Daemon Database
         """
         self.logger.debug(f'Fields => {field}')
         self.logger.debug(f'Rows => {rows}')
         self.table.format = True
         self.table.field_names = ['Key', 'Value']
         for key, value in zip(field, rows):
-                if key != '_override':
-                    self.table.add_row([key, value])
+            if key != '_override':
+                self.table.add_row([key, value])
         self.table.align = "l"
         attribute = {}
-        attribute['id'] = "my_table"
+        attribute['id'] = "show_table"
         attribute['class'] = "table table-bordered table-hover table-striped"
         response = self.table.get_html_string(attributes=attribute)
-        modified_html = self.add_class_to_tr_if_script_is_not_default(response)
+        modified_html = self.add_class_to_tr_if_first_td_contains_star(response)
         return modified_html
+
