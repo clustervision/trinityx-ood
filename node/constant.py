@@ -43,6 +43,24 @@ LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+APP_STATE = True  # False for Development, True for Production
+
+
+def overrides(table=None):
+    """
+    This method has information regarding what could be an override for what table: node, group, cluster, etc
+    """
+    response = False
+    static = {
+        'node': [
+            'osimage', 'osimagetag', 'kerneloptions', 'setupbmc', 'bmcsetup', 'netboot', 'bootmenu',
+            'roles', 'scripts', 'prescript', 'partscript', 'postscript', 'provision_interface',
+            'provision_method', 'provision_fallback'
+        ]
+    }
+    if table and table in static:
+        response = list(static[table])
+    return response
 
 
 def filter_columns(table=None):
@@ -52,7 +70,8 @@ def filter_columns(table=None):
     """
     response = False
     static = {
-        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid', 'interfaces']
+        # 'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid', 'interfaces']
+        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_present', 'interfaces']
     }
     response = list(static[table])
     return response
@@ -66,15 +85,24 @@ def sortby(table=None):
     response = False
     static = {
         'node': [
-            'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
-            'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
-            'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles',
-            'scripts_source', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
+            'info', 'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions',
+            'interfaces', 'status', 'vendor', 'assettag', 'position', 'switch', 'switchport',
+            'cloud', 'setupbmc', 'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu',
+            'service', 'roles', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
             'partscript', 'postscript_source', 'postscript', 'provision_interface',
             'provision_method', 'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256',
             'comment',  'macaddress'
         ],
-        'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network'],
+        # 'node': [
+        #     'info', 'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
+        #     'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
+        #     'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles',
+        #     'scripts_source', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
+        #     'partscript', 'postscript_source', 'postscript', 'provision_interface',
+        #     'provision_method', 'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256',
+        #     'comment',  'macaddress'
+        # ],
+        'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network', 'vlanid'],
         'nodesecrets': ['Node', 'name', 'path', 'content']
     }
     response = list(static[table])

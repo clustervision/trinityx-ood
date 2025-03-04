@@ -13,13 +13,11 @@
         </span>
       </h5>
       <div class="card-body">
-        <div class="table-responsive text-nowrap">
           {% if data %}
             {{ data  | safe }}
           {% else %}
           <div class="alert alert-danger" role="alert">{{ message }}</div>
           {% endif %}
-        </div>
       </div>
     </div>
     <!--/ Bordered Table -->

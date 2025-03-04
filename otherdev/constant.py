@@ -41,7 +41,8 @@ else:
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+EDITOR_KEYS = ['comment']
+APP_STATE = True # False for Development, True for Production
 
 
 def filter_columns(table=None):

@@ -34,10 +34,10 @@ __status__      = 'Development'
 import os
 import json
 from html import unescape
-from flask import Flask,request, render_template, flash, url_for, redirect
+from flask import Flask, request, abort, render_template, flash, url_for, redirect
 from log import Log
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE
+from constant import LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from presenter import Presenter
 from model import Model
@@ -45,6 +45,11 @@ from model import Model
 logger = Log.init_log('INFO')
 app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+
+if APP_STATE is False: 
+    app.config["DEBUG"] = True
+    os.environ["FLASK_ENV"] = "development"
 
 
 @app.before_request
@@ -57,6 +62,14 @@ def validate_home_directory():
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table="Secrets", data="", error=TOKEN_FILE["error"])
     return None
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """
+    This method will redirect to error Template Page with Error Message on 404.
+    """
+    return render_template("error.html", table="Secrets", data="", error=f"ERROR :: {e}"), 200
 
 
 @app.route('/', methods=['GET'])
@@ -92,8 +105,10 @@ def home(entity=None):
     if entity:
         if entity == 'group':
             node_secrets = ''
-        if entity == 'node':
+        elif entity == 'node':
             group_secrets = ''
+        else:
+            abort(404, None)
 
     return render_template("inventory.html", table = table.capitalize(), secrets=secrets, group_secrets=group_secrets, node_secrets=node_secrets, data=None, entity=entity)
 
@@ -134,7 +149,6 @@ def get_list(table=None):
         response = Model().get_list_options(table)
         response = json.dumps(response)
     return response
-
 
 
 @app.route('/add/<string:table>', methods=['GET', 'POST'])
@@ -287,5 +301,7 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host= '0.0.0.0', port= 7059, debug= True)
-    app.run()
+    if APP_STATE is False: 
+        app.run(host='0.0.0.0', port=7755, debug=True)
+    else:
+        app.run()

@@ -42,6 +42,7 @@ INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
+APP_STATE = True  # False for Development, True for Production
 
 
 def filter_columns(table=None):

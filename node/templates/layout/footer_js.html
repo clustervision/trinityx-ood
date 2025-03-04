@@ -2,8 +2,9 @@
 <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-<script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/dataTables.bootstrap4.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dataTables.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dataTables.bootstrap5.min.js') }}"></script>
+
 
 <div class="modal fade" id="logmodal" tabindex="-1" role="dialog" aria-labelledby="logmodalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
@@ -63,16 +64,8 @@
 
 
 <script>
- 
-    new DataTable('.datatable');
-    $('#datatable_length  lable').addClass("datatable_length").parent().next().addClass("datatable_length");
-    $('#datatable_length  select').addClass("datatable_length").parent().next().addClass("datatable_length");
-    $('.dataTables_filter').addClass("datatable_search").parent().next().addClass("datatable_search");
-    $('.dataTables_filter lable').addClass("datatable_length").parent().next().addClass("datatable_length");
-    $('.dataTables_filter input').addClass("datatable_length").parent().next().addClass("datatable_length");
-    $(".dataTables_filter ").after("<br />");
-    $('.dataTables_paginate').addClass("datatable_paginate").parent().next().addClass("datatable_paginate");
-
+    new DataTable('#datatable');
+  
 
     function color_message(message=null){
         if  (message.includes('error') || message.includes('undefined') || message.includes('failed')){
@@ -326,7 +319,7 @@ $('body').on('change', '#id_network', function() {
 </script>
 
 
-<script src="{{ url_for('static', filename='js/jquery.inputmask.min.js') }}" integrity="sha512-efAcjYoYT0sXxQRtxGY37CKYmqsFVOIwMApaEbrxJr4RwqVVGw8o+Lfh/+59TU07+suZn1BWq4fDl5fdgyCNkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="{{ url_for('static', filename='js/jquery.inputmask.min.js') }}" ></script>
 <script>
     function activate_inputmark(){
         var ipv4_address = $('.ipv4');

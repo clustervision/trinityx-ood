@@ -16,7 +16,7 @@
   <div class="card">
     <h5 class="card-header">{{ table }} List <span><a style="float: right;" href="{{ url_for('add') }}" class="btn btn-success">Add New {{ table }}</a></span></h5>
     <div class="card-body">
-      <div class="table-responsive text-nowrap">{{ data  | safe }}</div>
+        {{ data  | safe }}
     </div>
   </div>
   <!--/ Bordered Table -->

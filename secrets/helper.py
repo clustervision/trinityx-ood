@@ -326,6 +326,4 @@ class Helper():
         for row in rows:
             new_fields = new_fields + fields
             new_row = new_row + row
-            new_fields.append("")
-            new_row.append("")
         return new_fields, new_row
