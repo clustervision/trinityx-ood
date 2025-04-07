@@ -9,19 +9,19 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
     OODSlurmNodesConfigParser,
 )
 
-from base.config import settings, get_token, get_luna_url
+from base.config import get_verify_certificate, get_token, get_luna_endpoint
 
 
 def get_luna_nodes():
     """
     This method will fetch the luna nodes.
     """
-    daemon_url = f"{get_luna_url()}/config/node"
+    daemon_url = f"{get_luna_endpoint()}/config/node"
     headers = {"x-access-tokens": get_token()}
     response = get(
         daemon_url,
         headers=headers,
-        verify=settings.api.verify_certificate.lower() == "true",
+        verify=get_verify_certificate(),
     )
     if response.status_code != 200:
         raise Exception(

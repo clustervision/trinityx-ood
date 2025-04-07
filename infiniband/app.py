@@ -6,13 +6,15 @@ from json import loads, dumps, JSONDecodeError
 
 from flask import Flask, render_template, request, jsonify
 
-from base.config import settings
+from base.config import get_configs
+
+STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
+CONFIGS = get_configs()
 
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
 
-STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 
 def _parse_severity(metric_name):
     if metric_name.startswith("delta_1h"):
@@ -27,6 +29,11 @@ def wrap_errors(error):
     if app.debug:
         raise error
     return dumps({"message": str(error)}), 500
+
+
+@app.context_processor
+def inject_settings():
+    return {"CONFIGS": CONFIGS}
 
 
 def _parse_graph(graph_data, prometheus_data):
@@ -125,7 +132,7 @@ def get_prometheus_data():
         data = {}
         for query_type, params in queries.items():
 
-            response = requests.get(f"{settings.PROMETHEUS_ENDPOINT}/api/v1/query", params=params, verify=False)
+            response = requests.get(f"{CONFIGS['APP']['PROMETHEUS_ENDPOINT']}/api/v1/query", params=params, verify=False)
 
             for result in response.json()['data']['result']:
                 guid = result['metric']['guid'][2:]
@@ -159,7 +166,7 @@ def get_graph_state():
 
 def get_graph_data():
     process = subprocess.run(
-        settings.IBNETDISCOVER_CMD , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
+        CONFIGS['APP']['IBNETDISCOVER_CMD'] , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
     if process.returncode != 0:
         raise Exception(
@@ -179,7 +186,7 @@ def index_route():
     Route to get the index page.
     """
 
-    return render_template("index.html", content="", settings=settings)
+    return render_template("index.html", content="")
 
 @app.route("/graph", methods=["GET"])
 def graph_route():
