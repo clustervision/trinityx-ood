@@ -31,10 +31,12 @@ __status__      = 'Development'
 
 
 import datetime
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 from luna_requests import LunaRequestHandler
-from base.config import settings
-from json import loads, dumps
+
+from base.config import get_configs
+
+CONFIGS = get_configs()
 
 app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
@@ -67,21 +69,26 @@ fields = {
 def get_name_filter(items):
     return [i['name'] for i in items]
 
+# add a wrapper to all the routes to catch errors
 @app.errorhandler(Exception)
 def wrap_errors(error):
-    """
-    Decorator to wrap errors in a JSON response.
-    """
+    """Decorator to wrap errors in a JSON response."""
     if app.debug:
         raise error
-    return dumps({"message": str(error)}), 500
+    return jsonify({"message": str(error)}), 500
+
+
+@app.context_processor
+def inject_settings():
+    return {"CONFIGS": CONFIGS}
+
 
 @app.route("/")
 def index():
     """
     This is main route of application, it will serve index page of the application.
     """
-    return render_template('index.html', settings=settings)
+    return render_template('index.html')
 
 @app.route("/users")
 def users():

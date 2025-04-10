@@ -18,29 +18,32 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 import requests
-from base.config import settings, get_token, get_luna_url
-from multiprocessing.pool import ThreadPool
+from base.config import get_luna_endpoint, get_token, get_verify_certificate
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class LunaRequestHandler():
-    endpoints = {
-        'users': {
-            'list': f'{settings.api.protocol}://{settings.api.endpoint}/config/osuser',
-            'get': f'{settings.api.protocol}://{settings.api.endpoint}/config/osuser/{{name}}',
-            'update': f'{settings.api.protocol}://{settings.api.endpoint}/config/osuser/{{name}}',
-            'delete': f'{settings.api.protocol}://{settings.api.endpoint}/config/osuser/{{name}}/_delete'
-        },
-        'groups': {
-            'list': f'{settings.api.protocol}://{settings.api.endpoint}/config/osgroup',
-            'get': f'{settings.api.protocol}://{settings.api.endpoint}/config/osgroup/{{name}}',
-            'update': f'{settings.api.protocol}://{settings.api.endpoint}/config/osgroup/{{name}}',
-            'delete': f'{settings.api.protocol}://{settings.api.endpoint}/config/osgroup/{{name}}/_delete'
-        }
-    }
+
     def __init__(self):
+        
         self.session = requests.Session()
+        self.luna_endpoint = get_luna_endpoint()
+        self.verify_certificate = get_verify_certificate()
+        self.endpoints = {
+            'users': {
+                'list': f'{self.luna_endpoint}/config/osuser',
+                'get': f'{self.luna_endpoint}/config/osuser/{{name}}',
+                'update': f'{self.luna_endpoint}/config/osuser/{{name}}',
+                'delete': f'{self.luna_endpoint}/config/osuser/{{name}}/_delete'
+            },
+            'groups': {
+                'list': f'{self.luna_endpoint}/config/osgroup',
+                'get': f'{self.luna_endpoint}/config/osgroup/{{name}}',
+                'update': f'{self.luna_endpoint}/config/osgroup/{{name}}',
+                'delete': f'{self.luna_endpoint}/config/osgroup/{{name}}/_delete'
+            }
+        }
 
     @classmethod
     def get_token(cls):
@@ -57,24 +60,12 @@ class LunaRequestHandler():
         """
         This method will get all the groups/users from the database.
         """
-        resp = self.session.get(self.endpoints[target]['list'], headers=self.get_auth_header(), verify=(settings.api.verify_certificate.lower() == 'true'))
+        resp = self.session.get(self.endpoints[target]['list'], headers=self.get_auth_header(), verify=self.verify_certificate)
         if resp.status_code == 404:
             return []
         elif resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {resp.text} while listing {target}, received status code {resp.status_code}")
         data = resp.json()['config'][f"os{target[:-1]}"]
-        # data = [{'name': k, **v} for k, v in data.items()]
-
-        # for item in data:
-        #     additional_info = self.get(target, item['name'])
-        #     item.update(additional_info)
-
-        # tpool = ThreadPool(5)
-        # additional_data = tpool.map(lambda x: self.get(target, x['name']), data)
-        # tpool.close()
-        # tpool.join()
-        # for item, additional_info in zip(data, additional_data):
-        #     item.update(additional_info)
             
         return data
 
@@ -82,7 +73,7 @@ class LunaRequestHandler():
         """
         This method will get the group/user from the database.
         """
-        resp = self.session.get(self.endpoints[target]['get'].format(name=name), headers=self.get_auth_header(), verify=(settings.api.verify_certificate.lower() == 'true'))
+        resp = self.session.get(self.endpoints[target]['get'].format(name=name), headers=self.get_auth_header(), verify=self.verify_certificate)
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {resp.text} while getting {target}, received status code {resp.status_code}")
         return  resp.json()['config'][f"os{target[:-1]}"][name]
@@ -91,7 +82,7 @@ class LunaRequestHandler():
         """
         This method will delete the group/user from the database.
         """
-        resp = self.session.get(self.endpoints[target]['delete'].format(name=name), headers=self.get_auth_header(), verify=(settings.api.verify_certificate.lower() == 'true'))
+        resp = self.session.get(self.endpoints[target]['delete'].format(name=name), headers=self.get_auth_header(), verify=self.verify_certificate)
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {resp.text} while deleting {target}, received status code {resp.status_code}")
         return  {"message", 'User Updated successfully'}
@@ -107,7 +98,7 @@ class LunaRequestHandler():
                 }
             }
         }
-        resp = self.session.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=payload, verify=(settings.api.verify_certificate.lower() == 'true'))
+        resp = self.session.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=payload, verify=self.verify_certificate)
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {resp.text} while updating {target}, received status code {resp.status_code}")
         return  {"message", 'User Updated successfully'}

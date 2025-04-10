@@ -1,11 +1,11 @@
-<nav class="navbar navbar-light" style="background-color: {{settings.BRAND_BG_COLOR}};">
+<nav class="navbar navbar-light" style="background-color: {{CONFIGS['ENV']['BRAND_BG_COLOR']}};">
   <ol class="breadcrumb bg-transparent d-flex align-items-center">
     <img src="{{ url_for( 'static', filename='/branding/trinityX/logo.png') }}" class="img-logo">
     <li class="breadcrumb-item">
       <a class="align-middle" href="/">Home</a>
     </li>
     <li class="breadcrumb-item">
-      <a class="align-middle" href="#">{{settings.app_name}}</a>
+      <a class="align-middle" href="#">{{CONFIGS['APP']['APP_NAME']}}</a>
     </li>
   </ol>
 </nav>

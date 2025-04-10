@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # This code is part of the TrinityX software suite
 # Copyright (C) 2023  ClusterVision Solutions b.v.
 #
@@ -27,24 +29,45 @@ __email__ = "support@clustervision.com"
 __status__ = "Development"
 
 import os
-import sys
-import jwt
-import requests
-from dynaconf import Dynaconf
+import toml
+from base.ini import Ini
+from base.token import Token
 
-TOKEN = None
-settings = Dynaconf(
-    envvar_prefix="OOD",
-    settings_files=[
-        os.path.join(os.path.dirname(__file__), "settings", "users.toml"),
-        os.path.join(os.path.dirname(__file__), "settings", "luna.ini"),
-        os.path.join(os.path.dirname(__file__), "..", "settings", "users.toml"),
-        os.path.join(os.path.dirname(__file__), "..", "settings", "luna.ini"),
-        "/trinity/local/ondemand/3.0/config/users.toml",
-        "/trinity/local/ondemand/3.0/config/luna.ini",
-    ],
-)
 
+LUNA_CONFIG_PATH = "/trinity/local/ondemand/3.0/config/luna.ini"
+INFINIBAND_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "settings", "app.toml")
+
+def get_app_configs():
+    """
+    This method will read the configuration file and return the settings.
+    """
+    config = toml.load(INFINIBAND_CONFIG_PATH)
+    return config
+
+def get_luna_configs():
+    """
+    This method will read the configuration file and return the settings.
+    """
+    config = Ini.read_ini(LUNA_CONFIG_PATH)
+    return config
+
+def get_env_configs():
+    config = {}
+    for key, value in os.environ.items():
+        if key.startswith("OOD_"):
+            config[key[5:]] = value
+    return config
+
+def get_configs():
+    """
+    This method will read the configuration file and return the settings.
+    """
+    configs = {
+        "LUNA": get_luna_configs(),
+        "APP": get_app_configs(),
+        "ENV": get_env_configs()
+    }
+    return configs
 
 def get_token():
     """
@@ -52,34 +75,27 @@ def get_token():
     This method will fetch a valid token for further use.
 
     """
-    # If there is a token check that is valid and return it
-    if TOKEN is not None:
-        try:
-            # Try to decode the token to check if it is still valid
-            jwt.decode(TOKEN, settings.api.secret_key, algorithms=["HS256"])
-            return TOKEN
-        except jwt.exceptions.ExpiredSignatureError:
-            # If the token is expired is ok, we fetch a new one
-            pass
+    config = get_luna_configs()
 
-    # Otherwise just fetch a new one
-    data = {"username": settings.api.username, "password": settings.api.password}
-    daemon_url = f"{settings.api.protocol}://{settings.api.endpoint}/token"
-    response = requests.post(
-        daemon_url,
-        json=data,
-        stream=True,
-        timeout=3,
-        verify=(settings.api.verify_certificate.lower() == "true"),
-    )
-    token = response.json()["token"]
+    token = Token.get_token(
+        config['USERNAME'],
+        config['PASSWORD'],
+        config['PROTOCOL'],
+        config['ENDPOINT'],
+        config['VERIFY_CERTIFICATE']
+    )    
     return token
 
-
-def get_luna_url():
+def get_luna_endpoint():
     """
-
-    This method will return the luna url.
-
+    This method will return the luna endpoint.
     """
-    return f"{settings.api.protocol}://{settings.api.endpoint}"
+    config = Ini.read_ini(LUNA_CONFIG_PATH)
+    return f"{config['PROTOCOL']}://{config['ENDPOINT']}"
+
+def get_verify_certificate():
+    """
+    This method will return the verify certificate.
+    """
+    config = Ini.read_ini(LUNA_CONFIG_PATH)
+    return config['VERIFY_CERTIFICATE']

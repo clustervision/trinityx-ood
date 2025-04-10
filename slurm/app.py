@@ -48,13 +48,14 @@ from trinityx_config_manager.parsers.ood_slurm_partitions import (
 from trinityx_config_manager.parsers.ood_slurm_nodes import (
     OODSlurmNodesConfigParser,
 )
+from base.config import get_configs
 
-from base.config import settings
 from helpers import (
     get_luna_nodes,
     managed_by_ood,
 )
 
+CONFIGS = get_configs()
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
@@ -72,7 +73,7 @@ def wrap_errors(error):
 
 @app.context_processor
 def inject_settings():
-    return {"settings": {"app_name": "Slurm", **settings}}
+    return {"CONFIGS": CONFIGS}
 
 
 def load_configuration(load_from_backup=False):
