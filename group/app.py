@@ -212,15 +212,42 @@ def edit(record=None):
             osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
             osimage_list = Model().get_list_option_html('osimage')
+        
+
+        selected_modes = {
+            'selected_none': '',
+            'selected_rr': '',
+            'selected_ab': '',
+            'selected_xor': '',
+            'selected_broadcast': '',
+            'selected_8023ad': '',
+            'selected_tlb': '',
+            'selected_alb': ''
+        }
 
         raw_html = Template("""
-            <div class="input-group">
+        <div class="input-group">
                 <span class="input-group-text">Interface</span>
                 <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
                 <span class="input-group-text">Network</span>
                 <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text">VLAN ID</span>
-                <input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <input type="number" name="vlanid" min="0" max="4094" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <span class="input-group-text">VLAN Parent</span>
+                <input type="text" name="vlan_parent" class="form-control" placeholder="VLAN Parent" value="$vlan_parent" />
+                <span class="input-group-text">Bond Mode</span>
+                <select name="bond_mode" class="form-control">
+                    <option value='' ${selected_none}>--- Select Bond Mode ---</option>
+                    <option value='balance-rr' ${selected_rr}>balance-rr</option>
+                    <option value='active-backup' ${selected_ab}>active-backup</option>
+                    <option value='balance-xor' ${selected_xor}>balance-xor</option>
+                    <option value='broadcast' ${selected_broadcast}>broadcast</option>
+                    <option value='802.3ad' ${selected_8023ad}>802.3ad</option>
+                    <option value='balance-tlb' ${selected_tlb}>balance-tlb</option>
+                    <option value='balance-alb' ${selected_alb}>balance-alb</option>
+                </select>
+                <span class="input-group-text">Bond Slaves</span>
+                <input type="text" name="bond_slaves" class="form-control" placeholder="Bond Slaves Interfaces" value="${bond_slaves}" />
                 <span class="input-group-text">DHCP&nbsp;
                     <input type="checkbox" class="form-check-input" id="id_dhcp" $dhcp_checked onclick="toggleDHCP(this)" />
                     <input type="hidden" name="dhcp" value="$dhcp" />
@@ -232,14 +259,36 @@ def edit(record=None):
         interface_html = ""
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
+            interface_list = []
+            for interfaces in data['interfaces']:
+                if 'interface' in interfaces:
+                    interface_list.append(interfaces['interface'])
+
             for interface_dict in data['interfaces']:
                 interface = interface_dict['interface'] if 'interface' in interface_dict else ""
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
+                vlan_parent = interface_dict['vlan_parent'] if 'vlan_parent' in interface_dict else ""
+                bond_mode = interface_dict['bond_mode'] if 'bond_mode' in interface_dict else ""
+                bond_slaves = interface_dict['bond_slaves'] if 'bond_slaves' in interface_dict else ""
                 dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
                 dhcp_checked = "checked" if dhcp is True else ""
-                interface_html += raw_html.safe_substitute(interface=interface, network=network, vlanid=vlanid, dhcp_checked=dhcp_checked, dhcp=dhcp, options=options, button=remove_button)
+
+                selected_key = {
+                    '': 'selected_none',
+                    'balance-rr': 'selected_rr',
+                    'active-backup': 'selected_ab',
+                    'balance-xor': 'selected_xor',
+                    'broadcast': 'selected_broadcast',
+                    '802.3ad': 'selected_8023ad',
+                    'balance-tlb': 'selected_tlb',
+                    'balance-alb': 'selected_alb'
+                }.get(bond_mode, 'selected_none')
+
+                selected_modes[selected_key] = 'selected'
+
+                interface_html += raw_html.safe_substitute(interface=interface, network=network, vlanid=vlanid, vlan_parent=vlan_parent, **selected_modes, bond_mode=bond_mode, bond_slaves=bond_slaves, dhcp_checked=dhcp_checked, dhcp=dhcp, options=options, button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
@@ -320,15 +369,40 @@ def clone(record=None):
             osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
             osimage_list = Model().get_list_option_html('osimage')
+        selected_modes = {
+            'selected_none': '',
+            'selected_rr': '',
+            'selected_ab': '',
+            'selected_xor': '',
+            'selected_broadcast': '',
+            'selected_8023ad': '',
+            'selected_tlb': '',
+            'selected_alb': ''
+        }
 
         raw_html = Template("""
-            <div class="input-group">
+        <div class="input-group">
                 <span class="input-group-text">Interface</span>
-                <input type="text" name="interface" class="form-control" maxlength="100" id="id_interface" value="$interface" />
+                <input type="text" name="interface" required class="form-control" maxlength="100" id="id_interface" value="$interface" />
                 <span class="input-group-text">Network</span>
                 <select name="network" class="form-control" id="id_network">$network</select>
                 <span class="input-group-text">VLAN ID</span>
-                <input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <input type="number" name="vlanid" min="0" max="4094" class="form-control" placeholder="VLAN ID" value="$vlanid" />
+                <span class="input-group-text">VLAN Parent</span>
+                <input type="text" name="vlan_parent" class="form-control" placeholder="VLAN Parent" value="$vlan_parent" />
+                <span class="input-group-text">Bond Mode</span>
+                <select name="bond_mode" class="form-control">
+                    <option value='' ${selected_none}>--- Select Bond Mode ---</option>
+                    <option value='balance-rr' ${selected_rr}>balance-rr</option>
+                    <option value='active-backup' ${selected_ab}>active-backup</option>
+                    <option value='balance-xor' ${selected_xor}>balance-xor</option>
+                    <option value='broadcast' ${selected_broadcast}>broadcast</option>
+                    <option value='802.3ad' ${selected_8023ad}>802.3ad</option>
+                    <option value='balance-tlb' ${selected_tlb}>balance-tlb</option>
+                    <option value='balance-alb' ${selected_alb}>balance-alb</option>
+                </select>
+                <span class="input-group-text">Bond Slaves</span>
+                <input type="text" name="bond_slaves" class="form-control" placeholder="Bond Slaves Interfaces" value="${bond_slaves}" />
                 <span class="input-group-text">DHCP&nbsp;
                     <input type="checkbox" class="form-check-input" id="id_dhcp" $dhcp_checked onclick="toggleDHCP(this)" />
                     <input type="hidden" name="dhcp" value="$dhcp" />
@@ -337,6 +411,7 @@ def clone(record=None):
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
                 $button
               </div><br />""")
+        
         interface_html = ""
         remove_button = '<button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>'
         if 'interfaces' in data:
@@ -345,9 +420,26 @@ def clone(record=None):
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
+                vlan_parent = interface_dict['vlan_parent'] if 'vlan_parent' in interface_dict else ""
+                bond_mode = interface_dict['bond_mode'] if 'bond_mode' in interface_dict else ""
+                bond_slaves = interface_dict['bond_slaves'] if 'bond_slaves' in interface_dict else ""
                 dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
                 dhcp_checked = "checked" if dhcp is True else ""
-                interface_html += raw_html.safe_substitute(interface=interface, network=network, vlanid=vlanid, dhcp_checked=dhcp_checked, dhcp=dhcp, options=options, button=remove_button)
+
+                selected_key = {
+                    '': 'selected_none',
+                    'balance-rr': 'selected_rr',
+                    'active-backup': 'selected_ab',
+                    'balance-xor': 'selected_xor',
+                    'broadcast': 'selected_broadcast',
+                    '802.3ad': 'selected_8023ad',
+                    'balance-tlb': 'selected_tlb',
+                    'balance-alb': 'selected_alb'
+                }.get(bond_mode, 'selected_none')
+
+                selected_modes[selected_key] = 'selected'
+
+                interface_html += raw_html.safe_substitute(interface=interface, network=network, vlanid=vlanid, vlan_parent=vlan_parent, **selected_modes, bond_mode=bond_mode, bond_slaves=bond_slaves, dhcp_checked=dhcp_checked, dhcp=dhcp, options=options, button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
