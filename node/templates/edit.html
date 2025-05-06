@@ -23,14 +23,6 @@
           <span style="float: right;"><a href="{{ url_for('home') }}" class="btn btn-warning">Back</a></span>
         </div>
 
-
-        
-        <!--
-          data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Node Name</span>"
-        -->
-
-
-
         <div class="card-body">
           <form id="formAuthentication" class="mb-3" action="" method="POST">
                 
@@ -272,20 +264,12 @@
             
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">interfaces</label>
-              <div class="col-sm-10">
-                {{ interface_html | safe }}
-                <div id="nodeinterface"></div>
-                  
-              </div>
+              <div class="col-sm-10"><button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button></div>
             </div>
 
-            <div class="row mb-3">
-              <label class="col-sm-2 col-form-label"></label>
-              <div class="col-sm-10">
-                <button type="button" id="add_nodeinterface" class="btn btn-sm btn-warning">Add Interface</button>
-                  <br><br>
-              </div>
-            </div>
+            {{ interface_html | safe }}
+            <div id="nodeinterface"></div>
+            <div class="row mb-3"></div>
 
             <div class="row justify-content-end">
               <div class="col-sm-10">
