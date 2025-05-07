@@ -187,7 +187,10 @@ class Helper():
         rows = final_rows
         if rows and kernel_path:
             for row, path in zip(rows, kernel_path):
-                full_url = f"{chroot_url}/image={row[0]},path={path},kernel_version={row[1]}"
+                if ">None<" not in row[1]:
+                    full_url = f"{chroot_url}/image={row[0]},path={path},kernel_version={row[1]}"
+                else:
+                    full_url = ">None<"
                 self.logger.info(f'name => {row[0]}')
                 self.logger.info(f'path => {path}')
                 self.logger.info(f'vers => {row[1]}')
@@ -253,13 +256,22 @@ class Helper():
             pack = f'<button type="button" {pack_click} class="{button}btn-secondary">Pack</button>'
             kernel = f'<a href="/kernel/{table}/{name}" class="{button}btn-dark">Change Kernel</a>'
         elif item_type == 'icon':
-            chroot =  self.make_icon(
-                href=chroot_url,
-                onclick=None,
-                text=f'LCHROOT {name}',
-                icon='bx-terminal',
-                color='#000000;'
-            )
+            if chroot_url == ">None<":
+                chroot =  self.make_icon(
+                    href=None,
+                    onclick=None,
+                    text=f'LCHROOT {name} Image Not Available',
+                    icon='bx-error',
+                    color='#FD0606;'
+                )
+            else:
+                chroot =  self.make_icon(
+                    href=chroot_url,
+                    onclick=None,
+                    text=f'LCHROOT {name}',
+                    icon='bx-terminal',
+                    color='#000000;'
+                )
             info =  self.make_icon(
                 href=url_for('show', record=name),
                 onclick=None,

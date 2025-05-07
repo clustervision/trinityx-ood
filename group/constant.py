@@ -43,7 +43,7 @@ LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
-APP_STATE = True  # False for Development, True for Production
+APP_STATE = True # False for Development, True for Production
 
 
 def overrides(table=None):
@@ -70,7 +70,7 @@ def filter_columns(table=None):
     response = False
     static = {
         'group': ['name', 'bmcsetupname', 'osimage', 'osimagetag', 'roles', 'interfaces'],
-        'groupinterface': ['interface', 'network', 'options'],
+        'groupinterface': ['interface', 'network', 'options', 'vlanid', 'vlan_parent', 'bond_mode', 'bond_slaves', 'dhcp'],
         'groupsecrets': ['Group', 'name', 'path', 'content']
     }
     response = list(static[table])

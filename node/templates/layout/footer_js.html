@@ -287,7 +287,31 @@ $('body').on('change', '#id_network', function() {
         return response;
     }
 
-    node_interface = '<br /><div class="input-group"><span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />'+get_list("network", null)+'<span class="input-group-text btn btn-sm btn-success" id="raw_network" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class=`bx bx-info-circle bx-xs`></i> <span>Next Available IP Address </span>">IP Address</span><input type="text" name="ipaddress" class="form-control ipv4" placeholder="ipaddress" /><span class="input-group-text">Macaddress</span><input type="text" name="macaddress" class="form-control mac" placeholder="macaddress" /><span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" /><span class="input-group-text">VLAN ID</span><input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" /><span class="input-group-text">DHCP&nbsp;<input type="checkbox" class="form-check-input" id="id_dhcp" onclick="toggleDHCP(this)"><input type="hidden" name="dhcp" value="false" /></span><button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>'
+    node_interface = `<br />
+    <div class="input-group">
+        <span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />
+        ${get_list("network", null)}
+        <span class="input-group-text btn btn-sm btn-success" id="raw_network" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Next Available IP Address </span>">IP Address</span><input type="text" name="ipaddress" class="form-control ipv4" placeholder="ipaddress" />
+        <span class="input-group-text">Macaddress</span><input type="text" name="macaddress" class="form-control mac" placeholder="macaddress" />
+        <span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" />
+        <span class="input-group-text">VLAN ID</span><input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" />
+        <span class="input-group-text">VLAN Parent</span><input type="text" name="vlan_parent" class="form-control" placeholder="VLAN Parent" value="" />
+        <span class="input-group-text">Bond Mode</span>
+        <select name="bond_mode" class="form-control">
+            <option value=''>--- Select Bond Mode ---</option>
+            <option value='balance-rr'>balance-rr</option>
+            <option value='active-backup'>active-backup</option>
+            <option value='balance-xor'>balance-xor</option>
+            <option value='broadcast'>broadcast</option>
+            <option value='802.3ad'>802.3ad</option>
+            <option value='balance-tlb'>balance-tlb</option>
+            <option value='balance-alb'>balance-alb</option>
+        </select>
+        <span class="input-group-text">Bond Slaves</span>
+        <input type="text" name="bond_slaves" class="form-control" placeholder="Bond Slaves Interfaces" value="" />
+        <span class="input-group-text">DHCP&nbsp;<input type="checkbox" class="form-check-input" id="id_dhcp" onclick="toggleDHCP(this)" /><input type="hidden" name="dhcp" value="false" /></span>
+        <button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button>
+    </div>`;
     $("#add_nodeinterface").click(function () {
         $("#nodeinterface").append(node_interface);
         $('[data-bs-toggle="tooltip"]').tooltip();

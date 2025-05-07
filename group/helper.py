@@ -61,11 +61,16 @@ class Helper():
         network = request.form.getlist('network')
         options = request.form.getlist('options')
         vlanid = request.form.getlist('vlanid')
+
+        vlan_parent = request.form.getlist('vlan_parent')
+        bond_mode = request.form.getlist('bond_mode')
+        bond_slaves = request.form.getlist('bond_slaves')
+
         dhcp = request.form.getlist('dhcp')
         interface_list = []
         if table == 'node':
-            zip_interface = zip(interface, ipaddress, macaddress, network, options)
-            for interface, ipaddress, macaddress, network, options in zip_interface:
+            zip_interface = zip(interface, ipaddress, macaddress, network, options, vlan_parent, bond_mode, bond_slaves)
+            for interface, ipaddress, macaddress, network, options, vlan_parent, bond_mode, bond_slaves in zip_interface:
                 tmp_interface = {}
                 if interface:
                     tmp_interface['interface'] = interface
@@ -77,10 +82,18 @@ class Helper():
                     tmp_interface['network'] = network
                 if options:
                     tmp_interface['options'] = options
+                
+                if vlan_parent:
+                    tmp_interface['vlan_parent'] = vlan_parent
+                if bond_mode:
+                    tmp_interface['bond_mode'] = bond_mode
+                if bond_slaves:
+                    tmp_interface['bond_slaves'] = bond_slaves
+                
                 interface_list.append(tmp_interface)
         elif table =='group':
-            zip_interface = zip(interface, network, options, vlanid, dhcp)
-            for interface, network, options, vlanid, dhcp in zip_interface:
+            zip_interface = zip(interface, network, options, vlanid, dhcp, vlan_parent, bond_mode, bond_slaves)
+            for interface, network, options, vlanid, dhcp, vlan_parent, bond_mode, bond_slaves in zip_interface:
                 tmp_interface = {}
                 if interface:
                     tmp_interface['interface'] = interface
@@ -92,6 +105,12 @@ class Helper():
                     tmp_interface['dhcp'] = True if dhcp.lower() == 'true' else False
                 if options:
                     tmp_interface['options'] = options
+                if vlan_parent:
+                    tmp_interface['vlan_parent'] = vlan_parent
+                if bond_mode:
+                    tmp_interface['bond_mode'] = bond_mode
+                if bond_slaves:
+                    tmp_interface['bond_slaves'] = bond_slaves
                 interface_list.append(tmp_interface)
         if 'interface' in payload:
             del payload['interface']
@@ -107,6 +126,12 @@ class Helper():
             del payload['vlanid']
         if 'dhcp' in payload:
             del payload['dhcp']
+        if 'vlan_parent' in payload:
+            del payload['vlan_parent']
+        if 'bond_mode' in payload:
+            del payload['bond_mode']
+        if 'bond_slaves' in payload:
+            del payload['bond_slaves']
         payload['interfaces'] = interface_list
         return payload
 
@@ -544,18 +569,20 @@ class Helper():
                 key_name += ' *'
             fields.append(key_name)
             if isinstance(key[1], list):
-                new_list = []
+                interface_html = ""
                 for internal in key[1]:
+                    interface_html += '<pre style="border: 1px solid #000; color: #000; background-color: #f2f1e1; font-size: 14px;">'
                     for internal_val in internal:
                         self.logger.debug(f'Key: {internal_val} Value: {internal[internal_val]}')
                         if internal[internal_val] in [True, False, None]:
                             internal[internal_val] = self.format_value(internal[internal_val])
                         if internal_val == "interface":
-                            new_list.append(f'{internal_val} = {internal[internal_val]}')
+                            interface_html += f'{internal_val} = {internal[internal_val]}<br />'
                         else:
-                            new_list.append(f'  {internal_val} = {internal[internal_val]}')
-                new_list = '\n'.join(new_list)
-                rows.append(new_list)
+                            interface_html += f'&nbsp;&nbsp;&nbsp;{internal_val} = {internal[internal_val]}<br />'
+                    interface_html += '</pre><br />'
+                interface_html = interface_html[:-6]
+                rows.append(interface_html)
                 new_list = []
             elif isinstance(key[1], dict):
                 new_list = []
