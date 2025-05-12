@@ -137,7 +137,9 @@ export default defineComponent({
         if (nodeResponse.status === 200) {
           nodeResponse.data.data.result.forEach((node: NodeList) => {
             const hostname = node.metric.hostname;
-            this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[]});
+            if (hostname !== undefined) {
+              this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[]});
+            }
           });
         } else {
           this.noRows += `\nERROR[Prometheus Server] :: Error fetching Nodes from ${this.nodeListAPI} Status: ${nodeResponse.status}.`;
