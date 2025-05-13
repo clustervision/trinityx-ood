@@ -5,11 +5,68 @@
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="modalLabel">Alert Status for <span style="color: blue;"><i>{{ props.ruleName }}</i></span></h5>
+            <h5 class="modal-title" id="modalLabel">Alert Rule <span style="color: blue;"><i>{{ props.rule.name }}</i></span></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <table class="table table-striped table-bordered">
+              <tbody>
+                <tr>
+                  <td><strong>Rule Name</strong></td>
+                  <td>{{ props.rule.name }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Description</strong></td>
+                  <td>{{ props.rule.annotations.description }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Query</strong></td>
+                  <td>{{ props.rule.query }}</td>
+                </tr>
+                <tr>
+                  <td><strong>State</strong></td>
+                  <td>{{ props.rule.state }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Type</strong></td>
+                  <td>{{ props.rule.type }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Health</strong></td>
+                  <td>{{ props.rule.health }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Severity</strong></td>
+                  <td>{{ props.rule.labels.severity }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Category</strong></td>
+                  <td>{{ props.rule.labels.category }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Duration</strong></td>
+                  <td>{{ props.rule.duration }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Evaluation Time</strong></td>
+                  <td>{{ props.rule.evaluationTime }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Evaluation Duration</strong></td>
+                  <td>{{ props.rule.duration }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Last Evaluation</strong></td>
+                  <td>{{ props.rule.lastEvaluation }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Keep Firing For</strong></td>
+                  <td>{{ props.rule.keepFiringFor }}</td>
+                </tr>
+
+              </tbody>
+            </table>
+              <table class="table table-striped table-bordered">
               <thead>
                 <tr>
                   <th>#</th>
@@ -64,10 +121,29 @@ interface Alerts {
   value: string;
 }
 
+
+interface Rule {
+  annotations: { description: string },
+  duration: number,
+  evaluationTime: number,
+  health: string,
+  keepFiringFor: number,
+  labels: {
+      category: string,
+      severity: string
+  },
+  lastEvaluation: string,
+  name: string,
+  query: string,
+  state: string,
+  type: string
+}
+
 const props = defineProps<{
+  rule: Rule;
   alerts: Alerts[];
   modalId: string;
-  ruleName: string;
+  // ruleName: string;
 }>();
 
 const emit = defineEmits(["html", "modal-open", "modal-close"]);
@@ -117,7 +193,7 @@ onUnmounted(() => {
 
 <style scoped>
 .modal-body {
-  max-height: 400px;
+  max-height: 650px;
   overflow-y: auto;
 }
 </style>

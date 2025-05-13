@@ -210,6 +210,26 @@ export default defineComponent({
 
 
     async fetchAlerts() {
+      let alert_groups:number = 0;
+
+      try {
+          const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+          const response = await axios.get(proxyUrl);
+          if (response.status === 200) {
+            alert_groups = response.data.data.groups;
+          }
+        } catch (error: unknown) {
+          if (error instanceof AxiosError) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          } else if (error instanceof Error) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          }else {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+          }
+        }
+
+
+
       //let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       this.rows = [];
       this.noRows = '';
@@ -221,8 +241,35 @@ export default defineComponent({
           if (alert_manager.status === 200) {
             let alert_rows:number = 0;
             alert_manager.data.forEach((alert: AlertManager) => {
-              alert_rows = alert_rows + 1;
-              this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": this.parseTimestamp(alert.startsAt), "hostname": alert.labels.hostname, "exporter": alert.labels.exporter, "job": alert.labels.job});
+              if (alert.status.state !== "suppressed"){
+                alert_rows = alert_rows + 1;
+                let ruleBelongs = {};
+                let alertsBelongs = [];
+                if (alert_groups.length !== 0){
+                  const match = alert_groups.flatMap(group => group.rules).find(rule => rule.name === alert.labels.alertname && rule.labels?.category === alert.labels.category);
+                  const { alerts, ...cleanRule } = match || {};
+                  const matchedAlerts = alerts?.filter(a => a.labels?.hostname === alert.labels.hostname);
+                  alertsBelongs =  matchedAlerts || [];
+                  ruleBelongs = cleanRule;
+                }
+
+                this.rows.push({
+                  id: alert_rows,
+                  alert: alert.labels.alertname,
+                  nhc: alert.labels.nhc,
+                  state: alert.status.state,
+                  severity: alert.labels.severity,
+                  eventTime: this.parseTimestamp(alert.startsAt),
+                  hostname: alert.labels.hostname,
+                  exporter: alert.labels.exporter,
+                  job: alert.labels.job,
+                  rule: ruleBelongs,
+                  alerts: alertsBelongs
+                });
+
+                this.sortRowsBySeverity();
+              }
+
             });
             if (this.rows.length === 0){
               this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
@@ -232,7 +279,8 @@ export default defineComponent({
             console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
           }
         } catch (error: unknown) {
-          console.error("Error fetching Alerts:", error);
+          // console.error("Error fetching Alerts:", error);
+          console.error(error);
           if (error instanceof Error) {
             this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
           } else {
@@ -243,55 +291,55 @@ export default defineComponent({
         this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
       } // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       //if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-        try {
-          const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
-          const response = await axios.get(proxyUrl);
-          // const response = await axios.get(this.statusAPI);
-          if (response.status === 200) {
-            response.data.data.groups.forEach((group: Prometheus) => {
-              if (group.name === "trinityx" || group.name === "trinityx_hw"){
-                group.rules.forEach((rule) => {
-                  if (rule.alerts && rule.alerts.length > 0){
-                    rule.alerts.forEach((alert) => {
-                      if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
-                        const exists = this.rows.some(row => row.rule === rule.name && row.hostname === alert.labels.hostname && row.exporter === alert.labels.exporter && row.job === alert.labels.job);
-                        if (!exists) {
-                          this.rows.push({
-                            rule: rule.name,
-                            nhc: String(rule.labels.nhc) === 'true',
-                            state: rule.state,
-                            severity: rule.labels.severity as keyof typeof severity_order,
-                            eventTime: this.parseTimestamp(rule.lastEvaluation),
-                            hostname: this.hostnameParser(alert.labels.hostname),
-                            exporter: alert.labels.exporter,
-                            job: alert.labels.job,
-                            alerts: rule.alerts as Alerts[]});
-                        }
-                      }
-                    });
-                  }
-                });
-              }
-            });
-          } else {
-            this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
-            console.error("Error fetching rules:", response.status, response.data);
-          }
-          if (this.rows.length === 0){
-            this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
-            this.noRowsType = true;
-          } else {
-            this.sortRowsBySeverity();
-          }
-        } catch (error: unknown) {
-          if (error instanceof AxiosError) {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
-          } else if (error instanceof Error) {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
-          }else {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
-          }
-        }
+        // try {
+        //   const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+        //   const response = await axios.get(proxyUrl);
+        //   // const response = await axios.get(this.statusAPI);
+        //   if (response.status === 200) {
+        //     response.data.data.groups.forEach((group: Prometheus) => {
+        //       if (group.name === "trinityx" || group.name === "trinityx_hw"){
+        //         group.rules.forEach((rule) => {
+        //           if (rule.alerts && rule.alerts.length > 0){
+        //             rule.alerts.forEach((alert) => {
+        //               if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
+        //                 const exists = this.rows.some(row => row.rule === rule.name && row.hostname === alert.labels.hostname && row.exporter === alert.labels.exporter && row.job === alert.labels.job);
+        //                 if (!exists) {
+        //                   this.rows.push({
+        //                     rule: rule.name,
+        //                     nhc: String(rule.labels.nhc) === 'true',
+        //                     state: rule.state,
+        //                     severity: rule.labels.severity as keyof typeof severity_order,
+        //                     eventTime: this.parseTimestamp(rule.lastEvaluation),
+        //                     hostname: this.hostnameParser(alert.labels.hostname),
+        //                     exporter: alert.labels.exporter,
+        //                     job: alert.labels.job,
+        //                     alerts: rule.alerts as Alerts[]});
+        //                 }
+        //               }
+        //             });
+        //           }
+        //         });
+        //       }
+        //     });
+        //   } else {
+        //     this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
+        //     console.error("Error fetching rules:", response.status, response.data);
+        //   }
+        //   if (this.rows.length === 0){
+        //     this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
+        //     this.noRowsType = true;
+        //   } else {
+        //     this.sortRowsBySeverity();
+        //   }
+        // } catch (error: unknown) {
+        //   if (error instanceof AxiosError) {
+        //     this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+        //   } else if (error instanceof Error) {
+        //     this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+        //   }else {
+        //     this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+        //   }
+        // }
       //}  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       await nextTick();
       this.refreshDataTable();
@@ -347,11 +395,11 @@ export default defineComponent({
       <thead>
         <tr>
           <th>#</th>
-          <th>Rule</th>
+          <th>Alert</th>
           <th>State</th>
           <th>Severity</th>
           <th>NHC</th>
-          <th>Event Time</th>
+          <th>First Occurrence</th>
           <th>Hostname</th>
           <th>Exporter</th>
           <th>Job</th>
@@ -361,8 +409,9 @@ export default defineComponent({
         <tr v-for="(row, index) in rows" :key="index">
           <td>{{ index +1 }}</td>
           <td>
-            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-            <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.rule }}</a>
+            <StatusAlerts :rule="row.rule || []" :alerts="row.alerts || []" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+            <!-- <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" /> -->
+            <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.alert }}</a>
           </td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state }}</span></td>
           <!-- <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td> -->
