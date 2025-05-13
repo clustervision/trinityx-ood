@@ -1,3 +1,153 @@
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref, watch } from "vue";
+
+
+
+function parseTimestamp(timestampStr: string) {
+  try {
+    if (!timestampStr) return "";
+    if (timestampStr.includes("Z00:00Z")){ timestampStr = timestampStr.replace("Z00:00Z", "Z"); }
+    if (timestampStr.endsWith("Z")){ timestampStr = timestampStr.replace("Z", "+00:00"); }
+    if (timestampStr.includes(".")){
+      const datePart = timestampStr.split(".")[0];
+      let fractionPart = timestampStr.split(".")[1];
+      fractionPart = fractionPart.replace(/Z$/, ""); // Remove trailing Z if exists
+
+      if (fractionPart.includes("+") || fractionPart.includes("-")){
+        let fraction = fractionPart.split(/[+-]/)[0];
+        const tz = fractionPart.split(/[+-]/)[1];
+        fraction = fraction.substring(0, 6); // Trim to 6 digits
+        timestampStr = `${datePart}.${fraction}+${tz}`;
+      } else {
+        timestampStr = `${datePart}.${fractionPart.substring(0, 6)}`;
+      }
+    }
+    const dateObj = new Date(timestampStr);
+
+    // For UTC TimeZone uncomment this block and comment out the Dynamic block
+    // const offsetMinutes = dateObj.getTimezoneOffset();
+    // const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
+    // const offsetMins = Math.abs(offsetMinutes % 60);
+    // const sign = offsetMinutes > 0 ? "-" : "+";
+    // const utcOffset = `UTC${sign}${String(offsetHours).padStart(2, "0")}:${String(offsetMins).padStart(2, "0")}`;
+    // const formattedDate = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    // const formattedTime = dateObj.toTimeString().split(" ")[0]; // "HH:MM:SS"
+    // return `${formattedDate} ${formattedTime} ${utcOffset}`;
+    // For UTC TimeZone uncomment this block and comment out the Dynamic block
+
+    // For Dynamic TimeZone
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const formattedDate = dateObj.toISOString().split("T")[0]; // "YYYY-MM-DD"
+    const formattedTime = dateObj.toTimeString().split(" ")[0]; // "HH:MM:SS"
+    return `${formattedDate} ${formattedTime} ${timeZone}`;
+    // For Dynamic TimeZone
+
+  } catch (error) {
+    console.error("Invalid timestamp:", timestampStr, error);
+    return "";
+  }
+}
+
+interface Alerts {
+  activeAt: string;
+  annotations: { description: string };
+  labels: {
+    alertname: string;
+    exporter: string;
+    hostname: string;
+    category: string;
+    class: string;
+    instance: string;
+    job: string;
+    luna_group: string;
+    disabled: boolean | null;
+    nhc: boolean | null;
+    severity: string;
+  };
+  state: string;
+  value: string;
+}
+
+
+interface Rule {
+  annotations: { description: string },
+  duration: number,
+  evaluationTime: number,
+  health: string,
+  keepFiringFor: number,
+  labels: {
+      category: string,
+      severity: string
+  },
+  lastEvaluation: string,
+  name: string,
+  query: string,
+  state: string,
+  type: string
+}
+
+const props = defineProps<{
+  rule: Rule;
+  alerts: Alerts[];
+  modalId: string;
+  first_occurrence: string;
+  // ruleName: string;
+}>();
+
+const emit = defineEmits(["html", "modal-open", "modal-close"]);
+
+const hostList = ref<string[]>([]);
+
+watch(
+  () => props.alerts,
+  async (alerts) => {
+    try {
+      hostList.value = [];
+      for (const alert of alerts) {
+        if (!alert?.labels?.hostname) {
+          // console.warn("Missing hostname in alert:", alert);
+          hostList.value.push(""); // Push an empty string for missing hostnames
+          continue;
+        }
+        const parsedHostname = await new Promise<string>((resolve) => {
+          emit("html", alert.labels.hostname, resolve);
+        });
+        hostList.value.push(parsedHostname);
+      }
+    } catch (error) {
+      console.error("Error parsing hostnames:", error);
+      hostList.value = []; // Fallback to an empty array
+    }
+  },
+  { immediate: true }
+);
+
+onMounted(() => {
+  const modalElement = document.getElementById(props.modalId);
+  if (modalElement) {
+    modalElement.addEventListener("shown.bs.modal", () => emit("modal-open"));
+    modalElement.addEventListener("hidden.bs.modal", () => emit("modal-close"));
+  }
+});
+
+onUnmounted(() => {
+  const modalElement = document.getElementById(props.modalId);
+  if (modalElement) {
+    modalElement.removeEventListener("shown.bs.modal", () => emit("modal-open"));
+    modalElement.removeEventListener("hidden.bs.modal", () => emit("modal-close"));
+  }
+});
+</script>
+
+<style scoped>
+.modal-body {
+  max-height: 650px;
+  overflow-y: auto;
+}
+</style>
+
+
+
 <template>
   <div>
     <!-- Modal -->
@@ -56,8 +206,12 @@
                   <td>{{ props.rule.duration }}</td>
                 </tr>
                 <tr>
+                  <td><strong>First Occurrence</strong></td>
+                  <td>{{ props.first_occurrence }}</td>
+                </tr>
+                <tr>
                   <td><strong>Last Evaluation</strong></td>
-                  <td>{{ props.rule.lastEvaluation }}</td>
+                  <td>{{ parseTimestamp(props.rule.lastEvaluation) }}</td>
                 </tr>
                 <tr>
                   <td><strong>Keep Firing For</strong></td>
@@ -98,102 +252,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from "vue";
-
-interface Alerts {
-  activeAt: string;
-  annotations: { description: string };
-  labels: {
-    alertname: string;
-    exporter: string;
-    hostname: string;
-    category: string;
-    class: string;
-    instance: string;
-    job: string;
-    luna_group: string;
-    disabled: boolean | null;
-    nhc: boolean | null;
-    severity: string;
-  };
-  state: string;
-  value: string;
-}
-
-
-interface Rule {
-  annotations: { description: string },
-  duration: number,
-  evaluationTime: number,
-  health: string,
-  keepFiringFor: number,
-  labels: {
-      category: string,
-      severity: string
-  },
-  lastEvaluation: string,
-  name: string,
-  query: string,
-  state: string,
-  type: string
-}
-
-const props = defineProps<{
-  rule: Rule;
-  alerts: Alerts[];
-  modalId: string;
-  // ruleName: string;
-}>();
-
-const emit = defineEmits(["html", "modal-open", "modal-close"]);
-
-const hostList = ref<string[]>([]);
-
-watch(
-  () => props.alerts,
-  async (alerts) => {
-    try {
-      hostList.value = [];
-      for (const alert of alerts) {
-        if (!alert?.labels?.hostname) {
-          // console.warn("Missing hostname in alert:", alert);
-          hostList.value.push(""); // Push an empty string for missing hostnames
-          continue;
-        }
-        const parsedHostname = await new Promise<string>((resolve) => {
-          emit("html", alert.labels.hostname, resolve);
-        });
-        hostList.value.push(parsedHostname);
-      }
-    } catch (error) {
-      console.error("Error parsing hostnames:", error);
-      hostList.value = []; // Fallback to an empty array
-    }
-  },
-  { immediate: true }
-);
-
-onMounted(() => {
-  const modalElement = document.getElementById(props.modalId);
-  if (modalElement) {
-    modalElement.addEventListener("shown.bs.modal", () => emit("modal-open"));
-    modalElement.addEventListener("hidden.bs.modal", () => emit("modal-close"));
-  }
-});
-
-onUnmounted(() => {
-  const modalElement = document.getElementById(props.modalId);
-  if (modalElement) {
-    modalElement.removeEventListener("shown.bs.modal", () => emit("modal-open"));
-    modalElement.removeEventListener("hidden.bs.modal", () => emit("modal-close"));
-  }
-});
-</script>
-
-<style scoped>
-.modal-body {
-  max-height: 650px;
-  overflow-y: auto;
-}
-</style>
