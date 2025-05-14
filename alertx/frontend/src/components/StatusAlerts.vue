@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from "vue";
-
-
+import { onMounted, onUnmounted } from "vue";
 
 function parseTimestamp(timestampStr: string) {
   try {
@@ -77,6 +75,7 @@ interface Rule {
   keepFiringFor: number,
   labels: {
       category: string,
+      nhc: boolean,
       severity: string
   },
   lastEvaluation: string,
@@ -87,40 +86,13 @@ interface Rule {
 }
 
 const props = defineProps<{
-  rule: Rule;
+  rule: Rule[];
   alerts: Alerts[];
   modalId: string;
   first_occurrence: string;
-  // ruleName: string;
 }>();
 
-const emit = defineEmits(["html", "modal-open", "modal-close"]);
-
-const hostList = ref<string[]>([]);
-
-watch(
-  () => props.alerts,
-  async (alerts) => {
-    try {
-      hostList.value = [];
-      for (const alert of alerts) {
-        if (!alert?.labels?.hostname) {
-          // console.warn("Missing hostname in alert:", alert);
-          hostList.value.push(""); // Push an empty string for missing hostnames
-          continue;
-        }
-        const parsedHostname = await new Promise<string>((resolve) => {
-          emit("html", alert.labels.hostname, resolve);
-        });
-        hostList.value.push(parsedHostname);
-      }
-    } catch (error) {
-      console.error("Error parsing hostnames:", error);
-      hostList.value = []; // Fallback to an empty array
-    }
-  },
-  { immediate: true }
-);
+const emit = defineEmits(["modal-open", "modal-close"]);
 
 onMounted(() => {
   const modalElement = document.getElementById(props.modalId);
@@ -155,7 +127,7 @@ onUnmounted(() => {
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="modalLabel">Alert Rule <span style="color: blue;"><i>{{ props.rule.name }}</i></span></h5>
+            <h5 class="modal-title" id="modalLabel">Alert Rule <span style="color: blue;"><i>{{ props.rule[0].name }}</i></span></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -163,47 +135,47 @@ onUnmounted(() => {
               <tbody>
                 <tr>
                   <td><strong>Rule Name</strong></td>
-                  <td>{{ props.rule.name }}</td>
+                  <td>{{ props.rule[0].name }}</td>
                 </tr>
                 <tr>
                   <td><strong>Description</strong></td>
-                  <td>{{ props.rule.annotations.description }}</td>
+                  <td>{{ props.rule[0].annotations.description }}</td>
                 </tr>
                 <tr>
                   <td><strong>Query</strong></td>
-                  <td>{{ props.rule.query }}</td>
+                  <td>{{ props.rule[0].query }}</td>
                 </tr>
                 <tr>
                   <td><strong>State</strong></td>
-                  <td>{{ props.rule.state }}</td>
+                  <td>{{ props.rule[0].state }}</td>
                 </tr>
                 <tr>
                   <td><strong>Type</strong></td>
-                  <td>{{ props.rule.type }}</td>
+                  <td>{{ props.rule[0].type }}</td>
                 </tr>
                 <tr>
                   <td><strong>Health</strong></td>
-                  <td>{{ props.rule.health }}</td>
+                  <td>{{ props.rule[0].health }}</td>
                 </tr>
                 <tr>
                   <td><strong>Severity</strong></td>
-                  <td>{{ props.rule.labels.severity }}</td>
+                  <td>{{ props.rule[0].labels.severity }}</td>
                 </tr>
                 <tr>
                   <td><strong>Category</strong></td>
-                  <td>{{ props.rule.labels.category }}</td>
+                  <td>{{ props.rule[0].labels.category }}</td>
                 </tr>
                 <tr>
                   <td><strong>Duration</strong></td>
-                  <td>{{ props.rule.duration }}</td>
+                  <td>{{ props.rule[0].duration }}</td>
                 </tr>
                 <tr>
                   <td><strong>Evaluation Time</strong></td>
-                  <td>{{ props.rule.evaluationTime }}</td>
+                  <td>{{ props.rule[0].evaluationTime }}</td>
                 </tr>
                 <tr>
                   <td><strong>Evaluation Duration</strong></td>
-                  <td>{{ props.rule.duration }}</td>
+                  <td>{{ props.rule[0].duration }}</td>
                 </tr>
                 <tr>
                   <td><strong>First Occurrence</strong></td>
@@ -211,11 +183,11 @@ onUnmounted(() => {
                 </tr>
                 <tr>
                   <td><strong>Last Evaluation</strong></td>
-                  <td>{{ parseTimestamp(props.rule.lastEvaluation) }}</td>
+                  <td>{{ parseTimestamp(props.rule[0].lastEvaluation) }}</td>
                 </tr>
                 <tr>
                   <td><strong>Keep Firing For</strong></td>
-                  <td>{{ props.rule.keepFiringFor }}</td>
+                  <td>{{ props.rule[0].keepFiringFor }}</td>
                 </tr>
 
               </tbody>
@@ -237,7 +209,7 @@ onUnmounted(() => {
                   <td>{{ alert.labels.category }}</td>
                   <td>{{ alert.labels.class }}</td>
                   <td>{{ alert.labels.exporter }}</td>
-                  <td v-html="hostList[index]"></td>
+                  <td>{{ alert.labels.hostname }}</td>
                   <td>{{ alert.annotations.description }}</td>
                 </tr>
               </tbody>

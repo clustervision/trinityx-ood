@@ -10,22 +10,22 @@ import axios, { AxiosError } from 'axios';
 
 interface Alerts {
   activeAt: string;
-    annotations: {description: string};
-    labels: {
-      alertname: string,
-      exporter: string,
-      hostname: string,
-      category: string;
-      class: string;
-      instance: string,
-      job: string,
-      luna_group: string,
-      disabled: boolean | null,
-      nhc: boolean | null,
-      severity: string
-    };
-    state: string;
-    value: string;
+  annotations: {description: string};
+  labels: {
+    alertname: string,
+    exporter: string,
+    hostname: string,
+    category: string;
+    class: string;
+    instance: string,
+    job: string,
+    luna_group: string,
+    disabled: boolean | null,
+    nhc: boolean | null,
+    severity: string
+  };
+  state: string;
+  value: string;
   };
 
 interface AlertRules {
@@ -40,8 +40,10 @@ interface AlertRules {
   type: string;
   labels: {
     severity: string,
+    category: string,
     nhc: boolean,
   };
+  annotations: {description: string};
   alerts: Array<{
     activeAt: string;
     annotations: {description: string};
@@ -86,6 +88,7 @@ interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE AL
     generatorURL: string;
     labels: {
         alertname: string;
+        category: string;
         cluster: string;
         exporter: string;
         hostname: string;
@@ -97,9 +100,6 @@ interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE AL
 }; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
 
 const severity_order = { 'critical': 1, 'danger': 2, 'warning': 3, 'info': 4, 'none': 5 };
-
-// const selectedAlerts = ref([]);
-// const selectedAlerts =[];
 
 export default defineComponent({
   props: {
@@ -123,9 +123,10 @@ export default defineComponent({
 
   data() {
     return {
-      selectedRows: [],
-      selectedAlerts: [],
-      rows: [] as {rule: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; alerts: Alerts[]; }[],
+      silenceMessages: [] as string[],
+      dataFrom: '',
+      selectedRows: [] as Array<{ alert: string; hostname: string }>,
+      rows: [] as {alert: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; rule: AlertRules[]; alerts: Alerts[]; }[],
       alerts: [],
       noRows: '',
       noRowsType: false,
@@ -142,14 +143,22 @@ export default defineComponent({
 
   beforeUnmount() {
     if (this.intervalId) {
-      clearInterval(this.intervalId); // Clear polling interval when component unmounts
+      clearInterval(this.intervalId);
     }
   },
 
   methods: {
 
-    getRowIdentifier(row) {
-      return `${row.alert}::${row.hostname}`; // unique identifier
+    handleSilenceMessage(msg: string) {
+      this.silenceMessages.push(msg);
+      this.selectedRows = [];
+      setTimeout(() => {
+        this.silenceMessages = this.silenceMessages.filter(m => m !== msg);
+      }, 10000);
+    },
+
+    getRowIdentifier(alert:string, hostname:string) {
+      return {alert: alert, hostname: hostname};
     },
 
     silentAlerts() {
@@ -168,9 +177,10 @@ export default defineComponent({
       }
     },
 
-    toggleAll(event) {
-      if (event.target.checked) {
-        this.selectedRows = this.rows.map(row => this.getRowIdentifier(row));
+    toggleAll(event: Event) {
+      const input = event.target as HTMLInputElement;
+      if (input.checked) {
+        this.selectedRows = this.rows.map(row => this.getRowIdentifier(row.alert, row.hostname));
       } else {
         this.selectedRows = [];
       }
@@ -221,24 +231,6 @@ export default defineComponent({
       }
     },
 
-    hostnameParser(hostname: string | Array<string> | null) {
-      let cleanHostname = "";
-      if (Array.isArray(hostname)) {
-        cleanHostname = hostname.join("<br />");
-      } else if (typeof hostname === "string") {
-        if (hostname.includes(",") || hostname.includes(";")) {
-          hostname = hostname.replace(/\[|\]|\s/g, ""); // Remove brackets and spaces
-          cleanHostname = hostname.split(",").join("<br>");
-        } else {
-          cleanHostname = hostname;
-        }
-      } else {
-        cleanHostname = "";
-      }
-
-      return cleanHostname;
-    },
-
     sortRowsBySeverity() {
       this.rows.sort((a, b) => {
         const severityA = severity_order[a.severity as keyof typeof severity_order] || 5;
@@ -249,7 +241,7 @@ export default defineComponent({
 
 
     async fetchAlerts() {
-      let alert_groups:number = 0;
+      let alert_groups = [];
       let alertData = false;
       try {
           const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
@@ -278,34 +270,32 @@ export default defineComponent({
           const alert_manager = await axios.get(alert_manager_Url);
 
           if (alert_manager.status === 200) {
-            let alert_rows:number = 0;
+            // let alert_rows:number = 0;
             alert_manager.data.forEach((alert: AlertManager) => {
               if (alert.status.state !== "suppressed"){
-                alert_rows = alert_rows + 1;
-                let ruleBelongs = {};
-                let alertsBelongs = [];
+                // alert_rows = alert_rows + 1;
+                let ruleBelongs;
+                let alertsBelongs;
                 if (alert_groups.length !== 0){
-                  const match = alert_groups.flatMap(group => group.rules).find(rule => rule.name === alert.labels.alertname && rule.labels?.category === alert.labels.category);
+                  const match = (alert_groups as Prometheus[]).flatMap(group => group.rules).find(rule => rule.name === alert.labels.alertname && rule.labels?.category === alert.labels.category);
                   const { alerts, ...cleanRule } = match || {};
                   const matchedAlerts = alerts?.filter(a => a.labels?.hostname === alert.labels.hostname);
-                  alertsBelongs =  matchedAlerts || [];
-                  ruleBelongs = cleanRule;
+                  alertsBelongs =  matchedAlerts ?? [];
+                  ruleBelongs = [cleanRule];
                 }
-
                 this.rows.push({
-                  id: alert_rows,
                   alert: alert.labels.alertname,
                   nhc: alert.labels.nhc,
                   state: alert.status.state,
-                  severity: alert.labels.severity,
+                  severity: alert.labels.severity as keyof typeof severity_order,
                   eventTime: this.parseTimestamp(alert.startsAt),
                   hostname: alert.labels.hostname,
                   exporter: alert.labels.exporter,
                   job: alert.labels.job,
-                  rule: ruleBelongs,
-                  alerts: alertsBelongs
+                  rule: ruleBelongs as AlertRules[] || [],
+                  alerts: alertsBelongs as Alerts[] || [],
                 });
-
+                this.dataFrom = "Alert Manager";
                 this.sortRowsBySeverity();
               }
 
@@ -341,19 +331,23 @@ export default defineComponent({
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
-                        const exists = this.rows.some(row => row.rule === rule.name && row.hostname === alert.labels.hostname && row.exporter === alert.labels.exporter && row.job === alert.labels.job);
+                        const exists = this.rows.some(row => row.alert === rule.name && row.hostname === alert.labels.hostname && row.exporter === alert.labels.exporter && row.job === alert.labels.job);
                         if (!exists) {
+
                           this.rows.push({
                             alert: rule.name,
                             nhc: String(rule.labels.nhc) === 'true',
                             state: rule.state,
                             severity: rule.labels.severity as keyof typeof severity_order,
                             eventTime: this.parseTimestamp(rule.lastEvaluation),
-                            hostname: this.hostnameParser(alert.labels.hostname),
+                            hostname: alert.labels.hostname,
                             exporter: alert.labels.exporter,
                             job: alert.labels.job,
-                            rule: rule,
-                            alerts: rule.alerts as Alerts[]});
+                            rule: Array.isArray(rule) ? rule : [rule],
+                            alerts: rule.alerts as Alerts[]
+                          });
+                          this.dataFrom = "Prometheus";
+                          this.sortRowsBySeverity();
                         }
                       }
                     });
@@ -368,9 +362,9 @@ export default defineComponent({
           if (this.rows.length === 0){
             this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
             this.noRowsType = true;
-          } else {
-            this.sortRowsBySeverity();
-          }
+          } //else {
+          //   this.sortRowsBySeverity();
+          // }
         } catch (error: unknown) {
           if (error instanceof AxiosError) {
             this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
@@ -390,7 +384,10 @@ export default defineComponent({
       const table = $('#dataTable');
       // nextTick(() => {
           table.DataTable({
-          pageLength: 25
+          pageLength: 25,
+          columnDefs: [
+            { orderable: false, targets: 1 } // 0 = first column (checkbox)
+          ]
         });
       // });
     },
@@ -423,14 +420,15 @@ export default defineComponent({
 </script>
 
 <template>
-  <AlertsSilence :alerts="selectedRows" modalId="silenceAlerts" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+  <div v-for="(msg, index) in silenceMessages" :key="index" class="alert alert-primary" role="alert" v-html="msg"></div>
+  <AlertsSilence v-if="dataFrom === 'Alert Manager'" :alerts="selectedRows" :silenceAPI="`${url}/proxy_post?url=${silenceAPI}`" modalId="silenceAlerts" @silence-message="handleSilenceMessage" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
   <h4 class="fw-bold py-3 mb-4">
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span class="text-muted fw-light"> Monitoring /</span> Alerts
       </div>
       <div class="d-flex">
-        <button type="button" class="btn btn-sm btn-info me-2" @click="silentAlerts">Silent Alerts</button>
+        <button v-if="dataFrom === 'Alert Manager'" type="button" class="btn btn-sm btn-info me-2" @click="silentAlerts">Silent Alerts</button>
         <button type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']" @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
     </div>
   </div>
@@ -443,7 +441,8 @@ export default defineComponent({
     <table id="dataTable" class="table table-bordered table-striped table-hover caption-top">
       <thead>
         <tr>
-          <th># <input type="checkbox" @change="toggleAll($event)" /></th>
+          <th>#</th>
+          <th v-if="dataFrom === 'Alert Manager'">Silent <input type="checkbox" @change="toggleAll($event)" /></th>
           <th>Alert</th>
           <th>State</th>
           <th>Severity</th>
@@ -457,14 +456,13 @@ export default defineComponent({
 
       <tbody>
         <tr v-for="(row, index) in rows" :key="index">
-          <td>{{ index +1 }} <input type="checkbox" :value="getRowIdentifier(row)" v-model="selectedRows" /></td>
+          <td>{{ index +1 }}</td>
+          <td v-if="dataFrom === 'Alert Manager'"><input type="checkbox" :value="getRowIdentifier(row.alert, row.hostname)" v-model="selectedRows" /></td>
           <td>
-            <StatusAlerts :rule="row.rule || []" :alerts="row.alerts || []" :first_occurrence="row.eventTime" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-            <!-- <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" /> -->
+            <StatusAlerts :rule="row.rule" :alerts="row.alerts" :first_occurrence="row.eventTime" :modalId="`Status_${index +1}`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
             <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.alert }}</a>
           </td>
           <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state }}</span></td>
-          <!-- <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td> -->
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>

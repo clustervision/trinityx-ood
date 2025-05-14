@@ -1,81 +1,110 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
+import axios from 'axios';
+import { Modal } from 'bootstrap';
 
 const startAt = ref('');
 const endAt = ref('');
+const comment = ref('');
+const errorMessage = ref<string[]>([]);
 
-function applySilence() {
-  // Use `startAt.value` and `endAt.value` as ISO strings for the POST body
-  console.log(props.alerts);
-  console.log("Start:", startAt.value);
-  console.log("End:", endAt.value);
-  // convert to UTC ISO format if needed
+async function applySilence() {
+  const payloads: {
+    matchers: { name: string; value: string; isRegex: boolean }[];
+    startsAt: string;
+    endsAt: string;
+    createdBy: string;
+    comment: string;
+  }[] = [];
+
+  const uniqueAlerts = props.alerts.map(alert => ({
+    alertname: alert.alert,
+    hostname: alert.hostname || null
+  }));
+
+  for (const alert of uniqueAlerts) {
+    const matchers = [
+      {
+        name: "alertname",
+        value: alert.alertname,
+        isRegex: false
+      }
+    ];
+
+    if (alert.hostname) {
+      matchers.push({
+        name: "hostname",
+        value: alert.hostname,
+        isRegex: false
+      });
+    }
+
+    if (startAt.value === '') {
+      errorMessage.value.push(`Start time is required.`);
+    }
+    if (endAt.value === '') {
+      errorMessage.value.push(`End time is required.`);
+    }
+    if (errorMessage.value.length > 0) {
+      return;
+    }
+
+    const payload = {
+      matchers,
+      startsAt: new Date(startAt.value).toISOString(),
+      endsAt: new Date(endAt.value).toISOString(),
+      createdBy: "admin",
+      comment: comment.value || "Silence for maintenance"
+    };
+
+    payloads.push(payload);
+  }
+
+  for (const payload of payloads) {
+    try {
+      const response = await axios.post(props.silenceAPI, payload);
+      const message = `Alert ${payload.matchers[0].value} silenced successfully. Silence ID: <strong>${response.data.silenceID}</strong>`;
+      emit('silence-message', message);
+      const modalEl = document.getElementById("silenceAlerts");
+      if (modalEl) {
+        const bootstrapModal = Modal.getInstance(modalEl) || new Modal(modalEl);
+        bootstrapModal.hide();
+      }
+    } catch (error) {
+      console.error("Error creating silence:", error);
+    }
+  }
 }
-// methods: {
-//   open() {
-//     const modal = new bootstrap.Modal(document.getElementById(this.modalId));
-//     modal.show();
-//     this.$emit("modal-open");
-//   },
-//   close() {
-//     const modal = bootstrap.Modal.getInstance(document.getElementById(this.modalId));
-//     modal.hide();
-//     this.$emit("modal-close");
-//   }
-// }
 
 const props = defineProps<{
-  // rule: Rule;
-  alerts: [];
-  // alerts: Alerts[];
+  alerts: { alert: string; hostname: string }[];
   modalId: string;
-  // first_occurrence: string;
-  // ruleName: string;
+  silenceAPI: string;
 }>();
 
-// const emit = defineEmits(["html", "modal-open", "modal-close"]);
+const emit = defineEmits(["silence-message", "modal-open", "modal-close"]);
 
-// const hostList = ref<string[]>([]);
+onMounted(() => {
+  const modalElement = document.getElementById(props.modalId);
+  if (modalElement) {
+    modalElement.addEventListener("shown.bs.modal", () => emit("modal-open"));
+    modalElement.addEventListener("hidden.bs.modal", () => {
+      emit("modal-close");
+      startAt.value = '';
+      endAt.value = '';
+      comment.value = '';
+      errorMessage.value = [];
+    });
+  }
+});
 
-// watch(
-//   () => props.alerts,
-//   async (alerts) => {
-//     try {
-//       hostList.value = [];
-//       for (const alert of alerts) {
-//         if (!alert?.labels?.hostname) {
-//           // console.warn("Missing hostname in alert:", alert);
-//           hostList.value.push(""); // Push an empty string for missing hostnames
-//           continue;
-//         }
-//         const parsedHostname = await new Promise<string>((resolve) => {
-//           emit("html", alert.labels.hostname, resolve);
-//         });
-//         hostList.value.push(parsedHostname);
-//       }
-//     } catch (error) {
-//       console.error("Error parsing hostnames:", error);
-//       hostList.value = []; // Fallback to an empty array
-//     }
-//   },
-//   { immediate: true }
-// );
-
-// onMounted(() => {
-//   const modalElement = document.getElementById(props.modalId);
-//   if (modalElement) {
-//     modalElement.addEventListener("shown.bs.modal", () => emit("modal-open"));
-//     modalElement.addEventListener("hidden.bs.modal", () => emit("modal-close"));
-//   }
-// });
-
-// onUnmounted(() => {
-//   const modalElement = document.getElementById(props.modalId);
-//   if (modalElement) {
-//     modalElement.removeEventListener("shown.bs.modal", () => emit("modal-open"));
-//     modalElement.removeEventListener("hidden.bs.modal", () => emit("modal-close"));
-//   }
-// });
+onUnmounted(() => {
+  const modalElement = document.getElementById(props.modalId);
+  if (modalElement) {
+    modalElement.removeEventListener("shown.bs.modal", () => emit("modal-open"));
+    modalElement.removeEventListener("hidden.bs.modal", () => emit("modal-close"));
+  }
+});
 </script>
 
 <style scoped>
@@ -84,8 +113,6 @@ const props = defineProps<{
   overflow-y: auto;
 }
 </style>
-
-
 
 <template>
   <div>
@@ -99,22 +126,28 @@ const props = defineProps<{
           </div>
           <div class="modal-body">
 
-            <form class="row g-3 mb-4">
-              <div class="col-md-5">
-                <label for="startAt" class="form-label">Start Time</label>
-                <input type="datetime-local" class="form-control" id="startAt" v-model="startAt">
+            <div v-for="(msg, index) in errorMessage" :key="index" class="alert alert-danger" role="alert" v-html="msg"></div>
+            <form>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                  <label for="startAt" class="form-label">Start Time</label>
+                  <input type="datetime-local" class="form-control" id="startAt" v-model="startAt">
+                </div>
+                <div class="col-md-6">
+                  <label for="endAt" class="form-label">End Time</label>
+                  <input type="datetime-local" class="form-control" id="endAt" v-model="endAt">
+                </div>
               </div>
-              <div class="col-md-5">
-                <label for="endAt" class="form-label">End Time</label>
-                <input type="datetime-local" class="form-control" id="endAt" v-model="endAt">
-              </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <button type="button" class="btn btn-primary w-100" @click="applySilence">
-                  Apply Silence
-                </button>
+              <div class="row g-3 mb-4">
+                <div class="col-md-10">
+                  <label for="comment" class="form-label">Comment</label>
+                  <textarea type="text" class="form-control" id="comment" placeholder="Comment"></textarea>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="button" class="btn btn-primary w-100" @click="applySilence">Apply Silence</button>
+                </div>
               </div>
             </form>
-
 
             <table class="table table-striped table-bordered">
               <thead>
@@ -125,7 +158,11 @@ const props = defineProps<{
                 </tr>
               </thead>
               <tbody>
-
+                <tr v-for="(alert, index) in props.alerts" :key="index">
+                  <td>{{ index + 1 }}</td>
+                  <td>{{ alert.alert }}</td>
+                  <td>{{ alert.hostname }}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -137,69 +174,3 @@ const props = defineProps<{
     </div>
   </div>
 </template>
-<!-- POST https://<alertmanager-host>:9093/api/v2/silences
-{
-  "matchers": [
-    {
-      "name": "alertname",
-      "value": "ServerDown",
-      "isRegex": false
-    },
-    {
-      "name": "hostname",
-      "value": "node002.cluster",
-      "isRegex": false
-    }
-  ],
-  "startsAt": "2025-05-13T08:00:00Z",
-  "endsAt": "2025-05-14T08:00:00Z",
-  "createdBy": "admin",
-  "comment": "Silence for maintenance"
-} -->
-
-
-<!--
-
-curl -X POST https://vmware-controller1.cluster:9093/api/v2/silences \
-  -H "Content-Type: application/json" \
-  -u "admin:z80ea5dbbce33DZ2z420" \
-  -d '{
-    "matchers": [
-      {
-        "name": "alertname",
-        "value": "ServerDown",
-        "isRegex": false
-      },
-      {
-        "name": "hostname",
-        "value": "node002.cluster",
-        "isRegex": false
-      }
-    ],
-    "startsAt": "2025-05-13T08:00:00Z",
-    "endsAt": "2025-05-14T08:00:00Z",
-    "createdBy": "admin",
-    "comment": "Silence for maintenance"
-  }'
-
-  -->
-
-  <!--
-
-  curl -s -u admin:your_password https://vmware-controller1.cluster:9093/api/v2/silences
-
-[
-  {
-    "id": "f7c4539b-3381-49d4-9bc1-123456789abc",
-    "status": {
-      "state": "active"
-    },
-    "matchers": [...],
-    "startsAt": "...",
-    "endsAt": "...",
-    ...
-  }
-]
-
-
-  -->
