@@ -1,29 +1,31 @@
 <script setup lang="ts">
 import StatusAlerts from '@/components/StatusAlerts.vue';
+import AlertsSilence from '@/components/AlertsSilence.vue';
 </script>
 
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
+import { Modal } from 'bootstrap';
 import axios, { AxiosError } from 'axios';
 
 interface Alerts {
   activeAt: string;
-    annotations: {description: string};
-    labels: {
-      alertname: string,
-      exporter: string,
-      hostname: string,
-      category: string;
-      class: string;
-      instance: string,
-      job: string,
-      luna_group: string,
-      disabled: boolean | null,
-      nhc: boolean | null,
-      severity: string
-    };
-    state: string;
-    value: string;
+  annotations: {description: string};
+  labels: {
+    alertname: string,
+    exporter: string,
+    hostname: string,
+    category: string;
+    class: string;
+    instance: string,
+    job: string,
+    luna_group: string,
+    disabled: boolean | null,
+    nhc: boolean | null,
+    severity: string
+  };
+  state: string;
+  value: string;
   };
 
 interface AlertRules {
@@ -38,8 +40,10 @@ interface AlertRules {
   type: string;
   labels: {
     severity: string,
+    category: string,
     nhc: boolean,
   };
+  annotations: {description: string};
   alerts: Array<{
     activeAt: string;
     annotations: {description: string};
@@ -69,30 +73,31 @@ interface Prometheus {
   rules: AlertRules[];
 };
 
-// interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-//     annotations: {description: string;};
-//     endsAt: string;
-//     fingerprint: string;
-//     receivers: [{name: string;}],
-//     startsAt: string;
-//     status: {
-//         inhibitedBy: [];
-//         silencedBy: [];
-//         state: string;
-//     },
-//     updatedAt: string;
-//     generatorURL: string;
-//     labels: {
-//         alertname: string;
-//         cluster: string;
-//         exporter: string;
-//         hostname: string;
-//         job: string;
-//         luna_group: string;
-//         nhc: boolean;
-//         severity: string;
-//     }
-// }; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+    annotations: {description: string;};
+    endsAt: string;
+    fingerprint: string;
+    receivers: [{name: string;}],
+    startsAt: string;
+    status: {
+        inhibitedBy: [];
+        silencedBy: [];
+        state: string;
+    },
+    updatedAt: string;
+    generatorURL: string;
+    labels: {
+        alertname: string;
+        category: string;
+        cluster: string;
+        exporter: string;
+        hostname: string;
+        job: string;
+        luna_group: string;
+        nhc: boolean;
+        severity: string;
+    }
+}; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
 
 const severity_order = { 'critical': 1, 'danger': 2, 'warning': 3, 'info': 4, 'none': 5 };
 
@@ -110,11 +115,18 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    silenceAPI: {
+      type: String,
+      required: true,
+    },
   },
 
   data() {
     return {
-      rows: [] as {rule: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; alerts: Alerts[]; }[],
+      silenceMessages: [] as string[],
+      dataFrom: '',
+      selectedRows: [] as Array<{ alert: string; hostname: string }>,
+      rows: [] as {alert: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; rule: AlertRules[]; alerts: Alerts[]; }[],
       alerts: [],
       noRows: '',
       noRowsType: false,
@@ -131,11 +143,48 @@ export default defineComponent({
 
   beforeUnmount() {
     if (this.intervalId) {
-      clearInterval(this.intervalId); // Clear polling interval when component unmounts
+      clearInterval(this.intervalId);
     }
   },
 
   methods: {
+
+    handleSilenceMessage(msg: string) {
+      this.silenceMessages.push(msg);
+      this.selectedRows = [];
+      setTimeout(() => {
+        this.silenceMessages = this.silenceMessages.filter(m => m !== msg);
+      }, 10000);
+    },
+
+    getRowIdentifier(alert:string, hostname:string) {
+      return {alert: alert, hostname: hostname};
+    },
+
+    silentAlerts() {
+      if (this.selectedRows.length > 0) {
+        const modalEl = document.getElementById("silenceAlerts");
+      if (modalEl) {
+        const bootstrapModal = Modal.getInstance(modalEl) || new Modal(modalEl);
+        bootstrapModal.show();
+      } else {
+        console.error("Modal element not found");
+      }
+
+      } else {
+        alert("Please select at least one alert to make it silent or active.");
+        console.log("No alerts selected");
+      }
+    },
+
+    toggleAll(event: Event) {
+      const input = event.target as HTMLInputElement;
+      if (input.checked) {
+        this.selectedRows = this.rows.map(row => this.getRowIdentifier(row.alert, row.hostname));
+      } else {
+        this.selectedRows = [];
+      }
+    },
 
     parseTimestamp(timestampStr: string) {
       try {
@@ -182,24 +231,6 @@ export default defineComponent({
       }
     },
 
-    hostnameParser(hostname: string | Array<string> | null) {
-      let cleanHostname = "";
-      if (Array.isArray(hostname)) {
-        cleanHostname = hostname.join("<br />");
-      } else if (typeof hostname === "string") {
-        if (hostname.includes(",") || hostname.includes(";")) {
-          hostname = hostname.replace(/\[|\]|\s/g, ""); // Remove brackets and spaces
-          cleanHostname = hostname.split(",").join("<br>");
-        } else {
-          cleanHostname = hostname;
-        }
-      } else {
-        cleanHostname = "";
-      }
-
-      return cleanHostname;
-    },
-
     sortRowsBySeverity() {
       this.rows.sort((a, b) => {
         const severityA = severity_order[a.severity as keyof typeof severity_order] || 5;
@@ -210,39 +241,85 @@ export default defineComponent({
 
 
     async fetchAlerts() {
-      // let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-      // this.updateShowSpinner(true);
-      this.rows = [];  // Clear the table before fetching new data
+      let alert_groups = [];
+      let alertData = false;
+      try {
+          const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
+          const response = await axios.get(proxyUrl);
+          if (response.status === 200) {
+            alert_groups = response.data.data.groups;
+          }
+        } catch (error: unknown) {
+          if (error instanceof AxiosError) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          } else if (error instanceof Error) {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          }else {
+            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+          }
+        }
+
+
+
+      //let alertData = false; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      this.rows = [];
       this.noRows = '';
-      // if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-        // try {
-        //   // const alert_manager = await axios.get('/api/api/v2/alerts'); // Development Purpose Only - Remove this line when deploying to production
-        //   const alert_manager = await axios.get(this.alertURL);
-        //   if (alert_manager.status === 200) {
-        //     let alert_rows:number = 0;
-        //     alert_manager.data.forEach((alert: AlertManager) => {
-        //       alert_rows = alert_rows + 1;
-        //       this.rows.push({"id": alert_rows, "rule": alert.labels.alertname, "nhc": alert.labels.nhc, "state": alert.status.state, "severity": alert.labels.severity, "eventTime": alert.startsAt, "hostname": alert.labels.hostname, "exporter": alert.labels.exporter, "job": alert.labels.job});
-        //     });
-        //     if (this.rows.length === 0){
-        //       this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
-        //     } else { alertData = true; }
-        //   } else {
-        //     this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
-        //     console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
-        //   }
-        // } catch (error: unknown) {
-        //   console.error("Error fetching Alerts:", error);
-        //   if (error instanceof Error) {
-        //     this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
-        //   } else {
-        //     this.noRows += `\nERROR[Alert Manager] :: ${error}`;
-        //   }
-        // }
-      // } else {
-        // this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
-      // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
-      // if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      if (this.alertURL.includes("http")) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+        try {
+          const alert_manager_Url = `${this.url}/proxy?url=${this.alertURL}`;
+          const alert_manager = await axios.get(alert_manager_Url);
+
+          if (alert_manager.status === 200) {
+            // let alert_rows:number = 0;
+            alert_manager.data.forEach((alert: AlertManager) => {
+              if (alert.status.state !== "suppressed"){
+                // alert_rows = alert_rows + 1;
+                let ruleBelongs;
+                let alertsBelongs;
+                if (alert_groups.length !== 0){
+                  const match = (alert_groups as Prometheus[]).flatMap(group => group.rules).find(rule => rule.name === alert.labels.alertname && rule.labels?.category === alert.labels.category);
+                  const { alerts, ...cleanRule } = match || {};
+                  const matchedAlerts = alerts?.filter(a => a.labels?.hostname === alert.labels.hostname);
+                  alertsBelongs =  matchedAlerts ?? [];
+                  ruleBelongs = [cleanRule];
+                }
+                this.rows.push({
+                  alert: alert.labels.alertname,
+                  nhc: alert.labels.nhc,
+                  state: alert.status.state,
+                  severity: alert.labels.severity as keyof typeof severity_order,
+                  eventTime: this.parseTimestamp(alert.startsAt),
+                  hostname: alert.labels.hostname,
+                  exporter: alert.labels.exporter,
+                  job: alert.labels.job,
+                  rule: ruleBelongs as AlertRules[] || [],
+                  alerts: alertsBelongs as Alerts[] || [],
+                });
+                this.dataFrom = "Alert Manager";
+                this.sortRowsBySeverity();
+              }
+
+            });
+            if (this.rows.length === 0){
+              this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
+            } else { alertData = true; }
+          } else {
+            this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
+            console.error("Error fetching Alerts:", alert_manager.status, alert_manager.data);
+          }
+        } catch (error: unknown) {
+          // console.error("Error fetching Alerts:", error);
+          console.error(error);
+          if (error instanceof Error) {
+            this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
+          } else {
+            this.noRows += `\nERROR[Alert Manager] :: ${error}`;
+          }
+        }
+      } else {
+        this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
+      } // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      if (alertData === false) {  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
         try {
           const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
           const response = await axios.get(proxyUrl);
@@ -254,16 +331,24 @@ export default defineComponent({
                   if (rule.alerts && rule.alerts.length > 0){
                     rule.alerts.forEach((alert) => {
                       if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
-                        this.rows.push({
-                          rule: rule.name,
-                          nhc: String(rule.labels.nhc) === 'true',
-                          state: rule.state,
-                          severity: rule.labels.severity as keyof typeof severity_order,
-                          eventTime: this.parseTimestamp(rule.lastEvaluation),
-                          hostname: this.hostnameParser(alert.labels.hostname),
-                          exporter: alert.labels.exporter,
-                          job: alert.labels.job,
-                          alerts: rule.alerts as Alerts[]});
+                        const exists = this.rows.some(row => row.alert === rule.name && row.hostname === alert.labels.hostname && row.exporter === alert.labels.exporter && row.job === alert.labels.job);
+                        if (!exists) {
+
+                          this.rows.push({
+                            alert: rule.name,
+                            nhc: String(rule.labels.nhc) === 'true',
+                            state: rule.state,
+                            severity: rule.labels.severity as keyof typeof severity_order,
+                            eventTime: this.parseTimestamp(rule.lastEvaluation),
+                            hostname: alert.labels.hostname,
+                            exporter: alert.labels.exporter,
+                            job: alert.labels.job,
+                            rule: Array.isArray(rule) ? rule : [rule],
+                            alerts: rule.alerts as Alerts[]
+                          });
+                          this.dataFrom = "Prometheus";
+                          this.sortRowsBySeverity();
+                        }
                       }
                     });
                   }
@@ -277,9 +362,9 @@ export default defineComponent({
           if (this.rows.length === 0){
             this.noRows += `SUCCESS[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
             this.noRowsType = true;
-          } else {
-            this.sortRowsBySeverity();
-          }
+          } //else {
+          //   this.sortRowsBySeverity();
+          // }
         } catch (error: unknown) {
           if (error instanceof AxiosError) {
             this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
@@ -289,16 +374,20 @@ export default defineComponent({
             this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
           }
         }
-      // }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+      }  // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
       await nextTick();
       this.refreshDataTable();
+      console.log(this.silenceAPI)
     },
 
     refreshDataTable() {
       const table = $('#dataTable');
       // nextTick(() => {
           table.DataTable({
-          pageLength: 25
+          pageLength: 25,
+          columnDefs: [
+            { orderable: false, targets: 1 } // 0 = first column (checkbox)
+          ]
         });
       // });
     },
@@ -331,11 +420,20 @@ export default defineComponent({
 </script>
 
 <template>
+  <div v-for="(msg, index) in silenceMessages" :key="index" class="alert alert-primary" role="alert" v-html="msg"></div>
+  <AlertsSilence v-if="dataFrom === 'Alert Manager'" :alerts="selectedRows" :silenceAPI="`${url}/proxy_post?url=${silenceAPI}`" modalId="silenceAlerts" @silence-message="handleSilenceMessage" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
   <h4 class="fw-bold py-3 mb-4">
-    <span class="text-muted fw-light"> Monitoring /</span> Alerts
-    <button style="float: right;" type="button"  :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']" @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <span class="text-muted fw-light"> Monitoring /</span> Alerts
+      </div>
+      <div class="d-flex">
+        <button v-if="dataFrom === 'Alert Manager'" type="button" class="btn btn-sm btn-info me-2" @click="silentAlerts">Silent Alerts</button>
+        <button type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']" @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
+    </div>
+  </div>
   </h4>
-  <div v-if="noRows" :class="['alert', noRowsType ? 'alert-success' : 'alert-danger', 'alert-dismissible']" role="alert">
+  <div v-if="noRows && !rows.length" :class="['alert', noRowsType ? 'alert-success' : 'alert-danger', 'alert-dismissible']" role="alert">
     <pre style="font-weight: bold; font-size: larger;">{{ noRows }}</pre>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
@@ -344,24 +442,27 @@ export default defineComponent({
       <thead>
         <tr>
           <th>#</th>
-          <th>Rule</th>
+          <th v-if="dataFrom === 'Alert Manager'">Silent <input type="checkbox" @change="toggleAll($event)" /></th>
+          <th>Alert</th>
           <th>State</th>
           <th>Severity</th>
           <th>NHC</th>
-          <th>Event Time</th>
+          <th>First Occurrence</th>
           <th>Hostname</th>
           <th>Exporter</th>
           <th>Job</th>
         </tr>
       </thead>
+
       <tbody>
-        <tr v-for="(row, index) in rows" :key="row.state">
+        <tr v-for="(row, index) in rows" :key="index">
           <td>{{ index +1 }}</td>
+          <td v-if="dataFrom === 'Alert Manager'"><input type="checkbox" :value="getRowIdentifier(row.alert, row.hostname)" v-model="selectedRows" /></td>
           <td>
-            <StatusAlerts :alerts="row.alerts || []" :ruleName="row.rule" :modalId="`Status_${index +1}`" @html="(hostname, resolve) => resolve(hostnameParser(hostname))" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-            <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.rule }}</a>
+            <StatusAlerts :rule="row.rule" :alerts="row.alerts" :first_occurrence="row.eventTime" :modalId="`Status_${index +1}`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+            <a href="#" data-bs-toggle="modal" :data-bs-target="`#Status_${index +1}`">{{ row.alert }}</a>
           </td>
-          <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state === 'active' ? 'firing' : row.state }}</span></td>
+          <td><span class="badge me-1" :class="{'bg-label-secondary': row.state === 'inactive', 'bg-label-danger': row.state === 'firing', 'bg-label-warning': row.state === 'pending', 'bg-label-success': row.state === 'active', 'bg-label-info': row.state === 'suppressed'}" >{{ row.state }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-info': row.severity === 'info', 'bg-label-warning': row.severity === 'warning', 'bg-label-danger': row.severity === 'danger', 'bg-label-dark': row.severity === 'critical' }" >{{ row.severity }}</span></td>
           <td><span class="badge me-1" :class="{'bg-label-primary': row.nhc === true, 'bg-label-warning': row.nhc === false || row.nhc === undefined }" >{{ row.nhc === true ? true : false }}</span></td>
           <td>{{ row.eventTime }}</td>
