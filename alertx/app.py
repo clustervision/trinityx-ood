@@ -56,6 +56,7 @@ if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/get_global": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/set_global": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/proxy": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/proxy_post": {"origins": "http://localhost:5173"}})
 
 
 @app.route('/proxy', methods=['GET'])
@@ -69,6 +70,24 @@ def proxy():
         return jsonify({'error': 'URL parameter is required'}), 400
     try:
         response = requests.get(target_url, verify=False, timeout=5)
+        response.raise_for_status()
+        return jsonify(response.json()), response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/proxy_post', methods=['POST'])
+def proxy_post():
+    """
+    This is AlertX application proxy pass, which can pass alert manager, Prometheus or any other
+    CORS related URL, and give back the clean response.
+    """
+    target_url = request.args.get('url')
+    payload = request.get_json()
+    if not target_url:
+        return jsonify({'error': 'URL parameter is required'}), 400
+    try:
+        response = requests.post(target_url, json=payload, verify=False, timeout=5)
         response.raise_for_status()
         return jsonify(response.json()), response.status_code
     except requests.exceptions.RequestException as e:
