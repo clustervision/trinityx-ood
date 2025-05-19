@@ -76,6 +76,7 @@ interface Overview {
   servicesAlerts: SpecificAlerts[];
   hardwareAlerts: SpecificAlerts[];
   otherAlerts: SpecificAlerts[];
+  allAlerts: SpecificAlerts[];
 };
 
 interface NodeList {
@@ -112,13 +113,15 @@ export default defineComponent({
       noRows: '',
       showPopup: false,
       intervalId: null as number | null,
-      autoReload: true,
+      autoReload: false,
     };
   },
 
   async mounted() {
     await this.fetchOverview(); // Initial fetch
-    this.intervalId = setInterval(this.fetchOverview, 30000); // Poll every 15 seconds
+    if (this.autoReload) {
+      this.startAutoReload(); // Poll every 15 seconds
+    }
   },
 
   beforeUnmount() {
@@ -138,7 +141,7 @@ export default defineComponent({
           nodeResponse.data.data.result.forEach((node: NodeList) => {
             const hostname = node.metric.hostname;
             if (hostname !== undefined) {
-              this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[]});
+              this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[], allAlerts:[]});
             }
           });
         } else {
@@ -156,6 +159,8 @@ export default defineComponent({
       }
       if (!this.noRows){
         try {
+
+          // console.log(this.overview);
           const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
           const response = await axios.get(proxyUrl);
           if (response.status === 200) {
@@ -165,6 +170,7 @@ export default defineComponent({
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert : SpecificAlerts) => {
+                      // console.log(alert);
                       const hostname = alert.labels.hostname;
                       const state = true;
                       let genericRules: boolean | null = null;
@@ -176,6 +182,8 @@ export default defineComponent({
                       const servicesAlerts: SpecificAlerts[] = [];
                       const hardwareAlerts: SpecificAlerts[] = [];
                       const otherAlerts: SpecificAlerts[] = [];
+                      // const allAlerts: SpecificAlerts[] = [];
+                      // allAlerts.push(alert);
 
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
@@ -197,6 +205,7 @@ export default defineComponent({
                             if (nhc === true){ other = true; } else { other = false; }
                             otherAlerts.push(alert);
                           }
+
 
                           const hostEntry = this.overview.find(item => item.hostname === hostname);
                           if (hostEntry) {
@@ -232,8 +241,32 @@ export default defineComponent({
                             if (alert.labels.alertname === "ServerDown") {
                               hostEntry.state = false;
                             }
+                            // hostEntry.allAlerts.push(alert);
+                            // hostEntry.allAlerts.push(...allAlerts);
+                            hostEntry.allAlerts.push(...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts);
+                            // console.log([[...genericAlerts], [...servicesAlerts], [...hardwareAlerts], [...otherAlerts]]);
+                            // console.log(hostEntry.hostname);
+                            // if (hostname === "vmware-controller1.cluster") {
+
+                            // console.log(hostEntry.allAlerts);
+                            // }
                           } else {
-                            this.overview.push({state: state, hostname: hostname, genericRules: genericRules, services: services, hardware: hardware, other: other, ipmi: null, genericAlerts:[...genericAlerts], servicesAlerts:[...servicesAlerts], hardwareAlerts:[...hardwareAlerts], otherAlerts:[...otherAlerts], })
+                            // console.log(hostname);
+                            this.overview.push({
+                              state: state,
+                              hostname: hostname,
+                              genericRules: genericRules,
+                              services: services,
+                              hardware: hardware,
+                              other: other,
+                              ipmi: null,
+                              genericAlerts:[...genericAlerts],
+                              servicesAlerts:[...servicesAlerts],
+                              hardwareAlerts:[...hardwareAlerts],
+                              otherAlerts:[...otherAlerts],
+                              // allAlerts:[alert],
+                              allAlerts:[...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts],
+                            })
                           }
                         }
                       }
@@ -304,6 +337,31 @@ export default defineComponent({
     },
 
   },
+
+  computed: {
+  overviewCompact() {
+    const chunkSize = 10;
+    const chunks = [];
+    for (let i = 0; i < this.overview.length; i += chunkSize) {
+      chunks.push(this.overview.slice(i, i + chunkSize));
+    }
+    return chunks;
+  },
+
+  overviewSuperCompact() {
+    const chunkSize = 25;
+    const chunks = [];
+    for (let i = 0; i < this.overview.length; i += chunkSize) {
+      chunks.push(this.overview.slice(i, i + chunkSize));
+    }
+    return chunks;
+  },
+
+  showContainerClass() {
+    return this.overview.length > 0 && this.overview.length <= 101;
+  }
+},
+
 });
 
 </script>
@@ -317,7 +375,7 @@ export default defineComponent({
     <pre>{{ noRows }}</pre>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
-  <div class="container-xxl flex-grow-1 container-p-y">
+  <div :class="showContainerClass ? 'container-xxl flex-grow-1 container-p-y' : ''">
     <div class="card">
       <div class="alert alert-info alert-dismissible" role="alert">
         <div class="row">
@@ -338,7 +396,8 @@ export default defineComponent({
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
-      <div v-if="overview.length">
+
+      <div v-if="overview.length && overview.length > 0 && overview.length <= 101">
         <table id="dataTableOverview" class="table table-bordered table-striped table-hover caption-top">
           <thead>
             <tr>
@@ -416,6 +475,93 @@ export default defineComponent({
           </tbody>
         </table>
       </div>
+
+      <div v-if="overview.length && overview.length > 101 && overview.length <= 251">
+        <table class="table table-bordered table-striped table-hover caption-top">
+          <tbody>
+            <tr v-for="(chunk, rowIndex) in overviewCompact" :key="rowIndex">
+              <td v-for="(row) in chunk" :key="row.hostname">
+                <span :class="{'text-danger': !row.state}" class="me-2" :data-tippy-content="!row.state ? `Node ${row.hostname} is Down.` : `Node ${row.hostname} is UP.`">{{ row.hostname }}</span>
+                <span class="d-inline-flex gap-1 align-items-center">
+                  <template v-if="row.state === false">
+                    <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.genericRules === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.genericRules === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  </template>
+                  <template v-else>
+                    <box-icon v-if="row.genericRules === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
+                    <box-icon v-else-if="row.genericRules === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
+                    <box-icon v-else-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                    <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  </template>
+
+                  <template v-if="row.state === false">
+                    <box-icon v-if="row.services === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.services === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.services === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  </template>
+                  <template v-else>
+                    <box-icon v-if="row.services === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
+                    <box-icon v-else-if="row.services === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
+                    <box-icon v-else-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                    <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  </template>
+
+                  <template v-if="row.state === false">
+                    <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.hardware === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.hardware === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  </template>
+                  <template v-else>
+                    <box-icon v-if="row.hardware === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
+                    <box-icon v-else-if="row.hardware === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
+                    <box-icon v-else-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                    <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  </template>
+
+                  <template v-if="row.state === false">
+                    <box-icon v-if="row.other === null" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.other === false" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <box-icon v-else-if="row.other === true" name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  </template>
+                  <template v-else>
+                    <box-icon v-if="row.other === null" name="circle" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
+                    <box-icon v-else-if="row.other === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
+                    <box-icon v-else-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                    <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  </template>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <div v-if="overview.length && overview.length > 251">
+        <table class="table table-bordered table-striped table-hover caption-top">
+          <tbody>
+            <tr v-for="(chunk, rowIndex) in overviewSuperCompact" :key="rowIndex">
+              <td v-for="(row) in chunk" :key="row.hostname">
+                <span class="d-inline-flex gap-1 align-items-center">
+                  <template v-if="row.state === false">
+                    <box-icon name="circle" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  </template>
+                  <template v-else>
+                    <box-icon v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" name="circle" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                    <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === false)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
+                    <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === null)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" name="circle" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
+                    <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <!-- <OverviewAlerts :alerts="[...(row.genericAlerts || []), ...(row.servicesAlerts || []), ...(row.hardwareAlerts || []), ...(row.otherAlerts || [])]" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" @modal-open="stopAutoReload" @modal-close="startAutoReload" /> -->
+                  </template>
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
   </div>
 </div>
 
