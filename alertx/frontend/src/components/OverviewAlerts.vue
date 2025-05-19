@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Modal -->
-    <div class="modal fade" :id="props.modalId" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal fade" :id="props.modalId" tabindex="-1" aria-labelledby="modalLabel">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">

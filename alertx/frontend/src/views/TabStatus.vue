@@ -132,13 +132,15 @@ export default defineComponent({
       noRowsType: false,
       showPopup: false,
       intervalId: null as number | null,
-      autoReload: true,
+      autoReload: false,
     };
   },
 
   async mounted() {
     await this.fetchAlerts();
-    this.intervalId = setInterval(this.fetchAlerts, 30000);
+    if (this.autoReload) {
+      this.startAutoReload();
+    }
   },
 
   beforeUnmount() {
