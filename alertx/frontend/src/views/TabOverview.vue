@@ -86,6 +86,11 @@ interface NodeList {
 
 export default defineComponent({
   props: {
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
     url: {
       type: String,
       required: true,
@@ -113,20 +118,35 @@ export default defineComponent({
       noRows: '',
       showPopup: false,
       intervalId: null as number | null,
-      autoReload: false,
+      autoReload: true,
     };
   },
 
+  watch: {
+    async isActive(newValue) {
+      if (newValue) {
+        await this.fetchOverview();
+        if (this.autoReload) {
+          this.startAutoReload();
+        }
+      } else {
+        this.stopAutoReload();
+      }
+    },
+  },
+
   async mounted() {
-    await this.fetchOverview(); // Initial fetch
-    if (this.autoReload) {
-      this.startAutoReload(); // Poll every 15 seconds
+    if (this.isActive) {
+      await this.fetchOverview();
+      if (this.autoReload) {
+        this.startAutoReload();
+      }
     }
   },
 
   beforeUnmount() {
     if (this.intervalId) {
-      clearInterval(this.intervalId); // Clear polling interval when component unmounts
+      clearInterval(this.intervalId);
     }
   },
 
@@ -159,8 +179,6 @@ export default defineComponent({
       }
       if (!this.noRows){
         try {
-
-          // console.log(this.overview);
           const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
           const response = await axios.get(proxyUrl);
           if (response.status === 200) {
@@ -170,7 +188,6 @@ export default defineComponent({
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert : SpecificAlerts) => {
-                      // console.log(alert);
                       const hostname = alert.labels.hostname;
                       const state = true;
                       let genericRules: boolean | null = null;
@@ -182,8 +199,6 @@ export default defineComponent({
                       const servicesAlerts: SpecificAlerts[] = [];
                       const hardwareAlerts: SpecificAlerts[] = [];
                       const otherAlerts: SpecificAlerts[] = [];
-                      // const allAlerts: SpecificAlerts[] = [];
-                      // allAlerts.push(alert);
 
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
@@ -241,17 +256,8 @@ export default defineComponent({
                             if (alert.labels.alertname === "ServerDown") {
                               hostEntry.state = false;
                             }
-                            // hostEntry.allAlerts.push(alert);
-                            // hostEntry.allAlerts.push(...allAlerts);
                             hostEntry.allAlerts.push(...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts);
-                            // console.log([[...genericAlerts], [...servicesAlerts], [...hardwareAlerts], [...otherAlerts]]);
-                            // console.log(hostEntry.hostname);
-                            // if (hostname === "vmware-controller1.cluster") {
-
-                            // console.log(hostEntry.allAlerts);
-                            // }
                           } else {
-                            // console.log(hostname);
                             this.overview.push({
                               state: state,
                               hostname: hostname,
@@ -264,7 +270,6 @@ export default defineComponent({
                               servicesAlerts:[...servicesAlerts],
                               hardwareAlerts:[...hardwareAlerts],
                               otherAlerts:[...otherAlerts],
-                              // allAlerts:[alert],
                               allAlerts:[...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts],
                             })
                           }
@@ -552,7 +557,6 @@ export default defineComponent({
                     <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === false)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" name="circle" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
                     <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === null)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" name="circle" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
                     <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                    <!-- <OverviewAlerts :alerts="[...(row.genericAlerts || []), ...(row.servicesAlerts || []), ...(row.hardwareAlerts || []), ...(row.otherAlerts || [])]" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" @modal-open="stopAutoReload" @modal-close="startAutoReload" /> -->
                   </template>
                 </span>
               </td>

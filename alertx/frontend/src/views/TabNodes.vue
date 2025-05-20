@@ -198,7 +198,7 @@
 </template>
 
 <script lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import axios from "axios";
 
 interface ToastItem {
@@ -279,6 +279,11 @@ interface Hardware {
 export default {
 
   props: {
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
     url: {
       type: String,
       required: true,
@@ -458,7 +463,7 @@ export default {
         console.error("Error fetching nodes:", error);
       }
     };
-    fetchGlobalSettings();
+    // fetchGlobalSettings();
 
     const setGlobalSettings = async (event: Event) => {
       error_message.value = [];
@@ -562,10 +567,21 @@ export default {
     }
   };
 
-    // Lifecycle hook
-    onMounted(() => {
-      fetchNodes();
+    watch(() => props.isActive, async (newValue) => {
+      if (newValue) {
+        fetchNodes();
+        fetchGlobalSettings();
+      }
     });
+
+    onMounted(() => {
+      if (props.isActive) {
+        fetchNodes();
+        fetchGlobalSettings();
+      }
+
+    });
+
 
     return {
       nodes,
