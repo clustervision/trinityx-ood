@@ -73,7 +73,7 @@ interface Prometheus {
   rules: AlertRules[];
 };
 
-interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+interface AlertManager {
     annotations: {description: string;};
     endsAt: string;
     fingerprint: string;
@@ -97,12 +97,17 @@ interface AlertManager { // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE AL
         nhc: boolean;
         severity: string;
     }
-}; // COMMENTED - UNTIL DO NOT GET THE SOLUTION FOR THE ALERT MANAGER PROXY PASS.
+};
 
 const severity_order = { 'critical': 1, 'danger': 2, 'warning': 3, 'info': 4, 'none': 5 };
 
 export default defineComponent({
   props: {
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
     url: {
       type: String,
       required: true,
@@ -132,16 +137,31 @@ export default defineComponent({
       noRowsType: false,
       showPopup: false,
       intervalId: null as number | null,
-      autoReload: false,
+      autoReload: true,
     };
+  },
+  watch: {
+    async isActive(newValue) {
+      if (newValue) {
+        await this.fetchAlerts();
+        if (this.autoReload) {
+          this.startAutoReload();
+        }
+      } else {
+        this.stopAutoReload();
+      }
+    },
   },
 
   async mounted() {
-    await this.fetchAlerts();
-    if (this.autoReload) {
-      this.startAutoReload();
+    if (this.isActive) {
+      await this.fetchAlerts();
+      if (this.autoReload) {
+        this.startAutoReload();
+      }
     }
   },
+
 
   beforeUnmount() {
     if (this.intervalId) {

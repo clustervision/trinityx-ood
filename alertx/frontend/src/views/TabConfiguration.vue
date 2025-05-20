@@ -6,6 +6,11 @@ import { ref, computed } from 'vue';
 import { Modal } from 'bootstrap';
 
 const props = defineProps({
+  isActive: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   rulesFile: {
     type: String,
     required: true,

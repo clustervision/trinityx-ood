@@ -180,7 +180,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
 </script>
 
 <template>
-  <div class="modal fade" v-bind:id="`rule_modal_${props.configType}_${index}`" tabindex="-1" aria-hidden="true" >
+  <div class="modal fade" v-bind:id="`rule_modal_${props.configType}_${index}`" tabindex="-1" >
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">

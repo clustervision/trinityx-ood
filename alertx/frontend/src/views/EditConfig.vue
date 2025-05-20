@@ -3,7 +3,7 @@
   <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" :data-bs-target="`#rule_modal_${props.configType}_0`">Add Alert Rule</button> &nbsp;
   <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" :data-bs-target="`#edit_${props.configType}_config`">Edit Configuration</button>
 
-  <div class="modal fade" :id="`edit_${props.configType}_config`" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" :id="`edit_${props.configType}_config`" tabindex="-1">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
