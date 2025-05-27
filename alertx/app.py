@@ -70,7 +70,6 @@ def proxy():
         return jsonify({'error': 'URL parameter is required'}), 400
     try:
         response = requests.get(target_url, verify=False, timeout=5)
-        # response.raise_for_status()
         return jsonify(response.json()), response.status_code
     except requests.exceptions.RequestException as e:
         return jsonify({'error': str(e)}), 500
