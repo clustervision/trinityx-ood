@@ -42,7 +42,11 @@ else:
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
-LOG_FILE = '/var/log/luna/luna2-web.log'
 TRIX_CONFIG = '/trinity/local/etc/prometheus_server/rules/trix.rules'
 ALERT_MANAGER_DIR = '/etc/trinity/passwords/prometheus'
-APP_STATE = True  # False for Development, True for Production
+APP_STATE = True # False for Development, True for Production
+LOG_FILE = '/var/log/luna/luna2-web.log' if APP_STATE is True else '/tmp/luna2-web-dev.log'
+
+# Run in Dev mode:
+# sudo setfacl -m u:admin:r /trinity/local/etc/ssl/vmware-controller1.cluster.*
+# sudo -u admin bash -c '. /trinity/local/python/bin/activate && python app.py'

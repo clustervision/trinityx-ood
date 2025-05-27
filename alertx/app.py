@@ -70,7 +70,7 @@ def proxy():
         return jsonify({'error': 'URL parameter is required'}), 400
     try:
         response = requests.get(target_url, verify=False, timeout=5)
-        response.raise_for_status()
+        # response.raise_for_status()
         return jsonify(response.json()), response.status_code
     except requests.exceptions.RequestException as e:
         return jsonify({'error': str(e)}), 500
@@ -189,7 +189,11 @@ def license_info():
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
-        app.run(host='0.0.0.0', port=7755, debug= True)
+    if APP_STATE is False:
+        dev_context=(
+            '/trinity/local/etc/ssl/vmware-controller1.cluster.crt',
+            '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        )
+        app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
     else:
         app.run()
