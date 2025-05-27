@@ -224,32 +224,19 @@ export default defineComponent({
 
                           const hostEntry = this.overview.find(item => item.hostname === hostname);
                           if (hostEntry) {
-                            if (genericRules === true){
+                            if (genericRules === true || (genericRules === false && hostEntry.genericRules !== true)){
                               hostEntry.genericRules = genericRules;
                               hostEntry.genericAlerts.push(...genericAlerts);
-
-                            } else if (genericRules === false && hostEntry.genericRules !== true){
-                              hostEntry.genericRules = genericRules;
-                              hostEntry.genericAlerts.push(...genericAlerts);
-                            }
-                            if (services === true){
-                              hostEntry.services = services;
-                              hostEntry.servicesAlerts.push(...servicesAlerts);
-                            } else if (services === false && hostEntry.services !== true){
+                            } 
+                            if (services === true || (services === false && hostEntry.services !== true)){
                               hostEntry.services = services;
                               hostEntry.servicesAlerts.push(...servicesAlerts);
                             }
-                            if (hardware === true){
-                              hostEntry.hardware = hardware;
-                              hostEntry.hardwareAlerts.push(...hardwareAlerts);
-                            } else if (hardware === false && hostEntry.hardware !== true){
+                            if (hardware === true || (hardware === false && hostEntry.hardware !== true)){
                               hostEntry.hardware = hardware;
                               hostEntry.hardwareAlerts.push(...hardwareAlerts);
                             }
-                            if (other === true){
-                              hostEntry.other = other;
-                              hostEntry.otherAlerts.push(...otherAlerts);
-                            } else if (other === false && hostEntry.other !== true){
+                            if (other === true || (other === false && hostEntry.other !== true)){
                               hostEntry.other = other;
                               hostEntry.otherAlerts.push(...otherAlerts);
                             }
@@ -257,21 +244,6 @@ export default defineComponent({
                               hostEntry.state = false;
                             }
                             hostEntry.allAlerts.push(...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts);
-                          } else {
-                            this.overview.push({
-                              state: state,
-                              hostname: hostname,
-                              genericRules: genericRules,
-                              services: services,
-                              hardware: hardware,
-                              other: other,
-                              ipmi: null,
-                              genericAlerts:[...genericAlerts],
-                              servicesAlerts:[...servicesAlerts],
-                              hardwareAlerts:[...hardwareAlerts],
-                              otherAlerts:[...otherAlerts],
-                              allAlerts:[...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts],
-                            })
                           }
                         }
                       }
