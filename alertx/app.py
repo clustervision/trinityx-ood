@@ -196,3 +196,7 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
     else:
         app.run()
+
+# Run in Dev mode:
+# sudo setfacl -m u:admin:r /trinity/local/etc/ssl/vmware-controller1.cluster.*
+# sudo -u admin bash -c '. /trinity/local/python/bin/activate && python app.py'
