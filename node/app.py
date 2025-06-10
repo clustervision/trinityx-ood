@@ -184,7 +184,7 @@ def rename(record=None):
         response = Helper().update_record(TABLE, payload)
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 204:
-            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
+            flash(f'{TABLE_CAP} renamed from {payload["name"]} to {payload["newnodename"]}.', "success")
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
