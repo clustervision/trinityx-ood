@@ -175,6 +175,10 @@ export default defineComponent({
 
   methods: {
 
+    clearRows() {
+      this.rows = [];
+    },
+
     handleSilenceMessage(msg: string) {
       this.silenceMessages.push(msg);
       this.selectedRows = [];
@@ -264,6 +268,7 @@ export default defineComponent({
     },
 
     async fetchAlerts() {
+      this.clearRows();
       this.updateShowSpinner(true);
       let alert_groups = [];
       let alertData = false;
@@ -284,8 +289,8 @@ export default defineComponent({
         }
       }
 
-      this.rows = [];
       this.noRows = '';
+      if (this.dataFrom === "" || this.dataFrom === "Alert Manager") {
       if (this.alertURL.includes("http")) {
         try {
           const alert_manager_Url = `${this.url}/proxy?url=${this.alertURL}`;
@@ -320,15 +325,16 @@ export default defineComponent({
               }
 
             });
+            alertData = true;
             if (this.rows.length === 0){
-              this.noRows += `ERROR[Alert Manager] ::There is no records coming from ${this.alertURL}.`;
-            } else { alertData = true; }
+              this.noRows += `ERROR[Alert Manager] ::There is no alerts coming from Alert Manager ${this.alertURL}.`;
+            } //else { alertData = true; }
           } else {
             this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from ${this.alertURL} Status: ${alert_manager.status}.`;
           }
         } catch (error: unknown) {
           if (error instanceof Error) {
-            this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${error.stack}`;
+            this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${this.alertURL}`;
           } else {
             this.noRows += `\nERROR[Alert Manager] :: ${error}`;
           }
@@ -336,7 +342,11 @@ export default defineComponent({
       } else {
         this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
       }
+    }
+    
       if (alertData === false) {
+        if (this.dataFrom === "" || this.dataFrom === "Prometheus") {
+          console.log(this.rows);
         if (alert_groups.length !== 0) {
           alert_groups.forEach((group: Prometheus) => {
             group.rules.forEach((rule) => {
@@ -375,6 +385,7 @@ export default defineComponent({
           this.noRowsType = true;
         }
       }
+    }
       this.updateShowSpinner(false);
       await nextTick();
       this.refreshDataTable();
@@ -428,6 +439,17 @@ export default defineComponent({
       this.$emit("update:showSpinner", value);
     },
 
+    toggleData() {
+      console.log(this.dataFrom);
+      if (this.dataFrom === 'Alert Manager') {
+        this.dataFrom = 'Prometheus';
+      } else {
+        this.dataFrom = 'Alert Manager';
+      }
+      console.log(this.dataFrom);
+      this.fetchAlerts();
+    },
+
   },
 });
 
@@ -443,7 +465,8 @@ export default defineComponent({
       </div>
       <div class="d-flex">
         <button v-if="dataFrom === 'Alert Manager'" type="button" class="btn btn-sm btn-info me-2" @click="silentAlerts">Silent Alerts</button>
-        <button type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']" @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
+        <button type="button" :class="['btn', 'btn-sm', ' me-2', autoReload ? 'btn-success' : 'btn-warning']" @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
+        <button type="button" :class="['btn', 'btn-sm', dataFrom === 'Alert Manager' ? 'btn-secondary' : 'btn-primary']" @click="toggleData">{{ dataFrom === 'Alert Manager' ? "Prometheus" : "Alert Manager" }}</button>
     </div>
   </div>
   </h4>
