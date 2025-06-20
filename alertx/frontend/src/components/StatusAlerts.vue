@@ -75,7 +75,7 @@ interface Rule {
   keepFiringFor: number,
   labels: {
       category: string,
-      nhc: boolean,
+      nhc: boolean | null,
       severity: string
   },
   lastEvaluation: string,

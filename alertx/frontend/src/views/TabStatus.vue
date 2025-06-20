@@ -44,7 +44,7 @@ interface AlertRules {
   labels: {
     severity: string,
     category: string,
-    nhc: boolean,
+    nhc: boolean | null,
   };
   annotations: {description: string};
   alerts: Array<{
@@ -97,7 +97,7 @@ interface AlertManager {
     hostname: string;
     job: string;
     luna_group: string;
-    nhc: boolean;
+    nhc: boolean | null;
     severity: string;
   }
 };
@@ -305,7 +305,7 @@ export default defineComponent({
                 }
                 this.rows.push({
                   alert: alert.labels.alertname,
-                  nhc: alert.labels.nhc,
+                  nhc: String(alert.labels.nhc) === 'true',
                   state: alert.status.state,
                   severity: alert.labels.severity as keyof typeof severity_order,
                   eventTime: this.parseTimestamp(alert.startsAt),
