@@ -406,7 +406,7 @@ export default defineComponent({
             });
           });
         } else {
-          this.noRowsPrometheus = `<strong>[Prometheus Server] :: Could not read from Alert Manager: URL: ${this.statusAPI}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: Could not read from Prometheus Server: URL: ${this.statusAPI}`;
           this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
           this.noRowsTypePrometheus = 'danger';
           this.dataFrom = "";
