@@ -115,7 +115,11 @@ export default defineComponent({
     return {
       overview: [] as Overview[],
       alerts: [],
-      noRows: '',
+      // noRows: '',
+      // noRowsAlertManager: '',
+      noRowsPrometheus: '',
+      // noRowsTypeAlertManager: '',
+      noRowsTypePrometheus: '',
       showPopup: false,
       intervalId: null as number | null,
       autoReload: true,
@@ -165,19 +169,22 @@ export default defineComponent({
             }
           });
         } else {
-          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Nodes from ${this.nodeListAPI} Status: ${nodeResponse.status}.`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: Error fetching Nodes from ${this.nodeListAPI} Status: ${nodeResponse.status}.</strong>`;
           console.error("Error fetching nodes:", nodeResponse.status, nodeResponse.data);
         }
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: Could not read from Prometheus Server: URL: ${this.statusAPI}`;
+          this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
+          this.noRowsTypePrometheus = 'danger';
         } else if (error instanceof Error) {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error.message}</strong>`;
         }else {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error}</strong>`;
         }
+        this.noRowsTypePrometheus = 'danger';
       }
-      if (!this.noRows){
+      if (!this.noRowsPrometheus){
         try {
           const proxyUrl = `${this.url}/proxy?url=${this.statusAPI}`;
           const response = await axios.get(proxyUrl);
@@ -251,23 +258,24 @@ export default defineComponent({
                   }
                 });
                 if (this.overview.length === 0) {
-                  this.noRows += `\nERROR[Prometheus Server] :: There is only inactive alerts for TrinityX Group.`;
+                  this.noRowsPrometheus = `<strong>[Prometheus Server] :: There is only inactive alerts for TrinityX Group.</strong>`;
                 }
               }
             });
 
           } else {
-            this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.`;
+            this.noRowsPrometheus = `<strong>[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.</strong>`;
             console.error("Error fetching rules:", response.status, response.data);
           }
         } catch (error: unknown) {
           if (error instanceof AxiosError) {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+            this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}</strong>`;
           } else if (error instanceof Error) {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+            this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error.message}</strong>`;
           }else {
-            this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+            this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error}</strong>`;
           }
+          this.noRowsTypePrometheus = 'danger';
         }
     }
       this.updateShowSpinner(false);
@@ -348,8 +356,8 @@ export default defineComponent({
     <span class="text-muted fw-light"> Monitoring /</span> Overview
     <button style="float: right;" type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']"  @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
   </h4>
-  <div v-if="noRows" class="alert alert-danger alert-dismissible" role="alert">
-    <pre>{{ noRows }}</pre>
+  <div v-if="noRowsPrometheus && !overview.length" :class="['alert', 'alert-'+noRowsTypePrometheus, 'alert-dismissible']" role="alert">
+     <pre v-html="noRowsPrometheus" style="font-size: larger; margin-bottom: 0rem;"></pre>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   <div :class="showContainerClass ? 'container-xxl flex-grow-1 container-p-y' : ''">

@@ -136,8 +136,10 @@ export default defineComponent({
       selectedRows: [] as Array<{ alert: string; hostname: string }>,
       rows: [] as {alert: string; nhc: boolean; state: string; severity: keyof typeof severity_order; eventTime: string; hostname: string; exporter: string; job: string; rule: AlertRules[]; alerts: Alerts[]; }[],
       alerts: [],
-      noRows: '',
-      noRowsType: '',
+      noRowsAlertManager: '',
+      noRowsPrometheus: '',
+      noRowsTypeAlertManager: '',
+      noRowsTypePrometheus: '',
       showPopup: false,
       intervalId: null as number | null,
       autoReload: true,
@@ -292,21 +294,28 @@ export default defineComponent({
         }
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error.message}: CODE:${error.code} URL:${error.config?.url}</strong>`;
         } else if (error instanceof Error) {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error.message}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error.message}</strong>`;
         }else {
-          this.noRows += `\nERROR[Prometheus Server] :: ${error}`;
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error}</strong>`;
         }
-        this.noRowsType = 'danger';
+        this.noRowsTypePrometheus = 'danger';
       }
 
-      this.noRows = '';
-      if (this.dataFrom === "" || this.dataFrom === "Alert Manager") {
+      if (this.dataFrom === "" || this.dataFrom === "Alert Manager" || this.noRowsAlertManager !== '') {
+        const url = new URL(this.alertURL);
+          url.username = '';
+          url.password = '';
+          const sanitizedUrl = url.href;
       if (this.alertURL.includes("http")) {
+        
+
         try {
           const alert_manager_Url = `${this.url}/proxy?url=${this.alertURL}`;
           const alert_manager = await axios.get(alert_manager_Url, { timeout: 5000 });
+
+          
 
           if (alert_manager.status === 200) {
             alert_manager.data.forEach((alert: AlertManager) => {
@@ -337,31 +346,34 @@ export default defineComponent({
               }
 
             });
-            alertData = true;
+            this.noRowsAlertManager = '';
+            this.noRowsTypeAlertManager = '';
             if (this.rows.length === 0){
-              this.noRows += `INFO[Alert Manager] ::There is no alerts coming from Alert Manager [${this.alertURL}].`;
-              this.noRowsType = 'info';
-            } //else { alertData = true; }
+              this.noRowsAlertManager = `<strong>[Alert Manager] :: There is no alerts coming from Alert Manager, so falling back to Promethues Data to get the Alerts. \n\t [${sanitizedUrl}].</strong>`;
+              this.noRowsTypeAlertManager = 'info';
+            } else { alertData = true; }
           } else {
-            this.noRows += `\nERROR[Alert Manager] :: Error fetching Alerts from [${this.alertURL}] Status: ${alert_manager.status}.`;
-            this.noRowsType = 'warning';
+            this.noRowsAlertManager = `<strong>[Alert Manager] :: Error fetching Alerts from [${sanitizedUrl}] Status: ${alert_manager.status}.</strong>`;
+            this.noRowsTypeAlertManager = 'warning';
           }
         } catch (error: unknown) {
           if (error instanceof Error) {
-            this.noRows += `\nERROR[Alert Manager] :: ${error.message}: ${this.alertURL}`;
+            this.noRowsAlertManager = `<strong>[Alert Manager] :: Could not read from Alert Manager: \n\t ${error.message}: ${sanitizedUrl}`;
+            this.noRowsAlertManager += `\n\t Please ensure Alert Manager service is running and the port can be reachable.`;
+            this.noRowsAlertManager += `\n\t Falling back to Prometheus data.</strong>`;
           } else {
-            this.noRows += `\nERROR[Alert Manager] :: ${error}`;
+            this.noRowsAlertManager = `<strong>[Alert Manager] :: ${error}</strong>`;
           }
-          this.noRowsType = 'danger';
+          this.noRowsTypeAlertManager = 'danger';
         }
       } else {
-        this.noRows += `\nERROR[Alert Manager] :: URL is incorrect: ${this.alertURL}`;
-        this.noRowsType = 'danger';
+        this.noRowsAlertManager = `<strong>[Alert Manager] :: URL is incorrect: ${sanitizedUrl}</strong>`;
+        this.noRowsTypeAlertManager = 'danger';
       }
     }
     
       if (alertData === false) {
-        if (this.dataFrom === "" || this.dataFrom === "Prometheus") {
+        if (this.dataFrom === "" || this.dataFrom === "Prometheus" || this.noRowsAlertManager !== '') {
           
         if (alert_groups.length !== 0) {
           alert_groups.forEach((group: Prometheus) => {
@@ -394,15 +406,12 @@ export default defineComponent({
             });
           });
         } else {
-          this.noRows += `\nERROR[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI}.`;
-          this.noRowsType = 'danger';
+          this.noRowsPrometheus = `<strong>[Prometheus Server] :: Could not read from Prometheus Server: URL: ${this.statusAPI}`;
+          this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
+          this.noRowsTypePrometheus = 'danger';
+          this.dataFrom = "";
         }
-        // if (this.rows.length === 0){
-        //   console.log(this.noRows);
-        //   this.noRows += `\nERROR[Prometheus Server] :: There is no firing alerts for TrinityX Group.`;
-        //   this.noRowsType = 'info';
-        //   // this.noRowsType = true;
-        // }
+
       }
     }
       this.updateShowSpinner(false);
@@ -461,8 +470,10 @@ export default defineComponent({
     toggleData() {
       if (this.dataFrom === 'Alert Manager') {
         this.dataFrom = 'Prometheus';
-      } else {
+      } else if (this.dataFrom === 'Prometheus') {
         this.dataFrom = 'Alert Manager';
+      } else {
+        this.dataFrom = '';
       }
       this.fetchAlerts();
     },
@@ -477,7 +488,10 @@ export default defineComponent({
   <AlertsSilence v-if="dataFrom === 'Alert Manager'" :alerts="selectedRows" :silenceAPI="`${url}/proxy_post?url=${silenceAPI}`" modalId="silenceAlerts" @silence-message="handleSilenceMessage" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
   <h4 class="fw-bold py-3 mb-4">
     <div class="d-flex justify-content-between align-items-center">
-      <div>
+      <div v-if="dataFrom">
+        <span class="text-muted fw-light"> Monitoring / Alerts /</span> {{ dataFrom }}
+      </div>
+      <div v-else>
         <span class="text-muted fw-light"> Monitoring /</span> Alerts
       </div>
       <div class="d-flex">
@@ -487,8 +501,12 @@ export default defineComponent({
     </div>
   </div>
   </h4>
-  <div v-if="noRows && !rows.length" :class="['alert', 'alert-'+noRowsType, 'alert-dismissible']" role="alert">
-    <pre style="font-weight: bold; font-size: larger;">{{ noRows }}</pre>
+  <div v-if="noRowsAlertManager || dataFrom === 'Alert Manager'" :class="['alert', 'alert-'+noRowsTypeAlertManager, 'alert-dismissible']" role="alert">
+    <pre v-if="noRowsAlertManager" v-html="noRowsAlertManager" style="font-size: larger; margin-bottom: 0rem;"></pre>
+    <button v-if="noRowsAlertManager" type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <div v-if="noRowsPrometheus && !rows.length" :class="['alert', 'alert-'+noRowsTypePrometheus, 'alert-dismissible']" role="alert">
+     <pre v-html="noRowsPrometheus" style="font-size: larger; margin-bottom: 0rem;"></pre>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
   <div v-if="rows.length">
