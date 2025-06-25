@@ -1,182 +1,109 @@
 <script setup lang="ts">
 import { ref, computed, reactive, toRaw, watch } from 'vue';
-// import CodeMirrorEditor from '@/components/CodeMirrorEditor.vue';
-// import PromQLEditor from './PromQLEditor.vue';
-// import jsyaml from 'js-yaml';
-
-// interface Row {
-//   alert: string;
-//   annotations: {
-//     description: string;
-//   };
-//   expr: string;
-//   for: string;
-//   labels: {
-//     category: string;
-//     disabled: boolean;
-//     nhc: boolean;
-//     severity: string;
-//   };
-// }
-
-// const props = defineProps({
-//   configType: {
-//     type: String,
-//     required: true,
-//   },
-//   url: {
-//     type: String,
-//     required: true,
-//   },
-//   promQLurl: {
-//     type: String,
-//     required: true,
-//   },
-//   configuration: Object,
-//   save_configuration: {
-//     type: Function,
-//     required: true,
-//   },
-//   updateClass: Function,
-//   ruleRow: Function,
-//   row: {
-//     type: Object as () => Row,
-//     required: true,
-//   },
-//   index: {
-//     type: Number,
-//     required: true
-//   },
-//   selectedClass: String,
-// });
-
-// const new_config = props.configuration;
-
-// // Centralized state for rule data
-// const ruleData = reactive({
-//   alert: props.row.alert,
-//   annotations: { description: props.row.annotations.description },
-//   expr: props.row.expr,
-//   for: props.row.for || '',
-//   labels: {
-//     category: props.configType === 'generic' ? 'generic' : 'service',
-//     disabled: props.row.labels.disabled || false,
-//     nhc: props.row.labels.nhc,
-//     severity: props.row.labels.severity
-//   },
-// });
-
-// watch(
-//   () => props.row,
-//   (newRow) => {
-//     ruleData.alert = newRow.alert;
-//     ruleData.annotations.description = newRow.annotations.description;
-//     ruleData.expr = newRow.expr;
-//     ruleData.for = newRow.for || '';
-//     ruleData.labels.disabled = newRow.labels.disabled || false;
-//     ruleData.labels.nhc = newRow.labels.nhc;
-//     ruleData.labels.category = newRow.labels.category || props.index === 0 ? (props.configType === 'generic' ? 'generic' : 'service') : props.row.labels.category;
-//     ruleData.labels.severity = newRow.labels.severity;
-//   },
-//   { deep: true, immediate: true } // Ensure deep watching and immediate reaction
-// );
+import axios, { AxiosError } from 'axios';
 
 
-// // Current mode (HTML, JSON, YAML)
-// const currentMode = ref<'HTML' | 'JSON' | 'YAML'>('HTML');
-
-// // Synchronize data from the HTML form
-// const syncFromHTML = () => {
-//   // ruleData is already reactive and bound to the form inputs via v-model
-// };
-
-// const emit = defineEmits(['toast']);
-
-// // Synchronize data from the CodeMirror editor
-// const syncFromCodeMirror = (content: string) => {
-//   try {
-//     if (currentMode.value === 'JSON') {
-//       Object.assign(ruleData, JSON.parse(content));
-//     } else if (currentMode.value === 'YAML') {
-//       Object.assign(ruleData, jsyaml.load(content));
-//     }
-//   } catch (err: unknown) {
-//     if (err instanceof Error) {
-//     emit('toast', {message: err.message, toastClass: 'bg-danger'});
-//     } else {
-//       emit('toast', {message: 'An unknown error occurred', toastClass: 'bg-danger'});
-//     }
-//   }
-// };
-
-// // Switch between modes
-// const switchMode = (mode: 'HTML' | 'JSON' | 'YAML') => {
-//   if (mode === currentMode.value){
-//     emit('toast', {message: `Error: Already in ${mode} Mode, no conversion needed`, toastClass: 'bg-warning'});
-//   } else{
-//     currentMode.value = mode;
-//   }
-// };
-
-// const serializedContent = computed(() => {
-//   if (currentMode.value === 'JSON') {
-//     return JSON.stringify(ruleData, null, 2);
-//   } else if (currentMode.value === 'YAML') {
-//     return jsyaml.dump(ruleData);
-//   }
-//   return '';
-// });
+interface activeTargets 
+  {
+    discoveredLabels: {
+      __address__: string;
+      __meta_filepath: string;
+      __metrics_path__: string;
+      __scheme__: string;
+      __scrape_interval__: string;
+      __scrape_timeout__: string;
+      exporter: string;
+      hostname: string;
+      job: string;
+      luna_group: string;
+    },
+    labels: {
+      exporter: string;
+      hostname: string;
+      instance: string;
+      job: string;
+      luna_group: string;
+    },
+    scrapePool: string;
+    scrapeUrl: string;
+    globalUrl: string;
+    lastError: string;
+    lastScrape: string;
+    lastScrapeDuration: number;
+    health: string;
+    scrapeInterval: string;
+    scrapeTimeout: string;
+  };
 
 
-// const updateRow = (row: object, count: number) => {
-//   if (new_config?.groups?.[0]?.rules && count >= 0 && count < new_config.groups[0].rules.length) {
-//     new_config.groups[0].rules[count] = row;
-//   } else {
-//     console.error('Invalid index or rules array not found');
-//   }
-// };
+const props = defineProps({
+  PrometheusServer: {
+    type: String,
+    required: true,
+  },
+  url: {
+    type: String,
+    required: true,
+  },
 
-// function update_configuration(count: number) {
-//   let error = false;
-//   if (ruleData.alert === ""){
-//     emit('toast', {message: 'Alert Name is required.', toastClass: 'bg-danger'});
-//     error = true;
-//   }
-//   if (ruleData.annotations.description === ""){
-//     emit('toast', {message: 'Alert Description is required.', toastClass: 'bg-danger'});
-//     error = true;
-//   }
-//   if (ruleData.expr === ""){
-//     emit('toast', {message: 'Alert Expression is required.', toastClass: 'bg-danger'});
-//     error = true;
-//   }
+});
 
-//   if (error === false){
-//     if (ruleData.for === ""){ ruleData.for = "null"; }
-//     const rule = toRaw(ruleData);
-//     if (count === 0){
-//       const add_rule_config = JSON.parse(JSON.stringify(props.configuration));
-//       if (add_rule_config?.groups?.[0]?.rules) {
-//         add_rule_config.groups[0].rules.push(rule);
-//       } else {
-//         console.error('Cannot add row: Invalid configuration structure');
-//       }
-//       props.save_configuration(props.configType, add_rule_config, `rule_modal_${props.configType}_${count}`)
+const PrometheusServer = new URL(props.PrometheusServer);
+PrometheusServer.pathname = '/api/v1/targets';
+PrometheusServer.searchParams.set('scrapePool', '');
+const PrometheusTarget = PrometheusServer.href;
+console.log('Prometheus Target URL:', PrometheusTarget);
 
-//     } else {
-//       updateRow(rule, count-1);
-//       props.save_configuration(props.configType, new_config, `rule_modal_${props.configType}_${count}`)
-//     }
-//   }
+let exporters = ref<string[]>([]);
+let luna_groups = ref<string[]>([]);
+let hostnames = ref<string[]>([]);
+const selectedFilterKey = ref('');
+const selectedGroup = ref('');
+const selectedHostname = ref('');
 
-// }
+async function fetchTarget() {
 
-// const getComputedDisabled = (status: boolean | undefined) => computed({
-//   get: () => status !== true,
-//   set: (value: boolean) => {
-//     if (value) { status = false; ruleData.labels.disabled = false; } else { status = true; ruleData.labels.disabled = true; }
-//   }
-// });
+      try {
+        const proxyUrl = `${props.url}/proxy?url=${PrometheusTarget}`;
+        const response = await axios.get(proxyUrl);
+        if (response.status === 200) {
+          const activeTargets = response.data.data.activeTargets;
+          console.log(response.status);
+          console.log(activeTargets);
+          activeTargets.forEach((target: activeTargets) => {
+            const group = target.labels?.luna_group;
+            const exporter = target.labels?.exporter;
+            const hostname = target.labels?.hostname;
+            if (group && !luna_groups.value.includes(group)) {
+              luna_groups.value.push(group);
+            }
+            if (exporter && !exporters.value.includes(exporter)) {
+              exporters.value.push(exporter);
+            }
+            if (hostname && !hostnames.value.includes(hostname)) {
+              hostnames.value.push(hostname);
+            }
+          });
+
+          console.log(luna_groups.value);
+          console.log(exporters.value);
+          console.log(hostnames.value);
+          
+        }
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          console.log(error.code);
+          console.log(error.message);
+        } else if (error instanceof Error) {
+          console.log(error.message);
+        }else {
+          console.log(error);
+        }
+      }
+
+    }
+
+fetchTarget();
 </script>
 
 <template>
@@ -251,19 +178,21 @@ import { ref, computed, reactive, toRaw, watch } from 'vue';
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Filter Key</label>
-                  <select class="form-select">
-                    <option selected disabled>Select filter key</option>
-                    <option>luna_group</option>
-                    <option>hostname</option>
+                  <select v-model=selectedFilterKey class="form-select">
+                    <option selected disabled value="">Select filter key</option>
+                    <option value="luna_group">luna_group</option>
+                    <option value="hostname">hostname</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Filter Value</label>
-                  <select class="form-select">
-                    <option selected disabled>Select filter value</option>
-                    <option>controller</option>
-                    <option>compute</option>
-                    <option>gpu</option>
+                  <select v-if="selectedFilterKey === 'luna_group'" v-model="selectedGroup" id="luna_group" class="form-select" :disabled="!luna_groups.length">
+                    <option selected disabled value="">Select Filter Value</option>
+                    <option v-for="group in luna_groups" :key="group" :value="group">{{ group }}</option>
+                  </select>
+                  <select v-if="selectedFilterKey === 'hostname'" v-model="selectedHostname" id="hostname" class="form-select" :disabled="!hostnames.length">
+                    <option selected disabled value="">Select Filter Value</option>
+                    <option v-for="hostname in hostnames" :key="hostname" :value="hostname">{{ hostname }}</option>
                   </select>
                 </div>
               </div>
