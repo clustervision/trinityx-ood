@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { type PropType } from 'vue';
 import EditConfig from '@/views/EditConfig.vue';
+import Wizard from '@/components/Wizard.vue';
 import RuleModals from '@/components/RuleModals.vue';
 import { ref, computed } from 'vue';
 import { Modal } from 'bootstrap';
@@ -108,6 +109,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
         <div class="table-responsive text-nowrap">
+          <Wizard />
           <RuleModals
             configType = "generic"
             :url = "url"
