@@ -32,7 +32,7 @@ import json
 from prettytable import PrettyTable
 from bs4 import BeautifulSoup
 from log import Log
-
+from constant import OVERRIDE_COLOR
 
 class Presenter():
     """
@@ -65,7 +65,7 @@ class Presenter():
         for tr in soup.find_all('tr'):
             tds = tr.find_all('td')
             if len(tds) > 1 and '*' in tds[1].get_text():
-                tr['class'] = tr.get('class', []) + ['table-success']
+                tr['class'] = tr.get('class', []) + [OVERRIDE_COLOR]
         return str(soup)
     
 
@@ -79,7 +79,7 @@ class Presenter():
             tds = tr.find_all('td')
             if tds and ('*' in tds[0].get_text(strip=True) or 'info' == tds[0].get_text(strip=True)):
                 existing_classes = tr.get('class', [])  
-                tr['class'] = list(set(existing_classes + ['table-success']))
+                tr['class'] = list(set(existing_classes + [OVERRIDE_COLOR]))
         return str(soup)
 
 
