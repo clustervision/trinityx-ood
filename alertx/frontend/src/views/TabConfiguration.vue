@@ -87,7 +87,11 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
 <template>
 
   <div class="container-xxl flex-grow-1 container-p-y" style="max-width: none">
-    <span style="float: right;">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="fw-bold py-3 mb-4">
+      <span class="text-muted fw-light"> Monitoring /</span> Generic Rules</h4>
+    
+      <div class="d-flex">
         <EditConfig
           configType = "generic"
           :rulesFile = "rulesFile"
@@ -95,11 +99,10 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
           :Content="Content"
           :ContentType="ContentType"
           @Toast="$emit('toast', $event)"
+          class="me-2"
         />
-      </span>
-    <h4 class="fw-bold py-3 mb-4">
-      <span class="text-muted fw-light"> Monitoring /</span> Generic Rules
-    </h4>
+      </div>
+    </div>
 
     <div class="card">
       <h5 class="card-header">Rules</h5>
