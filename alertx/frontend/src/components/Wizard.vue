@@ -57,6 +57,7 @@ console.log('Prometheus Target URL:', PrometheusTarget);
 let exporters = ref<string[]>([]);
 let luna_groups = ref<string[]>([]);
 let hostnames = ref<string[]>([]);
+const selectedCategory = ref('');
 const selectedFilterKey = ref('');
 const selectedGroup = ref('');
 const selectedHostname = ref('');
@@ -155,12 +156,10 @@ fetchTarget();
               <!-- Select category -->
               <div class="mb-3">
                 <label class="form-label">Select Category</label>
-                <select class="form-select">
-                  <option selected disabled>Select category</option>
-                  <option>node</option>
-                  <option>ipmi</option>
-                  <option>infiniband</option>
-                </select>
+                <select v-model="selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length">
+                    <option selected disabled value="">Select Category(Exporter)</option>
+                    <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
+                  </select>
               </div>
 
               <!-- Select metric -->
