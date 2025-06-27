@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, toRaw, watch } from 'vue';
+import { ref } from 'vue';
 import axios, { AxiosError } from 'axios';
 
 
@@ -35,12 +35,10 @@ interface activeTargets {
 };
 
 interface PrometheusMetrics {
-  // result: {
-    metric: {
-      __name__: string;
-    };
-    value: [number, string];
-  // }[];
+  metric: {
+    __name__: string;
+  };
+  value: [number, string];
 }[];
 
 
@@ -63,8 +61,7 @@ PrometheusTarget.searchParams.set('scrapePool', '');
 console.log('Prometheus Target URL:', PrometheusTarget);
 const PrometheusMetric = new URL(PrometheusServer.toString());
 PrometheusMetric.pathname = '/api/v1/query';
-// PrometheusMetric.searchParams.set('query', 'avg by (__name__) ({__name__=~".*", exporter=""})');
-// console.log('Prometheus Metric URL:', PrometheusMetric);
+
 
 let exporters = ref<string[]>([]);
 let luna_groups = ref<string[]>([]);
@@ -77,82 +74,77 @@ const selectedGroup = ref('');
 const selectedHostname = ref('');
 
 async function fetchTarget() {
-
-      try {
-        const proxyUrl = `${props.url}/proxy?url=${PrometheusTarget}`;
-        const response = await axios.get(proxyUrl);
-        if (response.status === 200) {
-          const activeTargets = response.data.data.activeTargets;
-          console.log(response.status);
-          console.log(activeTargets);
-          activeTargets.forEach((target: activeTargets) => {
-            const group = target.labels?.luna_group;
-            const exporter = target.labels?.exporter;
-            const hostname = target.labels?.hostname;
-            if (group && !luna_groups.value.includes(group)) {
-              luna_groups.value.push(group);
-            }
-            if (exporter && !exporters.value.includes(exporter)) {
-              exporters.value.push(exporter);
-            }
-            if (hostname && !hostnames.value.includes(hostname)) {
-              hostnames.value.push(hostname);
-            }
-          });
-
-          console.log(luna_groups.value);
-          console.log(exporters.value);
-          console.log(hostnames.value);
-          
+  try {
+    const proxyUrl = `${props.url}/proxy?url=${PrometheusTarget}`;
+    const response = await axios.get(proxyUrl);
+    if (response.status === 200) {
+      const activeTargets = response.data.data.activeTargets;
+      console.log(proxyUrl);
+      console.log(response.status);
+      console.log(activeTargets);
+      activeTargets.forEach((target: activeTargets) => {
+        const group = target.labels?.luna_group;
+        const exporter = target.labels?.exporter;
+        const hostname = target.labels?.hostname;
+        if (group && !luna_groups.value.includes(group)) {
+          luna_groups.value.push(group);
         }
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          console.log(error.code);
-          console.log(error.message);
-        } else if (error instanceof Error) {
-          console.log(error.message);
-        }else {
-          console.log(error);
+        if (exporter && !exporters.value.includes(exporter)) {
+          exporters.value.push(exporter);
         }
-      }
-
+        if (hostname && !hostnames.value.includes(hostname)) {
+          hostnames.value.push(hostname);
+        }
+      });
+      console.log(luna_groups.value);
+      console.log(exporters.value);
+      console.log(hostnames.value);
     }
-
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      console.log(error.code);
+      console.log(error.message);
+    } else if (error instanceof Error) {
+      console.log(error.message);
+    }else {
+      console.log(error);
+    }
+  }
+}
 fetchTarget();
 
+
 async function fetchMetrics(exporter: string) {
-  metrics.value = []; // Reset metrics array before fetching new metrics
-      PrometheusMetric.searchParams.set('query', `avg by (__name__) ({__name__=~".*", exporter="${exporter}"})`);
-      console.log('Prometheus Metric URL:', PrometheusMetric);
-      try {
-        const proxyUrl = `${props.url}/proxy?url=${PrometheusMetric}`;
-        const response = await axios.get(proxyUrl);
-        if (response.status === 200) {
-          const result = response.data.data.result;
-          console.log(response.status);
-          console.log(result);
-          result.forEach((MetricsResult: PrometheusMetrics) => {
-            const metric = MetricsResult.metric?.__name__;
-            if (metric && !metrics.value.includes(metric)) {
-              metrics.value.push(metric);
-            }
-          });
-
-          console.log(luna_groups.value);
-          
+  metrics.value = [];
+  PrometheusMetric.searchParams.set('query', `avg by (__name__) ({__name__=~".*", exporter="${exporter}"})`);
+  try {
+    const proxyUrl = `${props.url}/proxy?url=${PrometheusMetric}`;
+    const response = await axios.get(proxyUrl);
+    if (response.status === 200) {
+      const result = response.data.data.result;
+      console.log(proxyUrl);
+      console.log(response.status);
+      console.log(result);
+      result.forEach((MetricsResult: PrometheusMetrics) => {
+        const metric = MetricsResult.metric?.__name__;
+        if (metric && !metrics.value.includes(metric)) {
+          metrics.value.push(metric);
         }
-      } catch (error: unknown) {
-        if (error instanceof AxiosError) {
-          console.log(error.code);
-          console.log(error.message);
-        } else if (error instanceof Error) {
-          console.log(error.message);
-        }else {
-          console.log(error);
-        }
-      }
-
+      });
+      console.log(luna_groups.value);
     }
+  } catch (error: unknown) {
+    if (error instanceof AxiosError) {
+      console.log(error.code);
+      console.log(error.message);
+    } else if (error instanceof Error) {
+      console.log(error.message);
+    }else {
+      console.log(error);
+    }
+  }
+
+}
 
 </script>
 
@@ -172,10 +164,10 @@ async function fetchMetrics(exporter: string) {
               <div class="mb-3">
                 <label class="form-label">Per-Metric</label>
                 <select class="form-select">
-                  <option selected disabled>Select metric type</option>
-                  <option>per-GPU</option>
-                  <option>per-Disk</option>
-                  <option>per-NIC</option>
+                  <option selected disabled value="">Select metric type</option>
+                  <option value="per-GPU">per-GPU</option>
+                  <option value="per-Disk">per-Disk</option>
+                  <option value="per-NIC">per-NIC</option>
                 </select>
               </div>
 
@@ -184,20 +176,22 @@ async function fetchMetrics(exporter: string) {
                 <div class="col-md-6">
                   <label class="form-label">Group Granularity</label>
                   <select class="form-select">
-                    <option selected disabled>Select granularity</option>
-                    <option>per-metric</option>
-                    <option>per-hostname</option>
-                    <option>per-group</option>
-                    <option>global</option>
+                    <option selected disabled value="">Select granularity</option>
+                    <option value="per-metric">per-metric</option>
+                    <option value="per-hostname">per-hostname</option>
+                    <option value="per-group">per-group</option>
+                    <option value="global">global</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Grouping Operator</label>
                   <select class="form-select">
-                    <option selected disabled>Select operator</option>
-                    <option>max</option>
-                    <option>min</option>
-                    <option>avg</option>
+                    <option selected disabled value="">Select operator</option>
+                    <option value="max">max</option>
+                    <option value="min">min</option>
+                    <option value="avg">avg</option>
+                    <option value="sum">sum</option>
+                    <option value="count">count</option>
                   </select>
                 </div>
               </div>
@@ -247,12 +241,12 @@ async function fetchMetrics(exporter: string) {
               <div class="mb-3">
                 <label class="form-label">Select Operator</label>
                 <select class="form-select">
-                  <option selected disabled>Select comparison</option>
-                  <option>&gt;</option>
-                  <option>&lt;</option>
-                  <option>&gt;=</option>
-                  <option>&lt;=</option>
-                  <option>=</option>
+                  <option selected disabled value="">Select comparison</option>
+                  <option value=">">&gt;</option>
+                  <option value="<">&lt;</option>
+                  <option value=">=">&gt;=</option>
+                  <option value="<=">&lt;=</option>
+                  <option value="=">=</option>
                 </select>
               </div>
 
