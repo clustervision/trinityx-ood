@@ -203,22 +203,22 @@ async function fetchMetrics(exporter: string) {
               </div>
 
               <!-- Select category -->
-              <!-- <div class="mb-3">
+              <div class="mb-3">
                 <label class="form-label">Select Category</label>
                 <select v-model="selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length" @change="() => fetchMetrics(selectedCategory)">
                     <option selected disabled value="">Select Category(Exporter)</option>
                     <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
                   </select>
-              </div> -->
+              </div>
 
               <!-- Select metric -->
-              <!-- <div class="mb-3">
+              <div class="mb-3">
                 <label class="form-label">Select Metric</label>
                 <select v-if="metrics.length" v-model="selectedMetrics" id="metrics" class="form-select" :disabled="!metrics.length">
                     <option selected disabled value="">Select Metric</option>
                     <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
                   </select>
-              </div> -->
+              </div>
 
               <!-- Filter key & value -->
               <div class="row mb-3">
