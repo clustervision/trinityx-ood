@@ -3,37 +3,45 @@ import { ref, computed, reactive, toRaw, watch } from 'vue';
 import axios, { AxiosError } from 'axios';
 
 
-interface activeTargets 
-  {
-    discoveredLabels: {
-      __address__: string;
-      __meta_filepath: string;
-      __metrics_path__: string;
-      __scheme__: string;
-      __scrape_interval__: string;
-      __scrape_timeout__: string;
-      exporter: string;
-      hostname: string;
-      job: string;
-      luna_group: string;
-    },
-    labels: {
-      exporter: string;
-      hostname: string;
-      instance: string;
-      job: string;
-      luna_group: string;
-    },
-    scrapePool: string;
-    scrapeUrl: string;
-    globalUrl: string;
-    lastError: string;
-    lastScrape: string;
-    lastScrapeDuration: number;
-    health: string;
-    scrapeInterval: string;
-    scrapeTimeout: string;
-  };
+interface activeTargets {
+  discoveredLabels: {
+    __address__: string;
+    __meta_filepath: string;
+    __metrics_path__: string;
+    __scheme__: string;
+    __scrape_interval__: string;
+    __scrape_timeout__: string;
+    exporter: string;
+    hostname: string;
+    job: string;
+    luna_group: string;
+  },
+  labels: {
+    exporter: string;
+    hostname: string;
+    instance: string;
+    job: string;
+    luna_group: string;
+  },
+  scrapePool: string;
+  scrapeUrl: string;
+  globalUrl: string;
+  lastError: string;
+  lastScrape: string;
+  lastScrapeDuration: number;
+  health: string;
+  scrapeInterval: string;
+  scrapeTimeout: string;
+};
+
+interface PrometheusMetrics {
+  // result: {
+    metric: {
+      __name__: string;
+    };
+    value: [number, string];
+  // }[];
+}[];
 
 
 const props = defineProps({
@@ -49,15 +57,21 @@ const props = defineProps({
 });
 
 const PrometheusServer = new URL(props.PrometheusServer);
-PrometheusServer.pathname = '/api/v1/targets';
-PrometheusServer.searchParams.set('scrapePool', '');
-const PrometheusTarget = PrometheusServer.href;
+const PrometheusTarget = new URL(PrometheusServer.toString());
+PrometheusTarget.pathname = '/api/v1/targets';
+PrometheusTarget.searchParams.set('scrapePool', '');
 console.log('Prometheus Target URL:', PrometheusTarget);
+const PrometheusMetric = new URL(PrometheusServer.toString());
+PrometheusMetric.pathname = '/api/v1/query';
+// PrometheusMetric.searchParams.set('query', 'avg by (__name__) ({__name__=~".*", exporter=""})');
+// console.log('Prometheus Metric URL:', PrometheusMetric);
 
 let exporters = ref<string[]>([]);
 let luna_groups = ref<string[]>([]);
 let hostnames = ref<string[]>([]);
+let metrics = ref<string[]>([]);
 const selectedCategory = ref('');
+const selectedMetrics = ref('');
 const selectedFilterKey = ref('');
 const selectedGroup = ref('');
 const selectedHostname = ref('');
@@ -105,6 +119,41 @@ async function fetchTarget() {
     }
 
 fetchTarget();
+
+async function fetchMetrics(exporter: string) {
+  metrics.value = []; // Reset metrics array before fetching new metrics
+      PrometheusMetric.searchParams.set('query', `avg by (__name__) ({__name__=~".*", exporter="${exporter}"})`);
+      console.log('Prometheus Metric URL:', PrometheusMetric);
+      try {
+        const proxyUrl = `${props.url}/proxy?url=${PrometheusMetric}`;
+        const response = await axios.get(proxyUrl);
+        if (response.status === 200) {
+          const result = response.data.data.result;
+          console.log(response.status);
+          console.log(result);
+          result.forEach((MetricsResult: PrometheusMetrics) => {
+            const metric = MetricsResult.metric?.__name__;
+            if (metric && !metrics.value.includes(metric)) {
+              metrics.value.push(metric);
+            }
+          });
+
+          console.log(luna_groups.value);
+          
+        }
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          console.log(error.code);
+          console.log(error.message);
+        } else if (error instanceof Error) {
+          console.log(error.message);
+        }else {
+          console.log(error);
+        }
+      }
+
+    }
+
 </script>
 
 <template>
@@ -154,24 +203,22 @@ fetchTarget();
               </div>
 
               <!-- Select category -->
-              <div class="mb-3">
+              <!-- <div class="mb-3">
                 <label class="form-label">Select Category</label>
-                <select v-model="selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length">
+                <select v-model="selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length" @change="() => fetchMetrics(selectedCategory)">
                     <option selected disabled value="">Select Category(Exporter)</option>
                     <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
                   </select>
-              </div>
+              </div> -->
 
               <!-- Select metric -->
-              <div class="mb-3">
+              <!-- <div class="mb-3">
                 <label class="form-label">Select Metric</label>
-                <select class="form-select">
-                  <option selected disabled>Select metric</option>
-                  <option>temperature</option>
-                  <option>fan_speed</option>
-                  <option>power_usage</option>
-                </select>
-              </div>
+                <select v-if="metrics.length" v-model="selectedMetrics" id="metrics" class="form-select" :disabled="!metrics.length">
+                    <option selected disabled value="">Select Metric</option>
+                    <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
+                  </select>
+              </div> -->
 
               <!-- Filter key & value -->
               <div class="row mb-3">
