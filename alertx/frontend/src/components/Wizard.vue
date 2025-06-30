@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import axios, { AxiosError } from 'axios';
 
 
@@ -71,6 +71,10 @@ function goNext() {
   if (currentIndex.value < tabs.value.length - 1) {
     updateTab(currentIndex.value + 1);
   } else {
+
+
+    submitForm();
+
     alert("Wizard Complete!");
   }
 }
@@ -218,6 +222,51 @@ async function fetchMetrics(exporter: string) {
 
 }
 
+
+interface WidgetForm {
+  rule_name: string;
+  rule_description: string;
+  rule_for: string;
+  rule_category: string;
+  rule_status: boolean;
+  rule_nhc: boolean;
+  rule_severity: string;
+  group_granularity?: string;
+  grouping_operator?: string;
+  threshold?: number;
+  selectedCategory?: string;
+  selectedMetrics?: string;
+  selectedFilterKey?: string;
+  selectedGroup?: string;
+  selectedHostname?: string;
+}
+
+const form = reactive<WidgetForm>({
+  rule_name: '',
+  rule_description: '',
+  rule_for: '',
+  rule_category: '',
+  rule_status: false,
+  rule_nhc: false,
+  rule_severity: '',
+  group_granularity: '',
+  grouping_operator: '',
+  threshold: 0,
+  selectedCategory: '',
+  selectedMetrics: '',
+  selectedFilterKey: '',
+  selectedGroup: '',
+  selectedHostname: '',
+});
+function submitForm() {
+  console.log(form); // full reactive object
+  // Send via axios
+  // axios.post('/api/rules', form)
+}
+
+
+
+
 </script>
 <style>
 #wizardTabs {
@@ -291,30 +340,33 @@ async function fetchMetrics(exporter: string) {
 
             <!-- Tab content with fixed height -->
             <div class="tab-content border border-top-0 p-3" id="wizardTabContent" style="height: 500px; overflow-y: auto;">
+              <!-- class="needs-validation" novalidate -->
+              <!-- <form id="wizardForm" > -->
+              
               <div class="tab-pane fade show active" id="step1" role="tabpanel">
                 <h2 class="mb-4">Basic Rule Information</h2>
                 <div class="row g-6">
                   <div class="col mb-0">
                     <label for="rule_name" class="form-label">Rule Name</label>
-                    <input type="text" id="rule_name" class="form-control" placeholder="Enter Rule Name" required/>
+                    <input type="text" v-model="form.rule_name" id="rule_name" class="form-control" placeholder="Enter Rule Name" required/>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col mb-6">
                     <label for="rule_description" class="form-label">Rule Description</label>
-                    <input type="text" id="rule_description" class="form-control" required placeholder="Enter Rule Description" />
+                    <textarea v-model="form.rule_description" id="rule_description" class="form-control" rows="3" required placeholder="Enter Rule Description"></textarea>
                   </div>
                 </div>
                 <div class="row">
                   <div class="col mb-0">
                     <label for="rule_for" class="form-label">Rule For</label>
-                    <input type="text" id="rule_for" class="form-control" placeholder="Enter Rule For"  />
+                    <input type="text" v-model="form.rule_for" id="rule_for" class="form-control" placeholder="Enter Rule For"  />
                   </div>
                 </div>
                 <div class="row">
                   <div class="col mb-6">
                     <label for="rule_category" class="form-label">Rule Category</label>
-                    <select id="rule_category" class="form-select">
+                    <select v-model="form.rule_category" id="rule_category" class="form-select">
                       <option class="btn-primary" value="">Set Category</option>
                       <option class="btn-info" value="generic">Generic</option>
                       <option class="btn-warning" value="service">Service</option>
@@ -324,20 +376,20 @@ async function fetchMetrics(exporter: string) {
                   <div class="col mb-0">
                     <label for="rule_status" class="form-label">Enable</label>
                     <div class="form-check form-switch ">
-                      <input type="checkbox" id="rule_status" class="form-check-input" />
-                      <label id="rule_status_label" for="rule_status" class="form-check-label">ON</label>
+                      <input v-model="form.rule_status" type="checkbox" id="rule_status" class="form-check-input" />
+                      <label id="rule_status_label" for="rule_status" class="form-check-label">{{ form.rule_status ? 'ON' : 'OFF' }}</label>
                     </div>
                   </div>
                   <div class="col mb-6">
                     <label for="rule_nhc" class="form-label">Rule NHC</label>
                     <div class="form-check form-switch ">
-                      <input type="checkbox" id="rule_nhc" class="form-check-input" data-toggle="switch" true-value=true false-value=false />
-                      <label id="rule_nhc_label" for="rule_nhc" class="form-check-label">ON</label>
+                      <input v-model="form.rule_nhc" type="checkbox" id="rule_nhc" class="form-check-input"/>
+                      <label id="rule_nhc_label" for="rule_nhc" class="form-check-label">{{ form.rule_nhc ? 'ON' : 'OFF' }}</label>
                     </div>
                   </div>
                   <div class="col mb-6">
                     <label for="rule_severity" class="form-label">Set Severity</label>
-                    <select id="rule_severity" class="form-select">
+                    <select v-model="form.rule_severity" id="rule_severity" class="form-select">
                       <option class="btn-primary" value="">Set Severity</option>
                       <option class="btn-dark" value="critical">Critical</option>
                       <option class="btn-danger" value="danger">Danger</option>
@@ -348,11 +400,121 @@ async function fetchMetrics(exporter: string) {
                 </div>
                 
               </div>
-              <div class="tab-pane fade" id="step2" role="tabpanel">Step 2 content here.</div>
-              <div class="tab-pane fade" id="step3" role="tabpanel">Step 3 content here.</div>
-              <div class="tab-pane fade" id="step4" role="tabpanel">Step 4 content here.</div>
-              <div class="tab-pane fade" id="test" role="tabpanel">Test stage content.</div>
-              <div class="tab-pane fade" id="finish" role="tabpanel">Finish content. You're done!</div>
+
+              <div class="tab-pane fade" id="step2" role="tabpanel">
+              <h2 class="mb-4">Grouping the Metrics</h2>
+              <p class="text-muted mb-4">Optional</p>
+                
+                <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Group Granularity</label>
+                  <select v-model="form.group_granularity" class="form-select">
+                    <option selected disabled value="">Select granularity</option>
+                    <option value="per-metric">per-metric</option>
+                    <option value="per-hostname">per-hostname</option>
+                    <option value="per-group">per-group</option>
+                    <option value="global">global</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Grouping Operator</label>
+                  <select v-model="form.grouping_operator" class="form-select">
+                    <option selected disabled value="">Select operator</option>
+                    <option value="max">max</option>
+                    <option value="min">min</option>
+                    <option value="avg">avg</option>
+                    <option value="sum">sum</option>
+                    <option value="count">count</option>
+                  </select>
+                </div>
+              </div>
+
+
+              </div>
+
+
+              <div class="tab-pane fade" id="step3" role="tabpanel">
+
+                <h2 class="mb-4">Select Metrics</h2>
+                <p class="text-muted mb-4">Select the exporter and metric to monitor.</p>
+                <div class="mb-3">
+                  <label class="form-label">Select Category</label>
+                  <select v-model="form.selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length" @change="() => form.selectedCategory && fetchMetrics(form.selectedCategory)">
+                      <option selected disabled value="">Select Category(Exporter)</option>
+                      <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Select Metric</label>
+                  <select v-if="metrics.length" v-model="form.selectedMetrics" id="metrics" class="form-select" :disabled="!metrics.length">
+                      <option selected disabled value="">Select Metric</option>
+                      <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
+                    </select>
+                </div>
+              </div>
+
+            <!-- </form> -->
+              <div class="tab-pane fade" id="step4" role="tabpanel">
+                
+                <h2 class="mb-4">Filter Metrics</h2>
+                <p class="text-muted mb-4">Optional</p>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Filter Key</label>
+                    <select v-model="form.selectedFilterKey" class="form-select">
+                      <option selected disabled value="">Select filter key</option>
+                      <option value="luna_group">luna_group</option>
+                      <option value="hostname">hostname</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Filter Value</label>
+                    <select v-if="form.selectedFilterKey === 'luna_group'" v-model="form.selectedGroup" id="luna_group" class="form-select" :disabled="!luna_groups.length">
+                      <option selected disabled value="">Select Filter Value</option>
+                      <option v-for="group in luna_groups" :key="group" :value="group">{{ group }}</option>
+                    </select>
+                    <select v-if="form.selectedFilterKey === 'hostname'" v-model="form.selectedHostname" id="hostname" class="form-select" :disabled="!hostnames.length">
+                      <option selected disabled value="">Select Filter Value</option>
+                      <option v-for="hostname in hostnames" :key="hostname" :value="hostname">{{ hostname }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Select Operator</label>
+                  <select v-model="form.grouping_operator" class="form-select">
+                    <option selected disabled value="">Select comparison</option>
+                    <option value=">">&gt;</option>
+                    <option value="<">&lt;</option>
+                    <option value=">=">&gt;=</option>
+                    <option value="<=">&lt;=</option>
+                    <option value="=">=</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Threshold</label>
+                  <input v-model="form.threshold" type="number" class="form-control" placeholder="Enter threshold value">
+                </div>
+              
+              </div>
+
+
+              <div class="tab-pane fade" id="test" role="tabpanel">
+                
+                <h2 class="mb-4">Test stage content.</h2>
+                <p class="text-muted mb-4">Test the rule with the selected metrics and filters.</p>
+              
+              
+              </div>
+
+
+              <div class="tab-pane fade" id="finish" role="tabpanel">
+
+                <h2 class="mb-4">Finish stage content.</h2>
+                <p class="text-muted mb-4">You're done! Review your settings and save the rule.</p>
+              </div>
             </div>
 
             <!-- Navigation buttons -->
@@ -364,99 +526,6 @@ async function fetchMetrics(exporter: string) {
             </div>
             </div>
           </div>
-
-
-
-
-
-
-
-
-
-          <!-- <div class="container">
-            <h3 class="mb-4">Create Monitoring Rule</h3>
-            <form>
-              
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <label class="form-label">Group Granularity</label>
-                  <select class="form-select">
-                    <option selected disabled value="">Select granularity</option>
-                    <option value="per-metric">per-metric</option>
-                    <option value="per-hostname">per-hostname</option>
-                    <option value="per-group">per-group</option>
-                    <option value="global">global</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Grouping Operator</label>
-                  <select class="form-select">
-                    <option selected disabled value="">Select operator</option>
-                    <option value="max">max</option>
-                    <option value="min">min</option>
-                    <option value="avg">avg</option>
-                    <option value="sum">sum</option>
-                    <option value="count">count</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Select Category</label>
-                <select v-model="selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length" @change="() => fetchMetrics(selectedCategory)">
-                    <option selected disabled value="">Select Category(Exporter)</option>
-                    <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
-                  </select>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Select Metric</label>
-                <select v-if="metrics.length" v-model="selectedMetrics" id="metrics" class="form-select" :disabled="!metrics.length">
-                    <option selected disabled value="">Select Metric</option>
-                    <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
-                  </select>
-              </div>
-
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <label class="form-label">Filter Key</label>
-                  <select v-model=selectedFilterKey class="form-select">
-                    <option selected disabled value="">Select filter key</option>
-                    <option value="luna_group">luna_group</option>
-                    <option value="hostname">hostname</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">Filter Value</label>
-                  <select v-if="selectedFilterKey === 'luna_group'" v-model="selectedGroup" id="luna_group" class="form-select" :disabled="!luna_groups.length">
-                    <option selected disabled value="">Select Filter Value</option>
-                    <option v-for="group in luna_groups" :key="group" :value="group">{{ group }}</option>
-                  </select>
-                  <select v-if="selectedFilterKey === 'hostname'" v-model="selectedHostname" id="hostname" class="form-select" :disabled="!hostnames.length">
-                    <option selected disabled value="">Select Filter Value</option>
-                    <option v-for="hostname in hostnames" :key="hostname" :value="hostname">{{ hostname }}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Select Operator</label>
-                <select class="form-select">
-                  <option selected disabled value="">Select comparison</option>
-                  <option value=">">&gt;</option>
-                  <option value="<">&lt;</option>
-                  <option value=">=">&gt;=</option>
-                  <option value="<=">&lt;=</option>
-                  <option value="=">=</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Threshold</label>
-                <input type="number" class="form-control" placeholder="Enter threshold value">
-              </div>
-              </form>
-              </div> -->
         </div>
       </div>
     </div>
