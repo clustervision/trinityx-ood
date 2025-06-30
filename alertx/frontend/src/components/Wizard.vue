@@ -7,11 +7,36 @@ const currentIndex = ref(0);
 const tabs = ref<HTMLElement[]>([]);
 const nextBtn = ref<HTMLButtonElement | null>(null);
 const prevBtn = ref<HTMLButtonElement | null>(null);
+const showValidation = ref(false);
+
+function validateForm() {
+  if (currentIndex.value === 0) {
+    const ruleName = document.getElementById('rule_name') as HTMLInputElement;
+    const ruleDescription = document.getElementById('rule_description') as HTMLTextAreaElement;
+    const ruleFor = document.getElementById('rule_for') as HTMLInputElement;
+    const ruleCategory = document.getElementById('rule_category') as HTMLSelectElement;
+    const ruleStatus = document.getElementById('rule_status') as HTMLInputElement;
+    const ruleSeverity = document.getElementById('rule_severity') as HTMLSelectElement;
+
+    if (!ruleName.value || !ruleDescription.value || !ruleFor.value || !ruleCategory.value || !ruleSeverity.value) {
+      alert('Please fill all required fields in Step 1');
+      showValidation.value = true;
+      return false;
+    }
+    return true;
+  }
+  
+}
 
 /**
  * Sync tab display with current index
  */
-function updateTab(index: number) {
+function updateTab(formtab: boolean, index: number) {
+  if(formtab){
+    const isValid = validateForm();
+    if (!isValid) return;
+  }
+  
   if (index < 0 || index >= tabs.value.length) return;
 
   tabs.value[currentIndex.value].classList.remove('active');
@@ -52,7 +77,7 @@ onMounted(() => {
   prevBtn.value = document.getElementById('prevBtn') as HTMLButtonElement;
 
   // Initialize tab state
-  updateTab(currentIndex.value);
+  updateTab(false, currentIndex.value);
 });
 
 /**
@@ -60,7 +85,7 @@ onMounted(() => {
  */
 function goPrev() {
   if (currentIndex.value > 0) {
-    updateTab(currentIndex.value - 1);
+    updateTab(true, currentIndex.value - 1);
   }
 }
 
@@ -69,7 +94,7 @@ function goPrev() {
  */
 function goNext() {
   if (currentIndex.value < tabs.value.length - 1) {
-    updateTab(currentIndex.value + 1);
+    updateTab(true, currentIndex.value + 1);
   } else {
 
 
@@ -233,6 +258,7 @@ interface WidgetForm {
   rule_severity: string;
   group_granularity?: string;
   grouping_operator?: string;
+  aggregation_operator?: string;
   threshold?: number;
   selectedCategory?: string;
   selectedMetrics?: string;
@@ -240,7 +266,6 @@ interface WidgetForm {
   selectedGroup?: string;
   selectedHostname?: string;
 }
-
 const form = reactive<WidgetForm>({
   rule_name: '',
   rule_description: '',
@@ -251,6 +276,7 @@ const form = reactive<WidgetForm>({
   rule_severity: '',
   group_granularity: '',
   grouping_operator: '',
+  aggregation_operator: '',
   threshold: 0,
   selectedCategory: '',
   selectedMetrics: '',
@@ -258,13 +284,53 @@ const form = reactive<WidgetForm>({
   selectedGroup: '',
   selectedHostname: '',
 });
+// });
 function submitForm() {
   console.log(form); // full reactive object
   // Send via axios
   // axios.post('/api/rules', form)
+  const query = constructQuery();
+  console.log('Constructed Query:', query);
 }
 
 
+const granularityMap: Record<string, string> = {
+  'per-metric': '',              // no group
+  'per-hostname': 'hostname',
+  'per-group': 'luna_group',
+  'global': '',                  // treat as no `by (...)`
+};
+
+
+function constructQuery() {
+  if (!form.selectedMetrics) return '';
+
+  // Build filter
+  let filters = '';
+  if (form.selectedFilterKey && form.selectedGroup) {
+    filters = `{${form.selectedFilterKey}="${form.selectedGroup}"}`;
+  } else if (form.selectedFilterKey && form.selectedHostname) {
+    filters = `{${form.selectedFilterKey}="${form.selectedHostname}"}`;
+  }
+
+  // Default to no aggregation if not selected
+  const aggFn = form.aggregation_operator || ''; // e.g., avg, sum
+  const operator = form.grouping_operator || ''; // e.g., >=
+  const threshold = form.threshold ?? '';        // allow 0 and blank
+
+  // Grouping key map
+  const groupKey = granularityMap[form.group_granularity || ''] || '';
+  const byClause = groupKey ? ` by (${groupKey})` : '';
+
+  // If aggregation operator is missing, skip wrapping the metric
+  const metricWithFilters = `${form.selectedMetrics}${filters}`;
+  const leftExpr = aggFn ? `${aggFn}(${metricWithFilters})${byClause}` : metricWithFilters;
+
+  // Final query with optional threshold/operator
+  const query = operator && threshold !== '' ? `${leftExpr} ${operator} ${threshold}` : leftExpr;
+
+  return query;
+}
 
 
 </script>
@@ -348,7 +414,8 @@ function submitForm() {
                 <div class="row g-6">
                   <div class="col mb-0">
                     <label for="rule_name" class="form-label">Rule Name</label>
-                    <input type="text" v-model="form.rule_name" id="rule_name" class="form-control" placeholder="Enter Rule Name" required/>
+                    <input type="text" v-model="form.rule_name" id="rule_name" class="form-control" :class="{ 'is-invalid': !form.rule_name && showValidation }" placeholder="Enter Rule Name" required/>
+                    <div class="invalid-feedback">Rule name is required.</div>
                   </div>
                 </div>
                 <div class="row">
@@ -417,9 +484,9 @@ function submitForm() {
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Grouping Operator</label>
-                  <select v-model="form.grouping_operator" class="form-select">
-                    <option selected disabled value="">Select operator</option>
+                  <label class="form-label">Grouping Aggregation Operator</label>
+                  <select v-model="form.aggregation_operator" class="form-select">
+                    <option selected disabled value="">Select Aggregation Operator</option>
                     <option value="max">max</option>
                     <option value="min">min</option>
                     <option value="avg">avg</option>
@@ -482,9 +549,9 @@ function submitForm() {
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Select Operator</label>
+                  <label class="form-label">Grouping Operator</label>
                   <select v-model="form.grouping_operator" class="form-select">
-                    <option selected disabled value="">Select comparison</option>
+                    <option selected disabled value="">Select Grouping Comparison</option>
                     <option value=">">&gt;</option>
                     <option value="<">&lt;</option>
                     <option value=">=">&gt;=</option>
