@@ -19,7 +19,7 @@ function validateForm() {
     const ruleSeverity = document.getElementById('rule_severity') as HTMLSelectElement;
 
     if (!ruleName.value || !ruleDescription.value || !ruleFor.value || !ruleCategory.value || !ruleSeverity.value) {
-      alert('Please fill all required fields in Step 1');
+      // alert('Please fill all required fields in Step 1');
       showValidation.value = true;
       return false;
     }
@@ -427,7 +427,8 @@ function constructQuery() {
                 <div class="row">
                   <div class="col mb-0">
                     <label for="rule_for" class="form-label">Rule For</label>
-                    <input type="text" v-model="form.rule_for" id="rule_for" class="form-control" placeholder="Enter Rule For"  />
+                    <input type="text" v-model="form.rule_for" id="rule_for" class="form-control" :class="{ 'is-invalid': !form.rule_for && showValidation }" placeholder="Enter Rule For"  />
+                    <div class="invalid-feedback">Rule For is required.</div>
                   </div>
                 </div>
                 <div class="row">
