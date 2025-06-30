@@ -291,8 +291,8 @@ async function fetchMetrics(exporter: string) {
 
             <!-- Tab content with fixed height -->
             <div class="tab-content border border-top-0 p-3" id="wizardTabContent" style="height: 500px; overflow-y: auto;">
-              <div class="tab-pane fade show active" id="step1" role="tabpanel">Step 1 content here.
-                <!-- <h2 class="mb-4">Basic Rule Information</h2>
+              <div class="tab-pane fade show active" id="step1" role="tabpanel">
+                <h2 class="mb-4">Basic Rule Information</h2>
                 <div class="row g-6">
                   <div class="col mb-0">
                     <label for="rule_name" class="form-label">Rule Name</label>
@@ -346,7 +346,7 @@ async function fetchMetrics(exporter: string) {
                     </select>
                   </div>
                 </div>
-                 -->
+                
               </div>
               <div class="tab-pane fade" id="step2" role="tabpanel">Step 2 content here.</div>
               <div class="tab-pane fade" id="step3" role="tabpanel">Step 3 content here.</div>
