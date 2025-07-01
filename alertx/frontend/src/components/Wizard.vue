@@ -400,7 +400,7 @@ function submitForm() {
     expr: constructQuery() || '',
     labels: {
       category: form.rule_category === 'generic' ? 'generic' : 'service',
-      disabled: form.rule_status || false,
+      disabled: !form.rule_status,
       nhc: form.rule_nhc || false,
       severity: form.rule_severity || 'info'
     },
