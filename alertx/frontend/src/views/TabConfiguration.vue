@@ -109,7 +109,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
         <div class="table-responsive text-nowrap">
-          <Wizard :url = "url" :PrometheusServer = "promQLurl"/>
+          <Wizard :url="url" :PrometheusServer="promQLurl" configType="generic" :configuration="configuration" :save_configuration = "save_configuration" />
           <RuleModals
             configType = "generic"
             :url = "url"

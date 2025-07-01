@@ -1,108 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, toRaw, reactive } from 'vue';
 import axios, { AxiosError } from 'axios';
+import { Line } from 'vue-chartjs';
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale
+} from 'chart.js';
+ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
 
-
-const currentIndex = ref(0);
-const tabs = ref<HTMLElement[]>([]);
-const nextBtn = ref<HTMLButtonElement | null>(null);
-const prevBtn = ref<HTMLButtonElement | null>(null);
-const showValidation = ref(false);
-
-function validateForm() {
-  if (currentIndex.value === 0) {
-    const ruleName = document.getElementById('rule_name') as HTMLInputElement;
-    const ruleDescription = document.getElementById('rule_description') as HTMLTextAreaElement;
-    const ruleFor = document.getElementById('rule_for') as HTMLInputElement;
-    const ruleCategory = document.getElementById('rule_category') as HTMLSelectElement;
-    const ruleStatus = document.getElementById('rule_status') as HTMLInputElement;
-    const ruleSeverity = document.getElementById('rule_severity') as HTMLSelectElement;
-
-    if (!ruleName.value || !ruleDescription.value || !ruleFor.value || !ruleCategory.value || !ruleSeverity.value) {
-      // alert('Please fill all required fields in Step 1');
-      showValidation.value = true;
-      return false;
-    }
-    return true;
-  }
-  
-}
-
-/**
- * Sync tab display with current index
- */
-function updateTab(formtab: boolean, index: number) {
-  if(formtab){
-    const isValid = validateForm();
-    if (!isValid) return;
-  }
-  
-  if (index < 0 || index >= tabs.value.length) return;
-
-  tabs.value[currentIndex.value].classList.remove('active');
-  const currentTabPane = document.querySelector<HTMLElement>(tabs.value[currentIndex.value].dataset.bsTarget!);
-  currentTabPane?.classList.remove('show', 'active');
-
-  currentIndex.value = index;
-
-  tabs.value[currentIndex.value].classList.add('active');
-  const nextTabPane = document.querySelector<HTMLElement>(tabs.value[currentIndex.value].dataset.bsTarget!);
-  nextTabPane?.classList.add('show', 'active');
-
-  // Set previous tabs color (#ffca2c) and reset others to default color
-  tabs.value.forEach((tab, i) => {
-    if (i < currentIndex.value) {
-      tab.style.color = '#f8f9fa';  // Highlight previous tabs
-      tab.style.backgroundColor = '#ffca2c';
-    } else if (i === currentIndex.value) {
-      tab.style.color = '#f8f9fa';  // Current tab color (original blue)
-      tab.style.backgroundColor = '#0d6efd';
-    } else {
-      tab.style.color = '#f8f9fa'; // Reset to default (or inherit)
-      tab.style.backgroundColor = '#5c636a';
-    }
-  });
-  
-
-  if (prevBtn.value) prevBtn.value.disabled = currentIndex.value === 0;
-  if (nextBtn.value) nextBtn.value.innerText = currentIndex.value === tabs.value.length - 1 ? 'Finish' : 'Next';
-}
-
-/**
- * On DOM ready, bind buttons and load tabs
- */
-onMounted(() => {
-  tabs.value = Array.from(document.querySelectorAll<HTMLElement>('#wizardTabs .nav-link'));
-  nextBtn.value = document.getElementById('nextBtn') as HTMLButtonElement;
-  prevBtn.value = document.getElementById('prevBtn') as HTMLButtonElement;
-
-  // Initialize tab state
-  updateTab(false, currentIndex.value);
-});
-
-/**
- * Navigation: Previous
- */
-function goPrev() {
-  if (currentIndex.value > 0) {
-    updateTab(true, currentIndex.value - 1);
-  }
-}
-
-/**
- * Navigation: Next
- */
-function goNext() {
-  if (currentIndex.value < tabs.value.length - 1) {
-    updateTab(true, currentIndex.value + 1);
-  } else {
-
-
-    submitForm();
-
-    alert("Wizard Complete!");
-  }
-}
 
 interface activeTargets {
   discoveredLabels: {
@@ -142,6 +53,24 @@ interface PrometheusMetrics {
   value: [number, string];
 }[];
 
+interface WidgetForm {
+  rule_name: string;
+  rule_description: string;
+  rule_for: string;
+  rule_category: string;
+  rule_status: boolean;
+  rule_nhc: boolean;
+  rule_severity: string;
+  group_granularity?: string;
+  grouping_operator?: string;
+  aggregation_operator?: string;
+  threshold?: number;
+  selectedCategory?: string;
+  selectedMetrics?: string;
+  selectedFilterKey?: string;
+  selectedGroup?: string;
+  selectedHostname?: string;
+}
 
 const props = defineProps({
   PrometheusServer: {
@@ -152,27 +81,346 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  configType: {
+    type: String,
+    required: true,
+  },
+  configuration: Object,
+  save_configuration: {
+    type: Function,
+    required: true,
+  },
 
 });
+
+const form = reactive<WidgetForm>({
+  rule_name: '',
+  rule_description: '',
+  rule_for: '',
+  rule_category: props.configType,
+  rule_status: true,
+  rule_nhc: false,
+  rule_severity: 'info',
+  group_granularity: '',
+  grouping_operator: '',
+  aggregation_operator: '',
+  threshold: 0,
+  selectedCategory: '',
+  selectedMetrics: '',
+  selectedFilterKey: '',
+  selectedGroup: '',
+  selectedHostname: '',
+});
+
+const currentIndex = ref(0);
+const tabs = ref<HTMLElement[]>([]);
+const nextBtn = ref<HTMLButtonElement | null>(null);
+const prevBtn = ref<HTMLButtonElement | null>(null);
+const showValidation = ref(false);
 
 const PrometheusServer = new URL(props.PrometheusServer);
 const PrometheusTarget = new URL(PrometheusServer.toString());
 PrometheusTarget.pathname = '/api/v1/targets';
 PrometheusTarget.searchParams.set('scrapePool', '');
-console.log('Prometheus Target URL:', PrometheusTarget);
 const PrometheusMetric = new URL(PrometheusServer.toString());
 PrometheusMetric.pathname = '/api/v1/query';
-
 
 let exporters = ref<string[]>([]);
 let luna_groups = ref<string[]>([]);
 let hostnames = ref<string[]>([]);
 let metrics = ref<string[]>([]);
-const selectedCategory = ref('');
-const selectedMetrics = ref('');
-const selectedFilterKey = ref('');
-const selectedGroup = ref('');
-const selectedHostname = ref('');
+
+const granularityMap: Record<string, string> = {
+  'per-metric':   '',
+  'per-hostname': 'hostname',
+  'per-group':    'luna_group',
+  'global':       '',
+};
+
+function validateForm(): boolean {
+  const activePane = document.querySelector('.tab-pane.active');
+  if (!activePane) return false;
+
+  if (currentIndex.value === 0) {
+    const ruleName = activePane.querySelector('#rule_name') as HTMLInputElement;
+    const ruleFor = activePane.querySelector('#rule_for') as HTMLInputElement;
+    if (!ruleName?.value || !ruleFor?.value) {
+      showValidation.value = true;
+      return false;
+    }
+  } else if (currentIndex.value === 2) {
+    const selectedCategory = activePane.querySelector('#exporter') as HTMLSelectElement;
+    const selectedMetrics = activePane.querySelector('#metrics') as HTMLSelectElement;
+    if (!selectedCategory?.value || !selectedMetrics?.value) {
+      showValidation.value = true;
+      return false;
+    }
+  } else if (currentIndex.value === 3) {
+    const filter_key = activePane.querySelector('#filter_key') as HTMLSelectElement;
+    const grouping_operator = activePane.querySelector('#grouping_operator') as HTMLSelectElement;
+    const threshold = activePane.querySelector('#threshold') as HTMLInputElement;
+    if (!filter_key?.value) {
+      showValidation.value = true;
+      return false;
+    } else {
+      if (filter_key.value === 'luna_group') {
+        const selectedGroup = activePane.querySelector('#luna_group') as HTMLSelectElement;
+        if (!selectedGroup?.value) {
+          showValidation.value = true;
+          return false;
+        }
+      }
+      if (filter_key.value === 'hostname') {
+        const selectedHostname = activePane.querySelector('#hostname') as HTMLSelectElement;
+        if (!selectedHostname?.value) {
+          showValidation.value = true;
+          return false;
+        }
+      }
+    }
+
+    if (!grouping_operator?.value || String(threshold.value) === '') {
+      showValidation.value = true;
+      return false;
+    } 
+
+  }
+  // else if (currentIndex.value === 4) {
+  // runQueryValidation();
+  // }
+  showValidation.value = false;
+  return true;
+}
+const validationResult = ref<{ valid: boolean; error?: string; data?: any } | null>(null);
+
+async function runQueryValidation() {
+  validationResult.value = await validatePrometheusQuery();
+}
+async function validatePrometheusQuery() {
+  const Query = constructQuery();
+  if (!Query || Query.trim() === '') {
+    return { valid: false, error: 'Query cannot be empty' };
+  }
+  try {
+    const response = await axios.get(`${PrometheusMetric}`, {
+      params: { Query },
+    });
+    console.log(PrometheusMetric);
+    console.log(response.data);
+    console.log(response.data.status);
+    if (response.data.status === 'success') {
+      fetchGraphData();
+      return { valid: true, data: response.data.data };
+    } else {
+      return { valid: false, error: response.data.error };
+    }
+  } catch (err) {
+    let errorMsg = 'Unknown error';
+    if (err instanceof Error) {
+      errorMsg = err.message;
+    } else if (typeof err === 'string') {
+      errorMsg = err;
+    }
+    return { valid: false, error: errorMsg };
+  }
+}
+
+
+const chartData = ref<any>(null);
+const chartOptions = ref<any>({
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    title: { display: true, text: 'Prometheus Query Result' }
+  }
+});
+
+async function fetchGraphData() {
+  const now = Math.floor(Date.now() / 1000);
+  const start = now - 300; // last 5 minutes
+  const end = now;
+  const step = 15; // 15s resolution
+  const Query = constructQuery();
+  if (!Query || Query.trim() === '') {
+    return { valid: false, error: 'Query cannot be empty' };
+  }
+
+  try {
+    const response = await axios.get(`${PrometheusServer}api/v1/query_range`, {
+      params: {
+        query: Query,
+        start,
+        end,
+        step
+      }
+    });
+ console.log(`${PrometheusServer}api/v1/query_range`);
+    console.log(response.data);
+    console.log(response.data.status);
+    console.log(response.data.data);
+    console.log(response.data.data.result);
+    const result = response.data.data.result;
+
+    if (result.length === 0) {
+      chartData.value = {
+        labels: [],
+        datasets: []
+      };
+      return;
+    }
+
+    chartData.value = {
+      labels: result[0].values.map(([timestamp, _]: [number, string]) => new Date(timestamp * 1000).toLocaleTimeString()),
+      datasets: result.map((series: any) => ({
+        label: series.metric.luna_group || 'group',
+        data: series.values.map(([_, value]: [any, any]) => parseFloat(value)),
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        tension: 0.3,
+        fill: true
+      }))
+    };
+  } catch (error) {
+    console.error('Prometheus query error:', error);
+  }
+}
+
+
+/**
+ * Sync tab display with current index
+ */
+function updateTab(formtab: boolean, index: number) {
+  if(formtab){
+    const isValid = validateForm();
+    console.log(isValid);
+    if (!isValid) return;
+  }
+  
+  if (index < 0 || index >= tabs.value.length) return;
+
+  tabs.value[currentIndex.value].classList.remove('active');
+  const currentTabPane = document.querySelector<HTMLElement>(tabs.value[currentIndex.value].dataset.bsTarget!);
+  currentTabPane?.classList.remove('show', 'active');
+
+  currentIndex.value = index;
+
+  const currentTarget = tabs.value[currentIndex.value].dataset.bsTarget;
+  if (currentTarget === '#test') {
+    runQueryValidation();
+  }
+
+  tabs.value[currentIndex.value].classList.add('active');
+  const nextTabPane = document.querySelector<HTMLElement>(tabs.value[currentIndex.value].dataset.bsTarget!);
+  nextTabPane?.classList.add('show', 'active');
+
+  // Set previous tabs color (#ffca2c) and reset others to default color
+  tabs.value.forEach((tab, i) => {
+    if (i < currentIndex.value) {
+      tab.style.color = '#f8f9fa';  // Highlight previous tabs
+      tab.style.backgroundColor = '#ffca2c';
+    } else if (i === currentIndex.value) {
+      tab.style.color = '#f8f9fa';  // Current tab color (original blue)
+      tab.style.backgroundColor = '#0d6efd';
+    } else {
+      tab.style.color = '#f8f9fa'; // Reset to default (or inherit)
+      tab.style.backgroundColor = '#5c636a';
+    }
+  });
+
+  if (prevBtn.value) prevBtn.value.disabled = currentIndex.value === 0;
+  if (nextBtn.value) nextBtn.value.innerText = currentIndex.value === tabs.value.length - 1 ? 'Finish' : 'Next';
+}
+
+/**
+ * On DOM ready, bind buttons and load tabs
+ */
+onMounted(() => {
+  const modalEl = document.getElementById(`wizard_modal_${props.configType}`);
+  if (!modalEl) return;
+
+  modalEl.addEventListener('show.bs.modal', () => {
+    fetchTarget();
+    tabs.value = Array.from(modalEl.querySelectorAll<HTMLElement>('#wizardTabs .nav-link'));
+    // tabs.value = Array.from(document.querySelectorAll<HTMLElement>(`#wizard_modal_${props.configType} #wizardTabs .nav-link`));
+    // tabs.value = Array.from(document.querySelectorAll<HTMLElement>('#wizardTabs .nav-link'));
+    nextBtn.value = document.getElementById('nextBtn') as HTMLButtonElement;
+    prevBtn.value = document.getElementById('prevBtn') as HTMLButtonElement;
+    updateTab(false, currentIndex.value);
+  });
+
+});
+
+/**
+ * Navigation: Previous
+ */
+function goPrev() {
+  if (currentIndex.value > 0) {
+    updateTab(false, currentIndex.value - 1);
+  }
+}
+
+/**
+ * Navigation: Next
+ */
+function goNext() {
+  console.log('Current Index:', currentIndex.value);
+  console.log('Tabs Length:', tabs.value.length); 
+  console.log('Tabs Length:', tabs.value); 
+  if (currentIndex.value < tabs.value.length - 1) {
+    updateTab(true, currentIndex.value + 1);
+  } else {
+    submitForm();
+    // alert("Wizard Complete!");
+  }
+}
+
+interface RuleRow {
+  alert: string;
+  annotations: {
+    description: string;
+  };
+  expr: string;
+  for: string;
+  labels: {
+    category: string;
+    disabled: boolean;
+    nhc: boolean;
+    severity: string;
+  };
+}
+
+
+
+function submitForm() {
+  // Centralized state for rule data
+  const ruleData = reactive({
+    alert: form.rule_name,
+    annotations: { description: form.rule_description },
+    for: form.rule_for,
+    expr: constructQuery() || '',
+    labels: {
+      category: form.rule_category === 'generic' ? 'generic' : 'service',
+      disabled: form.rule_status || false,
+      nhc: form.rule_nhc || false,
+      severity: form.rule_severity || 'info'
+    },
+  });
+
+  console.log(form); // full reactive object
+  console.log(ruleData); // full reactive object
+  const rule = toRaw(ruleData);
+   const add_rule_config = JSON.parse(JSON.stringify(props.configuration));
+   if (add_rule_config?.groups?.[0]?.rules) {
+        add_rule_config.groups[0].rules.push(rule);
+      } else {
+        console.error('Cannot add row: Invalid configuration structure');
+      }
+      console.log('Updated Configuration:', add_rule_config);
+  props.save_configuration(props.configType, add_rule_config, `wizard_modal_${props.configType}`)
+  //
+}
+
+
 
 async function fetchTarget() {
   try {
@@ -212,7 +460,7 @@ async function fetchTarget() {
     }
   }
 }
-fetchTarget();
+
 
 
 async function fetchMetrics(exporter: string) {
@@ -248,58 +496,7 @@ async function fetchMetrics(exporter: string) {
 }
 
 
-interface WidgetForm {
-  rule_name: string;
-  rule_description: string;
-  rule_for: string;
-  rule_category: string;
-  rule_status: boolean;
-  rule_nhc: boolean;
-  rule_severity: string;
-  group_granularity?: string;
-  grouping_operator?: string;
-  aggregation_operator?: string;
-  threshold?: number;
-  selectedCategory?: string;
-  selectedMetrics?: string;
-  selectedFilterKey?: string;
-  selectedGroup?: string;
-  selectedHostname?: string;
-}
-const form = reactive<WidgetForm>({
-  rule_name: '',
-  rule_description: '',
-  rule_for: '',
-  rule_category: '',
-  rule_status: false,
-  rule_nhc: false,
-  rule_severity: '',
-  group_granularity: '',
-  grouping_operator: '',
-  aggregation_operator: '',
-  threshold: 0,
-  selectedCategory: '',
-  selectedMetrics: '',
-  selectedFilterKey: '',
-  selectedGroup: '',
-  selectedHostname: '',
-});
-// });
-function submitForm() {
-  console.log(form); // full reactive object
-  // Send via axios
-  // axios.post('/api/rules', form)
-  const query = constructQuery();
-  console.log('Constructed Query:', query);
-}
 
-
-const granularityMap: Record<string, string> = {
-  'per-metric': '',              // no group
-  'per-hostname': 'hostname',
-  'per-group': 'luna_group',
-  'global': '',                  // treat as no `by (...)`
-};
 
 
 function constructQuery() {
@@ -385,15 +582,14 @@ function constructQuery() {
 
 </style>
 <template>
-  <div class="modal fade" id="wizard_modal" tabindex="-1" >
+  <div class="modal fade" :id="`wizard_modal_${props.configType}`" tabindex="-1">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel4">Rule Creation Wizard</h5>
+          <h2 class="modal-title">Rule Creation Wizard</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body container-fluid">
-          <div class="">
             <!-- Tab navigation (full width) -->
             <div class="nav nav-pills nav-fill" id="wizardTabs" role="tablist">
               <button class="wizard-step-first nav-link active" disabled id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab">Step 1</button>
@@ -405,16 +601,14 @@ function constructQuery() {
             </div>
 
             <!-- Tab content with fixed height -->
-            <div class="tab-content border border-top-0 p-3" id="wizardTabContent" style="height: 500px; overflow-y: auto;">
-              <!-- class="needs-validation" novalidate -->
-              <!-- <form id="wizardForm" > -->
-              
+            <div class="tab-content border border-top-0 p-3" id="wizardTabContent" style="overflow-y: auto;">
+ 
               <div class="tab-pane fade show active" id="step1" role="tabpanel">
-                <h2 class="mb-4">Basic Rule Information</h2>
+                <h5 class="mb-4">Basic Rule Information</h5>
                 <div class="row g-6">
                   <div class="col mb-0">
                     <label for="rule_name" class="form-label">Rule Name</label>
-                    <input type="text" v-model="form.rule_name" id="rule_name" class="form-control" :class="{ 'is-invalid': !form.rule_name && showValidation }" placeholder="Enter Rule Name" required/>
+                    <input type="text" v-model="form.rule_name" id="rule_name" autocomplete="off" class="form-control" :class="{ 'is-invalid': !form.rule_name && showValidation }" placeholder="Enter Rule Name" required/>
                     <div class="invalid-feedback">Rule name is required.</div>
                   </div>
                 </div>
@@ -427,7 +621,7 @@ function constructQuery() {
                 <div class="row">
                   <div class="col mb-0">
                     <label for="rule_for" class="form-label">Rule For</label>
-                    <input type="text" v-model="form.rule_for" id="rule_for" class="form-control" :class="{ 'is-invalid': !form.rule_for && showValidation }" placeholder="Enter Rule For"  />
+                    <input type="text" v-model="form.rule_for" id="rule_for" autocomplete="off" class="form-control" :class="{ 'is-invalid': !form.rule_for && showValidation }" placeholder="Enter Rule For"  />
                     <div class="invalid-feedback">Rule For is required.</div>
                   </div>
                 </div>
@@ -435,16 +629,16 @@ function constructQuery() {
                   <div class="col mb-6">
                     <label for="rule_category" class="form-label">Rule Category</label>
                     <select v-model="form.rule_category" id="rule_category" class="form-select">
-                      <option class="btn-primary" value="">Set Category</option>
-                      <option class="btn-info" value="generic">Generic</option>
+                      <option class="btn-primary" disabled value="">Set Category</option>
+                      <option class="btn-info" selected value="generic">Generic</option>
                       <option class="btn-warning" value="service">Service</option>
-                      <option class="btn-dark" value="hardware">Hardware</option>
+                      <!-- <option class="btn-dark" value="hardware">Hardware</option> -->
                     </select>
                   </div>
                   <div class="col mb-0">
                     <label for="rule_status" class="form-label">Enable</label>
                     <div class="form-check form-switch ">
-                      <input v-model="form.rule_status" type="checkbox" id="rule_status" class="form-check-input" />
+                      <input v-model="form.rule_status" type="checkbox" id="rule_status" class="form-check-input" checked />
                       <label id="rule_status_label" for="rule_status" class="form-check-label">{{ form.rule_status ? 'ON' : 'OFF' }}</label>
                     </div>
                   </div>
@@ -458,11 +652,11 @@ function constructQuery() {
                   <div class="col mb-6">
                     <label for="rule_severity" class="form-label">Set Severity</label>
                     <select v-model="form.rule_severity" id="rule_severity" class="form-select">
-                      <option class="btn-primary" value="">Set Severity</option>
+                      <option class="btn-primary" disabled value="">Set Severity</option>
                       <option class="btn-dark" value="critical">Critical</option>
                       <option class="btn-danger" value="danger">Danger</option>
                       <option class="btn-warning" value="warning">Warning</option>
-                      <option class="btn-info" value="info">Informational</option>
+                      <option class="btn-info" selected value="info">Informational</option>
                     </select>
                   </div>
                 </div>
@@ -470,11 +664,11 @@ function constructQuery() {
               </div>
 
               <div class="tab-pane fade" id="step2" role="tabpanel">
-              <h2 class="mb-4">Grouping the Metrics</h2>
-              <p class="text-muted mb-4">Optional</p>
+              <h5 class="mb-4">Grouping the Metrics</h5>
+              <p class="text-muted mb-4">Grouping is Optional</p>
                 
                 <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-12">
                   <label class="form-label">Group Granularity</label>
                   <select v-model="form.group_granularity" class="form-select">
                     <option selected disabled value="">Select granularity</option>
@@ -484,7 +678,9 @@ function constructQuery() {
                     <option value="global">global</option>
                   </select>
                 </div>
-                <div class="col-md-6">
+                </div>
+                <div class="row mb-3">
+                <div class="col-md-12">
                   <label class="form-label">Grouping Aggregation Operator</label>
                   <select v-model="form.aggregation_operator" class="form-select">
                     <option selected disabled value="">Select Aggregation Operator</option>
@@ -503,55 +699,64 @@ function constructQuery() {
 
               <div class="tab-pane fade" id="step3" role="tabpanel">
 
-                <h2 class="mb-4">Select Metrics</h2>
+                <h5 class="mb-4">Select Metrics</h5>
                 <p class="text-muted mb-4">Select the exporter and metric to monitor.</p>
                 <div class="mb-3">
                   <label class="form-label">Select Category</label>
-                  <select v-model="form.selectedCategory" id="exporter" class="form-select" :disabled="!exporters.length" @change="() => form.selectedCategory && fetchMetrics(form.selectedCategory)">
+                  <select v-model="form.selectedCategory" id="exporter" class="form-select" :class="{ 'is-invalid': !form.selectedCategory && showValidation }" :disabled="!exporters.length" @change="() => form.selectedCategory && fetchMetrics(form.selectedCategory)">
                       <option selected disabled value="">Select Category(Exporter)</option>
                       <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
                     </select>
+                    <div class="invalid-feedback">Category selection is madatory to build a rule.</div>
                 </div>
 
                 <div class="mb-3">
                   <label class="form-label">Select Metric</label>
-                  <select v-if="metrics.length" v-model="form.selectedMetrics" id="metrics" class="form-select" :disabled="!metrics.length">
+                  <select v-model="form.selectedMetrics" id="metrics" class="form-select" :class="{ 'is-invalid': !form.selectedMetrics && showValidation }" :disabled="!metrics.length">
                       <option selected disabled value="">Select Metric</option>
                       <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
                     </select>
+                    <div class="invalid-feedback">Metric selection is madatory to build a rule.</div>
                 </div>
               </div>
 
             <!-- </form> -->
               <div class="tab-pane fade" id="step4" role="tabpanel">
                 
-                <h2 class="mb-4">Filter Metrics</h2>
-                <p class="text-muted mb-4">Optional</p>
+                <h5 class="mb-4">Filter Metrics</h5>
+                <p class="text-muted mb-4">Please select the filter criteria for the metrics.</p>
                 <div class="row mb-3">
-                  <div class="col-md-6">
+                  <div class="col-md-12">
                     <label class="form-label">Filter Key</label>
-                    <select v-model="form.selectedFilterKey" class="form-select">
+                    <select v-model="form.selectedFilterKey" id="filter_key" class="form-select" :class="{ 'is-invalid': !form.selectedFilterKey && showValidation }">
                       <option selected disabled value="">Select filter key</option>
                       <option value="luna_group">luna_group</option>
                       <option value="hostname">hostname</option>
                     </select>
+                    <div class="invalid-feedback">Filter Key selection is madatory to build a rule.</div>
                   </div>
-                  <div class="col-md-6">
+                  </div>
+                  <div class="row mb-3">
+                  <div class="col-md-12">
                     <label class="form-label">Filter Value</label>
-                    <select v-if="form.selectedFilterKey === 'luna_group'" v-model="form.selectedGroup" id="luna_group" class="form-select" :disabled="!luna_groups.length">
+                    <select v-if="form.selectedFilterKey === 'luna_group'" v-model="form.selectedGroup" id="luna_group" class="form-select" :class="{ 'is-invalid': !form.selectedGroup && showValidation }" :disabled="!luna_groups.length">
                       <option selected disabled value="">Select Filter Value</option>
                       <option v-for="group in luna_groups" :key="group" :value="group">{{ group }}</option>
                     </select>
-                    <select v-if="form.selectedFilterKey === 'hostname'" v-model="form.selectedHostname" id="hostname" class="form-select" :disabled="!hostnames.length">
+                    <select v-else-if="form.selectedFilterKey === 'hostname'" v-model="form.selectedHostname" id="hostname" class="form-select" :class="{ 'is-invalid': !form.selectedHostname && showValidation }" :disabled="!hostnames.length">
                       <option selected disabled value="">Select Filter Value</option>
                       <option v-for="hostname in hostnames" :key="hostname" :value="hostname">{{ hostname }}</option>
                     </select>
+                    <select v-else class="form-select" disabled>
+                      <option selected disabled value="">Select Filter Value</option>
+                    </select>
+                    <div class="invalid-feedback">Filter Value selection is madatory to build a rule.</div>
                   </div>
                 </div>
 
                 <div class="mb-3">
                   <label class="form-label">Grouping Operator</label>
-                  <select v-model="form.grouping_operator" class="form-select">
+                  <select v-model="form.grouping_operator" id="grouping_operator" class="form-select" :class="{ 'is-invalid': !form.grouping_operator && showValidation }">
                     <option selected disabled value="">Select Grouping Comparison</option>
                     <option value=">">&gt;</option>
                     <option value="<">&lt;</option>
@@ -559,29 +764,81 @@ function constructQuery() {
                     <option value="<=">&lt;=</option>
                     <option value="=">=</option>
                   </select>
+                  <div class="invalid-feedback">Grouping Operator selection is madatory to build a rule.</div>
                 </div>
 
                 <div class="mb-3">
                   <label class="form-label">Threshold</label>
-                  <input v-model="form.threshold" type="number" class="form-control" placeholder="Enter threshold value">
+                  <input v-model="form.threshold" type="number" id="threshold" autocomplete="off" class="form-control" :class="{ 'is-invalid': String(form.threshold) === '' && showValidation }" placeholder="Enter threshold value">
+                  <div class="invalid-feedback">Threshold is madatory to build a rule.</div>
                 </div>
               
               </div>
 
 
               <div class="tab-pane fade" id="test" role="tabpanel">
-                
-                <h2 class="mb-4">Test stage content.</h2>
-                <p class="text-muted mb-4">Test the rule with the selected metrics and filters.</p>
-              
-              
+              <h5 class="mb-4">Test stage content.</h5>
+              <div class="alert alert-info" role="alert"><strong>Constructed Query: <i>{{ constructQuery() }}</i></strong></div>
+
+              <div v-if="validationResult">
+                <div v-if="!validationResult.valid" class="alert alert-warning" role="alert"><strong>Test Fails ❌: Status: <i>{{ validationResult.error }}</i></strong></div>
+                <div v-if="validationResult.valid" class="alert alert-success" role="alert"><strong>Test Pass ✅: <i>Constructed Queery is a valid Prometheus Query.</i></strong></div>
+                <div v-if="validationResult.valid" class="p-3">
+                  <Line v-if="chartData" :data="chartData" :options="chartOptions" />
+                  <div v-else>Loading chart...</div>
+                </div>
               </div>
+
+            </div>
 
 
               <div class="tab-pane fade" id="finish" role="tabpanel">
 
-                <h2 class="mb-4">Finish stage content.</h2>
-                <p class="text-muted mb-4">You're done! Review your settings and save the rule.</p>
+                <h5 class="mb-4">Finish stage content.</h5>
+                <p class="text-muted mb-4">Review Rule settings and save the rule.</p>
+                <table class="table table-bordered table-striped">
+                  <thead>
+                    <tr>
+                      <th scope="col">Key</th>
+                      <th scope="col">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="col">Rule Name</th>
+                      <td scope="col">{{ form.rule_name }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="col">Rule Description</th>
+                      <td scope="col">{{ form.rule_description }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="col">Rule For</th>
+                      <td scope="col">{{ form.rule_for }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="col">Rule Category</th>
+                      <td scope="col">{{ form.rule_category }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="col">Rule Status</th>
+                      <td scope="col">{{ form.rule_status ? 'Enabled' : 'Disabled' }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="col">Rule NHC</th>
+                      <td scope="col">{{ form.rule_nhc ? 'Enabled' : 'Disabled' }}</td>
+                    </tr>
+                    <tr>
+                      <th scope="col">Rule Severity</th>
+                      <td scope="col">{{ form.rule_severity }}</td>
+                    </tr> 
+                    <tr>
+                      <th scope="col">Rule Exprestion</th>
+                      <td scope="col" class="table-info">{{ constructQuery() }}</td>
+                    </tr>
+
+                  </tbody>
+                </table>
               </div>
             </div>
 
@@ -593,7 +850,6 @@ function constructQuery() {
               <button id="nextBtn" class="btn btn-primary" @click="goNext">{{ currentIndex === 5 ? 'Save Rule' : 'Next' }}</button>
             </div>
             </div>
-          </div>
         </div>
       </div>
     </div>

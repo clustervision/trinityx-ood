@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { type PropType } from 'vue';
 import EditConfig from '@/views/EditConfig.vue';
+import Wizard from '@/components/Wizard.vue';
 import RuleModals from '@/components/RuleModals.vue';
 import { ref, computed } from 'vue';
 import { Modal } from 'bootstrap';
@@ -87,7 +88,11 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
 <template>
 
   <div class="container-xxl flex-grow-1 container-p-y" style="max-width: none">
-    <span style="float: right;">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="fw-bold py-3 mb-4">
+      <span class="text-muted fw-light"> Monitoring /</span> Service Rules</h4>
+    
+      <div class="d-flex">
         <EditConfig
           configType = "service"
           :rulesFile = "rulesFile"
@@ -95,16 +100,17 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
           :Content="Content"
           :ContentType="ContentType"
           @Toast="$emit('toast', $event)"
+          class="me-2"
         />
-      </span>
-    <h4 class="fw-bold py-3 mb-4">
-      <span class="text-muted fw-light"> Monitoring /</span> Services
-    </h4>
+      </div>
+    </div>
+
 
     <div class="card">
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
         <div class="table-responsive text-nowrap">
+          <Wizard :url="url" :PrometheusServer="promQLurl" configType="generic" :configuration="configuration" :save_configuration = "save_configuration" />
           <RuleModals
             configType = "service"
             :url = "url"
