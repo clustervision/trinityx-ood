@@ -100,7 +100,6 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
           :Content="Content"
           :ContentType="ContentType"
           @Toast="$emit('toast', $event)"
-          class="me-2"
         />
       </div>
     </div>
@@ -110,7 +109,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
         <div class="table-responsive text-nowrap">
-          <Wizard :url="url" :PrometheusServer="promQLurl" configType="generic" :configuration="configuration" :save_configuration = "save_configuration" />
+          <Wizard :url="url" :PrometheusServer="promQLurl" configType="service" :configuration="configuration" :save_configuration = "save_configuration" />
           <RuleModals
             configType = "service"
             :url = "url"

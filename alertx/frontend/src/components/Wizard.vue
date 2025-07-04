@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, toRaw, reactive } from 'vue';
+import { ref, onMounted, onBeforeUnmount, toRaw, reactive } from 'vue';
 import axios, { AxiosError } from 'axios';
 import { Line } from 'vue-chartjs';
 import {
@@ -12,6 +12,7 @@ import {
   CategoryScale,
   LinearScale
 } from 'chart.js';
+
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
 
 
@@ -73,6 +74,7 @@ interface WidgetForm {
 }
 
 const props = defineProps({
+
   PrometheusServer: {
     type: String,
     required: true,
@@ -117,6 +119,29 @@ const tabs = ref<HTMLElement[]>([]);
 const nextBtn = ref<HTMLButtonElement | null>(null);
 const prevBtn = ref<HTMLButtonElement | null>(null);
 const showValidation = ref(false);
+const validationResult = ref<{ valid: boolean; error?: string; data?: any } | null>(null);
+const granularityMap: Record<string, string> = {
+  'per-metric':   '',
+  'per-hostname': 'hostname',
+  'per-group':    'luna_group',
+  'global':       '',
+};
+
+const chartData = ref<any>(null);
+const chartOptions = ref<any>({
+  responsive: true,
+  plugins: {
+    legend: { display: false },
+    title: { display: true, text: 'Prometheus Query Result' }
+  }
+});
+const error_message = ref('');
+
+let exporters = ref<string[]>([]);
+let luna_groups = ref<string[]>([]);
+let hostnames = ref<string[]>([]);
+let metrics = ref<string[]>([]);
+let onModalHidden: (() => void) | null = null;
 
 const PrometheusServer = new URL(props.PrometheusServer);
 const PrometheusTarget = new URL(PrometheusServer.toString());
@@ -125,17 +150,6 @@ PrometheusTarget.searchParams.set('scrapePool', '');
 const PrometheusMetric = new URL(PrometheusServer.toString());
 PrometheusMetric.pathname = '/api/v1/query';
 
-let exporters = ref<string[]>([]);
-let luna_groups = ref<string[]>([]);
-let hostnames = ref<string[]>([]);
-let metrics = ref<string[]>([]);
-
-const granularityMap: Record<string, string> = {
-  'per-metric':   '',
-  'per-hostname': 'hostname',
-  'per-group':    'luna_group',
-  'global':       '',
-};
 
 function validateForm(): boolean {
   const activePane = document.querySelector('.tab-pane.active');
@@ -185,17 +199,15 @@ function validateForm(): boolean {
     } 
 
   }
-  // else if (currentIndex.value === 4) {
-  // runQueryValidation();
-  // }
   showValidation.value = false;
   return true;
 }
-const validationResult = ref<{ valid: boolean; error?: string; data?: any } | null>(null);
 
 async function runQueryValidation() {
   validationResult.value = await validatePrometheusQuery();
 }
+
+
 async function validatePrometheusQuery() {
   const Query = constructQuery();
   if (!Query || Query.trim() === '') {
@@ -205,9 +217,6 @@ async function validatePrometheusQuery() {
     const response = await axios.get(`${PrometheusMetric}`, {
       params: { Query },
     });
-    console.log(PrometheusMetric);
-    console.log(response.data);
-    console.log(response.data.status);
     if (response.data.status === 'success') {
       fetchGraphData();
       return { valid: true, data: response.data.data };
@@ -225,16 +234,9 @@ async function validatePrometheusQuery() {
   }
 }
 
-
-const chartData = ref<any>(null);
-const chartOptions = ref<any>({
-  responsive: true,
-  plugins: {
-    legend: { display: false },
-    title: { display: true, text: 'Prometheus Query Result' }
-  }
-});
-
+/**
+ * Fetch graph data from Prometheus
+ */
 async function fetchGraphData() {
   const now = Math.floor(Date.now() / 1000);
   const start = now - 300; // last 5 minutes
@@ -247,25 +249,12 @@ async function fetchGraphData() {
 
   try {
     const response = await axios.get(`${PrometheusServer}api/v1/query_range`, {
-      params: {
-        query: Query,
-        start,
-        end,
-        step
-      }
+      params: { query: Query, start, end, step}
     });
- console.log(`${PrometheusServer}api/v1/query_range`);
-    console.log(response.data);
-    console.log(response.data.status);
-    console.log(response.data.data);
-    console.log(response.data.data.result);
     const result = response.data.data.result;
 
     if (result.length === 0) {
-      chartData.value = {
-        labels: [],
-        datasets: []
-      };
+      chartData.value = {labels: [], datasets: []};
       return;
     }
 
@@ -292,7 +281,6 @@ async function fetchGraphData() {
 function updateTab(formtab: boolean, index: number) {
   if(formtab){
     const isValid = validateForm();
-    console.log(isValid);
     if (!isValid) return;
   }
   
@@ -341,14 +329,84 @@ onMounted(() => {
   modalEl.addEventListener('show.bs.modal', () => {
     fetchTarget();
     tabs.value = Array.from(modalEl.querySelectorAll<HTMLElement>('#wizardTabs .nav-link'));
-    // tabs.value = Array.from(document.querySelectorAll<HTMLElement>(`#wizard_modal_${props.configType} #wizardTabs .nav-link`));
-    // tabs.value = Array.from(document.querySelectorAll<HTMLElement>('#wizardTabs .nav-link'));
     nextBtn.value = document.getElementById('nextBtn') as HTMLButtonElement;
     prevBtn.value = document.getElementById('prevBtn') as HTMLButtonElement;
     updateTab(false, currentIndex.value);
   });
 
+  onModalHidden = () => {
+    resetForm();
+  };
+  modalEl.addEventListener('hidden.bs.modal', onModalHidden);
+
 });
+
+
+onBeforeUnmount(() => {
+  const modalEl = document.getElementById(`wizard_modal_${props.configType}`);
+  if (modalEl && onModalHidden) {
+    modalEl.removeEventListener('hidden.bs.modal', onModalHidden);
+  }
+});
+
+/**
+ * Reset form to initial state
+ */
+function resetForm() {
+  // Reset form fields
+  Object.assign(form, {
+    rule_name: '',
+    rule_description: '',
+    rule_for: '',
+    rule_category: props.configType,
+    rule_status: true,
+    rule_nhc: false,
+    rule_severity: 'info',
+    group_granularity: '',
+    grouping_operator: '',
+    aggregation_operator: '',
+    threshold: 0,
+    selectedCategory: '',
+    selectedMetrics: '',
+    selectedFilterKey: '',
+    selectedGroup: '',
+    selectedHostname: '',
+  });
+
+  currentIndex.value = 0;
+  showValidation.value = false;
+  validationResult.value = null;
+  chartData.value = null;
+
+  // Reset tab visual state
+  tabs.value.forEach((tab, i) => {
+    tab.classList.remove('active');
+    const pane = document.querySelector<HTMLElement>(tab.dataset.bsTarget!);
+    pane?.classList.remove('show', 'active');
+  });
+
+  // Activate first tab only
+  const firstTab = tabs.value[0];
+  firstTab.classList.add('active');
+  const firstPane = document.querySelector<HTMLElement>(firstTab.dataset.bsTarget!);
+  firstPane?.classList.add('show', 'active');
+
+  // Recolor tabs
+  tabs.value.forEach((tab, i) => {
+    if (i === 0) {
+      tab.style.color = '#f8f9fa';
+      tab.style.backgroundColor = '#0d6efd';
+    } else {
+      tab.style.color = '#f8f9fa';
+      tab.style.backgroundColor = '#5c636a';
+    }
+  });
+
+  // Reset buttons
+  if (prevBtn.value) prevBtn.value.disabled = true;
+  if (nextBtn.value) nextBtn.value.innerText = 'Next';
+}
+
 
 /**
  * Navigation: Previous
@@ -363,34 +421,15 @@ function goPrev() {
  * Navigation: Next
  */
 function goNext() {
-  console.log('Current Index:', currentIndex.value);
-  console.log('Tabs Length:', tabs.value.length); 
-  console.log('Tabs Length:', tabs.value); 
   if (currentIndex.value < tabs.value.length - 1) {
     updateTab(true, currentIndex.value + 1);
   } else {
     submitForm();
-    // alert("Wizard Complete!");
   }
 }
-
-interface RuleRow {
-  alert: string;
-  annotations: {
-    description: string;
-  };
-  expr: string;
-  for: string;
-  labels: {
-    category: string;
-    disabled: boolean;
-    nhc: boolean;
-    severity: string;
-  };
-}
-
-
-
+/**
+ * Submit the form and save the configuration
+ */
 function submitForm() {
   // Centralized state for rule data
   const ruleData = reactive({
@@ -406,21 +445,15 @@ function submitForm() {
     },
   });
 
-  console.log(form); // full reactive object
-  console.log(ruleData); // full reactive object
   const rule = toRaw(ruleData);
-   const add_rule_config = JSON.parse(JSON.stringify(props.configuration));
-   if (add_rule_config?.groups?.[0]?.rules) {
-        add_rule_config.groups[0].rules.push(rule);
-      } else {
-        console.error('Cannot add row: Invalid configuration structure');
-      }
-      console.log('Updated Configuration:', add_rule_config);
+  const add_rule_config = JSON.parse(JSON.stringify(props.configuration));
+  if (add_rule_config?.groups?.[0]?.rules) {
+    add_rule_config.groups[0].rules.push(rule);
+  } else {
+    console.error('Cannot add row: Invalid configuration structure');
+  }
   props.save_configuration(props.configType, add_rule_config, `wizard_modal_${props.configType}`)
-  //
 }
-
-
 
 async function fetchTarget() {
   try {
@@ -428,9 +461,6 @@ async function fetchTarget() {
     const response = await axios.get(proxyUrl);
     if (response.status === 200) {
       const activeTargets = response.data.data.activeTargets;
-      console.log(proxyUrl);
-      console.log(response.status);
-      console.log(activeTargets);
       activeTargets.forEach((target: activeTargets) => {
         const group = target.labels?.luna_group;
         const exporter = target.labels?.exporter;
@@ -445,23 +475,18 @@ async function fetchTarget() {
           hostnames.value.push(hostname);
         }
       });
-      console.log(luna_groups.value);
-      console.log(exporters.value);
-      console.log(hostnames.value);
     }
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
-      console.log(error.code);
-      console.log(error.message);
+      error_message.value = `<strong>[Prometheus Server] :: Could not read from Prometheus Server. \n\t URL: ${PrometheusTarget}`;
+      error_message.value += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
     } else if (error instanceof Error) {
-      console.log(error.message);
+      error_message.value = `<strong>[Prometheus Server] :: ${error.message}</strong>`;
     }else {
-      console.log(error);
+      error_message.value = `<strong>[Prometheus Server] :: ${error}</strong>`;
     }
   }
 }
-
-
 
 async function fetchMetrics(exporter: string) {
   metrics.value = [];
@@ -471,16 +496,12 @@ async function fetchMetrics(exporter: string) {
     const response = await axios.get(proxyUrl);
     if (response.status === 200) {
       const result = response.data.data.result;
-      console.log(proxyUrl);
-      console.log(response.status);
-      console.log(result);
       result.forEach((MetricsResult: PrometheusMetrics) => {
         const metric = MetricsResult.metric?.__name__;
         if (metric && !metrics.value.includes(metric)) {
           metrics.value.push(metric);
         }
       });
-      console.log(luna_groups.value);
     }
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -494,10 +515,6 @@ async function fetchMetrics(exporter: string) {
   }
 
 }
-
-
-
-
 
 function constructQuery() {
   if (!form.selectedMetrics) return '';
@@ -589,7 +606,13 @@ function constructQuery() {
           <h2 class="modal-title">Rule Creation Wizard</h2>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
+        
         <div class="modal-body container-fluid">
+          <div v-if="error_message">
+            <div class="alert alert-danger alert-dismissible" role="alert">
+              <pre v-html="error_message" style="font-size: larger; margin-bottom: 0rem;"></pre>
+              </div>
+          </div>
             <!-- Tab navigation (full width) -->
             <div class="nav nav-pills nav-fill" id="wizardTabs" role="tablist">
               <button class="wizard-step-first nav-link active" disabled id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab">Step 1</button>
@@ -632,7 +655,6 @@ function constructQuery() {
                       <option class="btn-primary" disabled value="">Set Category</option>
                       <option class="btn-info" selected value="generic">Generic</option>
                       <option class="btn-warning" value="service">Service</option>
-                      <!-- <option class="btn-dark" value="hardware">Hardware</option> -->
                     </select>
                   </div>
                   <div class="col mb-0">
@@ -660,45 +682,39 @@ function constructQuery() {
                     </select>
                   </div>
                 </div>
-                
               </div>
 
               <div class="tab-pane fade" id="step2" role="tabpanel">
               <h5 class="mb-4">Grouping the Metrics</h5>
               <p class="text-muted mb-4">Grouping is Optional</p>
-                
                 <div class="row mb-3">
-                <div class="col-md-12">
-                  <label class="form-label">Group Granularity</label>
-                  <select v-model="form.group_granularity" class="form-select">
-                    <option selected disabled value="">Select granularity</option>
-                    <option value="per-metric">per-metric</option>
-                    <option value="per-hostname">per-hostname</option>
-                    <option value="per-group">per-group</option>
-                    <option value="global">global</option>
-                  </select>
-                </div>
+                  <div class="col-md-12">
+                    <label class="form-label">Group Granularity</label>
+                    <select v-model="form.group_granularity" class="form-select">
+                      <option selected disabled value="">Select granularity</option>
+                      <option value="per-metric">per-metric</option>
+                      <option value="per-hostname">per-hostname</option>
+                      <option value="per-group">per-group</option>
+                      <option value="global">global</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="row mb-3">
-                <div class="col-md-12">
-                  <label class="form-label">Grouping Aggregation Operator</label>
-                  <select v-model="form.aggregation_operator" class="form-select">
-                    <option selected disabled value="">Select Aggregation Operator</option>
-                    <option value="max">max</option>
-                    <option value="min">min</option>
-                    <option value="avg">avg</option>
-                    <option value="sum">sum</option>
-                    <option value="count">count</option>
-                  </select>
+                  <div class="col-md-12">
+                    <label class="form-label">Grouping Aggregation Operator</label>
+                    <select v-model="form.aggregation_operator" class="form-select">
+                      <option selected disabled value="">Select Aggregation Operator</option>
+                      <option value="max">max</option>
+                      <option value="min">min</option>
+                      <option value="avg">avg</option>
+                      <option value="sum">sum</option>
+                      <option value="count">count</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-
-
-              </div>
-
 
               <div class="tab-pane fade" id="step3" role="tabpanel">
-
                 <h5 class="mb-4">Select Metrics</h5>
                 <p class="text-muted mb-4">Select the exporter and metric to monitor.</p>
                 <div class="mb-3">
@@ -720,9 +736,7 @@ function constructQuery() {
                 </div>
               </div>
 
-            <!-- </form> -->
               <div class="tab-pane fade" id="step4" role="tabpanel">
-                
                 <h5 class="mb-4">Filter Metrics</h5>
                 <p class="text-muted mb-4">Please select the filter criteria for the metrics.</p>
                 <div class="row mb-3">
@@ -772,28 +786,23 @@ function constructQuery() {
                   <input v-model="form.threshold" type="number" id="threshold" autocomplete="off" class="form-control" :class="{ 'is-invalid': String(form.threshold) === '' && showValidation }" placeholder="Enter threshold value">
                   <div class="invalid-feedback">Threshold is madatory to build a rule.</div>
                 </div>
-              
               </div>
 
-
               <div class="tab-pane fade" id="test" role="tabpanel">
-              <h5 class="mb-4">Test stage content.</h5>
-              <div class="alert alert-info" role="alert"><strong>Constructed Query: <i>{{ constructQuery() }}</i></strong></div>
+                <h5 class="mb-4">Test stage content.</h5>
+                <div class="alert alert-info" role="alert"><strong>Constructed Query: <i>{{ constructQuery() }}</i></strong></div>
 
-              <div v-if="validationResult">
-                <div v-if="!validationResult.valid" class="alert alert-warning" role="alert"><strong>Test Fails ❌: Status: <i>{{ validationResult.error }}</i></strong></div>
-                <div v-if="validationResult.valid" class="alert alert-success" role="alert"><strong>Test Pass ✅: <i>Constructed Queery is a valid Prometheus Query.</i></strong></div>
-                <div v-if="validationResult.valid" class="p-3">
-                  <Line v-if="chartData" :data="chartData" :options="chartOptions" />
-                  <div v-else>Loading chart...</div>
+                <div v-if="validationResult">
+                  <div v-if="!validationResult.valid" class="alert alert-warning" role="alert"><strong>Test Fails ❌: Status: <i>{{ validationResult.error }}</i></strong></div>
+                  <div v-if="validationResult.valid" class="alert alert-success" role="alert"><strong>Test Pass ✅: <i>Constructed Queery is a valid Prometheus Query.</i></strong></div>
+                  <div v-if="validationResult.valid" class="p-3">
+                    <Line v-if="chartData" :data="chartData" :options="chartOptions" />
+                    <div v-else>Loading chart...</div>
+                  </div>
                 </div>
               </div>
 
-            </div>
-
-
               <div class="tab-pane fade" id="finish" role="tabpanel">
-
                 <h5 class="mb-4">Finish stage content.</h5>
                 <p class="text-muted mb-4">Review Rule settings and save the rule.</p>
                 <table class="table table-bordered table-striped">
@@ -836,19 +845,18 @@ function constructQuery() {
                       <th scope="col">Rule Exprestion</th>
                       <td scope="col" class="table-info">{{ constructQuery() }}</td>
                     </tr>
-
                   </tbody>
                 </table>
               </div>
             </div>
 
             <!-- Navigation buttons -->
-             <div class="modal-footer">
-            <div class="mt-3 d-flex justify-content-between" style="float: right;">
-              <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Close</button>
-              <button v-if="currentIndex !== 0" id="prevBtn" class="btn btn-secondary me-2" @click="goPrev">Previous (Step {{ currentIndex }})</button>
-              <button id="nextBtn" class="btn btn-primary" @click="goNext">{{ currentIndex === 5 ? 'Save Rule' : 'Next' }}</button>
-            </div>
+            <div class="modal-footer">
+              <div class="mt-3 d-flex justify-content-between" style="float: right;">
+                <button type="button" class="btn btn-outline-secondary me-2" data-bs-dismiss="modal">Close</button>
+                <button v-if="currentIndex !== 0" id="prevBtn" class="btn btn-secondary me-2" @click="goPrev">Previous (Step {{ currentIndex }})</button>
+                <button id="nextBtn" class="btn btn-primary" @click="goNext">{{ currentIndex === 5 ? 'Save Rule' : 'Next' }}</button>
+              </div>
             </div>
         </div>
       </div>

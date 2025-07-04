@@ -100,7 +100,6 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
           :Content="Content"
           :ContentType="ContentType"
           @Toast="$emit('toast', $event)"
-          class="me-2"
         />
       </div>
     </div>
