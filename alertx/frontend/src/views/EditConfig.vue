@@ -1,6 +1,7 @@
 
 <template>
-  <button type="button" class="btn btn-primary btn-sm" id="add_rule" data-bs-toggle="modal" :data-bs-target="`#rule_modal_${props.configType}_0`">Add Alert Rule</button> &nbsp;
+  <button type="button" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" :data-bs-target="`#wizard_modal_${props.configType}`"><strong>Rule Wizard</strong></button>
+  <button type="button" class="btn btn-primary btn-sm me-2" id="add_rule" data-bs-toggle="modal" :data-bs-target="`#rule_modal_${props.configType}_0`">Add Alert Rule</button>
   <button type="button" class="btn btn-warning btn-sm" id="edit_configuration" data-bs-toggle="modal" :data-bs-target="`#edit_${props.configType}_config`">Edit Configuration</button>
 
   <div class="modal fade" :id="`edit_${props.configType}_config`" tabindex="-1">
@@ -25,7 +26,6 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script lang="ts" setup>
