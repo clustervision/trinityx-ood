@@ -228,6 +228,8 @@ def edit(record=None):
         if 'bmcsetup' in data:
             if 'bmcsetup_source' in data:
                 bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['bmcsetup_source'])
+            elif '_bmcsetup_source' in data:
+                bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['_bmcsetup_source'])
             else:
                 bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
@@ -235,6 +237,8 @@ def edit(record=None):
         if 'osimage' in data:
             if 'osimage_source' in data:
                 osimage_list = Model().get_list_option_html('osimage', data['osimage'], data['osimage_source'])
+            elif '_osimage_source' in data:
+                osimage_list = Model().get_list_option_html('osimage', data['osimage'], data['_osimage_source'])
             else:
                 osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:
@@ -413,6 +417,8 @@ def clone(record=None):
         if 'bmcsetup' in data:
             if 'bmcsetup_source' in data:
                 bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['bmcsetup_source'])
+            elif '_bmcsetup_source' in data:
+                bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'], data['_bmcsetup_source'])
             else:
                 bmcsetup_list = Model().get_list_option_html('bmcsetup', data['bmcsetup'])
         else:
@@ -420,6 +426,8 @@ def clone(record=None):
         if 'osimage' in data:
             if 'osimage_source' in data:
                 osimage_list = Model().get_list_option_html('osimage', data['osimage'], data['osimage_source'])
+            elif '_osimage_source' in data:
+                osimage_list = Model().get_list_option_html('osimage', data['osimage'], data['_osimage_source'])
             else:
                 osimage_list = Model().get_list_option_html('osimage', data['osimage'])
         else:

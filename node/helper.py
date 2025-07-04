@@ -654,6 +654,7 @@ class Helper():
         This method will merge *_source field to the real field with braces and remove the
         *_source keys from the output.
         """
+        exception = []
         response = deepcopy(data)
         override = overrides(table)
         resp_overrides = []
@@ -661,6 +662,8 @@ class Helper():
             script = True if 'part' in key or 'post' in key or 'pre' in key else False
             if '_source' in key:
                 raw_name = key.replace('_source', '')
+                if raw_name.startswith('_'):
+                    raw_name = raw_name[1:]
                 if table == value:
                     if raw_name in override:
                         resp_overrides.append(raw_name)
