@@ -372,6 +372,8 @@ const Context = {
             .attr("r", d => nodeRadius(d))
 
         this.nodeImageItems = this.nodeContainerItems.append("image")
+            .attr("class", "right-click")
+            .attr("device_type", node => node.type)
             .attr("xlink:href", nodeImage)
             .attr("x", d => -nodeRadius(d) * 0.7)
             .attr("y", d => -nodeRadius(d) * 0.7)
@@ -657,3 +659,118 @@ window.onload = function () {
         context.resized();
     }
 }
+
+
+function control_action(system, action, device){
+    var url = window.location.href
+    url = url.replace('#','');
+    url = url+'/perform/'+system+'/'+action+'/'+device;
+    $.ajax({
+        url: url,
+        type: 'GET',
+        dataType: 'json',
+        contentType: 'application/json; charset=UTF-8',
+        success: function(response_data) {
+            result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
+            console.log(result);
+            $('#ajax').html();
+            $('#ajax').html(result);
+            setTimeout(function(){ $('#ajax').html(''); }, 5000);  
+            
+        }
+    });
+}
+
+
+function createMenu(e, title, items) {
+    var menu = $('<ul class="contextMenuPlugin"><div class="gutterLine"></div></ul>').appendTo(document.body);
+    if (title) { $('<li class="header"></li>').text(title).appendTo(menu); }
+    items.forEach(function(item) {
+        if (item) {
+        var rowCode = '<li><a href="#"><span></span></a></li>';
+        var row = $(rowCode).appendTo(menu);
+        if(item.icon){
+            var icon = $('<img>');
+            icon.attr('src', item.icon);
+            icon.insertBefore(row.find('span'));
+        }
+        row.find('span').text(item.label);
+        if (item.action) {
+            row.find('a').click(function(){ item.action(e); });
+        }
+        } else { $('<li class="divider"></li>').appendTo(menu); }
+    });
+    menu.find('.header').html(title);
+    return menu;
+}
+
+$(document).ready(function () {
+    $(document).on('contextmenu', '.right-click', function (e) {
+        e.preventDefault();
+
+        var url = window.location.href
+        url = url.replace('#','');
+        var device_type = $(this).attr("device_type");
+        var g = $(this).closest('g');
+        var device_name = g.find('text tspan').first().text();
+
+        if (device_type === "H"){
+            var title = '<img class="device-icon" src="'+url+'/base/icons/processor.png" />   <strong>'+device_name+' Settings</strong>';
+            info = url + "trinity_node/show/"+device_name;
+            edit = url + "trinity_node/edit/"+device_name;
+            rename = url + "trinity_node/rename/"+device_name;
+            clone = url + "trinity_node/clone/"+device_name;
+        } else if (device_type === "S"){
+            var title = '<img class="device-icon" src="'+url+'/base/icons/switch-network.png" />   <strong>'+device_name+' Settings</strong>';
+            info = url + "trinity_switch/show/"+device_name;
+            edit = url + "trinity_switch/edit/"+device_name;
+            rename = url + "trinity_switch/rename/"+device_name;
+            clone = url + "trinity_switch/clone/"+device_name;
+        }
+        var items =[
+            {label:'Details',               icon: url + '/base/icons/application-detail.png',       action: function(e) { e.preventDefault(); window.open(info, '_blank').focus(); }  },
+        ];
+        if (device_type == "H"){
+            items.push(
+                null,
+                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/applications-stack.png',   action: function(e) { e.preventDefault(); window.open(edit, '_blank').focus(); }  },
+                null,
+                {label:'Power Status',          icon: url + '/base/icons/application-monitor.png',      action: function(e) { e.preventDefault(); control_action('power', 'status', device_name); } },
+                {label:'Power Off',             icon: url + '/base/icons/network-status-busy.png',      action: function(e) { e.preventDefault(); control_action('power', 'off', device_name); } },
+                {label:'Power ON',              icon: url + '/base/icons/network-status.png',           action: function(e) { e.preventDefault(); control_action('power', 'on', device_name); } },
+                {label:'Power Reset',           icon: url + '/base/icons/network-status-away.png',      action: function(e) { e.preventDefault(); control_action('power', 'reset', device_name); } },
+                null,
+                {label:'Sel List',              icon: url + '/base/icons/application.png',              action: function(e) { e.preventDefault(); control_action('sel', 'list', device_name); } },
+                {label:'Sel Clear',             icon: url + '/base/icons/application--minus.png',       action: function(e) { e.preventDefault(); control_action('sel', 'clear', device_name); } },
+                null,
+                {label:'Chassis Identify',      icon: url + '/base/icons/television.png',               action: function(e) { e.preventDefault(); control_action('chassis', 'identify', device_name); } },
+                {label:'Chassis No Identify',   icon: url + '/base/icons/television--exclamation.png',  action: function(e) { e.preventDefault(); control_action('chassis', 'noidentify', device_name); } },
+                // null,
+                // {label:'Redfish Upload',     icon: url + '/base/icons/application-table.png',             action: function(e) {control_action('redfish', 'upload', device); } },
+                // {label:'Redfish Setting',     icon: url + '/base/icons/application-table.png',             action: function(e) { control_action('redfish', 'setting', device); } },
+            );
+        }
+        if (device_type == "S"){
+            items.push(
+                null,
+                {label:'Drain All Nodes',       icon: url + '/base/icons/applications-stack.png',       action: function(e) { e.preventDefault(); window.open(edit, '_blank').focus(); }  },
+            );
+        }
+        var menu = createMenu(e, title, items).show().css({zIndex:1000001, left:e.pageX + 5, top:e.pageY}).bind('contextmenu', function() { return false; });
+        var bg = $('<div></div>').css({left:0, top:0, width:'1000%', height:'1000%', position:'absolute', zIndex:1000000}).appendTo(document.body)
+        .bind('contextmenu click', function(e) {
+            e.preventDefault();
+            bg.remove();
+            menu.remove();
+            return false;
+        });
+
+        menu.find('a').click(function(e) {
+            e.preventDefault();
+        bg.remove();
+        menu.remove();
+        });
+
+        return false;
+    });
+});
