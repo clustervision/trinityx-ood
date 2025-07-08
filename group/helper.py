@@ -51,6 +51,29 @@ class Helper():
         self.logger = Log.get_logger()
 
 
+    def get_bond_mode_options(self, bond_mode=None):
+        """
+        This method will return the bond mode options in HTML format.
+        """
+        mode_list = [
+            "<option value=''>--- Select Bond Mode ---</option>",
+            "<option value='balance-rr'>balance-rr</option>",
+            "<option value='active-backup'>active-backup</option>",
+            "<option value='balance-xor'>balance-xor</option>",
+            "<option value='broadcast'>broadcast</option>",
+            "<option value='802.3ad'>802.3ad</option>",
+            "<option value='balance-tlb'>balance-tlb</option>",
+            "<option value='balance-alb'>balance-alb</option>",
+        ]
+        if bond_mode:
+            for i, mode in enumerate(mode_list):
+                if f"value='{bond_mode}'" in mode:
+                    mode_list[i] = f"<option value='{bond_mode}' selected>{bond_mode}</option>"
+                    break
+        response = "".join(mode_list)
+        return response
+
+
     def filter_interfaces(self, request=None, table=None, payload=None):
         """
         This method
