@@ -3,13 +3,17 @@ import os
 import subprocess
 import requests
 from json import loads, dumps, JSONDecodeError
-
+from textwrap import wrap
 from flask import Flask, render_template, request, jsonify
 
 from base.config import get_configs
-
+from rest import Rest
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 CONFIGS = get_configs()
+
+
+from log import Log
+LOGGER = Log.init_log('INFO')
 
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
@@ -212,9 +216,45 @@ def graph_state_save_route():
     response = {"message": f"Saved state to {STATE_PATH}"}
     return dumps(response)
 
+@app.route('/perform/<string:system>/<string:action>/<string:nodename>', methods=['GET'])
+def perform(system=None, action=None, nodename=None):
+    """
+    This is the main method of application.
+    It will list all Control which is available with daemon.
+    """
+    response = {"status": "danger", "message": ""}
+    message = ''
+    if system and action and nodename:
+        uri = f'control/action/{system}/{nodename}/_{action}'
+        result = Rest().get_raw(uri)
+        if result.content:
+            content = result.json()
+            if 'control' in content.keys():
+                message = content['control'][system]
+            elif 'message' in content.keys():
+                message = content['message']
+            else:
+                message = 'NO message received'
+        else:
+            message = action
+        if len(message) >= 150:
+            message = '<br />'.join(wrap(message, width=150))
+            message = f'<br />{message}'
+        if result.status_code in [200, 204]:
+            if 'off' in message:
+                response['status'] = "danger"
+                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+            else:
+                response['status'] = "success"
+                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+        else:
+            response['status'] = "warning"
+            response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
+    return response
 
 
 if __name__ == "__main__":
     from pprint import pprint
     
     pprint(get_prometheus_data())
+    # app.run(host='0.0.0.0', port=7755, debug=True)
