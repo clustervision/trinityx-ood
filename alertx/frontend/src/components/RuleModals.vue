@@ -212,8 +212,8 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
               </div>
               <div class="row">
                 <div class="col mb-0">
-                  <label :for="`${props.configType}_rule_for_${index}`" class="form-label">Rule For</label>
-                  <input type="text" v-model="ruleData.for" :id="`${props.configType}_rule_for_${index}`" class="form-control" placeholder="Enter Rule For"  />
+                  <label :for="`${props.configType}_rule_for_${index}`" class="form-label">Rule For (Time)</label>
+                  <input type="text" v-model="ruleData.for" :id="`${props.configType}_rule_for_${index}`" class="form-control" placeholder="Enter Rule For, e.g. 5m"  />
                 </div>
               </div>
               <div class="row">

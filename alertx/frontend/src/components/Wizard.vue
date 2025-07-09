@@ -655,8 +655,8 @@ function constructQuery() {
                 </div>
                 <div class="row">
                   <div class="col mb-0">
-                    <label for="rule_for" class="form-label">Rule For</label>
-                    <input type="text" v-model="form.rule_for" id="rule_for" autocomplete="off" class="form-control" :class="{ 'is-invalid': !form.rule_for && showValidation }" placeholder="Enter Rule For"  />
+                    <label for="rule_for" class="form-label">Rule For (Time)</label>
+                    <input type="text" v-model="form.rule_for" id="rule_for" autocomplete="off" class="form-control" :class="{ 'is-invalid': !form.rule_for && showValidation }" placeholder="Enter Rule For, e.g. 5m"  />
                     <div class="invalid-feedback">Rule For is required.</div>
                   </div>
                 </div>
