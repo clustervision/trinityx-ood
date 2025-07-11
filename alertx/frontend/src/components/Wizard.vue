@@ -596,15 +596,15 @@ function constructQuery() {
 .nav-pills .nav-link {
   border-radius: 0;
 }
-.modal-header .btn-close {
+.wizard-header .wizard-btn-close {
     /* padding: 0.125rem 0.75rem; */
     margin: -0.125rem -0.75rem -0.125rem 0rem;
 }
-.modal .modal-header .btn-close {
+.modal .wizard-header .wizard-btn-close {
     margin-top: -8rem;
 }
 
-.modal-title {
+.wizard-title {
     margin-top: -5rem !important;
 }
 </style>
@@ -612,10 +612,10 @@ function constructQuery() {
   <div class="modal fade" :id="`wizard_modal_${props.configType}`" tabindex="-1">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
-        <div class="modal-header d-flex align-items-center justify-content-between">
-          <h2 class="modal-title m-0">Rule Creation Wizard</h2>
+        <div class="modal-header wizard-header d-flex align-items-center justify-content-between">
+          <h2 class="modal-title wizard-title m-0">Rule Creation Wizard</h2>
           <img :src="`${$props.url}/assets/wizard-hat-70.png`" alt="Wizard Logo" class="img-fluid ms-auto" style="width: 150px; height: 150px; ">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close wizard-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         
