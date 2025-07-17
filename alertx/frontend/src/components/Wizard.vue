@@ -479,7 +479,7 @@ async function fetchTarget() {
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
       error_message.value = `<strong>[Prometheus Server] :: Could not read from Prometheus Server. \n\t URL: ${PrometheusTarget}`;
-      error_message.value += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
+      error_message.value += `\n\t Please ensure Prometheus Server service is running and the port can be reached.</strong>`;
     } else if (error instanceof Error) {
       error_message.value = `<strong>[Prometheus Server] :: ${error.message}</strong>`;
     }else {
