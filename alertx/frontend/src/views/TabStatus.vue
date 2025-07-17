@@ -359,7 +359,7 @@ export default defineComponent({
         } catch (error: unknown) {
           if (error instanceof Error) {
             this.noRowsAlertManager = `<strong>[Alert Manager] :: Could not read from Alert Manager: \n\t ${error.message}: ${sanitizedUrl}`;
-            this.noRowsAlertManager += `\n\t Please ensure Alert Manager service is running and the port can be reachable.`;
+            this.noRowsAlertManager += `\n\t Please ensure Alert Manager service is running and the port can be reached.`;
             this.noRowsAlertManager += `\n\t Falling back to Prometheus data.</strong>`;
           } else {
             this.noRowsAlertManager = `<strong>[Alert Manager] :: ${error}</strong>`;
@@ -407,7 +407,7 @@ export default defineComponent({
           });
         } else {
           this.noRowsPrometheus = `<strong>[Prometheus Server] :: Could not read from Prometheus Server: URL: ${this.statusAPI}`;
-          this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
+          this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reached.</strong>`;
           this.noRowsTypePrometheus = 'danger';
           this.dataFrom = "";
         }

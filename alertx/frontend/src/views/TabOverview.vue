@@ -173,7 +173,7 @@ export default defineComponent({
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
           this.noRowsPrometheus = `<strong>[Prometheus Server] :: Could not read from Prometheus Server: URL: ${this.statusAPI}`;
-          this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reachable.</strong>`;
+          this.noRowsPrometheus += `\n\t Please ensure Prometheus Server service is running and the port can be reached.</strong>`;
           this.noRowsTypePrometheus = 'danger';
         } else if (error instanceof Error) {
           this.noRowsPrometheus = `<strong>[Prometheus Server] :: ${error.message}</strong>`;
