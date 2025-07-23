@@ -135,6 +135,9 @@ export default defineComponent({
         this.stopAutoReload();
       }
     },
+    // icons(newValue, oldValue) {
+    //   console.log("Icons changed from", oldValue, "to", newValue);
+    // }
   },
 
   async mounted() {
@@ -319,14 +322,6 @@ export default defineComponent({
       }
     },
 
-    toggleIcons() {
-      if (this.icons === "default") {
-        this.icons = "blank";
-      } else {
-        this.icons = "default";
-      }
-    },
-
   },
 
   computed: {
@@ -362,7 +357,12 @@ export default defineComponent({
     <div class="d-flex justify-content-between align-items-center">
       <div><span class="text-muted fw-light"> Monitoring /</span> Overview</div>
       <div class="d-flex">
-        <button type="button" class="btn btn-sm btn-info me-2"  @click="toggleIcons">{{ icons === "default" ? "Icons without Labels" : "Default Icons" }}</button>
+        <div class="btn-group btn-group-sm me-2" role="group" aria-label="Basic radio toggle button group">
+          <input type="radio" class="btn-check" name="glyphs" id="glyphs" autocomplete="off" value="default" v-model="icons">
+          <label class="btn btn-outline-primary" for="glyphs">Glyphs</label>
+          <input type="radio" class="btn-check" name="glyphs" id="no_glyphs" autocomplete="off" value="blank" v-model="icons">
+          <label class="btn btn-outline-primary" for="no_glyphs">No Glyphs</label>
+        </div>
         <button type="button" :class="['btn', 'btn-sm', autoReload ? 'btn-success' : 'btn-warning']"  @click="toggleAutoReload">{{ autoReload ? "Stop Auto Reload" : "Start Auto Reload" }}</button>
     </div>
   </div>
