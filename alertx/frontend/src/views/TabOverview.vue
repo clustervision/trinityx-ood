@@ -135,9 +135,6 @@ export default defineComponent({
         this.stopAutoReload();
       }
     },
-    // icons(newValue, oldValue) {
-    //   console.log("Icons changed from", oldValue, "to", newValue);
-    // }
   },
 
   async mounted() {
