@@ -735,7 +735,7 @@ function constructQuery() {
                       <option selected disabled value="">Select Category(Exporter)</option>
                       <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
                     </select>
-                    <div class="invalid-feedback">Category selection is madatory to build a rule.</div>
+                    <div class="invalid-feedback">Category selection is mandatory to build a rule.</div>
                 </div>
 
                 <div class="mb-3">
@@ -744,7 +744,7 @@ function constructQuery() {
                       <option selected disabled value="">Select Metric</option>
                       <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
                     </select>
-                    <div class="invalid-feedback">Metric selection is madatory to build a rule.</div>
+                    <div class="invalid-feedback">Metric selection is mandatory to build a rule.</div>
                 </div>
               </div>
 
@@ -759,7 +759,7 @@ function constructQuery() {
                       <option value="luna_group">luna_group</option>
                       <option value="hostname">hostname</option>
                     </select>
-                    <div class="invalid-feedback">Filter Key selection is madatory to build a rule.</div>
+                    <div class="invalid-feedback">Filter Key selection is mandatory to build a rule.</div>
                   </div>
                   </div>
                   <div class="row mb-3">
@@ -776,7 +776,7 @@ function constructQuery() {
                     <select v-else class="form-select" disabled>
                       <option selected disabled value="">Select Filter Value</option>
                     </select>
-                    <div class="invalid-feedback">Filter Value selection is madatory to build a rule.</div>
+                    <div class="invalid-feedback">Filter Value selection is mandatory to build a rule.</div>
                   </div>
                 </div>
 
@@ -788,15 +788,16 @@ function constructQuery() {
                     <option value="<">&lt;</option>
                     <option value=">=">&gt;=</option>
                     <option value="<=">&lt;=</option>
-                    <option value="=">=</option>
+                    <option value="==">==</option>
+                    <option value="!=">!=</option>
                   </select>
-                  <div class="invalid-feedback">Grouping Operator selection is madatory to build a rule.</div>
+                  <div class="invalid-feedback">Grouping Operator selection is mandatory to build a rule.</div>
                 </div>
 
                 <div class="mb-3">
                   <label class="form-label">Threshold</label>
                   <input v-model="form.threshold" type="number" id="threshold" autocomplete="off" class="form-control" :class="{ 'is-invalid': String(form.threshold) === '' && showValidation }" placeholder="Enter threshold value">
-                  <div class="invalid-feedback">Threshold is madatory to build a rule.</div>
+                  <div class="invalid-feedback">Threshold is mandatory to build a rule.</div>
                 </div>
               </div>
 
@@ -806,7 +807,7 @@ function constructQuery() {
 
                 <div v-if="validationResult">
                   <div v-if="!validationResult.valid" class="alert alert-warning" role="alert"><strong>Test Fails ❌: Status: <i>{{ validationResult.error }}</i></strong></div>
-                  <div v-if="validationResult.valid" class="alert alert-success" role="alert"><strong>Test Pass ✅: <i>Constructed Queery is a valid Prometheus Query.</i></strong></div>
+                  <div v-if="validationResult.valid" class="alert alert-success" role="alert"><strong>Test Pass ✅: <i>Constructed Query is a valid Prometheus Query.</i></strong></div>
                   <div v-if="validationResult.valid" class="p-3">
                     <Line v-if="chartData" :data="chartData" :options="chartOptions" />
                     <div v-else>Loading chart...</div>
@@ -854,7 +855,7 @@ function constructQuery() {
                       <td scope="col">{{ form.rule_severity }}</td>
                     </tr> 
                     <tr>
-                      <th scope="col">Rule Exprestion</th>
+                      <th scope="col">Rule Expression</th>
                       <td scope="col" class="table-info">{{ constructQuery() }}</td>
                     </tr>
                   </tbody>
