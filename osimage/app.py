@@ -384,7 +384,7 @@ def license_info():
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
+    if APP_STATE is False:
         app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
