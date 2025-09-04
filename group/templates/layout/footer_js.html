@@ -220,6 +220,10 @@
     <div class="input-group">
         <span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />
         ${get_list("network", null)}
+        <span class="input-group-text">MTU</span><input type="number" name="mtu" class="form-control" min="68" max="65535" id="id_mtu" placeholder="68-65535" />
+        <span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" />
+    </div>
+    <div class="input-group">
         <span class="input-group-text">VLAN ID</span><input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" />
         <span class="input-group-text">VLAN Parent</span><input type="text" name="vlan_parent" class="form-control" placeholder="VLAN Parent" value="" />
         <span class="input-group-text">Bond Mode</span>
@@ -237,11 +241,30 @@
         <input type="text" name="bond_slaves" class="form-control" placeholder="Bond Slaves Interfaces" value="" />
 
         <span class="input-group-text">DHCP&nbsp;<input type="checkbox" class="form-check-input" id="id_dhcp" onclick="toggleDHCP(this)" /><input type="hidden" name="dhcp" value="false" /></span>
-        <span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" />
+        
         <button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>`
     $("#add_nodeinterface").click(function () {
         $("#nodeinterface").append(group_interface);    
-     });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const mtuFields = document.querySelectorAll("input[name='mtu']");
+
+        if (mtuFields.length > 0) {
+            mtuFields.forEach(field => {
+                field.addEventListener("blur", function () {
+                    let value = parseInt(this.value, 10);
+
+                    if (!isNaN(value)) {
+                        if (value < 68) this.value = 68;
+                        if (value > 65535) this.value = 65535;
+                    }
+                });
+            });
+        }
+    });
+
 
     function remove_interface(node, interface){
         var response = {};
