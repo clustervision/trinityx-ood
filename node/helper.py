@@ -82,6 +82,7 @@ class Helper():
         ipaddress = request.form.getlist('ipaddress')
         macaddress = request.form.getlist('macaddress')
         network = request.form.getlist('network')
+        mtu = request.form.getlist('mtu')
         options = request.form.getlist('options')
         vlanid = request.form.getlist('vlanid')
 
@@ -92,8 +93,8 @@ class Helper():
         dhcp = request.form.getlist('dhcp')
         interface_list = []
         if table == 'node':
-            zip_interface = zip(interface, ipaddress, macaddress, network, options, vlanid, dhcp, vlan_parent, bond_mode, bond_slaves)
-            for interface, ipaddress, macaddress, network, options, vlanid, dhcp, vlan_parent, bond_mode, bond_slaves in zip_interface:
+            zip_interface = zip(interface, ipaddress, macaddress, network, mtu, options, vlanid, dhcp, vlan_parent, bond_mode, bond_slaves)
+            for interface, ipaddress, macaddress, network, mtu, options, vlanid, dhcp, vlan_parent, bond_mode, bond_slaves in zip_interface:
                 tmp_interface = {}
                 if interface:
                     tmp_interface['interface'] = interface
@@ -103,6 +104,8 @@ class Helper():
                     tmp_interface['macaddress'] = macaddress
                 if network:
                     tmp_interface['network'] = network
+                if mtu:
+                    tmp_interface['mtu'] = mtu
                 if options:
                     tmp_interface['options'] = options
                 if vlanid and len(vlanid) > 0 and vlanid.strip():
@@ -127,6 +130,8 @@ class Helper():
                     tmp_interface['interface'] = interface
                 if network:
                     tmp_interface['network'] = network
+                if mtu:
+                    tmp_interface['mtu'] = mtu
                 if options:
                     tmp_interface['options'] = options
                 interface_list.append(tmp_interface)
@@ -138,6 +143,8 @@ class Helper():
             del payload['macaddress']
         if 'network' in payload:
             del payload['network']
+        if 'mtu' in payload:
+            del payload['mtu']
         if 'options' in payload:
             del payload['options']
         if 'vlanid' in payload:

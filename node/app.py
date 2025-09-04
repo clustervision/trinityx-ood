@@ -262,8 +262,12 @@ def edit(record=None):
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
                 <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="$macaddress" />
+                <span class="input-group-text">MTU</span>
+                <input type="number" name="mtu" class="form-control" min="68" max="65535" id="id_mtu" value="$mtu" placeholder="68-65535" />
                 <span class="input-group-text">Options</span>
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+            </div>
+            <div class="input-group">
                 <span class="input-group-text">VLAN ID</span>
                 <input type="number" name="vlanid" min="0" max="4094" class="form-control" placeholder="VLAN ID" value="$vlanid" />
                 <span class="input-group-text">VLAN Parent</span>
@@ -287,6 +291,7 @@ def edit(record=None):
                 macaddress = interface_dict['macaddress'] if 'macaddress' in interface_dict else ""
                 macaddress = "" if macaddress is None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
+                mtu = interface_dict['mtu'] if 'mtu' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
                 vlan_parent = interface_dict['vlan_parent'] if 'vlan_parent' in interface_dict else ""
@@ -298,9 +303,9 @@ def edit(record=None):
                 dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
                 dhcp_checked = "checked" if dhcp is True else ""
 
-                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, options=options, vlanid=vlanid, vlan_parent=vlan_parent, bond_mode=bond_mode, bond_slaves=bond_slaves, dhcp_checked=dhcp_checked, dhcp=dhcp, button=remove_button)
+                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, macaddress=macaddress, network=network, mtu=mtu, options=options, vlanid=vlanid, vlan_parent=vlan_parent, bond_mode=bond_mode, bond_slaves=bond_slaves, dhcp_checked=dhcp_checked, dhcp=dhcp, button=remove_button)
         else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
+            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), mtu='', options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
@@ -416,8 +421,12 @@ def clone(record=None):
                 <input type="text" name="ipaddress" class="form-control ipv4" maxlength="100" id="id_ipaddress" inputmode="decimal" value="$ipaddress" />
                 <span class="input-group-text">Mac address</span>
                 <input type="text" name="macaddress" class="form-control mac" maxlength="100" id="id_macaddress" inputmode="text" value="" />
+                <span class="input-group-text">MTU</span>
+                <input type="number" name="mtu" class="form-control" min="68" max="65535" id="id_mtu" value="$mtu" placeholder="68-65535" />
                 <span class="input-group-text">Options</span>
                 <input type="text" name="options" class="form-control" maxlength="100" id="id_options" value="$options" />
+            </div>
+            <div class="input-group">
                 <span class="input-group-text">VLAN ID</span>
                 <input type="number" name="vlanid" min="0" max="4094" class="form-control" placeholder="VLAN ID" value="$vlanid" />
                 <span class="input-group-text">VLAN Parent</span>
@@ -441,6 +450,7 @@ def clone(record=None):
                 macaddress = "" if macaddress is None else macaddress
                 network = Model().get_list_option_html('network', interface_dict['network']) if 'network' in interface_dict else Model().get_list_option_html('network')
                 ipaddress = nextip_network(interface_dict['network']) if 'ipaddress' in interface_dict else ""
+                mtu = interface_dict['mtu'] if 'mtu' in interface_dict else ""
                 options = interface_dict['options'] if 'options' in interface_dict else ""
                 vlanid = interface_dict['vlanid'] if 'vlanid' in interface_dict else ""
                 vlan_parent = interface_dict['vlan_parent'] if 'vlan_parent' in interface_dict else ""
@@ -451,9 +461,9 @@ def clone(record=None):
                 bond_slaves = interface_dict['bond_slaves'] if 'bond_slaves' in interface_dict else ""
                 dhcp = interface_dict['dhcp'] if 'dhcp' in interface_dict else ""
                 dhcp_checked = "checked" if dhcp is True else ""
-                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, network=network, options=options, vlanid=vlanid, vlan_parent=vlan_parent, bond_mode=bond_mode, bond_slaves=bond_slaves, dhcp_checked=dhcp_checked, dhcp=dhcp, button=remove_button)
+                interface_html += raw_html.safe_substitute(interface=interface, ipaddress=ipaddress, network=network, mtu=mtu, options=options, vlanid=vlanid, vlan_parent=vlan_parent, bond_mode=bond_mode, bond_slaves=bond_slaves, dhcp_checked=dhcp_checked, dhcp=dhcp, button=remove_button)
         else:
-            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), options='', button=remove_button)
+            interface_html = raw_html.safe_substitute(interface='', network=Model().get_list_option_html('network'), mtu='', options='', button=remove_button)
         interface_html = interface_html[:-6]
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
@@ -591,7 +601,7 @@ def license_info():
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
+    if APP_STATE is False:
         app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
