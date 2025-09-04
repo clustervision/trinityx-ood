@@ -344,22 +344,23 @@ $('body').on('change', '#id_network', function() {
      });
 
 
-document.addEventListener("DOMContentLoaded", function () {
-    const mtuFields = document.querySelectorAll("input[name='mtu']");
 
-    if (mtuFields.length > 0) {
-        mtuFields.forEach(field => {
-            field.addEventListener("input", function () {
-                const value = parseInt(this.value, 10);
+    document.addEventListener("DOMContentLoaded", function () {
+        const mtuFields = document.querySelectorAll("input[name='mtu']");
 
-                if (!isNaN(value)) {
-                    if (value < 68) this.value = 68;
-                    if (value > 65535) this.value = 65535;
-                }
+        if (mtuFields.length > 0) {
+            mtuFields.forEach(field => {
+                field.addEventListener("blur", function () {
+                    let value = parseInt(this.value, 10);
+
+                    if (!isNaN(value)) {
+                        if (value < 68) this.value = 68;
+                        if (value > 65535) this.value = 65535;
+                    }
+                });
             });
-        });
-    }
-});
+        }
+    });
 
 
 </script>
