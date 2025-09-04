@@ -248,12 +248,12 @@ def clone(record=None):
                 payload[k] = True
         if data['tag'] == payload['tag']:
             del payload['tag']
+
         response = Helper().clone_record(TABLE, payload)
         LOGGER.info(f'{response.status_code} {response.content}')
-        if response.content:
-            response_json = response.json()
+        response_json = response.json() if response.content else {}
         if response.status_code == 200:
-            flash(f'{TABLE_CAP}, {data["name"]} Cloned as {payload["name"]}.', "success")
+            flash(f'{TABLE_CAP}, {data["name"]} Cloned as {payload["newosimage"]}.', "success")
             if 'request_id' in response_json:
                 return redirect(url_for('clone', record = record, request_id=response_json['request_id'], message=response_json['message']), code=302)
         else:
