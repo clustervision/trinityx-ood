@@ -125,6 +125,19 @@
                 <label class="col-sm-2 col-form-label">Roles</label>
                 <div class="col-sm-10"><input type="text" name="roles" class="form-control" maxlength="100" id="id_roles" value="{{ data.roles }}" /></div>
               </div>
+
+              <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Kernel Options</label>
+              <div class="col-sm-10">
+                <div class="input-group">
+                  <span class="input-group-text">{{ data.kerneloptions_source }}{{ data._kerneloptions_source }}</span>
+                  {% if data.kerneloptions_source and data.kerneloptions_source != 'node' or data._kerneloptions_source != 'node' %}
+                    <textarea disabled cols="5" rows="3" class="form-control" id="id_kerneloptions">{{ data.kerneloptions }}</textarea>
+                  {% endif %}
+                  <textarea name="kerneloptions" cols="5" rows="3" class="form-control" id="id_kerneloptions">{% if data.kerneloptions_source == 'node' or data._kerneloptions_source == 'node' %}{{ data.kerneloptions }}{% endif %}</textarea>
+                </div>
+              </div>
+            </div>
   
               <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">Scripts</label>
