@@ -98,6 +98,19 @@
                 <label class="col-sm-2 col-form-label">Scripts</label>
                 <div class="col-sm-10"><input type="text" name="scripts" class="form-control" maxlength="100" id="id_scripts" value="{{ data.scripts }}" /></div>
               </div>
+
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">Kernel Options</label>
+                <div class="col-sm-10">
+                  <div class="input-group">
+                    <span class="input-group-text">{{ data.kerneloptions_source }}{{ data._kerneloptions_source }}</span>
+                    {% if data.kerneloptions_source and data.kerneloptions_source != 'group' or data._kerneloptions_source != 'group' %}
+                      <textarea disabled cols="5" rows="3" class="form-control" id="id_kerneloptions">{{ data.kerneloptions }}</textarea>
+                    {% endif %}
+                    <textarea name="kerneloptions" cols="5" rows="3" class="form-control" id="id_kerneloptions">{% if data.kerneloptions_source == 'group' or data._kerneloptions_source == 'group' %}{{ data.kerneloptions }}{% endif %}</textarea>
+                  </div>
+                </div>
+              </div>
             
               <div class="row mb-3">
                 <label class="col-sm-2 col-form-label">pre script</label>
