@@ -293,7 +293,10 @@ $('body').on('change', '#id_network', function() {
         ${get_list("network", null)}
         <span class="input-group-text btn btn-sm btn-success" id="raw_network" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bx-info-circle bx-xs'></i> <span>Next Available IP Address </span>">IP Address</span><input type="text" name="ipaddress" class="form-control ipv4" placeholder="ipaddress" />
         <span class="input-group-text">Macaddress</span><input type="text" name="macaddress" class="form-control mac" placeholder="macaddress" />
+        <span class="input-group-text">MTU</span><input type="number" name="mtu" class="form-control" min="68" max="65535" id="id_mtu" placeholder="68-65535" />
         <span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" />
+        </div>
+        <div class="input-group">
         <span class="input-group-text">VLAN ID</span><input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" />
         <span class="input-group-text">VLAN Parent</span><input type="text" name="vlan_parent" class="form-control" placeholder="VLAN Parent" value="" />
         <span class="input-group-text">Bond Mode</span>
@@ -339,6 +342,25 @@ $('body').on('change', '#id_network', function() {
         }
         
      });
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const mtuFields = document.querySelectorAll("input[name='mtu']");
+
+    if (mtuFields.length > 0) {
+        mtuFields.forEach(field => {
+            field.addEventListener("input", function () {
+                const value = parseInt(this.value, 10);
+
+                if (!isNaN(value)) {
+                    if (value < 68) this.value = 68;
+                    if (value > 65535) this.value = 65535;
+                }
+            });
+        });
+    }
+});
+
 
 </script>
 
