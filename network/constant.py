@@ -46,7 +46,7 @@ EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'post
 APP_STATE = True  # False for Development, True for Production
 
 
-def filter_columns(table=None):
+def filter_columns(table:str) -> list[str]:
     """
     This method remove the unnecessary fields from
     the dataset.
@@ -59,7 +59,7 @@ def filter_columns(table=None):
     return response
 
 
-def sortby(table=None):
+def sortby(table:str) -> list[str]:
     """
     This method remove the unnecessary fields from
     the dataset.
