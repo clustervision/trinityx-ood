@@ -28,16 +28,13 @@ __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
-import os
-from time import time
+
+from typing import Any, cast
 import base64
 import binascii
-import subprocess
-from random import randint
-from os import getpid
 import hostlist
 from flask import url_for
-from nested_lookup import nested_lookup, nested_update, nested_delete
+from nested_lookup import nested_lookup, nested_update
 from rest import Rest
 from log import Log
 from constant import filter_columns, EDITOR_KEYS, sortby
@@ -55,17 +52,17 @@ class Helper():
         self.logger = Log.get_logger()
 
 
-    def prepare_payload(self, table=None, raw_data=None):
+    def prepare_payload(self, raw_data:dict) -> dict[str, Any]:
         """
         This method will prepare the payload.
         """
-        payload = {k: v for k, v in raw_data.items() if v is not None}
+        payload:dict = {k: v for k, v in raw_data.items() if v is not None}
         for key in EDITOR_KEYS:
             content = nested_lookup(key, payload)
             if content:
                 if content[0]:
-                    content = self.base64_encode(bytes(content[0].replace('\r\n', '\n'), 'utf-8'))
-                    payload = nested_update(payload, key=key, value=content)
+                    content = self.base64_encode(bytes(str(content[0]).replace('\r\n', '\n'), 'utf-8'))
+                    payload = cast(dict[str, Any], nested_update(payload, key=key, value=content))
         return payload
 
 
