@@ -37,7 +37,8 @@
     "vite-plugin-commonjs": "^0.10.4",
     "vue": "^3.5.13",
     "vue-chartjs": "^5.3.2",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "vue3-treeselect": "^0.1.10"
   },
   "resolutions": {
     "@codemirror/state": "6.4.1"
