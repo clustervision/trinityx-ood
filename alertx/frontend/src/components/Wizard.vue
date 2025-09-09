@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, toRaw, reactive } from 'vue';
+import { ref, onMounted, onBeforeUnmount, toRaw, reactive, watch } from 'vue';
 import axios, { AxiosError } from 'axios';
 import { Line } from 'vue-chartjs';
 import {
@@ -12,6 +12,9 @@ import {
   CategoryScale,
   LinearScale
 } from 'chart.js';
+
+import VueTreeselect from 'vue3-treeselect'
+import 'vue3-treeselect/dist/vue3-treeselect.css'
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
 
@@ -141,6 +144,7 @@ let exporters = ref<string[]>([]);
 let luna_groups = ref<string[]>([]);
 let hostnames = ref<string[]>([]);
 let metrics = ref<string[]>([]);
+let metricsTree = ref<any[]>([]);
 let onModalHidden: (() => void) | null = null;
 
 const PrometheusServer = new URL(props.PrometheusServer);
@@ -149,7 +153,7 @@ PrometheusTarget.pathname = '/api/v1/targets';
 PrometheusTarget.searchParams.set('scrapePool', '');
 const PrometheusMetric = new URL(PrometheusServer.toString());
 PrometheusMetric.pathname = '/api/v1/query';
-
+const selectedMetric = ref(null);
 
 function validateForm(): boolean {
   const activePane = document.querySelector('.tab-pane.active');
@@ -164,8 +168,14 @@ function validateForm(): boolean {
     }
   } else if (currentIndex.value === 2) {
     const selectedCategory = activePane.querySelector('#exporter') as HTMLSelectElement;
-    const selectedMetrics = activePane.querySelector('#metrics') as HTMLSelectElement;
-    if (!selectedCategory?.value || !selectedMetrics?.value) {
+    if (!selectedCategory?.value) {
+      showValidation.value = true;
+      return false;
+    }
+    if (!selectedMetric.value) {
+      showValidation.value = true;
+      return false;
+    } else if (!metrics.value.includes(selectedMetric.value)) {
       showValidation.value = true;
       return false;
     }
@@ -488,8 +498,51 @@ async function fetchTarget() {
   }
 }
 
+
+function buildMetricsTree(metrics: string[]) {
+  const tree: Record<string, any> = {};
+
+  for (const metric of metrics) {
+    const parts = metric.split("_");
+    let current = tree;
+
+    parts.forEach((part, index) => {
+      const isLast = index === parts.length - 1;
+
+      if (!current[part]) {
+        current[part] = {
+          id: parts.slice(0, index + 1).join("_"),
+          label: isLast ? parts.join("_") : part.toUpperCase(), // full metric name for leaf
+          children: {},
+          isLeaf: isLast
+        };
+      }
+
+      current = current[part].children;
+    });
+  }
+
+  function convertToArray(node: Record<string, any>): any[] {
+    return Object.values(node).map((n: any) => {
+      const children = convertToArray(n.children);
+      return {
+        id: n.id,
+        label: n.label,
+        children: children.length > 0 ? children : undefined,
+        // isDisabled: children.length === 0 ? false : true
+        // isDisabled: !n.isLeaf // only leaf nodes selectable
+      };
+    });
+  }
+
+  return convertToArray(tree);
+}
+
+
+
 async function fetchMetrics(exporter: string) {
   metrics.value = [];
+  metricsTree.value = [];
   PrometheusMetric.searchParams.set('query', `avg by (__name__) ({__name__=~".*", exporter="${exporter}"})`);
   try {
     const proxyUrl = `${props.url}/proxy?url=${PrometheusMetric}`;
@@ -498,10 +551,14 @@ async function fetchMetrics(exporter: string) {
       const result = response.data.data.result;
       result.forEach((MetricsResult: PrometheusMetrics) => {
         const metric = MetricsResult.metric?.__name__;
-        if (metric && !metrics.value.includes(metric)) {
+        if (metric && !metrics.value.includes(metric) && !metric.startsWith('go_') && !metric.startsWith('scrape_') && !metric.startsWith('process_') && !metric.startsWith('promhttp_')) {
           metrics.value.push(metric);
         }
       });
+      if (metrics.value.length){
+        metricsTree.value = buildMetricsTree(metrics.value);
+      }
+      
     }
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -517,7 +574,8 @@ async function fetchMetrics(exporter: string) {
 }
 
 function constructQuery() {
-  if (!form.selectedMetrics) return '';
+  // if (!form.selectedMetrics) return '';
+  if (!selectedMetric.value) return '';
 
   // Build filter
   let filters = '';
@@ -537,7 +595,8 @@ function constructQuery() {
   const byClause = groupKey ? ` by (${groupKey})` : '';
 
   // If aggregation operator is missing, skip wrapping the metric
-  const metricWithFilters = `${form.selectedMetrics}${filters}`;
+  // const metricWithFilters = `${form.selectedMetrics}${filters}`;
+  const metricWithFilters = `${selectedMetric.value}${filters}`;
   const leftExpr = aggFn ? `${aggFn}(${metricWithFilters})${byClause}` : metricWithFilters;
 
   // Final query with optional threshold/operator
@@ -547,6 +606,20 @@ function constructQuery() {
 }
 
 
+
+
+// Watch when user selects a value
+watch(selectedMetric, (newVal) => {
+  if (!newVal) return;
+
+  if (!metrics.value.includes(newVal)) {
+    // Reset and show validation
+    selectedMetric.value = null;
+    showValidation.value = true;
+  } else {
+    showValidation.value = false;
+  }
+});
 </script>
 <style>
 #wizardTabs {
@@ -606,6 +679,14 @@ function constructQuery() {
 
 .wizard-title {
     margin-top: -5rem !important;
+}
+
+.invalid-matrics {
+  /* display: none; */
+  width: 100%;
+  margin-top: 0.3rem;
+  font-size: 85%;
+  color: #ff3e1d;
 }
 </style>
 <template>
@@ -732,20 +813,34 @@ function constructQuery() {
                 <div class="mb-3">
                   <label class="form-label">Select Category</label>
                   <select v-model="form.selectedCategory" id="exporter" class="form-select" :class="{ 'is-invalid': !form.selectedCategory && showValidation }" :disabled="!exporters.length" @change="() => form.selectedCategory && fetchMetrics(form.selectedCategory)">
-                      <option selected disabled value="">Select Category(Exporter)</option>
-                      <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
-                    </select>
-                    <div class="invalid-feedback">Category selection is mandatory to build a rule.</div>
+                    <option selected disabled value="">Select Category(Exporter)</option>
+                    <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
+                  </select>
+                  <div class="invalid-feedback">Category selection is mandatory to build a rule.</div>
                 </div>
-
-                <div class="mb-3">
+                <!-- <div class="mb-3">
                   <label class="form-label">Select Metric</label>
                   <select v-model="form.selectedMetrics" id="metrics" class="form-select" :class="{ 'is-invalid': !form.selectedMetrics && showValidation }" :disabled="!metrics.length">
                       <option selected disabled value="">Select Metric</option>
                       <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
                     </select>
                     <div class="invalid-feedback">Metric selection is mandatory to build a rule.</div>
-                </div>
+                </div> v-if="form.selectedCategory && metricsTree.length" -->
+
+              <VueTreeselect
+                id="metrics"
+                v-model="selectedMetric"
+                :multiple="false"
+                :options="metricsTree"
+                :searchable="true"
+                placeholder="Select Metric"
+                :disabled="!form.selectedCategory || !metricsTree.length"
+              />
+              <div class="invalid-feedback">Metric selection is mandatory to build a rule.</div>
+              <p v-if="showValidation" class="invalid-matrics text-red-500"> Please select a valid metric.</p>
+                <br /><br /><br /><br /><br />
+                <br /><br /><br /><br /><br />
+                <br /><br /><br />
               </div>
 
               <div class="tab-pane fade" id="step4" role="tabpanel">
@@ -795,7 +890,7 @@ function constructQuery() {
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Threshold</label>
+                  <label class="form-label">Alert Trigger Threshold (point at which the alert is triggered)</label>
                   <input v-model="form.threshold" type="number" id="threshold" autocomplete="off" class="form-control" :class="{ 'is-invalid': String(form.threshold) === '' && showValidation }" placeholder="Enter threshold value">
                   <div class="invalid-feedback">Threshold is mandatory to build a rule.</div>
                 </div>

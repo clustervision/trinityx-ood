@@ -483,6 +483,17 @@ export default defineComponent({
 
 </script>
 
+<style scoped>
+/* Fix Table Header */
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+}
+/* Fix Table Header */
+</style>
+
 <template>
   <div v-for="(msg, index) in silenceMessages" :key="index" class="alert alert-primary" role="alert" v-html="msg"></div>
   <AlertsSilence v-if="dataFrom === 'Alert Manager'" :alerts="selectedRows" :silenceAPI="`${url}/proxy_post?url=${silenceAPI}`" modalId="silenceAlerts" @silence-message="handleSilenceMessage" @modal-open="stopAutoReload" @modal-close="startAutoReload" />

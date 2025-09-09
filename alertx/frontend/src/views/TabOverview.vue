@@ -348,6 +348,16 @@ export default defineComponent({
 });
 
 </script>
+<style scoped>
+/* Fix Table Header */
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+}
+/* Fix Table Header */
+</style>
 
 <template>
   <h4 class="fw-bold py-3 mb-4">
