@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, toRaw, reactive, computed, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, toRaw, reactive, watch } from 'vue';
 import axios, { AxiosError } from 'axios';
 import { Line } from 'vue-chartjs';
 import {
