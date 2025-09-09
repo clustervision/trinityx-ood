@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, toRaw, reactive, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, toRaw, reactive, computed, watch } from 'vue';
 import axios, { AxiosError } from 'axios';
 import { Line } from 'vue-chartjs';
 import {
@@ -153,7 +153,7 @@ PrometheusTarget.pathname = '/api/v1/targets';
 PrometheusTarget.searchParams.set('scrapePool', '');
 const PrometheusMetric = new URL(PrometheusServer.toString());
 PrometheusMetric.pathname = '/api/v1/query';
-
+const selectedMetric = ref(null);
 
 function validateForm(): boolean {
   const activePane = document.querySelector('.tab-pane.active');
@@ -168,23 +168,17 @@ function validateForm(): boolean {
     }
   } else if (currentIndex.value === 2) {
     const selectedCategory = activePane.querySelector('#exporter') as HTMLSelectElement;
-    // const selectedMetrics = activePane.querySelector('#metrics') as HTMLSelectElement;
-    const selectedMetrics = activePane.querySelector('#metricsDropdown') as HTMLInputElement;
     if (!selectedCategory?.value) {
       showValidation.value = true;
       return false;
     }
-    if (!selectedMetrics?.value) {
+    if (!selectedMetric.value) {
       showValidation.value = true;
       return false;
-    } else if (!metrics.value.includes(selectedMetrics.value)) {
+    } else if (!metrics.value.includes(selectedMetric.value)) {
       showValidation.value = true;
       return false;
     }
-    // if (!selectedCategory?.value || !selectedMetrics?.value) {
-    //   showValidation.value = true;
-    //   return false;
-    // }
   } else if (currentIndex.value === 3) {
     const filter_key = activePane.querySelector('#filter_key') as HTMLSelectElement;
     const grouping_operator = activePane.querySelector('#grouping_operator') as HTMLSelectElement;
@@ -505,38 +499,6 @@ async function fetchTarget() {
 }
 
 
-// function buildMetricsTree(metrics: string[]) {
-//   const tree: Record<string, any> = {};
-
-//   for (const metric of metrics) {
-//     // split into parts by underscore
-//     const parts = metric.split("_");
-//     let current = tree;
-
-//     parts.forEach((part, index) => {
-//       if (!current[part]) {
-//         current[part] = {
-//           id: parts.slice(0, index + 1).join("_"),
-//           label: part.toUpperCase(), // Capitalize for display
-//           children: {}
-//         };
-//       }
-//       current = current[part].children;
-//     });
-//   }
-
-//   // recursively convert children {} → []
-//   function convertToArray(node: Record<string, any>): any[] {
-//     return Object.values(node).map((n: any) => ({
-//       id: n.id,
-//       label: n.label,
-//       children: convertToArray(n.children)
-//     }));
-//   }
-
-//   return convertToArray(tree);
-// }
-
 function buildMetricsTree(metrics: string[]) {
   const tree: Record<string, any> = {};
 
@@ -578,45 +540,6 @@ function buildMetricsTree(metrics: string[]) {
 
 
 
-// function buildMetricsTree(metrics: string[]) {
-//   const tree: Record<string, any> = {};
-
-//   for (const metric of metrics) {
-//     const parts = metric.split("_");
-//     let current = tree;
-
-//     parts.forEach((part, index) => {
-//       const isLast = index === parts.length - 1;
-
-//       if (!current[part]) {
-//         current[part] = {
-//           id: isLast ? metric : parts.slice(0, index + 1).join("_"),
-//           label: isLast ? metric : part.toUpperCase(),
-//           children: {}
-//         };
-//       }
-//       current = current[part].children;
-//     });
-//   }
-
-//   function convertToArray(node: Record<string, any>): any[] {
-//     return Object.values(node).map((n: any) => {
-//       const children = convertToArray(n.children);
-//       const isLeaf = children.length === 0;
-
-//       return {
-//         id: n.id,
-//         label: n.label,
-//         children: isLeaf ? undefined : children,
-//         isDisabled: !isLeaf // disable all non-leaf nodes
-//       };
-//     });
-//   }
-
-//   return convertToArray(tree);
-// }
-
-
 async function fetchMetrics(exporter: string) {
   metrics.value = [];
   metricsTree.value = [];
@@ -628,13 +551,14 @@ async function fetchMetrics(exporter: string) {
       const result = response.data.data.result;
       result.forEach((MetricsResult: PrometheusMetrics) => {
         const metric = MetricsResult.metric?.__name__;
-        // console.log(metric);
-        if (metric && !metrics.value.includes(metric) && !metric.startsWith('go_') && !metric.startsWith('scrape_')) {
+        if (metric && !metrics.value.includes(metric) && !metric.startsWith('go_') && !metric.startsWith('scrape_') && !metric.startsWith('process_') && !metric.startsWith('promhttp_')) {
           metrics.value.push(metric);
         }
       });
-      metricsTree.value = buildMetricsTree(metrics.value);
-      console.log(JSON.stringify(metricsTree.value, null, 2));
+      if (metrics.value.length){
+        metricsTree.value = buildMetricsTree(metrics.value);
+      }
+      
     }
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -650,7 +574,8 @@ async function fetchMetrics(exporter: string) {
 }
 
 function constructQuery() {
-  if (!form.selectedMetrics) return '';
+  // if (!form.selectedMetrics) return '';
+  if (!selectedMetric.value) return '';
 
   // Build filter
   let filters = '';
@@ -670,7 +595,8 @@ function constructQuery() {
   const byClause = groupKey ? ` by (${groupKey})` : '';
 
   // If aggregation operator is missing, skip wrapping the metric
-  const metricWithFilters = `${form.selectedMetrics}${filters}`;
+  // const metricWithFilters = `${form.selectedMetrics}${filters}`;
+  const metricWithFilters = `${selectedMetric.value}${filters}`;
   const leftExpr = aggFn ? `${aggFn}(${metricWithFilters})${byClause}` : metricWithFilters;
 
   // Final query with optional threshold/operator
@@ -681,96 +607,19 @@ function constructQuery() {
 
 
 
-// import Dropdown from "bootstrap/js/dist/dropdown";
 
-// const metricsInputRef = ref<HTMLInputElement | null>(null);
-// const metricsDropdownRef = ref<HTMLDivElement | null>(null);
-// let dropdownInstance: Dropdown | null = null;
+// Watch when user selects a value
+watch(selectedMetric, (newVal) => {
+  if (!newVal) return;
 
-// const showList = ref(false);
-// const search = ref("");
-// // const metrics = ref<string[]>([]);
-
-
-// async function onCategoryChange() {
-//   if (!form.selectedCategory) return;
-
-//   await fetchMetrics(form.selectedCategory);
-
-//   // Wait for DOM updates
-//   await nextTick();
-
-//   // Focus the input
-//   metricsInputRef.value?.focus();
-
-//   const selectedMetrics = document.getElementById('#metricsDropdown') as HTMLInputElement;
-//   search.value = ''; // Clear previous selection
-//   selectedMetrics.value = ''; // Clear previous selection
-
-//   // Show the dropdown
-//   if (metricsDropdownRef.value) {
-//     dropdownInstance = new Dropdown(metricsDropdownRef.value.querySelector(".dropdown-toggle")!);
-//     // dropdownInstance.show();
-    
-
-//     // metricsDropdown
-//     showList.value = true; // Vue-controlled list
-//   }
-// }
-
-// // // Dropdown search logic
-// // // const search = ref("");
-// const filteredMetrics = ref([]);
-// // // const showList = ref(false);
-
-// // Filter using your metrics variable
-// function filterMetrics() {
-//   filteredMetrics.value = metrics.value.filter((m) =>
-//     m.toLowerCase().includes(search.value.toLowerCase())
-//   );
-//   showList.value = true;
-// }
-
-// // Set selection
-// function selectMetric(metric: string) {
-//   // form.value.selectedMetrics = metric;
-//   form.selectedMetrics = metric;
-//   search.value = metric;
-//   showList.value = false;
-// }
-
-// // // Optional: hide dropdown if clicked outside
-// // document.addEventListener("click", (e) => {
-// //   const dropdown = document.getElementById("metricsDropdown");
-// //   if (!dropdown.contains(e.target)) {
-// //     showList.value = false;
-// //   }
-// // });
-
-// import Treeselect from '@riophae/vue-treeselect';
-
-
-const selectedMetric = ref(null);
-
-// const metricsTree = [
-//   {
-//     id: 'cpu',
-//     label: 'CPU',
-//     children: [
-//       { id: 'cpu_usage', label: 'CPU Usage' },
-//       { id: 'cpu_temp', label: 'CPU Temp' }
-//     ]
-//   },
-//   {
-//     id: 'memory',
-//     label: 'Memory',
-//     children: [
-//       { id: 'mem_used', label: 'Memory Used' },
-//       { id: 'mem_free', label: 'Memory Free' }
-//     ]
-//   }
-// ];
-
+  if (!metrics.value.includes(newVal)) {
+    // Reset and show validation
+    selectedMetric.value = null;
+    showValidation.value = true;
+  } else {
+    showValidation.value = false;
+  }
+});
 </script>
 <style>
 #wizardTabs {
@@ -830,6 +679,14 @@ const selectedMetric = ref(null);
 
 .wizard-title {
     margin-top: -5rem !important;
+}
+
+.invalid-matrics {
+  /* display: none; */
+  width: 100%;
+  margin-top: 0.3rem;
+  font-size: 85%;
+  color: #ff3e1d;
 }
 </style>
 <template>
@@ -959,20 +816,8 @@ const selectedMetric = ref(null);
                     <option selected disabled value="">Select Category(Exporter)</option>
                     <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
                   </select>
-                  <!-- <select
-                    v-model="form.selectedCategory"
-                    id="exporter"
-                    class="form-select"
-                    :class="{ 'is-invalid': !form.selectedCategory && showValidation }"
-                    :disabled="!exporters.length"
-                       @change="onCategoryChange"
-                  >
-                    <option selected disabled value="">Select Category(Exporter)</option>
-                    <option v-for="exporter in exporters" :key="exporter" :value="exporter">{{ exporter }}</option>
-                  </select> -->
                   <div class="invalid-feedback">Category selection is mandatory to build a rule.</div>
                 </div>
-
                 <!-- <div class="mb-3">
                   <label class="form-label">Select Metric</label>
                   <select v-model="form.selectedMetrics" id="metrics" class="form-select" :class="{ 'is-invalid': !form.selectedMetrics && showValidation }" :disabled="!metrics.length">
@@ -980,84 +825,22 @@ const selectedMetric = ref(null);
                       <option v-for="metric in metrics" :key="metric" :value="metric">{{ metric }}</option>
                     </select>
                     <div class="invalid-feedback">Metric selection is mandatory to build a rule.</div>
-                </div> -->
-
-                <!-- <div class="dropdown w-100 position-relative" ref="metricsDropdownRef">
-                  <input
-                    ref="metricsInputRef"
-                    v-model="search"
-                    class="form-control dropdown-toggle"
-                    type="text"
-                    id="metricsDropdown"
-                    data-bs-toggle="dropdown"
-                    @input="filterMetrics"
-                    @focus="showList = true"
-                    placeholder="Type to search..."
-                    autocomplete="off" :class="{ 'is-invalid': !form.selectedMetrics && showValidation }"
-                  />
-                  <ul
-                    v-if="showList && metrics.length"
-                    class="dropdown-menu w-100 show"
-                    style="max-height: 200px; overflow-y: auto;"
-                  >
-                    <li v-for="metric in metrics" :key="metric">
-                      <a class="dropdown-item" href="#" @mousedown.prevent="selectMetric(metric)">
-                        {{ metric }}
-                      </a>
-                    </li>
-                  </ul>
-                  <div class="invalid-feedback">Please select a correct Metric to build a rule.</div>
-                </div> -->
+                </div> v-if="form.selectedCategory && metricsTree.length" -->
 
               <VueTreeselect
+                id="metrics"
                 v-model="selectedMetric"
                 :multiple="false"
                 :options="metricsTree"
                 :searchable="true"
                 placeholder="Select Metric"
+                :disabled="!form.selectedCategory || !metricsTree.length"
               />
-
-
-
-                <!-- <div class="dropdown w-100 position-relative">
-                  <label class="form-label">Select Metric</label>
-                  <input
-                    v-model="search"
-                    class="form-control dropdown-toggle"
-                    type="text"
-                    id="metricsDropdown"
-                    data-bs-toggle="dropdown"
-                    @input="filterMetrics"
-                    @focus="showList = true"
-                    placeholder="Type to search..."
-                    autocomplete="off"
-                  />
-                  <ul
-                    v-if="showList && metrics.length"
-                    class="dropdown-menu w-100 show"
-                    style="max-height: 200px; overflow-y: auto;"
-                  >
-                    <li v-for="metric in metrics" :key="metric">
-                      <a class="dropdown-item" href="#" @mousedown.prevent="selectMetric(metric)">
-                        {{ metric }}
-                      </a>
-                    </li>
-                  </ul>
-                </div> -->
-
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-                <br />
-
-
-  
-
-
+              <div class="invalid-feedback">Metric selection is mandatory to build a rule.</div>
+              <p v-if="showValidation" class="invalid-matrics text-red-500"> Please select a valid metric.</p>
+                <br /><br /><br /><br /><br />
+                <br /><br /><br /><br /><br />
+                <br /><br /><br />
               </div>
 
               <div class="tab-pane fade" id="step4" role="tabpanel">

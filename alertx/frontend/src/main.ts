@@ -1,5 +1,5 @@
 
-import { createApp } from 'vue'
+import { createApp, h, Transition } from 'vue'
 
 import { createPinia } from 'pinia'
 
@@ -12,7 +12,16 @@ import "datatables.net-dt/css/dataTables.dataTables.min.css";
 import "datatables.net";
 window.$ = window.jQuery = $;
 
+
+
 const app = createApp(App)
+
+Object.defineProperty(app.config.globalProperties, '$createElement', {
+  get() {
+    return h
+  }
+})
+app.component('transition', Transition)
 
 app.use(createPinia())
 app.use(router)
