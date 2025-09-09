@@ -32,6 +32,8 @@ __status__      = "Development"
 from configparser import RawConfigParser
 import os
 import requests
+from requests import Response
+from typing import Union, Any
 from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
@@ -188,13 +190,14 @@ class Rest():
         return response
 
 
-    def post_data(self, table=None, name=None, data=None):
+    def post_data(self, table: str | None = None, name: str | None = None, data: dict | None = None) -> Union[Response, bool]:
         """
         This method is based on REST API's POST method.
         It will post data to Luna 2 Daemon via REST API's.
         And use for creating and updating records.
         """
-        response = False
+        response: Union[Response, Any] = False
+        # response = False
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:

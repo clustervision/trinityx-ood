@@ -46,7 +46,7 @@ EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'post
 APP_STATE = True  # False for Development, True for Production
 
 
-def filter_columns(table=None):
+def filter_columns(table:str) -> list[str]:
     """
     This method remove the unnecessary fields from
     the dataset.
@@ -59,7 +59,7 @@ def filter_columns(table=None):
     return response
 
 
-def sortby(table=None):
+def sortby(table:str) -> list[str]:
     """
     This method remove the unnecessary fields from
     the dataset.
@@ -67,8 +67,10 @@ def sortby(table=None):
     response = False
     static = {
         'network': [
-            'name', 'type', 'network', 'gateway', 'gateway_metric', 'ntp_server', 'nameserver_ip',
-            'dhcp', 'dhcp_range_begin', 'dhcp_range_end', 'shared', 'zone', 'comment'
+            'name', 'type', 'zone', 'non_authoritative', 'dhcp', 'network', 'gateway',
+            'nameserver_ip', 'dhcp_range_begin', 'dhcp_range_end', 'network_ipv6', 'gateway_ipv6',
+            'nameserver_ip_ipv6', 'dhcp_range_begin_ipv6', 'dhcp_range_end_ipv6', 'ntp_server',
+            'gateway_metric', 'dhcp_nodes_in_pool', 'shared', 'comment'
         ]
     }
     response = list(static[table])
