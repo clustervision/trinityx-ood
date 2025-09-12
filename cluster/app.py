@@ -127,12 +127,14 @@ def edit():
     if table_data:
         data = table_data['config'][TABLE]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+    network_list = Helper().get_list_option_html('network')
     if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None]}
+        payload = {k: v for k, v in request.form.items() if v not in [None, '', 'None']}
         payload["createnode_ondemand"] = True if 'createnode_ondemand' in payload else False
         payload["createnode_macashost"] = True if 'createnode_macashost' in payload else False
         payload["nextnode_discover"] = True if 'nextnode_discover' in payload else False
         payload["security"] = True if 'security' in payload else False
+        payload["packing_bootpause"] = True if 'packing_bootpause' in payload else False
         payload["debug"] = True if 'debug' in payload else False
         cluster_name = payload['name']
         del payload['name']
@@ -143,10 +145,10 @@ def edit():
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
+            flash(error, "danger")
         return redirect(url_for('edit'), code=302)
     else:
-        return render_template("edit.html", table=TABLE_CAP, record=TABLE,  data=data)
+        return render_template("edit.html", table=TABLE_CAP, record=TABLE,  data=data, network_list=network_list)
 
 
 @app.route('/license', methods=['GET'])
@@ -169,4 +171,3 @@ if __name__ == "__main__":
         app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
-

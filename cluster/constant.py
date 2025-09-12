@@ -46,18 +46,14 @@ LOG_FILE = '/var/log/luna/luna2-web.log'
 APP_STATE = True  # False for Development, True for Production
 
 
-def sortby(table=None):
+def sortby() -> list[str]:
     """
-    This method remove the unnecessary fields from
-    the dataset.
+    This method remove the unnecessary fields from the dataset.
     """
-    response = False
-    static = {
-        'cluster': [
-            'name', 'controller', 'technical_contacts', 'provision_method', 'provision_fallback',
-            'nameserver_ip', 'forwardserver_ip', 'ntp_server', 'security', 'createnode_ondemand'
-            'user', 'debug'
-        ]
-    }
-    response = list(static[table])
+    response = [
+        'name', 'controller', 'technical_contacts', 'provision_method', 'provision_fallback',
+        'nameserver_ip', 'forwardserver_ip', 'domain_search', 'ntp_server', 'security',
+        'nextnode_discover', 'createnode_ondemand', 'createnode_macashost', 'packing_bootpause',
+        'user', 'debug'
+    ]
     return response
