@@ -29,6 +29,7 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 
+from typing import cast
 from configparser import RawConfigParser
 import os
 import requests
@@ -52,8 +53,7 @@ class Rest():
         from luna.ini from Luna 2 Daemon.
         """
         self.logger = Log.get_logger()
-        self.get_ini_info()
-        self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
+        self.username, self.password, self.daemon, self.secret_key, self.errors, self.security = self.get_ini_info()
         urllib3.disable_warnings()
         self.session = Session()
         self.retries = Retry(
@@ -62,14 +62,15 @@ class Rest():
             status_forcelist=[502, 503, 504],
             allowed_methods={'GET', 'POST'},
         )
-        self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
+        adapter = HTTPAdapter(max_retries=cast(int, self.retries))
+        self.session.mount("https://", adapter)
 
 
     def get_ini_info(self):
         """
         This method will get the information from the INI File.
         """
-        self.username, self.password, self.daemon, self.secret_key, self.security = "", "", "", "", ""
+        username, password, daemon, secret_key, security = "", "", "", "", ""
         self.errors = []
         file_check = os.path.isfile(INI_FILE)
         read_check = os.access(INI_FILE, os.R_OK)
@@ -82,25 +83,28 @@ class Rest():
             parser = RawConfigParser()
             parser.read(INI_FILE)
             if parser.has_section('API'):
-                self.username = self.get_option(parser, 'API', 'USERNAME')
-                self.password = self.get_option(parser, 'API', 'PASSWORD')
-                self.secret_key = self.get_option(parser, 'API', 'SECRET_KEY')
+                username = self.get_option(parser, 'API', 'USERNAME')
+                password = self.get_option(parser, 'API', 'PASSWORD')
+                secret_key = self.get_option(parser, 'API', 'SECRET_KEY')
                 protocol = self.get_option(parser, 'API', 'PROTOCOL')
                 daemon = self.get_option(parser, 'API', 'ENDPOINT')
-                self.daemon = f'{protocol}://{daemon}'
-                self.security = self.get_option(parser, 'API', 'VERIFY_CERTIFICATE')
+                daemon = f'{protocol}://{daemon}'
+                security = self.get_option(parser, 'API', 'VERIFY_CERTIFICATE')
             else:
                 self.errors.append(f'API section is not found in {INI_FILE}.')
-        return self.username, self.password, self.daemon, self.secret_key, self.errors, self.security
+        return username, password, daemon, secret_key, self.errors, security
 
 
-    def get_option(self, parser=None, section=None, option=None):
+    def get_option(self, parser: RawConfigParser, section: str, option: str):
         """
         This method will retrieve the value from the INI
         """
         response = False
         if parser.has_option(section, option):
-            response = parser.get(section, option)
+            if option == 'VERIFY_CERTIFICATE':
+                response = parser.getboolean(section, option)
+            else:
+                response = parser.get(section, option)
         else:
             self.errors.append(f'{option} is not found in {section} section in {INI_FILE}.')
         return response

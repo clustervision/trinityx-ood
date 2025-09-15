@@ -45,14 +45,41 @@ class Helper():
         self.logger = Log.get_logger()
 
 
+    def get_list_option_html(self, table=None, record=None, source=None):
+        """
+        This method will open the Login Page(First Page)
+        """
+        response = ""
+        get_list = Rest().get_data(table)
+        if get_list:
+            raw_data = get_list['config'][table]
+            response += f"<option value=''> Select {str(table).capitalize()}  </option>"
+            for name, _ in raw_data.items():
+                if record:
+                    if record == name:
+                        if source:
+                            if source == 'node':
+                                response += f"<option value='{name}(group)'>{name} (group)</option>"
+                                response += f"<option value='{name}(node)' selected>{name} (node)</option>"
+                            else:
+                                response += f"<option value='{name}(group)' selected>{name} (group)</option>"
+                                response += f"<option value='{name}(node)'>{name} (node)</option>"
+                        else:
+                            response += f"<option value='{name}' selected>{name}</option>"
+                    else:
+                        response += f"<option value='{name}'>{name}</option>"
+                else:
+                    response += f"<option value='{name}'>{name}</option>"
+        else:
+            response += f"<option value=''>No {str(table).capitalize()} Available </option>"
+        return response
+
+
+
     def update_record(self, table=None, data=None):
         """
         This method will update a record.
         """
-        for remove in ['verbose', 'command', 'action', 'hostname']:
-            data.pop(remove, None)
-        if 'raw' in data:
-            data.pop('raw', None)
         payload = data
         name = None
         if 'name' in payload and 'cluster' not in table:
@@ -85,7 +112,7 @@ class Helper():
         row format
         """
         self.logger.debug(f'Table => {table} and Data => {data}')
-        defined_keys = sortby(table)
+        defined_keys = sortby()
         self.logger.debug(f'Fields => {defined_keys}')
         for new_key in list(data.keys()):
             if new_key not in defined_keys:

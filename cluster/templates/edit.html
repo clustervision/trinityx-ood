@@ -28,6 +28,20 @@
               <label class="col-sm-2 col-form-label">name</label>
               <div class="col-sm-10"><input type="text" name="name" value="{{ data.name }}" class="form-control" maxlength="100" required="" readonly="" id="id_name"></div>
             </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">controller ip [{{ data.controller.ipaddress }}]</label>
+              <div class="col-sm-10"><input type="text" name="controller" value="" class="form-control ipv4" id="id_controller" inputmode="decimal"></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Controller Network</label>
+              <div class="col-sm-10">
+                <select name="controller_network" class="form-select" id="id_controller_network">
+                  {{ network_list | safe }}
+                </select>
+              </div>
+            </div>
           
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">ntp server</label>
@@ -72,6 +86,16 @@
             <div class="row mb-3">
               <label class="col-sm-2 col-form-label">security</label>
               <div class="col-sm-10"><input type="checkbox" name="security" class="form-check-input" id="id_security" {% if data.security in [True, "True"] %}checked{% endif %} /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Packing Bootpause</label>
+              <div class="col-sm-10"><input type="checkbox" name="packing_bootpause" class="form-check-input" id="id_packing_bootpause" {% if data.packing_bootpause in [True, "True"] %}checked{% endif %} /></div>
+            </div>
+
+            <div class="row mb-3">
+              <label class="col-sm-2 col-form-label">Domain Search</label>
+              <div class="col-sm-10"><input type="text" name="domain_search" value="{{ data.domain_search }}" class="form-control" id="id_domain_search"></div>
             </div>
           
             <div class="row mb-3">
