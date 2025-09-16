@@ -29,11 +29,25 @@ function setActiveTab(tab: typeof activeTab.value) {
   activeTab.value = tab;
 }
 
+const isModalOpen = ref(false);
 onMounted(() => {
   const init = async () => {
     await fetchRules();
   };
   init();
+
+  const handleModalShow = () => (isModalOpen.value = true);
+  const handleModalHide = () => (isModalOpen.value = false);
+
+  // Listen for all Bootstrap modals globally
+  document.addEventListener("show.bs.modal", handleModalShow);
+  document.addEventListener("hidden.bs.modal", handleModalHide);
+
+  // Cleanup
+  onBeforeUnmount(() => {
+    document.removeEventListener("show.bs.modal", handleModalShow);
+    document.removeEventListener("hidden.bs.modal", handleModalHide);
+  });
 });
 
 
@@ -41,7 +55,7 @@ onMounted(() => {
 
 
 
-import { ref, onMounted, reactive, toRaw } from 'vue';
+import { ref, onMounted, reactive, toRaw, onBeforeUnmount } from 'vue';
 import jsyaml from 'js-yaml';
 import axios from 'axios';
 
@@ -413,7 +427,7 @@ let ServiceContent = JSON.stringify({}, null, 2);
 <template>
 
   <header>
-    <TopNavigation :url = "url" />
+    <TopNavigation :url = "url" :promQLurl="promQLurl" configType="generic" :configuration="configuration" :save_configuration = "save_configuration" />
   </header>
 
   <div class="layout-wrapper layout-content-navbar">
@@ -458,10 +472,10 @@ let ServiceContent = JSON.stringify({}, null, 2);
           </ul>
           <div class="tab-content">
             <div class="tab-pane fade active show" id="tab-overview" role="tabpanel">
-              <TabOverview :isActive="activeTab === 'overview'" :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" :nodeListAPI = "nodeListAPI" @update:showSpinner="updateShowSpinner" />
+              <TabOverview :isActive="activeTab === 'overview'" :isModalOpen="isModalOpen" :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" :nodeListAPI = "nodeListAPI" @update:showSpinner="updateShowSpinner" />
             </div>
             <div class="tab-pane fade" id="tab-alerts" role="tabpanel">
-              <TabStatus :isActive="activeTab === 'alerts'" :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" :silenceAPI="silenceAPI" @update:showSpinner="updateShowSpinner" />
+              <TabStatus :isActive="activeTab === 'alerts'" :isModalOpen="isModalOpen" :url = "url" :alertURL = "alertURL" :statusAPI = "statusAPI" :silenceAPI="silenceAPI" @update:showSpinner="updateShowSpinner" />
             </div>
             <div class="tab-pane fade" id="tab-rules" role="tabpanel">
               <TabConfiguration

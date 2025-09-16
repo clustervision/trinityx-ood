@@ -91,6 +91,7 @@ export default defineComponent({
       required: true,
       default: false,
     },
+    isModalOpen: Boolean,
     url: {
       type: String,
       required: true,
@@ -124,18 +125,45 @@ export default defineComponent({
     };
   },
 
-  watch: {
-    async isActive(newValue) {
-      if (newValue) {
-        await this.fetchOverview();
+  // watch: {
+  //   async isActive(newValue) {
+  //     if (newValue) {
+  //       await this.fetchOverview();
+  //       if (this.autoReload) {
+  //         this.startAutoReload();
+  //       }
+  //     } else {
+  //       this.stopAutoReload();
+  //     }
+  //   },
+  // },
+
+  
+watch: {
+  async isActive(newValue) {
+    if (newValue && !this.isModalOpen) {
+      await this.fetchOverview();
+      if (this.autoReload) {
+        this.startAutoReload();
+      }
+    } else {
+      this.stopAutoReload();
+    }
+  },
+  isModalOpen(newValue) {
+    if (!newValue) {
+      // modal closed → re-run isActive watcher logic
+      if (this.isActive) {
+        this.fetchOverview();
         if (this.autoReload) {
           this.startAutoReload();
         }
-      } else {
-        this.stopAutoReload();
       }
-    },
-  },
+    } else {
+      this.stopAutoReload();
+    }
+  }
+},
 
   async mounted() {
     if (this.isActive) {
@@ -353,7 +381,7 @@ export default defineComponent({
 .table thead th {
   position: sticky;
   top: 0;
-  z-index: 2;
+  /* z-index: 2; */
   background: white;
 }
 /* Fix Table Header */

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { type PropType } from 'vue';
 import EditConfig from '@/views/EditConfig.vue';
-import Wizard from '@/components/Wizard.vue';
+// import Wizard from '@/components/Wizard.vue';
 import RuleModals from '@/components/RuleModals.vue';
 import { ref, computed } from 'vue';
 import { Modal } from 'bootstrap';
@@ -90,7 +90,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
 .table thead th {
   position: sticky;
   top: 0;
-  z-index: 2;
+  /* z-index: 2; */
   background: white;
 }
 /* Fix Table Header */
@@ -118,7 +118,7 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
     <div class="card">
       <h5 class="card-header">Rules</h5>
       <div class="card-body">
-          <Wizard :url="url" :PrometheusServer="promQLurl" configType="generic" :configuration="configuration" :save_configuration = "save_configuration" />
+          <!-- <Wizard :url="url" :PrometheusServer="promQLurl" configType="generic" :configuration="configuration" :save_configuration = "save_configuration" /> -->
           <RuleModals
             configType = "generic"
             :url = "url"
