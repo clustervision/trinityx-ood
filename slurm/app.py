@@ -34,6 +34,15 @@ import itertools
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from slurmlint.linter import lint
 
+from trinityx_config_blocks import ConfigFile
+from trinityx_config_slurm  import (
+    SlurmConfig,
+    SlurmEntry,
+    SlurmProperty,
+    )
+from trinityx_config_manager.hostlist import compress, expand
+#from ..hostlist import compress, expand
+# soon deprecated
 from trinityx_config_manager.parsers.ood_base import (
     NodesConfig,
     PartitionsConfig,
@@ -49,6 +58,7 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
     OODSlurmNodesConfigParser,
 )
 from base.config import get_configs
+# ----
 
 from helpers import (
     get_luna_nodes,
@@ -192,8 +202,21 @@ def get_hw_presets_route():
     return jsonify(configuration["hw_presets"])
 
 
+"""
+[
+  {
+    "group_name": "compute",
+    "hw_preset_name": null,
+    "name": "node001",
+    "properties": {
+      "State": "UNKNOWN"
+    }
+  },
+"""
+
 @app.route("/json/configuration/nodes", methods=["GET"])
 def get_nodes_route():
+    """
     load_from_backup = request.args.get("load_from_backup")
     configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
     nodes = configuration["nodes"]
@@ -208,16 +231,155 @@ def get_nodes_route():
             None,
         )
         node["group_name"] = group_name
+    """
 
+    config_block = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
+    block_content = config_block.get_managed_block("TrinityX")
+    nodesets = {}
+    nodes = []
+    groups = {}
+    if block_content:
+        lines = []
+        for line in block_content.splitlines():
+            if line.startswith('#'):
+                lines.append(line[1:])
+            else:
+                lines.append(line)
+        nodes_configs = SlurmConfig.parse('\n'.join(lines))
+        nodeset_list = nodes_configs.object_aslist(entry='NodeSet')
+        nodes_list = nodes_configs.object_aslist(entry='NodeName')
+        nodesets = {data['NodeSet']: data['Nodes'] for data in nodeset_list}
+        for nodeset in nodesets.keys():
+            expanded_nodes = expand(nodesets[nodeset]).split(",")
+            for node in expanded_nodes:
+               if node not in groups:
+                   groups[node] = nodeset
+        print(f"{nodeset_list}")
+        print(f"{groups}")
+        for node in nodes_list:
+            group_name = None
+            if node['NodeName'] in groups:
+                group_name = groups[node['NodeName']]
+            properties = { k:v for k,v in node.items() if k not in ['NodeName'] }
+            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties, "hw_preset_name": None}
+            nodes.append(node_dict)
     return jsonify(nodes)
 
+"""
+[
+  {
+    "hw_preset_name": null,
+    "name": "compute",
+    "node_names": [
+      "compute"
+    ],
+    "properties": {}
+  }
+]
+"""
 
 @app.route("/json/configuration/partitions", methods=["GET"])
 def get_partitions_route():
+
+    """
     load_from_backup = request.args.get("load_from_backup")
     configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
     partitions = configuration["partitions"]
     return jsonify(partitions)
+    """
+
+# TWAN---------------------------------------------------------
+    """
+    inside load_configuration
+      call for:
+        BaseConfigParser - read the config file:
+            lines = {
+                "before": [],
+                "managed": [],
+                "after": [],
+            } --> raw lines. before/after are outside the managed block
+           self.content = self.parse_managed_block(self.lines["managed"]) # raw data in, PartitionsConfig(partitions) out
+           get_content return self.content
+
+        partitions_parser = OODSlurmPartitionsConfigParser()
+        nodes_parser = OODSlurmNodesConfigParser()
+        partitions_config = partitions_parser.get_content() # == PartitionsConfig(partitions)
+        nodes_config = nodes_parser.get_content()
+        configuration = nodes_config
+        configuration.partitions = partitions_config.partitions # == Partition -> self.name, self.properties...
+        # configuration is 
+        return configuration
+
+    inside OODSlurmPartitionsConfigParser(BaseConfigParser):
+        for each managed line:
+          parse, key=value -- hw_preset split from properties. node_names == ref to group in slurm-nodes.conf
+          partitions.append(Partition(name, node_names, properties, hw_preset)) # <--------------------------------------------------------------
+          partition_configs = PartitionsConfig(partitions)
+          return partition_configs == PartitionsConfig(partitions)
+
+    inside Partition: # is class - bevat functions
+        self.name = name
+        self.node_names = node_names
+        self.properties = {k:v for k,v in properties.items() if k not in HWPreset.MANAGED_PROPERTIES}
+        self.hw_preset_name = hw_preset_name # is in config like comment ->  # HWPreset=name
+        def to_dict(self):
+            return {"name": self.name, "node_names": self.node_names, "properties": self.properties, "hw_preset_name": self.hw_preset_name}
+
+    inside PartitionsConfig: # bevat functions - is class
+        def __init__(self, partitions: List[Partition]):
+            self.partitions = partitions
+        def to_dict:
+            return {"partitions": [partition.to_dict() for partition in self.partitions]}
+
+    partitions in app.route contect == dict !!!
+           {"partitions": [
+              {"name": self.name, "node_names": self.node_names, "properties": self.properties, "hw_preset_name": self.hw_preset_name},
+              {"name": self.name, "node_names": self.node_names, "properties": self.properties, "hw_preset_name": self.hw_preset_name}
+           ]}
+
+    """
+###-----------------------------------------------
+
+    config_block = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
+    block_content = config_block.get_managed_block("TrinityX")
+    nodesets = {}
+    if block_content:
+        lines = []
+        for line in block_content.splitlines():
+            if line.startswith('#'):
+                lines.append(line[1:])
+            else:
+                lines.append(line)
+        nodes_configs = SlurmConfig.parse('\n'.join(lines))
+        nodeset_list = nodes_configs.object_aslist(entry='NodeSet')
+        nodesets = {data['NodeSet']: data['Nodes'] for data in nodeset_list}
+        print(f"{nodeset_list}")
+        print(f"{nodesets}")
+
+    config_block = ConfigFile.read('/etc/slurm/slurm-partitions.conf')
+    block_content = config_block.get_managed_block("TrinityX")
+    partitions_dict = {"partitions": []}
+    if block_content:
+        lines = []
+        for line in block_content.splitlines():
+            if line.startswith('#'):
+                lines.append(line[1:])
+            else:
+                lines.append(line)
+        partitions_configs = SlurmConfig.parse('\n'.join(lines))
+        partitions_list = partitions_configs.object_aslist(entry='PartitionName')
+        print(f"{partitions_list}")
+    if partitions_list:
+        for partition in partitions_list:
+            properties = { k:v for k,v in partition.items() if k not in ['PartitionName','Nodes'] }
+            node_names = None
+            if partition['Nodes'] in nodesets.keys():
+                node_names = expand(nodesets[partition['Nodes']]).split(",")
+            #if 'Nodes' in partition:
+            #    node_names = [partition['Nodes']]
+            partition_dict={"name": partition['PartitionName'], "properties": properties, "hw_preset_name": None, "node_names": node_names}
+            partitions_dict["partitions"].append(partition_dict)
+    return jsonify(partitions_dict['partitions'])
 
 
 @app.route("/json/configuration/save", methods=["POST"])
@@ -297,4 +459,10 @@ def import_luna_nodes_route():
 
 
 if __name__ == "__main__":
-    app.run()
+    #app.run()
+    # Sumit Testing Comments
+    dev_context=(
+             '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.crt',
+             '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.key'
+         )
+    app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
