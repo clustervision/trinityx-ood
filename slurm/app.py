@@ -86,9 +86,74 @@ def inject_settings():
     return {"CONFIGS": CONFIGS}
 
 
+def slurm_config(file):
+    config_block = ConfigFile.read(file)
+    block_content = config_block.get_managed_block("TrinityX")
+    if block_content:
+        lines = []
+        for line in block_content.splitlines():
+            if line.startswith('#'):
+                lines.append(line[1:])
+            else:
+                lines.append(line)
+        slurm_config = SlurmConfig.parse('\n'.join(lines))
+        return slurm_config
+
+
 def load_configuration(load_from_backup=False):
     """Load the configuration files from the default path."""
 
+    configuration = {"nodes": [], "partitions": [], "groups": [], "hw_presets": []}
+
+    nodes_configs = slurm_config('/etc/slurm/slurm-nodes.conf')
+    if nodes_configs:
+        nodesets = {}
+        nodes = []
+        groups = []
+        nodeset_list = nodes_configs.object_aslist(entry='NodeSet')
+        nodes_list = nodes_configs.object_aslist(entry='NodeName')
+        nodesets = {data['NodeSet']: data['Nodes'] for data in nodeset_list}
+        #groups = {}
+        #for nodeset in nodesets.keys():
+        #    expanded_nodes = expand(nodesets[nodeset]).split(",")
+        #    nodesets[nodeset] = expanded_nodes
+        #    for node in expanded_nodes:
+        #       if node not in groups:
+        #           groups[node] = nodeset
+        for group in nodeset_list:
+            print(f"{group['Nodes']}")
+            expanded_nodes = expand(group['Nodes']).split(",")
+            group_dict = {"name": group['NodeSet'], "node_names": expanded_nodes}
+            groups.append(group_dict)
+        configuration['groups'] = groups
+        for node in nodes_list:
+            group_name = None
+            if node['NodeName'] in groups:
+                group_name = groups[node['NodeName']]
+            properties = { k:v for k,v in node.items() if k not in ['NodeName'] }
+            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties, "hw_preset_name": None}
+            nodes.append(node_dict)
+        configuration['nodes'] = nodes
+
+    partitions_configs = slurm_config('/etc/slurm/slurm-partitions.conf')
+    if partitions_configs:
+        partitions = []
+        partitions_list = partitions_configs.object_aslist(entry='PartitionName')
+        if partitions_list:
+            for partition in partitions_list:
+                properties = { k:v for k,v in partition.items() if k not in ['PartitionName','Nodes'] }
+                node_names = None
+                if partition['Nodes'] in nodesets.keys():
+                    node_names = expand(nodesets[partition['Nodes']]).split(",")
+                #if 'Nodes' in partition:
+                #    node_names = [partition['Nodes']]
+                partition_dict={"name": partition['PartitionName'], "properties": properties, "hw_preset_name": None, "node_names": node_names}
+                partitions.append(partition_dict)
+            configuration['partitions'] = partitions
+
+    return configuration
+
+    """
     # If the configuration is not provided, load it from the default path
     partitions_parser = OODSlurmPartitionsConfigParser()
     nodes_parser = OODSlurmNodesConfigParser()
@@ -116,7 +181,7 @@ def load_configuration(load_from_backup=False):
     configuration.partitions = partitions_config.partitions
 
     return configuration
-
+    """
 
 def save_configuration(configuration):
     """Save the configuration files to the default path."""
@@ -198,7 +263,7 @@ def set_manager_route():
 @app.route("/json/configuration/hw_presets", methods=["GET"])
 def get_hw_presets_route():
     load_from_backup = request.args.get("load_from_backup")
-    configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
+    configuration = load_configuration(load_from_backup=load_from_backup) #.to_dict()
     return jsonify(configuration["hw_presets"])
 
 
@@ -216,9 +281,8 @@ def get_hw_presets_route():
 
 @app.route("/json/configuration/nodes", methods=["GET"])
 def get_nodes_route():
-    """
     load_from_backup = request.args.get("load_from_backup")
-    configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
+    configuration = load_configuration(load_from_backup=load_from_backup)#.to_dict()
     nodes = configuration["nodes"]
 
     for node in nodes:
@@ -231,38 +295,6 @@ def get_nodes_route():
             None,
         )
         node["group_name"] = group_name
-    """
-
-    config_block = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
-    block_content = config_block.get_managed_block("TrinityX")
-    nodesets = {}
-    nodes = []
-    groups = {}
-    if block_content:
-        lines = []
-        for line in block_content.splitlines():
-            if line.startswith('#'):
-                lines.append(line[1:])
-            else:
-                lines.append(line)
-        nodes_configs = SlurmConfig.parse('\n'.join(lines))
-        nodeset_list = nodes_configs.object_aslist(entry='NodeSet')
-        nodes_list = nodes_configs.object_aslist(entry='NodeName')
-        nodesets = {data['NodeSet']: data['Nodes'] for data in nodeset_list}
-        for nodeset in nodesets.keys():
-            expanded_nodes = expand(nodesets[nodeset]).split(",")
-            for node in expanded_nodes:
-               if node not in groups:
-                   groups[node] = nodeset
-        print(f"{nodeset_list}")
-        print(f"{groups}")
-        for node in nodes_list:
-            group_name = None
-            if node['NodeName'] in groups:
-                group_name = groups[node['NodeName']]
-            properties = { k:v for k,v in node.items() if k not in ['NodeName'] }
-            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties, "hw_preset_name": None}
-            nodes.append(node_dict)
     return jsonify(nodes)
 
 """
@@ -280,13 +312,11 @@ def get_nodes_route():
 
 @app.route("/json/configuration/partitions", methods=["GET"])
 def get_partitions_route():
-
-    """
     load_from_backup = request.args.get("load_from_backup")
-    configuration = load_configuration(load_from_backup=load_from_backup).to_dict()
+    configuration = load_configuration(load_from_backup=load_from_backup) #.to_dict()
     partitions = configuration["partitions"]
     return jsonify(partitions)
-    """
+    
 
 # TWAN---------------------------------------------------------
     """
@@ -339,47 +369,6 @@ def get_partitions_route():
 
     """
 ###-----------------------------------------------
-
-    config_block = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
-    block_content = config_block.get_managed_block("TrinityX")
-    nodesets = {}
-    if block_content:
-        lines = []
-        for line in block_content.splitlines():
-            if line.startswith('#'):
-                lines.append(line[1:])
-            else:
-                lines.append(line)
-        nodes_configs = SlurmConfig.parse('\n'.join(lines))
-        nodeset_list = nodes_configs.object_aslist(entry='NodeSet')
-        nodesets = {data['NodeSet']: data['Nodes'] for data in nodeset_list}
-        print(f"{nodeset_list}")
-        print(f"{nodesets}")
-
-    config_block = ConfigFile.read('/etc/slurm/slurm-partitions.conf')
-    block_content = config_block.get_managed_block("TrinityX")
-    partitions_dict = {"partitions": []}
-    if block_content:
-        lines = []
-        for line in block_content.splitlines():
-            if line.startswith('#'):
-                lines.append(line[1:])
-            else:
-                lines.append(line)
-        partitions_configs = SlurmConfig.parse('\n'.join(lines))
-        partitions_list = partitions_configs.object_aslist(entry='PartitionName')
-        print(f"{partitions_list}")
-    if partitions_list:
-        for partition in partitions_list:
-            properties = { k:v for k,v in partition.items() if k not in ['PartitionName','Nodes'] }
-            node_names = None
-            if partition['Nodes'] in nodesets.keys():
-                node_names = expand(nodesets[partition['Nodes']]).split(",")
-            #if 'Nodes' in partition:
-            #    node_names = [partition['Nodes']]
-            partition_dict={"name": partition['PartitionName'], "properties": properties, "hw_preset_name": None, "node_names": node_names}
-            partitions_dict["partitions"].append(partition_dict)
-    return jsonify(partitions_dict['partitions'])
 
 
 @app.route("/json/configuration/save", methods=["POST"])
