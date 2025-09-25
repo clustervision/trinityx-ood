@@ -206,9 +206,21 @@ def load_configuration(load_from_backup=False):
     return configuration
     """
 
-def save_configuration(configuration):
-    """Save the configuration files to the default path."""
+"""
 
+"""
+
+
+def save_configuration(configuration):
+    """Save the configuration files to the default path."""    
+
+    render_raw_defaults(configuration)
+    return True
+    nodes_file = ConfigFile.read(config_file)
+    if block_managed:
+        nodes_file.set_managed_block("Defaults", config_nodes)
+        nodes_file.write(config_file)
+    """
     # If the configuration is not provided, load it from the default path
     partitions_parser = OODSlurmPartitionsConfigParser()
     nodes_parser = OODSlurmNodesConfigParser()
@@ -222,8 +234,21 @@ def save_configuration(configuration):
 
     partitions_parser.write(backup=True)
     nodes_parser.write(backup=True)
+    """
 
     return True
+
+"""
+NodesConfig(
+    Node(node001, {"State": "UNKNOWN"}, None),
+    Node(node002, {"State": "UNKNOWN"}, test),
+    Node(demonode, {"State": "UNKNOWN"}, None),
+    Group(compute, ["node001", "node002", "demonode"], None),
+    Partition(compute, ["node001", "node002", "demonode"], {"Default": "YES"}, None),
+    Partition(blaat, ["node001", "node002", "demonode"], {}, test),
+    HWPreset(test, {"Boards": "2", "CoresPerSocket": "2", "RealMemory": "6000", "SocketsPerBoard": "12", "State": "UNKNOWN", "ThreadsPerCore": "2"}),
+)
+"""
 
 
 def parse_raw_configuration(raw_configuration):
@@ -241,19 +266,56 @@ def parse_raw_configuration(raw_configuration):
         node.pop("group_name", None)
         node["properties"] = {k: v for k, v in node.get("properties", {}).items()}
 
-    nodes = [Node(**node) for node in raw_configuration["nodes"] or []]
-    groups = [Group(**group) for group in raw_groups or []]
-    partitions = [
-        Partition(**partition) for partition in raw_configuration["partitions"] or []
-    ]
-    hw_presets = [
-        HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"] or []
-    ]
+    #nodes = [Node(**node) for node in raw_configuration["nodes"] or []]
+    nodes = raw_configuration["nodes"] or []
+    #groups = [Group(**group) for group in raw_groups or []]
+    groups = raw_groups or []
+    partitions = raw_configuration["partitions"] or []
+        #Partition(**partition) for partition in raw_configuration["partitions"] or []
+    #]
+    hw_presets = raw_configuration["hw_presets"] or []
+    #    HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"] or []
+    #]
 
-    config = NodesConfig(
-        nodes=nodes, groups=groups, partitions=partitions, hw_presets=hw_presets
-    )
-    return config
+    #config = NodesConfig(
+    #    nodes=nodes, groups=groups, partitions=partitions, hw_presets=hw_presets
+    #)
+    configuration = {"nodes": nodes, "partitions": partitions, "groups": groups, "hw_presets": hw_presets}
+    sys.stdout.write(f"PARSED: {configuration}\n")
+    return configuration
+
+
+def render_raw_defaults(configuration):
+    hw_presets = []
+    if 'hw_presets' in configuration:
+        hw_preset_nodes = {}
+        hw_preset_partitions = {}
+        if 'nodes' in configuration:
+            for node in configuration['nodes']:
+                if node['hw_preset_name']:
+                    if node['hw_preset_name'] not in hw_preset_nodes:
+                        hw_preset_nodes[node['hw_preset_name']] = []
+                    hw_preset_nodes[node['hw_preset_name']].append(node['name'])
+        if 'partitions' in configuration:
+            for partition in configuration['partitions']:
+                if partition['hw_preset_name']:
+                    if partition['hw_preset_name'] not in hw_preset_partitions:
+                        hw_preset_partitions[partition['hw_preset_name']] = []
+                    hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
+        sys.stdout.write(f"REDNER: {hw_preset_nodes}\n        {hw_preset_partitions}\n")
+        for hw_preset in configuration['hw_presets']:
+            if 'properties' in hw_preset:
+                hw_preset_line="# HWPresetName="+hw_preset['name']+" "
+                for key, value in hw_preset['properties'].items():
+                    hw_preset_line+=key+"="+value+" "
+                hw_preset_line+="# "
+                if hw_preset['name'] in hw_preset_nodes:
+                    hw_preset_line+="Nodes="+compress(','.join(hw_preset_nodes[hw_preset['name']]))+" "
+                if hw_preset['name'] in hw_preset_partitions:
+                    hw_preset_line+="Partitions="+compress(','.join(hw_preset_partitions[hw_preset['name']]))
+                hw_presets.append(hw_preset_line)
+        sys.stdout.write(f"REDNER DEFAULT: {hw_presets}\n")
+    return configuration
 
 
 # Pages
@@ -408,21 +470,96 @@ def get_partitions_route():
     """
 ###-----------------------------------------------
 
-
 @app.route("/json/configuration/save", methods=["POST"])
 def set_configuration_route():
     """Set the configuration."""
     raw_configuration = request.json
     configuration = parse_raw_configuration(raw_configuration)
+
     save_configuration(configuration)
     output = {
         "redirect": url_for(
             "index_route",
-            message="Configuration saved successfully, restart the slurmctld service to apply the changes.",
+            message=f"---> Configuration saved successfully, restart the slurmctld service to apply the changes.\n\n{configuration}",
         )
     }
     return jsonify(output)
 
+
+"""
+    def save_configuration:
+    # If the configuration is not provided, load it from the default path
+    partitions_parser = OODSlurmPartitionsConfigParser()
+    nodes_parser = OODSlurmNodesConfigParser()
+
+    # Load the configuration files
+    partitions_parser = partitions_parser.read()
+    nodes_parser = nodes_parser.read()
+
+    partitions_parser.set_content(configuration)
+    nodes_parser.set_content(configuration)
+
+    partitions_parser.write(backup=True)
+    nodes_parser.write(backup=True)
+
+raw_config + plus preview received:
+{
+  "hw_presets": [
+    {
+      "name": "test",
+      "properties": {
+        "Boards": "2",
+        "CoresPerSocket": "2",
+        "RealMemory": "6000",
+        "SocketsPerBoard": "12",
+        "State": "UNKNOWN",
+        "ThreadsPerCore": "2"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "group_name": "compute",
+      "hw_preset_name": null,
+      "name": "node001",
+      "properties": {
+        "Boards": "1",
+        "CoresPerSocket": "2",
+        "RealMemory": "2000",
+        "SocketsPerBoard": "1",
+        "State": "UNKNOWN",
+        "ThreadsPerCore": "2"
+      }
+    }
+    ...
+  ],
+  "partitions": [
+    {
+      "hw_preset_name": "test",
+      "name": "compute",
+      "node_names": [
+        "node001",
+        "node002",
+        "demonode"
+      ],
+      "properties": {}
+    },
+    ...
+  ]
+}
+
+config:
+NodesConfig(
+    Node(node001, {"State": "UNKNOWN"}, None),
+    Node(node002, {"State": "UNKNOWN"}, test),
+    Node(demonode, {"State": "UNKNOWN"}, None),
+    Group(compute, ["node001", "node002", "demonode"], None),
+    Partition(compute, ["node001", "node002", "demonode"], {"Default": "YES"}, None),
+    Partition(blaat, ["node001", "node002", "demonode"], {}, test),
+    HWPreset(test, {"Boards": "2", "CoresPerSocket": "2", "RealMemory": "6000", "SocketsPerBoard": "12", "State": "UNKNOWN", "ThreadsPerCore": "2"}),
+)
+
+"""
 
 @app.route("/json/configuration/preview", methods=["POST"])
 def configuration_preview_route():
