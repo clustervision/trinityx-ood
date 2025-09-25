@@ -113,7 +113,7 @@ def load_configuration(load_from_backup=False):
         for default in defaults_list:
             properties = { k:v for k,v in default.items() if k not in ['HWPresetName'] }
             default_dict = {"name": default['HWPresetName'], "properties": properties}
-        defaults.append(default_dict)
+            defaults.append(default_dict)
         configuration['hw_presets'] = defaults
         # prefill for below nodes/partitions
         defaults_comments_nodes = defaults_configs.comment(name='Nodes')
@@ -214,12 +214,13 @@ def load_configuration(load_from_backup=False):
 def save_configuration(configuration):
     """Save the configuration files to the default path."""    
 
-    render_raw_defaults(configuration)
-    return True
-    nodes_file = ConfigFile.read(config_file)
+    raw_block = render_raw_nodes_defaults(configuration)
+    nodes_file = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
+    block_managed = nodes_file.ismanaged("Defaults")
     if block_managed:
-        nodes_file.set_managed_block("Defaults", config_nodes)
-        nodes_file.write(config_file)
+        nodes_file.set_managed_block("Defaults", raw_block)
+        nodes_file.write('/etc/slurm/slurm-nodes.conf')
+    return True
     """
     # If the configuration is not provided, load it from the default path
     partitions_parser = OODSlurmPartitionsConfigParser()
@@ -234,9 +235,8 @@ def save_configuration(configuration):
 
     partitions_parser.write(backup=True)
     nodes_parser.write(backup=True)
-    """
-
     return True
+    """
 
 """
 NodesConfig(
@@ -285,8 +285,20 @@ def parse_raw_configuration(raw_configuration):
     return configuration
 
 
-def render_raw_defaults(configuration):
-    hw_presets = []
+#def render_raw_nodes_defaults(configuration):
+
+
+def render_raw_nodes_defaults(configuration):
+    """
+    we generate the raw lines that go into the Defaults blocks.
+    For each node and partition we generate the correspondent lines, as such
+    that the Generate part can generate what will go into the "TrinityX" managed blocks
+    """
+    defaults_configs = slurm_config('/etc/slurm/slurm-nodes.conf','Defaults')
+    defaults = defaults_configs.object(multiple=False)
+    raw_block = ''
+
+    hw_presets = {}
     if 'hw_presets' in configuration:
         hw_preset_nodes = {}
         hw_preset_partitions = {}
@@ -302,20 +314,34 @@ def render_raw_defaults(configuration):
                     if partition['hw_preset_name'] not in hw_preset_partitions:
                         hw_preset_partitions[partition['hw_preset_name']] = []
                     hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
-        sys.stdout.write(f"REDNER: {hw_preset_nodes}\n        {hw_preset_partitions}\n")
         for hw_preset in configuration['hw_presets']:
             if 'properties' in hw_preset:
-                hw_preset_line="# HWPresetName="+hw_preset['name']+" "
+                hw_preset_line="HWPresetName="+hw_preset['name']+" "
+                hw_preset_properties = ""
                 for key, value in hw_preset['properties'].items():
-                    hw_preset_line+=key+"="+value+" "
+                    hw_preset_line+=f"{key}={value} "
+                    hw_preset_properties+=f"{key}={value} "
                 hw_preset_line+="# "
                 if hw_preset['name'] in hw_preset_nodes:
                     hw_preset_line+="Nodes="+compress(','.join(hw_preset_nodes[hw_preset['name']]))+" "
+                    for node in hw_preset_nodes[hw_preset['name']]:
+                        node_preset_line="NodeName="+node+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
+                        hw_presets["NodeName="+node]=node_preset_line
                 if hw_preset['name'] in hw_preset_partitions:
                     hw_preset_line+="Partitions="+compress(','.join(hw_preset_partitions[hw_preset['name']]))
-                hw_presets.append(hw_preset_line)
-        sys.stdout.write(f"REDNER DEFAULT: {hw_presets}\n")
-    return configuration
+                    for partition in hw_preset_partitions[hw_preset['name']]:
+                        partition_preset_line="PartitionName="+partition+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
+                        hw_presets["PartitionName="+partition]=partition_preset_line
+                hw_presets["HWPresetName="+hw_preset['name']]=hw_preset_line
+    for hw_preset, entry in sorted(hw_presets.items()):
+        raw_block+="# "+entry+"\n"
+        if hw_preset in defaults:
+            del defaults[hw_preset]
+    for hw_preset, entry in sorted(defaults.items()):
+        raw_block+="# "+hw_preset+" "+entry+"\n"
+
+    sys.stdout.write(f"RENDER RAW BLOCK:\n{raw_block}\n")
+    return raw_block
 
 
 # Pages
@@ -480,7 +506,7 @@ def set_configuration_route():
     output = {
         "redirect": url_for(
             "index_route",
-            message=f"---> Configuration saved successfully, restart the slurmctld service to apply the changes.\n\n{configuration}",
+            message=f"Configuration saved successfully, restart the slurmctld service to apply the changes.",
         )
     }
     return jsonify(output)
