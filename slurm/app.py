@@ -39,6 +39,7 @@ from trinityx_config_slurm  import (
     SlurmConfig,
     SlurmEntry,
     SlurmProperty,
+    Generate,
     )
 from trinityx_config_manager.hostlist import compress, expand
 #from ..hostlist import compress, expand
@@ -214,12 +215,18 @@ def load_configuration(load_from_backup=False):
 def save_configuration(configuration):
     """Save the configuration files to the default path."""    
 
+    fullset = []
+    if 'groups' in configuration:
+        for group in configuration['groups']:
+            for node in group['node_names']:
+                fullset.append({'name': node, 'group': group['name']})
     raw_block = render_raw_nodes_defaults(configuration)
     nodes_file = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
     block_managed = nodes_file.ismanaged("Defaults")
     if block_managed:
         nodes_file.set_managed_block("Defaults", raw_block)
         nodes_file.write('/etc/slurm/slurm-nodes.conf')
+    Generate().all_configs(fullset)
     return True
     """
     # If the configuration is not provided, load it from the default path
@@ -281,7 +288,7 @@ def parse_raw_configuration(raw_configuration):
     #    nodes=nodes, groups=groups, partitions=partitions, hw_presets=hw_presets
     #)
     configuration = {"nodes": nodes, "partitions": partitions, "groups": groups, "hw_presets": hw_presets}
-    sys.stdout.write(f"PARSED: {configuration}\n")
+    sys.stdout.write(f"RAW PARSED: {configuration}\n")
     return configuration
 
 
