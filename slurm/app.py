@@ -86,9 +86,9 @@ def inject_settings():
     return {"CONFIGS": CONFIGS}
 
 
-def slurm_config(file):
+def slurm_config(file,block_name='TrinityX'):
     config_block = ConfigFile.read(file)
-    block_content = config_block.get_managed_block("TrinityX")
+    block_content = config_block.get_managed_block(block_name)
     if block_content:
         lines = []
         for line in block_content.splitlines():
@@ -105,6 +105,32 @@ def load_configuration(load_from_backup=False):
 
     configuration = {"nodes": [], "partitions": [], "groups": [], "hw_presets": []}
 
+    hw_presets = {'nodes': {}, 'partitions': {}}
+    defaults_configs = slurm_config('/etc/slurm/slurm-nodes.conf','Defaults')
+    if defaults_configs:
+        defaults = []
+        defaults_list = defaults_configs.object_aslist(entry='HWPresetName')
+        for default in defaults_list:
+            properties = { k:v for k,v in default.items() if k not in ['HWPresetName'] }
+            default_dict = {"name": default['HWPresetName'], "properties": properties}
+        defaults.append(default_dict)
+        configuration['hw_presets'] = defaults
+        # prefill for below nodes/partitions
+        defaults_comments_nodes = defaults_configs.comment(name='Nodes')
+        defaults_comments_partitions = defaults_configs.comment(name='Partitions')
+        if defaults_comments_nodes:
+            for key, nodes in defaults_comments_nodes.items():
+                if key.startswith('HWPresetName'):
+                    _, hw_preset = key.split('=',1)
+                    for node in expand(nodes).split(","):
+                        hw_presets['nodes'][node] = hw_preset
+        if defaults_comments_partitions:
+            for key, partitions in defaults_comments_partitions.items():
+                if key.startswith('HWPresetName'):
+                    _, hw_preset = key.split('=',1)
+                    for partition in expand(partitions).split(","):
+                        hw_presets['partitions'][partition] = hw_preset
+
     nodes_configs = slurm_config('/etc/slurm/slurm-nodes.conf')
     if nodes_configs:
         nodesets = {}
@@ -113,13 +139,6 @@ def load_configuration(load_from_backup=False):
         nodeset_list = nodes_configs.object_aslist(entry='NodeSet')
         nodes_list = nodes_configs.object_aslist(entry='NodeName')
         nodesets = {data['NodeSet']: data['Nodes'] for data in nodeset_list}
-        #groups = {}
-        #for nodeset in nodesets.keys():
-        #    expanded_nodes = expand(nodesets[nodeset]).split(",")
-        #    nodesets[nodeset] = expanded_nodes
-        #    for node in expanded_nodes:
-        #       if node not in groups:
-        #           groups[node] = nodeset
         for group in nodeset_list:
             print(f"{group['Nodes']}")
             expanded_nodes = expand(group['Nodes']).split(",")
@@ -130,8 +149,11 @@ def load_configuration(load_from_backup=False):
             group_name = None
             if node['NodeName'] in groups:
                 group_name = groups[node['NodeName']]
+            hw_preset = None
+            if node['NodeName'] in hw_presets['nodes']:
+                hw_preset = hw_presets['nodes'][node['NodeName']]
             properties = { k:v for k,v in node.items() if k not in ['NodeName'] }
-            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties, "hw_preset_name": None}
+            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties, "hw_preset_name": hw_preset}
             nodes.append(node_dict)
         configuration['nodes'] = nodes
 
@@ -141,13 +163,14 @@ def load_configuration(load_from_backup=False):
         partitions_list = partitions_configs.object_aslist(entry='PartitionName')
         if partitions_list:
             for partition in partitions_list:
-                properties = { k:v for k,v in partition.items() if k not in ['PartitionName','Nodes'] }
                 node_names = None
                 if partition['Nodes'] in nodesets.keys():
                     node_names = expand(nodesets[partition['Nodes']]).split(",")
-                #if 'Nodes' in partition:
-                #    node_names = [partition['Nodes']]
-                partition_dict={"name": partition['PartitionName'], "properties": properties, "hw_preset_name": None, "node_names": node_names}
+                hw_preset = None
+                if partition['PartitionName'] in hw_presets['partitions']:
+                    hw_preset = hw_presets['partitions'][partition['PartitionName']]
+                properties = { k:v for k,v in partition.items() if k not in ['PartitionName','Nodes'] }
+                partition_dict={"name": partition['PartitionName'], "properties": properties, "hw_preset_name": hw_preset, "node_names": node_names}
                 partitions.append(partition_dict)
             configuration['partitions'] = partitions
 
@@ -239,8 +262,8 @@ def index_route():
     """Render the index page."""
     message = request.args.get("message")
 
-    if not managed_by_ood():
-        return render_template("pages/unmanaged.html")
+    #if not managed_by_ood():
+    #    return render_template("pages/unmanaged.html")
     return render_template(
         "pages/index.html",
         messages=[message] if message else [],
@@ -258,6 +281,21 @@ def set_manager_route():
     nodes_parser.write(force=True)
     return redirect(url_for("index_route"))
 
+
+"""
+[
+  {
+    "name": "test",
+    "properties": {
+      "Boards": "2",
+      "CoresPerSocket": "2",
+      "RealMemory": "6000",
+      "SocketsPerBoard": "12",
+      "ThreadsPerCore": "2"
+    }
+  }
+]
+"""
 
 # Actions
 @app.route("/json/configuration/hw_presets", methods=["GET"])
