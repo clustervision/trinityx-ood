@@ -193,6 +193,12 @@ def init_tmp_files(slurm_files):
                 file.write("#### TrinityX Managed block start ####\n")
                 file.write("#### TrinityX Managed block end   ####\n")
 
+def remove_tmp_files(slurm_files):
+    for slurm_file in ['nodes', 'partitions', 'gres']:
+        if len(slurm_files[slurm_file]) > 5 and slurm_files[slurm_file].startswith("/"):
+            if os.path.exists(slurm_files[slurm_file]):
+               os.remove(slurm_files[slurm_file])
+
 
 def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True):
     """Save the configuration files to the default path."""    
@@ -597,6 +603,7 @@ def configuration_preview_route():
         nodes_preview_lines = config_block.dump()
         config_block = ConfigFile.read(tmp_configs['partitions'])
         partitions_preview_lines = config_block.dump()
+        remove_tmp_files(tmp_configs)
 
     return render_template(
         "components/configuration_preview.html",
