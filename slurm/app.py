@@ -183,16 +183,15 @@ def load_configuration(slurm_files=SLURM_FILES):
 
     return configuration
 
+
 def init_tmp_files(slurm_files):
     for slurm_file in ['nodes', 'partitions', 'gres']:
-        with open(slurm_files[slurm_file], "w") as file:
-            file.write("#### Defaults Managed block start ####\n")
-            file.write("#### Defaults Managed block end   ####\n")
-            file.write("#### TrinityX Managed block start ####\n")
-            file.write("#### TrinityX Managed block end   ####\n")
-
-        #open(slurm_files[slurm_file], 'a').close()
-        # #### Defaults Managed block start ####
+        if len(slurm_files[slurm_file]) > 5 and slurm_files[slurm_file].startswith("/"):
+            with open(slurm_files[slurm_file], "w") as file:
+                file.write("#### Defaults Managed block start ####\n")
+                file.write("#### Defaults Managed block end   ####\n\n")
+                file.write("#### TrinityX Managed block start ####\n")
+                file.write("#### TrinityX Managed block end   ####\n")
 
 
 def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True):
@@ -394,7 +393,10 @@ def set_manager_route():
 @app.route("/json/configuration/hw_presets", methods=["GET"])
 def get_hw_presets_route():
     load_from_backup = request.args.get("load_from_backup")
-    configuration = load_configuration(load_from_backup=load_from_backup) #.to_dict()
+    slurm_files = SLURM_FILES
+    if load_from_backup:
+        slurm_files = SLURM_BACKUP_FILES
+    configuration = load_configuration(slurm_files=slurm_files)
     return jsonify(configuration["hw_presets"])
 
 
@@ -413,7 +415,10 @@ def get_hw_presets_route():
 @app.route("/json/configuration/nodes", methods=["GET"])
 def get_nodes_route():
     load_from_backup = request.args.get("load_from_backup")
-    configuration = load_configuration(load_from_backup=load_from_backup)#.to_dict()
+    slurm_files = SLURM_FILES
+    if load_from_backup:
+        slurm_files = SLURM_BACKUP_FILES
+    configuration = load_configuration(slurm_files=slurm_files)
     nodes = configuration["nodes"]
 
     for node in nodes:
@@ -444,7 +449,10 @@ def get_nodes_route():
 @app.route("/json/configuration/partitions", methods=["GET"])
 def get_partitions_route():
     load_from_backup = request.args.get("load_from_backup")
-    configuration = load_configuration(load_from_backup=load_from_backup) #.to_dict()
+    slurm_files = SLURM_FILES
+    if load_from_backup:
+        slurm_files = SLURM_BACKUP_FILES
+    configuration = load_configuration(slurm_files=slurm_files)
     partitions = configuration["partitions"]
     return jsonify(partitions)
     
@@ -570,7 +578,11 @@ raw_config + plus preview received:
 def configuration_preview_route():
     """Render the configuration preview."""
     if request.args.get("load_from_backup", False):
-        configuration = load_configuration(slurm_files=SLURM_BACKUP_FILES)
+        config_block = ConfigFile.read(SLURM_BACKUP_FILES['nodes'])
+        nodes_preview_lines = config_block.dump()
+        config_block = ConfigFile.read(SLURM_BACKUP_FILES['partitions'])
+        partitions_preview_lines = config_block.dump()
+        #configuration = load_configuration(slurm_files=SLURM_BACKUP_FILES)
     else:
         configuration = parse_raw_configuration(request.json)
         sys.stdout.write(f"PREVIEW: {configuration}\n")
@@ -579,19 +591,12 @@ def configuration_preview_route():
             'partitions': '/tmp/slurm-partitions.conf',
             'gres': '/tmp/gres.conf'}
         init_tmp_files(tmp_configs)
-        #for tmp_file in ['nodes', 'partitions', 'gres']:
-        #    open(tmp_configs[tmp_file], 'a').close()
         save_configuration(configuration=configuration, slurm_files=tmp_configs, backup=False)
 
-    """
-    partitions_parser = OODSlurmPartitionsConfigParser().read()
-    partitions_parser.set_content(configuration)
-    partitions_preview_lines = partitions_parser.dump_lines(marked=True)
-
-    nodes_parser = OODSlurmNodesConfigParser().read()
-    nodes_parser.set_content(configuration)
-    nodes_preview_lines = nodes_parser.dump_lines(marked=True)
-    """
+        config_block = ConfigFile.read(tmp_configs['nodes'])
+        nodes_preview_lines = config_block.dump()
+        config_block = ConfigFile.read(tmp_configs['partitions'])
+        partitions_preview_lines = config_block.dump()
 
     return render_template(
         "components/configuration_preview.html",
