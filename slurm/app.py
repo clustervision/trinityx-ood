@@ -61,7 +61,7 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
 )
 # ----
 """
-from base.config import get_configs
+from base.config import get_configs, get_slurm_files, get_slurm_backup_files
 
 from helpers import (
     get_luna_nodes,
@@ -69,6 +69,10 @@ from helpers import (
 )
 
 CONFIGS = get_configs()
+SLURM_FILES = get_slurm_files()
+SLURM_BACKUP_FILES = get_slurm_backup_files()
+sys.stdout.write(f"SLURM: {SLURM_FILES}\n")
+
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
@@ -103,13 +107,13 @@ def slurm_config(file,block_name='TrinityX'):
         return slurm_config
 
 
-def load_configuration(load_from_backup=False):
+def load_configuration(slurm_files=SLURM_FILES):
     """Load the configuration files from the default path."""
 
     configuration = {"nodes": [], "partitions": [], "groups": [], "hw_presets": []}
 
     hw_presets = {'nodes': {}, 'partitions': {}}
-    defaults_configs = slurm_config('/etc/slurm/slurm-nodes.conf','Defaults')
+    defaults_configs = slurm_config(slurm_files['nodes'],'Defaults')
     if defaults_configs:
         defaults = []
         defaults_list = defaults_configs.object_aslist(entry='HWPresetName')
@@ -134,7 +138,7 @@ def load_configuration(load_from_backup=False):
                     for partition in expand(partitions).split(","):
                         hw_presets['partitions'][partition] = hw_preset
 
-    nodes_configs = slurm_config('/etc/slurm/slurm-nodes.conf')
+    nodes_configs = slurm_config(slurm_files['nodes'])
     if nodes_configs:
         nodesets = {}
         nodes = []
@@ -160,7 +164,7 @@ def load_configuration(load_from_backup=False):
             nodes.append(node_dict)
         configuration['nodes'] = nodes
 
-    partitions_configs = slurm_config('/etc/slurm/slurm-partitions.conf')
+    partitions_configs = slurm_config(slurm_files['partitions'])
     if partitions_configs:
         partitions = []
         partitions_list = partitions_configs.object_aslist(entry='PartitionName')
@@ -179,60 +183,44 @@ def load_configuration(load_from_backup=False):
 
     return configuration
 
+def init_tmp_files(slurm_files):
+    for slurm_file in ['nodes', 'partitions', 'gres']:
+        with open(slurm_files[slurm_file], "w") as file:
+            file.write("#### Defaults Managed block start ####\n")
+            file.write("#### Defaults Managed block end   ####\n")
+            file.write("#### TrinityX Managed block start ####\n")
+            file.write("#### TrinityX Managed block end   ####\n")
 
-def save_configuration(configuration):
+        #open(slurm_files[slurm_file], 'a').close()
+        # #### Defaults Managed block start ####
+
+
+def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True):
     """Save the configuration files to the default path."""    
 
+    sys.stdout.write(f"FILES: {slurm_files}\n")
     fullset = []
     if 'groups' in configuration:
         for group in configuration['groups']:
             for node in group['node_names']:
                 fullset.append({'name': node, 'group': group['name']})
     #
-    raw_nodes_block = render_raw_nodes_defaults(configuration)
-    nodes_file = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
+    raw_nodes_block = render_raw_nodes_defaults(configuration,slurm_files)
+    nodes_file = ConfigFile.read(slurm_files['nodes'])
     block_managed = nodes_file.ismanaged("Defaults")
     if block_managed:
         nodes_file.set_managed_block("Defaults", raw_nodes_block)
-        nodes_file.write('/etc/slurm/slurm-nodes.conf')
+        nodes_file.write(slurm_files['nodes'])
     #
-    raw_partitions_block = render_raw_partitions_defaults(configuration)
-    partitions_file = ConfigFile.read('/etc/slurm/slurm-partitions.conf')
+    raw_partitions_block = render_raw_partitions_defaults(configuration,slurm_files)
+    partitions_file = ConfigFile.read(slurm_files['partitions'])
     block_managed = partitions_file.ismanaged("Defaults")
     if block_managed:
         partitions_file.set_managed_block("Defaults", raw_partitions_block)
-        partitions_file.write('/etc/slurm/slurm-partitions.conf')
+        partitions_file.write(slurm_files['partitions'])
     #
-    Generate().all_configs(fullset)
+    Generate().all_configs(nodes=fullset, configs=slurm_files)
     return True
-    """
-    # If the configuration is not provided, load it from the default path
-    partitions_parser = OODSlurmPartitionsConfigParser()
-    nodes_parser = OODSlurmNodesConfigParser()
-
-    # Load the configuration files
-    partitions_parser = partitions_parser.read()
-    nodes_parser = nodes_parser.read()
-
-    partitions_parser.set_content(configuration)
-    nodes_parser.set_content(configuration)
-
-    partitions_parser.write(backup=True)
-    nodes_parser.write(backup=True)
-    return True
-    """
-
-"""
-NodesConfig(
-    Node(node001, {"State": "UNKNOWN"}, None),
-    Node(node002, {"State": "UNKNOWN"}, test),
-    Node(demonode, {"State": "UNKNOWN"}, None),
-    Group(compute, ["node001", "node002", "demonode"], None),
-    Partition(compute, ["node001", "node002", "demonode"], {"Default": "YES"}, None),
-    Partition(blaat, ["node001", "node002", "demonode"], {}, test),
-    HWPreset(test, {"Boards": "2", "CoresPerSocket": "2", "RealMemory": "6000", "SocketsPerBoard": "12", "State": "UNKNOWN", "ThreadsPerCore": "2"}),
-)
-"""
 
 
 def parse_raw_configuration(raw_configuration):
@@ -270,13 +258,13 @@ def parse_raw_configuration(raw_configuration):
 
 
 
-def render_raw_nodes_defaults(configuration):
+def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
     """
     we generate the raw lines that go into the Defaults blocks.
     For each node and partition we generate the correspondent lines, as such
     that the Generate part can generate what will go into the "TrinityX" managed blocks
     """
-    defaults_configs = slurm_config('/etc/slurm/slurm-nodes.conf','Defaults')
+    defaults_configs = slurm_config(slurm_files['nodes'],'Defaults')
     try:
         defaults = defaults_configs.object(multiple=False)
     except:
@@ -329,13 +317,13 @@ def render_raw_nodes_defaults(configuration):
     return raw_block
 
 
-def render_raw_partitions_defaults(configuration):
+def render_raw_partitions_defaults(configuration, slurm_files=SLURM_FILES):
     """
     we generate the raw lines that go into the Defaults blocks.
     For each partition we generate the correspondent lines, as such
     that the Generate part can generate what will go into the "TrinityX" managed blocks
     """
-    defaults_configs = slurm_config('/etc/slurm/slurm-partitions.conf','Defaults')
+    defaults_configs = slurm_config(slurm_files['partitions'],'Defaults')
     try:
         defaults = defaults_configs.object(multiple=False)
     except:
@@ -582,10 +570,20 @@ raw_config + plus preview received:
 def configuration_preview_route():
     """Render the configuration preview."""
     if request.args.get("load_from_backup", False):
-        configuration = load_configuration(load_from_backup=True)
+        configuration = load_configuration(slurm_files=SLURM_BACKUP_FILES)
     else:
         configuration = parse_raw_configuration(request.json)
+        sys.stdout.write(f"PREVIEW: {configuration}\n")
+        tmp_configs = {
+            'nodes': '/tmp/slurm-nodes.conf',
+            'partitions': '/tmp/slurm-partitions.conf',
+            'gres': '/tmp/gres.conf'}
+        init_tmp_files(tmp_configs)
+        #for tmp_file in ['nodes', 'partitions', 'gres']:
+        #    open(tmp_configs[tmp_file], 'a').close()
+        save_configuration(configuration=configuration, slurm_files=tmp_configs, backup=False)
 
+    """
     partitions_parser = OODSlurmPartitionsConfigParser().read()
     partitions_parser.set_content(configuration)
     partitions_preview_lines = partitions_parser.dump_lines(marked=True)
@@ -593,6 +591,7 @@ def configuration_preview_route():
     nodes_parser = OODSlurmNodesConfigParser().read()
     nodes_parser.set_content(configuration)
     nodes_preview_lines = nodes_parser.dump_lines(marked=True)
+    """
 
     return render_template(
         "components/configuration_preview.html",

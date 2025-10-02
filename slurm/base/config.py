@@ -99,3 +99,23 @@ def get_verify_certificate():
     """
     config = Ini.read_ini(LUNA_CONFIG_PATH)
     return config['VERIFY_CERTIFICATE']
+
+def get_slurm_files():
+    """
+    This method will return the the file names for slurm configs.
+    """
+    configs = {
+        'nodes': '/etc/slurm/slurm-nodes.conf',
+        'partitions': '/etc/slurm/slurm-partitions.conf',
+        'gres': '/etc/slurm/gres.conf'}
+    return configs
+
+def get_slurm_backup_files():
+    """
+    This method will return the the file names for slurm configs backups.
+    """
+    configs = {
+        'nodes': '/etc/slurm/slurm-nodes.conf.bkp',
+        'partitions': '/etc/slurm/slurm-partitions.conf.bkp',
+        'gres': '/etc/slurm/gres.conf.bkp'}
+    return configs
