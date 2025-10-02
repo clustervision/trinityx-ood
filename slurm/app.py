@@ -43,6 +43,7 @@ from trinityx_config_slurm  import (
     )
 from trinityx_config_manager.hostlist import compress, expand
 #from ..hostlist import compress, expand
+"""
 # soon deprecated
 from trinityx_config_manager.parsers.ood_base import (
     NodesConfig,
@@ -58,8 +59,9 @@ from trinityx_config_manager.parsers.ood_slurm_partitions import (
 from trinityx_config_manager.parsers.ood_slurm_nodes import (
     OODSlurmNodesConfigParser,
 )
-from base.config import get_configs
 # ----
+"""
+from base.config import get_configs
 
 from helpers import (
     get_luna_nodes,
@@ -177,40 +179,6 @@ def load_configuration(load_from_backup=False):
 
     return configuration
 
-    """
-    # If the configuration is not provided, load it from the default path
-    partitions_parser = OODSlurmPartitionsConfigParser()
-    nodes_parser = OODSlurmNodesConfigParser()
-
-    # Load the configuration files
-    if load_from_backup:
-        print(
-            f"loading configuration from backup {partitions_parser.backup_filepath}",
-            file=sys.stderr,
-        )
-        print(
-            f"loading configuration from backup {nodes_parser.backup_filepath}",
-            file=sys.stderr,
-        )
-        partitions_parser = partitions_parser.read(partitions_parser.backup_filepath)
-        nodes_parser = nodes_parser.read(nodes_parser.backup_filepath)
-    else:
-        partitions_parser = partitions_parser.read()
-        nodes_parser = nodes_parser.read()
-
-    partitions_config = partitions_parser.get_content()
-    nodes_config = nodes_parser.get_content()
-
-    configuration = nodes_config
-    configuration.partitions = partitions_config.partitions
-
-    return configuration
-    """
-
-"""
-
-"""
-
 
 def save_configuration(configuration):
     """Save the configuration files to the default path."""    
@@ -220,12 +188,21 @@ def save_configuration(configuration):
         for group in configuration['groups']:
             for node in group['node_names']:
                 fullset.append({'name': node, 'group': group['name']})
-    raw_block = render_raw_nodes_defaults(configuration)
+    #
+    raw_nodes_block = render_raw_nodes_defaults(configuration)
     nodes_file = ConfigFile.read('/etc/slurm/slurm-nodes.conf')
     block_managed = nodes_file.ismanaged("Defaults")
     if block_managed:
-        nodes_file.set_managed_block("Defaults", raw_block)
+        nodes_file.set_managed_block("Defaults", raw_nodes_block)
         nodes_file.write('/etc/slurm/slurm-nodes.conf')
+    #
+    raw_partitions_block = render_raw_partitions_defaults(configuration)
+    partitions_file = ConfigFile.read('/etc/slurm/slurm-partitions.conf')
+    block_managed = partitions_file.ismanaged("Defaults")
+    if block_managed:
+        partitions_file.set_managed_block("Defaults", raw_partitions_block)
+        partitions_file.write('/etc/slurm/slurm-partitions.conf')
+    #
     Generate().all_configs(fullset)
     return True
     """
@@ -292,8 +269,6 @@ def parse_raw_configuration(raw_configuration):
     return configuration
 
 
-#def render_raw_nodes_defaults(configuration):
-
 
 def render_raw_nodes_defaults(configuration):
     """
@@ -302,7 +277,10 @@ def render_raw_nodes_defaults(configuration):
     that the Generate part can generate what will go into the "TrinityX" managed blocks
     """
     defaults_configs = slurm_config('/etc/slurm/slurm-nodes.conf','Defaults')
-    defaults = defaults_configs.object(multiple=False)
+    try:
+        defaults = defaults_configs.object(multiple=False)
+    except:
+        defaults = {}
     raw_block = ''
 
     hw_presets = {}
@@ -346,6 +324,38 @@ def render_raw_nodes_defaults(configuration):
             del defaults[hw_preset]
     for hw_preset, entry in sorted(defaults.items()):
         raw_block+="# "+hw_preset+" "+entry+"\n"
+
+    sys.stdout.write(f"RENDER RAW BLOCK:\n{raw_block}\n")
+    return raw_block
+
+
+def render_raw_partitions_defaults(configuration):
+    """
+    we generate the raw lines that go into the Defaults blocks.
+    For each partition we generate the correspondent lines, as such
+    that the Generate part can generate what will go into the "TrinityX" managed blocks
+    """
+    defaults_configs = slurm_config('/etc/slurm/slurm-partitions.conf','Defaults')
+    try:
+        defaults = defaults_configs.object(multiple=False)
+    except:
+        defaults = {}
+    raw_block = ''
+
+    properties = {}
+    if 'partitions' in configuration:
+        for partition in configuration['partitions']:
+            if 'properties' in partition:
+                properties_line="PartitionName="+partition['name']+" "
+                for key, value in partition['properties'].items():
+                    properties_line+=f"{key}={value} "
+                properties["PartitionName="+partition['name']]=properties_line
+    for property_preset, entry in sorted(properties.items()):
+        raw_block+="# "+entry+"\n"
+        if property_preset in defaults:
+            del defaults[property_preset]
+    for property_preset, entry in sorted(defaults.items()):
+        raw_block+="# "+property_preset+" "+entry+"\n"
 
     sys.stdout.write(f"RENDER RAW BLOCK:\n{raw_block}\n")
     return raw_block
@@ -520,21 +530,6 @@ def set_configuration_route():
 
 
 """
-    def save_configuration:
-    # If the configuration is not provided, load it from the default path
-    partitions_parser = OODSlurmPartitionsConfigParser()
-    nodes_parser = OODSlurmNodesConfigParser()
-
-    # Load the configuration files
-    partitions_parser = partitions_parser.read()
-    nodes_parser = nodes_parser.read()
-
-    partitions_parser.set_content(configuration)
-    nodes_parser.set_content(configuration)
-
-    partitions_parser.write(backup=True)
-    nodes_parser.write(backup=True)
-
 raw_config + plus preview received:
 {
   "hw_presets": [
@@ -580,17 +575,6 @@ raw_config + plus preview received:
     ...
   ]
 }
-
-config:
-NodesConfig(
-    Node(node001, {"State": "UNKNOWN"}, None),
-    Node(node002, {"State": "UNKNOWN"}, test),
-    Node(demonode, {"State": "UNKNOWN"}, None),
-    Group(compute, ["node001", "node002", "demonode"], None),
-    Partition(compute, ["node001", "node002", "demonode"], {"Default": "YES"}, None),
-    Partition(blaat, ["node001", "node002", "demonode"], {}, test),
-    HWPreset(test, {"Boards": "2", "CoresPerSocket": "2", "RealMemory": "6000", "SocketsPerBoard": "12", "State": "UNKNOWN", "ThreadsPerCore": "2"}),
-)
 
 """
 
