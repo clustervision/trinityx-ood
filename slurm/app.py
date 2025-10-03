@@ -28,6 +28,7 @@ __status__ = "Development"
 
 import os
 import sys
+import re
 import tempfile
 import itertools
 
@@ -40,7 +41,7 @@ from trinityx_config_slurm  import (
     SlurmEntry,
     SlurmProperty,
     Generate,
-    )
+)
 from trinityx_config_manager.hostlist import compress, expand
 #from ..hostlist import compress, expand
 """
@@ -61,7 +62,13 @@ from trinityx_config_manager.parsers.ood_slurm_nodes import (
 )
 # ----
 """
-from base.config import get_configs, get_slurm_files, get_slurm_backup_files
+from base.config import (
+    get_configs,
+    get_slurm_files,
+    get_slurm_backup_files,
+    MANAGER_NAME,
+    MANAGER_NAME_OOD,
+)
 
 from helpers import (
     get_luna_nodes,
@@ -93,7 +100,14 @@ def inject_settings():
     return {"CONFIGS": CONFIGS}
 
 
-def slurm_config(file,block_name='TrinityX'):
+def check_managed_block(file,block_name=MANAGER_NAME):
+    config_file = ConfigFile.read(file)
+    block_managed = config_file.ismanaged(block_name)
+    if block_managed:
+        return True
+    return False
+
+def slurm_config(file,block_name=MANAGER_NAME):
     config_block = ConfigFile.read(file)
     block_content = config_block.get_managed_block(block_name)
     if block_content:
@@ -139,6 +153,8 @@ def load_configuration(slurm_files=SLURM_FILES):
                         hw_presets['partitions'][partition] = hw_preset
 
     nodes_configs = slurm_config(slurm_files['nodes'])
+    if not nodes_configs:
+        nodes_configs = slurm_config(slurm_files['nodes'],MANAGER_NAME_OOD)
     if nodes_configs:
         nodesets = {}
         nodes = []
@@ -165,6 +181,8 @@ def load_configuration(slurm_files=SLURM_FILES):
         configuration['nodes'] = nodes
 
     partitions_configs = slurm_config(slurm_files['partitions'])
+    if not partitions_configs:
+        partitions_configs = slurm_config(slurm_files['partitions'],MANAGER_NAME_OOD)
     if partitions_configs:
         partitions = []
         partitions_list = partitions_configs.object_aslist(entry='PartitionName')
@@ -190,14 +208,35 @@ def init_tmp_files(slurm_files):
             with open(slurm_files[slurm_file], "w") as file:
                 file.write("#### Defaults Managed block start ####\n")
                 file.write("#### Defaults Managed block end   ####\n\n")
-                file.write("#### TrinityX Managed block start ####\n")
-                file.write("#### TrinityX Managed block end   ####\n")
+                file.write("#### "+MANAGER_NAME+" Managed block start ####\n")
+                file.write("#### "+MANAGER_NAME+" Managed block end   ####\n")
 
 def remove_tmp_files(slurm_files):
     for slurm_file in ['nodes', 'partitions', 'gres']:
         if len(slurm_files[slurm_file]) > 5 and slurm_files[slurm_file].startswith("/"):
             if os.path.exists(slurm_files[slurm_file]):
                os.remove(slurm_files[slurm_file])
+
+def set_manager(OOD=False, slurm_files=SLURM_FILES):    
+    new_manager = f"# {MANAGER_NAME}"
+    old_manager = f"# {MANAGER_NAME_OOD}"
+    if OOD:
+        new_manager = f"# {MANAGER_NAME_OOD}"
+        old_manager = f"# {MANAGER_NAME}"
+    sys.stdout.write(f"MGR: {new_manager}\n")
+
+    for slurm_file in ['nodes','partitions','gres']:
+        lines = []
+        with open(slurm_files[slurm_file]) as file:
+            for line in file:
+                sys.stdout.write(f"IN: {line}")
+                line = re.sub(r""+old_manager, new_manager, line)
+                sys.stdout.write(f"OUT: {line}\n")
+                lines.append(line)
+        if lines:
+            with open(slurm_files[slurm_file], "w") as file:
+                for line in lines:
+                    file.write(line)
 
 
 def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True):
@@ -243,20 +282,11 @@ def parse_raw_configuration(raw_configuration):
         node.pop("group_name", None)
         node["properties"] = {k: v for k, v in node.get("properties", {}).items()}
 
-    #nodes = [Node(**node) for node in raw_configuration["nodes"] or []]
     nodes = raw_configuration["nodes"] or []
-    #groups = [Group(**group) for group in raw_groups or []]
     groups = raw_groups or []
     partitions = raw_configuration["partitions"] or []
-        #Partition(**partition) for partition in raw_configuration["partitions"] or []
-    #]
     hw_presets = raw_configuration["hw_presets"] or []
-    #    HWPreset(**hw_preset) for hw_preset in raw_configuration["hw_presets"] or []
-    #]
 
-    #config = NodesConfig(
-    #    nodes=nodes, groups=groups, partitions=partitions, hw_presets=hw_presets
-    #)
     configuration = {"nodes": nodes, "partitions": partitions, "groups": groups, "hw_presets": hw_presets}
     sys.stdout.write(f"RAW PARSED: {configuration}\n")
     return configuration
@@ -318,7 +348,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
     for hw_preset, entry in sorted(defaults.items()):
         raw_block+="# "+hw_preset+" "+entry+"\n"
 
-    sys.stdout.write(f"RENDER RAW BLOCK:\n{raw_block}\n")
+    #sys.stdout.write(f"RENDER NODE RAW BLOCK:\n{raw_block}\n")
     return raw_block
 
 
@@ -350,7 +380,7 @@ def render_raw_partitions_defaults(configuration, slurm_files=SLURM_FILES):
     for property_preset, entry in sorted(defaults.items()):
         raw_block+="# "+property_preset+" "+entry+"\n"
 
-    sys.stdout.write(f"RENDER RAW BLOCK:\n{raw_block}\n")
+    #sys.stdout.write(f"RENDER PART RAW BLOCK:\n{raw_block}\n")
     return raw_block
 
 
@@ -371,13 +401,45 @@ def index_route():
 @app.route("/set_manager")
 def set_manager_route():
     """Set the manager of the managed block."""
+    """
     partitions_parser = OODSlurmPartitionsConfigParser().read()
     nodes_parser = OODSlurmNodesConfigParser().read()
     partitions_parser.set_manager(OODSlurmPartitionsConfigParser.MANAGER_NAME)
     nodes_parser.set_manager(OODSlurmNodesConfigParser.MANAGER_NAME)
     partitions_parser.write(force=True)
     nodes_parser.write(force=True)
+    """
+    who = request.args.get("manager")
+    OOD = False
+    if who == "OOD":
+        OOD = True
+    set_manager(OOD=OOD,slurm_files=SLURM_FILES)
     return redirect(url_for("index_route"))
+
+
+@app.route("/get_manager")
+def get_manager_route():
+    """Get the manager of the managed block."""
+    """
+    who = request.args.get("manager")
+    OOD = False
+    if who == "OOD":
+        OOD = True
+    set_manager(OOD=OOD,slurm_files=SLURM_FILES)
+    return redirect(url_for("index_route"))
+    """
+    return jsonify({"config": {"manager": MANAGER_NAME}})
+
+
+@app.route("/whois_manager")
+def whois_manager_route():
+    """Who is the manager of the managed block."""
+    file = SLURM_FILES['nodes']
+    if check_managed_block(file, MANAGER_NAME):
+        return jsonify({"config": {"manager": "default"}})
+    elif check_managed_block(file, MANAGER_NAME_OOD):
+        return jsonify({"config": {"manager": "OOD"}})
+    return jsonify({"config": {"manager": "manual"}})
 
 
 """
@@ -463,58 +525,6 @@ def get_partitions_route():
     return jsonify(partitions)
     
 
-# TWAN---------------------------------------------------------
-    """
-    inside load_configuration
-      call for:
-        BaseConfigParser - read the config file:
-            lines = {
-                "before": [],
-                "managed": [],
-                "after": [],
-            } --> raw lines. before/after are outside the managed block
-           self.content = self.parse_managed_block(self.lines["managed"]) # raw data in, PartitionsConfig(partitions) out
-           get_content return self.content
-
-        partitions_parser = OODSlurmPartitionsConfigParser()
-        nodes_parser = OODSlurmNodesConfigParser()
-        partitions_config = partitions_parser.get_content() # == PartitionsConfig(partitions)
-        nodes_config = nodes_parser.get_content()
-        configuration = nodes_config
-        configuration.partitions = partitions_config.partitions # == Partition -> self.name, self.properties...
-        # configuration is 
-        return configuration
-
-    inside OODSlurmPartitionsConfigParser(BaseConfigParser):
-        for each managed line:
-          parse, key=value -- hw_preset split from properties. node_names == ref to group in slurm-nodes.conf
-          partitions.append(Partition(name, node_names, properties, hw_preset)) # <--------------------------------------------------------------
-          partition_configs = PartitionsConfig(partitions)
-          return partition_configs == PartitionsConfig(partitions)
-
-    inside Partition: # is class - bevat functions
-        self.name = name
-        self.node_names = node_names
-        self.properties = {k:v for k,v in properties.items() if k not in HWPreset.MANAGED_PROPERTIES}
-        self.hw_preset_name = hw_preset_name # is in config like comment ->  # HWPreset=name
-        def to_dict(self):
-            return {"name": self.name, "node_names": self.node_names, "properties": self.properties, "hw_preset_name": self.hw_preset_name}
-
-    inside PartitionsConfig: # bevat functions - is class
-        def __init__(self, partitions: List[Partition]):
-            self.partitions = partitions
-        def to_dict:
-            return {"partitions": [partition.to_dict() for partition in self.partitions]}
-
-    partitions in app.route contect == dict !!!
-           {"partitions": [
-              {"name": self.name, "node_names": self.node_names, "properties": self.properties, "hw_preset_name": self.hw_preset_name},
-              {"name": self.name, "node_names": self.node_names, "properties": self.properties, "hw_preset_name": self.hw_preset_name}
-           ]}
-
-    """
-###-----------------------------------------------
-
 @app.route("/json/configuration/save", methods=["POST"])
 def set_configuration_route():
     """Set the configuration."""
@@ -588,7 +598,6 @@ def configuration_preview_route():
         nodes_preview_lines = config_block.dump()
         config_block = ConfigFile.read(SLURM_BACKUP_FILES['partitions'])
         partitions_preview_lines = config_block.dump()
-        #configuration = load_configuration(slurm_files=SLURM_BACKUP_FILES)
     else:
         configuration = parse_raw_configuration(request.json)
         sys.stdout.write(f"PREVIEW: {configuration}\n")

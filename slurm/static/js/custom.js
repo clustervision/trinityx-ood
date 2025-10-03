@@ -109,6 +109,59 @@ function GresValidator(cell, value, parameters) {
     return isValid;
 }
 
+function GetManager() {
+    var manager
+    $.ajax({
+	async: false,
+        type: "GET",
+        url: `${baseUrl}/get_manager`,
+        contentType: "application/json; charset=utf-8",
+        success: function(data){
+            manager = data.config.manager
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to get manager: <br>${data.responseJSON.message}`);
+        }
+    });
+    return manager;
+}
+
+function SetManager(OOD) {
+    var manager="default";
+    if (OOD) {
+	manager="OOD";
+    }
+    $.ajax({
+	async: false,
+        type: "GET",
+        url: `${baseUrl}/set_manager?manager=${manager}`,
+        contentType: "application/json; charset=utf-8",
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to set manager to ${manager}: <br>${data.responseJSON.message}`);
+        }
+    });
+}
+
+function WhoIsManager() {
+    var manager
+    $.ajax({
+	async: false,
+        type: "GET",
+        url: `${baseUrl}/whois_manager`,
+        contentType: "application/json; charset=utf-8",
+        success: function(data){
+            manager = data.config.manager
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to get manager: <br>${data.responseJSON.message}`);
+        }
+    });
+    return manager;
+}
+
 function NodesRowIsEditable(row) {
     return (!row.getData().group_name) || (row.getData().group_name == "");
 }
@@ -321,6 +374,19 @@ window.onload = function() {
         loadConfigurationBackup();
     }); 
 
+    manager = WhoIsManager();
+    if (manager == 'OOD') {
+        document.getElementById("functionality-manager-toggle").checked = true;
+    }
+    document.getElementById("functionality-manager-toggle").addEventListener("click", function(){
+	SetManager(document.getElementById("functionality-manager-toggle").checked)
+        manager = WhoIsManager();
+        if (manager == 'OOD') {
+            document.getElementById("functionality-manager-toggle").checked = true;
+        } else {
+            document.getElementById("functionality-manager-toggle").checked = false;
+        }
+    }); 
     resetLocation();
 
 }

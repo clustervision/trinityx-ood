@@ -36,6 +36,8 @@ from base.token import Token
 
 LUNA_CONFIG_PATH = "/trinity/local/ondemand/3.0/config/luna.ini"
 INFINIBAND_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "settings", "app.toml")
+MANAGER_NAME = "TrinityX"
+MANAGER_NAME_OOD = "TrinityX-OOD"
 
 def get_app_configs():
     """
