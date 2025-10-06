@@ -38,6 +38,7 @@ LUNA_CONFIG_PATH = "/trinity/local/ondemand/3.0/config/luna.ini"
 INFINIBAND_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "settings", "app.toml")
 MANAGER_NAME = "TrinityX"
 MANAGER_NAME_OOD = "TrinityX-OOD"
+MANAGED_PROPERTIES = ["Boards", "SocketsPerBoard", "CoresPerSocket", "ThreadsPerCore", "RealMemory", "TmpDisk", "CpuBind", "Gres"]
 
 def get_app_configs():
     """

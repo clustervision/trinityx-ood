@@ -68,6 +68,7 @@ from base.config import (
     get_slurm_backup_files,
     MANAGER_NAME,
     MANAGER_NAME_OOD,
+    MANAGED_PROPERTIES,
 )
 
 from helpers import (
@@ -307,21 +308,39 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
     raw_block = ''
 
     hw_presets = {}
+    hw_presets_addons = {}
+    # let's find if there are any manually added properties:
+    for default_preset, properties in defaults.items():
+        if default_preset.startswith('NodeName'):
+            addons = []
+            items = properties.split(' ')
+            #del items[0] # first entry is 'NodeName'
+            for item in items:
+                key, value = item.split('=')
+                if (key not in MANAGED_PROPERTIES) and (item not in addons):
+                    addons.append(item)
+            if addons:
+                hw_presets_addons[default_preset] = ' '.join(addons)
+    sys.stdout.write(f"ADDON: {hw_presets_addons}\n")
+
     if 'hw_presets' in configuration:
         hw_preset_nodes = {}
         hw_preset_partitions = {}
+        # what nodes are using the preset:
         if 'nodes' in configuration:
             for node in configuration['nodes']:
                 if node['hw_preset_name']:
                     if node['hw_preset_name'] not in hw_preset_nodes:
                         hw_preset_nodes[node['hw_preset_name']] = []
                     hw_preset_nodes[node['hw_preset_name']].append(node['name'])
+        # what partitions are using the preset:
         if 'partitions' in configuration:
             for partition in configuration['partitions']:
                 if partition['hw_preset_name']:
                     if partition['hw_preset_name'] not in hw_preset_partitions:
                         hw_preset_partitions[partition['hw_preset_name']] = []
                     hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
+        # now let's build a per node preset list and the hw presets themselves:
         for hw_preset in configuration['hw_presets']:
             if 'properties' in hw_preset:
                 hw_preset_line="HWPresetName="+hw_preset['name']+" "
@@ -333,7 +352,10 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 if hw_preset['name'] in hw_preset_nodes:
                     hw_preset_line+="Nodes="+compress(','.join(hw_preset_nodes[hw_preset['name']]))+" "
                     for node in hw_preset_nodes[hw_preset['name']]:
-                        node_preset_line="NodeName="+node+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
+                        properties_addons = ""
+                        if "NodeName="+node in hw_presets_addons:
+                            properties_addons = hw_presets_addons["NodeName="+node]+" "
+                        node_preset_line="NodeName="+node+" "+hw_preset_properties+properties_addons+" # HWPreset="+hw_preset["name"]
                         hw_presets["NodeName="+node]=node_preset_line
                 if hw_preset['name'] in hw_preset_partitions:
                     hw_preset_line+="Partitions="+compress(','.join(hw_preset_partitions[hw_preset['name']]))
@@ -341,6 +363,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         partition_preset_line="PartitionName="+partition+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
                         hw_presets["PartitionName="+partition]=partition_preset_line
                 hw_presets["HWPresetName="+hw_preset['name']]=hw_preset_line
+    # now we build the raw content:
     for hw_preset, entry in sorted(hw_presets.items()):
         raw_block+="# "+entry+"\n"
         if hw_preset in defaults:
