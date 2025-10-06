@@ -219,11 +219,11 @@ def remove_tmp_files(slurm_files):
                os.remove(slurm_files[slurm_file])
 
 def set_manager(OOD=False, slurm_files=SLURM_FILES):    
-    new_manager = f"# {MANAGER_NAME}"
-    old_manager = f"# {MANAGER_NAME_OOD}"
+    new_manager = f"# {MANAGER_NAME} "
+    old_manager = f"# {MANAGER_NAME_OOD} "
     if OOD:
-        new_manager = f"# {MANAGER_NAME_OOD}"
-        old_manager = f"# {MANAGER_NAME}"
+        new_manager = f"# {MANAGER_NAME_OOD} "
+        old_manager = f"# {MANAGER_NAME} "
     sys.stdout.write(f"MGR: {new_manager}\n")
 
     for slurm_file in ['nodes','partitions','gres']:
@@ -240,7 +240,7 @@ def set_manager(OOD=False, slurm_files=SLURM_FILES):
                     file.write(line)
 
 
-def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True):
+def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, manager=MANAGER_NAME):
     """Save the configuration files to the default path."""    
 
     sys.stdout.write(f"FILES: {slurm_files}\n")
@@ -264,8 +264,11 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True):
         partitions_file.set_managed_block("Defaults", raw_partitions_block)
         partitions_file.write(slurm_files['partitions'])
     #
-    Generate().all_configs(nodes=fullset, configs=slurm_files)
-    return True
+    status = Generate().all_configs(nodes=fullset, configs=slurm_files, manager=manager)
+    if status:
+        return True
+    else:
+        return False
 
 
 def parse_raw_configuration(raw_configuration):
@@ -554,11 +557,21 @@ def set_configuration_route():
     raw_configuration = request.json
     configuration = parse_raw_configuration(raw_configuration)
 
-    save_configuration(configuration)
+    file = SLURM_FILES['nodes']
+    if check_managed_block(file, MANAGER_NAME):
+        manager = MANAGER_NAME
+    elif check_managed_block(file, MANAGER_NAME_OOD):
+        manager = MANAGER_NAME_OOD
+    status = save_configuration(configuration=configuration,
+                                slurm_files=SLURM_FILES,
+                                backup=True, manager=manager)
+    message = f"Configuration saved successfully, restart the slurmctld service to apply the changes."
+    if not status:
+        message = f"Problem encountered during saving configuration. Please verify with ood logs."
     output = {
         "redirect": url_for(
             "index_route",
-            message=f"Configuration saved successfully, restart the slurmctld service to apply the changes.",
+            message=message,
         )
     }
     return jsonify(output)
@@ -629,7 +642,9 @@ def configuration_preview_route():
             'partitions': '/tmp/slurm-partitions.conf',
             'gres': '/tmp/gres.conf'}
         init_tmp_files(tmp_configs)
-        save_configuration(configuration=configuration, slurm_files=tmp_configs, backup=False)
+        save_configuration(configuration=configuration, 
+                           slurm_files=tmp_configs, 
+                           backup=False, manager=MANAGER_NAME)
 
         config_block = ConfigFile.read(tmp_configs['nodes'])
         nodes_preview_lines = config_block.dump()
