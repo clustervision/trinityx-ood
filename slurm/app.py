@@ -79,7 +79,7 @@ from helpers import (
 CONFIGS = get_configs()
 SLURM_FILES = get_slurm_files()
 SLURM_BACKUP_FILES = get_slurm_backup_files()
-sys.stdout.write(f"SLURM: {SLURM_FILES}\n")
+#sys.stdout.write(f"SLURM: {SLURM_FILES}\n")
 
 app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
@@ -251,6 +251,7 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
         for group in configuration['groups']:
             for node in group['node_names']:
                 fullset.append({'name': node, 'group': group['name']})
+    #sys.stdout.write(f"FULLSET: {fullset}\n")
     #
     raw_nodes_block = render_raw_nodes_defaults(configuration,slurm_files)
     nodes_file = ConfigFile.read(slurm_files['nodes'])
@@ -274,6 +275,7 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
 
 
 def parse_raw_configuration(raw_configuration):
+    #sys.stdout.write(f"PARSE: {raw_configuration}\n")
     raw_groups = []
     group_nodes = [
         node for node in raw_configuration["nodes"] if node.get("group_name")
@@ -287,6 +289,17 @@ def parse_raw_configuration(raw_configuration):
     for node in raw_configuration["nodes"]:
         node.pop("group_name", None)
         node["properties"] = {k: v for k, v in node.get("properties", {}).items()}
+
+    # the gui sometimes adds nodes, assigned to a partition, but not send as such.
+    # here we make sure we leave no one behind.
+    for partition in raw_configuration["partitions"]:
+        idx = 0
+        for raw_group in raw_groups:
+            if partition["name"] == raw_group["name"]:
+                for node_name in partition["node_names"]:
+                    if node_name not in raw_group["node_names"]:
+                        raw_groups[idx]["node_names"].append(node_name)
+            idx += 1
 
     nodes = raw_configuration["nodes"] or []
     groups = raw_groups or []
@@ -638,7 +651,7 @@ def configuration_preview_route():
         partitions_preview_lines = config_block.dump()
     else:
         configuration = parse_raw_configuration(request.json)
-        sys.stdout.write(f"PREVIEW: {configuration}\n")
+        #sys.stdout.write(f"PREVIEW: {configuration}\n")
         tmp_configs = {
             #'nodes': tempfile.TemporaryFile(mode='w'),
             #'partitions': tempfile.TemporaryFile(mode='w'),
@@ -646,15 +659,19 @@ def configuration_preview_route():
             'nodes': '/tmp/slurm-nodes.conf',
             'partitions': '/tmp/slurm-partitions.conf',
             'gres': '/tmp/gres.conf'}
-        init_tmp_files(tmp_configs)
-        save_configuration(configuration=configuration, 
-                           slurm_files=tmp_configs, 
-                           backup=False, manager=MANAGER_NAME)
+        try:
+            init_tmp_files(tmp_configs)
+            save_configuration(configuration=configuration,
+                               slurm_files=tmp_configs,
+                               backup=False, manager=MANAGER_NAME)
 
-        config_block = ConfigFile.read(tmp_configs['nodes'])
-        nodes_preview_lines = config_block.dump()
-        config_block = ConfigFile.read(tmp_configs['partitions'])
-        partitions_preview_lines = config_block.dump()
+            config_block = ConfigFile.read(tmp_configs['nodes'])
+            nodes_preview_lines = config_block.dump()
+            config_block = ConfigFile.read(tmp_configs['partitions'])
+            partitions_preview_lines = config_block.dump()
+        except Exception as exp:
+            nodes_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + nodes_preview_lines
+            partitions_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + partitions_preview_lines
         remove_tmp_files(tmp_configs)
 
     return render_template(

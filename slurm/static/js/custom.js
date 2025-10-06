@@ -137,6 +137,9 @@ function SetManager(OOD) {
         type: "GET",
         url: `${baseUrl}/set_manager?manager=${manager}`,
         contentType: "application/json; charset=utf-8",
+//        success: function(data){
+//            manager = data.config.manager
+//        },
         error: function(data) {
             console.log(data);
             displayAlert("danger", `Failed to set manager to ${manager}: <br>${data.responseJSON.message}`);
@@ -209,7 +212,7 @@ function NodesImport(){
                     var rowData = row.getData();
                     rowData.group_name = "";
                     row.update(rowData);
-                    changes.push(`Removed group from node <span class="font-weight-bold">${nodename}</span> (not presen in luna anymore)`);
+                    changes.push(`Removed group from node <span class="font-weight-bold">${nodename}</span> (not present in luna)`);
                 }
             }
 
@@ -374,23 +377,36 @@ window.onload = function() {
         loadConfigurationBackup();
     }); 
 
+    //GetManager();
     manager = WhoIsManager();
-    if (manager == 'OOD') {
-        document.getElementById("functionality-manager-toggle").checked = true;
-    }
+    ToggleButtons(manager);
     document.getElementById("functionality-manager-toggle").addEventListener("click", function(){
 	SetManager(document.getElementById("functionality-manager-toggle").checked)
         manager = WhoIsManager();
-        if (manager == 'OOD') {
-            document.getElementById("functionality-manager-toggle").checked = true;
-        } else {
-            document.getElementById("functionality-manager-toggle").checked = false;
-        }
+	ToggleButtons(manager);
+        //if (manager != 'OOD') {
+        //    NodesImport();
+        //}
     }); 
     resetLocation();
 
 }
 
+function ToggleButtons(manager) {
+        if (manager == 'OOD') {
+	    document.getElementById("add-node-button").disabled = false;
+            document.getElementById("delete-nodes-button").disabled = false;
+            document.getElementById("add-partition-button").disabled = false;
+            document.getElementById("delete-partitions-button").disabled = false;
+            document.getElementById("functionality-manager-toggle").checked = true;
+        } else {
+	    document.getElementById("add-node-button").disabled = true;
+            document.getElementById("delete-nodes-button").disabled = true;
+            document.getElementById("add-partition-button").disabled = true;
+            document.getElementById("delete-partitions-button").disabled = true;
+            document.getElementById("functionality-manager-toggle").checked = false;
+        }
+}
 
 function _getConfiguration() {
     var hw_presets = tables.hw_presets.getData();
