@@ -207,6 +207,7 @@ def init_tmp_files(slurm_files):
     for slurm_file in ['nodes', 'partitions', 'gres']:
         if len(slurm_files[slurm_file]) > 5 and slurm_files[slurm_file].startswith("/"):
             with open(slurm_files[slurm_file], "w") as file:
+            #with slurm_files[slurm_file] as file:
                 file.write("#### Defaults Managed block start ####\n")
                 file.write("#### Defaults Managed block end   ####\n\n")
                 file.write("#### "+MANAGER_NAME+" Managed block start ####\n")
@@ -214,6 +215,7 @@ def init_tmp_files(slurm_files):
 
 def remove_tmp_files(slurm_files):
     for slurm_file in ['nodes', 'partitions', 'gres']:
+        #    slurm_files[slurm_file].close()
         if len(slurm_files[slurm_file]) > 5 and slurm_files[slurm_file].startswith("/"):
             if os.path.exists(slurm_files[slurm_file]):
                os.remove(slurm_files[slurm_file])
@@ -224,15 +226,15 @@ def set_manager(OOD=False, slurm_files=SLURM_FILES):
     if OOD:
         new_manager = f"# {MANAGER_NAME_OOD} "
         old_manager = f"# {MANAGER_NAME} "
-    sys.stdout.write(f"MGR: {new_manager}\n")
+    #sys.stdout.write(f"MGR: {new_manager}\n")
 
     for slurm_file in ['nodes','partitions','gres']:
         lines = []
         with open(slurm_files[slurm_file]) as file:
             for line in file:
-                sys.stdout.write(f"IN: {line}")
+                #sys.stdout.write(f"IN: {line}")
                 line = re.sub(r""+old_manager, new_manager, line)
-                sys.stdout.write(f"OUT: {line}\n")
+                #sys.stdout.write(f"OUT: {line}\n")
                 lines.append(line)
         if lines:
             with open(slurm_files[slurm_file], "w") as file:
@@ -243,7 +245,7 @@ def set_manager(OOD=False, slurm_files=SLURM_FILES):
 def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, manager=MANAGER_NAME):
     """Save the configuration files to the default path."""    
 
-    sys.stdout.write(f"FILES: {slurm_files}\n")
+    #sys.stdout.write(f"FILES: {slurm_files}\n")
     fullset = []
     if 'groups' in configuration:
         for group in configuration['groups']:
@@ -292,7 +294,7 @@ def parse_raw_configuration(raw_configuration):
     hw_presets = raw_configuration["hw_presets"] or []
 
     configuration = {"nodes": nodes, "partitions": partitions, "groups": groups, "hw_presets": hw_presets}
-    sys.stdout.write(f"RAW PARSED: {configuration}\n")
+    #sys.stdout.write(f"RAW PARSED: {configuration}\n")
     return configuration
 
 
@@ -324,7 +326,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                     addons.append(item)
             if addons:
                 hw_presets_addons[default_preset] = ' '.join(addons)
-    sys.stdout.write(f"ADDON: {hw_presets_addons}\n")
+    #sys.stdout.write(f"ADDON: {hw_presets_addons}\n")
 
     if 'hw_presets' in configuration:
         hw_preset_nodes = {}
@@ -332,14 +334,14 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
         # what nodes are using the preset:
         if 'nodes' in configuration:
             for node in configuration['nodes']:
-                if node['hw_preset_name']:
+                if 'hw_preset_name' in node and node['hw_preset_name']:
                     if node['hw_preset_name'] not in hw_preset_nodes:
                         hw_preset_nodes[node['hw_preset_name']] = []
                     hw_preset_nodes[node['hw_preset_name']].append(node['name'])
         # what partitions are using the preset:
         if 'partitions' in configuration:
             for partition in configuration['partitions']:
-                if partition['hw_preset_name']:
+                if 'hw_preset_name' and partition['hw_preset_name']:
                     if partition['hw_preset_name'] not in hw_preset_partitions:
                         hw_preset_partitions[partition['hw_preset_name']] = []
                     hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
@@ -638,6 +640,9 @@ def configuration_preview_route():
         configuration = parse_raw_configuration(request.json)
         sys.stdout.write(f"PREVIEW: {configuration}\n")
         tmp_configs = {
+            #'nodes': tempfile.TemporaryFile(mode='w'),
+            #'partitions': tempfile.TemporaryFile(mode='w'),
+            #'gres': tempfile.TemporaryFile(mode='w')}
             'nodes': '/tmp/slurm-nodes.conf',
             'partitions': '/tmp/slurm-partitions.conf',
             'gres': '/tmp/gres.conf'}
