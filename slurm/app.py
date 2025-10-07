@@ -43,7 +43,7 @@ from trinityx_config_slurm  import (
     SlurmProperty,
     Generate,
 )
-from trinityx_config_manager.hostlist import compress, expand
+from trinityx_config_slurm.utils.hostlist import compress, expand
 #from ..hostlist import compress, expand
 """
 # soon deprecated
