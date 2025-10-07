@@ -110,7 +110,7 @@ def get_slurm_files():
     configs = {
         'nodes': '/etc/slurm/slurm-nodes.conf',
         'partitions': '/etc/slurm/slurm-partitions.conf',
-        'gres': '/etc/slurm/gres.conf'}
+        'gres': '/etc/slurm/slurm-gres.conf'}
     return configs
 
 def get_slurm_backup_files():
@@ -120,5 +120,5 @@ def get_slurm_backup_files():
     configs = {
         'nodes': '/etc/slurm/slurm-nodes.conf.bkp',
         'partitions': '/etc/slurm/slurm-partitions.conf.bkp',
-        'gres': '/etc/slurm/gres.conf.bkp'}
+        'gres': '/etc/slurm/slurm-gres.conf.bkp'}
     return configs
