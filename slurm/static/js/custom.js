@@ -109,6 +109,62 @@ function GresValidator(cell, value, parameters) {
     return isValid;
 }
 
+function GetManager() {
+    var manager
+    $.ajax({
+	async: false,
+        type: "GET",
+        url: `${baseUrl}/get_manager`,
+        contentType: "application/json; charset=utf-8",
+        success: function(data){
+            manager = data.config.manager
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to get manager: <br>${data.responseJSON.message}`);
+        }
+    });
+    return manager;
+}
+
+function SetManager(OOD) {
+    var manager="default";
+    if (OOD) {
+	manager="OOD";
+    }
+    $.ajax({
+	async: false,
+        type: "GET",
+        url: `${baseUrl}/set_manager?manager=${manager}`,
+        contentType: "application/json; charset=utf-8",
+//        success: function(data){
+//            manager = data.config.manager
+//        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to set manager to ${manager}: <br>${data.responseJSON.message}`);
+        }
+    });
+}
+
+function WhoIsManager() {
+    var manager
+    $.ajax({
+	async: false,
+        type: "GET",
+        url: `${baseUrl}/whois_manager`,
+        contentType: "application/json; charset=utf-8",
+        success: function(data){
+            manager = data.config.manager
+        },
+        error: function(data) {
+            console.log(data);
+            displayAlert("danger", `Failed to get manager: <br>${data.responseJSON.message}`);
+        }
+    });
+    return manager;
+}
+
 function NodesRowIsEditable(row) {
     return (!row.getData().group_name) || (row.getData().group_name == "");
 }
@@ -156,7 +212,7 @@ function NodesImport(){
                     var rowData = row.getData();
                     rowData.group_name = "";
                     row.update(rowData);
-                    changes.push(`Removed group from node <span class="font-weight-bold">${nodename}</span> (not presen in luna anymore)`);
+                    changes.push(`Removed group from node <span class="font-weight-bold">${nodename}</span> (not present in luna)`);
                 }
             }
 
@@ -321,10 +377,36 @@ window.onload = function() {
         loadConfigurationBackup();
     }); 
 
+    //GetManager();
+    manager = WhoIsManager();
+    ToggleButtons(manager);
+    document.getElementById("functionality-manager-toggle").addEventListener("click", function(){
+	SetManager(document.getElementById("functionality-manager-toggle").checked)
+        manager = WhoIsManager();
+	ToggleButtons(manager);
+        //if (manager != 'OOD') {
+        //    NodesImport();
+        //}
+    }); 
     resetLocation();
 
 }
 
+function ToggleButtons(manager) {
+        if (manager == 'OOD') {
+	    document.getElementById("add-node-button").disabled = false;
+            document.getElementById("delete-nodes-button").disabled = false;
+            document.getElementById("add-partition-button").disabled = false;
+            document.getElementById("delete-partitions-button").disabled = false;
+            document.getElementById("functionality-manager-toggle").checked = true;
+        } else {
+	    document.getElementById("add-node-button").disabled = true;
+            document.getElementById("delete-nodes-button").disabled = true;
+            document.getElementById("add-partition-button").disabled = true;
+            document.getElementById("delete-partitions-button").disabled = true;
+            document.getElementById("functionality-manager-toggle").checked = false;
+        }
+}
 
 function _getConfiguration() {
     var hw_presets = tables.hw_presets.getData();

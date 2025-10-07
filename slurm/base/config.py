@@ -36,6 +36,9 @@ from base.token import Token
 
 LUNA_CONFIG_PATH = "/trinity/local/ondemand/3.0/config/luna.ini"
 INFINIBAND_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "settings", "app.toml")
+MANAGER_NAME = "TrinityX"
+MANAGER_NAME_OOD = "TrinityX-OOD"
+MANAGED_PROPERTIES = ["Boards", "SocketsPerBoard", "CoresPerSocket", "ThreadsPerCore", "RealMemory", "TmpDisk", "CpuBind", "Gres"]
 
 def get_app_configs():
     """
@@ -99,3 +102,23 @@ def get_verify_certificate():
     """
     config = Ini.read_ini(LUNA_CONFIG_PATH)
     return config['VERIFY_CERTIFICATE']
+
+def get_slurm_files():
+    """
+    This method will return the the file names for slurm configs.
+    """
+    configs = {
+        'nodes': '/etc/slurm/slurm-nodes.conf',
+        'partitions': '/etc/slurm/slurm-partitions.conf',
+        'gres': '/etc/slurm/slurm-gres.conf'}
+    return configs
+
+def get_slurm_backup_files():
+    """
+    This method will return the the file names for slurm configs backups.
+    """
+    configs = {
+        'nodes': '/etc/slurm/slurm-nodes.conf.bkp',
+        'partitions': '/etc/slurm/slurm-partitions.conf.bkp',
+        'gres': '/etc/slurm/slurm-gres.conf.bkp'}
+    return configs

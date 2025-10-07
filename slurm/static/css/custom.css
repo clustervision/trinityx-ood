@@ -51,3 +51,54 @@
 a.nav-link {
   color: black;
 }
+/* switches */
+.togglespan {
+    vertical-align: top;
+    padding-left: 15px;
+    font-size: 12pt;
+}
+.toggle {
+    position: relative;
+    display: inline-block;
+    width: 45px;
+    height: 24px;
+}
+/* Hide the checkbox input */
+.toggle input {
+    display: none;
+}
+/* Describe slider's look and position. */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #b0b0b0;
+    transition: .4s;
+    border-radius: 24px;
+}
+/* Describe the white ball's location 
+      and appearance in the slider. */
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+/* Modify the slider's background color to 
+      green once the checkbox has been selected. */
+input:checked+.slider {
+    background-color: #007BFF;
+}
+/* When the checkbox is checked, shift the 
+      white ball towards the right within the slider. */
+input:checked+.slider:before {
+    transform: translateX(21px);
+}
