@@ -29,6 +29,7 @@ __status__ = "Development"
 import os
 import sys
 import re
+import shutil
 import tempfile
 import itertools
 
@@ -213,6 +214,30 @@ def init_tmp_files(slurm_files):
                 file.write("#### "+MANAGER_NAME+" Managed block start ####\n")
                 file.write("#### "+MANAGER_NAME+" Managed block end   ####\n")
 
+def save_tmp_files(configuration):
+    tmp_configs = {
+        #'nodes': tempfile.TemporaryFile(mode='w'),
+        #'partitions': tempfile.TemporaryFile(mode='w'),
+        #'gres': tempfile.TemporaryFile(mode='w')}
+        'nodes': '/tmp/slurm-nodes.conf',
+        'partitions': '/tmp/slurm-partitions.conf',
+        'gres': '/tmp/gres.conf'}
+    try:
+        init_tmp_files(tmp_configs)
+        save_configuration(configuration=configuration,
+                           slurm_files=tmp_configs,
+                           backup=False, manager=MANAGER_NAME)
+
+        config_block = ConfigFile.read(tmp_configs['nodes'])
+        nodes_preview_lines = config_block.dump()
+        config_block = ConfigFile.read(tmp_configs['partitions'])
+        partitions_preview_lines = config_block.dump()
+    except Exception as exp:
+        nodes_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + nodes_preview_lines
+        partitions_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + partitions_preview_lines
+    remove_tmp_files(tmp_configs)
+    return nodes_preview_lines, partitions_preview_lines
+
 def remove_tmp_files(slurm_files):
     for slurm_file in ['nodes', 'partitions', 'gres']:
         #    slurm_files[slurm_file].close()
@@ -243,7 +268,14 @@ def set_manager(OOD=False, slurm_files=SLURM_FILES):
 
 
 def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, manager=MANAGER_NAME):
-    """Save the configuration files to the default path."""    
+    """
+    Save the configuration files to the default path.
+    """
+    if backup:
+        for name, backup_file in SLURM_BACKUP_FILES.items():
+            if name in slurm_files.keys():
+                if slurm_files[name] != backup_file:
+                    shutil.copyfile(slurm_files[name], backup_file)
 
     #sys.stdout.write(f"FILES: {slurm_files}\n")
     fullset = []
@@ -651,29 +683,7 @@ def configuration_preview_route():
         partitions_preview_lines = config_block.dump()
     else:
         configuration = parse_raw_configuration(request.json)
-        #sys.stdout.write(f"PREVIEW: {configuration}\n")
-        tmp_configs = {
-            #'nodes': tempfile.TemporaryFile(mode='w'),
-            #'partitions': tempfile.TemporaryFile(mode='w'),
-            #'gres': tempfile.TemporaryFile(mode='w')}
-            'nodes': '/tmp/slurm-nodes.conf',
-            'partitions': '/tmp/slurm-partitions.conf',
-            'gres': '/tmp/gres.conf'}
-        try:
-            init_tmp_files(tmp_configs)
-            save_configuration(configuration=configuration,
-                               slurm_files=tmp_configs,
-                               backup=False, manager=MANAGER_NAME)
-
-            config_block = ConfigFile.read(tmp_configs['nodes'])
-            nodes_preview_lines = config_block.dump()
-            config_block = ConfigFile.read(tmp_configs['partitions'])
-            partitions_preview_lines = config_block.dump()
-        except Exception as exp:
-            nodes_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + nodes_preview_lines
-            partitions_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + partitions_preview_lines
-        remove_tmp_files(tmp_configs)
-
+        nodes_preview_lines, partitions_preview_lines = save_tmp_files(configuration)
     return render_template(
         "components/configuration_preview.html",
         partitions_preview_lines=partitions_preview_lines,
@@ -683,21 +693,15 @@ def configuration_preview_route():
 
 @app.route("/json/configuration/test", methods=["POST"])
 def test_configuration_route():
-    configuration = parse_raw_configuration(raw_configuration=request.json)
-
-    node_lines = (
-        OODSlurmNodesConfigParser().read().set_content(configuration).dump_lines()
-    )
-    partition_lines = (
-        OODSlurmPartitionsConfigParser().read().set_content(configuration).dump_lines()
-    )
+    configuration = parse_raw_configuration(request.json)
+    node_lines, partition_lines = save_tmp_files(configuration)
 
     configuration_lines = node_lines + partition_lines
+    configuration_lines = configuration_lines.split("\n")
     configuration_lines = [l for l in configuration_lines if not l.startswith("NodeSet=")]
     configuration_text = "".join(configuration_lines)
 
     res = lint(configuration_text)
-
     errors = res.get("errors", [])
 
     expanded_errors = [
@@ -720,10 +724,10 @@ def import_luna_nodes_route():
 
 
 if __name__ == "__main__":
-    #app.run()
+    app.run()
     # Sumit Testing Comments
-    dev_context=(
-             '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.crt',
-             '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.key'
-         )
-    app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
+    #dev_context=(
+    #         '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.crt',
+    #         '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.key'
+    #     )
+    #app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
