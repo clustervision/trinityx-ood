@@ -44,25 +44,6 @@ from trinityx_config_slurm  import (
     Generate,
 )
 from trinityx_config_slurm.utils.hostlist import compress, expand
-#from ..hostlist import compress, expand
-"""
-# soon deprecated
-from trinityx_config_manager.parsers.ood_base import (
-    NodesConfig,
-    PartitionsConfig,
-    Node,
-    Group,
-    Partition,
-    HWPreset,
-)
-from trinityx_config_manager.parsers.ood_slurm_partitions import (
-    OODSlurmPartitionsConfigParser,
-)
-from trinityx_config_manager.parsers.ood_slurm_nodes import (
-    OODSlurmNodesConfigParser,
-)
-# ----
-"""
 from base.config import (
     get_configs,
     get_slurm_files,
@@ -216,12 +197,14 @@ def init_tmp_files(slurm_files):
 
 def save_tmp_files(configuration):
     tmp_configs = {
+        # tempfile doesn't work as slurm-config-mgr expects a real file
+        # left here for future reference:
         #'nodes': tempfile.TemporaryFile(mode='w'),
         #'partitions': tempfile.TemporaryFile(mode='w'),
         #'gres': tempfile.TemporaryFile(mode='w')}
-        'nodes': '/tmp/slurm-nodes.conf',
-        'partitions': '/tmp/slurm-partitions.conf',
-        'gres': '/tmp/gres.conf'}
+        'nodes': '~/slurm-nodes.conf',
+        'partitions': '~/slurm-partitions.conf',
+        'gres': '~/gres.conf'}
     try:
         init_tmp_files(tmp_configs)
         save_configuration(configuration=configuration,
@@ -474,14 +457,6 @@ def index_route():
 @app.route("/set_manager")
 def set_manager_route():
     """Set the manager of the managed block."""
-    """
-    partitions_parser = OODSlurmPartitionsConfigParser().read()
-    nodes_parser = OODSlurmNodesConfigParser().read()
-    partitions_parser.set_manager(OODSlurmPartitionsConfigParser.MANAGER_NAME)
-    nodes_parser.set_manager(OODSlurmNodesConfigParser.MANAGER_NAME)
-    partitions_parser.write(force=True)
-    nodes_parser.write(force=True)
-    """
     who = request.args.get("manager")
     OOD = False
     if who == "OOD":
@@ -493,20 +468,21 @@ def set_manager_route():
 @app.route("/get_manager")
 def get_manager_route():
     """Get the manager of the managed block."""
-    """
-    who = request.args.get("manager")
-    OOD = False
-    if who == "OOD":
-        OOD = True
-    set_manager(OOD=OOD,slurm_files=SLURM_FILES)
-    return redirect(url_for("index_route"))
-    """
-    return jsonify({"config": {"manager": MANAGER_NAME}})
+    file = SLURM_FILES['nodes']
+    if check_managed_block(file, MANAGER_NAME):
+        return jsonify({"config": {"manager": MANAGER_NAME}})
+    elif check_managed_block(file, MANAGER_NAME_OOD):
+        return jsonify({"config": {"manager": MANAGER_NAME_OOD}})
+    return jsonify({"config": {"manager": "manual"}})
 
 
 @app.route("/whois_manager")
 def whois_manager_route():
-    """Who is the manager of the managed block."""
+    """
+    Who is the manager of the managed block.
+    Similar to /get_manager, however this one hides/translates
+    to a generic/slurm app known/coded name/value
+    """
     file = SLURM_FILES['nodes']
     if check_managed_block(file, MANAGER_NAME):
         return jsonify({"config": {"manager": "default"}})
@@ -725,9 +701,3 @@ def import_luna_nodes_route():
 
 if __name__ == "__main__":
     app.run()
-    # Sumit Testing Comments
-    #dev_context=(
-    #         '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.crt',
-    #         '/trinity/local/etc/ssl/twans-ansible-el9.taurusgroup.one.key'
-    #     )
-    #app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
