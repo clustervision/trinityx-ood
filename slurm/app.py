@@ -194,17 +194,20 @@ def init_tmp_files(slurm_files):
                 file.write("#### Defaults Managed block end   ####\n\n")
                 file.write("#### "+MANAGER_NAME+" Managed block start ####\n")
                 file.write("#### "+MANAGER_NAME+" Managed block end   ####\n")
+        else:
+            raise Exception(f"File name requirement not met for {slurm_files[slurm_file]}")
 
 def save_tmp_files(configuration):
+    my_home = os.path.expanduser("~/")
     tmp_configs = {
         # tempfile doesn't work as slurm-config-mgr expects a real file
         # left here for future reference:
         #'nodes': tempfile.TemporaryFile(mode='w'),
         #'partitions': tempfile.TemporaryFile(mode='w'),
         #'gres': tempfile.TemporaryFile(mode='w')}
-        'nodes': '~/slurm-nodes.conf',
-        'partitions': '~/slurm-partitions.conf',
-        'gres': '~/gres.conf'}
+        'nodes': my_home+'/slurm-nodes.conf',
+        'partitions': my_home+'/slurm-partitions.conf',
+        'gres': my_home+'/gres.conf'}
     try:
         init_tmp_files(tmp_configs)
         save_configuration(configuration=configuration,
@@ -216,8 +219,8 @@ def save_tmp_files(configuration):
         config_block = ConfigFile.read(tmp_configs['partitions'])
         partitions_preview_lines = config_block.dump()
     except Exception as exp:
-        nodes_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + nodes_preview_lines
-        partitions_preview_lines = f"<b>Problem generating preview: {exp}</b>\n\n" + partitions_preview_lines
+        nodes_preview_lines = f"Problem generating preview: {exp}\n\n"
+        partitions_preview_lines = f"Problem generating preview: {exp}\n\n"
     remove_tmp_files(tmp_configs)
     return nodes_preview_lines, partitions_preview_lines
 
@@ -356,31 +359,35 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 hw_presets_addons[default_preset] = ' '.join(addons)
     #sys.stdout.write(f"ADDON: {hw_presets_addons}\n")
 
+    hw_preset_nodes = {}
+    hw_preset_partitions = {}
+    nodes_states = {}
+    # what nodes are using the preset:
+    if 'nodes' in configuration:
+        for node in configuration['nodes']:
+            if 'hw_preset_name' in node and node['hw_preset_name']:
+                if node['hw_preset_name'] not in hw_preset_nodes:
+                    hw_preset_nodes[node['hw_preset_name']] = []
+                hw_preset_nodes[node['hw_preset_name']].append(node['name'])
+            if 'properties' in node and 'State' in node['properties'] and node['properties']['State']:
+                nodes_states[node['name']] = node['properties']['State']
+    # what partitions are using the preset:
+    if 'partitions' in configuration:
+        for partition in configuration['partitions']:
+            if 'hw_preset_name' in partition and partition['hw_preset_name']:
+                if partition['hw_preset_name'] not in hw_preset_partitions:
+                    hw_preset_partitions[partition['hw_preset_name']] = []
+                hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
+    # now let's build a per node preset list and the hw presets themselves:
     if 'hw_presets' in configuration:
-        hw_preset_nodes = {}
-        hw_preset_partitions = {}
-        # what nodes are using the preset:
-        if 'nodes' in configuration:
-            for node in configuration['nodes']:
-                if 'hw_preset_name' in node and node['hw_preset_name']:
-                    if node['hw_preset_name'] not in hw_preset_nodes:
-                        hw_preset_nodes[node['hw_preset_name']] = []
-                    hw_preset_nodes[node['hw_preset_name']].append(node['name'])
-        # what partitions are using the preset:
-        if 'partitions' in configuration:
-            for partition in configuration['partitions']:
-                if 'hw_preset_name' and partition['hw_preset_name']:
-                    if partition['hw_preset_name'] not in hw_preset_partitions:
-                        hw_preset_partitions[partition['hw_preset_name']] = []
-                    hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
-        # now let's build a per node preset list and the hw presets themselves:
         for hw_preset in configuration['hw_presets']:
             if 'properties' in hw_preset:
                 hw_preset_line="HWPresetName="+hw_preset['name']+" "
                 hw_preset_properties = ""
                 for key, value in hw_preset['properties'].items():
-                    hw_preset_line+=f"{key}={value} "
-                    hw_preset_properties+=f"{key}={value} "
+                    if not (key == "State" and value == "UNKNOWN"):
+                        hw_preset_line+=f"{key}={value} "
+                        hw_preset_properties+=f"{key}={value} "
                 hw_preset_line+="# "
                 if hw_preset['name'] in hw_preset_nodes:
                     hw_preset_line+="Nodes="+compress(','.join(hw_preset_nodes[hw_preset['name']]))+" "
@@ -388,20 +395,31 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         properties_addons = ""
                         if "NodeName="+node in hw_presets_addons:
                             properties_addons = hw_presets_addons["NodeName="+node]+" "
+                        if node in nodes_states:
+                            properties_addons += "State="+nodes_states[node]
+                            del nodes_states[node]
                         node_preset_line="NodeName="+node+" "+hw_preset_properties+properties_addons+" # HWPreset="+hw_preset["name"]
                         hw_presets["NodeName="+node]=node_preset_line
                 if hw_preset['name'] in hw_preset_partitions:
                     hw_preset_line+="Partitions="+compress(','.join(hw_preset_partitions[hw_preset['name']]))
                     for partition in hw_preset_partitions[hw_preset['name']]:
+                        properties_addons = ""
                         partition_preset_line="PartitionName="+partition+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
                         hw_presets["PartitionName="+partition]=partition_preset_line
                 hw_presets["HWPresetName="+hw_preset['name']]=hw_preset_line
+    # a tiny entry for nodes that do not have a hw preset but set a State:
+    for node in nodes_states:
+        hw_presets["NodeName="+node]="NodeName="+node+" State="+nodes_states[node]
+
     # now we build the raw content:
     for hw_preset, entry in sorted(hw_presets.items()):
         raw_block+="# "+entry+"\n"
         if hw_preset in defaults:
             del defaults[hw_preset]
     for hw_preset, entry in sorted(defaults.items()):
+        if hw_preset.startswith("HWPresetName=") and hw_preset not in hw_presets.keys():
+            #sys.stdout.write(f"DELETE: {hw_preset}\n")
+            continue
         raw_block+="# "+hw_preset+" "+entry+"\n"
 
     #sys.stdout.write(f"RENDER NODE RAW BLOCK:\n{raw_block}\n")
@@ -427,7 +445,8 @@ def render_raw_partitions_defaults(configuration, slurm_files=SLURM_FILES):
             if 'properties' in partition:
                 properties_line="PartitionName="+partition['name']+" "
                 for key, value in partition['properties'].items():
-                    properties_line+=f"{key}={value} "
+                    if not (key == "State" and value == "UNKNOWN"):
+                        properties_line+=f"{key}={value} "
                 properties["PartitionName="+partition['name']]=properties_line
     for property_preset, entry in sorted(properties.items()):
         raw_block+="# "+entry+"\n"
