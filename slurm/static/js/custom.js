@@ -295,7 +295,7 @@ window.onload = function() {
             {title:"Luna Group", field:"group_name", sorter:"string"},
             {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
             {title:"Properties", columns:[
-                {title: "State", minWidth:200, field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["DRAIN", "UNKNOWN", "IDLE"], clearable: true}},
+                {title: "State", minWidth:200, field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["DRAIN", "IDLE"], clearable: true}},
             ]},
         ],
         reactiveData:true,
