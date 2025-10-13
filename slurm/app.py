@@ -420,6 +420,16 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
         if hw_preset.startswith("HWPresetName=") and hw_preset not in hw_presets.keys():
             #sys.stdout.write(f"DELETE: {hw_preset}\n")
             continue
+        elif hw_preset.startswith("NodeName="):
+            _, node = hw_preset.split("=")
+            if node not in configuration['nodes']:
+                #sys.stdout.write(f"DELETE node: {node}\n")
+                continue
+        elif hw_preset.startswith("PartitionName="):
+            _, partition = hw_preset.split("=")
+            if partition not in configuration['partitions']:
+                #sys.stdout.write(f"DELETE part: {partition}\n")
+                continue
         raw_block+="# "+hw_preset+" "+entry+"\n"
 
     #sys.stdout.write(f"RENDER NODE RAW BLOCK:\n{raw_block}\n")
@@ -453,6 +463,11 @@ def render_raw_partitions_defaults(configuration, slurm_files=SLURM_FILES):
         if property_preset in defaults:
             del defaults[property_preset]
     for property_preset, entry in sorted(defaults.items()):
+        if property_preset.startswith("PartitionName="):
+            _, partition = property_preset.split("=")
+            if partition not in configuration['partitions']:
+                #sys.stdout.write(f"DELETE part: {partition}\n")
+                continue
         raw_block+="# "+property_preset+" "+entry+"\n"
 
     #sys.stdout.write(f"RENDER PART RAW BLOCK:\n{raw_block}\n")
