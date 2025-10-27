@@ -132,6 +132,28 @@ onUnmounted(() => {
           </div>
           <div class="modal-body">
             <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Category</th>
+                  <th>Class</th>
+                  <th>Exporter</th>
+                  <th>Hostname</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(alert, index) in props.alerts" :key="alert.state">
+                  <td>{{ index +1 }}</td>
+                  <td>{{ alert.labels.category }}</td>
+                  <td>{{ alert.labels.class }}</td>
+                  <td>{{ alert.labels.exporter }}</td>
+                  <td>{{ alert.labels.hostname }}</td>
+                  <td>{{ alert.annotations.description }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <table class="table table-striped table-bordered">
               <tbody>
                 <tr>
                   <td><strong>Rule Name</strong></td>
@@ -190,28 +212,6 @@ onUnmounted(() => {
                   <td>{{ props.rule[0].keepFiringFor }}</td>
                 </tr>
 
-              </tbody>
-            </table>
-              <table class="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Category</th>
-                  <th>Class</th>
-                  <th>Exporter</th>
-                  <th>Hostname</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(alert, index) in props.alerts" :key="alert.state">
-                  <td>{{ index +1 }}</td>
-                  <td>{{ alert.labels.category }}</td>
-                  <td>{{ alert.labels.class }}</td>
-                  <td>{{ alert.labels.exporter }}</td>
-                  <td>{{ alert.labels.hostname }}</td>
-                  <td>{{ alert.annotations.description }}</td>
-                </tr>
               </tbody>
             </table>
           </div>
