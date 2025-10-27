@@ -116,6 +116,8 @@ export default defineComponent({
     return {
       overview: [] as Overview[],
       alerts: [],
+      controller_hostname: '',
+      controller_state: false,
       icons: "default",
       noRowsPrometheus: '',
       noRowsTypePrometheus: '',
@@ -190,6 +192,9 @@ watch: {
         if (nodeResponse.status === 200) {
           nodeResponse.data.data.result.forEach((node: NodeList) => {
             const hostname = node.metric.hostname;
+            if (nodeList.includes(hostname) && this.controller_hostname === '') {
+              this.controller_hostname = hostname;
+            }
             if (hostname !== undefined) {
               this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[], allAlerts:[]});
             }
@@ -219,6 +224,7 @@ watch: {
             response.data.data.groups.forEach((group: Prometheus) => {
               if (group.name === "trinityx" || group.name === "trinityx_hw") {
                 group.rules.forEach((rule) => {
+                  
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert : SpecificAlerts) => {
                       const hostname = alert.labels.hostname;
@@ -235,6 +241,8 @@ watch: {
 
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
+                       
+
                       if (hostname !== undefined) {
                         if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                           if (alert.labels.category === "generic") {
@@ -244,6 +252,7 @@ watch: {
                           if (alert.labels.category === "service") {
                             if (nhc === true){ services = true; } else { services = false; }
                             servicesAlerts.push(alert);
+                            console.log(hostname);
                           }
                           if (alert.labels.category === "hardware") {
                             if (nhc === true){ hardware = true; } else { hardware = false; }
@@ -253,6 +262,12 @@ watch: {
                             if (nhc === true){ other = true; } else { other = false; }
                             otherAlerts.push(alert);
                           }
+
+                          
+                        if (this.controller_hostname === hostname) {
+                          if (nhc === true){ this.controller_state = true; }
+                          // console.log(this.controller_state);
+                        }
 
 
                           const hostEntry = this.overview.find(item => item.hostname === hostname);
@@ -279,9 +294,71 @@ watch: {
                             hostEntry.allAlerts.push(...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts);
                           }
                         }
+
+
+                        if (this.controller_state === true){
+                          
+
+                          this.overview.forEach(item => {
+                          // console.log(item);
+                          // console.log(item.hostname);
+                          // console.log(this.controller_hostname);
+                          //console.log(rule.state);
+                                if (item.hostname !== this.controller_hostname) {
+                                  item.state = true;
+                                  item.genericRules = true;
+                                  item.services = true;
+                                  item.hardware = true;
+                                  item.other = true;
+                                }
+
+
+                                // if (alert.labels.category === "generic") {
+                                //   item.genericAlerts.push(alert);
+                                // }
+                                // if (alert.labels.category === "service") {
+                                //   item.servicesAlerts.push(alert);
+                                // }
+                                // if (alert.labels.category === "hardware") {
+                                //   item.hardwareAlerts.push(alert);
+                                // }
+                                // if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
+                                //   item.otherAlerts.push(alert);
+                                // }
+
+
+
+                              });
+
+                        }
+                        
+                       
                       }
+
+
+
+                     
+                       
+                    
                     });
                   }
+
+                  //  this.overview.forEach(item => {
+                  //   // console.log(item.hostname);
+                  //   // console.log(this.controller_hostname);
+                  //   //console.log(rule.state);
+                  //         if (item.hostname !== this.controller_hostname  && rule.state === "firing") {
+                  //           // if (item.genericRules !== null)
+                  //             item.genericRules = true;
+                  //           // if (item.servicesAlerts !== null) 
+                  //           item.services = true;
+                  //           // if (item.hardwareAlerts !== null) 
+                  //           item.hardware = true;
+                  //           // if (item.otherAlerts !== null) 
+                  //           item.other = true;
+                  //         }
+                  //       });
+
                 });
                 if (this.overview.length === 0) {
                   this.noRowsPrometheus = `<strong>[Prometheus Server] :: There is only inactive alerts for TrinityX Group.</strong>`;
@@ -421,6 +498,10 @@ watch: {
         <div class="row">
           <div class="col col-1"><box-icon :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545"></box-icon></div>
           <div class="col col-9"><i>When Firing and NHC is <strong>Enabled</strong>.</i></div>
+        </div>
+        <div class="row">
+          <div class="col col-1"><box-icon :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#0dcaf0"></box-icon></div>
+          <div class="col col-9"><i>When Drain by <strong>Controller</strong>.</i></div>
         </div>
         <div class="row">
           <div class="col col-1"><box-icon :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000"></box-icon></div>
