@@ -31,7 +31,7 @@
                   <td>{{ alert.labels.nhc }}</td>
                   <td>{{ alert.labels.exporter }}</td>
                   <td>{{ alert.labels.path }}</td>
-                  <td v-if="triggered_by === true && controller_hostname !== alert.labels.hostname"><strong>[Triggered By Controller]</strong> {{ alert.annotations.description }}</td>
+                  <td v-if="triggered_by === true && alert.labels.job === 'luna_controllers' && controller_hostname !== props.hostname"><strong>[Triggered By Controller Rule]</strong> {{ alert.annotations.description }}</td>
                   <td v-else>{{ alert.annotations.description }}</td>
                 </tr>
               </tbody>
