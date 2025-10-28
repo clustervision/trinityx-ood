@@ -117,7 +117,10 @@ export default defineComponent({
       overview: [] as Overview[],
       alerts: [],
       controller_hostname: '',
-      controller_state: false,
+      controller_generic_state: false,
+      controller_service_state: false,
+      controller_hardware_state: false,
+      controller_other_state: false,
       icons: "default",
       noRowsPrometheus: '',
       noRowsTypePrometheus: '',
@@ -246,29 +249,34 @@ watch: {
                       if (hostname !== undefined) {
                         if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                           if (alert.labels.category === "generic") {
-                            if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                            if (nhc === true){
+                              genericRules = true;
+                              if (this.controller_hostname === hostname) { this.controller_generic_state = true; }
+                            } else { genericRules = false; }
                             genericAlerts.push(alert);
                           }
                           if (alert.labels.category === "service") {
-                            if (nhc === true){ services = true; } else { services = false; }
+                            if (nhc === true){
+                              services = true;
+                              if (this.controller_hostname === hostname) { this.controller_service_state = true; }
+                            } else { services = false; }
                             servicesAlerts.push(alert);
-                            console.log(hostname);
+                            // console.log(hostname);
                           }
                           if (alert.labels.category === "hardware") {
-                            if (nhc === true){ hardware = true; } else { hardware = false; }
+                            if (nhc === true){
+                              hardware = true;
+                              if (this.controller_hostname === hostname) { this.controller_hardware_state = true; }
+                            } else { hardware = false; }
                             hardwareAlerts.push(alert);
                           }
                           if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
-                            if (nhc === true){ other = true; } else { other = false; }
+                            if (nhc === true){
+                              other = true;
+                              if (this.controller_hostname === hostname) { this.controller_other_state = true; }
+                            } else { other = false; }
                             otherAlerts.push(alert);
                           }
-
-                          
-                        if (this.controller_hostname === hostname) {
-                          if (nhc === true){ this.controller_state = true; }
-                          // console.log(this.controller_state);
-                        }
-
 
                           const hostEntry = this.overview.find(item => item.hostname === hostname);
                           if (hostEntry) {
@@ -296,40 +304,41 @@ watch: {
                         }
 
 
-                        if (this.controller_state === true){
-                          
-
+                        if (this.controller_generic_state === true){
                           this.overview.forEach(item => {
-                          // console.log(item);
-                          // console.log(item.hostname);
-                          // console.log(this.controller_hostname);
-                          //console.log(rule.state);
-                                if (item.hostname !== this.controller_hostname) {
-                                  item.state = true;
-                                  item.genericRules = true;
-                                  item.services = true;
-                                  item.hardware = true;
-                                  item.other = true;
-                                }
+                            if (item.hostname !== this.controller_hostname) {
+                              //  if (item.hostname === "node001.cluster") {item.state = true; }
+                              // item.state = true;
+                              item.genericRules = true;
+                            }
+                          });
+                        }
 
+                        if (this.controller_service_state === true){
+                          this.overview.forEach(item => {
+                            if (item.hostname !== this.controller_hostname) {
+                              // item.state = true;
+                              item.services = true;
+                            }
+                          });
+                        }
 
-                                // if (alert.labels.category === "generic") {
-                                //   item.genericAlerts.push(alert);
-                                // }
-                                // if (alert.labels.category === "service") {
-                                //   item.servicesAlerts.push(alert);
-                                // }
-                                // if (alert.labels.category === "hardware") {
-                                //   item.hardwareAlerts.push(alert);
-                                // }
-                                // if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
-                                //   item.otherAlerts.push(alert);
-                                // }
+                        if (this.controller_hardware_state === true){
+                          this.overview.forEach(item => {
+                            if (item.hostname !== this.controller_hostname) {
+                              // item.state = true;
+                              item.hardware = true;
+                            }
+                          });
+                        }
 
-
-
-                              });
-
+                        if (this.controller_other_state === true){
+                          this.overview.forEach(item => {
+                            if (item.hostname !== this.controller_hostname) {
+                              // item.state = true;
+                              item.other = true;
+                            }
+                          });
                         }
                         
                        
@@ -500,10 +509,6 @@ watch: {
           <div class="col col-9"><i>When Firing and NHC is <strong>Enabled</strong>.</i></div>
         </div>
         <div class="row">
-          <div class="col col-1"><box-icon :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#0dcaf0"></box-icon></div>
-          <div class="col col-9"><i>When Drain by <strong>Controller</strong>.</i></div>
-        </div>
-        <div class="row">
           <div class="col col-1"><box-icon :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000"></box-icon></div>
           <div class="col col-9"><i>When Host is <strong>Down</strong>.</i></div>
         </div>
@@ -532,8 +537,12 @@ watch: {
                   <box-icon v-else-if="row.genericRules === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   <box-icon v-else-if="row.genericRules === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
+                <template v-else-if="controller_generic_state === true">
+                  <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <box-icon v-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                </template>
                 <template v-else>
-                  <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   <box-icon v-if="row.genericRules === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
                   <box-icon v-else-if="row.genericRules === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
                   <box-icon v-else-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
@@ -545,8 +554,12 @@ watch: {
                   <box-icon v-else-if="row.services === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   <box-icon v-else-if="row.services === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
+                <template v-else-if="controller_service_state === true">
+                  <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <box-icon v-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                </template>
                 <template v-else>
-                  <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   <box-icon v-if="row.services === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
                   <box-icon v-else-if="row.services === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
                   <box-icon v-else-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
@@ -558,8 +571,12 @@ watch: {
                   <box-icon v-else-if="row.hardware === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   <box-icon v-else-if="row.hardware === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
+                <template v-else-if="controller_hardware_state === true">
+                  <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <box-icon v-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                </template>
                 <template v-else>
-                  <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   <box-icon v-if="row.hardware === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
                   <box-icon v-else-if="row.hardware === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
                   <box-icon v-else-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
@@ -571,8 +588,12 @@ watch: {
                   <box-icon v-else-if="row.other === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   <box-icon v-else-if="row.other === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                 </template>
+                <template v-else-if="controller_other_state === true">
+                  <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <box-icon v-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                </template>
                 <template v-else>
-                  <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                  <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   <box-icon v-if="row.other === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
                   <box-icon v-else-if="row.other === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
                   <box-icon v-else-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
@@ -595,11 +616,15 @@ watch: {
                     <box-icon v-else-if="row.genericRules === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                     <box-icon v-else-if="row.genericRules === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   </template>
+                  <template v-else-if="controller_generic_state === true">
+                    <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <box-icon v-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                  </template>
                   <template v-else>
                     <box-icon v-if="row.genericRules === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
                     <box-icon v-else-if="row.genericRules === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
                     <box-icon v-else-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
-                    <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
 
                   <template v-if="row.state === false">
@@ -607,11 +632,15 @@ watch: {
                     <box-icon v-else-if="row.services === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                     <box-icon v-else-if="row.services === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   </template>
+                  <template v-else-if="controller_service_state === true">
+                    <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <box-icon v-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                  </template>
                   <template v-else>
                     <box-icon v-if="row.services === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
                     <box-icon v-else-if="row.services === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
                     <box-icon v-else-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
-                    <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
 
                   <template v-if="row.state === false">
@@ -619,11 +648,15 @@ watch: {
                     <box-icon v-else-if="row.hardware === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                     <box-icon v-else-if="row.hardware === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   </template>
+                  <template v-else-if="controller_hardware_state === true">
+                    <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <box-icon v-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                  </template>
                   <template v-else>
                     <box-icon v-if="row.hardware === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
                     <box-icon v-else-if="row.hardware === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
                     <box-icon v-else-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
-                    <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
 
                   <template v-if="row.state === false">
@@ -631,11 +664,15 @@ watch: {
                     <box-icon v-else-if="row.other === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                     <box-icon v-else-if="row.other === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   </template>
+                  <template v-else-if="controller_other_state === true">
+                    <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <box-icon v-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                  </template>
                   <template v-else>
                     <box-icon v-if="row.other === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
                     <box-icon v-else-if="row.other === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
                     <box-icon v-else-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
-                    <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
                 </span>
               </td>
@@ -654,11 +691,15 @@ watch: {
                   <template v-if="row.state === false">
                     <box-icon :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
                   </template>
+                  <template v-else-if="controller_generic_state === true">
+                    <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <box-icon v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                  </template>
                   <template v-else>
                     <box-icon v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
                     <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === false)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
                     <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === null)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
-                    <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
+                    <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
                 </span>
               </td>
