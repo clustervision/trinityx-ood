@@ -185,13 +185,6 @@ watch: {
         if (nodeResponse.status === 200) {
           nodeResponse.data.data.result.forEach((node: NodeList) => {
             const hostname = node.metric.hostname;
-            // console.log(nodeList);
-            this.controller_hostname = "rocky9.cluster"; // TODO: Need to fix later for dynamic controller hostname
-            // console.log(hostname);
-            // if (nodeList.includes(hostname) && this.controller_hostname === '') {
-            //   this.controller_hostname = hostname;
-            //   console.log(this.controller_hostname );
-            // }
             if (hostname !== undefined) {
               this.overview.push({state: true, hostname: hostname, genericRules: null, services: null, hardware: null, other: null, ipmi: null, genericAlerts:[], servicesAlerts:[], hardwareAlerts:[], otherAlerts:[], allAlerts:[]});
             }
@@ -226,10 +219,10 @@ watch: {
             response.data.data.groups.forEach((group: Prometheus) => {
               if (group.name === "trinityx" || group.name === "trinityx_hw") {
                 group.rules.forEach((rule) => {
-                  
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert : SpecificAlerts) => {
-                      
+
+                      if (this.controller_hostname === '' && alert.labels.job === "luna_controllers") { this.controller_hostname = alert.labels.hostname; }
                       const hostname = alert.labels.hostname;
                       const state = true;
                       let genericRules: boolean | null = null;
@@ -244,87 +237,78 @@ watch: {
 
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
+                      if (this.controller_hostname === hostname && nhc === true && rule.state === "firing") {
+                        if (alert.labels.category === "generic") {
+                          this.controller_generic_state = true;
+                          if (!this.controller_generic_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
+                            this.controller_generic_alerts.push(alert);
+                          }
+                        }
+
+                        if (alert.labels.category === "service") {
+                          this.controller_service_state = true;
+                          if (!this.controller_service_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
+                            this.controller_service_alerts.push(alert);
+                          }
+                        }
+
+                        if (alert.labels.category === "hardware") {
+                          this.controller_hardware_state = true;
+                          if (!this.controller_hardware_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
+                            this.controller_hardware_alerts.push(alert);
+                          }
+                        }
+
+                        if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
+                          this.controller_other_state = true;
+                          if (!this.controller_other_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
+                            this.controller_other_alerts.push(alert);
+                          }
+                        }
+
+                      }
+
                       if (hostname !== undefined) {
                         if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                           if (alert.labels.category === "generic") {
                             if (nhc === true){
                               genericRules = true;
-                              if (this.controller_hostname === hostname && alert.labels.job === "luna_controllers") {
-                                this.controller_generic_state = true;
-                                if (!this.controller_generic_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                    this.controller_generic_alerts.push(alert);
-                                }
-                              }
                             } else { genericRules = false; }
                             if (!genericAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
                                 genericAlerts.push(alert);
+                                if (this.controller_hostname !== hostname){ genericAlerts.push(...this.controller_generic_alerts); }
                             }
                           }
                           if (alert.labels.category === "service") {
                             if (nhc === true){
                               services = true;
-                              if (this.controller_hostname === hostname && alert.labels.job === "luna_controllers") {
-                                this.controller_service_state = true;
-                                if (!this.controller_service_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                  this.controller_service_alerts.push(alert);
-                                }
-                              }
                             } else { services = false; }
                             if (!servicesAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
                                 servicesAlerts.push(alert);
+                                if (this.controller_hostname !== hostname){ servicesAlerts.push(...this.controller_service_alerts); }
                             }
                           }
                           if (alert.labels.category === "hardware") {
                             if (nhc === true){
                               hardware = true;
-                              if (this.controller_hostname === hostname && alert.labels.job === "luna_controllers") {
-                                this.controller_hardware_state = true;
-                                if (!this.controller_hardware_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                  this.controller_hardware_alerts.push(alert);
-                                }
-                              }
                             } else { hardware = false; }
                             if (!hardwareAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
                                 hardwareAlerts.push(alert);
+                                if (this.controller_hostname !== hostname){ hardwareAlerts.push(...this.controller_hardware_alerts); }
                             }
                           }
                           if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
                             if (nhc === true){
                               other = true;
-                              if (this.controller_hostname === hostname && alert.labels.job === "luna_controllers") {
-                                this.controller_other_state = true;
-                                if (!this.controller_other_alerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                  this.controller_other_alerts.push(alert);
-                                }
-                              }
                             } else { other = false; }
                             if (!otherAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
                                 otherAlerts.push(alert);
+                                if (this.controller_hostname !== hostname){ otherAlerts.push(...this.controller_other_alerts); }
                             }
                           }
 
-
-                        // if (this.controller_generic_state === true){
-                        //   this.overview.forEach(item => {
-                        //     if (item.hostname !== this.controller_hostname) {
-                        //       item.genericRules = true;
-                              
-                        //       for (const alert of this.controller_generic_alerts) {
-                        //         const alreadyExists = item.genericAlerts.some(
-                        //           (a) => a.activeAt === alert.activeAt && a.value === alert.value
-                        //         );
-                        //         if (!alreadyExists) {
-                        //           item.genericAlerts.push(alert);
-                        //         }
-                        //       }
-                        //     }
-                        //   });
-                        // }
-
-                        
-
+                      
                           const hostEntry = this.overview.find(item => item.hostname === hostname);
-                          // console.log(hostEntry);
                           if (hostEntry) {
                             if (genericRules === true || (genericRules === false && hostEntry.genericRules !== true)){
                               hostEntry.genericRules = genericRules;
@@ -348,57 +332,6 @@ watch: {
                             hostEntry.allAlerts.push(...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts);
                           }
                         }
-
-
-                        
-
-                        // if (this.controller_service_state === true){
-                        //   this.overview.forEach(item => {
-                        //     if (item.hostname !== this.controller_hostname) {
-                        //       item.services = true;
-                        //       for (const alert of this.controller_service_alerts) {
-                        //         const alreadyExists = item.servicesAlerts.some(
-                        //           (a) => a.activeAt === alert.activeAt && a.value === alert.value
-                        //         );
-                        //         if (!alreadyExists) {
-                        //           item.servicesAlerts.push(alert);
-                        //         }
-                        //       }
-                        //     }
-                        //   });
-                        // }
-
-                        // if (this.controller_hardware_state === true){
-                        //   this.overview.forEach(item => {
-                        //     if (item.hostname !== this.controller_hostname) {
-                        //       item.hardware = true;
-                        //       for (const alert of this.controller_hardware_alerts) {
-                        //         const alreadyExists = item.hardwareAlerts.some(
-                        //           (a) => a.activeAt === alert.activeAt && a.value === alert.value
-                        //         );
-                        //         if (!alreadyExists) {
-                        //           item.hardwareAlerts.push(alert);
-                        //         }
-                        //       }
-                        //     }
-                        //   });
-                        // }
-
-                        // if (this.controller_other_state === true){
-                        //   this.overview.forEach(item => {
-                        //     if (item.hostname !== this.controller_hostname) {
-                        //       item.other = true;
-                        //       for (const alert of this.controller_other_alerts) {
-                        //         const alreadyExists = item.otherAlerts.some(
-                        //           (a) => a.activeAt === alert.activeAt && a.value === alert.value
-                        //         );
-                        //         if (!alreadyExists) {
-                        //           item.otherAlerts.push(alert);
-                        //         }
-                        //       }
-                        //     }
-                        //   });
-                        // }
                        
                       }
                     
@@ -408,29 +341,9 @@ watch: {
                 });
                 if (this.overview.length === 0) {
                   this.noRowsPrometheus = `<strong>[Prometheus Server] :: There is only inactive alerts for TrinityX Group.</strong>`;
-                } //else {
-
-                  
-                //}
+                } 
               }
             });
-
-
-            // if (this.controller_generic_state === true){
-            //   this.overview.forEach(item => {
-            //     if (item.hostname !== this.controller_hostname) {
-            //       item.genericRules = true;
-            //       for (const alert of this.controller_generic_alerts) {
-            //         const alreadyExists = item.genericAlerts.some(
-            //           (a) => a.activeAt === alert.activeAt && a.value === alert.value
-            //         );
-            //         if (!alreadyExists) {
-            //           item.genericAlerts.push(alert);
-            //         }
-            //       }
-            //     }
-            //   });
-            // }
 
           } else {
             this.noRowsPrometheus = `<strong>[Prometheus Server] :: Error fetching Alerts from ${this.statusAPI} Status: ${response.status}.</strong>`;
