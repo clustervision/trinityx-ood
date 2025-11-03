@@ -31,7 +31,8 @@
                   <td>{{ alert.labels.nhc }}</td>
                   <td>{{ alert.labels.exporter }}</td>
                   <td>{{ alert.labels.path }}</td>
-                  <td>{{ alert.annotations.description }}</td>
+                  <td v-if="triggered_by === true && alert.labels.job === 'luna_controllers' && controller_hostname !== props.hostname"><strong>[Triggered By Controller Rule]</strong> {{ alert.annotations.description }}</td>
+                  <td v-else>{{ alert.annotations.description }}</td>
                 </tr>
               </tbody>
             </table>
@@ -76,6 +77,8 @@ interface SpecificAlerts {
 const props = defineProps<{
   alerts: SpecificAlerts[];
   modalId: string;
+  triggered_by: boolean;
+  controller_hostname: string
   hostname: string;
   ruleType: string;
 }>();
