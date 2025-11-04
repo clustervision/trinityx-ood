@@ -221,20 +221,9 @@ watch: {
                 group.rules.forEach((rule) => {
                   if (rule.alerts && rule.alerts.length > 0) {
                     rule.alerts.forEach((alert : SpecificAlerts) => {
-
                       if (this.controller_hostname === '' && alert.labels.job === "luna_controllers") { this.controller_hostname = alert.labels.hostname; }
+
                       const hostname = alert.labels.hostname;
-                      const state = true;
-                      let genericRules: boolean | null = null;
-                      let services: boolean | null = null;
-                      let hardware: boolean | null = null;
-                      let other: boolean | null = null;
-
-                      const genericAlerts: SpecificAlerts[] = [];
-                      const servicesAlerts: SpecificAlerts[] = [];
-                      const hardwareAlerts: SpecificAlerts[] = [];
-                      const otherAlerts: SpecificAlerts[] = [];
-
                       const nhc: boolean = String(rule.labels.nhc) === "true";
 
                       if (this.controller_hostname === hostname && nhc === true && rule.state === "firing") {
@@ -265,79 +254,79 @@ watch: {
                             this.controller_other_alerts.push(alert);
                           }
                         }
-
                       }
+                    });
+                  }
+                });
+              }
+            });
+
+            response.data.data.groups.forEach((group: Prometheus) => {
+              if (group.name === "trinityx" || group.name === "trinityx_hw") {
+                group.rules.forEach((rule) => {
+                  if (rule.alerts && rule.alerts.length > 0) {
+                    rule.alerts.forEach((alert : SpecificAlerts) => {
+                      const hostname = alert.labels.hostname;
+                      let genericRules: boolean | null = null;
+                      let services: boolean | null = null;
+                      let hardware: boolean | null = null;
+                      let other: boolean | null = null;
+
+                      const genericAlerts: SpecificAlerts[] = [];
+                      const servicesAlerts: SpecificAlerts[] = [];
+                      const hardwareAlerts: SpecificAlerts[] = [];
+                      const otherAlerts: SpecificAlerts[] = [];
+
+                      const nhc: boolean = String(rule.labels.nhc) === "true";
 
                       if (hostname !== undefined) {
                         if (rule.state === "firing" && (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined)){
                           if (alert.labels.category === "generic") {
-                            if (nhc === true){
-                              genericRules = true;
-                            } else { genericRules = false; }
-                            if (!genericAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                genericAlerts.push(alert);
-                                if (this.controller_hostname !== hostname){ genericAlerts.push(...this.controller_generic_alerts); }
-                            }
+                            if (nhc === true){ genericRules = true; } else { genericRules = false; }
+                            if (!genericAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) { genericAlerts.push(alert); }
+                            if (this.controller_hostname !== hostname){ genericAlerts.push(...this.controller_generic_alerts); }
                           }
                           if (alert.labels.category === "service") {
-                            if (nhc === true){
-                              services = true;
-                            } else { services = false; }
-                            if (!servicesAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                servicesAlerts.push(alert);
-                                if (this.controller_hostname !== hostname){ servicesAlerts.push(...this.controller_service_alerts); }
-                            }
+                            if (nhc === true){ services = true; } else { services = false; }
+                            if (!servicesAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) { servicesAlerts.push(alert); }
+                            if (this.controller_hostname !== hostname){ servicesAlerts.push(...this.controller_service_alerts); }
                           }
                           if (alert.labels.category === "hardware") {
-                            if (nhc === true){
-                              hardware = true;
-                            } else { hardware = false; }
-                            if (!hardwareAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                hardwareAlerts.push(alert);
-                                if (this.controller_hostname !== hostname){ hardwareAlerts.push(...this.controller_hardware_alerts); }
-                            }
+                            if (nhc === true){ hardware = true; } else { hardware = false; }
+                            if (!hardwareAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) { hardwareAlerts.push(alert); }
+                            if (this.controller_hostname !== hostname){ hardwareAlerts.push(...this.controller_hardware_alerts); }
                           }
                           if ((alert.labels.category !== "generic" && alert.labels.category !== "service" && alert.labels.category !== "hardware") || (alert.labels.category === undefined)) {
-                            if (nhc === true){
-                              other = true;
-                            } else { other = false; }
-                            if (!otherAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {
-                                otherAlerts.push(alert);
-                                if (this.controller_hostname !== hostname){ otherAlerts.push(...this.controller_other_alerts); }
-                            }
+                            if (nhc === true){ other = true; } else { other = false; }
+                            if (!otherAlerts.some(a => a.activeAt === alert.activeAt && a.value === alert.value)) {  otherAlerts.push(alert); }
+                            if (this.controller_hostname !== hostname){ otherAlerts.push(...this.controller_other_alerts); }
                           }
 
-                      
                           const hostEntry = this.overview.find(item => item.hostname === hostname);
                           if (hostEntry) {
                             if (genericRules === true || (genericRules === false && hostEntry.genericRules !== true)){
                               hostEntry.genericRules = genericRules;
-                                hostEntry.genericAlerts.push(...genericAlerts);
+                              hostEntry.genericAlerts.push(...genericAlerts);
                             } 
                             if (services === true || (services === false && hostEntry.services !== true)){
                               hostEntry.services = services;
-                                hostEntry.servicesAlerts.push(...servicesAlerts);
+                              hostEntry.servicesAlerts.push(...servicesAlerts);
                             }
                             if (hardware === true || (hardware === false && hostEntry.hardware !== true)){
                               hostEntry.hardware = hardware;
-                                hostEntry.hardwareAlerts.push(...hardwareAlerts);
+                              hostEntry.hardwareAlerts.push(...hardwareAlerts);
                             }
                             if (other === true || (other === false && hostEntry.other !== true)){
                               hostEntry.other = other;
-                                hostEntry.otherAlerts.push(...otherAlerts);
+                              hostEntry.otherAlerts.push(...otherAlerts);
                             }
-                            if (alert.labels.alertname === "ServerDown") {
-                              hostEntry.state = false;
-                            }
+                            if (alert.labels.alertname === "ServerDown") { hostEntry.state = false; }
                             hostEntry.allAlerts.push(...genericAlerts, ...servicesAlerts, ...hardwareAlerts, ...otherAlerts);
                           }
                         }
-                       
                       }
-                    
                     });
                   }
-
                 });
                 if (this.overview.length === 0) {
                   this.noRowsPrometheus = `<strong>[Prometheus Server] :: There is only inactive alerts for TrinityX Group.</strong>`;
