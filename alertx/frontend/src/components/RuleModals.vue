@@ -248,7 +248,8 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
                   </div>
                 </div>
                 <div class="col mb-6">
-                  <label :for="`${props.configType}_rule_nhc_${index}`" class="form-label">Rule NHC</label>
+                  <label v-if='ruleData.expr.includes("job=\"luna_controllers\"")' :for="`${props.configType}_rule_nhc_${index}`" class="form-label">Rule NHC, propagating to all nodes </label>
+                  <label v-else :for="`${props.configType}_rule_nhc_${index}`" class="form-label">Rule NHC</label>
                   <div class="form-check form-switch ">
                     <input type="checkbox" v-model="ruleData.labels.nhc" :id="`${props.configType}_rule_nhc_${index}`" class="form-check-input" data-toggle="switch" :true-value=true :false-value=false />
                     <label :id="`${props.configType}_rule_nhc_label_${index}`" :for="`${props.configType}_rule_nhc_${index}`" class="form-check-label">{{ ruleData.labels.nhc === true ? 'ON' : 'OFF' }}</label>
