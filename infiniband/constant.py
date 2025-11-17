@@ -79,3 +79,10 @@ def sortby(table=None):
     }
     response = list(static[table])
     return response
+
+# Commands for Slurm List, and Drains:
+SLURM_VERSION = "scontrol --version"
+SLURM_INFO = "scontrol show node --json"  # slurm >= 23.11.x
+SLURM_DRAIN = 'sudo /usr/bin/scontrol update NodeName={} State=DRAIN Reason="IB Analyzer drained node"'
+# SLURM_DRAIN = 'sudo /usr/bin/scontrol update NodeName=node[001-004],node[002-003],node004 State=DRAIN Reason="IB Analyzer drained node"'
+
