@@ -84,5 +84,6 @@ def sortby(table=None):
 SLURM_VERSION = "scontrol --version"
 SLURM_INFO = "scontrol show node --json"  # slurm >= 23.11.x
 SLURM_DRAIN = 'sudo /usr/bin/scontrol update NodeName={} State=DRAIN Reason="IB Analyzer drained node"'
+SLURM_RESUME = 'sudo /usr/bin/scontrol update NodeName={} State=RESUME'
 # SLURM_DRAIN = 'sudo /usr/bin/scontrol update NodeName=node[001-004],node[002-003],node004 State=DRAIN Reason="IB Analyzer drained node"'
 

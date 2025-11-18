@@ -32,7 +32,7 @@ __status__      = "Development"
 import json
 import subprocess
 from packaging import version
-from constant import SLURM_VERSION, SLURM_INFO, SLURM_DRAIN
+from constant import SLURM_VERSION, SLURM_INFO, SLURM_DRAIN, SLURM_RESUME
 # from log import Log
 
 
@@ -1153,40 +1153,42 @@ class Helper():
         self.test_response = json.loads(self.test_response)
 
 
-    def shell_execute(self, command: str):
+    def shell_execute(self, command: str) -> dict:
         """
         This method will execute a command on shell and return the output.
         """
         version_check = subprocess.run([SLURM_VERSION], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, check=False)
         if version_check.returncode == 0:
-            # print("STDOUT:", version_check.stdout)
             slurm_version = version_check.stdout.replace("slurm ", "").strip()
             slurm_version = version.parse(slurm_version)
             if slurm_version >= version.parse("23.11.0"):
-                execute = subprocess.run([command], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, check=False)
+                #TODO only for testing
+                remote_host = "root@192.168.164.156"
+                command = f"ssh {remote_host} '{command}'"
+                #TODO only for testing
+                execute = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, check=False)
+                print(execute.returncode)
+                print(execute.stdout)
+                print(execute.stderr)
                 if execute.returncode == 0:
-                    # print("STDOUT:", execute.stdout)
-                    try:
-                        data = json.loads(execute.stdout)
-                        self.response = {"status": True, "response": data}
-                    except json.JSONDecodeError as exp:
-                        # print("Invalid JSON:", exp)
-                        # print("Raw output:", execute.stdout)
-                        self.response["response"] = exp
+                    if len(execute.stdout) > 0:
+                        try:
+                            data = json.loads(execute.stdout)
+                            self.response = {"status": True, "response": data}
+                        except json.JSONDecodeError as exp:
+                            self.response["response"] = exp
+                    else:
+                        self.response = {"status": True, "response": "Operation done"}
                 else:
-                    self.response["response"] = execute.stdout
-                    # print("STDERR:", execute.stderr)
+                    self.response["response"] = execute.stderr
             else:
-                self.response["response"] = f"slurm_version {slurm_version} is below then 23.11.0, Please upgrade the Slurm Version."
-                # print(f"slurm_version {slurm_version} is below then 23.11.0, Please upgrade the Slurm Version.")
-            
+                self.response["response"] = f"slurm_version {slurm_version} is below then 23.11.0, Please upgrade the Slurm Version."            
         else:
             self.response["response"] = version_check.stdout
-            # print("STDERR:", version_check.stderr)
         return self.response
 
 
-    def slurm_info(self):
+    def slurm_info(self) -> dict:
         """
         This method will provide the Slurm Nodes Information.
         """
@@ -1196,10 +1198,9 @@ class Helper():
         print("=============")
         if slurm_nodes["status"] is True:
             nodes = slurm_nodes["response"]["nodes"]
-            # if len(nodes) > 0:self.test_response # TODO: for testing
+            # if len(nodes) > 0:# TODO: for testing
             if self.test_response: # TODO: for testing
                 nodes = self.test_response["nodes"] # TODO: for testing
-                # print(nodes)
                 response = []
                 for node in nodes:
                     states = [s.lower() for s in node["state"]]
@@ -1212,16 +1213,48 @@ class Helper():
                             response.append({"name": node["name"], "state": "drain", "reason": node["reason"]})
                     elif any(x in states for x in ["idle", "busy", "mixed", "allocated"]):
                         response.append({"name": node["name"], "state": "idle"})
-                    # elif any(x in states for x in ["down", "unknown", "not_responding"]):
-                    #     response.append({"name": node["name"], "state": "down"})
-                print(response)
-
+                self.response = {"status": True, "response": response}
             else:
-                print("No Nodes available at this time.")
+                self.response["response"] = "No Nodes available at this time."
         else:
-            print(slurm_nodes["response"])
+            self.response["response"] = slurm_nodes["response"]
+        return self.response
+
+
+    def slurm_drain(self, node_list: str) -> dict:
+        """
+        This method will drain the Slurm Nodes.
+        """
+        slurm_drain_cmd = SLURM_DRAIN.format(node_list)
+        self.response = self.shell_execute(slurm_drain_cmd)
+        print("=============")
+        print(self.response)
+        print("=============")
+        return self.response
+
+
+    def slurm_resume(self, node_list: str) -> dict:
+        """
+        This method will Resume the Slurm Nodes.
+        """
+        slurm_resume_cmd = SLURM_RESUME.format(node_list)
+        self.response = self.shell_execute(slurm_resume_cmd)
+        print("=============")
+        print(self.response)
+        print("=============")
+        return self.response
 
 
 if __name__ == "__main__":
 
-    Helper().slurm_info()
+    # slurm_nodes = Helper().slurm_info()
+    # print("=============")
+    # print(slurm_nodes)
+    # print("=============")
+    # node_list = "node[001-005],node007,node[009-010]"
+    node_list = "node[001-005]"
+    slurm_nodes = Helper().slurm_drain(node_list)
+    slurm_nodes = Helper().slurm_resume(node_list)
+    # print("=============")
+    # print(slurm_nodes)
+    # print("=============")

@@ -181,6 +181,68 @@ const Context = {
     onchangeSimulationType() {
         this._simulation = this.simulation();
     },
+
+    
+    // Add this method to your Context object (inside the Context object)
+    getSwitchHostConnections() {
+        const switchConnections = {};
+        
+        // Initialize an empty array for each switch
+        this.switchNodes().forEach(switchNode => {
+            switchConnections[switchNode.uid] = {
+                switch: switchNode,
+                connectedHosts: [],
+                hostCount: 0
+            };
+        });
+        
+        // Iterate through all links to find switch-host connections
+        this.links().forEach(link => {
+            const source = link.source;
+            const target = link.target;
+            
+            // Case 1: Switch -> Host connection
+            if (source.type === "S" && target.type === "H") {
+                if (switchConnections[source.uid]) {
+                    switchConnections[source.uid].connectedHosts.push({
+                        host: target,
+                        link: link
+                    });
+                    switchConnections[source.uid].hostCount++;
+                }
+            }
+            // Case 2: Host -> Switch connection  
+            else if (source.type === "H" && target.type === "S") {
+                if (switchConnections[target.uid]) {
+                    switchConnections[target.uid].connectedHosts.push({
+                        host: source,
+                        link: link
+                    });
+                    switchConnections[target.uid].hostCount++;
+                }
+            }
+        });
+        
+        return switchConnections;
+    },
+
+    // And add this method to print the connections
+    printSwitchHostConnections() {
+        const connections = this.getSwitchHostConnections();
+        
+        // Print results for each switch
+        Object.values(connections).forEach(connection => {
+            console.log(`Switch ${connection.switch.name} (${connection.switch.uid}) is connected to ${connection.hostCount} hosts:`);
+            connection.connectedHosts.forEach(hostInfo => {
+                console.log(`  - ${hostInfo.host.name} (${hostInfo.host.uid})`);
+            });
+        });
+        
+        return connections;
+    }, 
+
+
+    
     simulation() {
         var simulationType = this.getSimulationType();
         
@@ -370,7 +432,7 @@ const Context = {
             .attr("stroke-width", nodeStrokeWidth(false))
             .attr("fill", d => "#CCC")
             .attr("r", d => nodeRadius(d))
-
+        
         this.nodeImageItems = this.nodeContainerItems.append("image")
             .attr("class", "right-click")
             .attr("device_type", node => node.type)
@@ -574,6 +636,11 @@ const Context = {
             });
 
             this.data = data
+
+            // CALL IT HERE - after data is loaded
+            this.printSwitchHostConnections();
+
+
             this.initialized()
         }
         var failureCallback = (request) => {
@@ -648,7 +715,11 @@ const Context = {
                 .attr("viewBox", [0, 0, this.width(), this.height()])
         this.nodesTable.setHeight(this.height()/2);
         this.linksTable.setHeight(this.height()/2);
-    }
+    },
+
+
+
+
 }
 
 var context;
