@@ -182,67 +182,164 @@ const Context = {
         this._simulation = this.simulation();
     },
 
+    getDirectHostsForSwitch(uid) {
+        const connections = this.getSwitchHostConnections();
+        if (!connections[uid]) return [];
+        return connections[uid].connectedHosts.map(h => ({
+            name: h.host.name,
+            uid: h.host.uid,
+            type: h.host.type
+        }));
+    },
+
+    getHostsForSwitch(uid) {
+        const directHosts = this.getDirectHostsForSwitch(uid);
+        const connections = this.getSwitchHostConnections();
+        const sw = connections[uid];
+
+        // Optionally include child switches’ hosts if needed
+        if (!sw) return directHosts;
+
+        const childHosts = sw.connectedSwitches.flatMap(child =>
+            this.getDirectHostsForSwitch(child.switch.uid)
+        );
+
+        return [...directHosts, ...childHosts];
+    },
+
+
+    // getHostsForSwitch(switchUid) {
+    //     const switchInfo = this.printSwitchHostConnections()
+    //                         .find(x => x.uid === switchUid);
+
+    //     if (!switchInfo) return [];
+
+    //     const hasParentSwitch = switchInfo.node_list.some(n => n.type === "S");
+
+    //     if (hasParentSwitch) {
+    //         // This is a child switch → return direct hosts only
+    //         return this.getDirectHostsForSwitch(switchUid);
+    //     }
+
+    //     // No parent → this is a root switch → return all (recursive)
+    //     return this.getAllConnectedHosts(switchUid);
+    // },
+
+
     
     // Add this method to your Context object (inside the Context object)
+    // Build mapping of switch -> { switch, connectedHosts: [], connectedSwitches: [], hostCount }
     getSwitchHostConnections() {
         const switchConnections = {};
-        
-        // Initialize an empty array for each switch
+
+        // Initialize an empty structure for each switch
         this.switchNodes().forEach(switchNode => {
             switchConnections[switchNode.uid] = {
                 switch: switchNode,
                 connectedHosts: [],
+                connectedSwitches: [],
                 hostCount: 0
             };
         });
-        
-        // Iterate through all links to find switch-host connections
+
+        // Walk all links and populate either connectedHosts or connectedSwitches
         this.links().forEach(link => {
-            const source = link.source;
-            const target = link.target;
-            
-            // Case 1: Switch -> Host connection
-            if (source.type === "S" && target.type === "H") {
-                if (switchConnections[source.uid]) {
-                    switchConnections[source.uid].connectedHosts.push({
-                        host: target,
-                        link: link
-                    });
-                    switchConnections[source.uid].hostCount++;
+            const src = link.source;
+            const tgt = link.target;
+
+            // If link is switch -> host or host -> switch, add host to the switch entry
+            if (src.type === "S" && tgt.type === "H") {
+                if (switchConnections[src.uid]) {
+                    switchConnections[src.uid].connectedHosts.push({ host: tgt, link });
+                    switchConnections[src.uid].hostCount++;
+                }
+            } else if (src.type === "H" && tgt.type === "S") {
+                if (switchConnections[tgt.uid]) {
+                    switchConnections[tgt.uid].connectedHosts.push({ host: src, link });
+                    switchConnections[tgt.uid].hostCount++;
                 }
             }
-            // Case 2: Host -> Switch connection  
-            else if (source.type === "H" && target.type === "S") {
-                if (switchConnections[target.uid]) {
-                    switchConnections[target.uid].connectedHosts.push({
-                        host: source,
-                        link: link
-                    });
-                    switchConnections[target.uid].hostCount++;
+
+            // If link is switch -> switch (either direction), add each other as connected switches
+            if (src.type === "S" && tgt.type === "S") {
+                if (switchConnections[src.uid]) {
+                    // avoid duplicates: only push if not already present
+                    if (!switchConnections[src.uid].connectedSwitches.some(s => s.switch.uid === tgt.uid)) {
+                        switchConnections[src.uid].connectedSwitches.push({ switch: tgt, link });
+                    }
+                }
+                if (switchConnections[tgt.uid]) {
+                    if (!switchConnections[tgt.uid].connectedSwitches.some(s => s.switch.uid === src.uid)) {
+                        switchConnections[tgt.uid].connectedSwitches.push({ switch: src, link });
+                    }
                 }
             }
         });
-        
+
+        // Debug: inspect mapping quickly in console
+        console.debug("getSwitchHostConnections()", Object.keys(switchConnections).length, switchConnections);
+
         return switchConnections;
     },
 
-    // And add this method to print the connections
+
+    // This method print the connections
     printSwitchHostConnections() {
         const connections = this.getSwitchHostConnections();
-        
-        // Print results for each switch
+        const switch_nodes = [];
+
         Object.values(connections).forEach(connection => {
-            console.log(`Switch ${connection.switch.name} (${connection.switch.uid}) is connected to ${connection.hostCount} hosts:`);
-            connection.connectedHosts.forEach(hostInfo => {
-                console.log(`  - ${hostInfo.host.name} (${hostInfo.host.uid})`);
+            const switchInfo = {
+                switch: connection.switch.name,
+                uid: connection.switch.uid,
+                node_list: connection.connectedHosts.map(hostInfo => ({
+                    name: hostInfo.host.name,
+                    uid: hostInfo.host.uid,
+                    type: hostInfo.host.type
+                })).concat(
+                    (connection.connectedSwitches || []).map(sw => ({
+                        name: sw.switch.name,
+                        uid: sw.switch.uid,
+                        type: "S"
+                    }))
+                )
+            };
+            switch_nodes.push(switchInfo);
+        });
+
+        return switch_nodes;
+    },
+
+    getAllConnectedHosts(startSwitchUid) {
+        const visitedSwitches = new Set();
+        const resultHosts = new Map();
+        const switchMap = {};
+        const nodeTypeMap = {};
+        const connections = this.printSwitchHostConnections();
+        connections.forEach(item => {
+            switchMap[item.uid] = item.node_list;
+            item.node_list.forEach(node => {
+                nodeTypeMap[node.uid] = node;
             });
         });
-        
-        return connections;
-    }, 
+
+        const traverse = (switchUid) => {
+            if (visitedSwitches.has(switchUid)) return;
+            visitedSwitches.add(switchUid);
+            const connected = switchMap[switchUid] || [];
+            connected.forEach(node => {
+                if (node.type === "S") {
+                    traverse(node.uid);
+                } else {
+                    resultHosts.set(node.uid, node);
+                }
+            });
+        };
+        traverse(startSwitchUid);
+        return Array.from(resultHosts.values());
+    },
 
 
-    
     simulation() {
         var simulationType = this.getSimulationType();
         
@@ -441,6 +538,27 @@ const Context = {
             .attr("y", d => -nodeRadius(d) * 0.7)
             .attr("width", d => nodeRadius(d) * 0.7 * 2)
             .attr("height", d => nodeRadius(d) * 0.7 * 2)
+        
+            // Get switch → host mapping once
+            // const switchHostMap = this.printSwitchHostConnections();  
+            // example: [{ switch: 'S1', uid:'abc', node_list:[{..},{..}] }, ... ]
+
+            // const switchHostDict = {};
+            // switchHostMap.forEach(item => {
+            //     switchHostDict[item.uid] = item.node_list;
+            // });
+
+            // Apply node_list to each <image> dynamically
+            this.nodeImageItems
+                .attr("node_list", d => {
+                    if (d.type === "S") {
+                        // const allHosts = this.getAllConnectedHosts(d.uid);
+                        // return JSON.stringify(allHosts);
+                        const hosts = this.getHostsForSwitch(d.uid);
+                        return JSON.stringify(hosts);
+                    }
+                    return "[]";
+                });
 
         this.nodeLabelItems = this.nodeContainerItems.append("text")
             .attr("text-anchor", "middle")
@@ -452,8 +570,6 @@ const Context = {
             .call(wrapText, 100)
             .attr("style", "display: none;")
         
-
-
 
         this.zoomItem = d3.zoom().scaleExtent([0.1, 4])
         this.dragItem = d3.drag()
@@ -636,11 +752,6 @@ const Context = {
             });
 
             this.data = data
-
-            // CALL IT HERE - after data is loaded
-            this.printSwitchHostConnections();
-
-
             this.initialized()
         }
         var failureCallback = (request) => {
@@ -782,6 +893,7 @@ $(document).ready(function () {
         var url = window.location.href
         url = url.replace('#','');
         var device_type = $(this).attr("device_type");
+        var node_list = $(this).attr("node_list");
         var g = $(this).closest('g');
         var device_name = g.find('text tspan').first().text();
 
@@ -804,7 +916,7 @@ $(document).ready(function () {
         if (device_type == "H"){
             items.push(
                 null,
-                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/applications-stack.png',   action: function(e) { e.preventDefault(); window.open(edit, '_blank').focus(); }  },
+                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/applications-stack.png',   action: function(e) { e.preventDefault(); console.log(node_list); /* window.open(edit, '_blank').focus(); */ }  },
                 null,
                 {label:'Power Status',          icon: url + '/base/icons/application-monitor.png',      action: function(e) { e.preventDefault(); control_action('power', 'status', device_name); } },
                 {label:'Power Off',             icon: url + '/base/icons/network-status-busy.png',      action: function(e) { e.preventDefault(); control_action('power', 'off', device_name); } },
@@ -824,7 +936,7 @@ $(document).ready(function () {
         if (device_type == "S"){
             items.push(
                 null,
-                {label:'Drain All Nodes',       icon: url + '/base/icons/applications-stack.png',       action: function(e) { e.preventDefault(); window.open(edit, '_blank').focus(); }  },
+                {label:'Drain All Nodes',       icon: url + '/base/icons/applications-stack.png',       action: function(e) { e.preventDefault(); console.log(node_list);  /* window.open(edit, '_blank').focus();*/ }  },
             );
         }
         var menu = createMenu(e, title, items).show().css({zIndex:1000001, left:e.pageX + 5, top:e.pageY}).bind('contextmenu', function() { return false; });
