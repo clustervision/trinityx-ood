@@ -2,6 +2,12 @@ const RED = "#FF0000";
 const ORANGE = "#FFA500";
 const GREY = "#222"
 
+const slurm_idle = "#198754";
+const slurm_down = "#6c757d";
+const slurm_drain_other = "#ffc107"
+const slurm_drain = "#dc3545"
+
+
 
 function nodeRadius(node) {
     var baseRadius = Math.sqrt(node.n_ports);
@@ -102,6 +108,86 @@ function wrapText(text, width) {
     });
 }
 
+
+// function slurm_info(){
+//     var url = window.location.href
+//     url = url.replace('#','');
+//     url = `${url}/slurm_info`;
+//     console.log(url);
+//     var node_list = null;
+//     $.ajax({
+//         url: url,
+//         type: 'GET',
+//         async: false,
+//         dataType: 'json',
+//         contentType: 'application/json; charset=UTF-8',
+//         success: function(response_data) {
+//             if (response_data.status == "success") {
+//                 node_list = response_data.data;
+
+//                 // Ensure final value is list
+//                 if (typeof node_list === "string") {
+//                     try {
+//                         node_list = JSON.parse(node_list);
+//                     } catch (e) {
+//                         console.error("Invalid JSON:", node_list);
+//                         node_list = [];
+//                     }
+//                 }
+//             }
+//         }
+//     });
+
+//     return node_list;
+// }
+// let ress = slurm_info();
+// console.log("ress:", ress);
+
+function slurm_info() {
+    var url = window.location.href.replace('#', '') + "/slurm_info";
+    console.log("Calling:", url);
+
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'json',
+            success: function(response_data) {
+                console.log("Response:", response_data);
+                if (response_data.status) {
+                    let node_list = response_data.response;
+                    // node_list = JSON.parse(node_list);
+                    if (typeof node_list === "string") {
+                        try {
+                            node_list = JSON.parse(node_list);
+                        } catch (e) {
+                            console.error("Invalid JSON:", node_list);
+                            node_list = [];
+                        }
+                    }
+
+                    resolve(node_list);
+                } else {
+                    resolve([]);
+                }
+            },
+            error: function(err) {
+                reject(err);
+            }
+        });
+    });
+}
+
+slurm_info().then(ress => {
+    console.log("ress:", ress);
+});
+
+// async function test() {
+//     let ress = await slurm_info();
+//     console.log("ress:", ress);
+// }
+// test();
+
 const Context = {
     
     svg: null,
@@ -185,8 +271,9 @@ const Context = {
     getDirectHostsForSwitch(uid) {
         const connections = this.getSwitchHostConnections();
         if (!connections[uid]) return [];
+        
         return connections[uid].connectedHosts.map(h => ({
-            name: h.host.name,
+            name: h.host.name.split(" ")[0],
             uid: h.host.uid,
             type: h.host.type
         }));
@@ -206,26 +293,6 @@ const Context = {
 
         return [...directHosts, ...childHosts];
     },
-
-
-    // getHostsForSwitch(switchUid) {
-    //     const switchInfo = this.printSwitchHostConnections()
-    //                         .find(x => x.uid === switchUid);
-
-    //     if (!switchInfo) return [];
-
-    //     const hasParentSwitch = switchInfo.node_list.some(n => n.type === "S");
-
-    //     if (hasParentSwitch) {
-    //         // This is a child switch → return direct hosts only
-    //         return this.getDirectHostsForSwitch(switchUid);
-    //     }
-
-    //     // No parent → this is a root switch → return all (recursive)
-    //     return this.getAllConnectedHosts(switchUid);
-    // },
-
-
     
     // Add this method to your Context object (inside the Context object)
     // Build mapping of switch -> { switch, connectedHosts: [], connectedSwitches: [], hostCount }
@@ -529,6 +596,51 @@ const Context = {
             .attr("stroke-width", nodeStrokeWidth(false))
             .attr("fill", d => "#CCC")
             .attr("r", d => nodeRadius(d))
+
+            slurm_info().then(ress => {
+                const slurmStateMap = {};
+                ress.forEach(item => slurmStateMap[item.name] = item.state);
+
+                this.nodeItems.attr("fill", d => {
+                    if (d.type !== "H") return "#CCC"; // only hosts
+
+                    const slurmInfo = slurmStateMap[d.name.split(" ")[0]]; // get node info
+                    if (!slurmInfo) return "#CCC";
+
+                    let state = slurmInfo.toLowerCase();
+
+                    // Special handling for drain reason
+                    if (state === "drain") {
+                        if (slurmInfo.reason !== "IB Analyzer drained node") {
+                            state = "drain_other";
+                        }
+                    }
+
+                    switch (state) {
+                        case "idle":       return slurm_idle;
+                        case "down":       return slurm_down;
+                        case "drain":      return slurm_drain;
+                        case "drain_other":return slurm_drain_other;
+                        default:           return "#CCC";
+                    }
+                });
+
+                // this.nodeItems.attr("fill", d => {
+                //     if (d.type !== "H") return "#CCC"; // only hosts
+
+                //     const state = slurmStateMap[d.name.split(" ")[0]];
+                //     if (!state) return "#CCC";
+
+                //     switch (state.toLowerCase()) {
+                //         case "idle":  return slurm_idle;
+                //         case "down":  return slurm_down;
+                //         case "drain": return slurm_drain;
+                //         case "drain_other": return slurm_drain_other;
+                //         default: return "#CCC";
+                //     }
+                // });
+            });
+
         
         this.nodeImageItems = this.nodeContainerItems.append("image")
             .attr("class", "right-click")
@@ -538,22 +650,11 @@ const Context = {
             .attr("y", d => -nodeRadius(d) * 0.7)
             .attr("width", d => nodeRadius(d) * 0.7 * 2)
             .attr("height", d => nodeRadius(d) * 0.7 * 2)
-        
-            // Get switch → host mapping once
-            // const switchHostMap = this.printSwitchHostConnections();  
-            // example: [{ switch: 'S1', uid:'abc', node_list:[{..},{..}] }, ... ]
-
-            // const switchHostDict = {};
-            // switchHostMap.forEach(item => {
-            //     switchHostDict[item.uid] = item.node_list;
-            // });
 
             // Apply node_list to each <image> dynamically
             this.nodeImageItems
                 .attr("node_list", d => {
                     if (d.type === "S") {
-                        // const allHosts = this.getAllConnectedHosts(d.uid);
-                        // return JSON.stringify(allHosts);
                         const hosts = this.getHostsForSwitch(d.uid);
                         return JSON.stringify(hosts);
                     }
@@ -863,6 +964,70 @@ function control_action(system, action, device){
     });
 }
 
+// function slurm_info(){
+//     var url = window.location.href
+//     url = url.replace('#','');
+//     url = `${url}/slurm_action`;
+//     console.log(url);
+//     $.ajax({
+//         url: url,
+//         type: 'GET',
+//         dataType: 'json',
+//         contentType: 'application/json; charset=UTF-8',
+//         success: function(response_data) {
+//             console.log("response_data:", response_data);
+//             // result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
+//             // console.log(result);
+//             // $('#ajax').html();
+//             // $('#ajax').html(result);
+//             // setTimeout(function(){ $('#ajax').html(''); }, 5000);  
+            
+//         }
+//     });
+// }
+
+
+function slurm_action(nodes){
+    var url = window.location.href
+    url = url.replace('#','');
+    url = `${url}/slurm_action`;
+    console.log(url);
+    let payload = [];
+
+    if (nodes.trim().startsWith("[") && nodes.trim().endsWith("]")) {
+        try {
+            let nodeList = JSON.parse(nodes);
+            payload = nodeList.map(node => node.name);
+        } catch {
+            payload = [];
+        }
+    } else {
+        payload = [nodes];
+    }
+
+    // console.log("Normalized nodes:", payload);
+    // console.log("Type:", typeof payload);
+    // console.log("Is array:", Array.isArray(payload));
+
+    
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: JSON.stringify(payload),
+        dataType: 'json',
+        contentType: 'application/json; charset=UTF-8',
+        success: function(response_data) {
+            console.log("response_data:", response_data);
+            // result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
+            // console.log(result);
+            // $('#ajax').html();
+            // $('#ajax').html(result);
+            // setTimeout(function(){ $('#ajax').html(''); }, 5000);  
+            
+        }
+    });
+}
+
 
 function createMenu(e, title, items) {
     var menu = $('<ul class="contextMenuPlugin"><div class="gutterLine"></div></ul>').appendTo(document.body);
@@ -916,7 +1081,7 @@ $(document).ready(function () {
         if (device_type == "H"){
             items.push(
                 null,
-                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/applications-stack.png',   action: function(e) { e.preventDefault(); console.log(node_list); /* window.open(edit, '_blank').focus(); */ }  },
+                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/applications-stack.png',   action: function(e) { e.preventDefault(); slurm_action(device_name); }  },
                 null,
                 {label:'Power Status',          icon: url + '/base/icons/application-monitor.png',      action: function(e) { e.preventDefault(); control_action('power', 'status', device_name); } },
                 {label:'Power Off',             icon: url + '/base/icons/network-status-busy.png',      action: function(e) { e.preventDefault(); control_action('power', 'off', device_name); } },
@@ -936,7 +1101,7 @@ $(document).ready(function () {
         if (device_type == "S"){
             items.push(
                 null,
-                {label:'Drain All Nodes',       icon: url + '/base/icons/applications-stack.png',       action: function(e) { e.preventDefault(); console.log(node_list);  /* window.open(edit, '_blank').focus();*/ }  },
+                {label:'Drain All Nodes',       icon: url + '/base/icons/applications-stack.png',       action: function(e) { e.preventDefault(); slurm_action(node_list); }  },
             );
         }
         var menu = createMenu(e, title, items).show().css({zIndex:1000001, left:e.pageX + 5, top:e.pageY}).bind('contextmenu', function() { return false; });

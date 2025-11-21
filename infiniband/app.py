@@ -2,12 +2,14 @@ import re
 import os
 import subprocess
 import requests
+import hostlist
 from json import loads, dumps, JSONDecodeError
 from textwrap import wrap
 from flask import Flask, render_template, request, jsonify
 
 from base.config import get_configs
 from rest import Rest
+from helper import Helper
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 CONFIGS = get_configs()
 
@@ -252,6 +254,38 @@ def perform(system=None, action=None, nodename=None):
             response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
     return response
 
+
+# AJAX route to get Slurm Info
+@app.route("/slurm_info", methods=["GET"])
+def slurm_info():
+    """
+    Route to get the Slurm Node Information.
+    """
+    slurm_node_list = []
+    slurm_nodes = Helper().slurm_info()
+    # if slurm_nodes["status"] is True:
+    #     slurm_node_list = slurm_nodes["response"]
+    # print(slurm_node_list)
+    return jsonify(slurm_nodes)
+
+
+# AJAX route to handle Slurm actions
+@app.route("/slurm_action", methods=["POST"])
+def slurm_action():
+    """
+    Route to Drain or Resume the Slurm Nodes.
+    """
+    data = request.json
+    try:
+        node_list = hostlist.collect_hostlist(data, silently_discard_bad = False)
+    except hostlist.BadHostlist as exp:
+        node_list = exp
+    message = {"status": "success", "data": node_list}
+    node_list = "node[001-005],node007,node[009-010]"
+    slurm_nodes = Helper().slurm_info()
+    print(slurm_nodes)
+
+    return jsonify(message)
 
 if __name__ == "__main__":
     from pprint import pprint

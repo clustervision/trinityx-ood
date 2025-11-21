@@ -47,1110 +47,1110 @@ class Helper():
         """
         # self.logger = Log.get_logger()
         self.response = {"status": False, "response": None}
-        self.test_response = """
-            {
-            "nodes": [
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337277
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "jonn-node-ringo",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "jonn-node-ringo",
-                "hostname": "jonn-node-ringo",
-                "state": [
-                    "DOWN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "Not responding",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337299
-                },
-                "reason_set_by_user": "slurm",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 2,
-                "effective_cpus": 2,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771832
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node001",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node001",
-                "hostname": "node001",
-                "state": [
-                    "DOWN",
-                    "DRAIN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 1,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771892
-                },
-                "reason_set_by_user": "root",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 2,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 2,
-                "threads": 1,
-                "temporary_disk": 1,
-                "weight": 1,
-                "tres": "cpu=2,mem=1M,billing=2",
-                "version": ""
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771832
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node002",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node002",
-                "hostname": "node002",
-                "state": [
-                    "DOWN",
-                    "DRAIN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771892
-                },
-                "reason_set_by_user": "root",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                },
-                {
-                "architecture": "x86_64",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1760631330
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 25,
-                "free_mem": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 10719
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1763378634
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node003",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node003",
-                "hostname": "node003",
-                "state": [
-                    "IDLE"
-                ],
-                "operating_system": "Linux 5.14.0-570.32.1.el9_6.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Aug 8 18:29:23 UTC 2025",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reason_set_by_user": "",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1760631542
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": "24.11.5"
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771832
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node004",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node004",
-                "hostname": "node004",
-                "state": [
-                    "DOWN",
-                    "DRAIN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "ubuntu-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771892
-                },
-                "reason_set_by_user": "root",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                },
-                {
-                "architecture": "x86_64",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1760631508
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 21,
-                "free_mem": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 9135
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1763378634
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node005",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node005",
-                "hostname": "node005",
-                "state": [
-                    "IDLE",
-                    "DRAIN"
-                ],
-                "operating_system": "Linux 5.14.0-570.32.1.el9_6.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Aug 8 18:29:23 UTC 2025",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reason_set_by_user": "",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1760631785
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": "24.11.5"
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771832
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node006",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node006",
-                "hostname": "node006",
-                "state": [
-                    "DOWN",
-                    "DRAIN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "ubuntu-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762771892
-                },
-                "reason_set_by_user": "root",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337277
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node009",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node009",
-                "hostname": "node009",
-                "state": [
-                    "DOWN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "Not responding",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337299
-                },
-                "reason_set_by_user": "slurm",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337277
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "node010-wont-show",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "node010-wont-show",
-                "hostname": "node010-wont-show",
-                "state": [
-                    "DOWN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "Not responding",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337299
-                },
-                "reason_set_by_user": "slurm",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                },
-                {
-                "architecture": "",
-                "burstbuffer_network_address": "",
-                "boards": 1,
-                "boot_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cluster_name": "",
-                "cores": 1,
-                "specialized_cores": 0,
-                "cpu_binding": 0,
-                "cpu_load": 0,
-                "free_mem": {
-                    "set": false,
-                    "infinite": false,
-                    "number": 0
-                },
-                "cpus": 1,
-                "effective_cpus": 1,
-                "specialized_cpus": "",
-                "energy": {
-                    "average_watts": 0,
-                    "base_consumed_energy": 0,
-                    "consumed_energy": 0,
-                    "current_watts": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                    },
-                    "previous_consumed_energy": 0,
-                    "last_collected": 0
-                },
-                "external_sensors": {
-                },
-                "extra": "",
-                "power": {
-                },
-                "features": [
-                ],
-                "active_features": [
-                ],
-                "gpu_spec": "",
-                "gres": "",
-                "gres_drained": "N\/A",
-                "gres_used": "",
-                "instance_id": "",
-                "instance_type": "",
-                "last_busy": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337277
-                },
-                "mcs_label": "",
-                "specialized_memory": 0,
-                "name": "renamed-node007",
-                "next_state_after_reboot": [
-                    "INVALID"
-                ],
-                "address": "renamed-node007",
-                "hostname": "renamed-node007",
-                "state": [
-                    "DOWN",
-                    "NOT_RESPONDING"
-                ],
-                "operating_system": "",
-                "owner": "",
-                "partitions": [
-                    "defq",
-                    "compute-group"
-                ],
-                "port": 6818,
-                "real_memory": 100,
-                "res_cores_per_gpu": 0,
-                "comment": "",
-                "reason": "Not responding",
-                "reason_changed_at": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 1762337299
-                },
-                "reason_set_by_user": "slurm",
-                "resume_after": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "reservation": "",
-                "alloc_memory": 0,
-                "alloc_cpus": 0,
-                "alloc_idle_cpus": 1,
-                "tres_used": "",
-                "tres_weighted": 0.0,
-                "slurmd_start_time": {
-                    "set": true,
-                    "infinite": false,
-                    "number": 0
-                },
-                "sockets": 1,
-                "threads": 1,
-                "temporary_disk": 0,
-                "weight": 1,
-                "tres": "cpu=1,mem=100M,billing=1",
-                "version": ""
-                }
-            ],
-            "last_update": {
-                "set": true,
-                "infinite": false,
-                "number": 1763385300
-            },
-            "meta": {
-                "plugin": {
-                "type": "",
-                "name": "",
-                "data_parser": "data_parser\/v0.0.42",
-                "accounting_storage": "accounting_storage\/slurmdbd"
-                },
-                "client": {
-                "source": "\/dev\/pts\/1",
-                "user": "root",
-                "group": "root"
-                },
-                "command": [
-                "show"
-                ],
-                "slurm": {
-                "version": {
-                    "major": "24",
-                    "micro": "5",
-                    "minor": "11"
-                },
-                "release": "24.11.5",
-                "cluster": "cluster"
-                }
-            },
-            "errors": [
-            ],
-            "warnings": [
-            ]
-            }
-            """
-        self.test_response = json.loads(self.test_response)
+        # self.test_response = """
+        #     {
+        #     "nodes": [
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337277
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "jonn-node-ringo",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "jonn-node-ringo",
+        #         "hostname": "jonn-node-ringo",
+        #         "state": [
+        #             "DOWN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "Not responding",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337299
+        #         },
+        #         "reason_set_by_user": "slurm",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 2,
+        #         "effective_cpus": 2,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771832
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node001",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node001",
+        #         "hostname": "node001",
+        #         "state": [
+        #             "DOWN",
+        #             "DRAIN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 1,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771892
+        #         },
+        #         "reason_set_by_user": "root",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 2,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 2,
+        #         "threads": 1,
+        #         "temporary_disk": 1,
+        #         "weight": 1,
+        #         "tres": "cpu=2,mem=1M,billing=2",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771832
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node002",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node002",
+        #         "hostname": "node002",
+        #         "state": [
+        #             "DOWN",
+        #             "DRAIN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771892
+        #         },
+        #         "reason_set_by_user": "root",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "x86_64",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1760631330
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 25,
+        #         "free_mem": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 10719
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1763378634
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node003",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node003",
+        #         "hostname": "node003",
+        #         "state": [
+        #             "IDLE"
+        #         ],
+        #         "operating_system": "Linux 5.14.0-570.32.1.el9_6.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Aug 8 18:29:23 UTC 2025",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reason_set_by_user": "",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1760631542
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": "24.11.5"
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771832
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node004",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node004",
+        #         "hostname": "node004",
+        #         "state": [
+        #             "DOWN",
+        #             "DRAIN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "ubuntu-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771892
+        #         },
+        #         "reason_set_by_user": "root",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "x86_64",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1760631508
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 21,
+        #         "free_mem": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 9135
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1763378634
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node005",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node005",
+        #         "hostname": "node005",
+        #         "state": [
+        #             "IDLE",
+        #             "DRAIN"
+        #         ],
+        #         "operating_system": "Linux 5.14.0-570.32.1.el9_6.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Aug 8 18:29:23 UTC 2025",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reason_set_by_user": "",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1760631785
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": "24.11.5"
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771832
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node006",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node006",
+        #         "hostname": "node006",
+        #         "state": [
+        #             "DOWN",
+        #             "DRAIN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "ubuntu-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "TRIX-DRAINER: Multiple reasons for drained node, check AlertX for more information",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762771892
+        #         },
+        #         "reason_set_by_user": "root",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337277
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node009",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node009",
+        #         "hostname": "node009",
+        #         "state": [
+        #             "DOWN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "Not responding",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337299
+        #         },
+        #         "reason_set_by_user": "slurm",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337277
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "node010-wont-show",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "node010-wont-show",
+        #         "hostname": "node010-wont-show",
+        #         "state": [
+        #             "DOWN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "Not responding",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337299
+        #         },
+        #         "reason_set_by_user": "slurm",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         },
+        #         {
+        #         "architecture": "",
+        #         "burstbuffer_network_address": "",
+        #         "boards": 1,
+        #         "boot_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cluster_name": "",
+        #         "cores": 1,
+        #         "specialized_cores": 0,
+        #         "cpu_binding": 0,
+        #         "cpu_load": 0,
+        #         "free_mem": {
+        #             "set": false,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "cpus": 1,
+        #         "effective_cpus": 1,
+        #         "specialized_cpus": "",
+        #         "energy": {
+        #             "average_watts": 0,
+        #             "base_consumed_energy": 0,
+        #             "consumed_energy": 0,
+        #             "current_watts": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #             },
+        #             "previous_consumed_energy": 0,
+        #             "last_collected": 0
+        #         },
+        #         "external_sensors": {
+        #         },
+        #         "extra": "",
+        #         "power": {
+        #         },
+        #         "features": [
+        #         ],
+        #         "active_features": [
+        #         ],
+        #         "gpu_spec": "",
+        #         "gres": "",
+        #         "gres_drained": "N\/A",
+        #         "gres_used": "",
+        #         "instance_id": "",
+        #         "instance_type": "",
+        #         "last_busy": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337277
+        #         },
+        #         "mcs_label": "",
+        #         "specialized_memory": 0,
+        #         "name": "renamed-node007",
+        #         "next_state_after_reboot": [
+        #             "INVALID"
+        #         ],
+        #         "address": "renamed-node007",
+        #         "hostname": "renamed-node007",
+        #         "state": [
+        #             "DOWN",
+        #             "NOT_RESPONDING"
+        #         ],
+        #         "operating_system": "",
+        #         "owner": "",
+        #         "partitions": [
+        #             "defq",
+        #             "compute-group"
+        #         ],
+        #         "port": 6818,
+        #         "real_memory": 100,
+        #         "res_cores_per_gpu": 0,
+        #         "comment": "",
+        #         "reason": "Not responding",
+        #         "reason_changed_at": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 1762337299
+        #         },
+        #         "reason_set_by_user": "slurm",
+        #         "resume_after": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "reservation": "",
+        #         "alloc_memory": 0,
+        #         "alloc_cpus": 0,
+        #         "alloc_idle_cpus": 1,
+        #         "tres_used": "",
+        #         "tres_weighted": 0.0,
+        #         "slurmd_start_time": {
+        #             "set": true,
+        #             "infinite": false,
+        #             "number": 0
+        #         },
+        #         "sockets": 1,
+        #         "threads": 1,
+        #         "temporary_disk": 0,
+        #         "weight": 1,
+        #         "tres": "cpu=1,mem=100M,billing=1",
+        #         "version": ""
+        #         }
+        #     ],
+        #     "last_update": {
+        #         "set": true,
+        #         "infinite": false,
+        #         "number": 1763385300
+        #     },
+        #     "meta": {
+        #         "plugin": {
+        #         "type": "",
+        #         "name": "",
+        #         "data_parser": "data_parser\/v0.0.42",
+        #         "accounting_storage": "accounting_storage\/slurmdbd"
+        #         },
+        #         "client": {
+        #         "source": "\/dev\/pts\/1",
+        #         "user": "root",
+        #         "group": "root"
+        #         },
+        #         "command": [
+        #         "show"
+        #         ],
+        #         "slurm": {
+        #         "version": {
+        #             "major": "24",
+        #             "micro": "5",
+        #             "minor": "11"
+        #         },
+        #         "release": "24.11.5",
+        #         "cluster": "cluster"
+        #         }
+        #     },
+        #     "errors": [
+        #     ],
+        #     "warnings": [
+        #     ]
+        #     }
+        #     """
+        # self.test_response = json.loads(self.test_response)
 
 
     def shell_execute(self, command: str) -> dict:
@@ -1167,9 +1167,9 @@ class Helper():
                 command = f"ssh {remote_host} '{command}'"
                 #TODO only for testing
                 execute = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, check=False)
-                print(execute.returncode)
-                print(execute.stdout)
-                print(execute.stderr)
+                # print(execute.returncode)
+                # print(execute.stdout)
+                # print(execute.stderr)
                 if execute.returncode == 0:
                     if len(execute.stdout) > 0:
                         try:
@@ -1193,14 +1193,14 @@ class Helper():
         This method will provide the Slurm Nodes Information.
         """
         slurm_nodes = self.shell_execute(SLURM_INFO)
-        print("=============")
-        print(slurm_nodes)
-        print("=============")
+        # print("=============")
+        # print(slurm_nodes)
+        # print("=============")
         if slurm_nodes["status"] is True:
             nodes = slurm_nodes["response"]["nodes"]
-            # if len(nodes) > 0:# TODO: for testing
-            if self.test_response: # TODO: for testing
-                nodes = self.test_response["nodes"] # TODO: for testing
+            if len(nodes) > 0:# TODO: for testing
+            # if self.test_response: # TODO: for testing
+                # nodes = self.test_response["nodes"] # TODO: for testing
                 response = []
                 for node in nodes:
                     states = [s.lower() for s in node["state"]]
@@ -1245,16 +1245,16 @@ class Helper():
         return self.response
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    # slurm_nodes = Helper().slurm_info()
-    # print("=============")
-    # print(slurm_nodes)
-    # print("=============")
-    # node_list = "node[001-005],node007,node[009-010]"
-    node_list = "node[001-005]"
-    slurm_nodes = Helper().slurm_drain(node_list)
-    slurm_nodes = Helper().slurm_resume(node_list)
-    # print("=============")
-    # print(slurm_nodes)
-    # print("=============")
+#     # slurm_nodes = Helper().slurm_info()
+#     # print("=============")
+#     # print(slurm_nodes)
+#     # print("=============")
+#     # node_list = "node[001-005],node007,node[009-010]"
+#     node_list = "node[001-005]"
+#     slurm_nodes = Helper().slurm_drain(node_list)
+#     slurm_nodes = Helper().slurm_resume(node_list)
+#     # print("=============")
+#     # print(slurm_nodes)
+#     # print("=============")
