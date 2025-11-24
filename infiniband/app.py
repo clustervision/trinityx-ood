@@ -2,12 +2,14 @@ import re
 import os
 import subprocess
 import requests
+import hostlist
 from json import loads, dumps, JSONDecodeError
 from textwrap import wrap
 from flask import Flask, render_template, request, jsonify
 
 from base.config import get_configs
 from rest import Rest
+from helper import Helper
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 CONFIGS = get_configs()
 
@@ -251,6 +253,97 @@ def perform(system=None, action=None, nodename=None):
             response['status'] = "warning"
             response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
     return response
+
+
+# AJAX route to get Slurm Info
+@app.route("/slurm_info", methods=["GET"])
+def slurm_info():
+    """
+    Route to get the Slurm Node Information.
+    """
+    slurm_nodes = Helper().slurm_info()
+    return jsonify(slurm_nodes)
+
+
+# AJAX route to handle Slurm actions
+@app.route("/slurm_action/<string:action>", methods=["POST"])
+def slurm_action(action: str):
+    """
+    Route to Drain or Resume the Slurm Nodes.
+    """
+    message = {"status": False, "data": "No action performed."}
+    data = request.json or []
+    slurm_nodes = Helper().slurm_info()
+    if len(data) == 1:
+        slurm_node = {}
+        data_node = data[0]
+        if slurm_nodes["status"] is True:
+            for node in slurm_nodes["response"]:
+                if "name" in node and data_node == node["name"]:
+                    slurm_node = node
+                    break
+        else:
+            message = {"status": False, "data": slurm_nodes["response"]}
+        if slurm_node:
+            if slurm_node["state"] == "drain":
+                if action == "drain":
+                    if slurm_node["reason"] == "IB Analyzer drained node":
+                        message = {"status": False, "data": f"Node {data_node} is already in DRAIN state for reason: IB Analyzer drained node."}
+                    else:
+                        message = {"status": False, "data": f"Node {data_node} is already in DRAIN state for reason: {slurm_node['reason']}."}
+                elif action == "resume":
+                    if slurm_node["reason"] == "IB Analyzer drained node":
+                        slurm_resume = Helper().slurm_resume(node_list=data_node)
+                        if slurm_resume["status"] is True:
+                            message = {"status": True, "data": f"Node {data_node} has been RESUMED successfully."}
+                        else:
+                            message = {"status": False, "data": f"Failed to RESUME Node {data_node}. Reason: {slurm_resume['response']}"}
+                    else:
+                        message = {"status": False, "data": f"Node {data_node} is already in DRAIN state for reason: {slurm_node['reason']}. We cannot RESUME it."}
+            elif slurm_node["state"] == "down":
+                message = {"status": False, "data": f"Node {data_node} is in DOWN state. Cannot perform any action."}
+            elif slurm_node["state"] == "idle":
+                if action == "drain":
+                    slurm_drain = Helper().slurm_drain(node_list=data_node)
+                    if slurm_drain["status"] is True:
+                        message = {"status": True, "data": f"Node {data_node} has been DRAINED successfully."}
+                    else:
+                        message = {"status": False, "data": f"Failed to DRAIN Node {data_node}. Reason: {slurm_drain['response']}"}
+                elif action == "resume":
+                    message = {"status": False, "data": f"Node {data_node} is already in IDLE state. Cannot RESUME it."}
+        else:
+            message = {"status": False, "data": f"Node {data_node} is not found in Slurm Node List."}
+    else:
+        if slurm_nodes["status"] is True:
+            node_info = {n["name"]: n for n in slurm_nodes["response"] if "name" in n}
+            node_list = []
+            for node in data:
+                info = node_info.get(node, {})
+                state = info.get("state")
+                reason = info.get("reason")
+                if state == "drain" and reason != "IB Analyzer drained node":
+                    continue
+                node_list.append(node)
+            try:
+                node_list = hostlist.collect_hostlist(data, silently_discard_bad = False)
+            except hostlist.BadHostlist as bad_hostlist_exception:
+                message = {"status": False, "data": bad_hostlist_exception}
+                return message
+            if action == "drain":
+                slurm_drain = Helper().slurm_drain(node_list=node_list)
+                if slurm_drain["status"] is True:
+                    message = {"status": True, "data": f"Node {node_list} has been DRAINED successfully."}
+                else:
+                    message = {"status": False, "data": f"Failed to DRAIN Node {node_list}. Reason: {slurm_drain['response']}"}
+            elif action == "resume":
+                slurm_resume = Helper().slurm_resume(node_list=node_list)
+                if slurm_resume["status"] is True:
+                    message = {"status": True, "data": f"Node {node_list} has been RESUMED successfully."}
+                else:
+                    message = {"status": False, "data": f"Failed to RESUME Node {node_list}. Reason: {slurm_resume['response']}"}
+        else:
+            message = {"status": False, "data": slurm_nodes["response"]}
+    return jsonify(message)
 
 
 if __name__ == "__main__":
