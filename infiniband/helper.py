@@ -59,8 +59,8 @@ class Helper():
             slurm_version = version.parse(slurm_version)
             if slurm_version >= version.parse("23.11.0"):
                 ############################################################################## TODO only for testing
-                # remote_host = "root@192.168.164.156"
-                # command = f"ssh {remote_host} '{command}'"
+                remote_host = "root@192.168.164.156"
+                command = f"ssh {remote_host} '{command}'"
                 ############################################################################## TODO only for testing
                 execute = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True, check=False)
                 if execute.returncode == 0:

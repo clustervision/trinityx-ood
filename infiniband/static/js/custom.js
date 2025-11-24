@@ -3,7 +3,7 @@ const ORANGE = "#FFA500";
 const GREY = "#222"
 
 const slurm_idle = "#198754";
-const slurm_down = "#6c757d";
+const slurm_down = "#000000ff";
 const slurm_drain_other = "#ffc107"
 const slurm_drain = "#dc3545"
 
@@ -179,7 +179,7 @@ function updateSlurmColors() {
                 case "down": return slurm_down;
                 case "drain": return slurm_drain;
                 case "drain_other": return slurm_drain_other;
-                default: return "#CCC";
+                default: return "#ffffffff";
             }
 
         });
@@ -620,7 +620,7 @@ const Context = {
                         case "down":       return slurm_down;
                         case "drain":      return slurm_drain;
                         case "drain_other":return slurm_drain_other;
-                        default:           return "#CCC";
+                        default:           return "#ffffffff";
                     }
                 });
 
@@ -1082,10 +1082,11 @@ $(document).ready(function () {
             clone = url + "trinity_switch/clone/"+device_name;
         }
         var items =[
-            {label:'Details',               icon: url + '/base/icons/application-detail.png',       action: function(e) { e.preventDefault(); window.open(info, '_blank').focus(); }  },
+            //{label:'Details',               icon: url + '/base/icons/application-detail.png',       action: function(e) { e.preventDefault(); window.open(info, '_blank').focus(); }  },
         ];
         if (device_type == "H"){
             items.push(
+                {label:'Luna Node Details',               icon: url + '/base/icons/application-detail.png',       action: function(e) { e.preventDefault(); window.open(info, '_blank').focus(); }  },
                 null,
                 {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/task--minus.png',   action: function(e) { e.preventDefault(); slurm_action(device_name, "drain"); }  },
                 {label: `Resume Node ${device_name}`,    icon: url + '/base/icons/task--plus.png',   action: function(e) { e.preventDefault(); slurm_action(device_name, "resume"); }  },
@@ -1107,7 +1108,7 @@ $(document).ready(function () {
         }
         if (device_type == "S"){
             items.push(
-                null,
+                // null,
                 {label:'Drain All Nodes',       icon: url + '/base/icons/task--minus.png',       action: function(e) { e.preventDefault(); slurm_action(node_list, "drain"); }  },
                 {label:'Resume All Nodes',       icon: url + '/base/icons/task--plus.png',       action: function(e) { e.preventDefault(); slurm_action(node_list, "resume"); }  },
             );

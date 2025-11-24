@@ -350,4 +350,4 @@ if __name__ == "__main__":
     from pprint import pprint
     
     pprint(get_prometheus_data())
-    # app.run(host='0.0.0.0', port=7755, debug=True)
+    app.run(host='0.0.0.0', port=7755, debug=True)
