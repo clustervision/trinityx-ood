@@ -108,44 +108,9 @@ function wrapText(text, width) {
     });
 }
 
-
-// function slurm_info(){
-//     var url = window.location.href
-//     url = url.replace('#','');
-//     url = `${url}/slurm_info`;
-//     console.log(url);
-//     var node_list = null;
-//     $.ajax({
-//         url: url,
-//         type: 'GET',
-//         async: false,
-//         dataType: 'json',
-//         contentType: 'application/json; charset=UTF-8',
-//         success: function(response_data) {
-//             if (response_data.status == "success") {
-//                 node_list = response_data.data;
-
-//                 // Ensure final value is list
-//                 if (typeof node_list === "string") {
-//                     try {
-//                         node_list = JSON.parse(node_list);
-//                     } catch (e) {
-//                         console.error("Invalid JSON:", node_list);
-//                         node_list = [];
-//                     }
-//                 }
-//             }
-//         }
-//     });
-
-//     return node_list;
-// }
-// let ress = slurm_info();
-// console.log("ress:", ress);
-
 function slurm_info() {
     var url = window.location.href.replace('#', '') + "/slurm_info";
-    console.log("Calling:", url);
+    console.debug("Calling:", url);
 
     return new Promise((resolve, reject) => {
         $.ajax({
@@ -153,10 +118,9 @@ function slurm_info() {
             type: 'GET',
             dataType: 'json',
             success: function(response_data) {
-                console.log("Response:", response_data);
+                console.debug("Response:", response_data);
                 if (response_data.status) {
                     let node_list = response_data.response;
-                    // node_list = JSON.parse(node_list);
                     if (typeof node_list === "string") {
                         try {
                             node_list = JSON.parse(node_list);
@@ -178,15 +142,50 @@ function slurm_info() {
     });
 }
 
-slurm_info().then(ress => {
-    console.log("ress:", ress);
-});
 
-// async function test() {
-//     let ress = await slurm_info();
-//     console.log("ress:", ress);
-// }
-// test();
+function updateSlurmColors() {
+    slurm_info().then(ress => {
+        const slurmStateMap = {};
+        const slurmReasonMap = {};
+
+        ress.forEach(item => {
+            slurmStateMap[item.name] = item.state;
+            if (item.reason) slurmReasonMap[item.name] = item.reason;
+        });
+
+        // Update colors
+        window.graph.nodeItems.attr("fill", d => {
+            if (d.type !== "H") return "#CCC";
+
+            const nodeName = d.name.split(" ")[0];
+
+            const state = slurmStateMap[nodeName];
+            const reason = slurmReasonMap[nodeName];
+
+            if (!state) return "#CCC";
+
+            let finalState = state.toLowerCase();
+
+            console.debug(`Node: ${nodeName}, State: ${finalState}, Reason: ${reason}`);
+
+            if (finalState === "drain") {
+                if (reason !== "IB Analyzer drained node") {
+                    finalState = "drain_other";
+                }
+            }
+
+            switch (finalState) {
+                case "idle": return slurm_idle;
+                case "down": return slurm_down;
+                case "drain": return slurm_drain;
+                case "drain_other": return slurm_drain_other;
+                default: return "#CCC";
+            }
+
+        });
+    });
+}
+
 
 const Context = {
     
@@ -641,6 +640,8 @@ const Context = {
                 // });
             });
 
+
+        window.graph = this;
         
         this.nodeImageItems = this.nodeContainerItems.append("image")
             .attr("class", "right-click")
@@ -921,7 +922,7 @@ const Context = {
         return state;
     },
     resized() {
-        console.log(`Resized to ${this.width()} x ${this.height()}`)
+        console.debug(`Resized to ${this.width()} x ${this.height()}`)
         this.svg.attr("width", this.width())
                 .attr("height", this.height())
                 .attr("viewBox", [0, 0, this.width(), this.height()])
@@ -955,7 +956,7 @@ function control_action(system, action, device){
         contentType: 'application/json; charset=UTF-8',
         success: function(response_data) {
             result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
-            console.log(result);
+            // console.log(result);
             $('#ajax').html();
             $('#ajax').html(result);
             setTimeout(function(){ $('#ajax').html(''); }, 5000);  
@@ -964,34 +965,12 @@ function control_action(system, action, device){
     });
 }
 
-// function slurm_info(){
-//     var url = window.location.href
-//     url = url.replace('#','');
-//     url = `${url}/slurm_action`;
-//     console.log(url);
-//     $.ajax({
-//         url: url,
-//         type: 'GET',
-//         dataType: 'json',
-//         contentType: 'application/json; charset=UTF-8',
-//         success: function(response_data) {
-//             console.log("response_data:", response_data);
-//             // result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
-//             // console.log(result);
-//             // $('#ajax').html();
-//             // $('#ajax').html(result);
-//             // setTimeout(function(){ $('#ajax').html(''); }, 5000);  
-            
-//         }
-//     });
-// }
 
-
-function slurm_action(nodes){
+function slurm_action(nodes, action){
     var url = window.location.href
     url = url.replace('#','');
-    url = `${url}/slurm_action`;
-    console.log(url);
+    url = `${url}/slurm_action/${action}`;
+    console.debug(url);
     let payload = [];
 
     if (nodes.trim().startsWith("[") && nodes.trim().endsWith("]")) {
@@ -1004,11 +983,6 @@ function slurm_action(nodes){
     } else {
         payload = [nodes];
     }
-
-    // console.log("Normalized nodes:", payload);
-    // console.log("Type:", typeof payload);
-    // console.log("Is array:", Array.isArray(payload));
-
     
     $.ajax({
         url: url,
@@ -1017,13 +991,30 @@ function slurm_action(nodes){
         dataType: 'json',
         contentType: 'application/json; charset=UTF-8',
         success: function(response_data) {
-            console.log("response_data:", response_data);
-            // result = '<div class="alert alert-'+response_data.status+'" role="alert">'+response_data.message+'</div>';
-            // console.log(result);
-            // $('#ajax').html();
-            // $('#ajax').html(result);
-            // setTimeout(function(){ $('#ajax').html(''); }, 5000);  
-            
+            console.debug("response_data:", response_data);
+            if (response_data.status) {
+                result = `
+                <div class="alert alert-success alert-dismissible fade show  d-flex align-items-center" role="alert">
+                    <svg class="bi flex-shrink-0 mr-2" width="24" height="24" role="img" aria-label="Success:"><use xlink:href="#check-circle-fill"/></svg>
+                    <div><strong>Success:</strong> ${response_data.data}</div>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>`;
+                $('#ajax').html(result);
+                if (action === "drain"){
+                    updateSlurmColors();
+                } else { setTimeout(function(){ updateSlurmColors(); }, 5000); }
+                
+                setTimeout(function(){ $('#ajax').html(''); }, 30000); 
+            } else {
+                result = `
+                <div class="alert alert-danger alert-dismissible fade show  d-flex align-items-center" role="alert">
+                    <svg class="bi flex-shrink-0 mr-2" width="24" height="24" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/></svg>
+                    <div><strong>Failed:</strong> ${response_data.data}</div>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>`;
+                $('#ajax').html(result);
+                setTimeout(function(){ $('#ajax').html(''); }, 30000); 
+            }
         }
     });
 }
@@ -1062,6 +1053,21 @@ $(document).ready(function () {
         var g = $(this).closest('g');
         var device_name = g.find('text tspan').first().text();
 
+
+        // var device_color_code = g.find('circle').attr('fill');
+        // var device_state = "default"
+        // switch (device_color_code) {
+        //     case slurm_idle:       device_state = "slurm_idle";
+        //     case slurm_down:       device_state = "slurm_down";
+        //     case slurm_drain:      device_state = "slurm_drain";
+        //     case slurm_drain_other:  device_state = "slurm_drain_other";
+        //     default:           device_state = "#CCC";
+        // }
+        // if (device_state.includes("#ffc107")) {
+        //     device_state = "slurm_drain_other";
+        // }
+
+
         if (device_type === "H"){
             var title = '<img class="device-icon" src="'+url+'/base/icons/processor.png" />   <strong>'+device_name+' Settings</strong>';
             info = url + "trinity_node/show/"+device_name;
@@ -1081,7 +1087,8 @@ $(document).ready(function () {
         if (device_type == "H"){
             items.push(
                 null,
-                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/applications-stack.png',   action: function(e) { e.preventDefault(); slurm_action(device_name); }  },
+                {label: `Drain Node ${device_name}`,    icon: url + '/base/icons/task--minus.png',   action: function(e) { e.preventDefault(); slurm_action(device_name, "drain"); }  },
+                {label: `Resume Node ${device_name}`,    icon: url + '/base/icons/task--plus.png',   action: function(e) { e.preventDefault(); slurm_action(device_name, "resume"); }  },
                 null,
                 {label:'Power Status',          icon: url + '/base/icons/application-monitor.png',      action: function(e) { e.preventDefault(); control_action('power', 'status', device_name); } },
                 {label:'Power Off',             icon: url + '/base/icons/network-status-busy.png',      action: function(e) { e.preventDefault(); control_action('power', 'off', device_name); } },
@@ -1101,7 +1108,8 @@ $(document).ready(function () {
         if (device_type == "S"){
             items.push(
                 null,
-                {label:'Drain All Nodes',       icon: url + '/base/icons/applications-stack.png',       action: function(e) { e.preventDefault(); slurm_action(node_list); }  },
+                {label:'Drain All Nodes',       icon: url + '/base/icons/task--minus.png',       action: function(e) { e.preventDefault(); slurm_action(node_list, "drain"); }  },
+                {label:'Resume All Nodes',       icon: url + '/base/icons/task--plus.png',       action: function(e) { e.preventDefault(); slurm_action(node_list, "resume"); }  },
             );
         }
         var menu = createMenu(e, title, items).show().css({zIndex:1000001, left:e.pageX + 5, top:e.pageY}).bind('contextmenu', function() { return false; });
