@@ -3,7 +3,7 @@ const ORANGE = "#FFA500";
 const GREY = "#222"
 
 const slurm_idle = "#198754";
-const slurm_down = "#000000ff";
+const slurm_down = "#000000";
 const slurm_drain_other = "#ffc107"
 const slurm_drain = "#dc3545"
 
@@ -1070,10 +1070,11 @@ $(document).ready(function () {
 
         if (device_type === "H"){
             var title = '<img class="device-icon" src="'+url+'/base/icons/processor.png" />   <strong>'+device_name+' Settings</strong>';
-            info = url + "trinity_node/show/"+device_name;
-            edit = url + "trinity_node/edit/"+device_name;
-            rename = url + "trinity_node/rename/"+device_name;
-            clone = url + "trinity_node/clone/"+device_name;
+            var inforURL = url.replace('trinity_infiniband','');
+            info = inforURL + "trinity_node/show/"+device_name;
+            edit = inforURL + "trinity_node/edit/"+device_name;
+            rename = inforURL + "trinity_node/rename/"+device_name;
+            clone = inforURL + "trinity_node/clone/"+device_name;
         } else if (device_type === "S"){
             var title = '<img class="device-icon" src="'+url+'/base/icons/switch-network.png" />   <strong>'+device_name+' Settings</strong>';
             info = url + "trinity_switch/show/"+device_name;

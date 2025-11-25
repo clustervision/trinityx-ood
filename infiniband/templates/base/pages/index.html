@@ -12,6 +12,35 @@
           <!-- Fixed navbar -->
           {% include "base/components/navbar.html" %}
       </header>
+      <div class="row info_bar">
+         <div class="col-md-12">
+               <div class="alert alert-info alert-dismissible" role="alert">
+                  <div class="row">
+                     <div class="col col-1"><i class="fa-solid fa-circle" style="color: #198754;"></i></div>
+                     <div class="col col-11"><i>When Node is UP <strong>(idle/busy/mixed/allocated)</strong></i></div>
+                  </div>
+                  <div class="row">
+                     <div class="col col-1"><i class="fa-solid fa-circle" style="color: #000000;"></i></div>
+                     <div class="col col-11"><i>When Node is Down <strong>(unknown/not_responding/down)</strong></i></div>
+                  </div>
+                  <div class="row">
+                     <div class="col col-1"><i class="fa-solid fa-circle" style="color: #ffc107;"></i></div>
+                     <div class="col col-11"><i>When Node is Drain by <strong>Someone else</strong></i></div>
+                  </div>
+                  <div class="row">
+                     <div class="col col-1"><i class="fa-solid fa-circle" style="color: #dc3545;"></i></div>
+                     <div class="col col-11"><i>When Node is Drain by <strong>Infiniband Application</strong></i></div>
+                  </div>
+                  <div class="row">
+                     <div class="col col-1"><i class="fa-solid fa-circle" style="color: #CCC;"></i></div>
+                     <div class="col col-11"><i>When Node is <strong>Absent in Slurm</strong></i></div>
+                  </div>
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+               </div>
+         </div>
+      </div>
+
+
       <div class="container" id="app-container">
         <div id="ajax"></div>
          <div id="alerts">
