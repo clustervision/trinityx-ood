@@ -13,3 +13,8 @@ ol.breadcrumb {
     margin-top: 30px;
     max-width: 90%;
 }
+
+.info_bar {
+    margin-left: 5%;
+    margin-right: 5%;
+}
