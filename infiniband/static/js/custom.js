@@ -1002,7 +1002,7 @@ function slurm_action(nodes, action){
                 $('#ajax').html(result);
                 if (action === "drain"){
                     updateSlurmColors();
-                } else { setTimeout(function(){ updateSlurmColors(); }, 5000); }
+                } else { setTimeout(function(){ updateSlurmColors(); }, 30000); }
                 
                 setTimeout(function(){ $('#ajax').html(''); }, 30000); 
             } else {
@@ -1052,21 +1052,6 @@ $(document).ready(function () {
         var node_list = $(this).attr("node_list");
         var g = $(this).closest('g');
         var device_name = g.find('text tspan').first().text();
-
-
-        // var device_color_code = g.find('circle').attr('fill');
-        // var device_state = "default"
-        // switch (device_color_code) {
-        //     case slurm_idle:       device_state = "slurm_idle";
-        //     case slurm_down:       device_state = "slurm_down";
-        //     case slurm_drain:      device_state = "slurm_drain";
-        //     case slurm_drain_other:  device_state = "slurm_drain_other";
-        //     default:           device_state = "#CCC";
-        // }
-        // if (device_state.includes("#ffc107")) {
-        //     device_state = "slurm_drain_other";
-        // }
-
 
         if (device_type === "H"){
             var title = '<img class="device-icon" src="'+url+'/base/icons/processor.png" />   <strong>'+device_name+' Settings</strong>';
