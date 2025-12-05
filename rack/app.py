@@ -35,8 +35,9 @@ import json
 from textwrap import wrap
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
+from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE
+from constant import LICENSE, TOKEN_FILE, APP_STATE
 from log import Log
 from helper import Helper
 from presenter import Presenter
@@ -44,8 +45,21 @@ from presenter import Presenter
 LOGGER = Log.init_log('INFO')
 TABLE = 'rack'
 TABLE_CAP = 'Rack'
-app = Flask(__name__, static_folder="static")
+# app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
+if APP_STATE is False: # FOR Development Only
+    CORS(app, resources={r"/get_temperature": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/get_screen_size": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/manage": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/show": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/update": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/edit": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/delete": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/perform": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
 
 
 @app.before_request
@@ -79,7 +93,7 @@ def home():
         inventory = table_data["config"]["rack"]["inventory"]
     else:
         inventory = {}
-    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
+    return render_template("index.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
 
 
 @app.route('/get_temperature', methods=['GET'])
@@ -111,7 +125,8 @@ def get_nodes(rack_name=None):
 
 @app.route('/get_screen_size', methods=['POST'])
 def get_screen_size():
-    data = request.json
+    # data = request.json
+    data = request.get_json()
     width = data['width']
     if width >= 1921:
         width = 220
@@ -161,7 +176,8 @@ def manage(page=None):
 
     if page in ["site", "room", "rack", "inventory"]:
         page_cap = page.capitalize()
-    return render_template("manage.html", table=TABLE_CAP, page=page_cap, inventory=inventory, data=data, error=error)
+    return jsonify({'inventory': inventory, 'data': data, 'error': error})
+    # return render_template("manage.html", table=TABLE_CAP, page=page_cap, inventory=inventory, data=data, error=error)
 
 
 @app.route('/show/<string:page>/<string:record>', methods=['GET'])
@@ -358,5 +374,15 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7059, debug=True)
-    app.run()
+    if APP_STATE is False:
+        dev_context=(
+            '/trinity/local/etc/ssl/vmware-controller1.cluster.crt',
+            '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        )
+        app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
+    else:
+        app.run()
+
+# Run in Dev mode:
+# sudo setfacl -m u:admin:r /trinity/local/etc/ssl/vmware-controller1.cluster.*
+# sudo -u admin bash -c '. /trinity/local/python/bin/activate && python app.py'

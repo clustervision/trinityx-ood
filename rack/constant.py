@@ -21,12 +21,12 @@
 Constant File for the Luna Web.
 """
 __author__      = "Sumit Sharma"
-__copyright__   = "Copyright 2022, Luna2 Project [OOD]"
+__copyright__   = "Copyright 2026, Luna2 Project [OOD]"
 __license__     = "GPL"
 __version__     = "2.0"
 __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
-__status__      = "Development"
+__status__      = "Production"
 
 import os
 
@@ -41,20 +41,20 @@ else:
 INI_FILE    = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE     = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR     = '/var/log/luna'
-LOG_FILE    = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
+APP_STATE = False # False for Development, True for Production
+LOG_FILE = '/var/log/luna/luna2-web.log' if APP_STATE is True else '/tmp/luna2-web-dev.log'
 
+EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
 TEMPERATURE_URL = "https://localhost:9090/api/v1/query?query=max+by+(hostname%2C+luna_group)+(ipmi_temperature_celsius{+name%3D~%22[cC][pP][uU].*[tT][eE][mM][pP].*%22+})"
 SYSTEM_LOAD_URL = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(node_load5)"
 POWER_URL       = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(ipmi_dcmi_power_consumption_watts)"
 GPU_TEMP_URL    = "https://localhost:9090/api/v1/query?query=avg+by+(hostname%2C+luna_group)+(nvidia_smi_temperature_gpu)"
 
 
-def filter_columns(table=None):
+def filter_columns(table: str) -> list:
     """
     This method remove the unnecessary fields from the dataset.
     """
-    response = False
     static = {
         'rack': ['name', 'size', 'order', 'room', 'site'],
         'site': ['name', 'rooms'],
@@ -65,12 +65,11 @@ def filter_columns(table=None):
     return response
 
 
-def sortby(table=None):
+def sortby(table: str) -> list:
     """
     This method remove the unnecessary fields from
     the dataset.
     """
-    response = False
     static = {
         'bmcsetup': [
             'name', 'userid', 'username', 'password', 'netchannel', 'mgmtchannel',
