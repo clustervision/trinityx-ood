@@ -1,26 +1,32 @@
 <script setup lang="ts">
-// Import the RackView directly to force it to show
-import RackView from './views/RackView.vue';
+import { RouterView } from 'vue-router'
+import SideMenu from '@/components/layout/SideMenu.vue'
 </script>
 
 <template>
-  <main class="app-container">
-    <RackView />
-  </main>
+  <div class="layout-wrapper layout-content-navbar">
+    <div class="layout-container">
+      
+      <SideMenu />
+
+      <div class="layout-page">
+        <div class="content-wrapper">
+          <RouterView />
+        </div>
+      </div>
+      
+    </div>
+  </div>
 </template>
 
 <style>
-/* Global Reset to ensure visibility */
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #f0f2f5; /* Light grey background to see white racks */
+/* Ensure the layout takes full height */
+.layout-container {
+    display: flex;
+    height: 100vh;
 }
-
-.app-container {
-  padding: 20px;
-  font-family: sans-serif;
+.layout-page {
+    flex-grow: 1;
+    overflow-y: auto;
 }
 </style>
