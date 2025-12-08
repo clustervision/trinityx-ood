@@ -11,7 +11,9 @@ import SideMenu from '@/components/layout/SideMenu.vue'
 
       <div class="layout-page">
         <div class="content-wrapper">
-          <RouterView />
+          <div class="container-fluid flex-grow-1 container-p-y">
+            <RouterView />
+          </div>
         </div>
       </div>
       
@@ -20,13 +22,9 @@ import SideMenu from '@/components/layout/SideMenu.vue'
 </template>
 
 <style>
-/* Ensure the layout takes full height */
-.layout-container {
-    display: flex;
-    height: 100vh;
-}
-.layout-page {
-    flex-grow: 1;
-    overflow-y: auto;
+/* Ensure body takes full space */
+html, body, #app {
+  height: 100%;
+  margin: 0;
 }
 </style>

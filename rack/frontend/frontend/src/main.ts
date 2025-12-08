@@ -1,5 +1,9 @@
 import './assets/css/main-ui.css'
 import './assets/css/rack.css'
+// 1. CORE STYLES (Order matters!)
+import './assets/fonts/boxicons.css' // You need the icons
+import './assets/css/core.css'       // Bootstrap & Layout wrappers
+import './assets/css/theme-default.css' // Colors & Sidebar theme
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

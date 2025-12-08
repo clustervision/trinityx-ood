@@ -96,43 +96,49 @@ const onDrop = (event: DragEvent, targetRackName: string, targetU: number) => {
 </script>
 
 <template>
-  <div class="rack-page">
-    <h2>Rack Management</h2>
-    
-    <div class="controls">
-      <button @click="currentView = 'front'" :class="{ active: currentView === 'front' }">Front View</button>
-      <button @click="currentView = 'back'" :class="{ active: currentView === 'back' }">Back View</button>
-    </div>
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="row">
+        <div class="col-md-6 d-flex gap-2">
+           <div class="dropdown">
+              <button class="btn btn-primary btn-sm dropdown-toggle" type="button">
+                Select 1st Metric
+              </button>
+           </div>
+           <div class="dropdown">
+              <button class="btn btn-info btn-sm dropdown-toggle" type="button">
+                Select 2nd Metric
+              </button>
+           </div>
+        </div>
 
-    <div class="racks-container">
-      <div v-for="(rack, rackName) in racks" :key="rackName" class="single-rack">
-        <h3>{{ rackName }} ({{ currentView }})</h3>
-
-        <div class="rack-frame">
-          <div 
-            v-for="u in reverseRange(rack.size)" 
-            :key="u" 
-            class="rack-row"
-          >
-            <div class="rack-pillar-left"></div>
-            <div class="rack-label">{{ u }}</div>
-
-            <div 
-              class="rack-slot"
-              @dragover.prevent
-              @drop="onDrop($event, rackName as string, u)"
-            >
-              <DeviceItem 
-                v-if="getDeviceAt(rackName as string, u)" 
-                :device="getDeviceAt(rackName as string, u)!" 
-              />
-            </div>
-
-            <div class="rack-label">{{ u }}</div>
-            <div class="rack-pillar-right"></div>
-          </div>
+        <div class="col-md-6 text-end">
+           <button 
+             v-if="currentView === 'front'"
+             @click="currentView = 'back'" 
+             class="btn btn-sm btn-dark"
+           >
+             Flip to Back View
+           </button>
+           <button 
+             v-else
+             @click="currentView = 'front'" 
+             class="btn btn-sm btn-secondary"
+           >
+             Flip to Front View
+           </button>
         </div>
       </div>
+      
+      <div class="row mt-3">
+         <div class="col-12">
+            </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="racks-container">
+         </div>
     </div>
   </div>
 </template>
