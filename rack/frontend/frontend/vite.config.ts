@@ -15,4 +15,18 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://yixin3-dev-ctrl001:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/update': {
+        target: 'https://yixin3-dev-ctrl001:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 })
