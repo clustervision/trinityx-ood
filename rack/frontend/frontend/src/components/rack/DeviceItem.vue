@@ -34,8 +34,28 @@ const heightPixels = computed(() => {
 
 // 4. Vendor Class Calculation
 const vendorClass = computed(() => {
-  const v = props.device.vendor?.toLowerCase() || 'default';
-  return `${v}-${props.device.height}`;
+  const type = props.device.type;
+  const vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
+  const height = props.device.height;
+
+  // 1. Switch Logic
+  if (type === 'switch') {
+    return 'switch'; // This maps to .switch class in CSS
+  }
+
+  // 2. Default/Empty Logic
+  if (!vendor || vendor === 'none') {
+    return 'default';
+  }
+
+  // 3. Allowed Vendors Logic
+  const allowedVendors = ["dell", "hp", "lenovo", "gigabyte", "supermicro", "asus"];
+  if (!allowedVendors.includes(vendor)) {
+    return 'noname';
+  }
+
+  // 4. Standard Case
+  return `${vendor}-${height}`; // e.g., 'dell-2'
 });
 
 // 5. Drag Start Event
