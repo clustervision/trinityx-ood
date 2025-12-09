@@ -2,13 +2,22 @@
   <div
     class="device-item draggable"
     :class="[vendorClass, { 'is-dragging': isDragging }]"
-    :style="{ height: heightPixels + 'px' }"
+    
+    :style="{ 
+       height: heightPixels + 'px',
+       backgroundColor: metricColor,  
+       backgroundImage: metricColor ? 'none' : '' 
+    }"
+    
     draggable="true"
     @dragstart="onDragStart"
     @dragend="isDragging = false"
   >
     <div class="device-content">
-      <span class="device-name">{{ device.name }}</span>
+      <span class="device-name">
+         {{ device.name }} 
+         <span v-if="metricValue">({{ metricValue }})</span>
+      </span>
     </div>
   </div>
 </template>
@@ -18,18 +27,47 @@ import { computed, ref } from 'vue';
 import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing'; 
 
-// 1. Define Props (ONLY ONCE)
 const props = defineProps<{
   device: Device;
+  // 3. NEW PROPS
+  metricValue?: number | string; // The actual number (e.g., 0.38 or 60)
+  metricType?: string;           // 'Temperature' or 'System Load'
 }>();
 
-// 2. Setup State
 const isDragging = ref(false);
 const { unitPixelHeight } = useRackSizing(); 
 
-// 3. Dynamic Height Calculation (Using the composable)
 const heightPixels = computed(() => {
   return (props.device.height * unitPixelHeight.value) - 2;
+});
+
+// 4. CALCULATE HEATMAP COLOR
+const metricColor = computed(() => {
+  if (!props.metricValue || !props.metricType) return null; // No color if no data
+
+  const value = parseFloat(props.metricValue.toString());
+  
+  // LOGIC A: Temperature (0°C to 100°C) -> Blue to Red
+  if (props.metricType === 'Temperature') {
+    // Clamp value between 0 and 100
+    const ratio = Math.min(Math.max(value, 0), 100) / 100; 
+    // Mix Blue (0,0,255) and Red (255,0,0)
+    const r = Math.round(255 * ratio);
+    const b = Math.round(255 * (1 - ratio));
+    return `rgb(${r}, 0, ${b})`;
+  }
+
+  // LOGIC B: System Load (0.0 to 1.0+) -> Green to Red
+  if (props.metricType === 'System Load') {
+    // Assume 1.0 (100%) is max load for coloring
+    let ratio = Math.min(Math.max(value, 0), 1);
+    // Green (0,255,0) to Red (255,0,0)
+    const r = Math.round(255 * ratio);
+    const g = Math.round(255 * (1 - ratio));
+    return `rgb(${r}, ${g}, 0)`;
+  }
+
+  return null; // Default to standard vendor CSS
 });
 
 // 4. Vendor Class Calculation
@@ -64,10 +102,22 @@ const onDragStart = (event: DragEvent) => {
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('application/json', JSON.stringify(props.device));
-    event.dataTransfer.setData('source', 'rack'); // Optional: Helps identify source
   }
 };
 </script>
+
+<style scoped>
+/* ... Keep your existing CSS ... */
+.device-item {
+  width: 100%;
+  position: absolute; 
+  z-index: 10;
+  cursor: grab;
+  border: 1px solid #333;
+  transition: background-color 0.3s ease; /* Smooth color transition */
+}
+/* ... */
+</style>
 
 <style scoped>
 .device-item {
