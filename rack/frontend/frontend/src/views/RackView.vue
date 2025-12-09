@@ -4,7 +4,7 @@ import DeviceItem from '@/components/rack/DeviceItem.vue';
 import type { RackData, Device } from '@/types/rack';
 
 // --- STATE ---
-const unassignedDevices = ref([]);
+// const unassignedDevices = ref([]);
 const currentView = ref<'front' | 'back'>('front');
 const racks = ref<RackData>({});
 
@@ -20,7 +20,7 @@ const loadMockData = async () => {
     const data = await response.json();
     
     racks.value = data.racks;
-    unassignedDevices.value = data.inventory || [];
+    // unassignedDevices.value = data.inventory || [];
     
     console.log("Data loaded from backend:", data);
   } catch (error) {
@@ -129,16 +129,19 @@ const onDrop = (event: DragEvent, targetRackName: string, targetU: number) => {
 };
 
 
-const metric1 = ref<string>('No Scale');
-const metric2 = ref<string>('No Scale');
+
+const metric1 = ref<string | null>(null);
+const metric2 = ref<string | null>(null);
 const showDropdown1 = ref(false);
 const showDropdown2 = ref(false); 
 
-// Helper to select a metric
 const selectMetric1 = (name: string) => {
   metric1.value = name;
   showDropdown1.value = false;
-  // TODO: Trigger data fetch for temperature/load here later
+};
+const selectMetric2 = (name: string) => {
+  metric2.value = name;
+  showDropdown2.value = false;
 };
 </script>
 
@@ -150,14 +153,14 @@ const selectMetric1 = (name: string) => {
     <div class="card-header">
       <div class="row">
         <div class="col-md-6 d-flex gap-2">
-           
-           <div class="dropdown">
+            
+            <div class="dropdown">
               <button 
                 class="btn btn-primary btn-sm dropdown-toggle" 
                 type="button"
                 @click="showDropdown1 = !showDropdown1"
               >
-                {{ metric1 }}
+                {{ metric1 ? metric1 : 'Select 1st Metric' }}
               </button>
               <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block;">
                 <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('No Scale')">No Scale</a></li>
@@ -166,30 +169,41 @@ const selectMetric1 = (name: string) => {
                 <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Power Consumption')">Power Consumption</a></li>
                 <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('GPU Temperature')">GPU Temperature</a></li>
               </ul>
-           </div>
+            </div>
 
-           <div class="dropdown">
-              <button class="btn btn-info btn-sm dropdown-toggle" type="button">
-                 Select 2nd Metric (TODO)
+            <div class="dropdown">
+              <button 
+                class="btn btn-info btn-sm dropdown-toggle" 
+                type="button"
+                @click="showDropdown2 = !showDropdown2"
+              >
+                 {{ metric2 ? metric2 : 'Select 2nd Metric' }}
               </button>
-           </div>
-        </div>
+              
+              <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block;">
+                <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('No Scale')">No Scale</a></li>
+                <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Temperature')">Temperature</a></li>
+                <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('System Load')">System Load</a></li>
+                <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Power Consumption')">Power Consumption</a></li>
+                <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('GPU Temperature')">GPU Temperature</a></li>
+
+              </ul>
+            </div>
 
         </div>
-      
-      <div class="row mt-3" v-if="metric1 !== 'No Scale'">
-         <div class="col-12">
-            <div v-if="metric1 === 'Temperature'">
-               <span style="display: inline-block;">0°C </span>
-               <span class="grad" style="display: inline-block; width: 100px; height: 10px; background: linear-gradient(90deg, blue, red); margin: 0 10px;">&nbsp;</span>
-               <span style="display: inline-block;"> 90°C</span>
-            </div>
-            </div>
       </div>
+      
+      <div class="row mt-3">
+         <div class="col-12" v-if="metric1 === 'Temperature'">
+            <span>0°C </span>
+            <span class="grad" style="display: inline-block; width: 100px; height: 10px; background: linear-gradient(90deg, blue, red); margin: 0 10px;">&nbsp;</span>
+            <span> 90°C</span>
+         </div>
+         
+         </div>
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .racks-container { display: flex; gap: 20px; padding: 20px; overflow-x: auto; }

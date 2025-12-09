@@ -18,7 +18,7 @@
     <ul class="menu-inner py-1">
       
       <li class="menu-item">
-        <RouterLink to="/" class="menu-link" active-class="active">
+        <RouterLink to="/" class="menu-link">
           <i class="menu-icon tf-icons">
              <img src="@/assets/icons/computer-network.png" alt="icon" width="20"/>
           </i>
@@ -31,7 +31,7 @@
       </li>
 
       <li class="menu-item">
-        <RouterLink to="/manage/rack" class="menu-link" active-class="active">
+        <RouterLink to="/manage/rack" class="menu-link">
           <i class="menu-icon tf-icons">
             <img src="@/assets/icons/application-detail.png" alt="icon" width="20"/>
           </i>
@@ -40,7 +40,7 @@
       </li>
 
       <li class="menu-item">
-        <RouterLink to="/manage/inventory" class="menu-link" active-class="active">
+        <RouterLink to="/manage/inventory" class="menu-link">
           <i class="menu-icon tf-icons">
              <img src="@/assets/icons/application-monitor.png" alt="icon" width="20"/>
           </i>
@@ -49,7 +49,7 @@
       </li>
 
        <li class="menu-item">
-        <RouterLink to="/manage/unassigned" class="menu-link" active-class="active">
+        <RouterLink to="" class="menu-link" active-class="active">
           <i class="menu-icon tf-icons">
              <img src="@/assets/icons/network-status-busy.png" alt="icon" width="20"/>
           </i>
