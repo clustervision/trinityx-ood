@@ -1,7 +1,10 @@
 <template>
   <div
     class="device-item draggable"
-    :class="[vendorClass, { 'is-dragging': isDragging }]"
+    :class="[
+       vendorClass, 
+       { 'is-dragging': isDragging },
+       isRackView ? 'is-absolute' : 'is-relative'  ]"
     
     :style="{ 
        height: heightPixels + 'px',
@@ -32,6 +35,7 @@ const props = defineProps<{
   // 3. NEW PROPS
   metricValue?: number | string; // The actual number (e.g., 0.38 or 60)
   metricType?: string;           // 'Temperature' or 'System Load'
+  isRackView?: boolean;
 }>();
 
 const isDragging = ref(false);
@@ -107,10 +111,8 @@ const onDragStart = (event: DragEvent) => {
 </script>
 
 <style scoped>
-/* ... Keep your existing CSS ... */
 .device-item {
   width: 100%;
-  position: absolute; 
   z-index: 10;
   cursor: grab;
   border: 1px solid #333;
@@ -129,6 +131,13 @@ const onDragStart = (event: DragEvent) => {
   /* Background images are loaded by rack.css using vendorClass */
 }
 
+.device-item.is-absolute {
+  position: absolute;
+}
+.device-item.is-relative {
+  position: relative; /* This makes them list normally in the sidebar */
+  margin-bottom: 5px;
+}
 .device-content {
   padding: 2px;
   color: white;
