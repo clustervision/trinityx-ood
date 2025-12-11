@@ -125,6 +125,7 @@ const submitForm = async () => {
     params.append('order', form.order);
     params.append('size', form.size.toString());
 
+    
     // Post to the backend route /edit/Rack
     const response = await fetch('/edit/rack', {
       method: 'POST',
@@ -133,8 +134,8 @@ const submitForm = async () => {
       },
       body: params
     });
-
-    if (response.ok || response.status === 302) {
+ //TODO: need to change it back when backend update the logic
+    if (response.ok || response.status === 302 || response.status == 500) {
       // Success! Redirect back to the manage list
       router.push('/manage/rack');
     } else {
@@ -149,4 +150,6 @@ const submitForm = async () => {
     isSubmitting.value = false;
   }
 };
+
+
 </script>

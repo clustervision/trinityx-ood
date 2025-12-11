@@ -17,22 +17,19 @@ export default defineConfig({
   },
   // https://yixin3-dev-ctrl001.taurusgroup.one:7755//get_temperature
   server: {
-    // host: '0.0.0.0',      // Allows access from outside the VM
-    // watch: {
-    //   usePolling: true    // Fixes the "Shared Folder" update issue
-    // },
+    port: 3000,
     proxy: {
       '/api': {
-        target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755', // Note: HTTPS
+        target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
         changeOrigin: true,
-        secure: false, // CRITICAL: Allows connection to self-signed HTTPS
+        secure: false,
       },
       '/manage': {
         target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
         changeOrigin: true,
         secure: false,
       },
-      '/update': {
+      '/edit': {
         target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
         changeOrigin: true,
         secure: false,

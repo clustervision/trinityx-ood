@@ -116,7 +116,7 @@ const fetchData = async () => {
 };
 
 const goToAddPage = () => {
-  router.push('/edit/rack'); 
+  router.push('/edit/Rack'); 
 };
 
 function parseHtmlToData(htmlString: string) {
