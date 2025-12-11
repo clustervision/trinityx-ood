@@ -186,7 +186,7 @@ const onDrop = (event: DragEvent, targetRackName: string, targetU: number) => {
                       v-if="getDeviceAt(String(rackName), u)"
                       :device="getDeviceAt(String(rackName), u)!"
                       :metric-value="getMetricForDevice(getDeviceAt(String(rackName), u)!)"
-                      :metric-type="metric1" 
+                      :metric-type="metric1 || undefined"
                     />
                  </div>
                  <div class="rack-label">{{ u }}</div>

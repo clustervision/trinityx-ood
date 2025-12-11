@@ -47,7 +47,7 @@ const heightPixels = computed(() => {
 
 // 4. CALCULATE HEATMAP COLOR
 const metricColor = computed(() => {
-  if (!props.metricValue || !props.metricType) return null; // No color if no data
+  if (!props.metricValue || !props.metricType) return undefined; // No color if no data
 
   const value = parseFloat(props.metricValue.toString());
   
@@ -71,7 +71,7 @@ const metricColor = computed(() => {
     return `rgb(${r}, ${g}, 0)`;
   }
 
-  return null; // Default to standard vendor CSS
+  return undefined; // Default to standard vendor CSS
 });
 
 // 4. Vendor Class Calculation

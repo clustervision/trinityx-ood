@@ -2,9 +2,13 @@
   <div class="container-fluid flex-grow-1 container-p-y">
     <div class="card">
       <h5 class="card-header d-flex justify-content-between align-items-center">
-        Manage {{ pageName }}
+        Manage {{ pageName }} Frames
         
-        <button v-if="pageType === 'rack'" class="btn btn-success btn-sm">
+        <button 
+          v-if="pageType === 'rack'" 
+          class="btn btn-success btn-sm" 
+          @click="goToAddPage"
+        >
           Add New {{ pageName }}
         </button>
       </h5>
@@ -18,7 +22,9 @@
                 <th class="text-center">Name</th>
                 <th class="text-center">Size</th>
                 <th class="text-center">Order</th>
-                <th class="text-center">Room</th> <th class="text-center">Site</th> <th class="text-center">Actions</th>
+                <th class="text-center">Room</th>
+                <th class="text-center">Site</th> 
+                <th class="text-center">Actions</th>
               </tr>
 
               <tr v-else>
@@ -37,7 +43,7 @@
                 <template v-if="pageType === 'rack'">
                    <td class="text-center">{{ item.name }}</td>
                    <td class="text-center">{{ item.size }}</td>
-                   <td class="text-center">{{ item.order || 'Ascending' }}</td>
+                   <td class="text-center">{{ item.order}}</td>
                    <td class="text-center">{{ item.room || '-' }}</td>
                    <td class="text-center">{{ item.site || '-' }}</td>
                 </template>
@@ -73,14 +79,16 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
 const pageType = ref(''); 
 const items = ref<any[]>([]);
 
 const pageName = computed(() => {
-  return pageType.value === 'rack' ? 'Rack Frames' : 'Inventory';
+  if (!pageType.value) return '';
+  return pageType.value.charAt(0).toUpperCase() + pageType.value.slice(1);
 });
 
 const fetchData = async () => {
@@ -93,28 +101,45 @@ const fetchData = async () => {
     const json = await res.json();
     
     if (page === 'inventory') {
-      // Backend already sends this correctly
       items.value = json.inventory || [];
     } 
     else if (page === 'rack') {
-      // THIS IS WHERE WE NEED THE BACKEND FIX
-      // Currently json.racks is missing. Once they add it, this will work:
-      if (json.racks) {
-        items.value = Object.keys(json.racks).map(key => ({
-          name: key,
-          size: json.racks[key].size,
-          order: json.racks[key].order,
-          room: json.racks[key].room,
-          site: json.racks[key].site
-        }));
+      if (json.data) {
+        items.value = parseHtmlToData(json.data);
       } else {
-        console.warn("Backend did not return 'racks' list.");
+        console.warn("Backend returned no data field.");
       }
     }
   } catch (e) {
     console.error("Failed to load table data", e);
   }
 };
+
+const goToAddPage = () => {
+  router.push('/edit/rack'); 
+};
+
+function parseHtmlToData(htmlString: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  const rows = doc.querySelectorAll('tr'); 
+  const parsedData: any[] = [];
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll('td');
+    if (cells.length > 1) {
+      parsedData.push({
+        name: cells[1]?.innerText.trim(),
+        size: cells[2]?.innerText.trim(),
+        order: cells[3]?.innerText.trim(),
+        room: cells[4]?.innerText.trim(),
+        site: cells[5]?.innerText.trim(),
+      });
+    }
+  });
+
+  return parsedData;
+}
 
 onMounted(fetchData);
 watch(() => route.params.page, fetchData);
