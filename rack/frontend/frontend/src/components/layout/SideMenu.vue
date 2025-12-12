@@ -57,8 +57,8 @@
           </a>
 
         <ul class="menu-sub ps-3 pe-3 pt-2" v-show="showUnassigned" style="display: block; list-style: none;">
-          <div v-if="inventory.length > 0">
-             <div v-for="device in inventory" :key="device.name" class="mb-2">
+          <div v-if="UnassignedNodes.length > 0">
+             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2">
                 <DeviceItem 
                   :device="device" 
                   :is-rack-view="false"
@@ -77,17 +77,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { RouterLink } from 'vue-router';
-// Import the component you created
+import { ref, onMounted, watch } from 'vue';
+import { routeLocationKey, RouterLink } from 'vue-router';
+import {useRoute} from 'vue-router'
 import DeviceItem from '@/components/rack/DeviceItem.vue'; 
 
 // --- STATE ---
-const inventory = ref<any[]>([]);
+const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true); // Default to open
+const route = useRoute();
 
 // --- API FETCH ---
-const fetchInventory = async () => {
+const fetchUnassignedNodes = async () => {
   try {
     // Fetching directly from the URL you provided
     const response = await fetch('/manage/rack'); 
@@ -95,7 +96,7 @@ const fetchInventory = async () => {
     
     // Assigning the 'inventory' array from your JSON example
     if (data.inventory) {
-      inventory.value = data.inventory;
+      UnassignedNodes.value = data.inventory;
     }
   } catch (error) {
     console.error("Failed to load Unassigned Inventory:", error);
@@ -103,7 +104,13 @@ const fetchInventory = async () => {
 };
 
 onMounted(() => {
-  fetchInventory();
+  fetchUnassignedNodes();
+  watch(
+    () => route.path,
+    () => {
+      fetchUnassignedNodes();
+    }
+  )
 });
 </script>
 
