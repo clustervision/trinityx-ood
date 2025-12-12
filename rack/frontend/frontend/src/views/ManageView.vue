@@ -56,10 +56,10 @@
                 </template>
 
                 <td class="text-center">
-                   <button class="btn btn-icon btn-sm" title="Edit">
+                   <button class="btn btn-icon btn-sm" title="Edit"@click="editItem(item)">
                      <i class='bx bx-edit text-primary'></i>
                    </button>
-                   <button class="btn btn-icon btn-sm" title="Delete">
+                   <button class="btn btn-icon btn-sm" title="Delete"@click="deleteItem(item)">
                      <i class='bx bx-trash text-danger'></i>
                    </button>
                 </td>
@@ -90,6 +90,44 @@ const pageName = computed(() => {
   if (!pageType.value) return '';
   return pageType.value.charAt(0).toUpperCase() + pageType.value.slice(1);
 });
+
+// 1. EDIT ACTION
+const editItem = (item: any) => {
+  if (pageType.value === 'rack') {
+    router.push(`/edit/rack/${item.name}`); 
+  } else {
+    // Inventory edit logic would go here
+  }
+};
+
+// 2. DELETE ACTION
+const deleteItem = async (item: any) => {
+  if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
+
+  try {
+    let url = '';
+    // Construct URL based on page type
+    if (pageType.value === 'rack') {
+      url = `/delete/rack/${item.name}`;
+    } else {
+      // Inventory delete usually needs type too: /delete/inventory/name/type
+      url = `/delete/inventory/${item.name}/${item.type}`;
+    }
+
+    const res = await fetch(url);
+    if (res.ok || res.status === 204) {
+      // Remove item from local list immediately
+      items.value = items.value.filter(i => i !== item);
+      alert(`${item.name} deleted successfully.`);
+    } else {
+      const text = await res.text();
+      alert(`Failed to delete: ${text}`);
+    }
+  } catch (e) {
+    console.error("Delete failed", e);
+    alert("Network error while deleting.");
+  }
+};
 
 const fetchData = async () => {
   const page = route.params.page as string;
