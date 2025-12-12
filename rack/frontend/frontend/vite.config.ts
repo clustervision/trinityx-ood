@@ -17,7 +17,7 @@ export default defineConfig({
   },
   // https://yixin3-dev-ctrl001.taurusgroup.one:7755//get_temperature
   server: {
-    port: 3000,
+    port: 3003,
     proxy: {
       '/api': {
         target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',

@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { parseHtmlToData } from '@/utils/rackHelpers';
 
 const route = useRoute();
 const router = useRouter();
@@ -97,11 +98,13 @@ const goToAddPage = () => {
 };
 
 // 1. EDIT ACTION
+// In src/views/ManageView.vue
+
 const editItem = (item: any) => {
   if (pageType.value === 'rack') {
-    router.push(`/edit/rack/${item.name}`); 
-  } else {
-    alert("Edit not implemented for Inventory yet");
+    router.push(`/edit/rack/${item.name}`);
+  } else if (pageType.value === 'inventory') {
+    router.push(`/edit/inventory/${item.name}`);
   }
 };
 
@@ -186,31 +189,6 @@ const fetchData = async () => {
     console.error("Failed to load table data", e);
   }
 };
-
-function parseHtmlToData(htmlString: string) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, 'text/html');
-  const rows = doc.querySelectorAll('table tbody tr'); 
-  const parsedData: any[] = [];
-
-  rows.forEach((row) => {
-    const cells = row.querySelectorAll('td');
-    // Basic validation to ensure row has enough columns
-    if (cells.length > 1) {
-      parsedData.push({
-        name: cells[1]?.innerText.trim(),
-        size: cells[2]?.innerText.trim(),
-        order: cells[3]?.innerText.trim(),
-        room: cells[4]?.innerText.trim(),
-        site: cells[5]?.innerText.trim(),
-        // Capture type for inventory items if needed
-        type: pageType.value === 'inventory' ? cells[2]?.innerText.trim() : undefined
-      });
-    }
-  });
-
-  return parsedData;
-}
 
 onMounted(fetchData);
 watch(() => route.params.page, fetchData);

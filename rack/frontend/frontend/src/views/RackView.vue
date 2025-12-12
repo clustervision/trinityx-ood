@@ -12,7 +12,7 @@ interface RackSlot {
 
 interface Rack {
   name: string | undefined;
-  size: number | undefined;
+  size: string | undefined;
   order: string | undefined; // 'ascending' or 'descending'
   slots: RackSlot[] | undefined;
 }
@@ -70,7 +70,7 @@ function parseHtmlToRackList(html: string): Rack[] {
     if (cells.length > 1) {
       data.push({
         name: cells[1]?.innerText.trim(),
-        size: parseInt(cells[2]?.innerText.trim()) || 42,
+        size: cells[2]?.innerText.trim(),
         order: cells[3]?.innerText.trim().toLowerCase(),
         slots: []
       });
@@ -85,10 +85,6 @@ const generateSlots = (size: number, order: string) => {
   for (let i = 1; i <= size; i++) {
     slots.push({ number: i, device: null });
   }
-  // If order is 'ascending' (Top to Bottom), 1 is at top.
-  // If 'descending' (Bottom to Top), Size (e.g. 42) is at top.
-  // Based on your screenshot, 01 is at the top, so we assume ascending visual order for now.
-  // You can remove .reverse() if you want 42 at the top.
   return order === 'descending' ? slots.reverse() : slots; 
 };
 
