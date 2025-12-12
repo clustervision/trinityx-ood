@@ -192,6 +192,17 @@ def edit(record=None):
         payload["non_authoritative"] = "yes" if 'non_authoritative' in payload else "no"
         payload["dhcp"] = "yes" if 'dhcp' in payload else "no"
         payload["dhcp_nodes_in_pool"] = "yes" if 'dhcp_nodes_in_pool' in payload else "no"
+        if payload["gateway"]  == "":
+            del payload["gateway"]
+        if payload["gateway_metric"]  == "":
+            del payload["gateway_metric"]
+        if payload["ntp_server"]  == "":
+            del payload["ntp_server"]
+        if payload["nameserver_ip"]  == "":
+            del payload["nameserver_ip"]
+        if payload["ntp_server"]  == "":
+            del payload["ntp_server"]
+        print(payload)
         payload = Helper().prepare_payload(payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
