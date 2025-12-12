@@ -85,26 +85,46 @@ const form = reactive({
 });
 
 // 1. Load existing data
+// src/views/EditRack.vue
+
 onMounted(async () => {
   const rackName = route.params.id as string;
-  form.name = rackName; // Set name immediately from URL
+  form.name = rackName;
   
   try {
-    // We fetch the list and find our rack because there isn't a dedicated "get single rack" JSON endpoint yet
-    // (You might need to use the HTML parser trick here again if the backend doesn't give JSON)
-    const res = await fetch('/manage/rack', { headers: { 'Accept': 'text/html' } });
-    const html = await res.text();
-    const racks = parseHtmlToData(html);
+    // 1. Fetch the FULL list of racks to find the details for THIS rack
+    const res = await fetch('/manage/rack', { 
+      headers: { 'Accept': 'application/json, text/html' } 
+    });
     
+    const contentType = res.headers.get('content-type');
+    let racks: any[] = [];
+
+    // Parse logic matching ManageView
+    if (contentType && contentType.includes('application/json')) {
+      const json = await res.json();
+      if (json.data) racks = parseHtmlToData(json.data);
+    } else {
+      const html = await res.text();
+      racks = parseHtmlToData(html);
+    }
+    
+    // 2. Find the specific rack
     const target = racks.find((r: any) => r.name === rackName);
+    
     if (target) {
       form.site = target.site;
       form.room = target.room;
-      form.order = target.order.toLowerCase();
+      // Handle potential undefined/null values safely
+      form.order = (target.order || 'ascending').toLowerCase();
       form.size = target.size;
+    } else {
+      errorMessage.value = `Rack '${rackName}' not found.`;
     }
+
   } catch (e) {
     console.error("Failed to load rack details", e);
+    errorMessage.value = "Failed to load rack details.";
   }
 });
 
