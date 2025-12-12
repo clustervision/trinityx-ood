@@ -140,6 +140,36 @@ const selectMetric1 = (name: string) => {
   else rawMetricData.value = [];
 };
 
+// --- LEGEND / GRAPH HELPERS ---
+
+// 1. Get the Unit string based on metric name
+const getUnit = (metricName: string | null) => {
+  if (metricName === 'Power Consumption') return 'Watt';
+  if (metricName === 'Temperature' || metricName === 'GPU Temperature') return '°C';
+  if (metricName === 'System Load') return ''; // Load has no unit
+  return '';
+};
+
+// 2. Calculate the Maximum value from the loaded data for the scale
+const getMaxValue = (metricName: string | null) => {
+  if (!rawMetricData.value || rawMetricData.value.length === 0) return 100; // Default if no data
+
+  // Map the dropdown name to the backend JSON key
+  let key = '';
+  if (metricName === 'System Load') key = 'load';
+  else if (metricName === 'Temperature') key = 'temperature';
+  else if (metricName === 'Power Consumption') key = 'power';
+  else if (metricName === 'GPU Temperature') key = 'gpu_temp';
+
+  if (!key) return 100;
+
+  // Find the highest number in the array
+  const max = Math.max(...rawMetricData.value.map((d: any) => parseFloat(d[key]) || 0));
+  
+  // Return max, or at least 1 (to avoid divide by zero visual issues)
+  return max > 0 ? max.toFixed(1) : 0;
+};
+
 const selectMetric2 = (name: string) => {
   metric2.value = name;
   showDropdown2.value = false;
@@ -158,48 +188,59 @@ onMounted(() => {
 <template>
   <div class="card mb-4 border-0">
     <div class="card-header p-4 bg-white">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" @click="showDropdown1 = !showDropdown1" style="min-width: 160px;">
-              {{ metric1 ? metric1 : 'Select 1st Metric' }}
-            </button>
-            <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block;">
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('No Scale')">No Scale</a></li>
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Temperature')">Temperature</a></li>
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('System Load')">System Load</a></li>
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Power Consumption')">Power Consumption</a></li>
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('GPU Temperature')">GPU Temperature</a></li>
-            </ul>
-          </div>
-          <div v-if="metric1 === 'Temperature'" class="d-flex align-items-center gap-2">
-            <span class="fw-bold">0°C</span>
-            <div style="width: 200px; height: 20px; background: linear-gradient(90deg, blue, lime, red); border: 1px solid #ccc; border-radius: 4px;"></div>
-            <span class="fw-bold">90°C</span>
-          </div>
-        </div>
-      </div>
+      <div class="d-flex align-items-center gap-3 mb-3">
+  <div class="dropdown">
+    <button 
+      class="btn dropdown-toggle" 
+      :class="metric1 === 'Power Consumption' ? 'btn-primary' : 'btn-info text-white'"
+      type="button" 
+      @click="showDropdown1 = !showDropdown1" 
+      style="min-width: 180px;"
+    >
+      {{ metric1 ? metric1 : 'Select 1st Metric' }}
+    </button>
+    <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block;">
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('No Scale')">No Scale</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Temperature')">Temperature</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('System Load')">System Load</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Power Consumption')">Power Consumption</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('GPU Temperature')">GPU Temperature</a></li>
+    </ul>
+  </div>
 
-      <div class="d-flex align-items-center gap-3">
-        <div class="dropdown">
-          <button class="btn btn-info text-white dropdown-toggle" type="button" @click="showDropdown2 = !showDropdown2" style="min-width: 160px;">
-            {{ metric2 ? metric2 : 'Select 2nd Metric' }}
-          </button>
-          <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block;">
-            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('No Scale')">No Scale</a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Temperature')">Temperature</a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('System Load')">System Load</a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Power Consumption')">Power Consumption</a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('GPU Temperature')">GPU Temperature</a></li>
-          </ul>
-        </div>
-        <div v-if="metric2 === 'Temperature'" class="d-flex align-items-center gap-2">
-            <span class="fw-bold">0°C</span>
-            <div style="width: 200px; height: 20px; background: linear-gradient(90deg, blue, lime, red); border: 1px solid #ccc; border-radius: 4px;"></div>
-            <span class="fw-bold">90°C</span>
-        </div>
-      </div>
-    </div>
+  <div v-if="metric1 && metric1 !== 'No Scale'" class="d-flex align-items-center gap-2">
+    <span class="text-muted">{{ 0 }} {{ getUnit(metric1) }}</span>
+    <div class="legend-bar"></div>
+    <span class="text-muted">{{ getMaxValue(metric1) }} {{ getUnit(metric1) }}</span>
+  </div>
+</div>
+
+<div class="d-flex align-items-center gap-3">
+  <div class="dropdown">
+    <button 
+      class="btn btn-secondary dropdown-toggle" 
+      type="button" 
+      @click="showDropdown2 = !showDropdown2" 
+      style="min-width: 180px;"
+    >
+      {{ metric2 ? metric2 : 'Select 2nd Metric' }}
+    </button>
+    <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block;">
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('No Scale')">No Scale</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Temperature')">Temperature</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('System Load')">System Load</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Power Consumption')">Power Consumption</a></li>
+        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('GPU Temperature')">GPU Temperature</a></li>
+    </ul>
+  </div>
+
+  <div v-if="metric2 && metric2 !== 'No Scale'" class="d-flex align-items-center gap-2">
+    <span class="text-muted">{{ 0 }} {{ getUnit(metric2) }}</span>
+    <div class="legend-bar"></div>
+    <span class="text-muted">{{ getMaxValue(metric2) }} {{ getUnit(metric2) }}</span>
+  </div>
+</div>
+</div>
 
     <div class="card-body">
       <div class="racks-container">
@@ -393,5 +434,18 @@ onMounted(() => {
     overflow: hidden;
 }
 
+.legend-bar {
+  width: 200px; 
+  height: 20px; 
+  /* Matches your screenshot: Blue -> Green -> Yellow -> Red */
+  background: linear-gradient(90deg, blue, green, yellow, red); 
+  border: 1px solid #ccc; 
+  border-radius: 4px;
+}
+
+/* Optional: Button colors to match screenshot if you want */
+.btn-primary { background-color: #6666ff; border-color: #6666ff; } /* Purple/Blue */
+.btn-info { background-color: #0dcaf0; border-color: #0dcaf0; }   /* Cyan */
 .cursor-pointer { cursor: pointer; }
+
 </style>
