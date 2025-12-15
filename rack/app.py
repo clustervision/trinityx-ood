@@ -54,9 +54,7 @@ app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False: # FOR Development Only
-    # CORS(app, resources={r"/get_temperature": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-    # CORS(app, resources={r"/get_screen_size": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/manage": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/show": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/update": {"origins": "http://localhost:5173"}})
@@ -88,23 +86,6 @@ def home():
     return render_template("index.html", PROMETHEUS_URL=url['PROMETHEUS_URL'], APP_URL=url['APP_URL'])
 
 
-# @app.route('/get_temperature', methods=['GET']) # TODO Convert this into vuejs
-# def get_temperature():
-#     """
-#     This route will call the prometheus URL to collect the temperature for the machines.
-#     """
-#     response = []
-#     response = Helper().get_metrics('temperature', data=response)
-#     print(response)
-#     response = Helper().get_metrics('load', data=response)
-#     print(response)
-#     response = Helper().get_metrics('power', data=response)
-#     print(response)
-#     response = Helper().get_metrics('gpu_temp', data=response)
-#     print(response)
-#     return jsonify(response)
-
-
 @app.route('/get_nodes/<string:rack_name>', methods=['GET'])
 def get_nodes(rack_name=None):
     """
@@ -121,124 +102,83 @@ def get_nodes(rack_name=None):
     print(jsonify(response))
     return jsonify(response)
 
-# @app.route('/get_screen_size', methods=['POST']) # TODO: Depriciated for VueJS Frontend
-# def get_screen_size():
-#     # data = request.json
-#     data = request.get_json()
-#     width = data['width']
-#     if width >= 1921:
-#         width = 220
-#         height = 30
-#     else:
-#         width = 120
-#         height = 20
-#     # print(f"Screen Width: {width}, Screen Height: {height}")
-#     return jsonify({'width': width, 'height': height})
 
-
-@app.route('/manage/<string:page>', methods=['GET'])
-def manage(page=None):
+@app.route('/manage_racks', methods=['GET'])
+def manage_racks():
     """
     This is the main route to manage things.
     """
-    # nav = types.SimpleNamespace()
-    # nav.name = f"Manage {TABLE_CAP}"
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    data, error = "", ""
-    if page == "site":
-        table_data = {"config": {"rack": {"site": [{"name": "ClusterVision Amsterdam", "rooms": 2}, {"name": "ClusterVision Schiphol", "rooms": 3}] } } }
-    elif page == "room":
-        table_data = {"config": {"rack": {"room": [
-            {"name": "Basement", "site": "ClusterVision Amsterdam", "racks": 20}, {"name": "1st Floor", "site": "ClusterVision Amsterdam", "racks": 10},
-            {"name": "Basement", "site": "ClusterVision Schiphol", "racks": 10}, {"name": "1st Floor", "site": "ClusterVision Schiphol", "racks": 20}, {"name": "2nd Floor", "site": "ClusterVision Schiphol", "racks": 30}
-            ] } } }
-    elif page == "rack":
-        table_data = Rest().get_data(TABLE)
-    elif page == "inventory":
-        table_data = Rest().get_data(TABLE, "inventory")
-
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data(TABLE)
     LOGGER.info(table_data)
     if table_data:
-        if page in ["site", "room", "inventory"]:
-            raw_data = table_data['config']['rack'][page]
-            fields, rows  = Helper().filter_data_list(page, raw_data)
-        elif page == "rack":
-            raw_data = table_data['config']['rack']
-            fields, rows  = Helper().filter_data(page, raw_data)
-        data = Presenter().show_table(fields, rows)
-        data = unescape(data)
-
-    if page in ["site", "room", "rack", "inventory"]:
-        page_cap = page.capitalize()
-    return jsonify({'inventory': inventory, 'data': data, 'error': error})
-    # return render_template("manage.html", table=TABLE_CAP, page=page_cap, inventory=inventory, data=data, error=error)
+        raw_data = table_data['config']['rack']
+        response["status"] = True
+        response["message"].append(raw_data)
+    print(jsonify(response))
+    return jsonify(response)
 
 
-@app.route('/show/<string:page>/<string:record>', methods=['GET'])
-def show(page=None, record=None):
-    metric = get_temperature()
-    metric_data = metric.get_data(as_text=True)
-    metric = json.loads(metric_data)
-    metric = True if metric else None
-    table_data = Rest().get_data(TABLE, record)
-    if table_data:
-        rack_data = table_data["config"]["rack"][record]
-    else:
-        rack_data = {}
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    page_cap = page.capitalize()
-    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', metric=metric)
-
-
-@app.route('/update', methods=['POST'])
-def update():
+@app.route('/manage_inventory', methods=['GET'])
+def manage_inventory():
     """
-    This API route will update the position of a device in a rack.
+    This is the main route to manage things.
     """
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data(TABLE, "inventory")
+    LOGGER.info(table_data)
+    if table_data:
+        raw_data = table_data['config']['rack']["inventory"]
+        response["status"] = True
+        response["message"] = raw_data
+    print(jsonify(response))
+    return jsonify(response)
+
+
+@app.route('/show_rack/<string:rack_name>', methods=['GET'])
+def show_rack(rack_name: str):
+    """
+    This route will return the provided rack data.
+    """
+    response = {"status": False, "message": {}}
+    table_data = Rest().get_data(TABLE, rack_name)
+    if table_data:
+        rack_data = table_data["config"]["rack"][rack_name]
+        response["message"] = rack_data
+    print(jsonify(response))
+    return jsonify(response)
+
+
+@app.route('/change_rack', methods=['POST'])
+def change_rack():
+    """
+    This route will be used to update the rack from Manage Rack.
+    """
+    response = {"status": False, "message": ""}
     payload = {}
-    request_data = json.loads(request.get_json())
-    if request_data['rack']:
-        rack_name = request_data['rack']
-        del request_data['rack']
-        payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
-        uri = f'config/rack/{rack_name}'
-        result = Rest().post_raw(uri, payload)
-    else:
-        uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
-        result = Rest().get_delete(TABLE, uri)
-        LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
-    response = json.dumps(payload)
-    return response
-
-
-@app.route('/edit/<string:page>', methods=['GET', 'POST'])
-@app.route('/edit/<string:page>/<string:record>', methods=['GET', 'POST'])
-def edit(page=None, record=None):
-    data, error = "", ""
-    site_list = ''
-    if page.lower() == "rack":
-        table_data = Rest().get_data(TABLE, record)
-    else:
-        table_data = Rest().get_data(TABLE, page)
-    if table_data:
-        if page.lower() == "rack":
-            if record in table_data["config"]["rack"]:
-                data = table_data["config"]["rack"][record]
+    if request.method == 'POST':
+        payload = {
+            k: v
+            for k, v in request.form.items() if v not in [None, '']
+        }
+        request_data = {'config': {TABLE: {payload['name']: payload}}}
+        post_response = Rest().post_data(TABLE, payload['name'], request_data)
+        LOGGER.info(f'{post_response.status_code} -> {post_response.content}')
+        if post_response.status_code == 204:
+            response = {"status": True, "message": f'{TABLE_CAP}, {payload["name"]} Updated.'}
         else:
-            tmp_data = table_data["config"]["rack"][page]
-            for each in tmp_data:
-                if each['name'] == record:
-                    data = each
-    else:
-        data = {}
+            response_json = post_response.json()
+            response["message"] = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+    print(jsonify(response))
+    return jsonify(response)
+
+
+@app.route('/change_inventory', methods=['POST'])
+def change_inventory():
+    """
+    This route will be used to update the inventory from Manage Inventory.
+    """
+    response = {"status": False, "message": ""}
     payload = {}
     if request.method == 'POST':
         payload = {
@@ -246,59 +186,38 @@ def edit(page=None, record=None):
             for k, v in request.form.items() if v not in [None, '']
         }
         payload = Helper().prepare_payload(None, payload)
-        if page.lower() == "rack":
-            payload['size'] = int(payload['size'])
-            request_data = {'config': {TABLE: {payload['name']: payload}}}
+        request_data = { 'config': { TABLE: { "inventory": [payload] } } }
+        post_response = Rest().post_data(TABLE, "inventory", request_data)
+        LOGGER.info(f'{post_response.status_code} -> {post_response.content}')
+        if post_response.status_code == 204:
+            response = {"status": True, "message": f'{TABLE_CAP}, {payload["name"]} Updated.'}
         else:
-            request_data = { 'config': { TABLE: { "inventory": [payload] } } }
-        if page.lower() == "rack":
-            if table_data:
-                if payload['name'] in table_data['config'][TABLE]:
-                    if 'devices' in table_data['config'][TABLE][payload['name']]:
-                        if table_data['config'][TABLE][payload['name']]['devices']:
-                            if table_data['config'][TABLE][payload['name']]['order'] != payload['order']:
-                                error = "Rack have devices, Kindly remove them before changing the Order of Rack"
-                                flash(error, "danger")
-                                return redirect(url_for('edit', page=page, record=record), code=302)
-                            if table_data['config'][TABLE][payload['name']]['size'] != payload['size']:
-                                error = "Rack have devices, Kindly remove them before changing the Size of Rack"
-                                flash(error, "danger")
-                                return redirect(url_for('edit', page=page, record=record), code=302)
+            response_json = post_response.json()
+            response["message"] = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+    print(jsonify(response))
+    return jsonify(response)
 
-            response = Rest().post_data(TABLE, payload['name'], request_data)
-        else:
-            configured = Rest().get_data(TABLE, "inventory/configured")
-            if 'config' in configured:
-                inventory = configured['config']['rack']['inventory']
-                for each in inventory:
-                    if each['name'] == payload['name'] and each['type'] == payload['type']:
-                        if int(each['height']) != int(payload['height']):
-                            error = "Inventory is configured in a Rack, Kindly remove it from there to change the height."
-                            flash(error, "danger")
-                            return redirect(url_for('edit', page=page, record=record), code=302)
-                        if each['orientation'] != payload['orientation']:
-                            error = "Inventory is configured in a Rack, Kindly remove it from there to change the orientation."
-                            flash(error, "danger")
-                            return redirect(url_for('edit', page=page, record=record), code=302)
-            response = Rest().post_data(TABLE, page, request_data)
-        LOGGER.info(f'{response.status_code} -> {response.content}')
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "danger")
-        return redirect(url_for('edit', page=page, record=record), code=302)
-    page_cap = page.capitalize()
 
-    
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    return render_template("change.html", table=TABLE_CAP, page=page_cap, record=record, data=data, inventory=inventory, site_list=site_list, error=error)
 
+# @app.route('/update', methods=['POST']) # TODOD Need to update the logic
+# def update():
+#     """
+#     This API route will update the position of a device in a rack.
+#     """
+#     payload = {}
+#     request_data = json.loads(request.get_json())
+#     if request_data['rack']:
+#         rack_name = request_data['rack']
+#         del request_data['rack']
+#         payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
+#         uri = f'config/rack/{rack_name}'
+#         result = Rest().post_raw(uri, payload)
+#     else:
+#         uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
+#         result = Rest().get_delete(TABLE, uri)
+#         LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
+#     response = json.dumps(payload)
+#     return response
 
 @app.route('/delete/<string:page>/<string:record>', methods=['GET'])
 @app.route('/delete/<string:page>/<string:record>/<string:device>', methods=['GET'])
