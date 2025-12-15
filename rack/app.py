@@ -54,7 +54,7 @@ app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False: # FOR Development Only
-    CORS(app, resources={r"/get_temperature": {"origins": "http://localhost:5173"}})
+    # CORS(app, resources={r"/get_temperature": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/get_screen_size": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/manage": {"origins": "http://localhost:5173"}})
@@ -88,17 +88,21 @@ def home():
     return render_template("index.html", PROMETHEUS_URL=url['PROMETHEUS_URL'], APP_URL=url['APP_URL'])
 
 
-@app.route('/get_temperature', methods=['GET'])
-def get_temperature():
-    """
-    This route will call the prometheus URL to collect the temperature for the machines.
-    """
-    response = []
-    response = Helper().get_metrics('temperature', data=response)
-    response = Helper().get_metrics('load', data=response)
-    response = Helper().get_metrics('power', data=response)
-    response = Helper().get_metrics('gpu_temp', data=response)
-    return jsonify(response)
+# @app.route('/get_temperature', methods=['GET']) # TODO Convert this into vuejs
+# def get_temperature():
+#     """
+#     This route will call the prometheus URL to collect the temperature for the machines.
+#     """
+#     response = []
+#     response = Helper().get_metrics('temperature', data=response)
+#     print(response)
+#     response = Helper().get_metrics('load', data=response)
+#     print(response)
+#     response = Helper().get_metrics('power', data=response)
+#     print(response)
+#     response = Helper().get_metrics('gpu_temp', data=response)
+#     print(response)
+#     return jsonify(response)
 
 
 @app.route('/get_nodes/<string:rack_name>', methods=['GET'])
