@@ -15,31 +15,26 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  // https://yixin3-dev-ctrl001.taurusgroup.one:7755//get_temperature
-  server: {
-    port: 3004,
-    proxy: {
-      '/api': {
-        target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
-        changeOrigin: true,
-        secure: false,
+  build: {
+    // Disable hash in filenames
+    rollupOptions: {
+      output: {
+        entryFileNames: 'index.js',  // Fixed name for JS file
+        chunkFileNames: 'index.js',  // Fixed name for chunk files
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name) {
+            if (/\.(png|jpe?g|gif|svg)$/.test(assetInfo.name)) {
+              return 'logo.png';  // Fixed name for image files
+            }
+            if (/\.css$/.test(assetInfo.name)) {
+              return 'index.css';  // Fixed name for CSS files
+            }
+          }
+          return '[name].[ext]';  // Default for other assets
+        },
       },
-      '/manage': {
-        target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/edit': {
-        target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/delete': {
-        target: 'https://yixin3-dev-ctrl001.taurusgroup.one:7755',
-        changeOrigin: true,
-        secure: false,
-      }
-    }
-  }
-    }
-)
+    },
+  },
+})
+
+

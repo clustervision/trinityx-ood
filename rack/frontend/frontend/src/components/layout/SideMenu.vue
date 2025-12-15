@@ -1,6 +1,6 @@
 <template>
   <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-    <div class="app-brand demo">
+    <!-- <div class="app-brand demo">
       <a href="/" class="app-brand-link">
         <span class="app-brand-logo demo">
             <img src="@/assets/img/logo.png" alt="Logo" style="width: 40px;">
@@ -11,12 +11,12 @@
       <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
         <i class="bx bx-chevron-left bx-sm align-middle"></i>
       </a>
-    </div>
+    </div> -->
 
     <div class="menu-inner-shadow"></div>
 
     <ul class="menu-inner py-1">
-      
+
       <li class="menu-item">
         <RouterLink to="/" class="menu-link">
           <i class="menu-icon tf-icons">
@@ -59,8 +59,8 @@
         <ul class="menu-sub ps-3 pe-3 pt-2" v-show="showUnassigned" style="display: block; list-style: none;">
           <div v-if="UnassignedNodes.length > 0">
              <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2">
-                <DeviceItem 
-                  :device="device" 
+                <DeviceItem
+                  :device="device"
                   :is-rack-view="false"
                 />
              </div>
@@ -80,7 +80,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { routeLocationKey, RouterLink } from 'vue-router';
 import {useRoute} from 'vue-router'
-import DeviceItem from '@/components/rack/DeviceItem.vue'; 
+import DeviceItem from '@/components/rack/DeviceItem.vue';
 
 // --- STATE ---
 const UnassignedNodes = ref<any[]>([]);
@@ -91,9 +91,9 @@ const route = useRoute();
 const fetchUnassignedNodes = async () => {
   try {
     // Fetching directly from the URL you provided
-    const response = await fetch('/manage/rack'); 
+    const response = await fetch('/manage/rack');
     const data = await response.json();
-    
+
     // Assigning the 'inventory' array from your JSON example
     if (data.inventory) {
       UnassignedNodes.value = data.inventory;
