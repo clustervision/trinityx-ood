@@ -41,7 +41,7 @@ else:
 INI_FILE    = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE     = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR     = '/var/log/luna'
-APP_STATE = False # False for Development, True for Production
+APP_STATE   = False # False for Development, True for Production
 LOG_FILE = '/var/log/luna/luna2-web.log' if APP_STATE is True else '/tmp/luna2-web-dev.log'
 
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']

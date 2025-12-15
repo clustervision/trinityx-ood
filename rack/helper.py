@@ -33,11 +33,11 @@ import binascii
 import requests
 from flask import url_for
 from nested_lookup import nested_lookup, nested_update
-from constant import filter_columns, EDITOR_KEYS, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL, GPU_TEMP_URL
+from constant import filter_columns, APP_STATE, EDITOR_KEYS, TEMPERATURE_URL, SYSTEM_LOAD_URL, POWER_URL, GPU_TEMP_URL
 from rest import Rest
 from log import Log
 from constant import filter_columns
-
+# from requests import Request
 
 class Helper():
     """
@@ -49,6 +49,25 @@ class Helper():
         Constructor - As of now, nothing have to initialize.
         """
         self.logger = Log.get_logger()
+
+
+    def app_url(self, request):
+        """
+        This method will provide the URL's for the frontend application.
+        """
+        response = {"PROMETHEUS_URL": "", "APP_URL": ""}
+        full_url = f"https://{request.host}{request.path}"
+        full_url = full_url[:-1]
+        full_url_app = f"{full_url}{url_for('home')}"
+        base_url = full_url_app[:-1]
+        if APP_STATE is False: # FOR Development Only
+            promethues_url = full_url.replace("7755", "9090")
+        else:
+            promethues_url = full_url.replace("8080", "9090")
+        response['PROMETHEUS_URL'] = promethues_url
+        response['APP_URL'] = base_url
+        return response
+
 
 
     def filter_interface(self, table=None, data=None):

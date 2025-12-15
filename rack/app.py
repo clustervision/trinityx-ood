@@ -35,12 +35,16 @@ import json
 from textwrap import wrap
 from html import unescape
 from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
+import requests
+import urllib3
 from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, TOKEN_FILE, APP_STATE
 from log import Log
 from helper import Helper
 from presenter import Presenter
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'rack'
@@ -79,21 +83,9 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    metric = get_temperature()
-    metric_data = metric.get_data(as_text=True)
-    metric = json.loads(metric_data)
-    metric = True if metric else None
-    table_data = Rest().get_data(TABLE)
-    if table_data:
-        rack_data = table_data["config"]["rack"]
-    else:
-        rack_data = {}
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    return render_template("index.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
+    url = Helper().app_url(request)
+    print(url)
+    return render_template("index.html", PROMETHEUS_URL=url['PROMETHEUS_URL'], APP_URL=url['APP_URL'])
 
 
 @app.route('/get_temperature', methods=['GET'])
