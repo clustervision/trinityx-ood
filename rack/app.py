@@ -110,13 +110,15 @@ def get_nodes(rack_name=None):
     """
     This route will call the prometheus URL to collect the temperature for the machines.
     """
-    response = []
+    response = {"status": False, "message": []}
     table_data = Rest().get_data(TABLE, rack_name)
     if isinstance(table_data, dict):
         rack_data = table_data["config"]["rack"][rack_name]["devices"]
         for node in rack_data:
             if node["type"] == "node":
-                response.append(node["name"])
+                response["status"] = True
+                response["message"].append(node["name"])
+    print(jsonify(response))
     return jsonify(response)
 
 @app.route('/get_screen_size', methods=['POST'])
