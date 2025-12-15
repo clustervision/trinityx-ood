@@ -90,6 +90,20 @@ def home():
     return render_template("index.html", PROMETHEUS_URL=url['PROMETHEUS_URL'], APP_URL=url['APP_URL'])
 
 
+@app.route('/device_pool', methods=['GET'])
+def device_pool():
+    """
+    This is the main method of application. It will Show Monitor Options.
+    """
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
+    if table_data:
+        response["message"] = table_data["config"]["rack"]["inventory"]
+    print(jsonify(response))
+    return jsonify(response)
+
+
+
 @app.route('/get_nodes/<string:rack_name>', methods=['GET'])
 def get_nodes(rack_name=None):
     """
