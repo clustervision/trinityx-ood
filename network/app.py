@@ -60,8 +60,8 @@ def validate_home_directory():
     """
     if request.path.startswith('/static/'):
         return
-    if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    if "does not exist" in TOKEN_FILE:
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE)
     return None
 
 
@@ -102,7 +102,7 @@ def show(record=None):
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config'][TABLE][record]
-        raw_data = Helper().prepare_json(raw_data)
+        raw_data = Helper().prepare_json(raw_data, False)
         fields, rows  = Helper().filter_data_col(TABLE, raw_data)
         data = Presenter().show_table_col(fields, rows)
         data = unescape(data)
@@ -133,7 +133,7 @@ def add():
         payload = Helper().prepare_payload(payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{response.status_code} {response.content}')
+        LOGGER.info("%s %s", response.status_code, response.content)
         if response.status_code == 201:
             flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
             return redirect(url_for('home'), code=302)
@@ -158,7 +158,7 @@ def rename(record=None):
         payload['newnetname'] = payload['newname']
         del payload['newname']
         response = Helper().update_record(TABLE, payload)
-        LOGGER.info(f'{response.status_code} {response.content}')
+        LOGGER.info("%s %s", response.status_code, response.content)
         if response.status_code == 204:
             flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
         else:
@@ -186,7 +186,7 @@ def edit(record=None):
     if table_data:
         data = table_data['config'][TABLE][record]
         data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
+        data = Helper().prepare_json(data, False)
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload["non_authoritative"] = "yes" if 'non_authoritative' in payload else "no"
@@ -200,13 +200,16 @@ def edit(record=None):
             del payload["ntp_server"]
         if payload["nameserver_ip"]  == "":
             del payload["nameserver_ip"]
-        if payload["ntp_server"]  == "":
-            del payload["ntp_server"]
-        print(payload)
+        if payload["dhcp_range_begin"]  == "":
+            del payload["dhcp_range_begin"]
+        if payload["dhcp_range_end"]  == "":
+            del payload["dhcp_range_end"]
+        if payload["shared"]  == "":
+            del payload["shared"]
         payload = Helper().prepare_payload(payload)
         request_data = {'config': {TABLE: {payload['name']: payload}}}
         response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{response.status_code} {response.content}')
+        LOGGER.info("%s %s", response.status_code, response.content)
         if response.status_code == 204:
             flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
         else:
@@ -239,7 +242,7 @@ def ipinfo(record=None):
     if request.method == "POST":
         uri = f'config/{TABLE}/{request.form["network"]}/{request.form["ipaddress"]}'
         result = Rest().get_raw(uri)
-        LOGGER.info(f'{result.status_code} {result.content}')
+        LOGGER.info("%s %s", result.status_code, result.content)
         result = result.json()
         if 'message' in result:
             flash(result['message'], "error")
@@ -268,7 +271,7 @@ def nextip(record=None):
     """
     uri = f'config/{TABLE}/{record}/_nextfreeip'
     result = Rest().get_raw(uri)
-    LOGGER.info(f'{result.status_code} {result.content}')
+    LOGGER.info("%s %s", result.status_code, result.content)
     result = result.json()
     if 'message' in result:
         flash(result['message'], "error")
@@ -286,10 +289,10 @@ def taken(record=None):
     """
     response = ""
     data = []
-    reserved_ip = Rest().get_data(TABLE, record+'/_member')
+    reserved_ip = Rest().get_data(TABLE, f'{record}/_member')
     if reserved_ip:
         data = reserved_ip['config'][TABLE][record]['taken']
-        data = Helper().prepare_json(data)
+        data = Helper().prepare_json(data, False)
         num = 1
         fields = ['S.No.', 'IP Address', 'Device Name']
         rows = []

@@ -29,12 +29,11 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 
+from typing import cast, Union, Any
 from configparser import RawConfigParser
 import os
 import requests
-from requests import Response
-from typing import Union, Any
-from requests import Session
+from requests import Response, Session
 from requests.adapters import HTTPAdapter
 import jwt
 import urllib3
@@ -55,7 +54,10 @@ class Rest():
         """
         self.logger = Log.get_logger()
         self.get_ini_info()
-        self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
+        if str(self.security).lower() in ['y', 'yes', 'true']:
+            self.security = True
+        else:
+            self.security = False
         urllib3.disable_warnings()
         self.session = Session()
         self.retries = Retry(
@@ -64,7 +66,7 @@ class Rest():
             status_forcelist=[502, 503, 504],
             allowed_methods={'GET', 'POST'},
         )
-        self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
+        self.session.mount('https://', HTTPAdapter(max_retries=cast(int, self.retries)))
 
 
     def get_ini_info(self):
@@ -79,7 +81,7 @@ class Rest():
             self.errors.append(f'Luna Configuration File Not Found. Default Path is : {INI_FILE}')
         if read_check is False:
             self.errors.append('Luna Configuration File is not readable.')
-        self.logger.debug(f'INI File => {INI_FILE} READ Check is {read_check}')
+        self.logger.debug("INI File => %s READ Check is %s", INI_FILE, read_check)
         if file_check and read_check:
             parser = RawConfigParser()
             parser.read(INI_FILE)
@@ -96,11 +98,11 @@ class Rest():
         return self.username, self.password, self.daemon, self.secret_key, self.errors, self.security
 
 
-    def get_option(self, parser=None, section=None, option=None):
+    def get_option(self, parser: RawConfigParser, section: str, option: str):
         """
         This method will retrieve the value from the INI
         """
-        response = False
+        response: str | None = None
         if parser.has_option(section, option):
             response = parser.get(section, option)
         else:
@@ -114,10 +116,10 @@ class Rest():
         """
         data = {'username': self.username, 'password': self.password}
         daemon_url = f'{self.daemon}/token'
-        self.logger.debug(f'Token URL => {daemon_url}')
+        self.logger.debug("Token URL => %s", daemon_url)
         try:
             call = self.session.post(url=daemon_url, json=data, stream=True, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", call.content, call.status_code)
             if call.content:
                 data = call.json()
                 if 'token' in data:
@@ -148,7 +150,7 @@ class Rest():
             with open(TOKEN_FILE, 'r', encoding='utf-8') as token:
                 token_data = token.read()
             try:
-                jwt.decode(token_data, self.secret_key, algorithms=['HS256'])
+                jwt.decode(token_data, str(self.secret_key), algorithms=['HS256'])
                 response = token_data
             except jwt.exceptions.DecodeError:
                 self.logger.debug('Token Decode Error, Getting New Token.')
@@ -172,10 +174,10 @@ class Rest():
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
-        self.logger.debug(f'GET URL => {daemon_url}')
+        self.logger.debug("GET URL => %s", daemon_url)
         try:
             call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", call.content, call.status_code)
             response_json = call.json()
             if 'message' in response_json:
                 self.errors.append(response_json["message"])
@@ -202,11 +204,11 @@ class Rest():
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
-        self.logger.debug(f'POST URL => {daemon_url}')
-        self.logger.debug(f'POST DATA => {data}')
+        self.logger.debug("POST URL => %s", daemon_url)
+        self.logger.debug("POST DATA => %s", data)
         try:
             response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
@@ -223,10 +225,10 @@ class Rest():
         response = False
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_delete'
-        self.logger.debug(f'GET URL => {daemon_url}')
+        self.logger.debug("GET URL => %s", daemon_url)
         try:
             response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
@@ -243,10 +245,10 @@ class Rest():
         response = False
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_clone'
-        self.logger.debug(f'Clone URL => {daemon_url}')
+        self.logger.debug("Clone URL => %s", daemon_url)
         try:
             response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
@@ -265,10 +267,10 @@ class Rest():
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
-        self.logger.debug(f'Status URL => {daemon_url}')
+        self.logger.debug("Status URL => %s", daemon_url)
         try:
             call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", call.content, call.status_code)
             response = call.status_code
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -288,10 +290,10 @@ class Rest():
         daemon_url = f'{self.daemon}/{route}'
         if uri:
             daemon_url = f'{daemon_url}/{uri}'
-        self.logger.debug(f'RAW URL => {daemon_url}')
+        self.logger.debug("RAW URL => %s", daemon_url)
         try:
             response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
@@ -308,10 +310,10 @@ class Rest():
         response = False
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/{route}'
-        self.logger.debug(f'Clone URL => {daemon_url}')
+        self.logger.debug("Clone URL => %s", daemon_url)
         try:
             response = self.session.post(url=daemon_url, json=payload, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
@@ -328,7 +330,7 @@ class Rest():
         response = False
         try:
             response = self.session.get(url=route, stream=True, data=payload, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
