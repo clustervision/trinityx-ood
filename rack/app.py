@@ -56,7 +56,7 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 if APP_STATE is False: # FOR Development Only
     # CORS(app, resources={r"/get_temperature": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/get_screen_size": {"origins": "http://localhost:5173"}})
+    # CORS(app, resources={r"/get_screen_size": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/manage": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/show": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/update": {"origins": "http://localhost:5173"}})
