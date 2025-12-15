@@ -66,52 +66,23 @@ class Helper():
         return payload
 
 
-    def add_record(self, table=None, data=None):
-        """
-        This method will add a new record.
-        """
-        for remove in ['verbose', 'command', 'action']:
-            data.pop(remove, None)
-        payload = self.prepare_payload(None, data)
-        request_data = {'config':{table:{payload['name']: payload}}}
-        self.logger.debug(f'Payload => {request_data}')
-        response = Rest().post_data(table, payload['name'], request_data)
-        self.logger.debug(f'Response => {response}')
-        return response
-
-
-    def update_record(self, table=None, data=None):
+    def update_record(self, table: str, data: dict):
         """
         This method will update a record.
         """
-        for remove in ['verbose', 'command', 'action', 'hostname']:
-            data.pop(remove, None)
-        if 'raw' in data:
-            data.pop('raw', None)
-        payload = self.prepare_payload(table, data)
+        payload = self.prepare_payload(data)
         name = None
         if 'name' in payload and 'cluster' not in table:
             name = payload['name']
             request_data = {'config':{table:{name: payload}}}
         else:
             request_data = {'config':{table: payload}}
-        self.logger.debug(f'Payload => {request_data}')
+        self.logger.debug("Payload => %s", request_data)
         response = Rest().post_data(table, name, request_data)
         return response
 
 
-    def collect_nodelist(self, nodelist=None):
-        """
-        This method provide the status of one or more nodes.
-        """
-        try:
-            response = hostlist.collect_hostlist(nodelist)
-        except hostlist.BadHostlist:
-            response = "BadHostlist"
-        return response
-
-
-    def filter_data(self, table=None, data=None):
+    def filter_data(self, table: str, data: dict):
         """
         This method will generate the data as for
         row format
@@ -166,7 +137,7 @@ class Helper():
             final_rows.append(tmp)
         rows = final_rows
         for row in rows:
-            action = self.action_items(table, row[0])
+            action = self.action_items(row[0])
             row.insert(len(row), action)
         # Adding Serial Numbers to the dataset
         fields.insert(0, 'S. No.')
@@ -203,7 +174,7 @@ class Helper():
         return item
 
 
-    def action_items(self, table=None, name=None):
+    def action_items(self, name: str):
         """
         This method provide the action items for the table. 
         """
@@ -219,8 +190,8 @@ class Helper():
             taken_click = f'onclick="taken(\'{name}\');"'
             taken_button = f'class="{button}rounded-pill btn-outline-primary"'
             taken = f'<button type="button" {taken_click} {taken_button}>Reserved IP</button>'
-            ipinfo = f'<a href="/ipinfo/{table}/{name}" class="{button}btn-secondary">IP Info</a>'
-            nextip = f'<a href="/nextip/{table}/{name}" class="{button}btn-dark">Next IP</a>'
+            ipinfo = f'<a href="/ipinfo/{name}" class="{button}btn-secondary">IP Info</a>'
+            nextip = f'<a href="/nextip/{name}" class="{button}btn-dark">Next IP</a>'
         elif item_type == 'icon':
 
             info =  self.make_icon(
@@ -272,10 +243,7 @@ class Helper():
             taken = ''
             ipinfo = ''
             nextip = ''
-        action = {
-            'network':  [info, edit, delete, taken, ipinfo, nextip]
-        }
-        response = "&nbsp;".join(action[table])
+        response = "&nbsp;".join([info, edit, delete, taken, ipinfo, nextip])
         return response
 
 
@@ -301,7 +269,7 @@ class Helper():
             if content is not None:
                 content = base64.b64encode(content).decode("utf-8")
         except binascii.Error:
-            self.logger.debug(f'Base64 Encode Error => {content}')
+            self.logger.debug("Base64 Encode Error => %s", content)
         return content
 
 
@@ -314,13 +282,13 @@ class Helper():
                 content = base64.b64decode(content)
                 content = content.decode("utf-8")
         except binascii.Error:
-            self.logger.debug(f'Base64 Decode Error => {content}')
+            self.logger.debug("Base64 Decode Error => %s", content)
         except UnicodeDecodeError:
-            self.logger.debug(f'Base64 Unicode Decode Error => {content}')
+            self.logger.debug("Base64 Unicode Decode Error => %s", content)
         return content
 
 
-    def prepare_json(self, json_data=None, limit=False):
+    def prepare_json(self, json_data: dict, limit: bool=False):
         """
         This method will decode the base 64 string.
         """
@@ -338,24 +306,24 @@ class Helper():
                                 content = f'{content}...'
                         json_data = nested_update(json_data, key=key, value=content)
                     except TypeError:
-                        self.logger.debug(f"Without any reason {content} is coming from api.")
+                        self.logger.debug("Without any reason %s is coming from api.", content)
         return json_data
 
 
-    def filter_data_col(self, table=None, data=None):
+    def filter_data_col(self, table: str, data: dict):
         """
         This method will generate the data as for
         row format
         """
-        self.logger.debug(f'Table => {table} and Data => {data}')
+        self.logger.debug("Table => %s and Data => %s", table, data)
         defined_keys = sortby(table)
-        self.logger.debug(f'Fields => {defined_keys}')
+        self.logger.debug("Fields => %s", defined_keys)
         for new_key in list(data.keys()):
             if new_key not in defined_keys:
                 defined_keys.append(new_key)
         index_map = {v: i for i, v in enumerate(defined_keys)}
         data = sorted(data.items(), key=lambda pair: index_map[pair[0]])
-        self.logger.debug(f'Sorted Data => {data}')
+        self.logger.debug("Sorted Data => %s", data)
         fields, rows = [], []
         for key in data:
             fields.append(f"<strong>{key[0].capitalize()}</strong>")
@@ -363,7 +331,7 @@ class Helper():
                 new_list = []
                 for internal in key[1]:
                     for internal_val in internal:
-                        self.logger.debug(f'Key: {internal_val} Value: {internal[internal_val]}')
+                        self.logger.debug("Key: %s Value: %s", internal_val, internal[internal_val])
                         if internal[internal_val] in [True, False, None]:
                             internal[internal_val] = self.format_value(internal[internal_val])
                         if internal_val == "interface":
@@ -376,7 +344,7 @@ class Helper():
             elif isinstance(key[1], dict):
                 new_list = []
                 for internal in key[1]:
-                    self.logger.debug(f'Key => {internal} and Value => {key[1][internal]}')
+                    self.logger.debug("Key => %s and Value => %s", internal, key[1][internal])
                     in_key = internal
                     in_val = key[1][internal]
                     if in_val in [True, False, None]:
