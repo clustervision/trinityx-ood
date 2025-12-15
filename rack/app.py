@@ -197,45 +197,77 @@ def change_inventory():
     print(jsonify(response))
     return jsonify(response)
 
-
-
-# @app.route('/update', methods=['POST']) # TODOD Need to update the logic
-# def update():
-#     """
-#     This API route will update the position of a device in a rack.
-#     """
-#     payload = {}
-#     request_data = json.loads(request.get_json())
-#     if request_data['rack']:
-#         rack_name = request_data['rack']
-#         del request_data['rack']
-#         payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
-#         uri = f'config/rack/{rack_name}'
-#         result = Rest().post_raw(uri, payload)
-#     else:
-#         uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
-#         result = Rest().get_delete(TABLE, uri)
-#         LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
-#     response = json.dumps(payload)
-#     return response
-
-@app.route('/delete/<string:page>/<string:record>', methods=['GET'])
-@app.route('/delete/<string:page>/<string:record>/<string:device>', methods=['GET'])
-def delete(page=None, record=None, device=None):
-    if page == "rack":
-        response = Rest().get_delete(TABLE, record)
+@app.route('/delete_rack/<string:rack_name>', methods=['GET'])
+def delete_rack(rack_name: str):
+    """
+    This route will remove the rack from the luna.
+    """
+    response = {"status": False, "message": ""}
+    delete_response = Rest().get_delete(TABLE, rack_name)
+    LOGGER.info(f'{delete_response.status_code} -> {delete_response.content}')
+    if delete_response.status_code == 204:
+        response = {"status": True, "message": f'{TABLE_CAP}, {rack_name} is deleted.'}
+    elif delete_response.status_code == 201:
+        response_json = delete_response.json()
+        response["message"] = response_json["message"]
     else:
-        response = Rest().get_delete(TABLE, f'inventory/{record}/type/{device}')
-    LOGGER.info(f'{response.status_code} -> {response.content}')
-    if response.status_code == 204:
-        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
-    elif response.status_code == 201:
-        response_json = response.json()
-        flash(response_json["message"], "success")
+        response_json = delete_response.json()
+        response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
+    print(jsonify(response))
+    return jsonify(response)
+
+
+@app.route('/delete_inventory/<string:device>/<string:inventory>', methods=['GET'])
+def delete_inventory(device: str, inventory: str):
+    """
+    This route will remove the inventory from the luna.
+    """
+    response = {"status": False, "message": ""}
+    delete_response = Rest().get_delete(TABLE, f'inventory/{recoinventoryrd}/type/{device}')
+    LOGGER.info(f'{delete_response.status_code} -> {delete_response.content}')
+    if delete_response.status_code == 204:
+        response = {"status": True, "message": f'{TABLE_CAP}, {inventory} is deleted.'}
+    elif delete_response.status_code == 201:
+        response_json = delete_response.json()
+        response["message"] = response_json["message"]
     else:
-        response_json = response.json()
-        flash(f'ERROR {response.status_code} :: {response_json["message"]}', "danger")
-    return redirect(url_for('manage', page=page), code=302)
+        response_json = delete_response.json()
+        response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
+    print(jsonify(response))
+    return jsonify(response)
+
+
+
+@app.route('/update_rack', methods=['POST'])
+def update_rack():
+    """
+    This API route will update the position of a device in a rack.
+    """
+    response = {"status": False, "message": {}}
+    payload = {}
+    request_data = json.loads(request.get_json())
+    rack_name = request_data['rack']
+    del request_data['rack']
+    payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
+    uri = f'config/rack/{rack_name}'
+    result = Rest().post_raw(uri, payload)
+    response = {"status": True, "message": json.dumps(payload)}
+    return jsonify(response)
+
+
+@app.route('/update_inventory', methods=['POST'])
+def update_inventory():
+    """
+    This API route will update the position of a device in a rack.
+    """
+    response = {"status": False, "message": {}}
+    payload = {}
+    request_data = json.loads(request.get_json())
+    uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
+    result = Rest().get_delete(TABLE, uri)
+    LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
+    response = {"status": True, "message": json.dumps(payload)}
+    return jsonify(response)
 
 
 @app.route('/perform/<string:system>/<string:action>/<string:nodename>', methods=['GET'])
@@ -244,7 +276,7 @@ def perform(system=None, action=None, nodename=None):
     This is the main method of application.
     It will list all Control which is available with daemon.
     """
-    response = {"status": "danger", "message": ""}
+    response = {"status": False, "message": ""}
     message = ''
     if system and action and nodename:
         uri = f'control/action/{system}/{nodename}/_{action}'
@@ -264,13 +296,11 @@ def perform(system=None, action=None, nodename=None):
             message = f'<br />{message}'
         if result.status_code in [200, 204]:
             if 'off' in message:
-                response['status'] = "danger"
                 response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
             else:
-                response['status'] = "success"
+                response['status'] = True
                 response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
         else:
-            response['status'] = "warning"
             response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
     return response
 
