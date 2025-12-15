@@ -55,11 +55,15 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/manage": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/show": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/update": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/edit": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/delete": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/manage_racks": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/manage_inventory": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/show_rack": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/change_rack": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/change_inventory": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/delete_rack": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/delete_inventory": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/update_rack": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/update_inventory": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/perform": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
 
