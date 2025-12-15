@@ -121,19 +121,19 @@ def get_nodes(rack_name=None):
     print(jsonify(response))
     return jsonify(response)
 
-@app.route('/get_screen_size', methods=['POST'])
-def get_screen_size():
-    # data = request.json
-    data = request.get_json()
-    width = data['width']
-    if width >= 1921:
-        width = 220
-        height = 30
-    else:
-        width = 120
-        height = 20
-    # print(f"Screen Width: {width}, Screen Height: {height}")
-    return jsonify({'width': width, 'height': height})
+# @app.route('/get_screen_size', methods=['POST']) # TODO: Depriciated for VueJS Frontend
+# def get_screen_size():
+#     # data = request.json
+#     data = request.get_json()
+#     width = data['width']
+#     if width >= 1921:
+#         width = 220
+#         height = 30
+#     else:
+#         width = 120
+#         height = 20
+#     # print(f"Screen Width: {width}, Screen Height: {height}")
+#     return jsonify({'width': width, 'height': height})
 
 
 @app.route('/manage/<string:page>', methods=['GET'])
