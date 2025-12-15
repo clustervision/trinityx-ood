@@ -18,54 +18,48 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-This File is a Main File Luna 2 Monitor.
-This file will provide the functionality to observe the Luna status and queue.
+This File is a Main File Luna 2 Rack View.
+This file will provide the functionality to manage the Rack and the inventory in it.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2026, Luna2 Project[OOD]'
 __license__     = 'GPL'
 __version__     = '2.0'
 __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
+__status__      = 'Production'
 
 import os
 import json
 from textwrap import wrap
-from html import unescape
-from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
-import requests
+from flask import Flask, render_template, request, jsonify
 import urllib3
 from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE, APP_STATE
+from constant import LICENSE, TOKEN_FILE, APP_STATE, APP_KEY
 from log import Log
 from helper import Helper
-from presenter import Presenter
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = Log.init_log('INFO')
-TABLE = 'rack'
-TABLE_CAP = 'Rack'
-# app = Flask(__name__, static_folder="static")
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.secret_key = APP_KEY
 
 if APP_STATE is False: # FOR Development Only
-    CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/manage_racks": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/manage_inventory": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/show_rack": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/change_rack": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/change_inventory": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/delete_rack": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/delete_inventory": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/update_rack": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/update_inventory": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/perform": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
+    CORS(app, resources = {r"/get_nodes":           {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/manage_racks":        {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/manage_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/show_rack":           {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/change_rack":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/change_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/delete_rack":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/delete_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/update_rack":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/update_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/perform":             {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/license":             {"origins": "http://localhost:5173"}} )
 
 
 @app.before_request
@@ -75,8 +69,9 @@ def validate_home_directory():
     """
     if request.path.startswith('/static/'):
         return
-    if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    if "does not exist" in TOKEN_FILE:
+        response = {"status": False, "message": TOKEN_FILE}
+        return response
     return None
 
 
@@ -87,7 +82,11 @@ def home():
     """
     url = Helper().app_url(request)
     print(url)
-    return render_template("index.html", PROMETHEUS_URL=url['PROMETHEUS_URL'], APP_URL=url['APP_URL'])
+    return render_template(
+        "index.html",
+        PROMETHEUS_URL  = url['PROMETHEUS_URL'],
+        APP_URL         = url['APP_URL']
+    )
 
 
 @app.route('/device_pool', methods=['GET'])
@@ -96,12 +95,12 @@ def device_pool():
     This is the main method of application. It will Show Monitor Options.
     """
     response = {"status": False, "message": []}
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
+    table_data = Rest().get_data("rack", "inventory/unconfigured")
     if table_data:
+        # response["message"] = table_data.content["config"]["rack"]["inventory"]
         response["message"] = table_data["config"]["rack"]["inventory"]
     print(jsonify(response))
     return jsonify(response)
-
 
 
 @app.route('/get_nodes/<string:rack_name>', methods=['GET'])
@@ -110,7 +109,7 @@ def get_nodes(rack_name=None):
     This route will call the prometheus URL to collect the temperature for the machines.
     """
     response = {"status": False, "message": []}
-    table_data = Rest().get_data(TABLE, rack_name)
+    table_data = Rest().get_data("rack", rack_name)
     if isinstance(table_data, dict):
         rack_data = table_data["config"]["rack"][rack_name]["devices"]
         for node in rack_data:
@@ -127,7 +126,7 @@ def manage_racks():
     This is the main route to manage things.
     """
     response = {"status": False, "message": []}
-    table_data = Rest().get_data(TABLE)
+    table_data = Rest().get_data("rack")
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config']['rack']
@@ -143,7 +142,7 @@ def manage_inventory():
     This is the main route to manage things.
     """
     response = {"status": False, "message": []}
-    table_data = Rest().get_data(TABLE, "inventory")
+    table_data = Rest().get_data("rack", "inventory")
     LOGGER.info(table_data)
     if table_data:
         raw_data = table_data['config']['rack']["inventory"]
@@ -159,7 +158,7 @@ def show_rack(rack_name: str):
     This route will return the provided rack data.
     """
     response = {"status": False, "message": {}}
-    table_data = Rest().get_data(TABLE, rack_name)
+    table_data = Rest().get_data("rack", rack_name)
     if table_data:
         rack_data = table_data["config"]["rack"][rack_name]
         response["message"] = rack_data
@@ -179,14 +178,15 @@ def change_rack():
             k: v
             for k, v in request.form.items() if v not in [None, '']
         }
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        post_response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{post_response.status_code} -> {post_response.content}')
+        request_data = {'config': {"rack": {payload['name']: payload}}}
+        post_response = Rest().post_data("rack", payload['name'], request_data)
+        LOGGER.info("%s -> %s", post_response.status_code, post_response.content)
         if post_response.status_code == 204:
-            response = {"status": True, "message": f'{TABLE_CAP}, {payload["name"]} Updated.'}
+            response = {"status": True, "message": f'Rack, {payload["name"]} Updated.'}
         else:
             response_json = post_response.json()
-            response["message"] = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+            msg = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+            response["message"] = msg
     print(jsonify(response))
     return jsonify(response)
 
@@ -203,17 +203,18 @@ def change_inventory():
             k: v
             for k, v in request.form.items() if v not in [None, '']
         }
-        payload = Helper().prepare_payload(None, payload)
-        request_data = { 'config': { TABLE: { "inventory": [payload] } } }
-        post_response = Rest().post_data(TABLE, "inventory", request_data)
-        LOGGER.info(f'{post_response.status_code} -> {post_response.content}')
+        request_data = { 'config': { "rack": { "inventory": [payload] } } }
+        post_response = Rest().post_data("rack", "inventory", request_data)
+        LOGGER.info("%s -> %s", post_response.status_code, post_response.content)
         if post_response.status_code == 204:
-            response = {"status": True, "message": f'{TABLE_CAP}, {payload["name"]} Updated.'}
+            response = {"status": True, "message": f'Rack, {payload["name"]} Updated.'}
         else:
             response_json = post_response.json()
-            response["message"] = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+            msg = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+            response["message"] = msg
     print(jsonify(response))
     return jsonify(response)
+
 
 @app.route('/delete_rack/<string:rack_name>', methods=['GET'])
 def delete_rack(rack_name: str):
@@ -221,10 +222,10 @@ def delete_rack(rack_name: str):
     This route will remove the rack from the luna.
     """
     response = {"status": False, "message": ""}
-    delete_response = Rest().get_delete(TABLE, rack_name)
-    LOGGER.info(f'{delete_response.status_code} -> {delete_response.content}')
+    delete_response = Rest().get_delete("rack", rack_name)
+    LOGGER.info("%s -> %s", delete_response.status_code, delete_response.content)
     if delete_response.status_code == 204:
-        response = {"status": True, "message": f'{TABLE_CAP}, {rack_name} is deleted.'}
+        response = {"status": True, "message": f'Rack, {rack_name} is deleted.'}
     elif delete_response.status_code == 201:
         response_json = delete_response.json()
         response["message"] = response_json["message"]
@@ -241,10 +242,10 @@ def delete_inventory(device: str, inventory: str):
     This route will remove the inventory from the luna.
     """
     response = {"status": False, "message": ""}
-    delete_response = Rest().get_delete(TABLE, f'inventory/{recoinventoryrd}/type/{device}')
-    LOGGER.info(f'{delete_response.status_code} -> {delete_response.content}')
+    delete_response = Rest().get_delete("rack", f'inventory/{inventory}/type/{device}')
+    LOGGER.info("%s -> %s", delete_response.status_code, delete_response.content)
     if delete_response.status_code == 204:
-        response = {"status": True, "message": f'{TABLE_CAP}, {inventory} is deleted.'}
+        response = {"status": True, "message": f'Rack, {inventory} is deleted.'}
     elif delete_response.status_code == 201:
         response_json = delete_response.json()
         response["message"] = response_json["message"]
@@ -253,7 +254,6 @@ def delete_inventory(device: str, inventory: str):
         response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
     print(jsonify(response))
     return jsonify(response)
-
 
 
 @app.route('/update_rack', methods=['POST'])
@@ -269,6 +269,7 @@ def update_rack():
     payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
     uri = f'config/rack/{rack_name}'
     result = Rest().post_raw(uri, payload)
+    LOGGER.info("Response %s & HTTP Code %s", result.status_code, result.content)
     response = {"status": True, "message": json.dumps(payload)}
     return jsonify(response)
 
@@ -282,8 +283,8 @@ def update_inventory():
     payload = {}
     request_data = json.loads(request.get_json())
     uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
-    result = Rest().get_delete(TABLE, uri)
-    LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
+    result = Rest().get_delete("rack", uri)
+    LOGGER.info("Response %s & HTTP Code %s", result.status_code, result.content)
     response = {"status": True, "message": json.dumps(payload)}
     return jsonify(response)
 
@@ -314,12 +315,12 @@ def perform(system=None, action=None, nodename=None):
             message = f'<br />{message}'
         if result.status_code in [200, 204]:
             if 'off' in message:
-                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+                response['message'] = f'Node {nodename} {system} {action} :: {message}.'
             else:
                 response['status'] = True
-                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+                response['message'] = f'Node {nodename} {system} {action} :: {message}.'
         else:
-            response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
+            response['message'] = f'{nodename} {system} {action} :: {message}.'
     return response
 
 
