@@ -71,7 +71,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-const url = 'https://yixin3-dev-ctrl001:7755';
+const Url = 'https://yixin3-dev-ctrl001:7755';
 
 
 const route = useRoute();
@@ -94,7 +94,7 @@ onMounted(async () => {
   
   try {
     // New Backend Route: /show_rack/<rack_name>
-    const response = await axios.get(url + `/show_rack/${rackName}`);
+    const response = await axios.get(Url + `/show_rack/${rackName}`);
     
     // structure: { message: { name: '...', site: '...', ... } }
     const rackData = response.data.message; 
@@ -128,11 +128,11 @@ const submitForm = async () => {
     params.append('order', form.order);
     params.append('size', form.size.toString());
 
-    const response = await axios.post(url + '/change_rack', params);
+    const response = await axios.post(Url + '/change_rack', params);
 
     // Backend returns { status: true, message: '...' }
     if (response.data.status) {
-      router.push('/manage_racks');
+      router.push(Url+'/manage_racks');
     } else {
       errorMessage.value = response.data.message || "Update failed.";
     }

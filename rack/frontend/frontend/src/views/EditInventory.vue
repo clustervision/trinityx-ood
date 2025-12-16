@@ -84,7 +84,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
-const url = 'https://yixin3-dev-ctrl001:7755';
+const Url = 'https://yixin3-dev-ctrl001:7755';
 
 
 const route = useRoute();
@@ -106,7 +106,7 @@ onMounted(async () => {
 
   try {
     // No specific /show_inventory endpoint, so we fetch all to find the match
-    const response = await axios.get(url + '/manage_inventory');
+    const response = await axios.get(Url + '/manage_inventory');
 
     let items = [];
     if (response.data.status && Array.isArray(response.data.message)) {
@@ -141,10 +141,10 @@ const submitForm = async () => {
     params.append('orientation', form.orientation);
 
     // Backend route: /change_inventory
-    const response = await axios.post(url + '/change_inventory', params);
+    const response = await axios.post(Url + '/change_inventory', params);
 
     if (response.data.status) {
-      router.push(url+'/manage_inventory');
+      router.push(Url+'/manage_inventory');
     } else {
       errorMessage.value = response.data.message || 'Update failed';
     }

@@ -68,7 +68,7 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
-const url = 'https://yixin3-dev-ctrl001:7755';
+const Url = 'https://yixin3-dev-ctrl001:7755';
 
 // --- STATE ---
 const UnassignedNodes = ref<any[]>([]);
@@ -76,26 +76,30 @@ const showUnassigned = ref(true);
 const route = useRoute();
 
 // --- API FETCH ---
+// src/components/SideMenu.vue
+
 const fetchUnassignedNodes = async () => {
   try {
-    const response = await axios.get(url + '/device_pool');
+    // 1. Make the request using your configured API instance
+    const response = await axios.get(Url + '/device_pool');
     
-    // Check if valid JSON status
-    console.log(response)
-    if (response.data.status === undefined && !response.data.message) {
-      console.error("Critical: Invalid JSON structure.");
-      return;
-    }
+    // 2. Extract the data object
+    const data = response.data; // This is { message: [...], status: false }
 
-    const data = response.data;
-    // Backend structure: { message: [...] }
+    // 3. FIX: Check if 'message' is an array. 
+    // Do NOT check 'if (data.status)' because your backend sends false.
     if (data.message && Array.isArray(data.message)) {
-      UnassignedNodes.value = data.message;
-    } else if (data.inventory) {
-      UnassignedNodes.value = data.inventory;
+       UnassignedNodes.value = data.message;
+    } else {
+       UnassignedNodes.value = [];
     }
+    
+    // Debugging: Check the console to see the array is now set
+    console.log("Unassigned Nodes set to:", UnassignedNodes.value);
+
   } catch (error) {
     console.error("Failed to load Unassigned Inventory:", error);
+    UnassignedNodes.value = [];
   }
 };
 

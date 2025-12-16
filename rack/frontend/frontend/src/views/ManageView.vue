@@ -83,7 +83,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import type RackView from './RackView.vue';
 
-const url = 'https://yixin3-dev-ctrl001:7755';
+const Url = 'https://yixin3-dev-ctrl001:7755';
 const route = useRoute();
 const router = useRouter();
 const pageType = ref(''); 
@@ -95,15 +95,15 @@ const pageName = computed(() => {
 });
 
 const goToAddPage = () => {
-  router.push(url + '/change_rack'); 
+  router.push(Url + '/change_rack'); 
 };
 
 // 1. EDIT ACTION
 const editItem = (item: any) => {
   if (pageType.value === 'rack') {
-    router.push(url +`'/change_rack'${item.name}`);
+    router.push(Url +`'/change_rack'${item.name}`);
   } else if (pageType.value === 'inventory') {
-    router.push(url+`'/change_rack'${item.name}`);
+    router.push(Url+`'/change_rack'${item.name}`);
   }
 };
 
@@ -114,9 +114,9 @@ const deleteItem = async (item: any) => {
   try {
     let url = '';
     if (pageType.value === 'rack') {
-      url = `/delete_rack/${item.name}`;
+      url = Url +`/delete_rack/${item.name}`;
     } else {
-      url = `/delete_inventory/${item.type}/${item.name}`;
+      url = Url + `/delete_inventory/${item.type}/${item.name}`;
     }
 
     const response = await axios.get(url);
@@ -144,9 +144,9 @@ const fetchData = async () => {
   try {
     let url = '';
     if (page === 'rack') {
-      url = '/manage_racks';
+      url = Url + '/manage_racks';
     } else if (page === 'inventory') {
-      url = '/manage_inventory';
+      url =Url +  '/manage_inventory';
     } else {
       return; 
     }
@@ -155,11 +155,6 @@ const fetchData = async () => {
     
     // Check backend status
     if (response.data.status) {
-      // Based on your python code, message contains the array
-      // e.g., response.data.message = [ {name: '...', ...} ]
-      // Note: In Python manage_racks, you do response["message"].append(raw_data), 
-      // so it might be a nested array [[...]]. 
-      // Let's flatten it just in case, or access index 0 if it's nested.
       
       const rawMsg = response.data.message;
       

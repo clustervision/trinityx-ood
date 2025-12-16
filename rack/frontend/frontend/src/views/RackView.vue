@@ -27,14 +27,14 @@ const showDropdown1 = ref(false);
 const showDropdown2 = ref(false); 
 const rawMetricData = ref<any[]>([]); 
 const currentMetricType = ref<string | null>(null);
-const url = 'https://yixin3-dev-ctrl001:7755'
+const Url = 'https://yixin3-dev-ctrl001:7755'
 const prome_url = 'https://yixin3-dev-ctrl001:9000'
 
 // --- API: LOAD RACKS ---
 const loadRacks = async () => {
   try {
     // New Backend returns JSON directly
-    const response = await axios.get(url + '/manage_racks');
+    const response = await axios.get(Url + '/manage_racks');
     
     // structure: { status: true, message: [ {name: 'Rack1', size: 42, ...} ] }
     if (response.data.status) {
@@ -76,7 +76,7 @@ const generateSlots = (size: number, order: string) => {
 const fetchDevicesForRack = async (rack: Rack) => {
   try {
     // Backend: /get_nodes/<rack_name> -> { status: true, message: ["node1", "node2"] }
-    const res = await axios.get(url + `/get_nodes/${rack.name}`);
+    const res = await axios.get(Url + `/get_nodes/${rack.name}`);
     
     if (res.data.status && Array.isArray(res.data.message)) {
       const deviceNames = res.data.message;

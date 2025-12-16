@@ -98,7 +98,7 @@
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-const url = 'https://yixin3-dev-ctrl001:7755';
+const Url = 'https://yixin3-dev-ctrl001:7755';
 
 
 const router = useRouter();
@@ -128,10 +128,10 @@ const submitForm = async () => {
     params.append('size', form.size.toString());
 
     // Backend route: /change_rack (used for both Add and Update based on your backend logic)
-    const response = await axios.post(url + '/change_rack', params);
+    const response = await axios.post(Url + '/change_rack', params);
 
     if (response.data.status) {
-      router.push(url + '/manage_racks');
+      router.push(Url + '/manage_racks');
     } else {
       errorMessage.value = response.data.message || 'Failed to add rack';
     }
