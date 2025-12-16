@@ -5,9 +5,9 @@
         Manage {{ pageName }} Frames
         
         <button 
-          v-if="pageType === 'rack'" 
+          v-if="props.pageType === 'rack'" 
           class="btn btn-success btn-sm" 
-          @click="goToAddPage"
+          @click="router.push('/edit/Rack')"
         >
           Add New {{ pageName }}
         </button>
@@ -17,7 +17,7 @@
         <div class="table-responsive text-nowrap">
           <table class="table table-bordered table-hover table-striped">
             <thead>
-              <tr v-if="pageType === 'rack'">
+              <tr v-if="props.pageType === 'rack'">
                 <th class="text-center">S. No.</th>
                 <th class="text-center">Name</th>
                 <th class="text-center">Size</th>
@@ -40,7 +40,7 @@
               <tr v-for="(item, index) in items" :key="index">
                 <td class="text-center">{{ index + 1 }}</td>
                 
-                <template v-if="pageType === 'rack'">
+                <template v-if="props.pageType === 'rack'">
                    <td class="text-center">{{ item.name }}</td>
                    <td class="text-center">{{ item.size }}</td>
                    <td class="text-center">{{ item.order }}</td>
@@ -65,7 +65,7 @@
                 </td>
               </tr>
               <tr v-if="items.length === 0">
-                 <td :colspan="pageType === 'rack' ? 7 : 6" class="text-center">
+                 <td :colspan="props.pageType === 'rack' ? 7 : 6" class="text-center">
                     No {{ pageName }} Available.
                  </td>
               </tr>
@@ -79,31 +79,31 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
-import type RackView from './RackView.vue';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
-const route = useRoute();
 const router = useRouter();
-const pageType = ref(''); 
 const items = ref<any[]>([]);
 
+// Define props to receive data from App.vue
+const props = defineProps<{
+  pageType: string // 'rack' or 'inventory'
+}>();
+
 const pageName = computed(() => {
-  if (!pageType.value) return '';
-  return pageType.value.charAt(0).toUpperCase() + pageType.value.slice(1);
+  if (!props.pageType) return '';
+  return props.pageType.charAt(0).toUpperCase() + props.pageType.slice(1);
 });
 
-const goToAddPage = () => {
-  router.push(Url + '/change_rack'); 
-};
-
-// 1. EDIT ACTION
+// 1. EDIT ACTION (Fixed Routes)
 const editItem = (item: any) => {
-  if (pageType.value === 'rack') {
-    router.push(Url +`'/change_rack'${item.name}`);
-  } else if (pageType.value === 'inventory') {
-    router.push(Url+`'/change_rack'${item.name}`);
+  if (props.pageType === 'rack') {
+    // Navigate to Frontend Route: /edit/rack/:id
+    router.push(`/edit/rack/${item.name}`);
+  } else if (props.pageType === 'inventory') {
+    // Navigate to Frontend Route: /edit/inventory/:id
+    router.push(`/edit/inventory/${item.name}`);
   }
 };
 
@@ -112,19 +112,18 @@ const deleteItem = async (item: any) => {
   if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
 
   try {
-    let url = '';
-    if (pageType.value === 'rack') {
-      url = Url +`/delete_rack/${item.name}`;
+    let deleteUrl = '';
+    // Use props.pageType here
+    if (props.pageType === 'rack') {
+      deleteUrl = Url + `/delete_rack/${item.name}`;
     } else {
-      url = Url + `/delete_inventory/${item.type}/${item.name}`;
+      deleteUrl = Url + `/delete_inventory/${item.type}/${item.name}`;
     }
 
-    const response = await axios.get(url);
+    const response = await axios.get(deleteUrl);
 
     if (response.data.status) {
-      // Success: Remove item locally to update UI immediately
       items.value = items.value.filter(i => i.name !== item.name);
-      // Optional: alert(response.data.message);
     } else {
       alert(`Failed to delete: ${response.data.message}`);
     }
@@ -135,45 +134,40 @@ const deleteItem = async (item: any) => {
   }
 };
 
-// 3. LOAD DATA
+// 3. LOAD DATA (Fixed Logic)
 const fetchData = async () => {
-  const page = route.params.page as string;
-  pageType.value = page;
   items.value = [];
-
+  
+  // ERROR WAS HERE: 'page' was undefined. Switched to 'props.pageType'
   try {
-    let url = '';
-    if (page === 'rack') {
-      url = Url + '/manage_racks';
-    } else if (page === 'inventory') {
-      url =Url +  '/manage_inventory';
+    let apiUrl = '';
+    if (props.pageType === 'rack') {
+      apiUrl = Url + '/manage_racks';
+    } else if (props.pageType === 'inventory') {
+      apiUrl = Url + '/manage_inventory';
     } else {
       return; 
     }
 
-    const response = await axios.get(url);
+    const response = await axios.get(apiUrl);
     
-    // Check backend status
     if (response.data.status) {
-      
       const rawMsg = response.data.message;
-      
       if (Array.isArray(rawMsg)) {
-        // If Python did .append(list), we get [[obj, obj]]. Flatten handles it.
         items.value = rawMsg.flat(); 
       } else if (typeof rawMsg === 'object') {
-          // Fallback if it returns a single dict object instead of list
-          items.value = Object.values(rawMsg);
+        items.value = Object.values(rawMsg);
       }
     }
-
   } catch (e) {
     console.error("Failed to load table data", e);
   }
 };
 
 onMounted(fetchData);
-watch(() => route.params.page, fetchData);
+
+// Watch for changes in the prop (in case user switches menu items rapidly)
+watch(() => props.pageType, fetchData);
 </script>
 
 <style scoped>

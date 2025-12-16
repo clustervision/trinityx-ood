@@ -5,12 +5,12 @@
     <ul class="menu-inner py-1">
 
       <li class="menu-item">
-        <RouterLink to="/" class="menu-link">
+        <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'dashboard')">
           <i class="menu-icon tf-icons">
              <img src="@/assets/icons/computer-network.png" alt="icon" width="20"/>
           </i>
           <div data-i18n="Analytics">Rack Representation</div>
-        </RouterLink>
+        </a>
       </li>
 
       <li class="menu-header small text-uppercase">
@@ -18,21 +18,21 @@
       </li>
 
       <li class="menu-item">
-        <RouterLink to="/manage/rack" class="menu-link">
+        <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-rack')">
           <i class="menu-icon tf-icons">
             <img src="@/assets/icons/application-detail.png" alt="icon" width="20"/>
           </i>
           <div data-i18n="Rack">Manage Rack Frames</div>
-        </RouterLink>
+        </a>
       </li>
 
       <li class="menu-item">
-        <RouterLink to="/manage/inventory" class="menu-link">
+        <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-inventory')">
           <i class="menu-icon tf-icons">
               <img src="@/assets/icons/application-monitor.png" alt="icon" width="20"/>
           </i>
           <div data-i18n="Inventory">Manage Inventory</div>
-        </RouterLink>
+        </a>
       </li>
 
        <li class="menu-item" :class="{ 'open': showUnassigned }">
@@ -65,38 +65,28 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute } from 'vue-router'; // Only used for watching path changes if needed
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
-// --- STATE ---
+// Define the emits so Vue knows this component sends events
+const emit = defineEmits(['change-view']);
+
 const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true); 
 const route = useRoute();
 
-// --- API FETCH ---
-// src/components/SideMenu.vue
-
 const fetchUnassignedNodes = async () => {
   try {
-    // 1. Make the request using your configured API instance
     const response = await axios.get(Url + '/device_pool');
+    const data = response.data; 
     
-    // 2. Extract the data object
-    const data = response.data; // This is { message: [...], status: false }
-
-    // 3. FIX: Check if 'message' is an array. 
-    // Do NOT check 'if (data.status)' because your backend sends false.
     if (data.message && Array.isArray(data.message)) {
        UnassignedNodes.value = data.message;
     } else {
        UnassignedNodes.value = [];
     }
-    
-    // Debugging: Check the console to see the array is now set
-    console.log("Unassigned Nodes set to:", UnassignedNodes.value);
-
   } catch (error) {
     console.error("Failed to load Unassigned Inventory:", error);
     UnassignedNodes.value = [];
@@ -105,26 +95,15 @@ const fetchUnassignedNodes = async () => {
 
 onMounted(() => {
   fetchUnassignedNodes();
-  watch(
-    () => route.path,
-    () => fetchUnassignedNodes()
-  );
 });
 </script>
 
 <style scoped>
+/* Keep your existing styles */
 .menu-item .router-link-active {
     background-color: rgba(67, 89, 113, 0.1);
     color: #696cff;
     font-weight: bold;
-}
-.menu-item .router-link-active::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    width: 3px;
-    height: 100%;
-    background-color: #696cff;
 }
 
 .menu-sub {
