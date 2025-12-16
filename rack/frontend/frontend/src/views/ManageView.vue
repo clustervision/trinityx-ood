@@ -7,7 +7,7 @@
         <button 
           v-if="props.pageType === 'rack'" 
           class="btn btn-success btn-sm" 
-          @click="router.push('/edit/Rack')"
+          @click="$emit('add-click')"
         >
           Add New {{ pageName }}
         </button>
@@ -56,7 +56,7 @@
                 </template>
 
                 <td class="text-center">
-                   <button class="btn btn-icon btn-sm" title="Edit" @click="editItem(item)">
+                   <button class="btn btn-icon btn-sm" title="Edit" @click="$emit('edit-click', item)">
                      <i class='bx bx-edit text-primary'></i>
                    </button>
                    <button class="btn btn-icon btn-sm" title="Delete" @click="deleteItem(item)">
@@ -79,48 +79,36 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
-const router = useRouter();
 const items = ref<any[]>([]);
 
-// Define props to receive data from App.vue
 const props = defineProps<{
-  pageType: string // 'rack' or 'inventory'
+  pageType: string 
 }>();
+
+// Define Events to tell App.vue what to do
+const emit = defineEmits(['add-click', 'edit-click']);
 
 const pageName = computed(() => {
   if (!props.pageType) return '';
   return props.pageType.charAt(0).toUpperCase() + props.pageType.slice(1);
 });
 
-// 1. EDIT ACTION (Fixed Routes)
-const editItem = (item: any) => {
-  if (props.pageType === 'rack') {
-    // Navigate to Frontend Route: /edit/rack/:id
-    router.push(`/edit/rack/${item.name}`);
-  } else if (props.pageType === 'inventory') {
-    // Navigate to Frontend Route: /edit/inventory/:id
-    router.push(`/edit/inventory/${item.name}`);
-  }
-};
-
-// 2. DELETE ACTION
+// DELETE remains local because it's just an API call
 const deleteItem = async (item: any) => {
   if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
 
   try {
-    let deleteUrl = '';
-    // Use props.pageType here
+    let url = '';
     if (props.pageType === 'rack') {
-      deleteUrl = Url + `/delete_rack/${item.name}`;
+      url =  `/delete_rack/${item.name}`;
     } else {
-      deleteUrl = Url + `/delete_inventory/${item.type}/${item.name}`;
+      url = `/delete_inventory/${item.type}/${item.name}`;
     }
 
-    const response = await axios.get(deleteUrl);
+    const response = await axios.get(url);
 
     if (response.data.status) {
       items.value = items.value.filter(i => i.name !== item.name);
@@ -130,33 +118,43 @@ const deleteItem = async (item: any) => {
 
   } catch (e) {
     console.error("Delete failed", e);
-    alert("Network error while deleting.");
+    alert("Network error.");
   }
 };
 
-// 3. LOAD DATA (Fixed Logic)
 const fetchData = async () => {
   items.value = [];
-  
-  // ERROR WAS HERE: 'page' was undefined. Switched to 'props.pageType'
+
   try {
-    let apiUrl = '';
+    let url = '';
     if (props.pageType === 'rack') {
-      apiUrl = Url + '/manage_racks';
+      url = Url + '/manage_racks';
     } else if (props.pageType === 'inventory') {
-      apiUrl = Url + '/manage_inventory';
+      url = Url + '/manage_inventory';
     } else {
       return; 
     }
 
-    const response = await axios.get(apiUrl);
+    const response = await axios.get(url);
     
     if (response.data.status) {
       const rawMsg = response.data.message;
       if (Array.isArray(rawMsg)) {
-        items.value = rawMsg.flat(); 
-      } else if (typeof rawMsg === 'object') {
-        items.value = Object.values(rawMsg);
+        const extractedItems: any[] = [];
+
+        rawMsg.forEach((entry: any) => {
+          if (entry.name && (entry.size || entry.type)) {
+            extractedItems.push(entry);
+          } else {
+            const innerValues = Object.values(entry);
+            extractedItems.push(...innerValues);
+          }
+        });
+
+        items.value = extractedItems;
+      } 
+      else if (typeof rawMsg === 'object' && rawMsg !== null) {
+         items.value = Object.values(rawMsg);
       }
     }
   } catch (e) {
@@ -165,12 +163,5 @@ const fetchData = async () => {
 };
 
 onMounted(fetchData);
-
-// Watch for changes in the prop (in case user switches menu items rapidly)
 watch(() => props.pageType, fetchData);
 </script>
-
-<style scoped>
-.btn-icon { border: none; background: transparent; }
-.bx { font-size: 1.2rem; }
-</style>

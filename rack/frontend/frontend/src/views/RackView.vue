@@ -30,29 +30,42 @@ const currentMetricType = ref<string | null>(null);
 const Url = 'https://yixin3-dev-ctrl001:7755'
 const prome_url = 'https://yixin3-dev-ctrl001:9000'
 
-// --- API: LOAD RACKS ---
+// Inside RackView.vue <script setup>
+
 const loadRacks = async () => {
   try {
-    // New Backend returns JSON directly
     const response = await axios.get(Url + '/manage_racks');
     
-    // structure: { status: true, message: [ {name: 'Rack1', size: 42, ...} ] }
     if (response.data.status) {
-      // Handle nested array if backend appends list to list, otherwise standard array
-      const rawList = Array.isArray(response.data.message) 
-        ? response.data.message.flat() 
-        : [];
+      const rawMsg = response.data.message;
+      let flatList: any[] = [];
 
-      const parsedRacks: Rack[] = rawList.map((r: any) => ({
+      // 1. Handle Nested Structure: [{ "rack1": {...}, "rack2": {...} }]
+      if (Array.isArray(rawMsg)) {
+        rawMsg.forEach((item: any) => {
+          // If the item has a 'name' and 'size', it's a rack.
+          // If not, it's a wrapper object, so we get its values.
+          if (item.name && item.size) {
+            flatList.push(item);
+          } else {
+            flatList.push(...Object.values(item));
+          }
+        });
+      } else if (typeof rawMsg === 'object' && rawMsg !== null) {
+        flatList = Object.values(rawMsg);
+      }
+
+      // 2. Map the cleaned list to your Rack interface
+      const parsedRacks: Rack[] = flatList.map((r: any) => ({
         name: r.name,
-        size: parseInt(r.size),
+        size: parseInt(r.size) || 42, // Default to 42 if NaN
         order: r.order ? r.order.toLowerCase() : 'ascending',
         slots: [],
         showBackSide: false,
         powerOn: true
       }));
 
-      // Generate slots and fetch nodes for each rack
+      // 3. Generate slots and fetch devices
       for (const rack of parsedRacks) {
         rack.slots = generateSlots(rack.size, rack.order);
         await fetchDevicesForRack(rack);

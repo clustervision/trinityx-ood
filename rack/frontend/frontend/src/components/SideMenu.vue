@@ -99,7 +99,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Keep your existing styles */
+  .layout-menu {
+  width: 250px !important;
+  min-width: 250px !important;
+  max-width: 250px !important;
+}
+
+
 .menu-item .router-link-active {
     background-color: rgba(67, 89, 113, 0.1);
     color: #696cff;
