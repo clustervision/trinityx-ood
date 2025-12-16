@@ -4,9 +4,7 @@
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Update Inventory - {{ form.name }}</h5>
         <small class="text-muted float-end">Change values here...</small>
-        <button class="btn btn-warning" @click="$router.push('/manage/inventory')">
-          Back
-        </button>
+         <button class="btn btn-warning" @click="$emit('close')">Back</button>
       </div>
       
       <div class="card-body">
@@ -77,18 +75,23 @@
         </form>
       </div>
     </div>
-  </div>
+  </div> 
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, reactive, onMounted,watch } from 'vue';
 import axios from 'axios';
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
 
-const route = useRoute();
-const router = useRouter();
+// 1. DEFINE PROPS (Replaces route.params)
+const props = defineProps<{
+  InventoryName: string // Passed from App.vue
+}>();
+
+// 2. DEFINE EMITS (Replaces router.push)
+const emit = defineEmits(['close']);
+
 const isSubmitting = ref(false);
 const errorMessage = ref('');
 
@@ -100,8 +103,10 @@ const form = reactive({
 });
 
 // 1. Load Data
-onMounted(async () => {
-  const inventoryName = route.params.id as string;
+const loadInventoryData=async () => {
+  const inventoryName = props.InventoryName;
+  if (!inventoryName) return ;
+
   form.name = inventoryName;
 
   try {
@@ -128,7 +133,7 @@ onMounted(async () => {
     console.error("Failed to load details", e);
     errorMessage.value = "Failed to load details.";
   }
-});
+};
 
 // 2. Submit Update
 const submitForm = async () => {
@@ -144,7 +149,7 @@ const submitForm = async () => {
     const response = await axios.post(Url + '/change_inventory', params);
 
     if (response.data.status) {
-      router.push(Url+'/manage_inventory');
+      emit('close');
     } else {
       errorMessage.value = response.data.message || 'Update failed';
     }
@@ -154,6 +159,12 @@ const submitForm = async () => {
     isSubmitting.value = false;
   }
 };
+
+onMounted(() => {
+  loadInventoryData();
+});
+
+watch(() => props.InventoryName, loadInventoryData);
 </script>
 
 <style scoped>

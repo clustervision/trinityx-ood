@@ -3,7 +3,8 @@
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Update Rack - {{ form.name }}</h5>
-        <button class="btn btn-warning" @click="$router.push('/manage/rack')">Back</button>
+        
+        <button class="btn btn-warning" @click="$emit('close')">Back</button>
       </div>
       
       <div class="card-body">
@@ -68,14 +69,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, reactive, onMounted, watch } from 'vue';
 import axios from 'axios';
+
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
+// 1. DEFINE PROPS (Replaces route.params)
+const props = defineProps<{
+  rackName: string // Passed from App.vue
+}>();
 
-const route = useRoute();
-const router = useRouter();
+// 2. DEFINE EMITS (Replaces router.push)
+const emit = defineEmits(['close']);
+
 const isSubmitting = ref(false);
 const errorMessage = ref('');
 
@@ -87,16 +93,16 @@ const form = reactive({
   size: ''
 });
 
-// 1. Load existing data
-onMounted(async () => {
-  const rackName = route.params.id as string;
+// Load Data Function
+const loadRackData = async () => {
+  // Use prop instead of route param
+  const rackName = props.rackName;
+  if (!rackName) return;
+
   form.name = rackName;
   
   try {
-    // New Backend Route: /show_rack/<rack_name>
     const response = await axios.get(Url + `/show_rack/${rackName}`);
-    
-    // structure: { message: { name: '...', site: '...', ... } }
     const rackData = response.data.message; 
 
     if (rackData) {
@@ -105,22 +111,27 @@ onMounted(async () => {
       form.order = (rackData.order || 'ascending').toLowerCase();
       form.size = rackData.size;
     } else {
-      errorMessage.value = `Rack '${rackName}' details not found in response.`;
+      errorMessage.value = `Rack '${rackName}' details not found.`;
     }
 
   } catch (e) {
     console.error("Failed to load rack details", e);
     errorMessage.value = "Failed to load rack details.";
   }
+};
+
+onMounted(() => {
+  loadRackData();
 });
 
-// 2. Submit Update
+// Optional: Watch prop if the component stays open while ID changes
+watch(() => props.rackName, loadRackData);
+
 const submitForm = async () => {
   isSubmitting.value = true;
   errorMessage.value = '';
 
   try {
-    // Backend expects Form Data (request.form)
     const params = new URLSearchParams();
     params.append('name', form.name);
     params.append('site', form.site);
@@ -130,9 +141,9 @@ const submitForm = async () => {
 
     const response = await axios.post(Url + '/change_rack', params);
 
-    // Backend returns { status: true, message: '...' }
     if (response.data.status) {
-      router.push(Url+'/manage_racks');
+      // 3. EMIT CLOSE ON SUCCESS (Parent will switch view back)
+      emit('close');
     } else {
       errorMessage.value = response.data.message || "Update failed.";
     }

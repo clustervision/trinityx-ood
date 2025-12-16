@@ -3,7 +3,8 @@
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Add Rack</h5>
-        <button class="btn btn-warning" @click="$router.push('/manage/rack')">Back</button>
+        
+        <button class="btn btn-warning" @click="$emit('close')">Back</button>
       </div>
       
       <div class="card-body">
@@ -96,12 +97,13 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
 import axios from 'axios';
+
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
+// 1. DEFINE EMITS (To communicate with Parent)
+const emit = defineEmits(['close']);
 
-const router = useRouter();
 const isSubmitting = ref(false);
 const errorMessage = ref('');
 
@@ -119,7 +121,6 @@ const submitForm = async () => {
   errorMessage.value = '';
 
   try {
-    // Using URLSearchParams to simulate form-urlencoded data for Flask request.form
     const params = new URLSearchParams();
     params.append('name', form.name);
     params.append('site', form.site);
@@ -127,11 +128,12 @@ const submitForm = async () => {
     params.append('order', form.order);
     params.append('size', form.size.toString());
 
-    // Backend route: /change_rack (used for both Add and Update based on your backend logic)
+    // Backend route
     const response = await axios.post(Url + '/change_rack', params);
 
     if (response.data.status) {
-      router.push(Url + '/manage_racks');
+      // 2. EMIT CLOSE ON SUCCESS
+      emit('close');
     } else {
       errorMessage.value = response.data.message || 'Failed to add rack';
     }
