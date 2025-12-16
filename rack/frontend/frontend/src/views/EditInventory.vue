@@ -83,8 +83,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-// Import helper to reuse parsing logic
-import { parseHtmlToData } from '@/utils/rackHelpers'; 
+import axios from 'axios';
+const url = 'https://yixin3-dev-ctrl001:7755';
+
 
 const route = useRoute();
 const router = useRouter();
@@ -104,23 +105,12 @@ onMounted(async () => {
   form.name = inventoryName;
 
   try {
-    // Fetch the full inventory list to find this specific item
-    // (Since we don't have a single-item API endpoint)
-    const res = await fetch('/manage/inventory', { 
-      headers: { 'Accept': 'application/json, text/html' } 
-    });
+    // No specific /show_inventory endpoint, so we fetch all to find the match
+    const response = await axios.get(url + '/manage_inventory');
 
-    const contentType = res.headers.get('content-type');
-    let items: any[] = [];
-
-    if (contentType && contentType.includes('application/json')) {
-      const json = await res.json();
-      // Handle Inventory format
-      items = json.inventory || [];
-    } else {
-      // Fallback for HTML
-      const html = await res.text();
-      items = parseHtmlToData(html);
+    let items = [];
+    if (response.data.status && Array.isArray(response.data.message)) {
+      items = response.data.message;
     }
 
     // Find the item
@@ -145,27 +135,21 @@ const submitForm = async () => {
   isSubmitting.value = true;
   try {
     const params = new URLSearchParams();
-    // The backend expects these specific field names based on 'change.html'
     params.append('name', form.name);
     params.append('type', form.type);
     params.append('height', form.height.toString());
     params.append('orientation', form.orientation);
 
-    // POST to /edit/inventory/nodeName
-    const response = await fetch(`/edit/inventory/${form.name}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params
-    });
+    // Backend route: /change_inventory
+    const response = await axios.post(url + '/change_inventory', params);
 
-    if (response.ok || response.status === 302 || response.status === 500) {
-      router.push('/manage/inventory');
+    if (response.data.status) {
+      router.push(url+'/manage_inventory');
     } else {
-      const text = await response.text();
-      errorMessage.value = `Update failed: ${text}`;
+      errorMessage.value = response.data.message || 'Update failed';
     }
-  } catch (error) {
-    errorMessage.value = "Network error.";
+  } catch (error: any) {
+    errorMessage.value = error.response?.data?.message || "Network error.";
   } finally {
     isSubmitting.value = false;
   }
@@ -173,6 +157,5 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
-/* Minor styling tweaks to match screenshot labels */
 .fs-7 { font-size: 0.85rem; font-weight: 500; color: #566a7f; }
 </style>

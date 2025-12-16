@@ -80,8 +80,10 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { parseHtmlToData } from '@/utils/rackHelpers';
+import axios from 'axios';
+import type RackView from './RackView.vue';
 
+const url = 'https://yixin3-dev-ctrl001:7755';
 const route = useRoute();
 const router = useRouter();
 const pageType = ref(''); 
@@ -93,53 +95,38 @@ const pageName = computed(() => {
 });
 
 const goToAddPage = () => {
-  // Suggestion: Use lowercase 'rack' to avoid backend case-sensitivity issues
-  router.push('/edit/rack'); 
+  router.push(url + '/change_rack'); 
 };
 
 // 1. EDIT ACTION
-// In src/views/ManageView.vue
-
 const editItem = (item: any) => {
   if (pageType.value === 'rack') {
-    router.push(`/edit/rack/${item.name}`);
+    router.push(url +`'/change_rack'${item.name}`);
   } else if (pageType.value === 'inventory') {
-    router.push(`/edit/inventory/${item.name}`);
+    router.push(url+`'/change_rack'${item.name}`);
   }
 };
 
-// 2. DELETE ACTION (FIXED LOGIC)
+// 2. DELETE ACTION
 const deleteItem = async (item: any) => {
   if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
-
-  const nameToCheck = item.name;
 
   try {
     let url = '';
     if (pageType.value === 'rack') {
-      url = `/delete/rack/${item.name}`;
+      url = `/delete_rack/${item.name}`;
     } else {
-      url = `/delete/inventory/${item.name}/${item.type}`;
+      url = `/delete_inventory/${item.type}/${item.name}`;
     }
 
-    // FIX: Use 'fetch', not 'fetchData'
-    const res = await fetch(url);
+    const response = await axios.get(url);
 
-    // Because your backend returns the HTML of the list page (redirect),
-    // we use that HTML to verify if the item is actually gone.
-    const htmlResponse = await res.text();
-    const currentItems = parseHtmlToData(htmlResponse);
-    
-    // Check if the item is still in the list returned by the server
-    const stillExists = currentItems.find((i: any) => i.name === nameToCheck);
-
-    if (!stillExists) {
-      // Success: Update the view with the new list
-      items.value = currentItems;
-      // Optional: alert(`${nameToCheck} deleted successfully.`);
+    if (response.data.status) {
+      // Success: Remove item locally to update UI immediately
+      items.value = items.value.filter(i => i.name !== item.name);
+      // Optional: alert(response.data.message);
     } else {
-      // Failure: The backend refused to delete it (e.g., Rack not empty)
-      alert(`Failed to delete '${nameToCheck}'. The server did not remove it (Rack might not be empty).`);
+      alert(`Failed to delete: ${response.data.message}`);
     }
 
   } catch (e) {
@@ -149,40 +136,40 @@ const deleteItem = async (item: any) => {
 };
 
 // 3. LOAD DATA
-// src/views/ManageView.vue
-
 const fetchData = async () => {
   const page = route.params.page as string;
   pageType.value = page;
   items.value = [];
 
   try {
-    // We accept both JSON and HTML because we aren't sure which one your specific backend version sends
-    const res = await fetch(`/manage/${page}`, { 
-      headers: { 'Accept': 'application/json, text/html' } 
-    });
+    let url = '';
+    if (page === 'rack') {
+      url = '/manage_racks';
+    } else if (page === 'inventory') {
+      url = '/manage_inventory';
+    } else {
+      return; 
+    }
+
+    const response = await axios.get(url);
     
-    const contentType = res.headers.get('content-type');
-    
-    // CASE A: Backend returns JSON (wrapper)
-    if (contentType && contentType.includes('application/json')) {
-      const json = await res.json();
+    // Check backend status
+    if (response.data.status) {
+      // Based on your python code, message contains the array
+      // e.g., response.data.message = [ {name: '...', ...} ]
+      // Note: In Python manage_racks, you do response["message"].append(raw_data), 
+      // so it might be a nested array [[...]]. 
+      // Let's flatten it just in case, or access index 0 if it's nested.
       
-      if (page === 'inventory') {
-        items.value = json.inventory || [];
-      } 
-      else if (page === 'rack') {
-        // THIS WAS MISSING! 
-        // If rack returns JSON, the HTML table is inside json.data
-        if (json.data) {
-          items.value = parseHtmlToData(json.data);
-        }
+      const rawMsg = response.data.message;
+      
+      if (Array.isArray(rawMsg)) {
+        // If Python did .append(list), we get [[obj, obj]]. Flatten handles it.
+        items.value = rawMsg.flat(); 
+      } else if (typeof rawMsg === 'object') {
+          // Fallback if it returns a single dict object instead of list
+          items.value = Object.values(rawMsg);
       }
-    } 
-    // CASE B: Backend returns raw HTML
-    else {
-      const html = await res.text();
-      items.value = parseHtmlToData(html);
     }
 
   } catch (e) {

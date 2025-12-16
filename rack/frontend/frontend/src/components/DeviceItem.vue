@@ -29,6 +29,8 @@
 import { computed, ref } from 'vue';
 import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing'; 
+const url = 'https://yixin3-dev-ctrl001:7755';
+
 
 const props = defineProps<{
   device: Device;

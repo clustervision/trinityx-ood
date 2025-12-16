@@ -1,18 +1,5 @@
 <template>
   <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-    <!-- <div class="app-brand demo">
-      <a href="/" class="app-brand-link">
-        <span class="app-brand-logo demo">
-            <img src="@/assets/img/logo.png" alt="Logo" style="width: 40px;">
-        </span>
-        <span class="app-brand-text demo menu-text fw-bolder ms-2">alertX</span>
-      </a>
-
-      <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
-        <i class="bx bx-chevron-left bx-sm align-middle"></i>
-      </a>
-    </div> -->
-
     <div class="menu-inner-shadow"></div>
 
     <ul class="menu-inner py-1">
@@ -78,24 +65,33 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { routeLocationKey, RouterLink } from 'vue-router';
-import {useRoute} from 'vue-router'
-import DeviceItem from '@/components/rack/DeviceItem.vue';
+import { useRoute } from 'vue-router';
+import axios from 'axios';
+import DeviceItem from '@/components/DeviceItem.vue';
+const url = 'https://yixin3-dev-ctrl001:7755';
 
 // --- STATE ---
 const UnassignedNodes = ref<any[]>([]);
-const showUnassigned = ref(true); // Default to open
+const showUnassigned = ref(true); 
 const route = useRoute();
 
 // --- API FETCH ---
 const fetchUnassignedNodes = async () => {
   try {
-    // Fetching directly from the URL you provided
-    const response = await fetch('/manage/rack');
-    const data = await response.json();
+    const response = await axios.get(url + '/device_pool');
+    
+    // Check if valid JSON status
+    console.log(response)
+    if (response.data.status === undefined && !response.data.message) {
+      console.error("Critical: Invalid JSON structure.");
+      return;
+    }
 
-    // Assigning the 'inventory' array from your JSON example
-    if (data.inventory) {
+    const data = response.data;
+    // Backend structure: { message: [...] }
+    if (data.message && Array.isArray(data.message)) {
+      UnassignedNodes.value = data.message;
+    } else if (data.inventory) {
       UnassignedNodes.value = data.inventory;
     }
   } catch (error) {
@@ -107,18 +103,15 @@ onMounted(() => {
   fetchUnassignedNodes();
   watch(
     () => route.path,
-    () => {
-      fetchUnassignedNodes();
-    }
-  )
+    () => fetchUnassignedNodes()
+  );
 });
 </script>
 
 <style scoped>
-/* Basic active state styling to match your theme */
 .menu-item .router-link-active {
     background-color: rgba(67, 89, 113, 0.1);
-    color: #696cff; /* Example theme color */
+    color: #696cff;
     font-weight: bold;
 }
 .menu-item .router-link-active::before {
@@ -130,9 +123,8 @@ onMounted(() => {
     background-color: #696cff;
 }
 
-/* Added style for the submenu to ensure items don't touch edges */
 .menu-sub {
   transition: all 0.3s ease;
-  background-color: transparent; /* Or match your theme */
+  background-color: transparent;
 }
 </style>

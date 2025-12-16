@@ -70,7 +70,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { parseHtmlToData } from '@/utils/rackHelpers';
+import axios from 'axios';
+const url = 'https://yixin3-dev-ctrl001:7755';
+
 
 const route = useRoute();
 const router = useRouter();
@@ -86,41 +88,24 @@ const form = reactive({
 });
 
 // 1. Load existing data
-// src/views/EditRack.vue
-
 onMounted(async () => {
   const rackName = route.params.id as string;
   form.name = rackName;
   
   try {
-    // 1. Fetch the FULL list of racks to find the details for THIS rack
-    const res = await fetch('/manage/rack', { 
-      headers: { 'Accept': 'application/json, text/html' } 
-    });
+    // New Backend Route: /show_rack/<rack_name>
+    const response = await axios.get(url + `/show_rack/${rackName}`);
     
-    const contentType = res.headers.get('content-type');
-    let racks: any[] = [];
+    // structure: { message: { name: '...', site: '...', ... } }
+    const rackData = response.data.message; 
 
-    // Parse logic matching ManageView
-    if (contentType && contentType.includes('application/json')) {
-      const json = await res.json();
-      if (json.data) racks = parseHtmlToData(json.data);
+    if (rackData) {
+      form.site = rackData.site || '';
+      form.room = rackData.room || '';
+      form.order = (rackData.order || 'ascending').toLowerCase();
+      form.size = rackData.size;
     } else {
-      const html = await res.text();
-      racks = parseHtmlToData(html);
-    }
-    
-    // 2. Find the specific rack
-    const target = racks.find((r: any) => r.name === rackName);
-    
-    if (target) {
-      form.site = target.site;
-      form.room = target.room;
-      // Handle potential undefined/null values safely
-      form.order = (target.order || 'ascending').toLowerCase();
-      form.size = target.size;
-    } else {
-      errorMessage.value = `Rack '${rackName}' not found.`;
+      errorMessage.value = `Rack '${rackName}' details not found in response.`;
     }
 
   } catch (e) {
@@ -132,7 +117,10 @@ onMounted(async () => {
 // 2. Submit Update
 const submitForm = async () => {
   isSubmitting.value = true;
+  errorMessage.value = '';
+
   try {
+    // Backend expects Form Data (request.form)
     const params = new URLSearchParams();
     params.append('name', form.name);
     params.append('site', form.site);
@@ -140,24 +128,19 @@ const submitForm = async () => {
     params.append('order', form.order);
     params.append('size', form.size.toString());
 
-    // POST to /edit/rack/RackName (This matches your backend route logic)
-    const response = await fetch(`/edit/rack/${form.name}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params
-    });
+    const response = await axios.post(url + '/change_rack', params);
 
-    // Accept 200, 302, or 500 (workaround for backend template error)
-    if (response.ok || response.status === 302 || response.status === 500) {
-      router.push('/manage/rack');
+    // Backend returns { status: true, message: '...' }
+    if (response.data.status) {
+      router.push('/manage_racks');
     } else {
-      errorMessage.value = "Update failed.";
+      errorMessage.value = response.data.message || "Update failed.";
     }
-  } catch (error) {
-    errorMessage.value = "Network error.";
+  } catch (error: any) {
+    console.error(error);
+    errorMessage.value = error.response?.data?.message || "Network error.";
   } finally {
     isSubmitting.value = false;
   }
 };
-
 </script>

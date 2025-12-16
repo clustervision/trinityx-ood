@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import DeviceItem from '@/components/rack/DeviceItem.vue';
+import axios from 'axios';
+import DeviceItem from '@/components/DeviceItem.vue';
 import type { Device } from '@/types/rack';
 
 // --- INTERFACES ---
@@ -14,7 +15,6 @@ interface Rack {
   size: number;
   order: string;
   slots: RackSlot[];
-  // Controls if the second column (Back) is visible
   showBackSide: boolean; 
   powerOn: boolean;
 }
@@ -27,46 +27,43 @@ const showDropdown1 = ref(false);
 const showDropdown2 = ref(false); 
 const rawMetricData = ref<any[]>([]); 
 const currentMetricType = ref<string | null>(null);
+const url = 'https://yixin3-dev-ctrl001:7755'
+const prome_url = 'https://yixin3-dev-ctrl001:9000'
 
 // --- API: LOAD RACKS ---
 const loadRacks = async () => {
   try {
-    const response = await fetch('/manage/rack', { headers: { 'Accept': 'text/html' } }); 
-    if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
-    const htmlString = await response.text();
-    const parsedRacks = parseHtmlToRackList(htmlString);
+    // New Backend returns JSON directly
+    const response = await axios.get(url + '/manage_racks');
+    
+    // structure: { status: true, message: [ {name: 'Rack1', size: 42, ...} ] }
+    if (response.data.status) {
+      // Handle nested array if backend appends list to list, otherwise standard array
+      const rawList = Array.isArray(response.data.message) 
+        ? response.data.message.flat() 
+        : [];
 
-    for (const rack of parsedRacks) {
-      rack.slots = generateSlots(rack.size, rack.order);
-      await fetchDevicesForRack(rack);
+      const parsedRacks: Rack[] = rawList.map((r: any) => ({
+        name: r.name,
+        size: parseInt(r.size),
+        order: r.order ? r.order.toLowerCase() : 'ascending',
+        slots: [],
+        showBackSide: false,
+        powerOn: true
+      }));
+
+      // Generate slots and fetch nodes for each rack
+      for (const rack of parsedRacks) {
+        rack.slots = generateSlots(rack.size, rack.order);
+        await fetchDevicesForRack(rack);
+      }
+      
+      racks.value = parsedRacks;
     }
-    racks.value = parsedRacks;
   } catch (error) {
     console.error("Failed to load racks:", error);
   }
 };
-
-function parseHtmlToRackList(html: string): Rack[] {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const rows = doc.querySelectorAll('table tbody tr');
-  const data: Rack[] = [];
-
-  rows.forEach((row) => {
-    const cells = row.querySelectorAll('td');
-    if (cells.length > 1) {
-      data.push({
-        name: cells[1]?.innerText.trim() || 'Unknown Rack',
-        size: cells[2]?.innerText.trim(),
-        order: cells[3]?.innerText.trim().toLowerCase() || 'ascending',
-        slots: [],
-        showBackSide: false, // Default: Single column
-        powerOn: true 
-      });
-    }
-  });
-  return data;
-}
 
 const generateSlots = (size: number, order: string) => {
   const slots: RackSlot[] = [];
@@ -78,19 +75,24 @@ const generateSlots = (size: number, order: string) => {
 
 const fetchDevicesForRack = async (rack: Rack) => {
   try {
-    const res = await fetch(`/get_nodes/${rack.name}`);
-    const deviceNames = await res.json();
-    deviceNames.forEach((devName: string, index: number) => {
-      if (index < rack.slots.length) {
-         rack.slots[index].device = { 
-           name: devName, 
-           position: rack.slots[index].number,
-           orientation: 'front', 
-           type: 'node', 
-           status: 'ok'
-         };
-      }
-    });
+    // Backend: /get_nodes/<rack_name> -> { status: true, message: ["node1", "node2"] }
+    const res = await axios.get(url + `/get_nodes/${rack.name}`);
+    
+    if (res.data.status && Array.isArray(res.data.message)) {
+      const deviceNames = res.data.message;
+      
+      deviceNames.forEach((devName: string, index: number) => {
+        if (index < rack.slots.length) {
+           rack.slots[index].device = { 
+             name: devName, 
+             position: rack.slots[index].number,
+             orientation: 'front', 
+             type: 'node', 
+             status: 'ok'
+           };
+        }
+      });
+    }
   } catch (e) {
     console.error(`Failed to load nodes for ${rack.name}`, e);
   }
@@ -99,10 +101,9 @@ const fetchDevicesForRack = async (rack: Rack) => {
 // --- API: METRICS ---
 const fetchMetricData = async () => {
   try {
-    const response = await fetch('/get_temperature');
-    if (!response.ok) throw new Error("Failed to fetch metrics");
-    const data = await response.json();
-    rawMetricData.value = data; 
+    // Assuming endpoint exists for metrics
+    const response = await axios.get(prome_url + '/get_node');
+    rawMetricData.value = response.data; 
   } catch (e) {
     console.error("Fetch error:", e);
   }
@@ -123,7 +124,7 @@ const getMetricForDevice = (device: Device | null) => {
 // --- ACTIONS ---
 const toggleRackPower = (rack: Rack) => {
   rack.powerOn = !rack.powerOn;
-  // API Call to toggle power would go here
+  // Add API call here if needed
 };
 
 const resetRack = (rack: Rack) => {
@@ -141,20 +142,15 @@ const selectMetric1 = (name: string) => {
 };
 
 // --- LEGEND / GRAPH HELPERS ---
-
-// 1. Get the Unit string based on metric name
 const getUnit = (metricName: string | null) => {
   if (metricName === 'Power Consumption') return 'Watt';
   if (metricName === 'Temperature' || metricName === 'GPU Temperature') return '°C';
-  if (metricName === 'System Load') return ''; // Load has no unit
   return '';
 };
 
-// 2. Calculate the Maximum value from the loaded data for the scale
 const getMaxValue = (metricName: string | null) => {
-  if (!rawMetricData.value || rawMetricData.value.length === 0) return 100; // Default if no data
+  if (!rawMetricData.value || rawMetricData.value.length === 0) return 100;
 
-  // Map the dropdown name to the backend JSON key
   let key = '';
   if (metricName === 'System Load') key = 'load';
   else if (metricName === 'Temperature') key = 'temperature';
@@ -162,11 +158,7 @@ const getMaxValue = (metricName: string | null) => {
   else if (metricName === 'GPU Temperature') key = 'gpu_temp';
 
   if (!key) return 100;
-
-  // Find the highest number in the array
   const max = Math.max(...rawMetricData.value.map((d: any) => parseFloat(d[key]) || 0));
-  
-  // Return max, or at least 1 (to avoid divide by zero visual issues)
   return max > 0 ? max.toFixed(1) : 0;
 };
 
@@ -189,58 +181,58 @@ onMounted(() => {
   <div class="card mb-4 border-0">
     <div class="card-header p-4 bg-white">
       <div class="d-flex align-items-center gap-3 mb-3">
-  <div class="dropdown">
-    <button 
-      class="btn dropdown-toggle" 
-      :class="metric1 === 'Power Consumption' ? 'btn-primary' : 'btn-info text-white'"
-      type="button" 
-      @click="showDropdown1 = !showDropdown1" 
-      style="min-width: 180px;"
-    >
-      {{ metric1 ? metric1 : 'Select 1st Metric' }}
-    </button>
-    <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block;">
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('No Scale')">No Scale</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Temperature')">Temperature</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('System Load')">System Load</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Power Consumption')">Power Consumption</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('GPU Temperature')">GPU Temperature</a></li>
-    </ul>
-  </div>
+        <div class="dropdown">
+          <button 
+            class="btn dropdown-toggle" 
+            :class="metric1 === 'Power Consumption' ? 'btn-primary' : 'btn-info text-white'"
+            type="button" 
+            @click="showDropdown1 = !showDropdown1" 
+            style="min-width: 180px;"
+          >
+            {{ metric1 ? metric1 : 'Select 1st Metric' }}
+          </button>
+          <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block;">
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('No Scale')">No Scale</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Temperature')">Temperature</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('System Load')">System Load</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('Power Consumption')">Power Consumption</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1('GPU Temperature')">GPU Temperature</a></li>
+          </ul>
+        </div>
 
-  <div v-if="metric1 && metric1 !== 'No Scale'" class="d-flex align-items-center gap-2">
-    <span class="text-muted">{{ 0 }} {{ getUnit(metric1) }}</span>
-    <div class="legend-bar"></div>
-    <span class="text-muted">{{ getMaxValue(metric1) }} {{ getUnit(metric1) }}</span>
-  </div>
-</div>
+        <div v-if="metric1 && metric1 !== 'No Scale'" class="d-flex align-items-center gap-2">
+          <span class="text-muted">{{ 0 }} {{ getUnit(metric1) }}</span>
+          <div class="legend-bar"></div>
+          <span class="text-muted">{{ getMaxValue(metric1) }} {{ getUnit(metric1) }}</span>
+        </div>
+      </div>
 
-<div class="d-flex align-items-center gap-3">
-  <div class="dropdown">
-    <button 
-      class="btn btn-secondary dropdown-toggle" 
-      type="button" 
-      @click="showDropdown2 = !showDropdown2" 
-      style="min-width: 180px;"
-    >
-      {{ metric2 ? metric2 : 'Select 2nd Metric' }}
-    </button>
-    <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block;">
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('No Scale')">No Scale</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Temperature')">Temperature</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('System Load')">System Load</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Power Consumption')">Power Consumption</a></li>
-        <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('GPU Temperature')">GPU Temperature</a></li>
-    </ul>
-  </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="dropdown">
+          <button 
+            class="btn btn-secondary dropdown-toggle" 
+            type="button" 
+            @click="showDropdown2 = !showDropdown2" 
+            style="min-width: 180px;"
+          >
+            {{ metric2 ? metric2 : 'Select 2nd Metric' }}
+          </button>
+          <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block;">
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('No Scale')">No Scale</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Temperature')">Temperature</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('System Load')">System Load</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('Power Consumption')">Power Consumption</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2('GPU Temperature')">GPU Temperature</a></li>
+          </ul>
+        </div>
 
-  <div v-if="metric2 && metric2 !== 'No Scale'" class="d-flex align-items-center gap-2">
-    <span class="text-muted">{{ 0 }} {{ getUnit(metric2) }}</span>
-    <div class="legend-bar"></div>
-    <span class="text-muted">{{ getMaxValue(metric2) }} {{ getUnit(metric2) }}</span>
-  </div>
-</div>
-</div>
+        <div v-if="metric2 && metric2 !== 'No Scale'" class="d-flex align-items-center gap-2">
+          <span class="text-muted">{{ 0 }} {{ getUnit(metric2) }}</span>
+          <div class="legend-bar"></div>
+          <span class="text-muted">{{ getMaxValue(metric2) }} {{ getUnit(metric2) }}</span>
+        </div>
+      </div>
+    </div>
 
     <div class="card-body">
       <div class="racks-container">
@@ -336,7 +328,7 @@ onMounted(() => {
     gap: 40px; 
     padding: 20px; 
     overflow-x: auto; 
-    align-items: flex-end; /* Align racks to bottom */
+    align-items: flex-end;
     min-height: 600px;
 }
 
@@ -345,11 +337,10 @@ onMounted(() => {
     flex-direction: column;
 }
 
-/* TABS */
 .rack-tabs {
   display: flex;
-  justify-content: space-between; /* Space out Front label and Back button */
-  margin-bottom: 0; /* Attach to header */
+  justify-content: space-between;
+  margin-bottom: 0;
 }
 
 .rack-tab {
@@ -361,13 +352,13 @@ onMounted(() => {
 }
 
 .front-label {
-  background-color: #6666ff; /* Blue for Front Side label */
+  background-color: #6666ff;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 }
 
 .back-toggle {
-  background-color: #333; /* Dark for Hide/Show button */
+  background-color: #333;
   cursor: pointer;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
@@ -379,7 +370,6 @@ onMounted(() => {
   flex-direction: column;
 }
 
-/* HEADER & FRAME */
 .rack-header-dark {
     background-color: #222; 
     display: flex;
@@ -437,15 +427,13 @@ onMounted(() => {
 .legend-bar {
   width: 200px; 
   height: 20px; 
-  /* Matches your screenshot: Blue -> Green -> Yellow -> Red */
   background: linear-gradient(90deg, blue, green, yellow, red); 
   border: 1px solid #ccc; 
   border-radius: 4px;
 }
 
-/* Optional: Button colors to match screenshot if you want */
-.btn-primary { background-color: #6666ff; border-color: #6666ff; } /* Purple/Blue */
-.btn-info { background-color: #0dcaf0; border-color: #0dcaf0; }   /* Cyan */
+.btn-primary { background-color: #6666ff; border-color: #6666ff; }
+.btn-info { background-color: #0dcaf0; border-color: #0dcaf0; }
 .cursor-pointer { cursor: pointer; }
 
 </style>

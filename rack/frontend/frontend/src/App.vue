@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import SideMenu from '@/components/layout/SideMenu.vue'
+import SideMenu from '@/components/SideMenu.vue'
 </script>
 
 <template>

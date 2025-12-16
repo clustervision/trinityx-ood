@@ -97,6 +97,9 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
+const url = 'https://yixin3-dev-ctrl001:7755';
+
 
 const router = useRouter();
 const isSubmitting = ref(false);
@@ -116,8 +119,7 @@ const submitForm = async () => {
   errorMessage.value = '';
 
   try {
-    // CRITICAL: The backend expects Form Data, NOT JSON.
-    // We use URLSearchParams to format it correctly.
+    // Using URLSearchParams to simulate form-urlencoded data for Flask request.form
     const params = new URLSearchParams();
     params.append('name', form.name);
     params.append('site', form.site);
@@ -125,31 +127,19 @@ const submitForm = async () => {
     params.append('order', form.order);
     params.append('size', form.size.toString());
 
-    
-    // Post to the backend route /edit/Rack
-    const response = await fetch('/edit/rack', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params
-    });
- //TODO: need to change it back when backend update the logic
-    if (response.ok || response.status === 302 || response.status == 500) {
-      // Success! Redirect back to the manage list
-      router.push('/manage/rack');
+    // Backend route: /change_rack (used for both Add and Update based on your backend logic)
+    const response = await axios.post(url + '/change_rack', params);
+
+    if (response.data.status) {
+      router.push(url + '/manage_racks');
     } else {
-      // Try to parse error message if available
-      const text = await response.text();
-      errorMessage.value = `Error: ${response.status} - ${text || 'Failed to add rack'}`;
+      errorMessage.value = response.data.message || 'Failed to add rack';
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    errorMessage.value = "Network error occurred.";
+    errorMessage.value = error.response?.data?.message || "Network error occurred.";
   } finally {
     isSubmitting.value = false;
   }
 };
-
-
 </script>
