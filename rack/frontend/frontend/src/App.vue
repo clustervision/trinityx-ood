@@ -6,6 +6,7 @@ import ManageView from '@/views/ManageView.vue';
 import AddRack from '@/views/AddRack.vue';
 import EditRack from '@/views/EditRack.vue';
 import ShowRack from '@/views/ShowRack.vue'; 
+import EditInventory from '@/views/EditInventory.vue';
 
 const currentView = ref('dashboard'); 
 const selectedItemName = ref('');
@@ -22,7 +23,11 @@ const handleEditRack = (item: any) => {
   currentView.value = 'edit-rack';
 };
 
-// Handle the "Info" icon click
+const handleEditInventory = (item: any) => {
+  selectedItemName.value = item.name;
+  currentView.value = 'edit-inventory';
+}
+
 const handleShowRack = (item: any) => {
   selectedItemName.value = item.name;
   currentView.value = 'show-rack';
@@ -52,8 +57,7 @@ const goBackToManage = () => {
       <ManageView 
          v-if="currentView === 'manage-inventory'" 
          :page-type="'inventory'" 
-         @edit-click="handleEditRack"
-         @show-click="handleShowRack"
+         @edit-click="handleEditInventory"
       />
 
       <AddRack v-if="currentView === 'add-rack'" @close="goBackToManage" />
@@ -69,6 +73,13 @@ const goBackToManage = () => {
         :rack-name="selectedItemName"
         @close="goBackToManage" 
       />
+
+      <EditInventory 
+        v-if="currentView === 'edit-inventory'"
+        :inventory-name="selectedItemName"
+        @close="goBackToManage"
+      />
+
     </div>
   </div>
 </template>

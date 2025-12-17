@@ -84,12 +84,11 @@ import axios from 'axios';
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
 
-// 1. DEFINE PROPS (Replaces route.params)
 const props = defineProps<{
-  InventoryName: string // Passed from App.vue
+  inventoryName: string;
 }>();
 
-// 2. DEFINE EMITS (Replaces router.push)
+
 const emit = defineEmits(['close']);
 
 const isSubmitting = ref(false);
@@ -104,7 +103,7 @@ const form = reactive({
 
 // 1. Load Data
 const loadInventoryData=async () => {
-  const inventoryName = props.InventoryName;
+  const inventoryName = props.inventoryName;
   if (!inventoryName) return ;
 
   form.name = inventoryName;
@@ -164,7 +163,7 @@ onMounted(() => {
   loadInventoryData();
 });
 
-watch(() => props.InventoryName, loadInventoryData);
+watch(() => props.inventoryName, loadInventoryData);
 </script>
 
 <style scoped>
