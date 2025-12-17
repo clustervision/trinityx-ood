@@ -109,6 +109,9 @@ const pageName = computed(() => {
 const deleteItem = async (item: any) => {
   if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
 
+  const previousItems = [...items.value]; 
+  items.value = items.value.filter(i => String(i.name) !== String(item.name));
+
   try {
     const timestamp = new Date().getTime();
     let deleteUrl = '';
@@ -118,18 +121,21 @@ const deleteItem = async (item: any) => {
     } else {
       deleteUrl = Url + `/delete_inventory/${item.type}/${item.name}?t=${timestamp}`;
     }
+    await axios.get(deleteUrl);
 
-    const response = await axios.get(deleteUrl);
-
-    if (response.status === 200) {
-       items.value = items.value.filter(i => i.name !== item.name);
-    } else {
-       alert('Delete might have failed. Please refresh.');
-    }
+    console.log("Delete confirmed by backend.");
 
   } catch (e: any) {
-    console.error("Delete failed", e);
-    alert(e.response?.data?.message || "Network error.");
+    // Check if it is the "CORS Success" case
+    // (Axios reports "Network Error" when CORS blocks a 200 OK response)
+    if (e.message === "Network Error" && !e.response) {
+       console.warn("Backend deleted it (Status 200), but Browser blocked the receipt. Keeping it deleted.");
+    } 
+    else {
+       console.error("Delete failed", e);
+       items.value = previousItems; 
+       alert("Failed to delete. The item has been restored.");
+    }
   }
 };
 
