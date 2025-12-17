@@ -19,21 +19,21 @@
             <thead>
               <tr v-if="props.pageType === 'rack'">
                 <th class="text-center">S. No.</th>
-                <th class="text-center">Name</th>
-                <th class="text-center">Size</th>
-                <th class="text-center">Order</th>
-                <th class="text-center">Room</th>
-                <th class="text-center">Site</th> 
-                <th class="text-center">Actions</th>
+                <th class="text-center">NAME</th>
+                <th class="text-center">SIZE</th>
+                <th class="text-center">ORDER</th>
+                <th class="text-center">ROOM</th>
+                <th class="text-center">SITE</th> 
+                <th class="text-center">ACTIONS</th>
               </tr>
 
               <tr v-else>
                 <th class="text-center">S. No.</th>
-                <th class="text-center">Name</th>
-                <th class="text-center">Type</th>
-                <th class="text-center">Height</th>
-                <th class="text-center">Orientation</th>
-                <th class="text-center">Actions</th>
+                <th class="text-center">NAME</th>
+                <th class="text-center">TYPE</th>
+                <th class="text-center">HEIGHT</th>
+                <th class="text-center">ORIENTATION</th>
+                <th class="text-center">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
@@ -56,12 +56,23 @@
                 </template>
 
                 <td class="text-center">
-                   <button class="btn btn-icon btn-sm" title="Edit" @click="$emit('edit-click', item)">
-                     <i class='bx bx-edit text-primary'></i>
-                   </button>
-                   <button class="btn btn-icon btn-sm" title="Delete" @click="deleteItem(item)">
-                     <i class='bx bx-trash text-danger'></i>
-                   </button>
+                   <a 
+                     v-if="props.pageType === 'rack'"
+                     href="javascript:void(0);" 
+                     class="me-2" 
+                     title="Show" 
+                     @click="$emit('show-click', item)"
+                   >
+                     <i class='bx bx-info-circle text-info fs-4'></i>
+                   </a>
+
+                   <a href="javascript:void(0);" class="me-2" title="Edit" @click="$emit('edit-click', item)">
+                     <i class='bx bx-edit text-primary fs-4'></i>
+                   </a>
+
+                   <a href="javascript:void(0);" title="Delete" @click="deleteItem(item)">
+                     <i class='bx bx-trash text-danger fs-4'></i>
+                   </a>
                 </td>
               </tr>
               <tr v-if="items.length === 0">
@@ -88,75 +99,63 @@ const props = defineProps<{
   pageType: string 
 }>();
 
-// Define Events to tell App.vue what to do
-const emit = defineEmits(['add-click', 'edit-click']);
+const emit = defineEmits(['add-click', 'edit-click', 'show-click']);
 
 const pageName = computed(() => {
   if (!props.pageType) return '';
   return props.pageType.charAt(0).toUpperCase() + props.pageType.slice(1);
 });
 
-// DELETE remains local because it's just an API call
 const deleteItem = async (item: any) => {
   if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
 
   try {
-    let url = '';
+    const timestamp = new Date().getTime();
+    let deleteUrl = '';
+    
     if (props.pageType === 'rack') {
-      url =  `/delete_rack/${item.name}`;
+      deleteUrl = Url + `/delete_rack/${item.name}?t=${timestamp}`;
     } else {
-      url = `/delete_inventory/${item.type}/${item.name}`;
+      deleteUrl = Url + `/delete_inventory/${item.type}/${item.name}?t=${timestamp}`;
     }
 
-    const response = await axios.get(url);
+    const response = await axios.get(deleteUrl);
 
-    if (response.data.status) {
-      items.value = items.value.filter(i => i.name !== item.name);
+    if (response.status === 200) {
+       items.value = items.value.filter(i => i.name !== item.name);
     } else {
-      alert(`Failed to delete: ${response.data.message}`);
+       alert('Delete might have failed. Please refresh.');
     }
 
-  } catch (e) {
+  } catch (e: any) {
     console.error("Delete failed", e);
-    alert("Network error.");
+    alert(e.response?.data?.message || "Network error.");
   }
 };
 
 const fetchData = async () => {
   items.value = [];
-
   try {
-    let url = '';
-    if (props.pageType === 'rack') {
-      url = Url + '/manage_racks';
-    } else if (props.pageType === 'inventory') {
-      url = Url + '/manage_inventory';
-    } else {
-      return; 
-    }
+    const timestamp = new Date().getTime();
+    let fetchUrl = '';
+    if (props.pageType === 'rack') fetchUrl = Url + `/manage_racks?t=${timestamp}`;
+    else if (props.pageType === 'inventory') fetchUrl = Url + `/manage_inventory?t=${timestamp}`;
+    else return;
 
-    const response = await axios.get(url);
+    const response = await axios.get(fetchUrl);
     
-    if (response.data.status) {
-      const rawMsg = response.data.message;
-      if (Array.isArray(rawMsg)) {
+    const rawMsg = response.data.message;
+    if (Array.isArray(rawMsg)) {
         const extractedItems: any[] = [];
-
         rawMsg.forEach((entry: any) => {
-          if (entry.name && (entry.size || entry.type)) {
-            extractedItems.push(entry);
-          } else {
-            const innerValues = Object.values(entry);
-            extractedItems.push(...innerValues);
-          }
+          if (entry.name && (entry.size || entry.type)) extractedItems.push(entry);
+          else extractedItems.push(...Object.values(entry));
         });
-
         items.value = extractedItems;
-      } 
-      else if (typeof rawMsg === 'object' && rawMsg !== null) {
+    } else if (typeof rawMsg === 'object' && rawMsg !== null) {
          items.value = Object.values(rawMsg);
-      }
     }
+
   } catch (e) {
     console.error("Failed to load table data", e);
   }
@@ -165,3 +164,9 @@ const fetchData = async () => {
 onMounted(fetchData);
 watch(() => props.pageType, fetchData);
 </script>
+
+<style scoped>
+.fs-4 { font-size: 1.3rem !important; }
+a { text-decoration: none; }
+a:hover { opacity: 0.8; }
+</style>

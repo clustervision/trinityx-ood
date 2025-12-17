@@ -5,41 +5,32 @@ import RackView from '@/views/RackView.vue';
 import ManageView from '@/views/ManageView.vue';
 import AddRack from '@/views/AddRack.vue';
 import EditRack from '@/views/EditRack.vue';
-// import EditInventory from '@/views/EditInventory.vue'; // Import if you have it
+import ShowRack from '@/views/ShowRack.vue'; 
 
-// State
 const currentView = ref('dashboard'); 
-const selectedItemName = ref(''); // To store which item we are editing
+const selectedItemName = ref('');
 
-// Navigation Handler
 const setView = (viewName: string) => {
   currentView.value = viewName;
-  selectedItemName.value = ''; // Reset selection on main menu change
+  selectedItemName.value = '';
 };
 
-// Handlers for Add/Edit actions coming from ManageView
-const handleAddRack = () => {
-  currentView.value = 'add-rack';
-};
+const handleAddRack = () => { currentView.value = 'add-rack'; };
 
 const handleEditRack = (item: any) => {
   selectedItemName.value = item.name;
   currentView.value = 'edit-rack';
 };
 
-const handleEditInventory = (item: any) => {
+// Handle the "Info" icon click
+const handleShowRack = (item: any) => {
   selectedItemName.value = item.name;
-  currentView.value = 'edit-inventory';
+  currentView.value = 'show-rack';
 };
 
-// Handler to go back to list
 const goBackToManage = () => {
-  // If we were adding/editing a rack, go back to Rack Manage
-  if (currentView.value.includes('rack')) {
-    currentView.value = 'manage-rack';
-  } else {
-    currentView.value = 'manage-inventory';
-  }
+  if (currentView.value.includes('rack')) currentView.value = 'manage-rack';
+  else currentView.value = 'manage-inventory';
 };
 </script>
 
@@ -55,18 +46,17 @@ const goBackToManage = () => {
          :page-type="'rack'" 
          @add-click="handleAddRack"
          @edit-click="handleEditRack"
+         @show-click="handleShowRack"
       />
       
       <ManageView 
          v-if="currentView === 'manage-inventory'" 
          :page-type="'inventory'" 
-         @edit-click="handleEditInventory"
+         @edit-click="handleEditRack"
+         @show-click="handleShowRack"
       />
 
-      <AddRack 
-        v-if="currentView === 'add-rack'" 
-        @close="goBackToManage" 
-      />
+      <AddRack v-if="currentView === 'add-rack'" @close="goBackToManage" />
 
       <EditRack 
         v-if="currentView === 'edit-rack'" 
@@ -74,7 +64,12 @@ const goBackToManage = () => {
         @close="goBackToManage" 
       />
 
-      </div>
+      <ShowRack 
+        v-if="currentView === 'show-rack'" 
+        :rack-name="selectedItemName"
+        @close="goBackToManage" 
+      />
+    </div>
   </div>
 </template>
 

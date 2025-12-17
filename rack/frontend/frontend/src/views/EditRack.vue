@@ -102,7 +102,8 @@ const loadRackData = async () => {
   form.name = rackName;
   
   try {
-    const response = await axios.get(Url + `/show_rack/${rackName}`);
+    const timestamp = new Date().getTime();
+    const response = await axios.get(Url + `/show_rack/${props.rackName}?t=${timestamp}`);
     const rackData = response.data.message; 
 
     if (rackData) {
