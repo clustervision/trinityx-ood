@@ -1,12 +1,16 @@
+{
+type: uploaded file
+fileName: RackView.vue
+fullContent:
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
-import RackMetricsHeader from '@/components/RackMetricsHeader.vue'; // IMPORT NEW COMPONENT
+import RackMetricsHeader from '@/components/RackMetricsHeader.vue'; 
 import type { Device } from '@/types/rack';
 
 // --- EMITS ---
-const emit = defineEmits(['rack-updated']);
+const emit = defineEmits(['rack-updated']); // Used to tell parent (App.vue) to refresh SideMenu
 
 // --- INTERFACES & STATE ---
 interface RackSlot { number: number; device: Device | null; }
@@ -14,7 +18,7 @@ interface Rack { name: string; size: number; order: string; slots: RackSlot[]; s
 
 const racks = ref<Rack[]>([]);
 const Url = 'https://yixin3-dev-ctrl001:7755';
-const prome_url = 'https://yixin3-dev-ctrl001:9000'; // Metrics URL
+const prome_url = 'https://yixin3-dev-ctrl001:9090'; 
 
 // Metric State
 const metric1 = ref<string | null>('No Scale');
@@ -23,7 +27,6 @@ const rawMetricData = ref<any[]>([]);
 
 // --- METRIC FETCHING ---
 const fetchMetricData = async () => {
-  // Only fetch if at least one metric is selected
   if (metric1.value === 'No Scale' && metric2.value === 'No Scale') {
     rawMetricData.value = [];
     return;
@@ -36,12 +39,8 @@ const fetchMetricData = async () => {
   }
 };
 
-// Watch for changes in metrics to fetch data
-watch([metric1, metric2], () => {
-  fetchMetricData();
-});
+watch([metric1, metric2], fetchMetricData);
 
-// Helper to find data for a specific device
 const getMetricForDevice = (device: Device | null, type: string | null) => {
   if (!device || !type || type === 'No Scale' || !rawMetricData.value.length) return undefined;
   
@@ -94,7 +93,6 @@ const loadRacks = async () => {
 const generateSlots = (size: number, order: string) => {
   const slots: RackSlot[] = [];
   for (let i = 1; i <= size; i++) { slots.push({ number: i, device: null }); }
-  // YOUR DEFINITION: Ascending = Top To Bottom (1 at Top)
   return order === 'ascending' ? slots : slots.reverse();
 };
 
@@ -134,18 +132,19 @@ const toggleRackPower = (rack: Rack) => { rack.powerOn = !rack.powerOn; };
 const resetRack = (rack: Rack) => { confirm(`Reset ${rack.name}?`); };
 
 // --- INSTANT DROP ---
-const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number) => {
+// Updated to accept 'side'
+const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side: 'front' | 'back') => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
   const device = JSON.parse(data);
 
-  // Optimistic Update
+  // 1. Optimistic Update (Immediate Feedback)
   const tempDevice = {
       name: device.name,
       position: targetU,
       height: device.height || 1,
       type: device.type || 'node',
-      orientation: device.orientation || 'front',
+      orientation: side, // Use the correct side!
       vendor: device.vendor || ''
   };
   placeDeviceInRack(targetRack, tempDevice);
@@ -158,7 +157,7 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number) => {
       position: targetU,
       height: device.height || 1,
       type: device.type || 'node',
-      orientation: device.orientation || 'front',
+      orientation: side, // Send correct side to backend
       vendor: device.vendor || ''
     };
 
@@ -167,9 +166,11 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number) => {
        headers: { 'Content-Type': 'application/json' }
     });
 
+    // 2. Notify Global Refresh
     if (response.status === 200) {
        emit('rack-updated'); 
     } else {
+       // If fail, reload
        await loadRacks();
     }
   } catch (e) {
@@ -212,12 +213,12 @@ onMounted(() => { loadRacks(); });
                 </div>
                 <div class="rack-frame">
                   <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-                       @drop="onDrop($event, rack, slot.number)" @dragover.prevent>
+                       @drop="onDrop($event, rack, slot.number, 'front')" @dragover.prevent>
                      <div class="rack-label">{{ slot.number }}</div>
                      <div class="rack-slot" style="position: relative; overflow: visible;">
                         
                         <DeviceItem 
-                          v-if="slot.device"
+                          v-if="slot.device && (slot.device.orientation === 'front' || !slot.device.orientation)"
                           :device="slot.device"
                           :metric-value="getMetricForDevice(slot.device, metric1)"
                           :metric-type="metric1 || undefined"
@@ -236,11 +237,12 @@ onMounted(() => { loadRacks(); });
                 <div class="rack-header-dark"><span class="text-white">{{ rack.name }} Back</span></div>
                 <div class="rack-frame">
                   <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-                       @drop="onDrop($event, rack, slot.number)" @dragover.prevent>
+                       @drop="onDrop($event, rack, slot.number, 'back')" @dragover.prevent>
                      <div class="rack-label">{{ slot.number }}</div>
                      <div class="rack-slot" style="position: relative; overflow: visible;">
+                        
                         <DeviceItem 
-                          v-if="slot.device"
+                          v-if="slot.device && slot.device.orientation === 'back'"
                           :device="slot.device"
                           :metric-value="getMetricForDevice(slot.device, metric2)"
                           :metric-type="metric2 || undefined"
@@ -248,6 +250,7 @@ onMounted(() => { loadRacks(); });
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
                           :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
                         />
+                        
                      </div>
                      <div class="rack-label">{{ slot.number }}</div>
                   </div>
@@ -277,3 +280,4 @@ onMounted(() => { loadRacks(); });
 .rack-slot { flex-grow: 1; }
 .cursor-pointer { cursor: pointer; }
 </style>
+}
