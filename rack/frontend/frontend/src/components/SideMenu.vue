@@ -79,7 +79,6 @@ const Url = 'https://yixin3-dev-ctrl001:7755';
 const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true); 
 
-// Define emits to notify Parent (App.vue) when something changes
 const emit = defineEmits(['change-view', 'pool-updated']);
 
 const fetchUnassignedNodes = async () => {
@@ -97,25 +96,24 @@ const fetchUnassignedNodes = async () => {
   }
 };
 
-// --- NEW: Handle Dropping Back to Pool ---
+// --- OPTIMISTIC: Drop Back To Pool ---
 const onDropBackToPool = async (event: DragEvent) => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
   const device = JSON.parse(data);
 
-  // If it's already in the pool (no position), ignore
-  if (!device.position && device.position !== 0) return;
+  // If already in pool, ignore
+  if (device.dragSource === 'pool') return;
+
+  // 1. Instant UI Update
+  UnassignedNodes.value.push(device);
 
   try {
     const timestamp = new Date().getTime();
-    
-    // Use the backend API to "Update Inventory" (which deletes from Rack)
     const payload = {
       name: device.name,
       type: device.type || 'node'
     };
-    
-    // Double Encode as per your backend requirement
     const doubleEncoded = JSON.stringify(JSON.stringify(payload));
 
     await axios.post(
@@ -123,21 +121,23 @@ const onDropBackToPool = async (event: DragEvent) => {
       doubleEncoded, 
       { headers: { 'Content-Type': 'application/json' } }
     );
-
-    // Refresh my own list
-    await fetchUnassignedNodes();
     
-    // Tell App.vue to refresh the Rack View (because a device left the rack)
+    // Notify parent to refresh Rack View (remove device from rack)
     emit('pool-updated'); 
 
   } catch (e) {
     console.error("Failed to unassign device", e);
     alert("Failed to return device to pool.");
+    fetchUnassignedNodes(); // Revert on error
   }
 };
 
-// Expose the fetch function so App.vue can call it
-defineExpose({ fetchUnassignedNodes });
+// --- EXPOSED HELPER: Remove from list instantly ---
+const removeNode = (deviceName: string) => {
+  UnassignedNodes.value = UnassignedNodes.value.filter(n => n.name !== deviceName);
+};
+
+defineExpose({ fetchUnassignedNodes, removeNode });
 
 onMounted(() => {
   fetchUnassignedNodes();
@@ -145,21 +145,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-  .layout-menu {
-  width: 250px !important;
-  min-width: 250px !important;
-  max-width: 250px !important;
-}
-
-
-.menu-item .router-link-active {
-    background-color: rgba(67, 89, 113, 0.1);
-    color: #696cff;
-    font-weight: bold;
-}
-
-.menu-sub {
-  transition: all 0.3s ease;
-  background-color: transparent;
-}
+  .layout-menu { width: 250px !important; min-width: 250px !important; max-width: 250px !important; }
+  .menu-item .router-link-active { background-color: rgba(67, 89, 113, 0.1); color: #696cff; font-weight: bold; }
+  .menu-sub { transition: all 0.3s ease; background-color: transparent; }
 </style>

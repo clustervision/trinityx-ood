@@ -4,6 +4,7 @@ import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import type { Device } from '@/types/rack';
+// import onDrop from '@/views/RackView.vue'
 
 const props = defineProps<{ rackName: string; }>();
 // Add 'pool-updated' to notify App.vue to refresh the sidebar
@@ -86,8 +87,6 @@ const placeDeviceInRack = (currentRack: Rack, d: any) => {
     }
 };
 
-// --- 2. DROP LOGIC (UPDATED) ---
-// Added 'side' parameter to know if it's Front or Back
 const onDrop = async (event: DragEvent, targetRackName: string, targetU: number, side: 'front' | 'back') => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;

@@ -1,7 +1,3 @@
-{
-type: uploaded file
-fileName: RackView.vue
-fullContent:
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
@@ -10,7 +6,7 @@ import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import type { Device } from '@/types/rack';
 
 // --- EMITS ---
-const emit = defineEmits(['rack-updated']); // Used to tell parent (App.vue) to refresh SideMenu
+const emit = defineEmits(['rack-updated', 'device-taken']);
 
 // --- INTERFACES & STATE ---
 interface RackSlot { number: number; device: Device | null; }
@@ -20,33 +16,22 @@ const racks = ref<Rack[]>([]);
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const prome_url = 'https://yixin3-dev-ctrl001:9090'; 
 
-// Metric State
+// ... (Metrics code same as before) ...
+// (Metric State, fetchMetricData, watch, getMetricForDevice - KEEP EXISTING CODE)
 const metric1 = ref<string | null>('No Scale');
 const metric2 = ref<string | null>('No Scale');
 const rawMetricData = ref<any[]>([]); 
 
-// --- METRIC FETCHING ---
 const fetchMetricData = async () => {
-  if (metric1.value === 'No Scale' && metric2.value === 'No Scale') {
-    rawMetricData.value = [];
-    return;
-  }
-  try {
-    const response = await axios.get(prome_url + '/get_node');
-    rawMetricData.value = response.data; 
-  } catch (e) {
-    console.error("Fetch metrics error:", e);
-  }
+  if (metric1.value === 'No Scale' && metric2.value === 'No Scale') { rawMetricData.value = []; return; }
+  try { const response = await axios.get(prome_url + '/get_node'); rawMetricData.value = response.data; } 
+  catch (e) { console.error("Fetch metrics error:", e); }
 };
-
 watch([metric1, metric2], fetchMetricData);
-
 const getMetricForDevice = (device: Device | null, type: string | null) => {
   if (!device || !type || type === 'No Scale' || !rawMetricData.value.length) return undefined;
-  
   const found = rawMetricData.value.find((item: any) => item.hostname === device.name);
   if (!found) return undefined;
-
   if (type === 'System Load') return found.load;
   if (type === 'Temperature') return found.temperature; 
   if (type === 'Power Consumption') return found.power;
@@ -54,31 +39,21 @@ const getMetricForDevice = (device: Device | null, type: string | null) => {
   return undefined;
 };
 
-// --- LOAD RACKS ---
+// ... (Rack Loading logic same as before) ...
 const loadRacks = async () => {
   try {
     const t = new Date().getTime();
     const response = await axios.get(Url + `/manage_racks?t=${t}`);
     const rawMsg = response.data.message;
-    
     if (rawMsg) {
       let flatList: any[] = [];
       if (Array.isArray(rawMsg)) {
-        rawMsg.forEach((item: any) => {
-          if (item.name && item.size) flatList.push(item);
-          else flatList.push(...Object.values(item));
-        });
-      } else if (typeof rawMsg === 'object') {
-        flatList = Object.values(rawMsg);
-      }
+        rawMsg.forEach((item: any) => { if (item.name && item.size) flatList.push(item); else flatList.push(...Object.values(item)); });
+      } else if (typeof rawMsg === 'object') { flatList = Object.values(rawMsg); }
 
       const parsedRacks: Rack[] = flatList.map((r: any) => ({
-        name: r.name,
-        size: parseInt(r.size) || 42,
-        order: r.order ? r.order.toLowerCase() : 'ascending',
-        slots: [],
-        showBackSide: false,
-        powerOn: true
+        name: r.name, size: parseInt(r.size) || 42, order: r.order ? r.order.toLowerCase() : 'ascending',
+        slots: [], showBackSide: false, powerOn: true
       }));
 
       for (const rack of parsedRacks) {
@@ -89,13 +64,11 @@ const loadRacks = async () => {
     }
   } catch (error) { console.error("Failed to load racks:", error); }
 };
-
 const generateSlots = (size: number, order: string) => {
   const slots: RackSlot[] = [];
   for (let i = 1; i <= size; i++) { slots.push({ number: i, device: null }); }
   return order === 'ascending' ? slots : slots.reverse();
 };
-
 const fetchRackDetails = async (rack: Rack) => {
   try {
     const t = new Date().getTime();
@@ -106,19 +79,16 @@ const fetchRackDetails = async (rack: Rack) => {
     }
   } catch (e) { console.error(`Failed to load details for ${rack.name}`, e); }
 };
-
 const placeDeviceInRack = (rack: Rack, d: any) => {
     const height = parseInt(d.height) || 1;
     const position = Number(d.position);
     const occupiedUs = [];
     for(let i=0; i<height; i++) occupiedUs.push(position + i);
-
     let minVisualIndex = Infinity;
     occupiedUs.forEach(u => {
         const idx = rack.slots.findIndex(s => s.number === u);
         if (idx !== -1 && idx < minVisualIndex) minVisualIndex = idx;
     });
-
     if (minVisualIndex !== Infinity && minVisualIndex !== -1) {
       rack.slots[minVisualIndex].device = {
         name: d.name, position: position, height: height,
@@ -127,28 +97,44 @@ const placeDeviceInRack = (rack: Rack, d: any) => {
       };
     }
 };
-
 const toggleRackPower = (rack: Rack) => { rack.powerOn = !rack.powerOn; };
 const resetRack = (rack: Rack) => { confirm(`Reset ${rack.name}?`); };
 
-// --- INSTANT DROP ---
-// Updated to accept 'side'
+
+// --- INSTANT DROP HANDLER ---
 const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side: 'front' | 'back') => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
   const device = JSON.parse(data);
 
-  // 1. Optimistic Update (Immediate Feedback)
+  // 1. CLEAR OLD POSITION (If moved from within rack)
+  if (device.dragSource === 'rack') {
+     // Find the rack/slot that currently holds this device and remove it
+     racks.value.forEach(r => {
+        r.slots.forEach(s => {
+           if (s.device && s.device.name === device.name) {
+              s.device = null; // Instant Removal
+           }
+        });
+     });
+  } 
+  // 2. OR NOTIFY PARENT (If moved from pool)
+  else if (device.dragSource === 'pool') {
+      emit('device-taken', device.name); // Tells App.vue -> SideMenu to remove it
+  }
+
+  // 3. SET NEW POSITION (Instant Add)
   const tempDevice = {
       name: device.name,
       position: targetU,
       height: device.height || 1,
       type: device.type || 'node',
-      orientation: side, // Use the correct side!
+      orientation: side, 
       vendor: device.vendor || ''
   };
   placeDeviceInRack(targetRack, tempDevice);
 
+  // 4. API CALL
   try {
     const t = new Date().getTime();
     const payload = {
@@ -157,7 +143,7 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side:
       position: targetU,
       height: device.height || 1,
       type: device.type || 'node',
-      orientation: side, // Send correct side to backend
+      orientation: side, 
       vendor: device.vendor || ''
     };
 
@@ -166,12 +152,10 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side:
        headers: { 'Content-Type': 'application/json' }
     });
 
-    // 2. Notify Global Refresh
     if (response.status === 200) {
        emit('rack-updated'); 
     } else {
-       // If fail, reload
-       await loadRacks();
+       await loadRacks(); // Revert if failed
     }
   } catch (e) {
     console.error("Drop failed", e);
@@ -185,13 +169,7 @@ onMounted(() => { loadRacks(); });
 
 <template>
   <div class="card mb-4 border-0">
-    
-    <RackMetricsHeader
-      v-model:metric1="metric1"
-      v-model:metric2="metric2"
-      @refresh="loadRacks"
-    />
-
+    <RackMetricsHeader v-model:metric1="metric1" v-model:metric2="metric2" @refresh="loadRacks" />
     <div class="card-body">
       <div class="racks-container">
         <div v-for="rack in racks" :key="rack.name" class="single-rack-wrapper">
@@ -216,7 +194,6 @@ onMounted(() => { loadRacks(); });
                        @drop="onDrop($event, rack, slot.number, 'front')" @dragover.prevent>
                      <div class="rack-label">{{ slot.number }}</div>
                      <div class="rack-slot" style="position: relative; overflow: visible;">
-                        
                         <DeviceItem 
                           v-if="slot.device && (slot.device.orientation === 'front' || !slot.device.orientation)"
                           :device="slot.device"
@@ -226,7 +203,6 @@ onMounted(() => { loadRacks(); });
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
                           :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
                         />
-
                      </div>
                      <div class="rack-label">{{ slot.number }}</div>
                   </div>
@@ -240,7 +216,6 @@ onMounted(() => { loadRacks(); });
                        @drop="onDrop($event, rack, slot.number, 'back')" @dragover.prevent>
                      <div class="rack-label">{{ slot.number }}</div>
                      <div class="rack-slot" style="position: relative; overflow: visible;">
-                        
                         <DeviceItem 
                           v-if="slot.device && slot.device.orientation === 'back'"
                           :device="slot.device"
@@ -250,7 +225,6 @@ onMounted(() => { loadRacks(); });
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
                           :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
                         />
-                        
                      </div>
                      <div class="rack-label">{{ slot.number }}</div>
                   </div>
@@ -280,4 +254,3 @@ onMounted(() => { loadRacks(); });
 .rack-slot { flex-grow: 1; }
 .cursor-pointer { cursor: pointer; }
 </style>
-}
