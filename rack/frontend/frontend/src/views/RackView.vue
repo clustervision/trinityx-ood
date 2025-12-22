@@ -10,7 +10,16 @@ const emit = defineEmits(['rack-updated', 'device-taken']);
 
 // --- INTERFACES & STATE ---
 interface RackSlot { number: number; device: Device | null; }
-interface Rack { name: string; size: number; order: string; slots: RackSlot[]; showBackSide: boolean; powerOn: boolean; }
+
+interface Rack { 
+  name: string; 
+  size: number; 
+  order: string; 
+  slots: RackSlot[]; 
+  showBackSide: boolean; 
+  powerOn: boolean;
+  backPowerOn: boolean;
+}
 
 const racks = ref<Rack[]>([]);
 const Url = 'https://yixin3-dev-ctrl001:7755';
@@ -65,7 +74,8 @@ const loadRacks = async () => {
         slots: [], 
         // 2. Check if the rack already existed, if so, keep its 'showBackSide' state
         showBackSide: currentStates.has(r.name) ? currentStates.get(r.name)! : false, 
-        powerOn: true
+        powerOn: true,
+        backPowerOn: true
       }));
 
       for (const rack of parsedRacks) {
@@ -113,8 +123,16 @@ const placeDeviceInRack = (rack: Rack, d: any) => {
     }
 };
 const toggleRackPower = (rack: Rack) => { rack.powerOn = !rack.powerOn; };
-const resetRack = (rack: Rack) => { confirm(`Reset ${rack.name}?`); };
 
+const toggleBackPower = (rack: Rack) => { 
+  rack.backPowerOn = !rack.backPowerOn; 
+};
+
+// Update existing resetRack to handle sides
+const resetRack = (rack: Rack, side: 'front' | 'back' = 'front') => { 
+  confirm(`Reset ${rack.name} ${side} side?`); 
+  // Add your API call logic here for the specific side
+};
 
 // --- INSTANT DROP HANDLER ---
 const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side: 'front' | 'back') => {
@@ -198,13 +216,14 @@ onMounted(() => { loadRacks(); });
 
            <div class="d-flex gap-0">
              <div class="rack-column">
-                <div class="rack-header-dark">
+                <div class="rack-header-light">
                   <div class="d-flex align-items-center">
                     <span class="u-header-label">U</span> 
                     <span class="rack-title text-white" style="margin-left: 5px; font-size: 0.7rem;">{{ rack.name }}</span>
                   </div>
                   <div class="d-flex align-items-center gap-1 me-0">
-                    <button class="btn btn-light btn-xs fw-bold reset-btn" @click="resetRack(rack)">REST</button> <i class='bx bx-power-off cursor-pointer' style="font-size: 0.8rem;" :class="rack.powerOn ? 'text-success' : 'text-danger'" @click="toggleRackPower(rack)"></i>
+                    <button class="btn btn-light btn-xs fw-bold reset-btn" @click="resetRack(rack)">RESET</button> 
+                    <i class='bx bx-power-off cursor-pointer' style="font-size: 0.8rem;" :class="rack.powerOn ? 'text-success' : 'text-danger'" @click="toggleRackPower(rack)"></i>
                     <span class="u-header-label ms-1">U</span> 
                   </div>
                 </div>
@@ -230,11 +249,13 @@ onMounted(() => { loadRacks(); });
 
              <div class="rack-column" v-if="rack.showBackSide">
               <div class="rack-header-dark">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center" style="height: 100%;">
                   <span class="u-header-label">U</span>
-                  <span class="rack-title text-white" style="margin-left: 5px; font-size: 0.7rem;">{{ rack.name }} Back</span>
+                  <span class="rack-title text-white" style="margin-left: 5px; font-size: 0.7rem;">{{ rack.name }}</span>
                 </div>
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-1">
+                  <button class="btn btn-light btn-xs fw-bold reset-btn" @click="resetRack(rack, 'back')">RESET</button>
+                  <i class='bx bx-power-off 'style="font-size: 0.8rem;" :class="rack.backPowerOn ? 'text-success' : 'text-danger'" @click="toggleBackPower(rack)"></i>
                   <span class="u-header-label">U</span>
                 </div>
               </div>
@@ -255,13 +276,13 @@ onMounted(() => { loadRacks(); });
                      </div>
                      <div class="rack-label">{{ slot.number }}</div>
                   </div>
+                  </div>
                </div>
              </div>
            </div>
         </div>
       </div>
     </div>
-  </div>
   </div>
 </template>
 
@@ -283,11 +304,22 @@ onMounted(() => { loadRacks(); });
   padding: 0;
   height: 20px;
   overflow: hidden;
-  border: 2px solid #222;
+  border: 2px solid #222; 
+  border-bottom: none;
+}
+.rack-header-light {
+  background-color: #aaaaaa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  height: 20px;
+  overflow: hidden;
+  border: 2px solid #222; 
   border-bottom: none;
 }
 .rack-title {margin-left: 10px;font-size: 0.8rem;font-weight: bold;}
-.reset-btn { font-size: 0.55rem; padding: 1px 5px; height: 15px; line-height: 0.5; }
+.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; }
 .rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; }
 .rack-row { display: flex; height: 20px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
 .rack-label { width: 20px;text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6; 
