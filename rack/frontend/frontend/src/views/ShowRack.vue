@@ -8,7 +8,7 @@ import type { Device } from '@/types/rack';
 
 const props = defineProps<{ rackName: string; }>();
 // Add 'pool-updated' to notify App.vue to refresh the sidebar
-const emit = defineEmits(['close', 'pool-updated']);
+const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const prome_url = 'https://yixin3-dev-ctrl001:9090';
@@ -92,21 +92,35 @@ const onDrop = async (event: DragEvent, targetRackName: string, targetU: number,
   if (!data) return;
   const device = JSON.parse(data);
 
-  // A. Optimistic Update (Immediate Feedback)
+
+  if (device.dragSource === 'rack' && rack.value) {
+     rack.value.slots.forEach(s => {
+        // Find the slot holding this device and clear it
+        if (s.device && s.device.name === device.name) {
+           s.device = null; 
+        }
+     });
+  } 
+
+  else if (device.dragSource === 'pool') {
+      emit('device-taken', device.name); 
+  }
+  
   if (rack.value) {
       const tempDevice = {
           name: device.name,
           position: targetU,
           height: device.height || 1,
           type: device.type || 'node',
-          orientation: side, // Use the side we dropped on!
+          orientation: side, 
           vendor: device.vendor || ''
       };
       placeDeviceInRack(rack.value, tempDevice);
   }
 
+
   try {
-    const timestamp = new Date().getTime();
+    const timestamp = new Date().getTime();    
     const payload = {
       rack: targetRackName,
       name: device.name,
@@ -118,8 +132,7 @@ const onDrop = async (event: DragEvent, targetRackName: string, targetU: number,
     };
 
     const doubleEncoded = JSON.stringify(JSON.stringify(payload));
-    
-    // B. Send to Backend
+        // B. Send to Backend
     await axios.post(
       Url + `/update_rack?t=${timestamp}`, 
       doubleEncoded, 
@@ -127,7 +140,7 @@ const onDrop = async (event: DragEvent, targetRackName: string, targetU: number,
     );
     
     // C. Refresh everything to be sure
-    emit('pool-updated'); // Tell App to refresh sidebar
+    emit('pool-updated','close','device-taken'); // Tell App to refresh sidebar
     await loadRackData(); // Refresh current view
 
   } catch (e: any) {
@@ -166,6 +179,7 @@ defineExpose({ loadRackData });
 onMounted(() => { loadRackData(); });
 </script>
 <template>
+  <div class="container-fluid flex-grow-1 container-p-y">
   <div class="card mb-4 border-0 h-100">
     
     <RackMetricsHeader
@@ -253,11 +267,7 @@ onMounted(() => { loadRackData(); });
 
       </div>
     </div>
-    
-    <div class="card-footer text-center border-0 bg-white">
-        <button class="btn btn-secondary" @click="$emit('close')">Back to Manage List</button>
-    </div>
-
+  </div>
   </div>
 </template>
 

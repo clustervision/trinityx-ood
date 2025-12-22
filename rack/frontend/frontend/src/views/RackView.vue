@@ -39,7 +39,6 @@ const getMetricForDevice = (device: Device | null, type: string | null) => {
   return undefined;
 };
 
-// ... (Rack Loading logic same as before) ...
 const loadRacks = async () => {
   try {
     const t = new Date().getTime();
@@ -48,12 +47,25 @@ const loadRacks = async () => {
     if (rawMsg) {
       let flatList: any[] = [];
       if (Array.isArray(rawMsg)) {
-        rawMsg.forEach((item: any) => { if (item.name && item.size) flatList.push(item); else flatList.push(...Object.values(item)); });
-      } else if (typeof rawMsg === 'object') { flatList = Object.values(rawMsg); }
+        rawMsg.forEach((item: any) => { 
+          if (item.name && item.size) flatList.push(item); 
+          else flatList.push(...Object.values(item)); 
+        });
+      } else if (typeof rawMsg === 'object') { 
+        flatList = Object.values(rawMsg); 
+      }
+
+      // 1. Create a map of the CURRENT toggle states
+      const currentStates = new Map(racks.value.map(r => [r.name, r.showBackSide]));
 
       const parsedRacks: Rack[] = flatList.map((r: any) => ({
-        name: r.name, size: parseInt(r.size) || 42, order: r.order ? r.order.toLowerCase() : 'ascending',
-        slots: [], showBackSide: false, powerOn: true
+        name: r.name, 
+        size: parseInt(r.size) || 42, 
+        order: r.order ? r.order.toLowerCase() : 'ascending',
+        slots: [], 
+        // 2. Check if the rack already existed, if so, keep its 'showBackSide' state
+        showBackSide: currentStates.has(r.name) ? currentStates.get(r.name)! : false, 
+        powerOn: true
       }));
 
       for (const rack of parsedRacks) {
@@ -62,8 +74,11 @@ const loadRacks = async () => {
       }
       racks.value = parsedRacks;
     }
-  } catch (error) { console.error("Failed to load racks:", error); }
+  } catch (error) { 
+    console.error("Failed to load racks:", error); 
+  }
 };
+
 const generateSlots = (size: number, order: string) => {
   const slots: RackSlot[] = [];
   for (let i = 1; i <= size; i++) { slots.push({ number: i, device: null }); }
@@ -168,6 +183,7 @@ onMounted(() => { loadRacks(); });
 </script>
 
 <template>
+  <div class="container-fluid flex-grow-1 container-p-y">
   <div class="card mb-4 border-0">
     <RackMetricsHeader v-model:metric1="metric1" v-model:metric2="metric2" @refresh="loadRacks" />
     <div class="card-body">
@@ -235,16 +251,17 @@ onMounted(() => { loadRacks(); });
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <style scoped>
-.racks-container { display: flex; gap: 40px; padding: 20px; overflow-x: auto; align-items: flex-end; min-height: 600px; }
-.single-rack-wrapper { display: flex; flex-direction: column; }
+.racks-container { display: flex; gap: 40px; padding: 20px; overflow-x: auto; align-items: flex-end; min-height: 600px; width:100% }
+.single-rack-wrapper { display: flex; flex-direction: column; flex-shrink: 0;}
 .rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }
 .rack-tab { padding: 5px 15px; font-size: 0.75rem; font-weight: bold; color: white; text-transform: uppercase; }
 .front-label { background-color: #6666ff; border-top-left-radius: 4px; border-top-right-radius: 4px; }
 .back-toggle { background-color: #333; cursor: pointer; border-top-left-radius: 4px; border-top-right-radius: 4px; }
-.rack-column { min-width: 280px; display: flex; flex-direction: column; }
+.rack-column { min-width: 300px; display: flex; flex-direction: column; flex:1;}
 .rack-header-dark { background-color: #222; display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #444; }
 .reset-btn { font-size: 0.65rem; padding: 1px 5px; height: 20px; line-height: 1; }
 .rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; }
