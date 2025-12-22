@@ -287,7 +287,7 @@ onMounted(() => { loadRacks(); });
 </template>
 
 <style scoped>
-.racks-container { display: flex; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; min-height: 600px; width:100% }
+.racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .single-rack-wrapper { display: flex; flex-direction: column; flex-shrink: 0;}
 .rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }
 .rack-tab { padding: 4px 12px; font-size: 0.5rem; font-weight: bold; color: white; text-transform: uppercase; }
