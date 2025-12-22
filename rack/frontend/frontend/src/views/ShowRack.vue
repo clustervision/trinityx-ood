@@ -220,7 +220,7 @@ onMounted(() => { loadRackData(); });
                           :metric-type="metric1 || undefined"
                           :is-rack-view="true" 
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
-                          :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
+                          :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
                         />
                      </div>
                      
@@ -247,7 +247,7 @@ onMounted(() => { loadRackData(); });
                           :metric-type="metric2 || undefined"
                           :is-rack-view="true" 
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
-                          :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
+                          :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
                         />
                      </div>
                      
@@ -287,8 +287,8 @@ onMounted(() => { loadRackData(); });
 .rack-column { min-width: 280px; display: flex; flex-direction: column; }
 .rack-header-dark { background-color: #222; display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #444; }
 .rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; }
-.rack-row { display: flex; height: 30px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
-.rack-label { width: 35px; text-align: center; line-height: 30px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6; }
+.rack-row { display: flex; height: 20px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
+.rack-label { width: 35px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6; }
 .rack-label:last-child { border-right: none; border-left: 1px solid #dee2e6; }
 .rack-slot { flex-grow: 1; }
 </style>

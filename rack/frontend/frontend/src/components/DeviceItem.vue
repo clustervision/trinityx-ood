@@ -100,7 +100,7 @@ const onDragStart = (event: DragEvent) => {
 <style scoped>
 /* Same styles as before */
 .device-item {
-  width: 100%;
+  width: 65%;
   z-index: 10;
   cursor: grab;
   border: 1px solid #333;

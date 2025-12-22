@@ -45,12 +45,12 @@
         <ul 
           class="menu-sub ps-3 pe-3 pt-2" 
           v-show="showUnassigned" 
-          style="display: block; list-style: none; min-height: 100px; border: 2px dashed #ddd;"
+          style="display: block; list-style: none; min-height: 520px; border: 2px dashed #ddd; width: 250px"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
           <div v-if="UnassignedNodes.length > 0">
-             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2">
+             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2 d-flex justify-content-center" >
                 <DeviceItem
                   :device="device"
                   :is-rack-view="false"

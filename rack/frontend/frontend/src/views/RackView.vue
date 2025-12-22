@@ -239,7 +239,7 @@ onMounted(() => { loadRacks(); });
                           :metric-type="metric1 || undefined"
                           :is-rack-view="true" 
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
-                          :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
+                          :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
                         />
                      </div>
                      <div class="rack-label">{{ slot.number }}</div>
@@ -271,7 +271,7 @@ onMounted(() => { loadRacks(); });
                           :metric-type="metric2 || undefined"
                           :is-rack-view="true" 
                           style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
-                          :style="{ height: (slot.device.height * 30 - 2) + 'px' }"
+                          :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
                         />
                      </div>
                      <div class="rack-label">{{ slot.number }}</div>
