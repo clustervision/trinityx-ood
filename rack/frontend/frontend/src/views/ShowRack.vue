@@ -4,6 +4,7 @@ import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import type { Device } from '@/types/rack';
+import SingleRack from '@/components/SingleRack.vue';
 // import onDrop from '@/views/RackView.vue'
 
 const props = defineProps<{ rackName: string; }>();
@@ -190,106 +191,27 @@ onMounted(() => { loadRackData(); });
 
     <div class="card-body">
       <div class="racks-container d-flex justify-content-center">
-        
         <div v-if="rack" class="single-rack-wrapper">
-           
-           <div class="rack-tabs">
-             <div class="rack-tab front-label">FRONT SIDE</div>
-             <div class="rack-tab back-toggle" @click="rack.showBackSide = !rack.showBackSide">
-               {{ rack.showBackSide ? 'HIDE BACK SIDE' : 'SHOW BACK SIDE' }}
-             </div>
-           </div>
-
-           <div class="d-flex gap-4">
-             
-             <div class="rack-column">
-                <div class="rack-header-dark">
-                   <span class="fw-bold text-white ms-2">{{ rack.name }} (Front)</span>
-                </div>
-                <div class="rack-frame">
-                  <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-                       @drop="onDrop($event, rack.name, slot.number, 'front')" @dragover.prevent>
-                     
-                     <div class="rack-label">{{ slot.number }}</div>
-                     
-                     <div class="rack-slot" style="position: relative; overflow: visible;">
-                        <DeviceItem 
-                          v-if="slot.device && (slot.device.orientation === 'front' || !slot.device.orientation)"
-                          :device="slot.device"
-                          :metric-value="getMetricForDevice(slot.device, metric1)"
-                          :metric-type="metric1 || undefined"
-                          :is-rack-view="true" 
-                          style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
-                          :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
-                        />
-                     </div>
-                     
-                     <div class="rack-label">{{ slot.number }}</div>
-                  </div>
-               </div>
-             </div>
-
-             <div class="rack-column" v-if="rack.showBackSide">
-                <div class="rack-header-dark">
-                  <span class="text-white ms-2">{{ rack.name }} (Back)</span>
-                </div>
-                <div class="rack-frame">
-                  <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-                       @drop="onDrop($event, rack.name, slot.number, 'back')" @dragover.prevent>
-                     
-                     <div class="rack-label">{{ slot.number }}</div>
-                     
-                     <div class="rack-slot" style="position: relative; overflow: visible;">
-                        <DeviceItem 
-                          v-if="slot.device && slot.device.orientation === 'back'"
-                          :device="slot.device"
-                          :metric-value="getMetricForDevice(slot.device, metric2)"
-                          :metric-type="metric2 || undefined"
-                          :is-rack-view="true" 
-                          style="position: absolute; top: 0; left: 0; width: 100%; z-index: 10;"
-                          :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
-                        />
-                     </div>
-                     
-                     <div class="rack-label">{{ slot.number }}</div>
-                  </div>
-               </div>
-             </div>
-
-           </div>
+           <div class="racks-container">
+          <SingleRack 
+            :key="rack.name"
+            :rack="rack"
+            :metric1="metric1"
+            :metric2="metric2"
+            :get-metric="getMetricForDevice"
+            @drop="onDrop" 
+            @reset="resetRack"
+          />
+            </div>
+        </div>
+        </div>
+        </div>
+        </div>
         </div>
 
-        <div v-else class="text-center mt-5">
-           <div class="spinner-border text-primary" role="status">
-             <span class="visually-hidden">Loading Rack...</span>
-           </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-  </div>
 </template>
 
-
 <style scoped>
-.racks-container { 
-  min-height: 600px; 
-  align-items: flex-start; 
-  padding-top: 20px;
-}
-.single-rack-wrapper { display: flex; flex-direction: column; }
-.rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }
-.rack-tab { padding: 5px 15px; font-size: 0.75rem; font-weight: bold; color: white; text-transform: uppercase; }
-.front-label { background-color: #6666ff; border-top-left-radius: 4px; border-top-right-radius: 4px; }
-.back-toggle { background-color: #333; cursor: pointer; border-top-left-radius: 4px; border-top-right-radius: 4px; }
-
-.rack-column { min-width: 280px; display: flex; flex-direction: column; }
-.rack-header-dark { background-color: #222; display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #444; }
-.rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; }
-.rack-row { display: flex; height: 20px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
-.rack-label { width: 35px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6; }
-.rack-label:last-child { border-right: none; border-left: 1px solid #dee2e6; }
-.rack-slot { flex-grow: 1; }
+.racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 </style>
 }
