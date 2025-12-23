@@ -1,23 +1,14 @@
 <script setup lang="ts">
 import DeviceItem from '@/components/DeviceItem.vue';
-import type { Device } from '@/types/rack';
+import type {Rack} from '@/types/rack';
 
-interface RackSlot { number: number; device: Device | null; }
-interface Rack { 
-  name: string; 
-  size: number; 
-  order: string; 
-  slots: RackSlot[]; 
-  showBackSide: boolean; 
-  powerOn: boolean;
-  backPowerOn: boolean;
-}
 const props = defineProps<{
   rack: Rack;            
   metric1: string | null; 
   metric2: string | null; 
   getMetric: Function;  
 }>();
+
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
 const toggleBack = () => { 
   props.rack.showBackSide = !props.rack.showBackSide; 

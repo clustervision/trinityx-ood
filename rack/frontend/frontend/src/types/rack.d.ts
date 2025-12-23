@@ -5,7 +5,7 @@ export interface Device {
   vendor: string; 
   position: number; 
   orientation: 'front' | 'back'; 
-  status?: string; // Optional: 'ok', 'error', etc.
+  status?: string;
 }
 
 export interface RackSlot {
