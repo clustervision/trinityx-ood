@@ -5,12 +5,9 @@ import DeviceItem from '@/components/DeviceItem.vue';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import type { Device } from '@/types/rack';
 import SingleRack from '@/components/SingleRack.vue';
-// import onDrop from '@/views/RackView.vue'
 
 const props = defineProps<{ rackName: string; }>();
-// Add 'pool-updated' to notify App.vue to refresh the sidebar
 const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
-
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const prome_url = 'https://yixin3-dev-ctrl001:9090';
 

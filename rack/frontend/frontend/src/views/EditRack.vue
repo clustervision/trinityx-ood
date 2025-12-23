@@ -71,9 +71,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch } from 'vue';
 import axios from 'axios';
+import { useToast } from 'vue-toastification';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
-
+const toast = useToast()
 // 1. DEFINE PROPS (Replaces route.params)
 const props = defineProps<{
   rackName: string // Passed from App.vue
@@ -145,6 +146,7 @@ const submitForm = async () => {
     if (response.data.status) {
       // 3. EMIT CLOSE ON SUCCESS (Parent will switch view back)
       emit('close');
+      toast.success(`Rack ${form.name} Updated.`);
     } else {
       errorMessage.value = response.data.message || "Update failed.";
     }

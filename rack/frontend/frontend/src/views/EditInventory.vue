@@ -79,10 +79,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted,watch } from 'vue';
+import { ref, reactive, onMounted,watch, useAttrs } from 'vue';
 import axios from 'axios';
-const Url = 'https://yixin3-dev-ctrl001:7755';
+import { useToast } from 'vue-toastification';
 
+const Url = 'https://yixin3-dev-ctrl001:7755';
+const toast = useToast()
 
 const props = defineProps<{
   inventoryName: string;
@@ -149,6 +151,7 @@ const submitForm = async () => {
 
     if (response.data.status) {
       emit('close');
+      toast.success(`${form.name} Updated.`);
     } else {
       errorMessage.value = response.data.message || 'Update failed';
     }

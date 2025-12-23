@@ -91,10 +91,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
+import {useToast} from "vue-toastification"
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const items = ref<any[]>([]);
-
+const toast = useToast()
 const props = defineProps<{
   pageType: string 
 }>();
@@ -122,20 +123,23 @@ const deleteItem = async (item: any) => {
       deleteUrl = Url + `/delete_inventory/${item.type}/${item.name}?t=${timestamp}`;
     }
     await axios.get(deleteUrl);
-
+    if (deleteUrl === Url + `/delete_rack/${item.name}?t=${timestamp}`)
+      toast.success(`Rack Delete\n Rack ${item.name} is deleted.`);
+    else
+      toast.success(`Rack Update\n${item.name} Removed from Rack\.`);
     console.log("Delete confirmed by backend.");
 
   } catch (e: any) {
     // Check if it is the "CORS Success" case
     // (Axios reports "Network Error" when CORS blocks a 200 OK response)
-    if (e.message === "Network Error" && !e.response) {
-       console.warn("Backend deleted it (Status 200), but Browser blocked the receipt. Keeping it deleted.");
-    } 
-    else {
+    // if (e.message === "Network Error" && !e.response) {
+    //    console.warn("Backend deleted it (Status 200), but Browser blocked the receipt. Keeping it deleted.");
+    // } 
+    // else {
        console.error("Delete failed", e);
        items.value = previousItems; 
        alert("Failed to delete. The item has been restored.");
-    }
+    // }
   }
 };
 

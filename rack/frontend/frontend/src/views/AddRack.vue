@@ -98,12 +98,13 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import axios from 'axios';
+import { useToast } from 'vue-toastification';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
 // 1. DEFINE EMITS (To communicate with Parent)
 const emit = defineEmits(['close']);
-
+const toast = useToast();
 const isSubmitting = ref(false);
 const errorMessage = ref('');
 
@@ -134,6 +135,7 @@ const submitForm = async () => {
     if (response.data.status) {
       // 2. EMIT CLOSE ON SUCCESS
       emit('close');
+      toast.success(`Add Rack ${form.name} as New Rack`);
     } else {
       errorMessage.value = response.data.message || 'Failed to add rack';
     }

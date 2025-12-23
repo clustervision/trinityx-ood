@@ -5,6 +5,7 @@ import DeviceItem from '@/components/DeviceItem.vue';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue'; 
 import type { Device } from '@/types/rack';
 import SingleRack from '@/components/SingleRack.vue';
+import {useToast} from "vue-toastification"
 
 // --- EMITS ---
 const emit = defineEmits(['rack-updated', 'device-taken']);
@@ -25,18 +26,18 @@ interface Rack {
 const racks = ref<Rack[]>([]);
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const prome_url = 'https://yixin3-dev-ctrl001:9090'; 
-
-// ... (Metrics code same as before) ...
-// (Metric State, fetchMetricData, watch, getMetricForDevice - KEEP EXISTING CODE)
 const metric1 = ref<string | null>('No Scale');
 const metric2 = ref<string | null>('No Scale');
 const rawMetricData = ref<any[]>([]); 
+const toast = useToast();
 
 const fetchMetricData = async () => {
   if (metric1.value === 'No Scale' && metric2.value === 'No Scale') { rawMetricData.value = []; return; }
   try { const response = await axios.get(prome_url + '/get_node'); rawMetricData.value = response.data; } 
   catch (e) { console.error("Fetch metrics error:", e); }
 };
+
+
 watch([metric1, metric2], fetchMetricData);
 const getMetricForDevice = (device: Device | null, type: string | null) => {
   if (!device || !type || type === 'No Scale' || !rawMetricData.value.length) return undefined;
@@ -187,7 +188,8 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side:
     });
 
     if (response.status === 200) {
-       emit('rack-updated'); 
+      toast.success(`Rack Update\n${device.name} Added to Rack ${targetRack.name}.`);
+      emit('rack-updated'); 
     } else {
        await loadRacks(); // Revert if failed
     }

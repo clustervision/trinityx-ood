@@ -74,11 +74,12 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
+import { useToast } from 'vue-toastification';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true); 
-
+const toast = useToast()
 const emit = defineEmits(['change-view', 'pool-updated']);
 
 const fetchUnassignedNodes = async () => {
@@ -101,8 +102,7 @@ const onDropBackToPool = async (event: DragEvent) => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
   const device = JSON.parse(data);
-
-  // If already in pool, ignore
+  const isRack = 'size' in device || device.type === 'rack';
   if (device.dragSource === 'pool') return;
 
   // 1. Instant UI Update
@@ -112,7 +112,7 @@ const onDropBackToPool = async (event: DragEvent) => {
     const timestamp = new Date().getTime();
     const payload = {
       name: device.name,
-      type: device.type || 'node'
+      type: isRack ?'rack':(device.type || 'node')
     };
     const doubleEncoded = JSON.stringify(JSON.stringify(payload));
 
@@ -123,8 +123,11 @@ const onDropBackToPool = async (event: DragEvent) => {
     );
     
     // Notify parent to refresh Rack View (remove device from rack)
-    emit('pool-updated'); 
-
+    emit('pool-updated');
+    if (device.type === 'rack')
+      toast.success(`Rack Update\n Rack ${device.name} is deleted.`);
+    else
+      toast.success(`Rack Update\n${device.name} Removed from Rack`);
   } catch (e) {
     console.error("Failed to unassign device", e);
     alert("Failed to return device to pool.");
