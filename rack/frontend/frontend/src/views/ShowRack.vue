@@ -211,4 +211,3 @@ onMounted(() => { loadRackData(); });
 <style scoped>
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 </style>
-}
