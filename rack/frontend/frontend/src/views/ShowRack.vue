@@ -20,7 +20,17 @@ const Url = 'https://yixin3-dev-ctrl001:7755';
 // 4. DEFINE HANDLERS
 const loadRackData = async () => {
   if (!props.rackName) return;
-  rack.value = await fetchSingleRack(props.rackName);
+
+  // 1. Save the current state if the rack already exists
+  const currentShowBack = rack.value ? rack.value.showBackSide : true; // Default to true
+
+  // 2. Fetch the fresh data
+  const freshRack = await fetchSingleRack(props.rackName);
+
+  // 3. Re-apply the saved toggle state to the fresh object
+  freshRack.showBackSide = currentShowBack;
+  
+  rack.value = freshRack;
 };
 
 const resetRack = (targetRack: any, side: 'front' | 'back') => {

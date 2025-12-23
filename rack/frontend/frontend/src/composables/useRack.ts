@@ -34,6 +34,7 @@ export function useRack() {
     }
   };
 
+
   const fetchSingleRack = async (rackName: string): Promise<Rack> => {
     const t = new Date().getTime();
     const res = await axios.get(`${Url}/show_rack/${rackName}?t=${t}`);
@@ -44,10 +45,10 @@ export function useRack() {
       name: rackName,
       size: parseInt(data.size) || 42,
       order: (data.order || 'ascending').toLowerCase(),
-      slots: [], // Now TypeScript knows this is RackSlot[]
-      showBackSide: false,
-      powerOn: true,      // Added to match your interface
-      backPowerOn: true   // Added to match your interface
+      slots: [], 
+      showBackSide: true,
+      powerOn: true,
+      backPowerOn: true
     };
 
     rackObj.slots = generateSlots(rackObj.size, rackObj.order);
