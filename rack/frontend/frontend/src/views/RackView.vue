@@ -3,25 +3,13 @@ import { ref, onMounted, watch } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue'; 
-import type { Device } from '@/types/rack';
+import type { Device, RackSlot, Rack } from '@/types/rack';
 import SingleRack from '@/components/SingleRack.vue';
 import {useToast} from "vue-toastification"
 
 // --- EMITS ---
 const emit = defineEmits(['rack-updated', 'device-taken']);
 
-// --- INTERFACES & STATE ---
-interface RackSlot { number: number; device: Device | null; }
-
-interface Rack { 
-  name: string; 
-  size: number; 
-  order: string; 
-  slots: RackSlot[]; 
-  showBackSide: boolean; 
-  powerOn: boolean;
-  backPowerOn: boolean;
-}
 
 const racks = ref<Rack[]>([]);
 const Url = 'https://yixin3-dev-ctrl001:7755';
@@ -36,8 +24,6 @@ const fetchMetricData = async () => {
   try { const response = await axios.get(prome_url + '/get_node'); rawMetricData.value = response.data; } 
   catch (e) { console.error("Fetch metrics error:", e); }
 };
-
-
 watch([metric1, metric2], fetchMetricData);
 const getMetricForDevice = (device: Device | null, type: string | null) => {
   if (!device || !type || type === 'No Scale' || !rawMetricData.value.length) return undefined;
