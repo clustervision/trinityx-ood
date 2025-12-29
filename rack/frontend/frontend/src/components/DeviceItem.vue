@@ -92,10 +92,14 @@ const vendorClass = computed(() => {
 const onDragStart = (event: DragEvent) => {
   isDragging.value = true;
   if (event.dataTransfer) {
+    const offsetY = event.offsetY; 
+    const uOffset = Math.floor(offsetY / unitPixelHeight.value);
+
     event.dataTransfer.effectAllowed = 'move';
     const payload = {
       ...props.device,
-      dragSource: props.isRackView ? 'rack' : 'pool' 
+      dragSource: props.isRackView ? 'rack' : 'pool',
+      uOffset: uOffset 
     };
     event.dataTransfer.setData('application/json', JSON.stringify(payload));
   }

@@ -14,26 +14,35 @@ export function useRack() {
     return order === 'ascending' ? slots : slots.reverse();
   };
 
-  const placeDeviceInRack = (rack: any, d: any) => {
-    const height = parseInt(d.height) || 1;
-    const position = Number(d.position);
-    const occupiedUs = Array.from({ length: height }, (_, i) => position + i);
+const placeDeviceInRack = (rack: any, d: any) => {
+  const height = parseInt(d.height) || 1;
+  const position = Number(d.position);
+  const deviceName = d.name;
 
-    let minVisualIndex = Infinity;
-    occupiedUs.forEach(u => {
-      const idx = rack.slots.findIndex((s: any) => s.number === u);
-      if (idx !== -1 && idx < minVisualIndex) minVisualIndex = idx;
-    });
-
-    if (minVisualIndex !== Infinity && minVisualIndex !== -1) {
-      rack.slots[minVisualIndex].device = {
-        name: d.name, position, height,
-        type: d.type || 'node', orientation: d.orientation || 'front',
-        vendor: d.vendor || null, status: 'ok'
-      };
+  // --- NEW STEP: SEARCH AND DESTROY ---
+  // We loop through all slots and remove the device if it already exists elsewhere
+  rack.slots.forEach((s: any) => {
+    if (s.device && s.device.name === deviceName) {
+      s.device = null;
     }
-  };
+  });
 
+  const occupiedUs = Array.from({ length: height }, (_, i) => position + i);
+
+  let minVisualIndex = Infinity;
+  occupiedUs.forEach(u => {
+    const idx = rack.slots.findIndex((s: any) => s.number === u);
+    if (idx !== -1 && idx < minVisualIndex) minVisualIndex = idx;
+  });
+
+  if (minVisualIndex !== Infinity && minVisualIndex !== -1) {
+    rack.slots[minVisualIndex].device = {
+      name: deviceName, position, height,
+      type: d.type || 'node', orientation: d.orientation || 'front',
+      vendor: d.vendor || null, status: 'ok'
+    };
+  }
+};
 
   const fetchSingleRack = async (rackName: string): Promise<Rack> => {
     const t = new Date().getTime();

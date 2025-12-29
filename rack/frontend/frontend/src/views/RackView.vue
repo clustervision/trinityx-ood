@@ -61,34 +61,25 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side:
   if (!data) return;
   const device = JSON.parse(data);
 
-  // 4. Instant UI Update Logic (Internal state change)
-  if (device.dragSource === 'rack') {
-     racks.value.forEach(r => {
-        r.slots?.forEach(s => {
-           if (s.device && s.device.name === device.name) s.device = null;
-        });
-     });
-  } else if (device.dragSource === 'pool') {
-      emit('device-taken', device.name);
-  }
+  let correctedPosition = targetU - (device.uOffset || 0);
+  correctedPosition = Math.max(1, correctedPosition);
 
-  const tempDevice = { ...device, position: targetU, orientation: side };
+  racks.value.forEach(r => {
+    r.slots?.forEach(s => {
+      if (s.device && s.device.name === device.name) {
+        s.device = null; 
+      }
+    });
+  });
+  const tempDevice = { ...device, position: correctedPosition, orientation: side };
   placeDeviceInRack(targetRack, tempDevice);
-
-  // 5. API Call
   try {
     const payload = { ...tempDevice, rack: targetRack.name };
     const doubleEncoded = JSON.stringify(JSON.stringify(payload));
-    const response = await axios.post(`${Url}/update_rack?t=${Date.now()}`, doubleEncoded, {
+    await axios.post(`${Url}/update_rack?t=${Date.now()}`, doubleEncoded, {
        headers: { 'Content-Type': 'application/json' }
     });
 
-    if (response.status === 200) {
-      toast.success(`Rack Update\n${device.name} Added to Rack ${targetRack.name}.`);
-      emit('rack-updated'); 
-    } else {
-       await loadRacks(); 
-    }
   } catch (e) {
     await loadRacks();
   }
