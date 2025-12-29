@@ -41,21 +41,24 @@ const toggleBack = () => {
         <div class="rack-frame">
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'front')" @dragover.prevent>
-            <div class="rack-label">{{ slot.number }}</div>
-            <div class="rack-slot" style="position: relative;">
+           <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
+            <div 
+              v-for="device in slot.devices" 
+              :key="device.name" 
+              class="flex-fill h-100 position-relative"
+            >
               <DeviceItem 
-                v-if="slot.device && (slot.device.orientation === 'front' || !slot.device.orientation)"
-                :device="slot.device"
-                
-                :metric1-value="getMetric(slot.device, metric1)"
+                :device="device"
+                :metric1-value="getMetric(device, metric1)"
                 :metric1-type="metric1"
-                :metric2-value="getMetric(slot.device, metric2)"
+                :metric2-value="getMetric(device, metric2)"
                 :metric2-type="metric2"
                 :is-rack-view="true"
                 style="position: absolute; width: 100%;"
-                :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
+                :style="{ height: (device.height * 20 - 2) + 'px' }"
               />
             </div>
+          </div>
             <div class="rack-label">{{ slot.number }}</div>
           </div>
         </div>

@@ -6,42 +6,60 @@ import type { Rack, RackSlot, Device } from '@/types/rack';
 export function useRack() {
   const Url = 'https://yixin3-dev-ctrl001:7755';
 
-  const generateSlots = (size: number, order: string): RackSlot[] => {
-    const slots: RackSlot[] = [];
-    for (let i = 1; i <= size; i++) {
-      slots.push({ number: i, device: null });
-    }
-    return order === 'ascending' ? slots : slots.reverse();
-  };
+// useRack.ts
+const generateSlots = (size: number, order: string): RackSlot[] => {
+  const slots: RackSlot[] = [];
+  for (let i = 1; i <= size; i++) {
+    slots.push({ number: i, devices: [] }); // Initialize as an empty array
+  }
+  return order === 'ascending' ? slots : slots.reverse();
+};
 
 const placeDeviceInRack = (rack: any, d: any) => {
   const height = parseInt(d.height) || 1;
   const position = Number(d.position);
   const deviceName = d.name;
 
-  // --- NEW STEP: SEARCH AND DESTROY ---
-  // We loop through all slots and remove the device if it already exists elsewhere
+  // STEP 1: REMOVE FROM OLD POSITION (Fixes the "double device" issue)
+  // We search the entire rack and remove any existing instance of this device
   rack.slots.forEach((s: any) => {
-    if (s.device && s.device.name === deviceName) {
-      s.device = null;
+    s.devices = s.devices.filter((dev: any) => dev.name !== deviceName);
+  });
+
+  // STEP 2: FIND TARGET SLOT
+  const targetSlot = rack.slots.find((s: any) => s.number === position);
+  if (!targetSlot) return;
+
+  // STEP 3: SPLIT LOGIC & CONSTRAINTS
+  if (targetSlot.devices.length > 0) {
+    const existingHeight = targetSlot.devices[0].height;
+
+    // Forbidden: New device (A) taller than existing (B)
+    if (height > existingHeight) {
+      alert("Forbidden: New device cannot be taller than existing devices in this slot.");
+      return;
     }
-  });
 
-  const occupiedUs = Array.from({ length: height }, (_, i) => position + i);
+    // Max 8 devices
+    if (targetSlot.devices.length >= 8) {
+      console.warn("Max 8 devices reached.");
+      return;
+    }
 
-  let minVisualIndex = Infinity;
-  occupiedUs.forEach(u => {
-    const idx = rack.slots.findIndex((s: any) => s.number === u);
-    if (idx !== -1 && idx < minVisualIndex) minVisualIndex = idx;
-  });
-
-  if (minVisualIndex !== Infinity && minVisualIndex !== -1) {
-    rack.slots[minVisualIndex].device = {
-      name: deviceName, position, height,
-      type: d.type || 'node', orientation: d.orientation || 'front',
-      vendor: d.vendor || null, status: 'ok'
-    };
+    // Force A to match B's height
+    d.height = existingHeight; 
   }
+
+  // STEP 4: INSERT
+  targetSlot.devices.push({
+    name: deviceName,
+    position,
+    height: d.height, 
+    type: d.type || 'node',
+    orientation: d.orientation || 'front',
+    vendor: d.vendor || null,
+    status: 'ok'
+  });
 };
 
   const fetchSingleRack = async (rackName: string): Promise<Rack> => {
