@@ -23,9 +23,11 @@
         </div>
 
         <div v-if="metric1 && metric1 !== 'No Scale'" class="d-flex align-items-center gap-2 fade-in">
-          <span class="text-muted small">0</span>
+          <span class="text-muted small">{{ range1?.min ?? 0 }}</span>
+          
           <div class="legend-bar"></div>
-          <span class="text-muted small">100</span>
+          
+          <span class="text-muted small">{{ range1?.max ?? 100 }}</span>
         </div>
       </div>
 
@@ -49,9 +51,11 @@
         </div>
 
         <div v-if="metric2 && metric2 !== 'No Scale'" class="d-flex align-items-center gap-2 fade-in">
-          <span class="text-muted small">0</span>
+          <span class="text-muted small">{{ range2?.min ?? 0 }}</span>
+          
           <div class="legend-bar"></div>
-          <span class="text-muted small">100</span>
+          
+          <span class="text-muted small">{{ range2?.max ?? 100 }}</span>
         </div>
       </div>
 
@@ -65,9 +69,11 @@ import { ref } from 'vue';
 const props = defineProps<{
   metric1: string | null;
   metric2: string | null;
+  range1?: { min: number; max: number }; 
+  range2?: { min: number; max: number };
 }>();
 
-const emit = defineEmits(['update:metric1', 'update:metric2']);
+const emit = defineEmits(['update:metric1', 'update:metric2', 'refresh']);
 
 const showDropdown1 = ref(false);
 const showDropdown2 = ref(false);
@@ -84,10 +90,9 @@ const selectMetric2 = (val: string) => {
 </script>
 
 <style scoped>
-/* Specific Styling to match your screenshot */
 
 .custom-btn-cyan {
-  background-color: #00C4FF; /* The bright cyan from your image */
+  background-color: #00C4FF;
   border-color: #00C4FF;
   min-width: 180px;
   border-radius: 5px;
@@ -96,9 +101,7 @@ const selectMetric2 = (val: string) => {
   justify-content: space-between;
   align-items: center;
 }
-.custom-btn-cyan:hover {
-  background-color: #00b0e6;
-}
+.custom-btn-cyan:hover { background-color: #00b0e6; }
 
 .custom-btn-width {
   min-width: 180px;
@@ -106,14 +109,15 @@ const selectMetric2 = (val: string) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #7d899b; /* Muted grey/blue */
+  background-color: #7d899b;
   border-color: #7d899b;
 }
 
 .legend-bar {
-  width: 250px; /* Wider bar like screenshot */
+  width: 250px;
   height: 20px;
-  background: linear-gradient(90deg, darkblue, green, yellow, red);
+
+  background: linear-gradient(120deg, hsl(220, 100%, 50%),hsl(125, 100%, 50%), hsl(0, 100%, 50%)); 
   border: 1px solid #ddd;
   border-radius: 2px;
 }
@@ -121,14 +125,11 @@ const selectMetric2 = (val: string) => {
 .text-muted {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #8898aa !important;
+  font-weight: bold;
+  min-width: 30px;
+  text-align: center;
 }
 
-.fade-in {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>

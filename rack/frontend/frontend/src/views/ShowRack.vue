@@ -11,7 +11,7 @@ const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
 
 // 2. INITIALIZE COMPOSABLE LOGIC
 const { fetchSingleRack } = useRack();
-const { metric1, metric2, getMetricForDevice } = useRackMetrics();
+const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 
 // 3. DEFINE LOCAL STATE
 const rack = ref<any>(null);
@@ -103,6 +103,8 @@ onMounted(() => {
                 :rack="rack"
                 :metric1="metric1"
                 :metric2="metric2"
+                :range1="metric1Range"
+                :range2="metric2Range"
                 :get-metric="getMetricForDevice"
                 @drop="onDrop" 
                 @reset="resetRack"

@@ -46,8 +46,11 @@ const toggleBack = () => {
               <DeviceItem 
                 v-if="slot.device && (slot.device.orientation === 'front' || !slot.device.orientation)"
                 :device="slot.device"
-                :metric-value="getMetric(slot.device, metric1)"
-                :metric-type="metric1 || undefined"
+                
+                :metric1-value="getMetric(slot.device, metric1)"
+                :metric1-type="metric1"
+                :metric2-value="getMetric(slot.device, metric2)"
+                :metric2-type="metric2"
                 :is-rack-view="true"
                 style="position: absolute; width: 100%;"
                 :style="{ height: (slot.device.height * 20 - 2) + 'px' }"

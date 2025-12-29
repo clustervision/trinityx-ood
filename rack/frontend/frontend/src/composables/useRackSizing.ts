@@ -10,7 +10,6 @@ export function useRackSizing() {
   onMounted(() => window.addEventListener('resize', updateWidth));
   onUnmounted(() => window.removeEventListener('resize', updateWidth));
 
-  // Replicating the logic: If screen is huge (>1920), use 30px/unit. Else 20px/unit.
   const unitPixelHeight = computed(() => {
     if (windowWidth.value >= 1921) {
       return 30; 

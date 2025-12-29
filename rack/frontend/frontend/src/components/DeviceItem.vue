@@ -4,23 +4,33 @@
     :class="[
        vendorClass, 
        { 'is-dragging': isDragging },
-       isRackView ? 'is-absolute' : 'is-relative'  ]"
-    
-    :style="{ 
-       height: heightPixels + 'px',
-       backgroundColor: metricColor,  
-       backgroundImage: metricColor ? 'none' : '' 
-    }"
-    
+       isRackView ? 'is-absolute' : 'is-relative' 
+    ]"
+    :style="{ height: heightPixels + 'px' }" 
     draggable="true"
     @dragstart="onDragStart"
     @dragend="isDragging = false"
   >
     <div class="device-content">
-      <span class="device-name">
-         {{ device.name }} 
-         <span v-if="metricValue">({{ metricValue }})</span>
-      </span>
+      <span class="device-name">{{ device.name }}</span>
+    </div>
+
+    <div class="indicators-overlay">
+      
+      <div 
+        v-if="metric1Type && metric1Type !== 'No Scale'" 
+        class="indicator-box"
+        :style="{ backgroundColor: getColor(metric1Value, metric1Type) }"
+        :title="`${metric1Type}: ${metric1Value ?? 'No Data'}`"
+      ></div>
+
+      <div 
+        v-if="metric2Type && metric2Type !== 'No Scale'" 
+        class="indicator-box"
+        :style="{ backgroundColor: getColor(metric2Value, metric2Type) }"
+        :title="`${metric2Type}: ${metric2Value ?? 'No Data'}`"
+      ></div>
+
     </div>
   </div>
 </template>
@@ -29,12 +39,13 @@
 import { computed, ref } from 'vue';
 import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing'; 
-const Url = 'https://yixin3-dev-ctrl001:7755';
 
 const props = defineProps<{
   device: Device;
-  metricValue?: number | string; 
-  metricType?: string;          
+  metric1Value?: number; 
+  metric1Type?: string | null;
+  metric2Value?: number; 
+  metric2Type?: string | null;
   isRackView?: boolean;
 }>();
 
@@ -45,68 +56,94 @@ const heightPixels = computed(() => {
   return (props.device.height * unitPixelHeight.value) - 2;
 });
 
-const metricColor = computed(() => {
-  if (!props.metricValue || !props.metricType) return undefined; 
-  const value = parseFloat(props.metricValue.toString());
+const getColor = (val: number | undefined | null, type: string | null) => {
+  if (!type || type === 'No Scale') return 'transparent';
+
+  if (val === undefined || val === null) {
+    return '#666666';
+  }
   
-  if (props.metricType === 'Temperature') {
-    const ratio = Math.min(Math.max(value, 0), 100) / 100; 
-    const r = Math.round(255 * ratio);
-    const b = Math.round(255 * (1 - ratio));
-    return `rgb(${r}, 0, ${b})`;
+  const value = parseFloat(val.toString());
+
+  if (type === 'Temperature') {
+    const ratio = Math.min(Math.max(value, 0), 100) / 100;
+    const hue = (1 - ratio) * 120; 
+    return `hsl(${hue}, 100%, 45%)`;
   }
 
-  if (props.metricType === 'System Load') {
-    let ratio = Math.min(Math.max(value, 0), 1);
-    const r = Math.round(255 * ratio);
-    const g = Math.round(255 * (1 - ratio));
-    return `rgb(${r}, ${g}, 0)`;
+  if (type === 'System Load') {
+    const ratio = Math.min(Math.max(value, 0), 1); 
+    const hue = (1 - ratio) * 120;
+    return `hsl(${hue}, 100%, 45%)`;
   }
-
-  return undefined; 
-});
+  
+  return '#cccccc';
+};
 
 const vendorClass = computed(() => {
   const type = props.device.type;
   const vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
   const height = props.device.height;
-
   if (type === 'switch') return 'switch';
   if (!vendor || vendor === 'none') return 'default';
-
-  const allowedVendors = ["dell", "hp", "lenovo", "gigabyte", "supermicro", "asus"];
-  if (!allowedVendors.includes(vendor)) return 'noname';
-
   return `${vendor}-${height}`; 
 });
 
-// --- UPDATED DRAG START ---
 const onDragStart = (event: DragEvent) => {
   isDragging.value = true;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
-    
-    // Add 'dragSource' to the payload
     const payload = {
       ...props.device,
       dragSource: props.isRackView ? 'rack' : 'pool' 
     };
-    
     event.dataTransfer.setData('application/json', JSON.stringify(payload));
   }
 };
 </script>
 
 <style scoped>
-/* Same styles as before */
 .device-item {
-  width: 65%;
+  width: 100%; 
   z-index: 10;
   cursor: grab;
   border: 1px solid #333;
-  transition: background-color 0.3s ease;
+  background-color: #3a3a3a; 
+  color: white;
+  position: relative; 
+  display: flex;
+  align-items: center; 
+  padding-left: 5px;
+  overflow: hidden;
 }
+
 .device-item.is-absolute { position: absolute; }
 .device-item.is-relative { position: relative; margin-bottom: 5px; }
-.device-content { padding: 2px; color: white; text-shadow: 1px 1px 2px black; font-size: 10px; overflow: hidden; white-space: nowrap; }
+
+.device-content {
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 10px;
+  text-shadow: 1px 1px 2px black;
+  width: 80%;
+}
+
+
+.indicators-overlay {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px; 
+  z-index: 20;
+}
+
+
+.indicator-box {
+  width: 12px; 
+  height: 12px; 
+  border-radius: 2px; 
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
 </style>

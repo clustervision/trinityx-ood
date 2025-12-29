@@ -14,7 +14,7 @@ const racks = ref<Rack[]>([]);
 
 // 2. Initialize Composable Logic
 const { fetchSingleRack, placeDeviceInRack } = useRack();
-const { metric1, metric2, getMetricForDevice } = useRackMetrics();
+const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
@@ -101,7 +101,11 @@ onMounted(loadRacks);
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
     <div class="card mb-4 border-0">
-      <RackMetricsHeader v-model:metric1="metric1" v-model:metric2="metric2" @refresh="loadRacks" />
+      <RackMetricsHeader v-model:metric1="metric1"
+       v-model:metric2="metric2"
+       :range1="metric1Range"
+        :range2="metric2Range" 
+        @refresh="loadRacks" />
       <div class="card-body">
         <div class="racks-container">
           <SingleRack 
