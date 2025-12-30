@@ -85,7 +85,7 @@ const toggleBack = () => {
 
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
                 
-                <template v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name">
+                <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name" class="flex-fill h-100 position-relative">
                   <DeviceItem 
                     v-if="device.orientation === 'back'"
                     :device="device"
@@ -97,7 +97,7 @@ const toggleBack = () => {
                     style="position: absolute; width: 100%;"
                     :style="{ height: (device.height * 20 - 2) + 'px' }"
                   />
-                </template>
+                </div>
 
               </div>
 
