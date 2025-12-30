@@ -41,13 +41,15 @@ const toggleBack = () => {
         <div class="rack-frame">
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'front')" @dragover.prevent>
+              <div class="rack-label">{{ slot.number }}</div>
+
            <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
             <div 
-              v-for="device in slot.devices" 
-              :key="device.name" 
+              v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" 
               class="flex-fill h-100 position-relative"
             >
               <DeviceItem 
+                v-if="device.orientation === 'front'"
                 :device="device"
                 :metric1-value="getMetric(device, metric1)"
                 :metric1-type="metric1"
@@ -76,25 +78,33 @@ const toggleBack = () => {
             <span class="u-header-label">U</span>
           </div>
         </div>
-        <div class="rack-frame">
-          <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-               @drop="$emit('drop', $event, rack, slot.number, 'back')" @dragover.prevent>
-            <div class="rack-label">{{ slot.number }}</div>
-            <div class="rack-slot" style="position: relative;">
-              <DeviceItem 
-                v-if="slot.device && slot.device.orientation === 'back'"
-                :device="slot.device"
-                :metric-value="getMetric(slot.device, metric2)"
-                :metric-type="metric2 || undefined"
-                :is-rack-view="true"
-                style="position: absolute; width: 100%;"
-                :style="{ height: (slot.device.height * 20 - 2) + 'px' }"
-              />
+          <div class="rack-frame">
+            <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
+                @drop="$emit('drop', $event, rack, slot.number, 'back')" @dragover.prevent>
+              <div class="rack-label">{{ slot.number }}</div>
+
+              <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
+                
+                <template v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name">
+                  <DeviceItem 
+                    v-if="device.orientation === 'back'"
+                    :device="device"
+                    :metric1-value="getMetric(device, metric1)"
+                    :metric1-type="metric1"
+                    :metric2-value="getMetric(device, metric2)"
+                    :metric2-type="metric2"
+                    :is-rack-view="true"
+                    style="position: absolute; width: 100%;"
+                    :style="{ height: (device.height * 20 - 2) + 'px' }"
+                  />
+                </template>
+
+              </div>
+
+              <div class="rack-label">{{ slot.number }}</div>
             </div>
-            <div class="rack-label">{{ slot.number }}</div>
           </div>
         </div>
-      </div>
     </div>
   </div>
 </template>
