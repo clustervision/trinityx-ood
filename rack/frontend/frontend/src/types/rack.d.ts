@@ -10,7 +10,7 @@ export interface Device {
 
 export interface RackSlot {
   number: number;
-  device: Device | null;
+  devices: Device[];
 }
 
 export interface Rack {
