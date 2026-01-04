@@ -9,10 +9,9 @@ import type { PluginOptions } from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
 import App from './App.vue'
 import type { Plugin } from 'vue';
-import router from './router'
+
 const options: PluginOptions = {
     position: POSITION.TOP_RIGHT, 
     timeout: 4000,  
@@ -21,5 +20,4 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use((Toast as unknown) as Plugin, options);
-app.use(router)
 app.mount('#app')

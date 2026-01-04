@@ -75,12 +75,10 @@ import { useToast } from 'vue-toastification';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const toast = useToast()
-// 1. DEFINE PROPS (Replaces route.params)
 const props = defineProps<{
-  rackName: string // Passed from App.vue
+  rackName: string 
 }>();
 
-// 2. DEFINE EMITS (Replaces router.push)
 const emit = defineEmits(['close']);
 
 const isSubmitting = ref(false);
@@ -94,9 +92,8 @@ const form = reactive({
   size: ''
 });
 
-// Load Data Function
+
 const loadRackData = async () => {
-  // Use prop instead of route param
   const rackName = props.rackName;
   if (!rackName) return;
 
@@ -126,7 +123,6 @@ onMounted(() => {
   loadRackData();
 });
 
-// Optional: Watch prop if the component stays open while ID changes
 watch(() => props.rackName, loadRackData);
 
 const submitForm = async () => {
@@ -144,7 +140,6 @@ const submitForm = async () => {
     const response = await axios.post(Url + '/change_rack', params);
 
     if (response.data.status) {
-      // 3. EMIT CLOSE ON SUCCESS (Parent will switch view back)
       emit('close');
       toast.success(`Rack ${form.name} Updated.`);
     } else {
