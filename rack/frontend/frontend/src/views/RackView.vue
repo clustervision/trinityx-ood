@@ -99,6 +99,10 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side:
     await axios.post(`${Url}/update_rack`, doubleEncoded, {
        headers: { 'Content-Type': 'application/json' }
     });
+    if (draggedDevice.dragSource === 'pool') {
+      emit('device-taken', draggedDevice.name); 
+    }
+    toast.success(`${draggedDevice.name}  added to rack ${targetRack.name}`);
   } catch (e) {
     await loadRacks();
   }
