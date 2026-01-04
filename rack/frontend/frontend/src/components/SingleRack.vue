@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DeviceItem from '@/components/DeviceItem.vue';
-import type {Rack} from '@/types/rack';
+import type { Rack } from '@/types/rack';
+import { ref } from 'vue';
 
 const props = defineProps<{
   rack: Rack;            
@@ -10,14 +11,27 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
+
 const toggleBack = () => { 
   props.rack.showBackSide = !props.rack.showBackSide; 
 };
+
+const hoveredSlot = ref<number | null>(null);
+const hoveredSide = ref<'front' | 'back' | null>(null);
+
+const handleDragOver = (uNumber: number, side: 'front' | 'back') => {
+  hoveredSlot.value = uNumber;
+  hoveredSide.value = side;
+};
+
+const clearPreview = () => {
+  hoveredSlot.value = null;
+  hoveredSide.value = null;
+};
 </script>
 
-
 <template>
-  <div class="single-rack-wrapper">
+  <div class="single-rack-wrapper" @dragleave="clearPreview">
     <div class="rack-tabs">
       <div class="rack-tab front-label">FRONT SIDE</div>
       <div class="rack-tab back-toggle" @click="toggleBack">
@@ -34,34 +48,36 @@ const toggleBack = () => {
           </div>
           <div class="d-flex align-items-center gap-1 ">
             <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'front')">RESET</button> 
-            <i class='bx bx-power-off':class="rack.powerOn ?'text-success' : 'text-danger'" @click="rack.powerOn = !rack.powerOn"></i>
+            <i class='bx bx-power-off':class="rack.powerOn ? 'text-success' : 'text-danger'" @click="rack.powerOn = !rack.powerOn"></i>
             <span class="u-header-label ms-1">U</span> 
           </div>
         </div>
         <div class="rack-frame">
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-               @drop="$emit('drop', $event, rack, slot.number, 'front')" @dragover.prevent>
+               @drop="$emit('drop', $event, rack, slot.number, 'front'); clearPreview()" 
+               @dragover.prevent="handleDragOver(slot.number, 'front')">
               <div class="rack-label">{{ slot.number }}</div>
 
-           <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
-            <div 
-              v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" 
-              class="flex-fill h-100 position-relative"
-            >
-              <DeviceItem 
-                v-if="device.orientation === 'front'"
-                :device="device"
-                :metric1-value="getMetric(device, metric1)"
-                :metric1-type="metric1"
-                :metric2-value="getMetric(device, metric2)"
-                :metric2-type="metric2"
-                :is-rack-view="true"
-                style="position: absolute; width: 100%;"
-                :style="{ height: (device.height * 20 - 2) + 'px' }"
-              />
-            </div>
-          </div>
-            <div class="rack-label">{{ slot.number }}</div>
+              <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
+                <div v-if="hoveredSlot === slot.number && hoveredSide === 'front'" class="placement-preview"></div>
+
+                <div 
+                  v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" 
+                  class="flex-fill h-100 position-relative"
+                >
+                  <DeviceItem 
+                    :device="device"
+                    :metric1-value="getMetric(device, metric1)"
+                    :metric1-type="metric1"
+                    :metric2-value="getMetric(device, metric2)"
+                    :metric2-type="metric2"
+                    :is-rack-view="true"
+                    style="position: absolute; width: 100%;"
+                    :style="{ height: (device.height * 20 - 2) + 'px' }"
+                  />
+                </div>
+              </div>
+              <div class="rack-label">{{ slot.number }}</div>
           </div>
         </div>
       </div>
@@ -78,16 +94,17 @@ const toggleBack = () => {
             <span class="u-header-label">U</span>
           </div>
         </div>
-          <div class="rack-frame">
-            <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-                @drop="$emit('drop', $event, rack, slot.number, 'back')" @dragover.prevent>
+        <div class="rack-frame">
+          <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
+               @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()" 
+               @dragover.prevent="handleDragOver(slot.number, 'back')">
               <div class="rack-label">{{ slot.number }}</div>
 
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
-                
+                <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
+
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name" class="flex-fill h-100 position-relative">
                   <DeviceItem 
-                    v-if="device.orientation === 'back'"
                     :device="device"
                     :metric1-value="getMetric(device, metric1)"
                     :metric1-type="metric1"
@@ -98,19 +115,38 @@ const toggleBack = () => {
                     :style="{ height: (device.height * 20 - 2) + 'px' }"
                   />
                 </div>
-
               </div>
 
               <div class="rack-label">{{ slot.number }}</div>
-            </div>
           </div>
         </div>
+      </div>
     </div>
   </div>
 </template>
 
-
 <style scoped>
+
+.placement-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 242, 255, 0.3);
+  border: 1px solid #00f2ff;
+  box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.5), 0 0 15px rgba(0, 242, 255, 0.4);
+  z-index: 5;
+  pointer-events: none;
+  animation: pulse-glow 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
+}
+
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .single-rack-wrapper { display: flex; flex-direction: column; flex-shrink: 0;}
 .rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }

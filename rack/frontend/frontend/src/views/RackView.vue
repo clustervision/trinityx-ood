@@ -59,27 +59,25 @@ const resetRack = (rack: Rack, side: 'front' | 'back' = 'front') => {
 const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side: 'front' | 'back') => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
-  const device = JSON.parse(data);
+  const draggedDevice = JSON.parse(data);
 
-  let correctedPosition = targetU - (device.uOffset || 0);
-  correctedPosition = Math.max(1, correctedPosition);
-
-  racks.value.forEach(r => {
-    r.slots?.forEach(s => {
-      if (s.device && s.device.name === device.name) {
-        s.device = null; 
-      }
-    });
+  targetRack.slots.forEach(s => {
+    s.devices = s.devices.filter(d => d.name !== draggedDevice.name);
   });
-  const tempDevice = { ...device, position: correctedPosition, orientation: side };
+
+  let finalPosition = targetU; 
+
+  const tempDevice = { ...draggedDevice, position: finalPosition, orientation: side };
   placeDeviceInRack(targetRack, tempDevice);
+
+  targetRack.slots = [...targetRack.slots];
+
   try {
     const payload = { ...tempDevice, rack: targetRack.name };
     const doubleEncoded = JSON.stringify(JSON.stringify(payload));
-    await axios.post(`${Url}/update_rack?t=${Date.now()}`, doubleEncoded, {
+    await axios.post(`${Url}/update_rack`, doubleEncoded, {
        headers: { 'Content-Type': 'application/json' }
     });
-
   } catch (e) {
     await loadRacks();
   }
