@@ -11,8 +11,6 @@ import type { Rack } from '@/types/rack';
 const emit = defineEmits(['rack-updated', 'device-taken']);
 const toast = useToast();
 const racks = ref<Rack[]>([]);
-
-// 2. Initialize Composable Logic
 const { fetchSingleRack, placeDeviceInRack } = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 
@@ -36,11 +34,9 @@ const loadRacks = async () => {
       }
 
       const currentStates = new Map(racks.value.map(r => [r.name, r.showBackSide]));
-
-      // 3. Use fetchSingleRack to populate the list correctly
       const parsedRacks = await Promise.all(flatList.map(async (r: any) => {
           const fullRack = await fetchSingleRack(r.name);
-          // Preserve the toggle state (Back side view)
+
           fullRack.showBackSide = currentStates.get(r.name) || false;
           return fullRack;
       }));
@@ -60,7 +56,32 @@ const onDrop = async (event: DragEvent, targetRack: Rack, targetU: number, side:
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
   const draggedDevice = JSON.parse(data);
+  const dragHeight = parseInt(draggedDevice.height) || 1;
 
+  if (targetU + dragHeight - 1 > targetRack.size) {
+      toast.error(`Installation failed: Device exceeds rack height (Max ${targetRack.size}U).`);
+      return;
+    }
+  for (let i = 0; i < dragHeight; i++) {
+    const checkU = targetU + i;
+    const slotToCheck = targetRack.slots.find(s => s.number === checkU);
+    
+    if (slotToCheck) {
+      const existingDevice = slotToCheck.devices.find(d => d.orientation === side && d.name !== draggedDevice.name);
+      
+      if (existingDevice) {
+        if (existingDevice.position !== targetU) {
+          toast.error(`Slot ${checkU} is occupied by ${existingDevice.name}`);
+          return; 
+        }
+        
+        if (existingDevice.position === targetU && existingDevice.height < dragHeight) {
+          toast.error(`Space is too small: existing device only has height ${existingDevice.height}`);
+          return; 
+        }
+      }
+    }
+  }
   targetRack.slots.forEach(s => {
     s.devices = s.devices.filter(d => d.name !== draggedDevice.name);
   });
