@@ -10,8 +10,6 @@ import EditInventory from '@/views/EditInventory.vue';
 
 const currentView = ref('dashboard'); 
 const selectedItemName = ref('');
-
-// Ref to access SideMenu methods
 const sideMenuRef = ref<InstanceType<typeof SideMenu> | null>(null);
 const rackViewRef = ref<InstanceType<typeof RackView> | null>(null);
 
@@ -20,24 +18,20 @@ const setView = (viewName: string) => {
   selectedItemName.value = '';
 };
 
-// --- INSTANT UPDATE LOGIC ---
-// 1. When RackView says "I took a device from pool", remove it from SideMenu
+
 const handleDeviceTakenFromPool = (deviceName: string) => {
   if (sideMenuRef.value) {
     sideMenuRef.value.removeNode(deviceName);
   }
 };
 
-// 2. When SideMenu says "I took a device back", refresh RackView
 const handlePoolUpdated = () => {
    if (rackViewRef.value) {
       rackViewRef.value.loadRacks();
    }
-   // ShowRack handles its own refresh if it's active, 
-   // but RackView is the dashboard, so we refresh it via ref.
 };
 
-// Standard navigation
+
 const handleAddRack = () => { currentView.value = 'add-rack'; };
 const handleEditRack = (item: any) => {
   selectedItemName.value = item.name;
@@ -55,6 +49,13 @@ const goBackToManage = () => {
   if (currentView.value.includes('rack')) currentView.value = 'manage-rack';
   else currentView.value = 'manage-inventory';
 };
+
+const refreshPoolData = () => {
+  if (sideMenuRef.value) {
+    sideMenuRef.value.fetchUnassignedNodes();
+  }
+};
+
 </script>
 
 <template>
@@ -104,6 +105,7 @@ const goBackToManage = () => {
       <EditInventory 
         v-if="currentView === 'edit-inventory'"
         :inventory-name="selectedItemName"
+        @inventory-updated="refreshPoolData"
         @close="goBackToManage"
       />
 

@@ -45,12 +45,12 @@
         <ul 
           class="menu-sub ps-3 pe-3 pt-2" 
           v-show="showUnassigned" 
-          style="display: block; list-style: none; min-height: 520px; border: 2px dashed #ddd; width: 250px"
+          style="display: block; list-style: none; min-height: 520px; border: 2px dashed #ddd; width: 240px"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
           <div v-if="UnassignedNodes.length > 0">
-             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2 d-flex justify-content-center" >
+             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;">
                 <DeviceItem
                   :device="device"
                   :is-rack-view="false"
@@ -97,7 +97,6 @@ const fetchUnassignedNodes = async () => {
   }
 };
 
-// --- OPTIMISTIC: Drop Back To Pool ---
 const onDropBackToPool = async (event: DragEvent) => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
@@ -105,7 +104,6 @@ const onDropBackToPool = async (event: DragEvent) => {
   const isRack = 'size' in device || device.type === 'rack';
   if (device.dragSource === 'pool') return;
 
-  // 1. Instant UI Update
   UnassignedNodes.value.push(device);
 
   try {
@@ -122,7 +120,6 @@ const onDropBackToPool = async (event: DragEvent) => {
       { headers: { 'Content-Type': 'application/json' } }
     );
     
-    // Notify parent to refresh Rack View (remove device from rack)
     emit('pool-updated');
     if (device.type === 'rack')
       toast.success(`Rack Update\n Rack ${device.name} is deleted.`);
@@ -131,11 +128,11 @@ const onDropBackToPool = async (event: DragEvent) => {
   } catch (e) {
     console.error("Failed to unassign device", e);
     alert("Failed to return device to pool.");
-    fetchUnassignedNodes(); // Revert on error
+    fetchUnassignedNodes();
   }
 };
 
-// --- EXPOSED HELPER: Remove from list instantly ---
+
 const removeNode = (deviceName: string) => {
   UnassignedNodes.value = UnassignedNodes.value.filter(n => n.name !== deviceName);
 };
