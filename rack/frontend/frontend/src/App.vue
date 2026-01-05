@@ -85,6 +85,8 @@ const refreshPoolData = () => {
          v-if="currentView === 'manage-inventory'" 
          :page-type="'inventory'" 
          @edit-click="handleEditInventory"
+         @inventory-updated="refreshPoolData"
+
       />
 
       <AddRack v-if="currentView === 'add-rack'" @close="goBackToManage" />

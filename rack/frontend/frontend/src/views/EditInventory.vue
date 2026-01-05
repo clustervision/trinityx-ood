@@ -103,7 +103,7 @@ const form = reactive({
   orientation: 'front'
 });
 
-// 1. Load Data
+
 const loadInventoryData=async () => {
   const inventoryName = props.inventoryName;
   if (!inventoryName) return ;
@@ -111,7 +111,6 @@ const loadInventoryData=async () => {
   form.name = inventoryName;
 
   try {
-    // No specific /show_inventory endpoint, so we fetch all to find the match
     const response = await axios.get(Url + '/manage_inventory');
 
     let items = [];
@@ -119,7 +118,6 @@ const loadInventoryData=async () => {
       items = response.data.message;
     }
 
-    // Find the item
     const target = items.find((i: any) => i.name === inventoryName);
     
     if (target) {
@@ -136,7 +134,6 @@ const loadInventoryData=async () => {
   }
 };
 
-// 2. Submit Update
 const submitForm = async () => {
   isSubmitting.value = true;
   try {
@@ -146,7 +143,6 @@ const submitForm = async () => {
     params.append('height', form.height.toString());
     params.append('orientation', form.orientation);
 
-    // Backend route: /change_inventory
     const response = await axios.post(Url + '/change_inventory', params);
 
     if (response.data.status) {

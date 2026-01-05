@@ -92,6 +92,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
 import {useToast} from "vue-toastification"
+import type { I } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const items = ref<any[]>([]);
@@ -100,7 +101,7 @@ const props = defineProps<{
   pageType: string 
 }>();
 
-const emit = defineEmits(['add-click', 'edit-click', 'show-click']);
+const emit = defineEmits(['add-click', 'edit-click', 'show-click', 'inventory-updated']);
 
 const pageName = computed(() => {
   if (!props.pageType) return '';
@@ -108,38 +109,48 @@ const pageName = computed(() => {
 });
 
 const deleteItem = async (item: any) => {
-  if (!confirm(`Are you sure you want to delete ${item.name}?`)) return;
+  const confirmText = props.pageType === 'rack' 
+    ? `Are you sure you want to delete Rack ${item.name}?` 
+    : `Are you sure you want to unassign ${item.name} and return it to the pool?`;
+  if (!confirm(confirmText)) return;
 
   const previousItems = [...items.value]; 
-  items.value = items.value.filter(i => String(i.name) !== String(item.name));
+  if(props.pageType === 'rack'){
+    item.value = item.value.filter(i => String(i.name) !== String(item.name));
+  }
 
-  try {
+
+ try {
     const timestamp = new Date().getTime();
-    let deleteUrl = '';
     
     if (props.pageType === 'rack') {
-      deleteUrl = Url + `/delete_rack/${item.name}?t=${timestamp}`;
+
+      const deleteUrl = Url + `/delete_rack/${item.name}?t=${timestamp}`;
+      await axios.get(deleteUrl);
+      toast.success(`Rack ${item.name} is deleted.`);
     } else {
-      deleteUrl = Url + `/delete_inventory/${item.type}/${item.name}?t=${timestamp}`;
+
+      const payload = {
+        name: item.name,
+        type: item.type || 'node'
+      };
+      const doubleEncoded = JSON.stringify(JSON.stringify(payload));
+
+      await axios.post(
+        Url + `/update_inventory?t=${timestamp}`, 
+        doubleEncoded, 
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      toast.success(`${item.name} returned to device pool.`);
     }
-    await axios.get(deleteUrl);
-    if (deleteUrl === Url + `/delete_rack/${item.name}?t=${timestamp}`)
-      toast.success(`Rack Delete\n Rack ${item.name} is deleted.`);
-    else
-      toast.success(`Rack Update\n${item.name} Removed from Rack\.`);
-    console.log("Delete confirmed by backend.");
+
+    emit('inventory-updated'); 
+    console.log("Action confirmed by backend.");
 
   } catch (e: any) {
-    // Check if it is the "CORS Success" case
-    // (Axios reports "Network Error" when CORS blocks a 200 OK response)
-    // if (e.message === "Network Error" && !e.response) {
-    //    console.warn("Backend deleted it (Status 200), but Browser blocked the receipt. Keeping it deleted.");
-    // } 
-    // else {
-       console.error("Delete failed", e);
-       items.value = previousItems; 
-       alert("Failed to delete. The item has been restored.");
-    // }
+       console.error("Action failed", e);
+       items.value = previousItems;
+       alert("Failed to process request.");
   }
 };
 
