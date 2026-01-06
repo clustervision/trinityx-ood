@@ -120,7 +120,18 @@ const form = reactive({
 const submitForm = async () => {
   isSubmitting.value = true;
   errorMessage.value = '';
+  
+  if (/\s/.test(form.name)) {
+      errorMessage.value = 'Rack Name must not contain spaces.';
+      isSubmitting.value = false;
+      return;
+  }
 
+  if (Number(form.size) <= 0) {
+    errorMessage.value = 'Rack Size must be greater than 0.';
+    isSubmitting.value = false;
+    return;
+  }
   try {
     const params = new URLSearchParams();
     params.append('name', form.name);
