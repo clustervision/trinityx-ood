@@ -5,12 +5,13 @@ import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
 import { useRack } from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
+import type { Rack } from '@/types/rack';
 
 const props = defineProps<{ rackName: string; }>();
 const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
 
 // 2. INITIALIZE COMPOSABLE LOGIC
-const { fetchSingleRack } = useRack();
+const { fetchSingleRack , handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 
 // 3. DEFINE LOCAL STATE
@@ -40,42 +41,20 @@ const resetRack = (targetRack: any, side: 'front' | 'back') => {
   }
 };
 
-const onDrop = async (event: DragEvent, targetRack: any, targetU: number, side: 'front' | 'back') => {
-  const data = event.dataTransfer?.getData('application/json');
-  if (!data) return;
-  const device = JSON.parse(data);
+const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
+  handleRackDrop(
+    event, 
+    targetRack, 
+    u, 
+    side, 
+    (deviceName: string) => {
+       emit('device-taken', deviceName);
+    },
+    () => {
 
-  // Optimistic UI update: Remove from old position if it was in the rack
-  if (device.dragSource === 'rack' && rack.value) {
-     rack.value.slots.forEach((s: any) => {
-        if (s.device && s.device.name === device.name) s.device = null;
-     });
-  } else if (device.dragSource === 'pool') {
-      emit('device-taken', device.name);
-  }
-
-  try {
-    const payload = {
-      rack: targetRack.name,
-      name: device.name,
-      position: targetU,
-      height: device.height || 1,
-      type: device.type || 'node',
-      orientation: side,
-      vendor: device.vendor || ''
-    };
-
-    const doubleEncoded = JSON.stringify(JSON.stringify(payload));
-    await axios.post(`${Url}/update_rack?t=${Date.now()}`, doubleEncoded, {
-       headers: { 'Content-Type': 'application/json' }
-    });
-    
-    await loadRackData(); // Refresh to ensure sync with backend
-    emit('pool-updated');
-  } catch (e) {
-    console.error("Drop failed", e);
-    await loadRackData(); // Revert on failure
-  }
+       loadRackData();
+    }
+  );
 };
 
 // 5. LIFECYCLE

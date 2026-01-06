@@ -1,9 +1,11 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import { useToast } from "vue-toastification"; 
 import type { Rack, RackSlot, Device } from '@/types/rack';
 
 export function useRack() {
   const Url = 'https://yixin3-dev-ctrl001:7755';
+  const toast = useToast(); 
 
   const generateSlots = (size: number, order: string): RackSlot[] => {
     const slots: RackSlot[] = [];
@@ -19,7 +21,6 @@ export function useRack() {
     const deviceName = d.name;
     const currentSide = d.orientation || 'front'; 
 
-
     rack.slots.forEach((s: any) => {
       s.devices = s.devices.filter((dev: any) => dev.name !== deviceName);
     });
@@ -28,24 +29,17 @@ export function useRack() {
     const targetSlot = rack.slots.find((s: any) => s.number === position);
     if (!targetSlot) return;
 
-
     const devicesOnSameSide = targetSlot.devices.filter(
       (dev: any) => (dev.orientation || 'front') === currentSide
     );
 
     if (devicesOnSameSide.length > 0) {
       const existingHeight = devicesOnSameSide[0].height;
-
       if (height > existingHeight) {
+
         alert(`Forbidden: New device is taller than existing equipment on the ${currentSide} side.`);
         return;
       }
-
-      if (devicesOnSameSide.length >= 8) {
-        console.warn(`Max density reached for ${currentSide} side.`);
-        return;
-      }
-
       d.height = existingHeight; 
     }
 
@@ -67,7 +61,7 @@ export function useRack() {
     
     const rackObj: Rack = {
       name: rackName,
-      size: parseInt(data.size) || 42,
+      size: parseInt(data.size),
       order: (data.order || 'ascending').toLowerCase(),
       slots: [], 
       showBackSide: true,
@@ -82,5 +76,72 @@ export function useRack() {
     return rackObj;
   };
 
-  return { fetchSingleRack, placeDeviceInRack };
+  const handleRackDrop = async (
+    event: DragEvent, 
+    targetRack: Rack, 
+    targetU: number, 
+    side: 'front' | 'back',
+    onSuccess?: Function,
+    onError?: Function
+  ) => {
+    const data = event.dataTransfer?.getData('application/json');
+    if (!data) return;
+    
+    const draggedDevice = JSON.parse(data);
+    const dragHeight = parseInt(draggedDevice.height) || 1;
+    if (targetU + dragHeight - 1 > targetRack.size) {
+      toast.error(`Installation failed: Device fits out of rack bounds (Max ${targetRack.size}U).`);
+      return;
+    }
+    for (let i = 0; i < dragHeight; i++) {
+      const checkU = targetU + i;
+      const slotToCheck = targetRack.slots.find(s => s.number === checkU);
+      
+      if (slotToCheck) {
+        const existingDevice = slotToCheck.devices.find(d => d.orientation === side && d.name !== draggedDevice.name);
+        
+        if (existingDevice) {
+          if (existingDevice.position !== targetU) {
+            toast.error(`Slot ${checkU} is occupied by ${existingDevice.name}`);
+            return; 
+          }
+          if (existingDevice.position === targetU && existingDevice.height < dragHeight) {
+            toast.error(`Space is too small: existing device only has height ${existingDevice.height}`);
+            return; 
+          }
+        }
+      }
+    }
+
+    targetRack.slots.forEach(s => {
+      s.devices = s.devices.filter(d => d.name !== draggedDevice.name);
+    });
+
+    let finalPosition = targetU; 
+
+
+    const tempDevice = { ...draggedDevice, position: finalPosition, orientation: side };
+    
+    placeDeviceInRack(targetRack, tempDevice);
+
+    targetRack.slots = [...targetRack.slots];
+    try {
+      const payload = { ...tempDevice, rack: targetRack.name };
+      const doubleEncoded = JSON.stringify(JSON.stringify(payload));
+      
+      await axios.post(`${Url}/update_rack`, doubleEncoded, {
+         headers: { 'Content-Type': 'application/json' }
+      });
+
+      toast.success(`${draggedDevice.name} added to rack ${targetRack.name}`);
+      
+      if (onSuccess) onSuccess(draggedDevice.name);
+
+    } catch (e) {
+      console.error("Drop failed", e);
+      if (onError) onError();
+    }
+  };
+
+  return { fetchSingleRack, placeDeviceInRack, handleRackDrop };
 }
