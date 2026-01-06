@@ -116,7 +116,7 @@ const deleteItem = async (item: any) => {
 
   const previousItems = [...items.value]; 
   if(props.pageType === 'rack'){
-    item.value = item.value.filter(i => String(i.name) !== String(item.name));
+    items.value = items.value.filter(i => String(i.name) !== String(item.name));
   }
 
 
