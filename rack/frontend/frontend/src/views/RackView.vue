@@ -15,11 +15,17 @@ const { fetchSingleRack, handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
-
-const flipToBack = () => {
+const isBackViewMode = ref(false);
+const toggleGlobalView = () => {
+  isBackViewMode.value = !isBackViewMode.value;
   racks.value.forEach(rack => {
-    rack.showFrontSide = false; // Hide Front
-    rack.showBackSide = true;   // Show Back
+    if (isBackViewMode.value) {
+      rack.showFrontSide = false;
+      rack.showBackSide = true;
+    } else {
+      rack.showFrontSide = true;
+      rack.showBackSide = false;
+    }
   });
 };
 const loadRacks = async () => {
@@ -88,10 +94,16 @@ onMounted(loadRacks);
 
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
-    <div class="card mb-4 border-0">
-      <button class="btn btn-dark btn-sm" @click="flipToBack">
-      Flip to Back
+    <div class="card-body position-relative"> <div style="position: absolute; right: 20px; top: 15px; z-index: 10;">
+    <button 
+      class="btn fw-bold"
+      :class="isBackViewMode ? 'btn-dark' : 'btn-custom-grey'"
+      @click="toggleGlobalView"
+      style="font-size: 12px; padding: 4px 15px;"
+    >
+      {{ isBackViewMode ? 'Flip to Front' : 'Flip to Back' }}
     </button>
+  </div>
       <RackMetricsHeader v-model:metric1="metric1"
        v-model:metric2="metric2"
        :range1="metric1Range"
@@ -117,4 +129,13 @@ onMounted(loadRacks);
 
 <style scoped>
   .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
+.btn-custom-grey {
+  background-color: #d3d3d3;
+  border-color: #c0c0c0;
+  color: #000;
+}
+
+.btn-custom-grey:hover {
+  background-color: #bebebe;
+}
 </style>
