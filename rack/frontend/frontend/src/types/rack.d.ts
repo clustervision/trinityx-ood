@@ -19,6 +19,7 @@ export interface Rack {
   order: string;
   slots: RackSlot[]; 
   showBackSide: boolean;
+  showFrontSide: boolean;
   powerOn?: boolean;
   backPowerOn?: boolean;
 }

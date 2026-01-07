@@ -16,6 +16,12 @@ const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = use
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
+const flipToBack = () => {
+  racks.value.forEach(rack => {
+    rack.showFrontSide = false; // Hide Front
+    rack.showBackSide = true;   // Show Back
+  });
+};
 const loadRacks = async () => {
   try {
     const t = new Date().getTime();
@@ -83,6 +89,9 @@ onMounted(loadRacks);
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
     <div class="card mb-4 border-0">
+      <button class="btn btn-dark btn-sm" @click="flipToBack">
+      Flip to Back
+    </button>
       <RackMetricsHeader v-model:metric1="metric1"
        v-model:metric2="metric2"
        :range1="metric1Range"

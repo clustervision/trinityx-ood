@@ -65,6 +65,7 @@ export function useRack() {
       order: (data.order || 'ascending').toLowerCase(),
       slots: [], 
       showBackSide: true,
+      showFrontSide: true,
       powerOn: true,
       backPowerOn: true
     };
