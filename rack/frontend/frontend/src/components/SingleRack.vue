@@ -73,7 +73,8 @@ const clearPreview = () => {
                     :metric2-type="metric2"
                     :is-rack-view="true"
                     style="position: absolute; width: 100%;"
-                    :style="{ height: (device.height * 20 - 2) + 'px' }"
+                    :style="{ height: (device.height * 20 - 2) + 'px',
+                    [rack.order === 'descending' ? 'bottom' : 'top']: '0' }"
                   />
                 </div>
               </div>
@@ -112,7 +113,8 @@ const clearPreview = () => {
                     :metric2-type="metric2"
                     :is-rack-view="true"
                     style="position: absolute; width: 100%;"
-                    :style="{ height: (device.height * 20 - 2) + 'px' }"
+                    :style="{ height: (device.height * 20 - 2) + 'px',
+                    [rack.order === 'descending' ? 'bottom' : 'top']: '0' }"
                   />
                 </div>
               </div>

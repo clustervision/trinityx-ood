@@ -60,6 +60,14 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
     side, 
     (deviceName: string) => {
        emit('device-taken', deviceName);
+
+       racks.value.forEach(r => {
+         if (r.name !== targetRack.name) {
+           r.slots.forEach(slot => {
+             slot.devices = slot.devices.filter(d => d.name !== deviceName);
+           });
+         }
+       });
     },
     () => {
 
