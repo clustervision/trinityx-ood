@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import DeviceItem from '@/components/DeviceItem.vue';
-import type { Rack } from '@/types/rack';
+import DeviceContextMenu from '@/components/DeviceContextMenu.vue'; 
+import type { Rack, Device } from '@/types/rack';
+import axios from 'axios';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -10,6 +12,65 @@ const props = defineProps<{
   getMetric: Function;  
 }>();
 
+// --- Context Menu Logic ---
+const menuVisible = ref(false);
+const menuPos = ref({ x: 0, y: 0 });
+const selectedDevice = ref<Device | null>(null);
+
+const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
+  // Prevent the browser's native menu
+  event.preventDefault();
+  
+  // Debug log to confirm right-click works
+  console.log("Opening menu for:", device.name); 
+
+  selectedDevice.value = device;
+  menuPos.value = { x: event.clientX, y: event.clientY };
+  menuVisible.value = true;
+};
+
+const handleMenuAction = async (payload: { action: string, subAction?: string, device: Device }) => {
+  const { action, subAction, device } = payload;
+  const baseUrl = window.location.origin; 
+  const Url = 'https://yixin3-dev-ctrl001:8080'; 
+
+  // 1. URL Navigation Actions
+  if (['details', 'edit', 'rename', 'clone'].includes(action)) {
+    let route = '';
+    const typeMap: Record<string, string> = {
+      'node': 'trinity_node',
+      'switch': 'trinity_switch',
+      'controller': 'trinity_cluster',
+      'otherdevices': 'trinity_otherdev'
+    };
+
+    const section = typeMap[device.type] || 'trinity_node';
+    
+    // Map action to URL structure
+    if (action === 'details') route = `${baseUrl}/${section}/show/${device.name}`;
+    if (action === 'edit') route = `${baseUrl}/${section}/edit/${device.name}`;
+    if (action === 'rename') route = `${baseUrl}/${section}/rename/${device.name}`;
+    if (action === 'clone') route = `${baseUrl}/${section}/clone/${device.name}`;
+
+    if (route) window.open(route, '_blank')?.focus();
+  }
+
+  // 2. API Actions (Power / IPMI)
+  if (['power', 'sel', 'chassis'].includes(action)) {
+    console.log(`Executing ${action} - ${subAction} on ${device.name}`);
+    try {
+      await axios.post(`${Url}/control_action`, {
+        type: action,
+        command: subAction,
+        device: device.name
+      });
+      alert(`Command sent: ${subAction}`);
+    } catch (e) {
+      console.error(e);
+      alert('Action failed');
+    }
+  }
+};
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
 
 // Simple toggles (Do not affect the other side)
@@ -81,6 +142,7 @@ const clearPreview = () => {
                     :is-rack-view="true"
                     style="position: absolute; width: 100%;"
                     :style="{ height: (device.height * 20 - 2) + 'px', [rack.order === 'descending' ? 'bottom' : 'top']: '0' }"
+                    @device-right-click="handleDeviceRightClick"
                   />
                 </div>
               </div>
@@ -121,6 +183,7 @@ const clearPreview = () => {
                     :is-rack-view="true"
                     style="position: absolute; width: 100%;"
                     :style="{ height: (device.height * 20 - 2) + 'px', [rack.order === 'descending' ? 'bottom' : 'top']: '0' }"
+                    @device-right-click="handleDeviceRightClick"
                   />
                 </div>
               </div>
@@ -129,7 +192,15 @@ const clearPreview = () => {
           </div>
         </div>
       </div>
-
+        <Teleport to="body">
+            <DeviceContextMenu 
+              :visible="menuVisible" 
+              :position="menuPos" 
+              :device="selectedDevice"
+              @close="menuVisible = false"
+              @action="handleMenuAction"
+            />
+          </Teleport>
     </div> </div>
 </template>
 

@@ -10,6 +10,7 @@
     draggable="true"
     @dragstart="onDragStart"
     @dragend="isDragging = false"
+    @contextmenu.prevent="onRightClick"
   >
     <div class="device-content">
       <span class="device-name">{{ device.name }}</span>
@@ -48,13 +49,18 @@ const props = defineProps<{
   metric2Type?: string | null;
   isRackView?: boolean;
 }>();
-
+const emit = defineEmits(['device-right-click']);
 const isDragging = ref(false);
 const { unitPixelHeight } = useRackSizing(); 
 
 const heightPixels = computed(() => {
   return (props.device.height * unitPixelHeight.value) - 2;
 });
+
+const onRightClick = (event: MouseEvent) => {
+  // Emit the raw event (for x/y coordinates) and the device data
+  emit('device-right-click', event, props.device);
+};
 
 const getColor = (val: number | undefined | null, type: string | null) => {
   if (!type || type === 'No Scale') return 'transparent';
