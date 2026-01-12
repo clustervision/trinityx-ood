@@ -94,14 +94,14 @@ onMounted(loadRacks);
 
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
-    <div class="card-body position-relative"> <div style="position: absolute; right: 20px; top: 15px; z-index: 10;">
+    <div class="card-body position-relative"> <div style="position: absolute; right: 80px; top: 55px; z-index: 10;">
     <button 
       class="btn fw-bold"
       :class="isBackViewMode ? 'btn-dark' : 'btn-custom-grey'"
       @click="toggleGlobalView"
       style="font-size: 12px; padding: 4px 15px;"
     >
-      {{ isBackViewMode ? 'Flip to Front' : 'Flip to Back' }}
+      {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
     </button>
   </div>
       <RackMetricsHeader v-model:metric1="metric1"
