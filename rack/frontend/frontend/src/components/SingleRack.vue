@@ -12,7 +12,7 @@ const props = defineProps<{
   metric2: string | null;
   getMetric: Function;
 }>();
-
+const isActionLoading = ref(false);
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 const selectedDevice = ref<Device | null>(null);
@@ -63,6 +63,7 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
   // 2. API Actions (Power / IPMI)
   if (['power', 'sel', 'chassis'].includes(action)) {
     console.log(`Executing ${action} - ${subAction} on ${device.name}`);
+    isActionLoading.value = true;
     try {
 
       const response = await axios.get(`${Url}perform/${action}/${subAction}/${device.name}`);
@@ -70,6 +71,9 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
     } catch (e) {
       console.error(e);
       alert('Action failed');
+    }
+    finally{
+      isActionLoading.value = false;
     }
   }
 };
@@ -99,7 +103,12 @@ const clearPreview = () => {
 
 <template>
   <div class="single-rack-wrapper" @dragleave="clearPreview">
-
+    <Teleport to="body">
+      <div v-if="isActionLoading" class="loader-overlay">
+        <div class="spinner"></div>
+        <span>Processing...</span>
+      </div>
+    </Teleport>
     <div class="rack-tabs">
       <div class="rack-tab front-label cursor-pointer" @click="toggleFront">
         {{ rack.showFrontSide ? 'HIDE FRONT' : 'SHOW FRONT' }}
@@ -218,7 +227,41 @@ const clearPreview = () => {
 }
 @keyframes pulse-glow { 0% { opacity: 0.5; } 50% { opacity: 0.8; } 100% { opacity: 0.5; } }
 .racks-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
-.single-rack-wrapper { display: flex; flex-direction: column; flex-shrink: 0; }
+.single-rack-wrapper { display: flex; flex-direction: column; flex-shrink: 0;position: relative; }
+.loader-overlay {
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+
+  z-index: 9999;
+
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  backdrop-filter: blur(2px);
+}
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 .rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }
 .rack-tab { padding: 4px 12px; font-size: 0.5rem; font-weight: bold; color: white; text-transform: uppercase; }
 .front-label { background-color: #6666ff; border-top-left-radius: 5px; border-top-right-radius: 5px; }
