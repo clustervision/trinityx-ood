@@ -60,8 +60,52 @@ const loadRacks = async () => {
   }
 };
 
-const resetRack = (rack: Rack, side: 'front' | 'back' = 'front') => { 
-  confirm(`Reset ${rack.name} ${side} side?`); 
+const resetRack = async (targetRack: any, side: 'front' | 'back') => {
+  if (!confirm(`Reset ${targetRack.name} ${side} side? This will move all devices back to the pool.`)) return;
+
+  const devicesToRemove: any[] = [];
+  targetRack.slots.forEach((slot: any) => {
+    slot.devices.forEach((device: any) => {
+      if (device.orientation === side) {
+        devicesToRemove.push(device);
+      }
+    });
+  });
+
+  if (devicesToRemove.length === 0) {
+    toast.info("No devices to reset on this side.");
+    return;
+  }
+
+  try {
+    const timestamp = new Date().getTime();
+    await Promise.all(devicesToRemove.map(device => {
+      
+      const payload = {
+        name: device.name,
+        type: device.type || 'node'
+      };
+      const doubleEncoded = JSON.stringify(JSON.stringify(payload));
+
+      return axios.post(
+        `${Url}/update_inventory?t=${timestamp}`, 
+        doubleEncoded, 
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+    }));
+
+    toast.success(`Successfully removed ${devicesToRemove.length} devices.`);
+    devicesToRemove.forEach(d => emit('device-taken', d.name));
+
+    if (typeof loadRacks === 'function') {
+      await loadRacks(); 
+    }
+
+  } catch (e: any) {
+    console.error("Reset failed", e);
+    const errorMsg = e.response?.data?.message || e.message;
+    toast.error(`Failed to reset rack: ${errorMsg}`);
+  }
 };
 
 const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
