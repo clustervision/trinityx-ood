@@ -4,7 +4,6 @@ import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
 import { ref } from 'vue';
-import { useToast } from 'vue-toastification';
 
 const props = defineProps<{
   rack: Rack;
@@ -16,7 +15,6 @@ const isActionLoading = ref(false);
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 const selectedDevice = ref<Device | null>(null);
-const toast = useToast()
 const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
   event.preventDefault();
 

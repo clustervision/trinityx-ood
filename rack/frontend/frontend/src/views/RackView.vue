@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import RackMetricsHeader from '@/components/RackMetricsHeader.vue'; 
+import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
 import { useToast } from "vue-toastification";
 import { useRack} from '@/composables/useRack';
@@ -13,6 +13,7 @@ const toast = useToast();
 const racks = ref<Rack[]>([]);
 const { fetchSingleRack, handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
+const isActionLoading = ref(false);
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const isBackViewMode = ref(false);
@@ -33,16 +34,16 @@ const loadRacks = async () => {
     const t = new Date().getTime();
     const response = await axios.get(`${Url}/manage_racks?t=${t}`);
     const rawMsg = response.data.message;
-    
+
     if (rawMsg) {
       let flatList: any[] = [];
       if (Array.isArray(rawMsg)) {
-        rawMsg.forEach((item: any) => { 
-          if (item.name && item.size) flatList.push(item); 
-          else flatList.push(...Object.values(item)); 
+        rawMsg.forEach((item: any) => {
+          if (item.name && item.size) flatList.push(item);
+          else flatList.push(...Object.values(item));
         });
-      } else { 
-        flatList = Object.values(rawMsg); 
+      } else {
+        flatList = Object.values(rawMsg);
       }
 
       const currentStates = new Map(racks.value.map(r => [r.name, r.showBackSide]));
@@ -55,65 +56,66 @@ const loadRacks = async () => {
 
       racks.value = parsedRacks;
     }
-  } catch (error) { 
-    console.error("Failed to load racks:", error); 
+  } catch (error) {
+    console.error("Failed to load racks:", error);
   }
 };
 
 const resetRack = async (targetRack: any, side: 'front' | 'back') => {
-  if (!confirm(`Reset ${targetRack.name} ${side} side? This will move all devices back to the pool.`)) return;
+  isActionLoading.value = true;
+  if (!confirm(`Power Reset all nodes on ${targetRack.name} ${side} side? (Switches & Controllers ignored)`)) return;
 
-  const devicesToRemove: any[] = [];
+
+  const nodesToReset: any[] = [];
   targetRack.slots.forEach((slot: any) => {
     slot.devices.forEach((device: any) => {
-      if (device.orientation === side) {
-        devicesToRemove.push(device);
+
+      if (device.orientation === side &&
+          device.type !== 'switch' &&
+          device.type !== 'controller') {
+        nodesToReset.push(device);
       }
     });
   });
 
-  if (devicesToRemove.length === 0) {
-    toast.info("No devices to reset on this side.");
+  if (nodesToReset.length === 0) {
+    toast.info(`No eligible nodes found on ${side} side.`);
     return;
   }
 
   try {
-    const timestamp = new Date().getTime();
-    await Promise.all(devicesToRemove.map(device => {
-      
-      const payload = {
-        name: device.name,
-        type: device.type || 'node'
-      };
-      const doubleEncoded = JSON.stringify(JSON.stringify(payload));
+    let successCount = 0;
+    let failCount = 0;
 
-      return axios.post(
-        `${Url}/update_inventory?t=${timestamp}`, 
-        doubleEncoded, 
-        { headers: { 'Content-Type': 'application/json' } }
-      );
+    await Promise.all(nodesToReset.map(async (dev) => {
+      try {
+
+        await axios.get(`${Url}/perform/power/reset/${dev.name}`);
+        successCount++;
+      } catch (e) {
+        console.error(`Failed to reset ${dev.name}`, e);
+        failCount++;
+      }
     }));
 
-    toast.success(`Successfully removed ${devicesToRemove.length} devices.`);
-    devicesToRemove.forEach(d => emit('device-taken', d.name));
-    emit('pool-updated');emit('pool-updated');
-    if (typeof loadRacks === 'function') {
-      await loadRacks(); 
-    }
+    if (successCount > 0) toast.success(`Power reset signal sent to ${successCount} nodes.`);
+    if (failCount > 0) toast.warning(`Failed to reset ${failCount} nodes.`);
 
   } catch (e: any) {
-    console.error("Reset failed", e);
-    const errorMsg = e.response?.data?.message || e.message;
-    toast.error(`Failed to reset rack: ${errorMsg}`);
+    console.error("Batch reset failed", e);
+    toast.error("An error occurred during batch reset.");
   }
+  finally{
+      isActionLoading.value = false;
+    }
 };
 
 const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
   handleRackDrop(
-    event, 
-    targetRack, 
-    u, 
-    side, 
+    event,
+    targetRack,
+    u,
+    side,
     (deviceName: string) => {
        emit('device-taken', deviceName);
 
@@ -138,8 +140,14 @@ onMounted(loadRacks);
 
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
+    <Teleport to="body">
+      <div v-if="isActionLoading" class="loader-overlay">
+        <div class="spinner"></div>
+        <span>Processing...</span>
+      </div>
+    </Teleport>
     <div class="card-body position-relative"> <div style="position: absolute; right: 80px; top: 55px; z-index: 10;">
-    <button 
+    <button
       class="btn fw-bold"
       :class="isBackViewMode ? 'btn-dark' : 'btn-custom-grey'"
       @click="toggleGlobalView"
@@ -151,18 +159,18 @@ onMounted(loadRacks);
       <RackMetricsHeader v-model:metric1="metric1"
        v-model:metric2="metric2"
        :range1="metric1Range"
-        :range2="metric2Range" 
+        :range2="metric2Range"
         @refresh="loadRacks" />
       <div class="card-body">
         <div class="racks-container">
-          <SingleRack 
-            v-for="rack in racks" 
+          <SingleRack
+            v-for="rack in racks"
             :key="rack.name"
             :rack="rack"
             :metric1="metric1"
             :metric2="metric2"
             :get-metric="getMetricForDevice"
-            @drop="onDrop" 
+            @drop="onDrop"
             @reset="resetRack"
           />
         </div>

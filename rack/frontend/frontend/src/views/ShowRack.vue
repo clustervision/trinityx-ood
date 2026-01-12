@@ -6,12 +6,13 @@ import SingleRack from '@/components/SingleRack.vue';
 import { useRack } from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
+import { useToast } from 'vue-toastification';
 
 const props = defineProps<{ rackName: string; }>();
 const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
 const { fetchSingleRack , handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
-
+const toast = useToast()
 
 const rack = ref<any>(null);
 const Url = 'https://yixin3-dev-ctrl001:7755';
@@ -30,10 +31,40 @@ const loadRackData = async () => {
   rack.value = freshRack;
 };
 
-const resetRack = (targetRack: any, side: 'front' | 'back') => {
-  if (confirm(`Reset ${targetRack.name} ${side} side?`)) {
-    console.log("Resetting rack side:", side);
+const resetRack = async (targetRack: any, side: 'front' | 'back') => {
+  if (!confirm(`Power Reset all nodes on ${targetRack.name} ${side} side? (Switches & Controllers ignored)`)) return;
+
+  const nodesToReset: any[] = [];
+  targetRack.slots.forEach((slot: any) => {
+    slot.devices.forEach((device: any) => {
+      if (device.orientation === side &&
+          device.type !== 'switch' &&
+          device.type !== 'controller') {
+        nodesToReset.push(device);
+      }
+    });
+  });
+
+  if (nodesToReset.length === 0) {
+    toast.info(`No eligible nodes found on ${side} side.`);
+    return;
   }
+
+  let successCount = 0;
+  let failCount = 0;
+
+  await Promise.all(nodesToReset.map(async (dev) => {
+    try {
+      await axios.get(`${Url}/perform/power/reset/${dev.name}`);
+      successCount++;
+    } catch (e) {
+      console.error(`Failed to reset ${dev.name}`, e);
+      failCount++;
+    }
+  }));
+
+  if (successCount > 0) toast.success(`Power reset signal sent to ${successCount} nodes.`);
+  if (failCount > 0) toast.warning(`Failed to reset ${failCount} nodes.`);
 };
 
 const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
