@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import DeviceItem from '@/components/DeviceItem.vue';
-import DeviceContextMenu from '@/components/DeviceContextMenu.vue'; 
+import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
 import { ref } from 'vue';
 
 const props = defineProps<{
-  rack: Rack;            
-  metric1: string | null; 
-  metric2: string | null; 
-  getMetric: Function;  
+  rack: Rack;
+  metric1: string | null;
+  metric2: string | null;
+  getMetric: Function;
 }>();
 
 const menuVisible = ref(false);
@@ -18,9 +18,9 @@ const selectedDevice = ref<Device | null>(null);
 
 const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
   event.preventDefault();
-  
 
-  console.log("Opening menu for:", device.name); 
+
+  console.log("Opening menu for:", device.name);
 
   selectedDevice.value = device;
   menuPos.value = { x: event.clientX, y: event.clientY };
@@ -29,8 +29,8 @@ const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
 
 const handleMenuAction = async (payload: { action: string, subAction?: string, device: Device }) => {
   const { action, subAction, device } = payload;
-  const baseUrl = 'https://yixin3-dev-ctrl001:8080/pun/sys'; 
-  const Url = 'https://yixin3-dev-ctrl001:8080/pun/sys/'; 
+  const baseUrl = 'https://yixin3-dev-ctrl001:8080/pun/sys';
+  const Url = 'https://yixin3-dev-ctrl001:8080/pun/sys/';
 
   // 1. URL Navigation Actions
   if (['details', 'edit', 'rename', 'clone'].includes(action)) {
@@ -43,12 +43,18 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
     };
 
     const section = typeMap[device.type] || 'trinity_node';
-    
-    // Map action to URL structure
-    if (action === 'details') route = `${baseUrl}/${section}/show/${device.name}`;
-    if (action === 'edit') route = `${baseUrl}/${section}/edit/${device.name}`;
-    if (action === 'rename') route = `${baseUrl}/${section}/rename/${device.name}`;
-    if (action === 'clone') route = `${baseUrl}/${section}/clone/${device.name}`;
+
+    if (device.type === 'controller') {
+      // Special case for Controller
+      if (action === 'details') route = `${baseUrl}/${section}/`; // Ends with slash, no "show", no name
+      if (action === 'edit') route = `${baseUrl}/${section}/edit`; // Ends with edit, no name
+    } else {
+      // Standard logic for other devices
+      if (action === 'details') route = `${baseUrl}/${section}/show/${device.name}`;
+      if (action === 'edit') route = `${baseUrl}/${section}/edit/${device.name}`;
+      if (action === 'rename') route = `${baseUrl}/${section}/rename/${device.name}`;
+      if (action === 'clone') route = `${baseUrl}/${section}/clone/${device.name}`;
+    }
 
     if (route) window.open(route, '_blank')?.focus();
   }
@@ -71,12 +77,12 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
 };
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
 
-const toggleBack = () => { 
-  props.rack.showBackSide = !props.rack.showBackSide; 
+const toggleBack = () => {
+  props.rack.showBackSide = !props.rack.showBackSide;
 };
 
-const toggleFront = () => { 
-  props.rack.showFrontSide = !props.rack.showFrontSide; 
+const toggleFront = () => {
+  props.rack.showFrontSide = !props.rack.showFrontSide;
 };
 
 const hoveredSlot = ref<number | null>(null);
@@ -95,7 +101,7 @@ const clearPreview = () => {
 
 <template>
   <div class="single-rack-wrapper" @dragleave="clearPreview">
-    
+
     <div class="rack-tabs">
       <div class="rack-tab front-label cursor-pointer" @click="toggleFront">
         {{ rack.showFrontSide ? 'HIDE FRONT' : 'SHOW FRONT' }}
@@ -106,23 +112,23 @@ const clearPreview = () => {
     </div>
 
     <div class="d-flex gap-1">
-      
+
       <div class="rack-column" v-if="rack.showFrontSide !== false">
         <div class="rack-header-light">
           <div class="d-flex align-items-center">
-            <span class="u-header-label">U</span> 
+            <span class="u-header-label">U</span>
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
           <div class="d-flex align-items-center gap-1 ">
-            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'front')">RESET</button> 
+            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'front')">RESET</button>
             <i class='bx bx-power-off' :class="rack.powerOn ? 'text-success' : 'text-danger'" @click="rack.powerOn = !rack.powerOn"></i>
-            <span class="u-header-label ms-1">U</span> 
+            <span class="u-header-label ms-1">U</span>
           </div>
         </div>
 
         <div class="rack-frame">
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-               @drop="$emit('drop', $event, rack, slot.number, 'front'); clearPreview()" 
+               @drop="$emit('drop', $event, rack, slot.number, 'front'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'front')">
               <div class="rack-label">{{ slot.number }}</div>
 
@@ -130,7 +136,7 @@ const clearPreview = () => {
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'front'" class="placement-preview"></div>
 
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" class="flex-fill h-100 position-relative">
-                  <DeviceItem 
+                  <DeviceItem
                     :device="device"
                     :metric1-value="getMetric(device, metric1)"
                     :metric1-type="metric1"
@@ -163,7 +169,7 @@ const clearPreview = () => {
 
         <div class="rack-frame">
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-               @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()" 
+               @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'back')">
               <div class="rack-label">{{ slot.number }}</div>
 
@@ -171,7 +177,7 @@ const clearPreview = () => {
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
 
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name" class="flex-fill h-100 position-relative">
-                  <DeviceItem 
+                  <DeviceItem
                     :device="device"
                     :metric1-value="getMetric(device, metric1)"
                     :metric1-type="metric1"
@@ -190,9 +196,9 @@ const clearPreview = () => {
         </div>
       </div>
         <Teleport to="body">
-            <DeviceContextMenu 
-              :visible="menuVisible" 
-              :position="menuPos" 
+            <DeviceContextMenu
+              :visible="menuVisible"
+              :position="menuPos"
               :device="selectedDevice"
               @close="menuVisible = false"
               @action="handleMenuAction"
