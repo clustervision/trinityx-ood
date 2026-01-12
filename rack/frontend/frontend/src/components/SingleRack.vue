@@ -127,7 +127,10 @@ const clearPreview = () => {
           </div>
           <div class="d-flex align-items-center gap-1 ">
             <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'front')">RESET</button>
-            <i class='bx bx-power-off' :class="rack.powerOn ? 'text-success' : 'text-danger'" @click="rack.powerOn = !rack.powerOn"></i>
+           <i class='bx bx-power-off cursor-pointer'
+              :class="rack.powerOn ? 'text-success' : 'text-danger'"
+              @click="$emit('power-toggle', rack, 'front')">
+            </i>
             <span class="u-header-label ms-1">U</span>
           </div>
         </div>
@@ -168,7 +171,10 @@ const clearPreview = () => {
           </div>
           <div class="d-flex align-items-center gap-1">
             <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'back')">RESET</button>
-            <i class='bx bx-power-off' :class="rack.backPowerOn ? 'text-success' : 'text-danger'" @click="rack.backPowerOn = !rack.backPowerOn"></i>
+            <i class='bx bx-power-off cursor-pointer'
+              :class="rack.backPowerOn ? 'text-success' : 'text-danger'"
+              @click="$emit('power-toggle', rack, 'back')">
+            </i>
             <span class="u-header-label">U</span>
           </div>
         </div>

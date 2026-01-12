@@ -110,6 +110,59 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
     }
 };
 
+// Add this function inside <script setup>
+
+const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
+  const isCurrentlyOn = side === 'front' ? targetRack.powerOn : targetRack.backPowerOn;
+  const action = isCurrentlyOn ? 'off' : 'on';
+
+  if (!confirm(`Power ${action.toUpperCase()} all nodes on ${targetRack.name} ${side} side?`)) return;
+  loadingRackName.value = targetRack.name;
+
+  const nodesToToggle: any[] = [];
+  targetRack.slots.forEach((slot: any) => {
+    slot.devices.forEach((device: any) => {
+      if (device.orientation === side &&
+          device.type !== 'switch' &&
+          device.type !== 'controller') {
+        nodesToToggle.push(device);
+      }
+    });
+  });
+
+  if (nodesToToggle.length === 0) {
+    toast.info(`No eligible nodes found on ${side} side.`);
+    loadingRackName.value = '';
+    return;
+  }
+
+  // 1. Set Loading for THIS rack
+  loadingRackName.value = targetRack.name;
+
+  try {
+    let successCount = 0;
+    await Promise.all(nodesToToggle.map(async (dev) => {
+      try {
+        await axios.get(`${Url}/perform/power/${action}/${dev.name}`);
+        successCount++;
+      } catch (e) { console.error(e); }
+    }));
+
+    if (successCount > 0) {
+      toast.success(`Power ${action} sent to ${successCount} nodes.`);
+      // Update local state visually
+      if (side === 'front') targetRack.powerOn = !isCurrentlyOn;
+      else targetRack.backPowerOn = !isCurrentlyOn;
+    }
+  } catch (e) {
+    toast.error("Batch power failed");
+  } finally {
+    // 2. Clear Loading
+    loadingRackName.value = '';
+  }
+};
+
+
 const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
   handleRackDrop(
     event,
@@ -166,6 +219,7 @@ onMounted(loadRacks);
             :get-metric="getMetricForDevice"
             @drop="onDrop"
             @reset="resetRack"
+            @power-toggle="handlePowerToggle"
             :is-busy="loadingRackName === rack.name"
           />
         </div>

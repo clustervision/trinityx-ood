@@ -71,6 +71,69 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
   if (failCount > 0) toast.warning(`Failed to reset ${failCount} nodes.`);
 };
 
+
+// Add this function inside <script setup>
+
+const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
+  // 1. Determine current state and target action
+  const isCurrentlyOn = side === 'front' ? targetRack.powerOn : targetRack.backPowerOn;
+  const action = isCurrentlyOn ? 'off' : 'on'; // If on, turn off. If off, turn on.
+  const confirmMsg = `Power ${action.toUpperCase()} all nodes on ${targetRack.name} ${side} side? (Switches/Controllers ignored)`;
+
+  if (!confirm(confirmMsg)) return;
+  loadingRackName.value = targetRack.name;
+  // 2. Identify target devices
+  const nodesToToggle: any[] = [];
+  targetRack.slots.forEach((slot: any) => {
+    slot.devices.forEach((device: any) => {
+      if (device.orientation === side &&
+          device.type !== 'switch' &&
+          device.type !== 'controller') {
+        nodesToToggle.push(device);
+      }
+    });
+  });
+
+  if (nodesToToggle.length === 0) {
+    toast.info(`No eligible nodes found on ${side} side.`);
+    loadingRackName.value = '';
+    return;
+  }
+
+  // 3. Start Loading (Using the state from previous step)
+    loadingRackName.value = targetRack.name;
+
+
+  try {
+    let successCount = 0;
+
+    await Promise.all(nodesToToggle.map(async (dev) => {
+      try {
+        // API Call: /perform/power/on/{name} or /perform/power/off/{name}
+        await axios.get(`${Url}/perform/power/${action}/${dev.name}`);
+        successCount++;
+      } catch (e) {
+        console.error(`Failed to power ${action} ${dev.name}`, e);
+      }
+    }));
+
+    // 4. Update UI State only on success
+    if (successCount > 0) {
+      toast.success(`${successCount} nodes powered ${action}.`);
+      if (side === 'front') targetRack.powerOn = !isCurrentlyOn;
+      else targetRack.backPowerOn = !isCurrentlyOn;
+    }
+
+  } catch (e) {
+    console.error("Batch power toggle failed", e);
+    toast.error("An error occurred during power toggle.");
+  } finally {
+    loadingRackName.value = '';
+  }
+};
+
+
+
 const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
   handleRackDrop(
     event,
@@ -127,6 +190,7 @@ onMounted(() => {
                 @drop="onDrop"
                 @reset="resetRack"
                 @dragend="onDragEnd"
+                @power-toggle="handlePowerToggle"
                 :is-busy="loadingRackName === rack.name"
               />
             </div>
