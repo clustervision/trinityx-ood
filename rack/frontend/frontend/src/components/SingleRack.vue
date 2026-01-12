@@ -12,16 +12,14 @@ const props = defineProps<{
   getMetric: Function;  
 }>();
 
-// --- Context Menu Logic ---
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 const selectedDevice = ref<Device | null>(null);
 
 const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
-  // Prevent the browser's native menu
   event.preventDefault();
   
-  // Debug log to confirm right-click works
+
   console.log("Opening menu for:", device.name); 
 
   selectedDevice.value = device;
@@ -73,7 +71,6 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
 };
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
 
-// Simple toggles (Do not affect the other side)
 const toggleBack = () => { 
   props.rack.showBackSide = !props.rack.showBackSide; 
 };

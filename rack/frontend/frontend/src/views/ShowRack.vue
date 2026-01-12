@@ -9,44 +9,39 @@ import type { Rack } from '@/types/rack';
 
 const props = defineProps<{ rackName: string; }>();
 const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
-
-// 2. INITIALIZE COMPOSABLE LOGIC
 const { fetchSingleRack , handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 
-// 3. DEFINE LOCAL STATE
+
 const rack = ref<any>(null);
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
-// 4. DEFINE HANDLERS
+
 const loadRackData = async () => {
   if (!props.rackName) return;
 
-  // 1. Save the current state if the rack already exists
-  const currentShowBack = rack.value ? rack.value.showBackSide : true; // Default to true
+  const currentShowBack = rack.value ? rack.value.showBackSide : true;
 
   // 2. Fetch the fresh data
   const freshRack = await fetchSingleRack(props.rackName);
 
-  // 3. Re-apply the saved toggle state to the fresh object
   freshRack.showBackSide = currentShowBack;
-  
+
   rack.value = freshRack;
 };
 
 const resetRack = (targetRack: any, side: 'front' | 'back') => {
   if (confirm(`Reset ${targetRack.name} ${side} side?`)) {
-    // Add your reset API logic here
     console.log("Resetting rack side:", side);
   }
 };
 
 const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | 'back') => {
   handleRackDrop(
-    event, 
-    targetRack, 
-    u, 
-    side, 
+    event,
+    targetRack,
+    u,
+    side,
     (deviceName: string) => {
        emit('device-taken', deviceName);
     },
@@ -57,7 +52,13 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
   );
 };
 
-// 5. LIFECYCLE
+const onDragEnd = () => {
+  setTimeout(() => {
+    loadRackData();
+  }, 400);
+};
+
+
 onMounted(() => {
   loadRackData();
 });
@@ -66,7 +67,10 @@ onMounted(() => {
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
     <div class="card mb-4 border-0 h-100">
-      
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">Rack Details: {{ props.rackName }}</h5>
+          <button class="btn btn-warning" @click="$emit('close')">Back</button>
+      </div>
       <RackMetricsHeader
         v-model:metric1="metric1"
         v-model:metric2="metric2"
@@ -77,7 +81,7 @@ onMounted(() => {
         <div class="racks-container d-flex justify-content-center">
           <div v-if="rack" class="single-rack-wrapper">
             <div class="racks-container">
-              <SingleRack 
+              <SingleRack
                 :key="rack.name"
                 :rack="rack"
                 :metric1="metric1"
@@ -85,8 +89,9 @@ onMounted(() => {
                 :range1="metric1Range"
                 :range2="metric2Range"
                 :get-metric="getMetricForDevice"
-                @drop="onDrop" 
+                @drop="onDrop"
                 @reset="resetRack"
+                @dragend="onDragEnd"
               />
             </div>
           </div>

@@ -3,24 +3,23 @@
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Update Inventory - {{ form.name }}</h5>
-        <small class="text-muted float-end">Change values here...</small>
          <button class="btn btn-warning" @click="$emit('close')">Back</button>
       </div>
-      
+
       <div class="card-body">
         <div v-if="isAssigned" class="alert alert-warning mb-3">
-          <i class='bx bx-lock-alt'></i> 
+          <i class='bx bx-lock-alt'></i>
           This device is currently placed in a rack. Data cannot be changed.
         </div>
         <form @submit.prevent="submitForm">
-          
+
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label text-uppercase fs-7">Name</label>
             <div class="col-sm-10">
-              <input 
-                type="text" 
-                v-model="form.name" 
-                class="form-control bg-light" 
+              <input
+                type="text"
+                v-model="form.name"
+                class="form-control bg-light"
                 :disabled="isAssigned"
               />
             </div>
@@ -29,10 +28,10 @@
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label text-uppercase fs-7">Select Type</label>
             <div class="col-sm-10">
-              <input 
-                type="text" 
-                v-model="form.type" 
-                class="form-control bg-light" 
+              <input
+                type="text"
+                v-model="form.type"
+                class="form-control bg-light"
                 :disabled="isAssigned"
               />
             </div>
@@ -41,13 +40,13 @@
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label text-uppercase fs-7">Inventory Height</label>
             <div class="col-sm-10">
-              <input 
-                type="number" 
-                v-model="form.height" 
-                class="form-control" 
-                min="1" 
-                max="80" 
-                required 
+              <input
+                type="number"
+                v-model="form.height"
+                class="form-control"
+                min="1"
+                max="80"
+                required
                 :disabled="isAssigned"
               />
             </div>
@@ -56,9 +55,9 @@
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label text-uppercase fs-7">Inventory Orientation</label>
             <div class="col-sm-10">
-              <select 
-                v-model="form.orientation" 
-                class="form-select" 
+              <select
+                v-model="form.orientation"
+                class="form-select"
                 required
                 :disabled="isAssigned"
               >
@@ -70,9 +69,9 @@
 
           <div class="row mt-4">
             <div class="col-sm-10 offset-sm-2">
-              <button 
-                type="submit" 
-                class="btn btn-primary" 
+              <button
+                type="submit"
+                class="btn btn-primary"
                 :disabled="isSubmitting || isAssigned"
               >
                 {{ isSubmitting ? 'Updating...' : 'Update Inventory ' + form.name }}
@@ -85,7 +84,7 @@
         </form>
       </div>
     </div>
-  </div> 
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -102,7 +101,7 @@ const props = defineProps<{
 
 
 // Note: Ensure you have 'inventory-updated' here if you need the parent to refresh
-const emit = defineEmits(['close', 'inventory-updated']); 
+const emit = defineEmits(['close', 'inventory-updated']);
 
 const isSubmitting = ref(false);
 const errorMessage = ref('');
@@ -130,7 +129,7 @@ const loadInventoryData=async () => {
     }
 
     const target = items.find((i: any) => i.name === inventoryName);
-    
+
     if (target) {
       form.type = target.type;
       form.height = parseInt(target.height) || 1;
