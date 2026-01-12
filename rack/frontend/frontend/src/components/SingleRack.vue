@@ -4,6 +4,7 @@ import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
 import { ref } from 'vue';
+import { useToast } from 'vue-toastification';
 
 const props = defineProps<{
   rack: Rack;
@@ -15,7 +16,7 @@ const props = defineProps<{
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 const selectedDevice = ref<Device | null>(null);
-
+const toast = useToast()
 const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
   event.preventDefault();
 
@@ -30,7 +31,7 @@ const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
 const handleMenuAction = async (payload: { action: string, subAction?: string, device: Device }) => {
   const { action, subAction, device } = payload;
   const baseUrl = 'https://yixin3-dev-ctrl001:8080/pun/sys';
-  const Url = 'https://yixin3-dev-ctrl001:8080/pun/sys/';
+  const Url = 'https://yixin3-dev-ctrl001:7755/';
 
   // 1. URL Navigation Actions
   if (['details', 'edit', 'rename', 'clone'].includes(action)) {
@@ -63,12 +64,9 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
   if (['power', 'sel', 'chassis'].includes(action)) {
     console.log(`Executing ${action} - ${subAction} on ${device.name}`);
     try {
-      await axios.post(`${Url}/control_action`, {
-        type: action,
-        command: subAction,
-        device: device.name
-      });
-      alert(`Command sent: ${subAction}`);
+
+      const response = await axios.get(`${Url}perform/${action}/${subAction}/${device.name}`);
+       alert(response.data.message || `Command sent: ${subAction}`);
     } catch (e) {
       console.error(e);
       alert('Action failed');
