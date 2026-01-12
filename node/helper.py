@@ -108,9 +108,11 @@ class Helper():
                     tmp_interface['mtu'] = mtu
                 if options:
                     tmp_interface['options'] = options
-                if vlanid and len(vlanid) > 0 and vlanid.strip():
-                    tmp_interface['vlanid'] = vlanid
-                
+                if vlanid:
+                    if len(vlanid) > 0 and vlanid.strip():
+                        tmp_interface['vlanid'] = vlanid
+                else:
+                    tmp_interface['vlanid'] = ""
                 if vlan_parent:
                     tmp_interface['vlan_parent'] = vlan_parent
                 if bond_mode:

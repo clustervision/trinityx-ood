@@ -278,7 +278,6 @@
         }
         url = url.join("/");
         url = url+"/remove/"+node+"/"+interface;
-
         $.ajax({
             async: false,
             global: false,
@@ -293,7 +292,8 @@
     }
 
      $('body').on('click', '#remove_nodeinterface', function() {
-        var interface = $(this).parent().find('input[type="text"]').val();
+        
+        var interface = $(this).parent().prev().find('input[type="text"]').val();
         var url = window.location.href;
         url = url.split('/');
         var node = url[url.length-1];
