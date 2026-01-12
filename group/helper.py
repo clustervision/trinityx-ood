@@ -125,8 +125,11 @@ class Helper():
                     tmp_interface['interface'] = interface
                 if network:
                     tmp_interface['network'] = network
-                if vlanid and len(vlanid) > 0 and vlanid.strip():
-                    tmp_interface['vlanid'] = vlanid
+                if vlanid:
+                    if len(vlanid) > 0 and vlanid.strip():
+                        tmp_interface['vlanid'] = vlanid
+                else:
+                    tmp_interface['vlanid'] = ""
                 if dhcp:
                     tmp_interface['dhcp'] = True if dhcp.lower() == 'true' else False
                 if mtu:

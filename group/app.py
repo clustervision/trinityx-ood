@@ -261,10 +261,9 @@ def edit(record=None):
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None]}
         payload = Helper().prepare_payload(payload)
-            
         if 'interface' in payload:
             payload = Helper().filter_interfaces(request, TABLE, payload)
-        
+
         if payload['bmcsetupname'] == '':
             del payload['bmcsetupname']
         if payload['osimage'] == '':
@@ -276,6 +275,9 @@ def edit(record=None):
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 204:
             flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
+        elif response.status_code == 201:
+            response_json = response.json()
+            flash(f'{TABLE_CAP} {response_json["message"]}.', "success")
         else:
             response_json = response.json()
             error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
