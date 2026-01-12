@@ -18,19 +18,18 @@ const setView = (viewName: string) => {
   selectedItemName.value = '';
 };
 
-
 const handleDeviceTakenFromPool = (deviceName: string) => {
   if (sideMenuRef.value) {
     sideMenuRef.value.removeNode(deviceName);
   }
 };
 
+// Called when SideMenu drops something, so RackView needs to reload
 const handlePoolUpdated = () => {
    if (rackViewRef.value) {
       rackViewRef.value.loadRacks();
    }
 };
-
 
 const handleAddRack = () => { currentView.value = 'add-rack'; };
 const handleEditRack = (item: any) => {
@@ -50,12 +49,12 @@ const goBackToManage = () => {
   else currentView.value = 'manage-inventory';
 };
 
+// Called when RackView resets, so SideMenu needs to reload
 const refreshPoolData = () => {
   if (sideMenuRef.value) {
     sideMenuRef.value.fetchUnassignedNodes();
   }
 };
-
 </script>
 
 <template>
@@ -63,7 +62,7 @@ const refreshPoolData = () => {
     <SideMenu 
        ref="sideMenuRef"
        @change-view="setView" 
-       @pool-updated="handlePoolUpdated"
+       @pool-updated="handlePoolUpdated" 
     />
 
     <div class="layout-page">
@@ -71,6 +70,7 @@ const refreshPoolData = () => {
          v-if="currentView === 'dashboard'" 
          ref="rackViewRef"
          @device-taken="handleDeviceTakenFromPool"
+         @pool-updated="refreshPoolData" 
       />
       
       <ManageView 
@@ -86,7 +86,6 @@ const refreshPoolData = () => {
          :page-type="'inventory'" 
          @edit-click="handleEditInventory"
          @inventory-updated="refreshPoolData"
-
       />
 
       <AddRack v-if="currentView === 'add-rack'" @close="goBackToManage" />
@@ -102,6 +101,7 @@ const refreshPoolData = () => {
         :rack-name="selectedItemName"
         @close="goBackToManage" 
         @device-taken="handleDeviceTakenFromPool"
+        @pool-updated="refreshPoolData"
       />
 
       <EditInventory 

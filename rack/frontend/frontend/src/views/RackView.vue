@@ -8,7 +8,7 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 
-const emit = defineEmits(['rack-updated', 'device-taken']);
+const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
 const toast = useToast();
 const racks = ref<Rack[]>([]);
 const { fetchSingleRack, handleRackDrop} = useRack();
@@ -96,7 +96,7 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
 
     toast.success(`Successfully removed ${devicesToRemove.length} devices.`);
     devicesToRemove.forEach(d => emit('device-taken', d.name));
-
+    emit('pool-updated');emit('pool-updated');
     if (typeof loadRacks === 'function') {
       await loadRacks(); 
     }
