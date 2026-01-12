@@ -48,18 +48,18 @@ app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = APP_KEY
 
 if APP_STATE is False: # FOR Development Only
-    CORS(app, resources = {r"/get_nodes":           {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/get_nodes/*":         {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/device_pool":         {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/manage_racks":        {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/manage_inventory":    {"origins": "http://localhost:5173"}} )
-    CORS(app, resources = {r"/show_rack":           {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/show_rack/*":         {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/change_rack":         {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/change_inventory":    {"origins": "http://localhost:5173"}} )
-    CORS(app, resources = {r"/delete_rack":         {"origins": "http://localhost:5173"}} )
-    CORS(app, resources = {r"/delete_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/delete_rack/*":       {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/delete_inventory/*":  {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/update_rack":         {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/update_inventory":    {"origins": "http://localhost:5173"}} )
-    CORS(app, resources = {r"/perform":             {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/perform/*":           {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/license":             {"origins": "http://localhost:5173"}} )
 
 
