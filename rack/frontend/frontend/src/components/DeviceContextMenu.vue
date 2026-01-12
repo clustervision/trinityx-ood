@@ -19,10 +19,31 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
-onUnmounted(() => document.removeEventListener('click', handleClickOutside));
+const menuStyle = computed(() => {
+  const { x, y } = props.position;
+  if (typeof window === 'undefined') return { top: `${y}px`, left: `${x}px` };
 
-// Helper to determine actions based on type (Legacy Logic)
+  const windowHeight = window.innerHeight;
+  const isNearBottom = y > windowHeight * 0.7;
+
+  if (isNearBottom) {
+    return {
+      left: `${x}px`,
+      bottom: `${windowHeight - y}px`,
+      top: 'auto' 
+    };
+  } else {
+    return {
+      left: `${x}px`,
+      top: `${y}px`,
+      bottom: 'auto'
+    };
+  }
+});
+onMounted(() => document.addEventListener('mousedown', handleClickOutside));
+onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside));
+
+
 const menuItems = computed(() => {
   if (!props.device) return [];
   const type = props.device.type || 'node';
@@ -54,7 +75,8 @@ const triggerAction = (action: string, subAction?: string) => {
     v-if="visible && device" 
     ref="menuRef"
     class="context-menu" 
-    :style="{ top: position.y + 'px', left: position.x + 'px' }"
+    :style="menuStyle"
+    @wheel.stop
   >
     <div class="menu-header">
       <i class="bx bx-chip me-2"></i> 
@@ -96,6 +118,10 @@ const triggerAction = (action: string, subAction?: string) => {
   min-width: 180px;
   font-size: 12px;
   color: #333;
+  display: flex;
+  flex-direction: column;
+  max-height: 40vh;
+  box-sizing: border-box;
 }
 
 .menu-header {
@@ -112,6 +138,10 @@ const triggerAction = (action: string, subAction?: string) => {
   list-style: none;
   padding: 0;
   margin: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .menu-list li {
