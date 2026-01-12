@@ -320,7 +320,7 @@ $('body').on('change', '#id_network', function() {
         $('[data-bs-toggle="tooltip"]').tooltip();
      });
      $('body').on('click', '#remove_nodeinterface', function() {
-        var interface = $(this).parent().find('input[type="text"]').val();
+        var interface = $(this).parent().prev().find('input[type="text"]').val();
         var url = window.location.href;
         url = url.split('/');
         var node = url[url.length-1];
