@@ -1,10 +1,10 @@
 export interface Device {
   name: string;
-  type: string; 
-  height: number; 
-  vendor: string; 
-  position: number; 
-  orientation: 'front' | 'back'; 
+  type: string;
+  height: number;
+  vendor: string;
+  position: number;
+  orientation: 'front' | 'back';
   status?: string;
 }
 
@@ -17,7 +17,7 @@ export interface Rack {
   name: string;
   size: number;
   order: string;
-  slots: RackSlot[]; 
+  slots: RackSlot[];
   showBackSide: boolean;
   showFrontSide: boolean;
   powerOn?: boolean;
@@ -25,7 +25,7 @@ export interface Rack {
 }
 
 export interface RackData {
-  [key: string]: Rack; 
+  [key: string]: Rack;
 }
 
 export interface NodeMetric {

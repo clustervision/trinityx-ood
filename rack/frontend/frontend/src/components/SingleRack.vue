@@ -9,6 +9,7 @@ const props = defineProps<{
   rack: Rack;
   metric1: string | null;
   metric2: string | null;
+  isBusy?: boolean;
   getMetric: Function;
 }>();
 const isActionLoading = ref(false);
@@ -102,10 +103,10 @@ const clearPreview = () => {
 <template>
   <div class="single-rack-wrapper" @dragleave="clearPreview">
     <Teleport to="body">
-      <div v-if="isActionLoading" class="loader-overlay">
-        <div class="spinner"></div>
-        <span>Processing...</span>
-      </div>
+      <div v-if="isActionLoading || props.isBusy" class="loader-overlay">
+      <div class="spinner"></div>
+      <span>Processing...</span>
+    </div>
     </Teleport>
     <div class="rack-tabs">
       <div class="rack-tab front-label cursor-pointer" @click="toggleFront">

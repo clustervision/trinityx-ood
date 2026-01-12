@@ -13,7 +13,7 @@ const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
 const { fetchSingleRack , handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 const toast = useToast()
-
+const loadingRackName = ref('');
 const rack = ref<any>(null);
 const Url = 'https://yixin3-dev-ctrl001:7755';
 
@@ -33,6 +33,7 @@ const loadRackData = async () => {
 
 const resetRack = async (targetRack: any, side: 'front' | 'back') => {
   if (!confirm(`Power Reset all nodes on ${targetRack.name} ${side} side? (Switches & Controllers ignored)`)) return;
+  loadingRackName.value = targetRack.name;
 
   const nodesToReset: any[] = [];
   targetRack.slots.forEach((slot: any) => {
@@ -61,8 +62,11 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
       console.error(`Failed to reset ${dev.name}`, e);
       failCount++;
     }
-  }));
+    finally{
+    loadingRackName.value = '';
 
+    }
+  }));
   if (successCount > 0) toast.success(`Power reset signal sent to ${successCount} nodes.`);
   if (failCount > 0) toast.warning(`Failed to reset ${failCount} nodes.`);
 };
@@ -123,6 +127,7 @@ onMounted(() => {
                 @drop="onDrop"
                 @reset="resetRack"
                 @dragend="onDragEnd"
+                :is-busy="loadingRackName === rack.name"
               />
             </div>
           </div>

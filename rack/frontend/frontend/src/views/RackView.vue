@@ -13,7 +13,7 @@ const toast = useToast();
 const racks = ref<Rack[]>([]);
 const { fetchSingleRack, handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
-const isActionLoading = ref(false);
+const loadingRackName = ref('');
 
 const Url = 'https://yixin3-dev-ctrl001:7755';
 const isBackViewMode = ref(false);
@@ -62,8 +62,8 @@ const loadRacks = async () => {
 };
 
 const resetRack = async (targetRack: any, side: 'front' | 'back') => {
-  isActionLoading.value = true;
   if (!confirm(`Power Reset all nodes on ${targetRack.name} ${side} side? (Switches & Controllers ignored)`)) return;
+  loadingRackName.value = targetRack.name;
 
 
   const nodesToReset: any[] = [];
@@ -106,7 +106,7 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
     toast.error("An error occurred during batch reset.");
   }
   finally{
-      isActionLoading.value = false;
+      loadingRackName.value = '';
     }
 };
 
@@ -140,12 +140,6 @@ onMounted(loadRacks);
 
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
-    <Teleport to="body">
-      <div v-if="isActionLoading" class="loader-overlay">
-        <div class="spinner"></div>
-        <span>Processing...</span>
-      </div>
-    </Teleport>
     <div class="card-body position-relative"> <div style="position: absolute; right: 80px; top: 55px; z-index: 10;">
     <button
       class="btn fw-bold"
@@ -172,6 +166,7 @@ onMounted(loadRacks);
             :get-metric="getMetricForDevice"
             @drop="onDrop"
             @reset="resetRack"
+            :is-busy="loadingRackName === rack.name"
           />
         </div>
       </div>
