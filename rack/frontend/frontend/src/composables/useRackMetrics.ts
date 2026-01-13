@@ -26,7 +26,7 @@ const QUERY_MAP: Record<string, string> = {
 
 
 export function useRackMetrics() {
-  const prome_url = 'https://yixin3-dev-ctrl001:9090'; 
+  const prome_url = 'https://yixin3-dev-ctrl001:9090';
   const metric1 = ref<string | null>('No Scale');
   const metric2 = ref<string | null>('No Scale');
   const metricDataMap = ref<Record<string, Record<string, number>>>({});
@@ -35,10 +35,10 @@ export function useRackMetrics() {
   const metric2Range = ref<MetricRange>({ min: 0, max: 100 });
 
   const calculateColor = (value: number, max: number) => {
-    if (max <= 0) return 'hsl(120, 100%, 45%)'; 
+    if (max <= 0) return 'hsl(120, 100%, 45%)';
     let ratio = value / max;
     if (ratio > 1) ratio = 1;
-    const hue = (1 - ratio) * 120; 
+    const hue = (1 - ratio) * 120;
     return `hsl(${hue}, 100%, 45%)`;
   };
 
@@ -54,20 +54,23 @@ export function useRackMetrics() {
       if (response.data.status !== 'success') return;
 
       const results = response.data.data.result;
-      
+
       let maxVal = 0;
 
       results.forEach((item) => {
         const rawHostname = item.metric.hostname;
         if (!rawHostname) return;
+        const parts = rawHostname.split('.');
+        const hostname = parts[0];
+        if (!hostname) return;
         const value = parseFloat(item.value[1]) || 0;
         if (value > maxVal) maxVal = value;
 
-        if (!metricDataMap.value[rawHostname]) metricDataMap.value[rawHostname] = {};
-        metricDataMap.value[rawHostname][metricType] = value;
+        if (!metricDataMap.value[hostname]) metricDataMap.value[hostname] = {};
+        metricDataMap.value[hostname][metricType] = value;
       });
       rangeRef.value = { min: 0, max: maxVal === 0 ? 100 : maxVal };
-      triggerRef(metricDataMap); 
+      triggerRef(metricDataMap);
     } catch (e) {
       console.error(`Fetch error ${metricType}`, e);
     }

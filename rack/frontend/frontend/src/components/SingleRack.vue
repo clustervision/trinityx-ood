@@ -12,6 +12,8 @@ const props = defineProps<{
   isBusy?: boolean;
   getMetric: Function;
   isBackViewMode: boolean;
+  metric1Color?: string;
+  metric2Color?: string;
 }>();
 const isActionLoading = ref(false);
 const menuVisible = ref(false);
@@ -156,9 +158,11 @@ const clearPreview = () => {
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" class="flex-fill h-100 position-relative">
                   <DeviceItem
                     :device="device"
-                    :metric1-value="getMetric(device, metric1)"
+                    :metric1-value="getMetric(device, metric1,true)?.value"
+                    :metric1-color="getMetric(device, metric1, true)?.color"
                     :metric1-type="metric1"
-                    :metric2-value="getMetric(device, metric2)"
+                    :metric2-value="getMetric(device, metric2,true)?.value"
+                    :metric2-color="getMetric(device, metric2, true)?.color"
                     :metric2-type="metric2"
                     :is-rack-view="true"
                     style="position: absolute; width: 100%;"
@@ -200,9 +204,11 @@ const clearPreview = () => {
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name" class="flex-fill h-100 position-relative">
                   <DeviceItem
                     :device="device"
-                    :metric1-value="getMetric(device, metric1)"
+                    :metric1-value="getMetric(device, metric1,true)?.value"
+                    :metric1-color="getMetric(device, metric1, true)?.color"
                     :metric1-type="metric1"
-                    :metric2-value="getMetric(device, metric2)"
+                    :metric2-value="getMetric(device, metric2,true)?.value"
+                    :metric2-color="getMetric(device, metric2, true)?.color"
                     :metric2-type="metric2"
                     :is-rack-view="true"
                     style="position: absolute; width: 100%;"
