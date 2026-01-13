@@ -1,4 +1,4 @@
-Flask==2.3.2
+Flask==2.3.3
 pip==23.2.1
 setuptools==51.0.0
 pexpect==4.9.0
