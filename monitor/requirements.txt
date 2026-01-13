@@ -1,4 +1,4 @@
-Flask==2.3.2
+Flask==2.3.3
 pip==23.2.1
 PyJWT==2.8.0
 requests==2.29.0
