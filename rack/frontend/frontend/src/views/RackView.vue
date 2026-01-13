@@ -196,7 +196,7 @@ onMounted(loadRacks);
     <div class="card-body position-relative"> <div style="position: absolute; right: 80px; top: 55px; z-index: 10;">
     <button
       class="btn fw-bold"
-      :class="isBackViewMode ? 'btn-dark' : 'btn-custom-grey'"
+      :class="isBackViewMode ? 'btn-custom-grey': 'btn-dark'"
       @click="toggleGlobalView"
       style="font-size: 12px; padding: 4px 15px;"
     >
