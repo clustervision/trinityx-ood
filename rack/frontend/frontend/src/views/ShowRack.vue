@@ -96,7 +96,7 @@ const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
 
   if (nodesToToggle.length === 0) {
     toast.info(`No eligible nodes found on ${side} side.`);
-    loadingRackName.value = '';
+
     return;
   }
 
@@ -187,6 +187,7 @@ onMounted(() => {
                 :range1="metric1Range"
                 :range2="metric2Range"
                 :get-metric="getMetricForDevice"
+                :is-back-view-mode="false"
                 @drop="onDrop"
                 @reset="resetRack"
                 @dragend="onDragEnd"

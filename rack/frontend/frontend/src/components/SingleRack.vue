@@ -11,6 +11,7 @@ const props = defineProps<{
   metric2: string | null;
   isBusy?: boolean;
   getMetric: Function;
+  isBackViewMode: boolean;
 }>();
 const isActionLoading = ref(false);
 const menuVisible = ref(false);
@@ -109,14 +110,22 @@ const clearPreview = () => {
     </div>
     </Teleport>
     <div class="rack-tabs">
-      <div class="rack-tab front-label cursor-pointer" @click="toggleFront">
-        {{ rack.showFrontSide ? 'HIDE FRONT' : 'SHOW FRONT' }}
+    <div
+        class="rack-tab front-label"
+        :class="{ 'cursor-pointer': props.isBackViewMode }"
+        @click="props.isBackViewMode ? toggleFront() : null"
+      >
+        {{ props.isBackViewMode ? (rack.showFrontSide ? 'HIDE FRONT' : 'SHOW FRONT') : 'FRONT' }}
       </div>
-      <div class="rack-tab back-toggle" @click="toggleBack">
-        {{ rack.showBackSide ? 'HIDE BACK' : 'SHOW BACK' }}
+
+      <div
+        class="rack-tab back-toggle"
+        :class="{ 'cursor-pointer': !props.isBackViewMode }"
+        @click="!props.isBackViewMode ? toggleBack() : null"
+      >
+        {{ !props.isBackViewMode ? (rack.showBackSide ? 'HIDE BACK' : 'SHOW BACK') : 'BACK' }}
       </div>
     </div>
-
     <div class="d-flex gap-1">
 
       <div class="rack-column" v-if="rack.showFrontSide !== false">

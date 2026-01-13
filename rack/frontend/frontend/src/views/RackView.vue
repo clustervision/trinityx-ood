@@ -217,6 +217,7 @@ onMounted(loadRacks);
             :metric1="metric1"
             :metric2="metric2"
             :get-metric="getMetricForDevice"
+            :is-back-view-mode="isBackViewMode"
             @drop="onDrop"
             @reset="resetRack"
             @power-toggle="handlePowerToggle"
