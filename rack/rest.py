@@ -196,6 +196,11 @@ class Rest():
                 timeout=self.request_timeout,
                 verify=self.security
             )
+            print("------------------------GET START----------------------------")
+            print(daemon_url)
+            print(response.content)
+            print(response.status_code)
+            print("------------------------GET FINISH----------------------------")
             self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -319,6 +324,12 @@ class Rest():
                 timeout = 5,
                 verify  = self.security
             )
+            print("------------------------POST START----------------------------")
+            print(daemon_url)
+            print(payload)
+            print(response.content)
+            print(response.status_code)
+            print("------------------------POST FINISH----------------------------")
             self.logger.debug("Response %s & HTTP Code %s", response.content, response.status_code)
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')

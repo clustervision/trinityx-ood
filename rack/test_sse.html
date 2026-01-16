@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE Rack State Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #111;
+            color: #0f0;
+            padding: 20px;
+        }
+        .event {
+            margin-bottom: 10px;
+            border-left: 3px solid #0f0;
+            padding-left: 10px;
+        }
+        .started { color: #00bfff; }
+        .update { color: #0f0; }
+        .completed { color: #ffa500; }
+        .error { color: #ff4444; }
+    </style>
+</head>
+<body>
+
+<h2>SSE Rack State Stream</h2>
+<button onclick="startStream()">Start Stream</button>
+<button onclick="stopStream()">Stop Stream</button>
+
+<div id="output"></div>
+
+<script>
+    let source = null;
+
+    function logEvent(type, data) {
+        const div = document.createElement("div");
+        div.className = "event " + type;
+        div.textContent = `[${type.toUpperCase()}] ` + data;
+        document.getElementById("output").appendChild(div);
+    }
+
+    function startStream() {
+        if (source) {
+            logEvent("error", "Stream already running");
+            return;
+        }
+        const APP_URL = "https://vmware-controller1.cluster:7755";
+        const rackName = "computed"; 
+        const url = `${APP_URL}/rack_power/${rackName}`;
+
+        source = new EventSource(url);
+
+        source.addEventListener("started", (e) => {
+            logEvent("started", e.data);
+        });
+
+        source.addEventListener("update", (e) => {
+            const data = JSON.parse(e.data);
+            logEvent("update", JSON.stringify(data, null, 2));
+        });
+
+        source.addEventListener("completed", () => {
+            logEvent("completed", "Stream completed");
+            source.close();
+            source = null;
+        });
+
+        source.addEventListener("error", (e) => {
+            logEvent("error", "SSE error or connection closed");
+            if (source) {
+                source.close();
+                source = null;
+            }
+        });
+    }
+
+    function stopStream() {
+        if (source) {
+            source.close();
+            source = null;
+            logEvent("completed", "Stream manually stopped");
+        }
+    }
+</script>
+
+</body>
+</html>

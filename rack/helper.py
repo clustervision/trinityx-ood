@@ -29,6 +29,7 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Production"
 
 
+import hostlist
 from flask import url_for
 from constant import APP_STATE
 from log import Log
@@ -61,4 +62,21 @@ class Helper():
             promethues_url = full_url.replace("8080", "9090")
         response['PROMETHEUS_URL'] = promethues_url
         response['APP_URL'] = base_url
+        return response
+
+
+    def get_hostlist(self, raw_hosts: list) -> dict:
+        """
+        This method will perform power option on node.
+        """
+        
+        response = {"status": False, "message": "No valid hostlist found."}
+        self.logger.info(f'Received hostlist: {raw_hosts}.')
+        try:
+            result = hostlist.collect_hostlist(raw_hosts)
+            self.logger.info(f'Expanded hostlist: {result}.')
+            response = {"status": True, "message": result}
+        except hostlist.BadHostlist:
+            self.logger.info(f'Hostlist is incorrect: {raw_hosts}.')
+            response["message"] = f"Hostlist is incorrect: {raw_hosts}."
         return response

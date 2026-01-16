@@ -31,15 +31,17 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Production'
 
 import os
+import time
 import json
 from textwrap import wrap
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 import urllib3
 from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, TOKEN_FILE, APP_STATE, APP_KEY
 from log import Log
 from helper import Helper
+from multiprocessing import Process
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -61,7 +63,7 @@ if APP_STATE is False: # FOR Development Only
     CORS(app, resources = {r"/update_inventory":    {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/perform/*":           {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/license":             {"origins": "http://localhost:5173"}} )
-
+    CORS(app, resources = {r"/rack_power/*":        {"origins": "*"}} )
 
 @app.before_request
 def validate_home_directory():
@@ -290,6 +292,7 @@ def update_inventory():
     return jsonify(response)
 
 
+
 @app.route('/perform/<string:system>/<string:action>/<string:nodename>', methods=['GET'])
 def perform(system=None, action=None, nodename=None):
     """
@@ -323,6 +326,194 @@ def perform(system=None, action=None, nodename=None):
         else:
             response['message'] = f'{nodename} {system} {action} :: {message}.'
     return response
+
+
+
+# @app.route('/rack_state/<string:rack_name>', methods=['GET'])
+# def rack_state(rack_name: str):
+#     """
+#     This route will return the provided rack data.
+#     """
+#     response = {"status": False, "message": f"{rack_name}, Rack Not found"}
+#     table_data = Rest().get_data("rack", rack_name)
+#     if table_data:
+#         rack_data = table_data["config"]["rack"][rack_name]
+#         node_list = []
+#         for device in rack_data["devices"]:
+#             if device["type"] in ["node", "controller"]:
+#                 node_list.append(device["name"])
+#         # node_list = [node_list[0]] # TODO : Only for Tesing Purpose.
+#         if len(node_list) == 0:
+#             response["message"] = f"{rack_name}, Rack has no nodes."
+#         elif len(node_list) == 1:
+#             uri = f'control/action/power/{node_list[0]}/_status'
+#             result = Rest().get_raw(uri)
+#             content = result.json()
+#             response["message"] = [{"node": node_list[0], "state": content['control']['power']}]
+#         else:
+#             construct_hostlist = Helper().get_hostlist(node_list)
+#             if construct_hostlist["status"] is False:
+#                 response["message"] = construct_hostlist["message"]
+#             else:
+#                 hostlist = construct_hostlist["message"]
+                
+                
+#                 # control_process = Process(target=Helper().loader, args=("Fetching Nodes Status...",))
+#                 # control_process.start()
+#                 # request_id = None
+
+
+#                 # uri = "control/action/power/_status"
+#                 # payload = {"control": {"power": {"status": {"hostlist": hostlist} } } }
+#                 # response = Rest().post_raw(uri, payload)
+#                 # if response.status_code == 200:
+#                 #     content = response.json()
+#                 #     if "control" in content:
+#                 #         request_id = content['request_id'] if 'request_id' in content else None
+#                 #         count = Helper().control_print("power", content , 1)
+#                 #         if request_id:
+#                 #             Helper().dig_control_status(request_id, count, self.args['system'])
+#                 #             control_process.terminate()
+
+
+
+#                 response["status"] = True
+#                 response["message"] = hostlist
+#     print(jsonify(response))
+#     return jsonify(response)
+
+
+@app.route('/rack_power/<string:rack_name>', methods=['GET'])
+@app.route('/rack_power/<string:rack_name>/<string:action>', methods=['GET'])
+def rack_power(rack_name: str, action: str = "status"):
+    """
+    Stream rack node power status using SSE
+    """
+    table_data = Rest().get_data("rack", rack_name)
+    if not table_data:
+        return jsonify({"status": False, "message": f"{rack_name}, Rack Not found"})
+
+    rack_data = table_data["config"]["rack"][rack_name]
+
+    node_list = [
+        device["name"]
+        for device in rack_data["devices"]
+        if device["type"] == "node"
+    ]
+
+    if not node_list:
+        return jsonify({"status": False, "message": f"{rack_name}, Rack has no nodes."})
+
+    # ---------------- SINGLE NODE (normal response) ----------------
+    if len(node_list) == 1:
+        if action != "status":
+            uri = f'control/action/power/{node_list[0]}/_{action}'
+            one_node_action = Rest().get_raw(uri)
+            if one_node_action.status_code == 204:
+                return jsonify({
+                    "status": True,
+                    "message": [{
+                        "node": node_list[0],
+                        "state": action.upper()
+                    }]
+                })
+            else:
+                return jsonify({
+                    "status": False,
+                    "message": f"Failed to perform {action} on {node_list[0]}."
+                })
+        else:
+            uri = f'control/action/power/{node_list[0]}/_status'
+            result = Rest().get_raw(uri)
+            content = result.json()
+            return jsonify({
+                "status": True,
+                "message": [{
+                    "node": node_list[0],
+                    "state": content["control"]["power"]
+                }]
+            })
+
+    # ---------------- MULTI NODE (SSE streaming) ----------------
+    construct_hostlist = Helper().get_hostlist(node_list)
+    if construct_hostlist["status"] is False:
+        return jsonify({"status": False, "message": construct_hostlist["message"]})
+
+    hostlist = construct_hostlist["message"]
+
+    def event_stream():
+        uri = f"control/action/power/_{action}"
+        payload = {"control": {"power": {action: {"hostlist": hostlist} } } }
+
+        start_resp = Rest().post_raw(uri, payload)
+        if start_resp.status_code != 200:
+            yield f"event: error\ndata: {json.dumps({'error': 'Failed to start power status'})}\n\n"
+            return
+
+        content = start_resp.json()
+        request_id = content.get("request_id")
+
+        if not request_id:
+            yield f"event: error\ndata: {json.dumps({'error': 'request_id missing'})}\n\n"
+            return
+
+        ipmi_response = {}
+        possible_cases = ['ok', 'on', 'off']
+        if 'failed' in content['control']:
+            for key, value in content['control']['failed'].items():
+                ipmi_response[key] = value
+
+        if "power" in content['control']:
+            for case in possible_cases:
+                if case in content['control']["power"]:
+                    for key, value in content['control']["power"][case].items():
+                        if case == "ok":
+                            ipmi_response[key] = action.upper()
+                        else:
+                            ipmi_response[key] = case.upper()
+        ipmi_response = dict(sorted(ipmi_response.items()))
+
+        yield f"event: started\ndata: {json.dumps(ipmi_response)}\n\n"
+        
+        while True:
+            status_uri = f"control/status/{request_id}"
+            resp = Rest().get_raw(status_uri)
+
+            if resp.status_code == 404:
+                yield "event: completed\ndata: {}\n\n"
+                break
+
+            if resp.status_code != 200:
+                yield f"event: error\ndata: {json.dumps({'error': 'Status polling failed'})}\n\n"
+                break
+
+            data = resp.json()
+
+            ipmi_response = {}
+            possible_cases = ['ok', 'on', 'off']
+            if 'failed' in data['control']:
+                for key, value in data['control']['failed'].items():
+                    ipmi_response[key] = value
+
+            if "power" in data['control']:
+                for case in possible_cases:
+                    if case in data['control']["power"]:
+                        for key, value in data['control']["power"][case].items():
+                            ipmi_response[key] = case.upper()
+            ipmi_response = dict(sorted(ipmi_response.items()))
+
+            if "unknown" in data["control"]:
+                yield f"event: update\ndata: {json.dumps(ipmi_response)}\n\n"
+            else:
+                yield f"event: update\ndata: {json.dumps(ipmi_response)}\n\n"
+
+            time.sleep(2)
+
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype="text/event-stream",
+        headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )
 
 
 @app.route('/license', methods=['GET'])
