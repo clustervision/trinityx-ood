@@ -1,4 +1,4 @@
-import { ref, watch, triggerRef } from 'vue';
+import { ref, watch, triggerRef, onMounted, onUnmounted } from 'vue'; // Added onMounted, onUnmounted
 import axios from 'axios';
 import type { Device } from '@/types/rack';
 
@@ -33,6 +33,8 @@ export function useRackMetrics() {
 
   const metric1Range = ref<MetricRange>({ min: 0, max: 100 });
   const metric2Range = ref<MetricRange>({ min: 0, max: 100 });
+
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   const calculateColor = (value: number, max: number) => {
     if (max <= 0) return 'hsl(120, 100%, 45%)';
@@ -76,13 +78,13 @@ export function useRackMetrics() {
     }
   };
 
-
   const fetchMetricData = async () => {
-    if (metric1.value && metric1.value !== 'No Scale') await fetchSingleMetric(metric1.value, metric1Range);
-    if (metric2.value && metric2.value !== 'No Scale') await fetchSingleMetric(metric2.value, metric2Range);
+    const m1Active = metric1.value && metric1.value !== 'No Scale';
+    const m2Active = metric2.value && metric2.value !== 'No Scale';
+
+    if (m1Active) await fetchSingleMetric(metric1.value!, metric1Range);
+    if (m2Active) await fetchSingleMetric(metric2.value!, metric2Range);
   };
-
-
   const getMetricForDevice = (device: Device | null, type: string | null, isMetric1: boolean) => {
     if (!device || !type || type === 'No Scale') return undefined;
     const deviceMetrics = metricDataMap.value[device.name];
@@ -98,6 +100,31 @@ export function useRackMetrics() {
     }
     return undefined;
   };
+
+  const startAutoRefresh = () => {
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => {
+      console.log('Auto-refreshing metrics...');
+      fetchMetricData();
+    }, 30000);
+  };
+
+  const stopAutoRefresh = () => {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  };
+
+  onMounted(() => {
+    startAutoRefresh();
+  });
+
+  onUnmounted(() => {
+    stopAutoRefresh();
+  });
+
   watch([metric1, metric2], fetchMetricData);
+
   return { metric1, metric2, metric1Range, metric2Range, getMetricForDevice, fetchMetricData };
 }
