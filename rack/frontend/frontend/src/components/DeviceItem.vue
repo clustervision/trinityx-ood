@@ -62,15 +62,8 @@ const onRightClick = (event: MouseEvent) => {
   emit('device-right-click', event, props.device);
 };
 
-const getDeviceImageUrl = () => {
-  const type = props.device.type;
-  const height = props.device.height;
+const getVendorImageUrl = (size: number) => {
   let vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
-
-  if (type === 'switch')
-  return new URL('@/assets/img/switch.png', import.meta.url).href;
-
-
   if (vendor.includes('supermicro')) vendor = 'supermicro';
   else if (vendor.includes('dell')) vendor = 'dell';
   else if (vendor.includes('asus')) vendor = 'asus';
@@ -78,33 +71,73 @@ const getDeviceImageUrl = () => {
   else if (vendor.includes('lenovo')) vendor = 'lenovo';
   else if (vendor.includes('gigabyte')) vendor = 'gigabyte';
   else vendor = '';
+  const validSizes = [1, 2, 3, 4, 8];
+  const safeSize = validSizes.includes(size) ? size : 1;
 
-  const imgHeight = height > 4 ? 4 : height;
   if (!vendor) {
-    return new URL(`../assets/img/noname-${imgHeight}.png`, import.meta.url).href;
+    return new URL(`../assets/img/default-${safeSize}u.png`, import.meta.url).href;
   }
+  return new URL(`../assets/img/${vendor}-${safeSize}u.png`, import.meta.url).href;
+};
 
-  return new URL(`../assets/img/${vendor}-${imgHeight}.png`, import.meta.url).href;
+const getImageStack = (totalHeight: number) => {
+  const availableSizes = [8, 4, 3, 2, 1];
+
+  let remaining = totalHeight;
+  const parts: number[] = [];
+  for (const size of availableSizes) {
+    while (remaining >= size) {
+      parts.push(size);
+      remaining -= size;
+    }
+    if (remaining === 0) break;
+  }
+  if (remaining > 0) parts.push(1);
+
+  return parts;
 };
 
 const deviceBackgroundStyle = computed(() => {
-  const isSwitch = props.device.type === 'switch';
-  const imageUrl = getDeviceImageUrl();
 
-  const bgSize = isSwitch
-    ? `100% ${unitPixelHeight.value}px`
-    : '100% 100%';
+  if (props.device.type === 'switch') {
+    const url = new URL('@/assets/img/switch.png', import.meta.url).href;
+    return {
+      height: heightPixels.value + 'px',
+      backgroundImage: `url(${url})`,
+      backgroundRepeat: 'repeat-y',
+      backgroundSize: `100% ${unitPixelHeight.value}px`,
+      backgroundColor: 'transparent',
+      border: 'none'
+    };
+  }
+
+  const heightParts = getImageStack(props.device.height);
+
+  const bgImages: string[] = [];
+  const bgPositions: string[] = [];
+  const bgSizes: string[] = [];
+
+  let currentOffsetY = 0;
+
+  heightParts.forEach((sizeU) => {
+    const url = getVendorImageUrl(sizeU);
+    const pixelH = sizeU * unitPixelHeight.value;
+    bgImages.push(`url(${url})`);
+    bgPositions.push(`0px ${currentOffsetY}px`);
+    bgSizes.push(`100% ${pixelH}px`);
+    currentOffsetY += pixelH;
+  });
 
   return {
     height: heightPixels.value + 'px',
-    backgroundImage: `url(${imageUrl})`,
-    backgroundRepeat: isSwitch ? 'repeat-y' : 'no-repeat',
-    backgroundSize: bgSize,
+    backgroundImage: bgImages.join(', '),
+    backgroundPosition: bgPositions.join(', '),
+    backgroundSize: bgSizes.join(', '),
+    backgroundRepeat: 'no-repeat',
     backgroundColor: 'transparent',
     border: 'none'
   };
 });
-
 
 const getColor = (val: number | undefined | null, type: string | null) => {
   if (!type || type === 'No Scale') return 'transparent';

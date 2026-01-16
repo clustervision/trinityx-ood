@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
@@ -8,7 +8,7 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 import { useTheme } from '@/composables/useTheme';
-const { isDarkMode, toggleTheme } = useTheme();
+const { isDarkMode, toggleTheme, setTheme } = useTheme();
 
 const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
 const toast = useToast();
@@ -32,6 +32,8 @@ const toggleGlobalView = () => {
     }
   });
 };
+
+
 const loadRacks = async () => {
   try {
     const t = new Date().getTime();
@@ -192,6 +194,9 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
 
 defineExpose({ loadRacks });
 onMounted(loadRacks);
+onUnmounted(() => {
+  setTheme(false);
+});
 </script>
 
 <template>
