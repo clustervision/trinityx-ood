@@ -84,7 +84,6 @@ def home():
     This is the main method of application. It will Show Monitor Options.
     """
     url = Helper().app_url(request)
-    print(url)
     return render_template(
         "index.html",
         PROMETHEUS_URL  = url['PROMETHEUS_URL'],
@@ -100,9 +99,7 @@ def device_pool():
     response = {"status": False, "message": []}
     table_data = Rest().get_data("rack", "inventory/unconfigured")
     if table_data:
-        # response["message"] = table_data.content["config"]["rack"]["inventory"]
         response["message"] = table_data["config"]["rack"]["inventory"]
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -119,7 +116,6 @@ def get_nodes(rack_name=None):
             if node["type"] == "node":
                 response["status"] = True
                 response["message"].append(node["name"])
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -135,7 +131,6 @@ def manage_racks():
         raw_data = table_data['config']['rack']
         response["status"] = True
         response["message"].append(raw_data)
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -151,7 +146,6 @@ def manage_inventory():
         raw_data = table_data['config']['rack']["inventory"]
         response["status"] = True
         response["message"] = raw_data
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -165,7 +159,6 @@ def show_rack(rack_name: str):
     if table_data:
         rack_data = table_data["config"]["rack"][rack_name]
         response["message"] = rack_data
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -190,7 +183,6 @@ def change_rack():
             response_json = post_response.json()
             msg = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
             response["message"] = msg
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -215,7 +207,6 @@ def change_inventory():
             response_json = post_response.json()
             msg = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
             response["message"] = msg
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -235,7 +226,6 @@ def delete_rack(rack_name: str):
     else:
         response_json = delete_response.json()
         response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -255,7 +245,6 @@ def delete_inventory(device: str, inventory: str):
     else:
         response_json = delete_response.json()
         response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
-    print(jsonify(response))
     return jsonify(response)
 
 
@@ -326,61 +315,6 @@ def perform(system=None, action=None, nodename=None):
         else:
             response['message'] = f'{nodename} {system} {action} :: {message}.'
     return response
-
-
-
-# @app.route('/rack_state/<string:rack_name>', methods=['GET'])
-# def rack_state(rack_name: str):
-#     """
-#     This route will return the provided rack data.
-#     """
-#     response = {"status": False, "message": f"{rack_name}, Rack Not found"}
-#     table_data = Rest().get_data("rack", rack_name)
-#     if table_data:
-#         rack_data = table_data["config"]["rack"][rack_name]
-#         node_list = []
-#         for device in rack_data["devices"]:
-#             if device["type"] in ["node", "controller"]:
-#                 node_list.append(device["name"])
-#         # node_list = [node_list[0]] # TODO : Only for Tesing Purpose.
-#         if len(node_list) == 0:
-#             response["message"] = f"{rack_name}, Rack has no nodes."
-#         elif len(node_list) == 1:
-#             uri = f'control/action/power/{node_list[0]}/_status'
-#             result = Rest().get_raw(uri)
-#             content = result.json()
-#             response["message"] = [{"node": node_list[0], "state": content['control']['power']}]
-#         else:
-#             construct_hostlist = Helper().get_hostlist(node_list)
-#             if construct_hostlist["status"] is False:
-#                 response["message"] = construct_hostlist["message"]
-#             else:
-#                 hostlist = construct_hostlist["message"]
-                
-                
-#                 # control_process = Process(target=Helper().loader, args=("Fetching Nodes Status...",))
-#                 # control_process.start()
-#                 # request_id = None
-
-
-#                 # uri = "control/action/power/_status"
-#                 # payload = {"control": {"power": {"status": {"hostlist": hostlist} } } }
-#                 # response = Rest().post_raw(uri, payload)
-#                 # if response.status_code == 200:
-#                 #     content = response.json()
-#                 #     if "control" in content:
-#                 #         request_id = content['request_id'] if 'request_id' in content else None
-#                 #         count = Helper().control_print("power", content , 1)
-#                 #         if request_id:
-#                 #             Helper().dig_control_status(request_id, count, self.args['system'])
-#                 #             control_process.terminate()
-
-
-
-#                 response["status"] = True
-#                 response["message"] = hostlist
-#     print(jsonify(response))
-#     return jsonify(response)
 
 
 @app.route('/rack_power/<string:rack_name>', methods=['GET'])
