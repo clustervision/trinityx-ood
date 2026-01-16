@@ -92,7 +92,8 @@ import { ref, reactive, onMounted,watch, useAttrs } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
-const Url = 'https://yixin3-dev-ctrl001:7755';
+//@ts-ignore
+const Url = window.APP_URL;
 const toast = useToast();
 const isAssigned = ref(false);
 const props = defineProps<{

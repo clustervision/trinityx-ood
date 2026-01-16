@@ -15,7 +15,8 @@ const { fetchSingleRack, handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 const loadingRackName = ref('');
 
-const Url = 'https://yixin3-dev-ctrl001:7755';
+//@ts-ignore
+const Url = window.APP_URL;
 const isBackViewMode = ref(false);
 const toggleGlobalView = () => {
   isBackViewMode.value = !isBackViewMode.value;

@@ -32,8 +32,10 @@ const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
 
 const handleMenuAction = async (payload: { action: string, subAction?: string, device: Device }) => {
   const { action, subAction, device } = payload;
-  const baseUrl = 'https://yixin3-dev-ctrl001:8080/pun/sys';
-  const Url = 'https://yixin3-dev-ctrl001:7755/';
+  //@ts-ignore
+  const baseUrl = wondow.CONTEXT_URL;
+  //@ts-ignore
+  const Url = window.APP_URL;
 
   // 1. URL Navigation Actions
   if (['details', 'edit', 'rename', 'clone'].includes(action)) {

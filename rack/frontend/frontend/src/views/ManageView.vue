@@ -3,16 +3,16 @@
     <div class="card">
       <h5 class="card-header d-flex justify-content-between align-items-center">
         Manage {{ pageName }} Frames
-        
-        <button 
-          v-if="props.pageType === 'rack'" 
-          class="btn btn-success btn-sm" 
+
+        <button
+          v-if="props.pageType === 'rack'"
+          class="btn btn-success btn-sm"
           @click="$emit('add-click')"
         >
           Add New {{ pageName }}
         </button>
       </h5>
-      
+
       <div class="card-body">
         <div class="table-responsive text-nowrap">
           <table class="table table-bordered table-hover table-striped">
@@ -23,7 +23,7 @@
                 <th class="text-center">SIZE</th>
                 <th class="text-center">ORDER</th>
                 <th class="text-center">ROOM</th>
-                <th class="text-center">SITE</th> 
+                <th class="text-center">SITE</th>
                 <th class="text-center">ACTIONS</th>
               </tr>
 
@@ -39,7 +39,7 @@
             <tbody>
               <tr v-for="(item, index) in items" :key="index">
                 <td class="text-center">{{ index + 1 }}</td>
-                
+
                 <template v-if="props.pageType === 'rack'">
                    <td class="text-center">{{ item.name }}</td>
                    <td class="text-center">{{ item.size }}</td>
@@ -56,11 +56,11 @@
                 </template>
 
                 <td class="text-center">
-                   <a 
+                   <a
                      v-if="props.pageType === 'rack'"
-                     href="javascript:void(0);" 
-                     class="me-2" 
-                     title="Show" 
+                     href="javascript:void(0);"
+                     class="me-2"
+                     title="Show"
                      @click="$emit('show-click', item)"
                    >
                      <i class='bx bx-info-circle text-info fs-4'></i>
@@ -94,11 +94,12 @@ import axios from 'axios';
 import {useToast} from "vue-toastification"
 import type { I } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
-const Url = 'https://yixin3-dev-ctrl001:7755';
+//@ts-ignore
+const Url = window.APP_URL;
 const items = ref<any[]>([]);
 const toast = useToast()
 const props = defineProps<{
-  pageType: string 
+  pageType: string
 }>();
 
 const emit = defineEmits(['add-click', 'edit-click', 'show-click', 'inventory-updated']);
@@ -109,12 +110,12 @@ const pageName = computed(() => {
 });
 
 const deleteItem = async (item: any) => {
-  const confirmText = props.pageType === 'rack' 
-    ? `Are you sure you want to delete Rack ${item.name}?` 
+  const confirmText = props.pageType === 'rack'
+    ? `Are you sure you want to delete Rack ${item.name}?`
     : `Are you sure you want to unassign ${item.name} and return it to the pool?`;
   if (!confirm(confirmText)) return;
 
-  const previousItems = [...items.value]; 
+  const previousItems = [...items.value];
   if(props.pageType === 'rack'){
     items.value = items.value.filter(i => String(i.name) !== String(item.name));
   }
@@ -122,7 +123,7 @@ const deleteItem = async (item: any) => {
 
  try {
     const timestamp = new Date().getTime();
-    
+
     if (props.pageType === 'rack') {
 
       const deleteUrl = Url + `/delete_rack/${item.name}?t=${timestamp}`;
@@ -137,14 +138,14 @@ const deleteItem = async (item: any) => {
       const doubleEncoded = JSON.stringify(JSON.stringify(payload));
 
       await axios.post(
-        Url + `/update_inventory?t=${timestamp}`, 
-        doubleEncoded, 
+        Url + `/update_inventory?t=${timestamp}`,
+        doubleEncoded,
         { headers: { 'Content-Type': 'application/json' } }
       );
       toast.success(`${item.name} returned to device pool.`);
     }
 
-    emit('inventory-updated'); 
+    emit('inventory-updated');
     console.log("Action confirmed by backend.");
 
   } catch (e: any) {
@@ -164,7 +165,7 @@ const fetchData = async () => {
     else return;
 
     const response = await axios.get(fetchUrl);
-    
+
     const rawMsg = response.data.message;
     if (Array.isArray(rawMsg)) {
         const extractedItems: any[] = [];

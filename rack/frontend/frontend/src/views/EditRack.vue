@@ -3,21 +3,21 @@
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Update Rack - {{ form.name }}</h5>
-        
+
         <button class="btn btn-warning" @click="$emit('close')">Back</button>
       </div>
-      
+
       <div class="card-body">
         <form @submit.prevent="submitForm">
-          
+
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label">Name</label>
             <div class="col-sm-10">
-              <input 
-                type="text" 
-                v-model="form.name" 
-                class="form-control" 
-                readonly 
+              <input
+                type="text"
+                v-model="form.name"
+                class="form-control"
+                readonly
               />
             </div>
           </div>
@@ -73,10 +73,11 @@ import { ref, reactive, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
-const Url = 'https://yixin3-dev-ctrl001:7755';
+//@ts-ignore
+const Url = window.APP_URL;
 const toast = useToast()
 const props = defineProps<{
-  rackName: string 
+  rackName: string
 }>();
 
 const emit = defineEmits(['close']);
@@ -98,11 +99,11 @@ const loadRackData = async () => {
   if (!rackName) return;
 
   form.name = rackName;
-  
+
   try {
     const timestamp = new Date().getTime();
     const response = await axios.get(Url + `/show_rack/${props.rackName}?t=${timestamp}`);
-    const rackData = response.data.message; 
+    const rackData = response.data.message;
 
     if (rackData) {
       form.site = rackData.site || '';
@@ -134,7 +135,7 @@ const submitForm = async () => {
       isSubmitting.value = false;
       return;
     }
-    
+
   try {
     const params = new URLSearchParams();
     params.append('name', form.name);

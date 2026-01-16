@@ -15,7 +15,8 @@ const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice, fetchM
 const toast = useToast()
 const loadingRackName = ref('');
 const rack = ref<any>(null);
-const Url = 'https://yixin3-dev-ctrl001:7755';
+//@ts-ignore
+const Url = window.APP_URL;
 
 
 const loadRackData = async () => {

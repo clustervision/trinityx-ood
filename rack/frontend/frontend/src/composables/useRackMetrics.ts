@@ -26,7 +26,8 @@ const QUERY_MAP: Record<string, string> = {
 
 
 export function useRackMetrics() {
-  const prome_url = 'https://yixin3-dev-ctrl001:9090';
+  //@ts-ignore
+  const prome_url = window.PROMETHEUS_URL;
   const metric1 = ref<string | null>('No Scale');
   const metric2 = ref<string | null>('No Scale');
   const metricDataMap = ref<Record<string, Record<string, number>>>({});

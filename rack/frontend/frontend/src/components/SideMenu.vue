@@ -42,9 +42,9 @@
           <div data-i18n="Unassigned">Unassigned Device Pool</div>
         </a>
 
-        <ul 
-          class="menu-sub ps-3 pe-3 pt-2" 
-          v-show="showUnassigned" 
+        <ul
+          class="menu-sub ps-3 pe-3 pt-2"
+          v-show="showUnassigned"
           style="display: block; list-style: none; min-height: 520px; border: 2px dashed #ddd; width: 240px"
           @dragover.prevent
           @drop="onDropBackToPool"
@@ -75,17 +75,17 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import { useToast } from 'vue-toastification';
-
-const Url = 'https://yixin3-dev-ctrl001:7755';
+//@ts-ignore
+const Url = window.APP_URL;
 const UnassignedNodes = ref<any[]>([]);
-const showUnassigned = ref(true); 
+const showUnassigned = ref(true);
 const toast = useToast()
 const emit = defineEmits(['change-view', 'pool-updated']);
 
 const fetchUnassignedNodes = async () => {
   try {
     const response = await axios.get(Url + '/device_pool');
-    const data = response.data; 
+    const data = response.data;
     if (data.message && Array.isArray(data.message)) {
        UnassignedNodes.value = data.message;
     } else {
@@ -115,11 +115,11 @@ const onDropBackToPool = async (event: DragEvent) => {
     const doubleEncoded = JSON.stringify(JSON.stringify(payload));
 
     await axios.post(
-      Url + `/update_inventory?t=${timestamp}`, 
-      doubleEncoded, 
+      Url + `/update_inventory?t=${timestamp}`,
+      doubleEncoded,
       { headers: { 'Content-Type': 'application/json' } }
     );
-    
+
     emit('pool-updated');
     if (device.type === 'rack')
       toast.success(`Rack Update\n Rack ${device.name} is deleted.`);
