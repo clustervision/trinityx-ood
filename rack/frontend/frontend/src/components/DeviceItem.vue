@@ -6,7 +6,7 @@
        { 'is-dragging': isDragging },
        isRackView ? 'is-absolute' : 'is-relative'
     ]"
-    :style="{ height: heightPixels + 'px' }"
+    :style="deviceBackgroundStyle"
     draggable="true"
     @dragstart="onDragStart"
     @dragend="isDragging = false"
@@ -61,6 +61,50 @@ const onRightClick = (event: MouseEvent) => {
 
   emit('device-right-click', event, props.device);
 };
+
+const getDeviceImageUrl = () => {
+  const type = props.device.type;
+  const height = props.device.height;
+  let vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
+
+  if (type === 'switch')
+  return new URL('@/assets/img/switch.png', import.meta.url).href;
+
+
+  if (vendor.includes('supermicro')) vendor = 'supermicro';
+  else if (vendor.includes('dell')) vendor = 'dell';
+  else if (vendor.includes('asus')) vendor = 'asus';
+  else if (vendor.includes('hp')) vendor = 'hp';
+  else if (vendor.includes('lenovo')) vendor = 'lenovo';
+  else if (vendor.includes('gigabyte')) vendor = 'gigabyte';
+  else vendor = '';
+
+  const imgHeight = height > 4 ? 4 : height;
+  if (!vendor) {
+    return new URL(`../assets/img/noname-${imgHeight}.png`, import.meta.url).href;
+  }
+
+  return new URL(`../assets/img/${vendor}-${imgHeight}.png`, import.meta.url).href;
+};
+
+const deviceBackgroundStyle = computed(() => {
+  const isSwitch = props.device.type === 'switch';
+  const imageUrl = getDeviceImageUrl();
+
+  const bgSize = isSwitch
+    ? `100% ${unitPixelHeight.value}px`
+    : '100% 100%';
+
+  return {
+    height: heightPixels.value + 'px',
+    backgroundImage: `url(${imageUrl})`,
+    backgroundRepeat: isSwitch ? 'repeat-y' : 'no-repeat',
+    backgroundSize: bgSize,
+    backgroundColor: 'transparent',
+    border: 'none'
+  };
+});
+
 
 const getColor = (val: number | undefined | null, type: string | null) => {
   if (!type || type === 'No Scale') return 'transparent';
