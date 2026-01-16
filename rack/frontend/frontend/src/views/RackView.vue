@@ -7,6 +7,8 @@ import { useToast } from "vue-toastification";
 import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
+import { useTheme } from '@/composables/useTheme';
+const { isDarkMode, toggleTheme } = useTheme();
 
 const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
 const toast = useToast();
@@ -203,6 +205,15 @@ onMounted(loadRacks);
     >
       {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
     </button>
+    <button
+          class="btn fw-bold"
+          :class="isDarkMode ? 'btn-light' : 'btn-secondary'"
+          @click="toggleTheme"
+          style="font-size: 12px; padding: 4px 15px;"
+        >
+          <i class='bx' :class="isDarkMode ? 'bx-sun' : 'bx-moon'"></i>
+          {{ isDarkMode ? 'Light Mode' : 'Night Mode' }}
+        </button>
   </div>
       <RackMetricsHeader v-model:metric1="metric1"
        v-model:metric2="metric2"
@@ -231,7 +242,7 @@ onMounted(loadRacks);
 </template>
 
 <style scoped>
-  .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
+.racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .btn-custom-grey {
   background-color: #d3d3d3;
   border-color: #c0c0c0;

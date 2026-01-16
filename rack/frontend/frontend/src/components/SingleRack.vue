@@ -284,6 +284,72 @@ const clearPreview = () => {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.rack-header-light {
+  background-color: var(--rack-header-bg);
+  border: 2px solid var(--border-color);
+  border-bottom: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  height: 20px;
+  overflow: hidden;
+  color: #fff;
+}
+
+.rack-header-dark {
+  background-color: #222;
+
+  border: 2px solid #222;
+  border-bottom: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  height: 20px;
+  overflow: hidden;
+  color: #fff;
+}
+
+.rack-frame {
+  background: var(--rack-frame-bg);
+  border: 2px solid var(--border-color);
+  border-top: none;
+  padding: 0;
+}
+
+.rack-row {
+  display: flex;
+  height: 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--rack-slot-bg);
+}
+
+.rack-label {
+  width: 20px;
+  text-align: center;
+  line-height: 20px;
+  font-size: 11px;
+  font-weight: bold;
+
+  color: var(--rack-text);
+  background-color: var(--rack-frame-bg);
+  border-right: 1px solid var(--border-color);
+}
+
+.rack-label:last-child {
+  border-right: none;
+  border-left: 1px solid var(--border-color);
+}
+
+.rack-title {
+  margin-left: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #fff !important;
+}
+
 .rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }
 .rack-tab { padding: 4px 12px; font-size: 0.5rem; font-weight: bold; color: white; text-transform: uppercase; }
 .front-label { background-color: #6666ff; border-top-left-radius: 5px; border-top-right-radius: 5px; }
