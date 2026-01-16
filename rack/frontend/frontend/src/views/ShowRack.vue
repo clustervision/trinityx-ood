@@ -11,7 +11,7 @@ import { useToast } from 'vue-toastification';
 const props = defineProps<{ rackName: string; }>();
 const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
 const { fetchSingleRack , handleRackDrop} = useRack();
-const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
+const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice, fetchMetricData } = useRackMetrics();
 const toast = useToast()
 const loadingRackName = ref('');
 const rack = ref<any>(null);
@@ -22,13 +22,10 @@ const loadRackData = async () => {
   if (!props.rackName) return;
 
   const currentShowBack = rack.value ? rack.value.showBackSide : true;
-
-  // 2. Fetch the fresh data
   const freshRack = await fetchSingleRack(props.rackName);
-
   freshRack.showBackSide = currentShowBack;
-
   rack.value = freshRack;
+  await fetchMetricData();
 };
 
 const resetRack = async (targetRack: any, side: 'front' | 'back') => {
@@ -172,6 +169,8 @@ onMounted(() => {
       <RackMetricsHeader
         v-model:metric1="metric1"
         v-model:metric2="metric2"
+        :range1="metric1Range"
+        :range2="metric2Range"
         @refresh="loadRackData"
       />
 
