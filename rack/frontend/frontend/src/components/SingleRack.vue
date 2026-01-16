@@ -33,7 +33,7 @@ const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
 const handleMenuAction = async (payload: { action: string, subAction?: string, device: Device }) => {
   const { action, subAction, device } = payload;
   //@ts-ignore
-  const baseUrl = wondow.CONTEXT_URL;
+  const baseUrl = window.CONTEXT_URL;
   //@ts-ignore
   const Url = window.APP_URL;
 
