@@ -3,10 +3,8 @@ import DeviceItem from '@/components/DeviceItem.vue';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'vue-toastification';
-
-
 
 const props = defineProps<{
   rack: Rack;
@@ -24,12 +22,10 @@ const isActionLoading = ref(false);
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 const selectedDevice = ref<Device | null>(null);
+
 const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
   event.preventDefault();
-
-
   console.log("Opening menu for:", device.name);
-
   selectedDevice.value = device;
   menuPos.value = { x: event.clientX, y: event.clientY };
   menuVisible.value = true;
@@ -55,11 +51,9 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
     const section = typeMap[device.type] || 'trinity_node';
 
     if (device.type === 'controller') {
-      // Special case for Controller
-      if (action === 'details') route = `${baseUrl}/${section}/`; // Ends with slash, no "show", no name
-      if (action === 'edit') route = `${baseUrl}/${section}/edit`; // Ends with edit, no name
+      if (action === 'details') route = `${baseUrl}/${section}/`;
+      if (action === 'edit') route = `${baseUrl}/${section}/edit`;
     } else {
-      // Standard logic for other devices
       if (action === 'details') route = `${baseUrl}/${section}/show/${device.name}`;
       if (action === 'edit') route = `${baseUrl}/${section}/edit/${device.name}`;
       if (action === 'rename') route = `${baseUrl}/${section}/rename/${device.name}`;
@@ -74,21 +68,36 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
     console.log(`Executing ${action} - ${subAction} on ${device.name}`);
     isActionLoading.value = true;
     try {
-
       const response = await axios.get(`${Url}perform/${action}/${subAction}/${device.name}`);
-       alert(response.data.message || `Command sent: ${subAction}`);
+      alert(response.data.message || `Command sent: ${subAction}`);
     } catch (e) {
       console.error(e);
       alert('Action failed');
-    }
-    finally{
+    } finally {
       isActionLoading.value = false;
     }
   }
 };
 
+const hasController = computed(() => {
+  if (!props.rack?.slots) return false;
+  return props.rack.slots.some(slot =>
+    slot.devices.some(device => device.type === 'controller')
+  );
+});
+
+const powerButtonTooltip = computed(() => {
+  const baseState = props.rack.powerOn
+    ? 'Power is ON (Click to Turn Off)'
+    : 'Power is OFF (Click to Turn On)';
+
+  if (hasController.value) {
+    return `${baseState}\n⚠️ Note: A Controller is present.\nIt will remain ON and is excluded from this action.`;
+  }
+  return baseState;
+});
+
 const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
-  // 1. 先统计一下这个机柜里有几个 'node' 类型的设备
   let nodeCount = 0;
   props.rack.slots.forEach(slot => {
     slot.devices.forEach(device => {
@@ -100,10 +109,13 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
   const baseUrl = window.APP_URL || '';
   const url = `${baseUrl}/rack_power/${props.rack.name}/${action}`;
 
-
   const handleSuccess = () => {
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
-    toast.error(`${actionName} action successful!`);
+    if (hasController.value) {
+        toast.success(`${actionName} action successful!\n(Controller remained ON)`);
+    } else {
+        toast.success(`${actionName} action successful!`);
+    }
 
     if (action === 'off') {
         props.rack.powerOn = false;
@@ -121,7 +133,6 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-
       if (data.status) {
         handleSuccess();
       } else {
@@ -133,14 +144,9 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     } finally {
       isActionLoading.value = false;
     }
-  }
-
- else {
+  } else {
     console.log(`Multi-node detected, using SSE: ${url}`);
-
-    // 🚩 1. Create a flag to track if we finished successfully
     let isTaskCompleted = false;
-
     const source = new EventSource(url);
 
     const closeConnection = () => {
@@ -158,20 +164,8 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 
     source.addEventListener("completed", () => {
       console.log("Task completed");
-
       isTaskCompleted = true;
-
-      const actionName = action.charAt(0).toUpperCase() + action.slice(1);
-      toast.success(`${actionName} action successful!`);
-
-      if (action === 'off') {
-          props.rack.powerOn = false;
-          props.rack.backPowerOn = false;
-      } else if (action === 'on') {
-          props.rack.powerOn = true;
-          props.rack.backPowerOn = true;
-      }
-
+      handleSuccess();
       closeConnection();
     });
 
@@ -199,13 +193,35 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 };
 
 const checkPowerStatus = async () => {
-  // 1. Count nodes to decide between Fetch (JSON) and SSE (Stream)
+  let hasController = false;
+  if (props.rack && props.rack.slots) {
+    for (const slot of props.rack.slots) {
+      for (const device of slot.devices) {
+        if (device.type === 'controller') {
+          hasController = true;
+          break;
+        }
+      }
+      if (hasController) break;
+    }
+  }
+
+  if (hasController) {
+    console.log(`Controller detected in ${props.rack.name}.`);
+
+  }
+
   let nodeCount = 0;
   props.rack.slots.forEach(slot => {
     slot.devices.forEach(device => {
       if (device.type === 'node') nodeCount++;
     });
   });
+
+  if (nodeCount === 0) {
+      console.log("No nodes in rack (only controller or empty), skipping API check.");
+      return;
+  }
 
   // @ts-ignore
   const baseUrl = window.APP_URL || '';
@@ -219,7 +235,6 @@ const checkPowerStatus = async () => {
       const response = await fetch(url);
       const data = await response.json();
 
-      // Backend returns: { status: true, message: [{ node: "...", state: "ON" }] }
       if (data.status && Array.isArray(data.message)) {
         const isAnyDeviceOn = data.message.some((item: any) =>
           item.state && item.state.toUpperCase() === 'ON'
@@ -232,7 +247,6 @@ const checkPowerStatus = async () => {
       console.error("Single node status check failed:", e);
     }
   }
-
   // --- CASE B: Multi Node (Use SSE) ---
   else {
     const source = new EventSource(url);
@@ -240,7 +254,6 @@ const checkPowerStatus = async () => {
     const handleStatusData = (data: any) => {
       console.log("Initial status received:", data);
       const values = Object.values(data);
-      // Backend returns: { node1: "ON", node2: "OFF" }
       const isAnyDeviceOn = values.some((val: any) =>
          typeof val === 'string' && val.toUpperCase() === 'ON'
       );
@@ -260,7 +273,6 @@ const checkPowerStatus = async () => {
       }
     });
 
-    // Fallback for update event
     source.addEventListener("update", (e: MessageEvent) => {
        try {
           const data = JSON.parse(e.data);
@@ -271,12 +283,10 @@ const checkPowerStatus = async () => {
     });
 
     source.onerror = (err) => {
-      // It's okay to close silently here if connection fails
       source.close();
     };
   }
 };
-
 
 onMounted(() => {
   checkPowerStatus();
@@ -340,14 +350,16 @@ const clearPreview = () => {
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
           <div class="d-flex align-items-center gap-1 ">
-            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-           <i class='bx bx-power-off cursor-pointer'
-              :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
-              :title="rack.backPowerOn ? 'Power is ON (Click to Turn Off)' : 'Power is OFF (Click to Turn On)'"
-              @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
-            </i>
-            <span class="u-header-label ms-1">U</span>
-          </div>
+              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
+
+              <i class='bx bx-power-off cursor-pointer'
+                :class="rack.powerOn ? 'text-danger' : 'text-success'"
+                :title="powerButtonTooltip"
+                @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
+              </i>
+
+              <span class="u-header-label ms-1">U</span>
+            </div>
         </div>
 
         <div class="rack-frame">
@@ -387,20 +399,18 @@ const clearPreview = () => {
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
           <div class="d-flex align-items-center gap-1">
+              <template v-if="rack.showFrontSide === false">
+                <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
 
-            <template v-if="rack.showFrontSide === false">
-              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-              <i class='bx bx-power-off cursor-pointer'
-                :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
-                :title="rack.powerOn ? 'Power is ON (Click to Turn Off)' : 'Power is OFF (Click to Turn On)'"
-                @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
-              </i>
-            </template>
-            <span class="u-header-label">U</span>
-          </div>
-        </div>
-
-        <div class="rack-frame">
+                <i class='bx bx-power-off cursor-pointer'
+                  :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
+                  :title="powerButtonTooltip"
+                  @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
+                </i>
+              </template>
+              <span class="u-header-label">U</span>
+            </div>
+        </div> <div class="rack-frame">
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'back')">
@@ -445,8 +455,6 @@ const clearPreview = () => {
 <style scoped>
 
 .cursor-pointer { cursor: pointer; }
-
-
 .placement-preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 242, 255, 0.3); border: 1px solid #00f2ff;
@@ -457,16 +465,12 @@ const clearPreview = () => {
 .racks-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .single-rack-wrapper { display: flex; flex-direction: column; flex-shrink: 0;position: relative; }
 .loader-overlay {
-
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-
-
   z-index: 9999;
-
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
@@ -485,12 +489,10 @@ const clearPreview = () => {
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 .rack-header-light {
   background-color: var(--rack-header-bg);
   border: 2px solid var(--border-color);
@@ -503,10 +505,8 @@ const clearPreview = () => {
   overflow: hidden;
   color: #fff;
 }
-
 .rack-header-dark {
   background-color: #222;
-
   border: 2px solid #222;
   border-bottom: none;
   display: flex;
@@ -517,45 +517,38 @@ const clearPreview = () => {
   overflow: hidden;
   color: #fff;
 }
-
 .rack-frame {
   background: var(--rack-frame-bg);
   border: 2px solid var(--border-color);
   border-top: none;
   padding: 0;
 }
-
 .rack-row {
   display: flex;
   height: 20px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--rack-slot-bg);
 }
-
 .rack-label {
   width: 20px;
   text-align: center;
   line-height: 20px;
   font-size: 11px;
   font-weight: bold;
-
   color: var(--rack-text);
   background-color: var(--rack-frame-bg);
   border-right: 1px solid var(--border-color);
 }
-
 .rack-label:last-child {
   border-right: none;
   border-left: 1px solid var(--border-color);
 }
-
 .rack-title {
   margin-left: 10px;
   font-size: 0.8rem;
   font-weight: bold;
   color: #fff !important;
 }
-
 .rack-tabs { display: flex; justify-content: space-between; margin-bottom: 0; }
 .rack-tab { padding: 4px 12px; font-size: 0.5rem; font-weight: bold; color: white; text-transform: uppercase; }
 .front-label { background-color: #6666ff; border-top-left-radius: 5px; border-top-right-radius: 5px; }
