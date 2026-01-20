@@ -4,6 +4,9 @@ import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
+import { useToast } from 'vue-toastification';
+
+
 
 const props = defineProps<{
   rack: Rack;
@@ -15,6 +18,8 @@ const props = defineProps<{
   metric1Color?: string;
   metric2Color?: string;
 }>();
+
+const toast = useToast();
 const isActionLoading = ref(false);
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
@@ -98,7 +103,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 
   const handleSuccess = () => {
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
-    alert(`${actionName} action successful!`);
+    toast.error(`${actionName} action successful!`);
 
     if (action === 'off') {
         props.rack.powerOn = false;
@@ -120,11 +125,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       if (data.status) {
         handleSuccess();
       } else {
-        alert(`Action Failed: ${data.message || 'Unknown error'}`);
+        toast.error(`Action Failed: ${data.message || 'Unknown error'}`);
       }
     } catch (e) {
       console.error(e);
-      alert("Action failed: Connection error.");
+      toast.error("Action failed: Connection error.");
     } finally {
       isActionLoading.value = false;
     }
@@ -157,7 +162,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       isTaskCompleted = true;
 
       const actionName = action.charAt(0).toUpperCase() + action.slice(1);
-      alert(`${actionName} action successful!`);
+      toast.success(`${actionName} action successful!`);
 
       if (action === 'off') {
           props.rack.powerOn = false;
@@ -181,12 +186,12 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
           const response = await fetch(url);
           const data = await response.json();
           if (data && !data.status) {
-             alert(`Action Failed: ${data.message}`);
+            toast.error(`Action Failed: ${data.message}`);
           } else {
-             alert("Action failed or connection lost.");
+             toast.error("Action failed or connection lost.");
           }
       } catch (e) {
-          alert("Action failed or connection lost.");
+          toast.error("Action failed or connection lost.");
       }
       isActionLoading.value = false;
     };
