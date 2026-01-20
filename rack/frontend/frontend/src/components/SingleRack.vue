@@ -3,7 +3,7 @@ import DeviceItem from '@/components/DeviceItem.vue';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const props = defineProps<{
   rack: Rack;
@@ -121,6 +121,31 @@ const handleRackAction = (action: 'reset' | 'on' | 'off') => {
   });
 
 };
+const checkPowerStatus = async () => {
+  // @ts-ignore
+  const baseUrl = window.APP_URL || '';
+  const url = `${baseUrl}/rack_power/${props.rack.name}/status`;
+
+  try {
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status && Array.isArray(data.message)) {
+      const isAnyDeviceOn = data.message.some((item: any) => item.state === 'ON');
+
+      props.rack.powerOn = isAnyDeviceOn;
+      props.rack.backPowerOn = isAnyDeviceOn;
+    }
+  } catch (error) {
+    console.error("Failed to fetch initial power status:", error);
+  }
+};
+
+
+onMounted(() => {
+  checkPowerStatus();
+});
 
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
 
@@ -182,7 +207,8 @@ const clearPreview = () => {
           <div class="d-flex align-items-center gap-1 ">
             <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
            <i class='bx bx-power-off cursor-pointer'
-              :class="rack.powerOn ? 'text-success' : 'text-danger'"
+              :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
+              :title="rack.backPowerOn ? 'Power is ON (Click to Turn Off)' : 'Power is OFF (Click to Turn On)'"
               @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
             </i>
             <span class="u-header-label ms-1">U</span>
@@ -228,7 +254,8 @@ const clearPreview = () => {
           <div class="d-flex align-items-center gap-1">
             <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
             <i class='bx bx-power-off cursor-pointer'
-              :class="rack.backPowerOn ? 'text-success' : 'text-danger'"
+              :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
+              :title="rack.powerOn ? 'Power is ON (Click to Turn Off)' : 'Power is OFF (Click to Turn On)'"
               @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
             </i>
             <span class="u-header-label">U</span>
