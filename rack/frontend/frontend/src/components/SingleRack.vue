@@ -82,30 +82,21 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
   }
 };
 
-const handleRackAction = (action: 'reset' | 'on' | 'off') => {
+const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
+  // 1. 先统计一下这个机柜里有几个 'node' 类型的设备
+  let nodeCount = 0;
+  props.rack.slots.forEach(slot => {
+    slot.devices.forEach(device => {
+      if (device.type === 'node') nodeCount++;
+    });
+  });
+
   // @ts-ignore
   const baseUrl = window.APP_URL || '';
   const url = `${baseUrl}/rack_power/${props.rack.name}/${action}`;
 
-  console.log(`Connecting to SSE: ${url}`);
-  isActionLoading.value = true;
 
-  const source = new EventSource(url);
-  const closeConnection = () => {
-    source.close();
-    isActionLoading.value = false;
-  };
-
-  source.addEventListener("started", (e: MessageEvent) => {
-    console.log("Task started:", e.data);
-  });
-
-  source.addEventListener("update", (e: MessageEvent) => {
-    console.log("Status update:", e.data);
-  });
-
-  source.addEventListener("completed", () => {
-    console.log("Task completed");
+  const handleSuccess = () => {
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
     alert(`${actionName} action successful!`);
 
@@ -116,29 +107,168 @@ const handleRackAction = (action: 'reset' | 'on' | 'off') => {
         props.rack.powerOn = true;
         props.rack.backPowerOn = true;
     }
+  };
 
-    closeConnection();
+  isActionLoading.value = true;
+
+  if (nodeCount === 1) {
+    console.log(`Single node detected (${nodeCount}), using standard fetch: ${url}`);
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.status) {
+        handleSuccess();
+      } else {
+        alert(`Action Failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Action failed: Connection error.");
+    } finally {
+      isActionLoading.value = false;
+    }
+  }
+
+ else {
+    console.log(`Multi-node detected, using SSE: ${url}`);
+
+    // 🚩 1. Create a flag to track if we finished successfully
+    let isTaskCompleted = false;
+
+    const source = new EventSource(url);
+
+    const closeConnection = () => {
+      source.close();
+      isActionLoading.value = false;
+    };
+
+    source.addEventListener("started", (e: MessageEvent) => {
+      console.log("Task started:", e.data);
+    });
+
+    source.addEventListener("update", (e: MessageEvent) => {
+      console.log("Status update:", e.data);
+    });
+
+    source.addEventListener("completed", () => {
+      console.log("Task completed");
+
+      isTaskCompleted = true;
+
+      const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+      alert(`${actionName} action successful!`);
+
+      if (action === 'off') {
+          props.rack.powerOn = false;
+          props.rack.backPowerOn = false;
+      } else if (action === 'on') {
+          props.rack.powerOn = true;
+          props.rack.backPowerOn = true;
+      }
+
+      closeConnection();
+    });
+
+    source.onerror = async (err) => {
+      if (isTaskCompleted) {
+        console.log("Connection closed after completion (Normal behavior).");
+        return;
+      }
+      console.error("SSE connection error:", err);
+      source.close();
+      try {
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data && !data.status) {
+             alert(`Action Failed: ${data.message}`);
+          } else {
+             alert("Action failed or connection lost.");
+          }
+      } catch (e) {
+          alert("Action failed or connection lost.");
+      }
+      isActionLoading.value = false;
+    };
+  }
+};
+
+const checkPowerStatus = async () => {
+  // 1. Count nodes to decide between Fetch (JSON) and SSE (Stream)
+  let nodeCount = 0;
+  props.rack.slots.forEach(slot => {
+    slot.devices.forEach(device => {
+      if (device.type === 'node') nodeCount++;
+    });
   });
 
-};
-const checkPowerStatus = async () => {
   // @ts-ignore
   const baseUrl = window.APP_URL || '';
   const url = `${baseUrl}/rack_power/${props.rack.name}/status`;
 
-  try {
+  console.log(`Checking status (${nodeCount === 1 ? 'Fetch' : 'SSE'}): ${url}`);
 
-    const response = await fetch(url);
-    const data = await response.json();
+  // --- CASE A: Single Node (Use Fetch) ---
+  if (nodeCount === 1) {
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
 
-    if (data.status && Array.isArray(data.message)) {
-      const isAnyDeviceOn = data.message.some((item: any) => item.state === 'ON');
+      // Backend returns: { status: true, message: [{ node: "...", state: "ON" }] }
+      if (data.status && Array.isArray(data.message)) {
+        const isAnyDeviceOn = data.message.some((item: any) =>
+          item.state && item.state.toUpperCase() === 'ON'
+        );
+
+        props.rack.powerOn = isAnyDeviceOn;
+        props.rack.backPowerOn = isAnyDeviceOn;
+      }
+    } catch (e) {
+      console.error("Single node status check failed:", e);
+    }
+  }
+
+  // --- CASE B: Multi Node (Use SSE) ---
+  else {
+    const source = new EventSource(url);
+
+    const handleStatusData = (data: any) => {
+      console.log("Initial status received:", data);
+      const values = Object.values(data);
+      // Backend returns: { node1: "ON", node2: "OFF" }
+      const isAnyDeviceOn = values.some((val: any) =>
+         typeof val === 'string' && val.toUpperCase() === 'ON'
+      );
 
       props.rack.powerOn = isAnyDeviceOn;
       props.rack.backPowerOn = isAnyDeviceOn;
-    }
-  } catch (error) {
-    console.error("Failed to fetch initial power status:", error);
+      source.close();
+    };
+
+    source.addEventListener("started", (e: MessageEvent) => {
+      try {
+          const data = JSON.parse(e.data);
+          handleStatusData(data);
+      } catch (err) {
+          console.error("Failed to parse status data", err);
+          source.close();
+      }
+    });
+
+    // Fallback for update event
+    source.addEventListener("update", (e: MessageEvent) => {
+       try {
+          const data = JSON.parse(e.data);
+          handleStatusData(data);
+      } catch (err) {
+          source.close();
+      }
+    });
+
+    source.onerror = (err) => {
+      // It's okay to close silently here if connection fails
+      source.close();
+    };
   }
 };
 
