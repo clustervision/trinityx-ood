@@ -8,6 +8,7 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 import { useTheme } from '@/composables/useTheme';
+
 const { isDarkMode, toggleTheme, setTheme } = useTheme();
 
 const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
@@ -217,7 +218,7 @@ onUnmounted(() => {
           style="font-size: 12px; padding: 4px 15px;"
         >
           <i class='bx' :class="isDarkMode ? 'bx-sun' : 'bx-moon'"></i>
-          {{ isDarkMode ? 'Light Mode' : 'Night Mode' }}
+          {{ isDarkMode ? 'Light' : 'Night' }}
         </button>
   </div>
       <RackMetricsHeader v-model:metric1="metric1"
@@ -225,7 +226,7 @@ onUnmounted(() => {
        :range1="metric1Range"
         :range2="metric2Range"
         @refresh="loadRacks" />
-      <div class="card-body">
+      <div class="card-body" :class="{ 'rack-view-dark': isDarkMode }" >
         <div class="racks-container">
           <SingleRack
             v-for="rack in racks"
