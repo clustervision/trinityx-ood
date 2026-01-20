@@ -252,12 +252,15 @@ const clearPreview = () => {
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
           <div class="d-flex align-items-center gap-1">
-            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-            <i class='bx bx-power-off cursor-pointer'
-              :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
-              :title="rack.powerOn ? 'Power is ON (Click to Turn Off)' : 'Power is OFF (Click to Turn On)'"
-              @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
-            </i>
+
+            <template v-if="rack.showFrontSide === false">
+              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
+              <i class='bx bx-power-off cursor-pointer'
+                :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
+                :title="rack.powerOn ? 'Power is ON (Click to Turn Off)' : 'Power is OFF (Click to Turn On)'"
+                @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
+              </i>
+            </template>
             <span class="u-header-label">U</span>
           </div>
         </div>
