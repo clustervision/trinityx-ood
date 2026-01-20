@@ -81,6 +81,47 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
     }
   }
 };
+
+const handleRackAction = (action: 'reset' | 'on' | 'off') => {
+  // @ts-ignore
+  const baseUrl = window.APP_URL || '';
+  const url = `${baseUrl}/rack_power/${props.rack.name}/${action}`;
+
+  console.log(`Connecting to SSE: ${url}`);
+  isActionLoading.value = true;
+
+  const source = new EventSource(url);
+  const closeConnection = () => {
+    source.close();
+    isActionLoading.value = false;
+  };
+
+  source.addEventListener("started", (e: MessageEvent) => {
+    console.log("Task started:", e.data);
+  });
+
+  source.addEventListener("update", (e: MessageEvent) => {
+    console.log("Status update:", e.data);
+  });
+
+  source.addEventListener("completed", () => {
+    console.log("Task completed");
+    const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+    alert(`${actionName} action successful!`);
+
+    if (action === 'off') {
+        props.rack.powerOn = false;
+        props.rack.backPowerOn = false;
+    } else if (action === 'on') {
+        props.rack.powerOn = true;
+        props.rack.backPowerOn = true;
+    }
+
+    closeConnection();
+  });
+
+};
+
 const emit = defineEmits(['drop', 'reset', 'power-toggle']);
 
 const toggleBack = () => {
@@ -139,10 +180,10 @@ const clearPreview = () => {
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
           <div class="d-flex align-items-center gap-1 ">
-            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'front')">RESET</button>
+            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
            <i class='bx bx-power-off cursor-pointer'
               :class="rack.powerOn ? 'text-success' : 'text-danger'"
-              @click="$emit('power-toggle', rack, 'front')">
+              @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
             </i>
             <span class="u-header-label ms-1">U</span>
           </div>
@@ -185,10 +226,10 @@ const clearPreview = () => {
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
           <div class="d-flex align-items-center gap-1">
-            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="$emit('reset', rack, 'back')">RESET</button>
+            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
             <i class='bx bx-power-off cursor-pointer'
               :class="rack.backPowerOn ? 'text-success' : 'text-danger'"
-              @click="$emit('power-toggle', rack, 'back')">
+              @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
             </i>
             <span class="u-header-label">U</span>
           </div>
