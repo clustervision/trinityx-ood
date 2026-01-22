@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import 'boxicons'
+// import 'boxicons'
 import './assets/core.css';
 import './assets/theme-default.css';
 import './assets/app.css';
@@ -446,27 +446,28 @@ let ServiceContent = JSON.stringify({}, null, 2);
           <ul class="nav nav-pills mb-4 nav-fill tab-bar" role="tablist">
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
               <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#tab-overview" aria-controls="tab-overview" aria-selected="true" @click="setActiveTab('overview')">
-                <span class="d-none d-sm-block"><box-icon name='detail' class="align-text-bottom icon-color"></box-icon> Overview</span>
+                <span class="d-none d-sm-block"><i class="bx bx-detail align-text-bottom icon-color"style="font-size:24px; color:#ffffff;"></i> Overview</span>
+                  
               </button>
             </li>
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
               <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-alerts" aria-controls="tab-alerts" aria-selected="true" @click="setActiveTab('alerts')">
-                <span class="d-none d-sm-block"><box-icon name='stats' class="align-text-bottom icon-color"></box-icon> Alerts</span>
+                <span class="d-none d-sm-block"><i class="bx bx-stats align-text-bottom icon-color"style="font-size:24px; color:#ffffff;"></i> Alerts</span>
               </button>
             </li>
             <li class="nav-item mb-1 mb-sm-0" role="presentation">
               <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-rules" aria-controls="tab-rules" aria-selected="false" tabindex="-1" @click="setActiveTab('generic')">
-                <span class="d-none d-sm-block"><box-icon name='bracket' class="align-text-bottom icon-color"></box-icon> Generic Rules</span>
+                <span class="d-none d-sm-block"><i class="bx bx-bracket align-text-bottom icon-color"style="font-size:24px; color:#ffffff;"></i> Generic Rules</span>
               </button>
             </li>
             <li class="nav-item" role="presentation">
               <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-service" aria-controls="tab-service" aria-selected="false" tabindex="-1" @click="setActiveTab('service')">
-                <span class="d-none d-sm-block"><box-icon name='wrench' class="align-text-bottom icon-color"></box-icon> Services</span>
+                <span class="d-none d-sm-block"><i class="bx bx-wrench align-text-bottom icon-color"style="font-size:24px; color:#ffffff;"></i> Services</span>
               </button>
             </li>
             <li class="nav-item" role="presentation">
               <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#tab-hardware" aria-controls="tab-hardware" aria-selected="false" tabindex="-1" @click="setActiveTab('hardware')">
-                <span class="d-none d-sm-block"><box-icon name='desktop' class="align-text-bottom icon-color"></box-icon> Node H/W</span>
+                <span class="d-none d-sm-block"><i class="bx bx-desktop align-text-bottom icon-color"style="font-size:24px; color:#ffffff;"></i> Node H/W</span>
               </button>
             </li>
           </ul>

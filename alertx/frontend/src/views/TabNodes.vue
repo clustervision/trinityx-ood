@@ -84,7 +84,7 @@
       </div>
       <div class="col-md-4">
         <div class="input-group input-group-sm">
-          <span class="input-group-text"><box-icon name="search" color="blue" size="sm"></box-icon></span>
+          <span class="input-group-text"><i class="bx bx-search" style="font-size:24px; color:blue;"></i></span>
           <input type="text" class="form-control" placeholder="Filter By Name" v-model="searchTerm" />
         </div>
       </div>
