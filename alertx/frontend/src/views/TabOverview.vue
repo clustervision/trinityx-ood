@@ -4,7 +4,8 @@ import OverviewAlerts from '@/components/OverviewAlerts.vue';
 <script lang="ts">
 import { defineComponent, nextTick } from "vue";
 import axios, { AxiosError } from 'axios';
-import BoxIcon from 'boxicons';
+// import BoxIcon from 'boxicons';
+// import 'boxicons/css/boxicons.min.css'
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 
@@ -109,9 +110,9 @@ export default defineComponent({
       required: true,
     },
   },
-  components: {
-    BoxIcon,
-  },
+  // components: {
+  //   BoxIcon,
+  // },
   data() {
     return {
       overview: [] as Overview[],
@@ -459,19 +460,19 @@ watch: {
     <div class="card">
       <div class="alert alert-info alert-dismissible" role="alert">
         <div class="row">
-          <div class="col col-1"><box-icon :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754"></box-icon></div>
+          <div class="col col-1"><i :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;"></i></div>
           <div class="col col-9"><i><strong>OK</strong></i></div>
         </div>
         <div class="row">
-          <div class="col col-1"><box-icon :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107"></box-icon></div>
+          <div class="col col-1"><i :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;"></i></div>
           <div class="col col-9"><i>When Firing and NHC is <strong>Disabled</strong>.</i></div>
         </div>
         <div class="row">
-          <div class="col col-1"><box-icon :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545"></box-icon></div>
+          <div class="col col-1"><i :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;"></i></div>
           <div class="col col-9"><i>When Firing and NHC is <strong>Enabled</strong>.</i></div>
         </div>
         <div class="row">
-          <div class="col col-1"><box-icon :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000"></box-icon></div>
+          <div class="col col-1"><i :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;"></i></div>
           <div class="col col-9"><i>When Host is <strong>Down</strong>.</i></div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -495,70 +496,70 @@ watch: {
               <td :class="{'text-danger': !row.state}" :data-tippy-content="!row.state ? `Node ${row.hostname} is Down.` : `Node ${row.hostname} is UP.`">{{ row.hostname }}</td>
               <td>
                 <template v-if="row.state === false">
-                  <box-icon v-if="row.genericRules === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.genericRules === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.genericRules === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <i v-if="row.genericRules === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.genericRules === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.genericRules === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                 </template>
                 <template v-else-if="controller_generic_state === true">
                   <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                  <i :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></i>
                 </template>
                 <template v-else>
                   <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.genericRules === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
-                  <box-icon v-else-if="row.genericRules === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                  <i v-if="row.genericRules === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node  Rules are OK.`"></i>
+                  <i v-else-if="row.genericRules === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></i>
+                  <i v-else-if="row.genericRules === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></i>
                 </template>
               </td>
               <td>
                 <template v-if="row.state === false">
-                  <box-icon v-if="row.services === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.services === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.services === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <i v-if="row.services === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.services === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.services === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                 </template>
                 <template v-else-if="controller_service_state === true">
                   <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                  <i v-if="row.services === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></i>
                 </template>
                 <template v-else>
                   <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.services === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
-                  <box-icon v-else-if="row.services === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                  <i v-if="row.services === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></i>
+                  <i v-else-if="row.services === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></i>
+                  <i v-else-if="row.services === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></i>
                 </template>
               </td>
               <td>
                 <template v-if="row.state === false">
-                  <box-icon v-if="row.hardware === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.hardware === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.hardware === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <i v-if="row.hardware === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.hardware === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.hardware === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                 </template>
                 <template v-else-if="controller_hardware_state === true">
                   <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                  <i v-if="row.hardware === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></i>
                 </template>
                 <template v-else>
                   <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.hardware === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
-                  <box-icon v-else-if="row.hardware === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                  <i v-if="row.hardware === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></i>
+                  <i v-else-if="row.hardware === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></i>
+                  <i v-else-if="row.hardware === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></i>
                 </template>
               </td>
               <td>
                 <template v-if="row.state === false">
-                  <box-icon v-if="row.other === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.other === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                  <box-icon v-else-if="row.other === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                  <i v-if="row.other === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.other === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                  <i v-else-if="row.other === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                 </template>
                 <template v-else-if="controller_other_state === true">
                   <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                  <i v-if="row.other === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></i>
                 </template>
                 <template v-else>
                   <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                  <box-icon v-if="row.other === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
-                  <box-icon v-else-if="row.other === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
-                  <box-icon v-else-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                  <i v-if="row.other === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></i>
+                  <i v-else-if="row.other === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></i>
+                  <i v-else-if="row.other === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></i>
                 </template>
               </td>
             </tr>
@@ -574,66 +575,66 @@ watch: {
                 <span :class="{'text-danger': !row.state}" class="me-2" :data-tippy-content="!row.state ? `Node ${row.hostname} is Down.` : `Node ${row.hostname} is UP.`">{{ row.hostname }}</span>
                 <span class="d-inline-flex gap-1 align-items-center">
                   <template v-if="row.state === false">
-                    <box-icon v-if="row.genericRules === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.genericRules === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.genericRules === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <i v-if="row.genericRules === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.genericRules === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.genericRules === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                   </template>
                   <template v-else-if="controller_generic_state === true">
                     <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                    <box-icon v-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                    <i v-if="row.genericRules === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></i>
                   </template>
                   <template v-else>
-                    <box-icon v-if="row.genericRules === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
-                    <box-icon v-else-if="row.genericRules === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-                    <box-icon v-else-if="row.genericRules === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                    <i v-if="row.genericRules === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node  Rules are OK.`"></i>
+                    <i v-else-if="row.genericRules === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></i>
+                    <i v-else-if="row.genericRules === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Generic`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></i>
                     <OverviewAlerts :alerts="row.genericAlerts || []" :hostname="row.hostname" ruleType="Generic Rules" :modalId="`${row.hostname}_Generic`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
 
                   <template v-if="row.state === false">
-                    <box-icon v-if="row.services === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.services === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.services === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <i v-if="row.services === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.services === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.services === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                   </template>
                   <template v-else-if="controller_service_state === true">
                     <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                    <box-icon v-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
-                  </template>
+                    <i v-if="row.services === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></i>
+                </template>
                   <template v-else>
-                    <box-icon v-if="row.services === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></box-icon>
-                    <box-icon v-else-if="row.services === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></box-icon>
-                    <box-icon v-else-if="row.services === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></box-icon>
+                    <i v-if="row.services === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node ${row.hostname} Services are OK.`"></i>
+                    <i v-else-if="row.services === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :data-tippy-content="`Node ${row.hostname} Services NHC is Disabled.`"></i>
+                    <i v-else-if="row.services === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Service`" :data-tippy-content="`Node ${row.hostname} Services NHC is Enabled.`"></i>
                     <OverviewAlerts :alerts="row.servicesAlerts || []" :hostname="row.hostname" ruleType="Service Rules" :modalId="`${row.hostname}_Service`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
 
                   <template v-if="row.state === false">
-                    <box-icon v-if="row.hardware === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.hardware === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.hardware === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <i v-if="row.hardware === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.hardware === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.hardware === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                   </template>
                   <template v-else-if="controller_hardware_state === true">
                     <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                    <box-icon v-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                    <i v-if="row.hardware === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></i>
                   </template>
                   <template v-else>
-                    <box-icon v-if="row.hardware === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></box-icon>
-                    <box-icon v-else-if="row.hardware === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></box-icon>
-                    <box-icon v-else-if="row.hardware === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></box-icon>
+                    <i v-if="row.hardware === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node ${row.hostname} Hardware are OK.`"></i>
+                    <i v-else-if="row.hardware === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Disabled.`"></i>
+                    <i v-else-if="row.hardware === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Hardware`" :data-tippy-content="`Node ${row.hostname} Hardware NHC is Enabled.`"></i>
                     <OverviewAlerts :alerts="row.hardwareAlerts || []" :hostname="row.hostname" ruleType="Hardware Rules" :modalId="`${row.hostname}_Hardware`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
 
                   <template v-if="row.state === false">
-                    <box-icon v-if="row.other === null" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.other === false" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
-                    <box-icon v-else-if="row.other === true" :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <i v-if="row.other === null" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.other === false" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
+                    <i v-else-if="row.other === true" :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                   </template>
                   <template v-else-if="controller_other_state === true">
                     <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                    <box-icon v-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                    <i v-if="row.other === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></i>
                   </template>
                   <template v-else>
-                    <box-icon v-if="row.other === null" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></box-icon>
-                    <box-icon v-else-if="row.other === false" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></box-icon>
-                    <box-icon v-else-if="row.other === true" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></box-icon>
+                    <i v-if="row.other === null" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" :data-tippy-content="`Node ${row.hostname} Other are OK.`"></i>
+                    <i v-else-if="row.other === false" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :data-tippy-content="`Node ${row.hostname} Other NHC is Disabled.`"></i>
+                    <i v-else-if="row.other === true" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_Other`" :data-tippy-content="`Node ${row.hostname} Other NHC is Enabled.`"></i>
                     <OverviewAlerts :alerts="row.otherAlerts || []" :hostname="row.hostname" ruleType="Other Rules" :modalId="`${row.hostname}_Other`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
                 </span>
@@ -651,16 +652,16 @@ watch: {
               <td v-for="(row) in chunk" :key="row.hostname">
                 <span class="d-inline-flex gap-1 align-items-center">
                   <template v-if="row.state === false">
-                    <box-icon :name="icons === 'default' ? 'x-circle' : 'circle'" type="solid" color="#000000" :data-tippy-content="`Node ${row.hostname} is Down.`"></box-icon>
+                    <i :class="['bx', icons === 'default' ? 'bxs-x-circle' : 'bxs-circle']" style="font-size:24px;color:#000000;" :data-tippy-content="`Node ${row.hostname} is Down.`"></i>
                   </template>
                   <template v-else-if="controller_generic_state === true">
                     <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" :triggered_by="true" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
-                    <box-icon v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
+                    <i v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></i>
                   </template>
                   <template v-else>
-                    <box-icon v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'error-circle' : 'circle'" type="solid" color="#DC3545" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></box-icon>
-                    <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === false)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'info-circle' : 'circle'" type="solid" color="#FFC107" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></box-icon>
-                    <box-icon v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === null)" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :name="icons === 'default' ? 'check-circle' : 'circle'" type="solid" color="#198754" :data-tippy-content="`Node  Rules are OK.`"></box-icon>
+                    <i v-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === true)" :class="['bx', icons === 'default' ? 'bxs-error-circle' : 'bxs-circle']" style="font-size:24px;color:#DC3545;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Enabled.`"></i>
+                    <i v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === false)" :class="['bx', icons === 'default' ? 'bxs-info-circle' : 'bxs-circle']" style="font-size:24px;color:#FFC107;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :data-tippy-content="`Node ${row.hostname} Rules NHC is Disabled.`"></i>
+                    <i v-else-if="[row.genericRules, row.services, row.hardware, row.other].some(val => val === null)" :class="['bx', icons === 'default' ? 'bxs-check-circle' : 'bxs-circle']" style="font-size:24px;color:#198754;" data-bs-toggle="modal" :data-bs-target="`#${row.hostname}_All`" :data-tippy-content="`Node  Rules are OK.`"></i>
                     <OverviewAlerts :alerts="row.allAlerts || []" :hostname="row.hostname" ruleType="All Rules" :modalId="`${row.hostname}_All`" :triggered_by="false" :controller_hostname="controller_hostname" @modal-open="stopAutoReload" @modal-close="startAutoReload" />
                   </template>
                 </span>
