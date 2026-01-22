@@ -18,12 +18,16 @@ export default defineConfig({
     vueJsx(),
     vueDevTools(),
   ],
+  base: './',
+  // base: '/pun/sys/trinity_alertx/assets/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
   build: {
+    // assetsDir: 'app/assets',
+    // assetsDir: 'assets',
     // Disable hash in filenames
     rollupOptions: {
       output: {
