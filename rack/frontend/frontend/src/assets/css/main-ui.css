@@ -13,7 +13,7 @@
 
 
 .rack-view-dark {
-  background-color: #232333;
+  background-color: #191919;
   border-radius:8px;
   margin-top: 10px;
 
@@ -29,8 +29,8 @@
 
 /* 2. Force Children to use these styles */
 .rack-view-dark .single-rack-wrapper .rack-frame {
-  background-color: var(--rack-frame-bg) !important;
-  border-color: var(--border-color) !important;
+  box-shadow: 0 0 15px 2px rgba(0, 40, 255, 0.6);
+  border-color: #191919 !important;
 }
 
 .rack-view-dark .single-rack-wrapper .rack-row {
@@ -54,7 +54,7 @@
 }
 
 .rack-view-dark .single-rack-wrapper {
-  box-shadow: 0 0 15px 2px rgba(0, 40, 255, 0.6);
+  box-shadow: none !important;
   transition: all 0.3s ease;
 }
 
