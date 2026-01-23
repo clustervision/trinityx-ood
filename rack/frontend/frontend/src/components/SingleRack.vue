@@ -5,6 +5,7 @@ import type { Rack, Device } from '@/types/rack';
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'vue-toastification';
+import { useTheme } from '@/composables/useTheme';
 
 const props = defineProps<{
   rack: Rack;
@@ -17,6 +18,7 @@ const props = defineProps<{
   metric2Color?: string;
 }>();
 
+const { isDarkMode } = useTheme();
 const toast = useToast();
 const isActionLoading = ref(false);
 const menuVisible = ref(false);
@@ -77,6 +79,67 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
       isActionLoading.value = false;
     }
   }
+};
+
+
+const LED_COLORS = ['#28c76f', '#00cfe8', '#ff9f43', '#00e676', '#00b0ff'];
+
+// ... (保留前面的 LED_COLORS 定义)
+
+const getDeviceLeds = (device: Device) => {
+  let seed = 0;
+  for (let i = 0; i < device.name.length; i++) seed += device.name.charCodeAt(i);
+
+  const rand = () => {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+  };
+
+  const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
+  const count = Math.floor(rand() * 5) + 2;
+
+  const selectedSlots: number[] = [];
+
+  let attempts = 0;
+  while (selectedSlots.length < count && attempts < 50) {
+    attempts++;
+
+    const slotIndex = Math.floor(rand() * gridSlots.length);
+    const slotPos = gridSlots[slotIndex];
+
+    // 🟢 Fix TS Error: 确保 slotPos 存在
+    if (slotPos === undefined) continue;
+
+    if (selectedSlots.includes(slotPos)) continue;
+
+
+    const leftNeighbor = gridSlots[slotIndex - 1];
+    const rightNeighbor = gridSlots[slotIndex + 1];
+
+    const hasLeft = leftNeighbor !== undefined && selectedSlots.includes(leftNeighbor);
+    const hasRight = rightNeighbor !== undefined && selectedSlots.includes(rightNeighbor);
+
+    if (hasLeft && hasRight) continue;
+
+    selectedSlots.push(slotPos);
+  }
+
+  return selectedSlots.map(leftPos => {
+    let topPos = 45;
+    if (device.height > 1) {
+        topPos = rand() > 0.5 ? 30 : 70;
+    } else {
+        topPos = 40 + (rand() * 20);
+    }
+
+    return {
+      left: leftPos + '%',
+      top: topPos + '%',
+      color: LED_COLORS[Math.floor(rand() * LED_COLORS.length)],
+      animationDuration: (0.8 + rand() * 1.7) + 's',
+      animationDelay: (rand() * 2) + 's'
+    };
+  });
 };
 
 const hasController = computed(() => {
@@ -253,6 +316,22 @@ const checkPowerStatus = async () => {
 
     const handleStatusData = (data: any) => {
       console.log("Initial status received:", data);
+          console.log("Status received:", data);
+      props.rack.slots.forEach(slot => {
+        slot.devices.forEach(device => {
+
+
+          const deviceStatus = Array.isArray(data)
+              ? data.find((d: any) => d.name === device.name)
+              : data[device.name];
+
+
+          if (deviceStatus) {
+             const isOn = (deviceStatus.state || deviceStatus).toUpperCase() === 'ON';
+             device.powerState = isOn ? 'ON' : 'OFF';
+          }
+        });
+      });
       const values = Object.values(data);
       const isAnyDeviceOn = values.some((val: any) =>
          typeof val === 'string' && val.toUpperCase() === 'ON'
@@ -371,7 +450,28 @@ const clearPreview = () => {
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'front'" class="placement-preview"></div>
 
-                <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" class="flex-fill h-100 position-relative">
+                <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name" class="flex-fill h-100 position-relative"
+                        :style="{
+                        height: (device.height * 20 - 2) + 'px',
+                        [rack.order === 'descending' ? 'bottom' : 'top']: '0',
+                        zIndex: 10
+                    }">
+                  <template v-if="device.powerState === 'ON'">
+                    <div
+                      v-for="(led, index) in getDeviceLeds(device)"
+                      :key="index"
+                      class="device-led"
+                      :style="{
+                        left: led.left,
+                        top: led.top,
+                        backgroundColor: led.color,
+                        boxShadow: '0 0 3px ' + led.color,
+                        animationDuration: led.animationDuration,
+                        animationDelay: led.animationDelay
+                      }"
+                    ></div>
+                  </template>
+                  <div v-if="isDarkMode" class="device-dark-overlay"></div>
                   <DeviceItem
                     :device="device"
                     :metric1-value="getMetric(device, metric1,true)?.value"
@@ -419,7 +519,28 @@ const clearPreview = () => {
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
 
-                <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name" class="flex-fill h-100 position-relative">
+                <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name" class="flex-fill h-100 position-relative"
+                      :style="{
+                        height: (device.height * 20 - 2) + 'px',
+                        [rack.order === 'descending' ? 'bottom' : 'top']: '0',
+                        zIndex: 10
+                    }">
+                  <template v-if="device.powerState === 'ON'">
+                     <div
+                        v-for="(led, index) in getDeviceLeds(device)"
+                        :key="index"
+                        class="device-led"
+                        :style="{
+                          left: led.left,
+                          top: led.top,
+                          backgroundColor: led.color,
+                          boxShadow: '0 0 3px ' + led.color,
+                          animationDuration: led.animationDuration,
+                          animationDelay: led.animationDelay
+                        }"
+                      ></div>
+                    </template>
+                    <div v-if="isDarkMode" class="device-dark-overlay"></div>
                   <DeviceItem
                     :device="device"
                     :metric1-value="getMetric(device, metric1,true)?.value"
@@ -488,6 +609,22 @@ const clearPreview = () => {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
+}
+.device-dark-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background-color: rgba(0, 0, 0, 0.85);
+
+  z-index: 50;
+
+  pointer-events: auto;
+  cursor: default;
+
+  backdrop-filter: blur(1px);
 }
 @keyframes spin {
   0% { transform: rotate(0deg); }

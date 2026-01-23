@@ -6,6 +6,7 @@ export interface Device {
   position: number;
   orientation: 'front' | 'back';
   status?: string;
+  powerState: 'ON' | 'OFF';
 }
 
 export interface RackSlot {
