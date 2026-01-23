@@ -29,7 +29,7 @@
 
 /* 2. Force Children to use these styles */
 .rack-view-dark .single-rack-wrapper .rack-frame {
-  box-shadow: 0 0 15px 2px rgba(0, 40, 255, 0.6);
+  box-shadow: 0 0 15px 5px rgb(31, 64, 255); top: -18px; height: calc(100% + 20px);
   border-color: #191919 !important;
 }
 

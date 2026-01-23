@@ -84,8 +84,6 @@ const handleMenuAction = async (payload: { action: string, subAction?: string, d
 
 const LED_COLORS = ['#28c76f', '#00cfe8', '#ff9f43', '#00e676', '#00b0ff'];
 
-// ... (保留前面的 LED_COLORS 定义)
-
 const getDeviceLeds = (device: Device) => {
   let seed = 0;
   for (let i = 0; i < device.name.length; i++) seed += device.name.charCodeAt(i);
@@ -96,7 +94,7 @@ const getDeviceLeds = (device: Device) => {
   };
 
   const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
-  const count = Math.floor(rand() * 5) + 2;
+  const count = Math.floor(rand() * 8) + 3;
 
   const selectedSlots: number[] = [];
 
@@ -107,7 +105,6 @@ const getDeviceLeds = (device: Device) => {
     const slotIndex = Math.floor(rand() * gridSlots.length);
     const slotPos = gridSlots[slotIndex];
 
-    // 🟢 Fix TS Error: 确保 slotPos 存在
     if (slotPos === undefined) continue;
 
     if (selectedSlots.includes(slotPos)) continue;
@@ -604,14 +601,14 @@ const clearPreview = () => {
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   color: white;
   font-weight: bold;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
 }
 .spinner {
   width: 50px;
@@ -628,10 +625,9 @@ const clearPreview = () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.35);
   z-index: 5;
-  pointer-events: none;
-  /* cursor: default; */
+  pointer-events: auto !important;
   backdrop-filter: blur(1px);
 }
 
