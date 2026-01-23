@@ -69,6 +69,7 @@
   animation-name: led-blink;
   animation-timing-function: steps(2, start);
   animation-iteration-count: infinite;
+  z-index: 30 !important;
 }
 
 @keyframes led-blink {

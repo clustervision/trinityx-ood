@@ -442,6 +442,7 @@ const clearPreview = () => {
         </div>
 
         <div class="rack-frame">
+          <div v-if="isDarkMode" class="device-dark-overlay"></div>
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'front'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'front')">
@@ -459,7 +460,7 @@ const clearPreview = () => {
                         [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                         zIndex: 10
                     }">
-
+                    <div v-if="isDarkMode" class="device-dark-overlay"></div>
                     <template v-if="device.powerState === 'ON'">
                         <div
                         v-for="(led, index) in getDeviceLeds(device)"
@@ -518,6 +519,7 @@ const clearPreview = () => {
               <span class="u-header-label">U</span>
             </div>
         </div> <div class="rack-frame">
+          <div v-if="isDarkMode" class="device-dark-overlay"></div>
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'back')">
@@ -627,12 +629,16 @@ const clearPreview = () => {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.85);
-  z-index: 50;
+  z-index: 5;
   pointer-events: none;
-  cursor: default;
-
+  /* cursor: default; */
   backdrop-filter: blur(1px);
 }
+
+.flex-fill .device-dark-overlay {
+    z-index: 20;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -666,6 +672,7 @@ const clearPreview = () => {
   border: 2px solid var(--border-color);
   border-top: none;
   padding: 0;
+  position: relative;
 }
 .rack-row {
   display: flex;
