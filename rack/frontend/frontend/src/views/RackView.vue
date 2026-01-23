@@ -218,7 +218,7 @@ onUnmounted(() => {
           style="font-size: 12px; padding: 4px 15px;"
         >
           <i class='bx' :class="isDarkMode ? 'bx-sun' : 'bx-moon'"></i>
-          {{ isDarkMode ? 'Light' : 'Night' }}
+          {{ isDarkMode ? 'Light Off' : 'Light On' }}
         </button>
   </div>
       <RackMetricsHeader v-model:metric1="metric1"

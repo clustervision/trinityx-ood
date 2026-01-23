@@ -450,49 +450,50 @@ const clearPreview = () => {
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'front'" class="placement-preview"></div>
 
-                <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name"
-                     class="flex-fill"
-                     :style="{
-                        position: 'absolute',
-                        width: '100%',
-                        left: 0,
+               <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name"
+                class="flex-fill h-100 position-relative">
+
+                <div class="position-absolute w-100"
+                    :style="{
                         height: (device.height * 20 - 2) + 'px',
                         [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                         zIndex: 10
-                     }">
+                    }">
 
-                  <template v-if="device.powerState === 'ON'">
-                    <div
-                      v-for="(led, index) in getDeviceLeds(device)"
-                      :key="index"
-                      class="device-led"
-                      :style="{
-                        left: led.left,
-                        top: led.top,
-                        backgroundColor: led.color,
-                        boxShadow: '0 0 3px ' + led.color,
-                        animationDuration: led.animationDuration,
-                        animationDelay: led.animationDelay
-                      }"
-                    ></div>
-                  </template>
+                    <template v-if="device.powerState === 'ON'">
+                        <div
+                        v-for="(led, index) in getDeviceLeds(device)"
+                            :key="index"
+                            class="device-led"
+                            :style="{
+                                left: led.left,
+                                top: led.top,
+                                backgroundColor: led.color,
+                                boxShadow: '0 0 3px ' + led.color,
+                                animationDuration: led.animationDuration,
+                                animationDelay: led.animationDelay
+                            }"
+                            >
+                        </div>
+                    </template>
 
-                  <div v-if="isDarkMode" class="device-dark-overlay"></div>
+                    <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
 
-                  <DeviceItem
-                    :device="device"
-                    :metric1-value="getMetric(device, metric1,true)?.value"
-                    :metric1-color="getMetric(device, metric1, true)?.color"
-                    :metric1-type="metric1"
-                    :metric2-value="getMetric(device, metric2,true)?.value"
-                    :metric2-color="getMetric(device, metric2, true)?.color"
-                    :metric2-type="metric2"
-                    :is-rack-view="true"
-                    style="width: 100%; height: 100%;"
-                    @device-right-click="handleDeviceRightClick"
-                  />
-                </div>
-                </div>
+                    <DeviceItem
+                        :device="device"
+                        :metric1-value="getMetric(device, metric1,true)?.value"
+                        :metric1-color="getMetric(device, metric1, true)?.color"
+                        :metric1-type="metric1"
+                        :metric2-value="getMetric(device, metric2,true)?.value"
+                        :metric2-color="getMetric(device, metric2, true)?.color"
+                        :metric2-type="metric2"
+                        :is-rack-view="true"
+                        style="width: 100%; height: 100%; display: block;"
+                        @device-right-click="handleDeviceRightClick"
+                    />
+                  </div>
+            </div>
+            </div>
               <div class="rack-label">{{ slot.number }}</div>
           </div>
         </div>
@@ -525,48 +526,47 @@ const clearPreview = () => {
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
 
-                <div v-for="device in slot.devices.filter(d => d.orientation === 'back')" :key="device.name"
-                     class="flex-fill"
-                     :style="{
-                        position: 'absolute',
-                        width: '100%',
-                        left: 0,
-                        height: (device.height * 20 - 2) + 'px',
-                        [rack.order === 'descending' ? 'bottom' : 'top']: '0',
-                        zIndex: 10
-                     }">
-
-                  <template v-if="device.powerState === 'ON'">
-                      <div
-                        v-for="(led, index) in getDeviceLeds(device)"
-                        :key="index"
-                        class="device-led"
+                <div v-for="device in slot.devices.filter(d => d.orientation === 'back')"
+                    :key="device.name"
+                    class="flex-fill h-100 position-relative">
+                    <div class="position-absolute w-100"
                         :style="{
-                          left: led.left,
-                          top: led.top,
-                          backgroundColor: led.color,
-                          boxShadow: '0 0 3px ' + led.color,
-                          animationDuration: led.animationDuration,
-                          animationDelay: led.animationDelay
-                        }"
-                      ></div>
-                    </template>
-                    <div v-if="isDarkMode" class="device-dark-overlay"></div>
-                  <DeviceItem
-                    :device="device"
-                    :metric1-value="getMetric(device, metric1,true)?.value"
-                    :metric1-color="getMetric(device, metric1, true)?.color"
-                    :metric1-type="metric1"
-                    :metric2-value="getMetric(device, metric2,true)?.value"
-                    :metric2-color="getMetric(device, metric2, true)?.color"
-                    :metric2-type="metric2"
-                    :is-rack-view="true"
-                    style="width: 100%; height: 100%;"
-                    @device-right-click="handleDeviceRightClick"
-                  />
-                </div>
-                </div>
+                            height: (device.height * 20 - 2) + 'px',
+                            [rack.order === 'descending' ? 'bottom' : 'top']: '0',
+                            zIndex: 10
+                        }">
 
+                        <template v-if="device.powerState === 'ON'">
+                            <div
+                            v-for="(led, index) in getDeviceLeds(device)"
+                                :key="index"
+                                class="device-led"
+                                :style="{
+                                    left: led.left,
+                                    top: led.top,
+                                    backgroundColor: led.color,
+                                    boxShadow: '0 0 3px ' + led.color,
+                                    animationDuration: led.animationDuration,
+                                    animationDelay: led.animationDelay
+                                }"
+                                ></div>
+                        </template>
+                        <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
+                        <DeviceItem
+                            :device="device"
+                            :metric1-value="getMetric(device, metric1,true)?.value"
+                            :metric1-color="getMetric(device, metric1, true)?.color"
+                            :metric1-type="metric1"
+                            :metric2-value="getMetric(device, metric2,true)?.value"
+                            :metric2-color="getMetric(device, metric2, true)?.color"
+                            :metric2-type="metric2"
+                            :is-rack-view="true"
+                            style="width: 100%; height: 100%; display: block;"
+                            @device-right-click="handleDeviceRightClick"
+                        />
+                    </div>
+                </div>
+                </div>
               <div class="rack-label">{{ slot.number }}</div>
           </div>
         </div>
@@ -626,12 +626,9 @@ const clearPreview = () => {
   left: 0;
   width: 100%;
   height: 100%;
-
   background-color: rgba(0, 0, 0, 0.85);
-
   z-index: 50;
-
-  pointer-events: auto;
+  pointer-events: none;
   cursor: default;
 
   backdrop-filter: blur(1px);
