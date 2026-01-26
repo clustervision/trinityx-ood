@@ -31,7 +31,7 @@
 .rack-view-dark .single-rack-wrapper .rack-frame {
   border-color: #191919 !important;
   border-top: none !important;
-  z-index: 6;
+  /* z-index: 6; */
 }
 
 .rack-view-dark .rack-column {
@@ -77,6 +77,7 @@
   animation-timing-function: steps(2, start);
   animation-iteration-count: infinite;
   z-index: 30 !important;
+  pointer-events: none;
 }
 
 @keyframes led-blink {

@@ -150,13 +150,27 @@ const hasController = computed(() => {
   );
 });
 
+
+const hasSwitch = computed(() => {
+  if (!props.rack?.slots) return false;
+  return props.rack.slots.some(slot =>
+    slot.devices.some(device => device.type === 'switch')
+  );
+});
+
 const powerButtonTooltip = computed(() => {
   const baseState = props.rack.powerOn
     ? 'Power is ON (Click to Turn Off)'
     : 'Power is OFF (Click to Turn On)';
 
-  if (hasController.value) {
+  if (hasController.value && !hasSwitch.value ) {
     return `${baseState}\n⚠️ Note: A Controller is present.\nIt will remain ON and is excluded from this action.`;
+  }
+  if (hasSwitch.value && !hasController.value) {
+    return `${baseState}\n⚠️ Note: A Switch is present.\nIt will remain ON and is excluded from this action.`;
+  }
+  if (hasSwitch.value && hasController.value) {
+    return `${baseState}\n⚠️ Note: Controller and Switch is present.\nThey will remain ON and is excluded from this action.`;
   }
   return baseState;
 });
@@ -177,7 +191,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
     if (hasController.value) {
         toast.success(`${actionName} action successful!\n(Controller remained ON)`);
-    } else {
+    }
+    if (hasSwitch.value){
+        toast.success(`${actionName} action successful!\n(Switch remained ON)`);
+    }
+    else {
         toast.success(`${actionName} action successful!`);
     }
 
@@ -258,6 +276,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 
 const checkPowerStatus = async () => {
   let hasController = false;
+  let hasSwitch = false;
   if (props.rack && props.rack.slots) {
     for (const slot of props.rack.slots) {
       for (const device of slot.devices) {
@@ -265,13 +284,23 @@ const checkPowerStatus = async () => {
           hasController = true;
           break;
         }
+        if (device.type === 'switch') {
+          hasSwitch = true;
+          break;
+        }
       }
       if (hasController) break;
+      if (hasSwitch) break;
+
     }
   }
 
   if (hasController) {
     console.log(`Controller detected in ${props.rack.name}.`);
+
+  }
+  if (hasSwitch) {
+    console.log(`Switch detected in ${props.rack.name}.`);
 
   }
 
@@ -464,12 +493,10 @@ const clearPreview = () => {
                         [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                         zIndex: 10
                     }">
-                    <template v-if="device.powerState === 'ON'|| device.type === 'controller'">
-                      <div v-if="isDarkMode">
+                    <template v-if="isDarkMode">
                         <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
-                            :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40 }">
+                            :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40,pointerEvents: 'none' }">
                         </div>
-                      </div>
                     </template>
                     <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
                     <DeviceItem
@@ -536,12 +563,10 @@ const clearPreview = () => {
                             zIndex: 10
                         }">
 
-                        <template v-if="device.powerState === 'ON'|| device.type === 'controller'">
-                          <div v-if="isDarkMode">
+                        <template v-if="isDarkMode">
                             <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
-                                :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40 }">
+                                :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay ,pointerEvents: 'none' }">
                             </div>
-                          </div>
                         </template>
                         <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
                         <DeviceItem
@@ -565,7 +590,14 @@ const clearPreview = () => {
       </div>
 
       <Teleport to="body">
-        </Teleport>
+            <DeviceContextMenu
+              :visible="menuVisible"
+              :position="menuPos"
+              :device="selectedDevice"
+              @close="menuVisible = false"
+              @action="handleMenuAction"
+            />
+          </Teleport>
     </div>
   </div>
 </template>
