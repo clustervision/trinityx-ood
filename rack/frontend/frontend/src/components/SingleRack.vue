@@ -94,49 +94,53 @@ const getDeviceLeds = (device: Device) => {
   };
 
   const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
-  const count = Math.floor(rand() * 8) + 3;
-
-  const selectedSlots: number[] = [];
-
-  let attempts = 0;
-  while (selectedSlots.length < count && attempts < 50) {
-    attempts++;
-
-    const slotIndex = Math.floor(rand() * gridSlots.length);
-    const slotPos = gridSlots[slotIndex];
-
-    if (slotPos === undefined) continue;
-
-    if (selectedSlots.includes(slotPos)) continue;
+  const allLeds: any[] = [];
 
 
-    const leftNeighbor = gridSlots[slotIndex - 1];
-    const rightNeighbor = gridSlots[slotIndex + 1];
+  for (let u = 0; u < device.height; u++) {
 
-    const hasLeft = leftNeighbor !== undefined && selectedSlots.includes(leftNeighbor);
-    const hasRight = rightNeighbor !== undefined && selectedSlots.includes(rightNeighbor);
 
-    if (hasLeft && hasRight) continue;
+    const countPerRow = Math.floor(rand() * 4) + 3;
 
-    selectedSlots.push(slotPos);
-  }
+    const rowSlots: number[] = [];
+    let attempts = 0;
 
-  return selectedSlots.map(leftPos => {
-    let topPos = 45;
-    if (device.height > 1) {
-        topPos = rand() > 0.5 ? 30 : 70;
-    } else {
-        topPos = 40 + (rand() * 20);
+    while (rowSlots.length < countPerRow && attempts < 50) {
+      attempts++;
+      const slotIndex = Math.floor(rand() * gridSlots.length);
+      const slotPos = gridSlots[slotIndex];
+
+      if (slotPos === undefined) continue;
+      if (rowSlots.includes(slotPos)) continue;
+
+      const leftNeighbor = gridSlots[slotIndex - 1];
+      const rightNeighbor = gridSlots[slotIndex + 1];
+      const hasLeft = leftNeighbor !== undefined && rowSlots.includes(leftNeighbor);
+      const hasRight = rightNeighbor !== undefined && rowSlots.includes(rightNeighbor);
+
+      if (hasLeft && hasRight) continue;
+
+      rowSlots.push(slotPos);
     }
 
-    return {
-      left: leftPos + '%',
-      top: topPos + '%',
-      color: LED_COLORS[Math.floor(rand() * LED_COLORS.length)],
-      animationDuration: (0.8 + rand() * 1.7) + 's',
-      animationDelay: (rand() * 2) + 's'
-    };
-  });
+    const rowLeds = rowSlots.map(leftPos => {
+      const heightPerU = 100 / device.height;
+
+      const baseTop = (u * heightPerU) + (heightPerU / 2);
+
+      return {
+        left: leftPos + '%',
+        top: baseTop + '%',
+        color: LED_COLORS[Math.floor(rand() * LED_COLORS.length)],
+        animationDuration: (0.8 + rand() * 1.7) + 's',
+        animationDelay: (rand() * 2) + 's'
+      };
+    });
+
+    allLeds.push(...rowLeds);
+  }
+
+  return allLeds;
 };
 
 const hasController = computed(() => {
@@ -460,7 +464,7 @@ const clearPreview = () => {
                         [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                         zIndex: 10
                     }">
-                    <template v-if="device.powerState === 'ON'">
+                    <template v-if="device.powerState === 'ON'|| device.type === 'controller'">
                       <div v-if="isDarkMode">
                         <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
                             :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40 }">
@@ -532,7 +536,7 @@ const clearPreview = () => {
                             zIndex: 10
                         }">
 
-                        <template v-if="device.powerState === 'ON'">
+                        <template v-if="device.powerState === 'ON'|| device.type === 'controller'">
                           <div v-if="isDarkMode">
                             <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
                                 :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40 }">

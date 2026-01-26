@@ -35,7 +35,7 @@
 }
 
 .rack-view-dark .rack-column {
-  box-shadow: 0 0 15px 5px rgb(31, 64, 255);
+  box-shadow: 0 0 15px 5px #5757ff;
   border-radius: 4px;
   transition: all 0.3s ease;
 }
