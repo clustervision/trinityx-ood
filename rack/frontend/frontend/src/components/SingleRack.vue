@@ -420,29 +420,32 @@ const clearPreview = () => {
     <div class="d-flex gap-1">
 
       <div class="rack-column" v-if="rack.showFrontSide !== false">
-        <div class="rack-header-light">
-          <div class="d-flex align-items-center">
+
+        <div class="rack-header-light position-relative">
+          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5;"></div>
+
+          <div class="d-flex align-items-center position-relative" style="z-index: 4;">
             <span class="u-header-label">U</span>
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
-          <div class="d-flex align-items-center gap-1 ">
+          <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
               <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-
               <i class='bx bx-power-off cursor-pointer'
                 :class="rack.powerOn ? 'text-danger' : 'text-success'"
                 :title="powerButtonTooltip"
                 @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
               </i>
-
               <span class="u-header-label ms-1">U</span>
             </div>
         </div>
 
         <div class="rack-frame">
-          <div v-if="isDarkMode" class="device-dark-overlay"></div>
+          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
+
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'front'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'front')">
+
               <div class="rack-label">{{ slot.number }}</div>
 
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
@@ -457,26 +460,14 @@ const clearPreview = () => {
                         [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                         zIndex: 10
                     }">
-                    <div v-if="isDarkMode" class="device-dark-overlay"></div>
                     <template v-if="device.powerState === 'ON'">
-                        <div
-                        v-for="(led, index) in getDeviceLeds(device)"
-                            :key="index"
-                            class="device-led"
-                            :style="{
-                                left: led.left,
-                                top: led.top,
-                                backgroundColor: led.color,
-                                boxShadow: '0 0 3px ' + led.color,
-                                animationDuration: led.animationDuration,
-                                animationDelay: led.animationDelay
-                            }"
-                            >
+                      <div v-if="isDarkMode">
+                        <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
+                            :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40 }">
                         </div>
+                      </div>
                     </template>
-
                     <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
-
                     <DeviceItem
                         :device="device"
                         :metric1-value="getMetric(device, metric1,true)?.value"
@@ -492,21 +483,24 @@ const clearPreview = () => {
                   </div>
             </div>
             </div>
-              <div class="rack-label">{{ slot.number }}</div>
+             <div class="rack-label">{{ slot.number }}</div>
           </div>
         </div>
       </div>
 
       <div class="rack-column" v-if="rack.showBackSide">
-        <div class="rack-header-dark">
-          <div class="d-flex align-items-center">
+
+        <div class="rack-header-dark position-relative">
+
+          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5;"></div>
+
+          <div class="d-flex align-items-center position-relative" style="z-index: 4;">
             <span class="u-header-label">U</span>
             <span class="rack-title text-white">{{ rack.name }}</span>
           </div>
-          <div class="d-flex align-items-center gap-1">
+          <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
               <template v-if="rack.showFrontSide === false">
                 <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-
                 <i class='bx bx-power-off cursor-pointer'
                   :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
                   :title="powerButtonTooltip"
@@ -515,19 +509,22 @@ const clearPreview = () => {
               </template>
               <span class="u-header-label">U</span>
             </div>
-        </div> <div class="rack-frame">
-          <div v-if="isDarkMode" class="device-dark-overlay"></div>
+        </div>
+
+        <div class="rack-frame">
+          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
+
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
                @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()"
                @dragover.prevent="handleDragOver(slot.number, 'back')">
-              <div class="rack-label">{{ slot.number }}</div>
 
-              <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
+              <div class="rack-label">{{ slot.number }}</div> <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
 
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'back')"
                     :key="device.name"
                     class="flex-fill h-100 position-relative">
+
                     <div class="position-absolute w-100"
                         :style="{
                             height: (device.height * 20 - 2) + 'px',
@@ -536,19 +533,11 @@ const clearPreview = () => {
                         }">
 
                         <template v-if="device.powerState === 'ON'">
-                            <div
-                            v-for="(led, index) in getDeviceLeds(device)"
-                                :key="index"
-                                class="device-led"
-                                :style="{
-                                    left: led.left,
-                                    top: led.top,
-                                    backgroundColor: led.color,
-                                    boxShadow: '0 0 3px ' + led.color,
-                                    animationDuration: led.animationDuration,
-                                    animationDelay: led.animationDelay
-                                }"
-                                ></div>
+                          <div v-if="isDarkMode">
+                            <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
+                                :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40 }">
+                            </div>
+                          </div>
                         </template>
                         <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
                         <DeviceItem
@@ -570,16 +559,11 @@ const clearPreview = () => {
           </div>
         </div>
       </div>
-        <Teleport to="body">
-            <DeviceContextMenu
-              :visible="menuVisible"
-              :position="menuPos"
-              :device="selectedDevice"
-              @close="menuVisible = false"
-              @action="handleMenuAction"
-            />
-          </Teleport>
-    </div> </div>
+
+      <Teleport to="body">
+        </Teleport>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -601,7 +585,7 @@ const clearPreview = () => {
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  background-color: rgba(0, 0, 0, 0.35);
+  background-color: rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -626,7 +610,7 @@ const clearPreview = () => {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.35);
-  z-index: 5;
+  z-index: 8;
   pointer-events: auto !important;
   backdrop-filter: blur(1px);
 }
@@ -663,6 +647,7 @@ const clearPreview = () => {
   height: 20px;
   overflow: hidden;
   color: #fff;
+  z-index: 5;
 }
 .rack-frame {
   background: var(--rack-frame-bg);
@@ -670,6 +655,7 @@ const clearPreview = () => {
   border-top: none;
   padding: 0;
   position: relative;
+
 }
 .rack-row {
   display: flex;
@@ -686,10 +672,12 @@ const clearPreview = () => {
   color: var(--rack-text);
   background-color: var(--rack-frame-bg);
   border-right: 1px solid var(--border-color);
+  z-index: 3;
 }
 .rack-label:last-child {
   border-right: none;
   border-left: 1px solid var(--border-color);
+  z-index: 5;
 }
 .rack-title {
   margin-left: 10px;
@@ -702,14 +690,14 @@ const clearPreview = () => {
 .front-label { background-color: #6666ff; border-top-left-radius: 5px; border-top-right-radius: 5px; }
 .back-toggle { background-color: #333; cursor: pointer; border-top-left-radius: 5px; border-top-right-radius: 5px; }
 .rack-column { min-width: 180px; display: flex; flex-direction: column; flex:1; }
-.u-header-label { width: 20px; text-align: center; font-size: 10px; font-weight: bold; color: #444; background-color: #e9ecef; display: inline-block; line-height: 16px; }
+.u-header-label { width: 20px; text-align: center; font-size: 10px; font-weight: bold; color: #444; background-color: #e9ecef; display: inline-block; line-height: 16px; z-index: 3;}
 .rack-header-dark { background-color: #222; display: flex; justify-content: space-between; align-items: center; padding: 0; height: 20px; overflow: hidden; border: 2px solid #222; border-bottom: none; }
 .rack-header-light { background-color: #aaaaaa; display: flex; justify-content: space-between; align-items: center; padding: 0; height: 20px; overflow: hidden; border: 2px solid #222; border-bottom: none; }
 .rack-title { margin-left: 10px; font-size: 0.8rem; font-weight: bold; }
-.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; }
-.rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; }
+.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; z-index: 3}
+.rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; z-index: 5;}
 .rack-row { display: flex; height: 20px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
-.rack-label { width: 20px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6; }
-.rack-label:last-child { border-right: none; border-left: 1px solid #dee2e6; }
+.rack-label { width: 20px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6;z-index: 3; }
+.rack-label:last-child { border-right: none; border-left: 1px solid #dee2e6; z-index: 4;}
 .rack-slot { flex-grow: 1; }
 </style>
