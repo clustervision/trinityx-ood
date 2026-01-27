@@ -12,10 +12,12 @@
     @dragend="isDragging = false"
     @contextmenu.prevent="onRightClick"
   >
-    <div class="device-content">
-      <span class="device-name">{{ device.name }}</span>
-    </div>
 
+  <div class="device-content">
+      <div v-if="!isDarkMode">
+      <span class="device-name">{{ device.name }}</span>
+      </div>
+    </div>
     <div class="indicators-overlay">
 
       <div
@@ -40,7 +42,10 @@
 import { computed, ref } from 'vue';
 import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing';
+import { useTheme } from '@/composables/useTheme';
 
+
+const { isDarkMode } = useTheme();
 const props = defineProps<{
   device: Device;
   metric1Value?: number;
