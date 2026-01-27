@@ -609,7 +609,7 @@ const clearPreview = () => {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 242, 255, 0.3); border: 1px solid #00f2ff;
   box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.5), 0 0 15px rgba(0, 242, 255, 0.4);
-  z-index: 6;  animation: pulse-glow 1.2s infinite ease-in-out;
+  z-index: 6;  animation: pulse-glow 1.2s infinite ease-in-out; pointer-events: none;
 }
 @keyframes pulse-glow { 0% { opacity: 0.5; } 50% { opacity: 0.8; } 100% { opacity: 0.5; } }
 .racks-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }

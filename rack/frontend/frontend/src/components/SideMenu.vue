@@ -5,9 +5,7 @@
     <ul class="menu-inner py-1">
       <li class="menu-item">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'dashboard')">
-          <i class="menu-icon tf-icons">
-             <img src="@/assets/icons/computer-network.png" alt="icon" width="20"/>
-          </i>
+          <i class="menu-icon tf-icons bx bx-server"></i>
           <div data-i18n="Analytics">Rack Representation</div>
         </a>
       </li>
@@ -18,27 +16,21 @@
 
       <li class="menu-item">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-rack')">
-          <i class="menu-icon tf-icons">
-            <img src="@/assets/icons/application-detail.png" alt="icon" width="20"/>
-          </i>
+          <i class="menu-icon tf-icons bx bx-grid-alt"></i>
           <div data-i18n="Rack">Manage Rack Frames</div>
         </a>
       </li>
 
       <li class="menu-item">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-inventory')">
-          <i class="menu-icon tf-icons">
-              <img src="@/assets/icons/application-monitor.png" alt="icon" width="20"/>
-          </i>
+          <i class="menu-icon tf-icons bx bx-hdd"></i>
           <div data-i18n="Inventory">Manage Inventory</div>
         </a>
       </li>
 
        <li class="menu-item open">
         <a href="javascript:void(0);" class="menu-link menu-toggle" @click="showUnassigned = !showUnassigned">
-          <i class="menu-icon tf-icons">
-              <img src="@/assets/icons/network-status-busy.png" alt="icon" width="20"/>
-          </i>
+          <i class="menu-icon tf-icons bx bx-unlink"></i>
           <div data-i18n="Unassigned">Unassigned Device Pool</div>
         </a>
 

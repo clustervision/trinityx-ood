@@ -1,4 +1,4 @@
-<template>
+menuVisible<template>
   <div class="card-header p-4 bg-white border-bottom">
 
     <div class="d-flex flex-column gap-3">
@@ -19,7 +19,7 @@
 
               <template v-for="opt in metricOptions" :key="opt">
                 <li v-if="opt !== metric2">
-                  <a class="dropdown-item" href="#" @click.prevent="selectMetric1(opt)">{{ opt }}</a>
+                  <a class="dropdown-item" href="#" @click.prevent="selectMetric1(opt)" style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt   }}</a>
                 </li>
               </template>
           </ul>
@@ -48,7 +48,7 @@
 
               <template v-for="opt in metricOptions" :key="opt">
                 <li v-if="opt !== metric1">
-                  <a class="dropdown-item" href="#" @click.prevent="selectMetric2(opt)">{{ opt }}</a>
+                  <a class="dropdown-item" href="#" @click.prevent="selectMetric2(opt)"style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt   }}</a>
                 </li>
               </template>
           </ul>
@@ -104,7 +104,7 @@ const selectMetric2 = (val: string | null) => {
 .custom-btn-cyan {
   background-color: #00C4FF;
   border-color: #00C4FF;
-  min-width: 180px;
+  min-width: 200px;
   border-radius: 5px;
   text-align: left;
   display: flex;
@@ -114,7 +114,7 @@ const selectMetric2 = (val: string | null) => {
 .custom-btn-cyan:hover { background-color: #00b0e6; }
 
 .custom-btn-width {
-  min-width: 180px;
+  min-width: 200px;
   text-align: left;
   display: flex;
   justify-content: space-between;
@@ -126,7 +126,7 @@ const selectMetric2 = (val: string | null) => {
 .legend-bar {
   width: 250px;
   height: 20px;
-  background: linear-gradient(120deg, hsl(220, 100%, 50%),hsl(125, 100%, 50%), hsl(0, 100%, 50%));
+  background: linear-gradient(120deg, hsl(246, 100%, 50%),hsl(129, 95%, 43%),hsl(62, 93%, 46%), hsl(0, 100%, 50%));
   border: 1px solid #ddd;
   border-radius: 2px;
 }

@@ -33,6 +33,15 @@
         :style="{ backgroundColor: getColor(metric2Value, metric2Type) }"
         :title="`${metric2Type}: ${metric2Value ?? 'No Data'}`"
       ></div>
+      <!-- <Teleport to="body">
+            <DeviceContextMenu
+              :visible="menuVisible"
+              :position="menuPos"
+              :device="selectedDevice"
+              @close="menuVisible = false"
+              @action="handleMenuAction"
+            />
+          </Teleport> -->
 
     </div>
   </div>
@@ -43,6 +52,7 @@ import { computed, ref } from 'vue';
 import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing';
 import { useTheme } from '@/composables/useTheme';
+import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 
 
 const { isDarkMode } = useTheme();
