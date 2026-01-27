@@ -33,15 +33,16 @@
         :style="{ backgroundColor: getColor(metric2Value, metric2Type) }"
         :title="`${metric2Type}: ${metric2Value ?? 'No Data'}`"
       ></div>
-      <!-- <Teleport to="body">
-            <DeviceContextMenu
-              :visible="menuVisible"
-              :position="menuPos"
-              :device="selectedDevice"
-              @close="menuVisible = false"
-              @action="handleMenuAction"
-            />
-          </Teleport> -->
+
+      <Teleport v-if="!isRackView" to="body">
+        <DeviceContextMenu
+          :visible="menuVisible"
+          :position="menuPos"
+          :device="device"
+          @close="closeMenu"
+          @action="handleMenuAction"
+        />
+      </Teleport>
 
     </div>
   </div>
@@ -52,10 +53,11 @@ import { computed, ref } from 'vue';
 import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing';
 import { useTheme } from '@/composables/useTheme';
+import { useDeviceActions } from '@/composables/useDeviceActions';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 
-
 const { isDarkMode } = useTheme();
+const { executeDeviceAction } = useDeviceActions();
 const props = defineProps<{
   device: Device;
   metric1Value?: number;
@@ -68,13 +70,37 @@ const emit = defineEmits(['device-right-click']);
 const isDragging = ref(false);
 const { unitPixelHeight } = useRackSizing();
 
+const menuVisible = ref(false);
+const menuPos = ref({ x: 0, y: 0 });
+
 const heightPixels = computed(() => {
   return (props.device.height * unitPixelHeight.value) - 2;
 });
 
 const onRightClick = (event: MouseEvent) => {
+  if (props.isRackView) {
+    emit('device-right-click', event, props.device);
+  } else {
+    event.preventDefault();
+    menuPos.value = { x: event.clientX, y: event.clientY };
+    menuVisible.value = true;
+  }
+};
 
-  emit('device-right-click', event, props.device);
+const closeMenu = () => {
+  menuVisible.value = false;
+};
+
+const handleMenuAction = async (payload: { action: string; subAction?: string; device: Device }) => {
+  const { action, subAction, device } = payload;
+  try {
+    const result = await executeDeviceAction(action, subAction, device);
+    if (result?.success) {
+      alert(result.message);
+    }
+  } catch {
+    alert('Action failed');
+  }
 };
 
 const getVendorImageUrl = (size: number) => {

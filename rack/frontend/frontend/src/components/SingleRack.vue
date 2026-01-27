@@ -2,10 +2,10 @@
 import DeviceItem from '@/components/DeviceItem.vue';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
-import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useTheme } from '@/composables/useTheme';
+import { useDeviceActions } from '@/composables/useDeviceActions';
 
 const props = defineProps<{
   rack: Rack;
@@ -20,6 +20,7 @@ const props = defineProps<{
 
 const { isDarkMode } = useTheme();
 const toast = useToast();
+const { executeDeviceAction } = useDeviceActions();
 const isActionLoading = ref(false);
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
@@ -27,57 +28,23 @@ const selectedDevice = ref<Device | null>(null);
 
 const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
   event.preventDefault();
-  console.log("Opening menu for:", device.name);
   selectedDevice.value = device;
   menuPos.value = { x: event.clientX, y: event.clientY };
   menuVisible.value = true;
 };
 
-const handleMenuAction = async (payload: { action: string, subAction?: string, device: Device }) => {
+const handleMenuAction = async (payload: { action: string; subAction?: string; device: Device }) => {
   const { action, subAction, device } = payload;
-  //@ts-ignore
-  const baseUrl = window.CONTEXT_URL;
-  //@ts-ignore
-  const Url = window.APP_URL;
-
-  // 1. URL Navigation Actions
-  if (['details', 'edit', 'rename', 'clone'].includes(action)) {
-    let route = '';
-    const typeMap: Record<string, string> = {
-      'node': 'trinity_node',
-      'switch': 'trinity_switch',
-      'controller': 'trinity_cluster',
-      'otherdevices': 'trinity_otherdev'
-    };
-
-    const section = typeMap[device.type] || 'trinity_node';
-
-    if (device.type === 'controller') {
-      if (action === 'details') route = `${baseUrl}/${section}/`;
-      if (action === 'edit') route = `${baseUrl}/${section}/edit`;
-    } else {
-      if (action === 'details') route = `${baseUrl}/${section}/show/${device.name}`;
-      if (action === 'edit') route = `${baseUrl}/${section}/edit/${device.name}`;
-      if (action === 'rename') route = `${baseUrl}/${section}/rename/${device.name}`;
-      if (action === 'clone') route = `${baseUrl}/${section}/clone/${device.name}`;
+  isActionLoading.value = true;
+  try {
+    const result = await executeDeviceAction(action, subAction, device);
+    if (result?.success) {
+      alert(result.message);
     }
-
-    if (route) window.open(route, '_blank')?.focus();
-  }
-
-  // 2. API Actions (Power / IPMI)
-  if (['power', 'sel', 'chassis'].includes(action)) {
-    console.log(`Executing ${action} - ${subAction} on ${device.name}`);
-    isActionLoading.value = true;
-    try {
-      const response = await axios.get(`${Url}perform/${action}/${subAction}/${device.name}`);
-      alert(response.data.message || `Command sent: ${subAction}`);
-    } catch (e) {
-      console.error(e);
-      alert('Action failed');
-    } finally {
-      isActionLoading.value = false;
-    }
+  } catch {
+    alert('Action failed');
+  } finally {
+    isActionLoading.value = false;
   }
 };
 
