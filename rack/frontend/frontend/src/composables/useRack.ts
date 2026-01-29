@@ -16,6 +16,15 @@ export function useRack() {
     return order === 'ascending' ? slots : slots.reverse();
   };
 
+  /** Update rack power button state from nodes only (controller/switch/other types ignored). */
+  const syncRackPowerFromNodes = (rack: Rack) => {
+    const hasNodeOn = rack.slots.some((s) =>
+      s.devices.some((d) => d.type === 'node' && d.powerState === 'ON')
+    );
+    rack.powerOn = hasNodeOn;
+    rack.backPowerOn = hasNodeOn;
+  };
+
   const placeDeviceInRack = (rack: any, d: any) => {
     const height = parseInt(d.height) || 1;
     const position = Number(d.position);
@@ -116,6 +125,7 @@ export function useRack() {
         orientation: savedOrientation
       });
       targetRack.slots = [...targetRack.slots];
+      syncRackPowerFromNodes(targetRack);
     };
 
     const finalPosition = targetU;
@@ -147,8 +157,9 @@ export function useRack() {
     const tempDevice = { ...draggedDevice, position: finalPosition, orientation: side };
 
     placeDeviceInRack(targetRack, tempDevice);
-
     targetRack.slots = [...targetRack.slots];
+    syncRackPowerFromNodes(targetRack);
+
     try {
       const payload = { ...tempDevice, rack: targetRack.name };
       const doubleEncoded = JSON.stringify(JSON.stringify(payload));
