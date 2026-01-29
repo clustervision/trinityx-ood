@@ -133,8 +133,8 @@ const hasSwitch = computed(() => {
 
 const powerButtonTooltip = computed(() => {
   const baseState = props.rack.powerOn
-    ? 'Power is ON (Click to Turn Off)'
-    : 'Power is OFF (Click to Turn On)';
+    ? 'Click to Turn Off (Power is ON)'
+    : 'Click to Turn On (Power is OFF)';
 
   if (hasController.value && !hasSwitch.value ) {
     return `${baseState}\n⚠️ Note: A Controller is present.\nIt will remain ON and is excluded from this action.`;
@@ -153,7 +153,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
   const confirmMsg =
     action === 'reset'
       ? `Power Reset all nodes on ${props.rack.name}? (Switches & Controllers ignored)`
-      : `Power ${actionLabel} all nodes on ${props.rack.name}? (Switches & Controllers ignored)`;
+      : `${actionLabel} all nodes on ${props.rack.name}? (Switches & Controllers ignored)`;
   if (!confirm(confirmMsg)) return;
 
   let nodeCount = 0;
