@@ -52,7 +52,14 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
 
 const LED_COLORS = ['#28c76f', '#00cfe8', '#ff9f43', '#00e676', '#00b0ff'];
 
-const getDeviceLeds = (device: Device) => {
+/** Node + powerState ON: blinking LEDs. Node + OFF: no LEDs. Controller/switch/no-type: always blinking LEDs. */
+const getDeviceLeds = (device: Device): Array<{ left: string; top: string; color: string; animationDuration: string; animationDelay: string; blinking: boolean }> => {
+  const type = (device.type || '').toLowerCase();
+  const isNode = type === 'node';
+  const powerOn = device.powerState === 'ON';
+
+  if (isNode && !powerOn) return [];
+
   let seed = 0;
   for (let i = 0; i < device.name.length; i++) seed += device.name.charCodeAt(i);
 
@@ -62,12 +69,9 @@ const getDeviceLeds = (device: Device) => {
   };
 
   const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
-  const allLeds: any[] = [];
-
+  const allLeds: Array<{ left: string; top: string; color: string; animationDuration: string; animationDelay: string; blinking: boolean }> = [];
 
   for (let u = 0; u < device.height; u++) {
-
-
     const countPerRow = Math.floor(rand() * 4) + 3;
 
     const rowSlots: number[] = [];
@@ -99,9 +103,10 @@ const getDeviceLeds = (device: Device) => {
       return {
         left: leftPos + '%',
         top: baseTop + '%',
-        color: LED_COLORS[Math.floor(rand() * LED_COLORS.length)],
+        color: LED_COLORS[Math.floor(rand() * LED_COLORS.length)] ?? '#28c76f',
         animationDuration: (0.8 + rand() * 1.7) + 's',
-        animationDelay: (rand() * 2) + 's'
+        animationDelay: (rand() * 2) + 's',
+        blinking: true
       };
     });
 
@@ -535,10 +540,16 @@ const clearPreview = () => {
                         height: (device.height * 20 - 2) + 'px',
                         [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                         zIndex: 10
-                    }">
+                    }"
+                    :title="isDarkMode ? device.name : undefined">
                     <template v-if="isDarkMode">
-                        <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
-                            :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay, zIndex: 40,pointerEvents: 'none' }">
+                        <div v-for="(led, index) in getDeviceLeds(device)" :key="index"
+                            :class="['device-led', { 'device-led-static': !led.blinking }]"
+                            :style="{
+                              top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color,
+                              ...(led.blinking ? { animationDuration: led.animationDuration, animationDelay: led.animationDelay } : {}),
+                              zIndex: 40, pointerEvents: 'none'
+                            }">
                         </div>
                     </template>
                     <div v-if="isDarkMode" class="device-dark-overlay"style="pointer-events: none;"></div>
@@ -608,11 +619,17 @@ const clearPreview = () => {
                             height: (device.height * 20 - 2) + 'px',
                             [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                             zIndex: 10
-                        }">
+                        }"
+                        :title="isDarkMode ? device.name : undefined">
 
                         <template v-if="isDarkMode">
-                            <div v-for="(led, index) in getDeviceLeds(device)" :key="index" class="device-led"
-                                :style="{ top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color, animationDuration: led.animationDuration, animationDelay: led.animationDelay ,pointerEvents: 'none' }">
+                            <div v-for="(led, index) in getDeviceLeds(device)" :key="index"
+                                :class="['device-led', { 'device-led-static': !led.blinking }]"
+                                :style="{
+                                  top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color,
+                                  ...(led.blinking ? { animationDuration: led.animationDuration, animationDelay: led.animationDelay } : {}),
+                                  zIndex: 40, pointerEvents: 'none'
+                                }">
                             </div>
                         </template>
                         <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
@@ -661,6 +678,10 @@ const clearPreview = () => {
 .placement-preview-conflict {
   background-color: rgba(244, 67, 54, 0.4); border: 1px solid #f44336;
   box-shadow: inset 0 0 10px rgba(244, 67, 54, 0.5), 0 0 15px rgba(244, 67, 54, 0.4);
+}
+.device-led-static {
+  animation: none !important;
+  opacity: 1;
 }
 @keyframes pulse-glow { 0% { opacity: 0.5; } 50% { opacity: 0.8; } 100% { opacity: 0.5; } }
 .racks-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
