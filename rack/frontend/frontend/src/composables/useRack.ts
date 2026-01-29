@@ -131,7 +131,7 @@ export function useRack() {
     const finalPosition = targetU;
 
     if (finalPosition < 1 || finalPosition + dragHeight - 1 > targetRack.size) {
-      toast.error(`Device does not fit: exceeds rack height (Max ${targetRack.size}U).`);
+      toast.error(`Device does not fit rack ${targetRack.name}: exceeds rack height (Max ${targetRack.size}U).`);
       restoreDevice();
       return;
     }
