@@ -9,7 +9,7 @@
     :style="deviceBackgroundStyle"
     draggable="true"
     @dragstart="onDragStart"
-    @dragend="isDragging = false"
+    @dragend="onDragEnd"
     @contextmenu.prevent="onRightClick"
   >
 
@@ -54,9 +54,11 @@ import type { Device } from '@/types/rack';
 import { useRackSizing } from '@/composables/useRackSizing';
 import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
+import { useDraggedDevice } from '@/composables/useDraggedDevice';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 
 const { isDarkMode } = useTheme();
+const { setDraggedDevice } = useDraggedDevice();
 const { executeDeviceAction } = useDeviceActions();
 const props = defineProps<{
   device: Device;
@@ -219,6 +221,7 @@ const vendorClass = computed(() => {
 
 const onDragStart = (event: DragEvent) => {
   isDragging.value = true;
+  setDraggedDevice(props.device);
   if (event.dataTransfer) {
     const offsetY = event.offsetY;
     const uOffset = Math.floor(offsetY / unitPixelHeight.value);
@@ -231,6 +234,11 @@ const onDragStart = (event: DragEvent) => {
     };
     event.dataTransfer.setData('application/json', JSON.stringify(payload));
   }
+};
+
+const onDragEnd = () => {
+  isDragging.value = false;
+  setDraggedDevice(null);
 };
 </script>
 

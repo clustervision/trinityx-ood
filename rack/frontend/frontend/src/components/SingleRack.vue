@@ -6,6 +6,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
+import { useDraggedDevice } from '@/composables/useDraggedDevice';
 
 const props = defineProps<{
   rack: Rack;
@@ -143,6 +144,13 @@ const powerButtonTooltip = computed(() => {
 });
 
 const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
+  const actionLabel = action === 'reset' ? 'Power Reset' : action === 'on' ? 'Power ON' : 'Power OFF';
+  const confirmMsg =
+    action === 'reset'
+      ? `Power Reset all nodes on ${props.rack.name}? (Switches & Controllers ignored)`
+      : `Power ${actionLabel} all nodes on ${props.rack.name}? (Switches & Controllers ignored)`;
+  if (!confirm(confirmMsg)) return;
+
   let nodeCount = 0;
   props.rack.slots.forEach(slot => {
     slot.devices.forEach(device => {
@@ -378,17 +386,81 @@ const toggleFront = () => {
   props.rack.showFrontSide = !props.rack.showFrontSide;
 };
 
+const { draggedDevice } = useDraggedDevice();
 const hoveredSlot = ref<number | null>(null);
 const hoveredSide = ref<'front' | 'back' | null>(null);
+const conflictSlots = ref<Set<number>>(new Set());
+const isDragOverRack = ref(false);
 
-const handleDragOver = (uNumber: number, side: 'front' | 'back') => {
-  hoveredSlot.value = uNumber;
+const ROW_HEIGHT_PX = 20;
+const frontFrameRef = ref<HTMLElement | null>(null);
+const backFrameRef = ref<HTMLElement | null>(null);
+
+function getSlotFromEvent(event: DragEvent, side: 'front' | 'back'): number | null {
+  const frameEl = side === 'front' ? frontFrameRef.value : backFrameRef.value;
+  if (!frameEl || !props.rack.slots.length) return null;
+  const rect = frameEl.getBoundingClientRect();
+  const relativeY = event.clientY - rect.top;
+  const rowIndex = Math.floor(relativeY / ROW_HEIGHT_PX);
+  const clamped = Math.max(0, Math.min(rowIndex, props.rack.slots.length - 1));
+  const slot = props.rack.slots[clamped];
+  return slot ? slot.number : null;
+}
+
+const handleDragOver = (event: DragEvent, side: 'front' | 'back') => {
+  const slotNumber = getSlotFromEvent(event, side);
+  if (slotNumber == null) return;
+  hoveredSlot.value = slotNumber;
   hoveredSide.value = side;
+
+  const conflicts = new Set<number>();
+  const device = draggedDevice.value;
+  const height = device ? (Number(device.height) || 1) : 1;
+  const ourStart = slotNumber;
+  const ourEnd = slotNumber + height - 1;
+
+  if (device && ourEnd <= props.rack.size) {
+    for (const slot of props.rack.slots) {
+      for (const existing of slot.devices) {
+        if (existing.orientation !== side || existing.name === device.name) continue;
+        const exHeight = Number(existing.height) || 1;
+        const exStart = existing.position;
+        const exEnd = exStart + exHeight - 1;
+        const overlaps = ourStart <= exEnd && exStart <= ourEnd;
+        if (!overlaps) continue;
+        if (exStart === ourStart) continue;
+        for (let s = Math.max(ourStart, exStart); s <= Math.min(ourEnd, exEnd); s++) {
+          conflicts.add(s);
+        }
+      }
+    }
+  }
+  conflictSlots.value = conflicts;
+};
+
+const handleDrop = (event: DragEvent, side: 'front' | 'back') => {
+  const slotNumber = getSlotFromEvent(event, side);
+  if (slotNumber != null) {
+    emit('drop', event, props.rack, slotNumber, side);
+  }
+  clearPreview();
+};
+
+const onFrameDragEnter = () => {
+  isDragOverRack.value = true;
+};
+
+const onFrameDragLeave = (event: DragEvent) => {
+  const related = event.relatedTarget as Node | null;
+  if (related && (frontFrameRef.value?.contains(related) || backFrameRef.value?.contains(related))) return;
+  isDragOverRack.value = false;
 };
 
 const clearPreview = () => {
   hoveredSlot.value = null;
   hoveredSide.value = null;
+  conflictSlots.value = new Set();
+  isDragOverRack.value = false;
 };
 </script>
 
@@ -439,20 +511,24 @@ const clearPreview = () => {
             </div>
         </div>
 
-        <div class="rack-frame">
+        <div ref="frontFrameRef" class="rack-frame"
+             @dragenter="onFrameDragEnter"
+             @dragleave="onFrameDragLeave"
+             @dragover.prevent="handleDragOver($event, 'front')"
+             @drop.prevent="handleDrop($event, 'front')">
           <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
 
-          <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-               @drop="$emit('drop', $event, rack, slot.number, 'front'); clearPreview()"
-               @dragover.prevent="handleDragOver(slot.number, 'front')">
+          <div class="rack-row" v-for="slot in rack.slots" :key="slot.number">
 
               <div class="rack-label">{{ slot.number }}</div>
 
               <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'front'" class="placement-preview"></div>
+                <div v-if="conflictSlots.has(slot.number) && hoveredSide === 'front'" class="placement-preview placement-preview-conflict"></div>
 
                <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name"
-                class="flex-fill h-100 position-relative">
+                class="flex-fill h-100 position-relative"
+                :style="{ pointerEvents: isDragOverRack ? 'none' : 'auto' }">
 
                 <div class="position-absolute w-100"
                     :style="{
@@ -509,19 +585,23 @@ const clearPreview = () => {
             </div>
         </div>
 
-        <div class="rack-frame">
+        <div ref="backFrameRef" class="rack-frame"
+             @dragenter="onFrameDragEnter"
+             @dragleave="onFrameDragLeave"
+             @dragover.prevent="handleDragOver($event, 'back')"
+             @drop.prevent="handleDrop($event, 'back')">
           <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
 
-          <div class="rack-row" v-for="slot in rack.slots" :key="slot.number"
-               @drop="$emit('drop', $event, rack, slot.number, 'back'); clearPreview()"
-               @dragover.prevent="handleDragOver(slot.number, 'back')">
+          <div class="rack-row" v-for="slot in rack.slots" :key="slot.number">
 
               <div class="rack-label">{{ slot.number }}</div> <div class="rack-slot d-flex align-items-start" style="position: relative; height: 100%; flex-grow: 1;">
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
+                <div v-if="conflictSlots.has(slot.number) && hoveredSide === 'back'" class="placement-preview placement-preview-conflict"></div>
 
                 <div v-for="device in slot.devices.filter(d => d.orientation === 'back')"
                     :key="device.name"
-                    class="flex-fill h-100 position-relative">
+                    class="flex-fill h-100 position-relative"
+                    :style="{ pointerEvents: isDragOverRack ? 'none' : 'auto' }">
 
                     <div class="position-absolute w-100"
                         :style="{
@@ -576,7 +656,11 @@ const clearPreview = () => {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 242, 255, 0.3); border: 1px solid #00f2ff;
   box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.5), 0 0 15px rgba(0, 242, 255, 0.4);
-  z-index: 6;  animation: pulse-glow 1.2s infinite ease-in-out; pointer-events: none;
+  z-index: 15;  animation: pulse-glow 1.2s infinite ease-in-out; pointer-events: none;
+}
+.placement-preview-conflict {
+  background-color: rgba(244, 67, 54, 0.4); border: 1px solid #f44336;
+  box-shadow: inset 0 0 10px rgba(244, 67, 54, 0.5), 0 0 15px rgba(244, 67, 54, 0.4);
 }
 @keyframes pulse-glow { 0% { opacity: 0.5; } 50% { opacity: 0.8; } 100% { opacity: 0.5; } }
 .racks-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }

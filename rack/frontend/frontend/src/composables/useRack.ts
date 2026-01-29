@@ -91,27 +91,15 @@ export function useRack() {
 
     const draggedDevice = JSON.parse(data);
     const dragHeight = parseInt(draggedDevice.height) || 1;
-    if (targetU + dragHeight - 1 > targetRack.size) {
-      toast.error(`Installation failed: Device fits out of rack bounds (Max ${targetRack.size}U).`);
-      return;
-    }
-    for (let i = 0; i < dragHeight; i++) {
-      const checkU = targetU + i;
-      const slotToCheck = targetRack.slots.find(s => s.number === checkU);
 
-      if (slotToCheck) {
-        const existingDevice = slotToCheck.devices.find(d => d.orientation === side && d.name !== draggedDevice.name);
-
-        if (existingDevice) {
-          if (existingDevice.position !== targetU) {
-            toast.error(`Slot ${checkU} is occupied by ${existingDevice.name}`);
-            return;
-          }
-          if (existingDevice.position === targetU && existingDevice.height < dragHeight) {
-            toast.error(`Space is too small: existing device only has height ${existingDevice.height}`);
-            return;
-          }
-        }
+    let savedPosition: number | null = null;
+    let savedOrientation: 'front' | 'back' = side;
+    for (const s of targetRack.slots) {
+      const found = s.devices.find(d => d.name === draggedDevice.name);
+      if (found) {
+        savedPosition = found.position;
+        savedOrientation = (found.orientation as 'front' | 'back') || side;
+        break;
       }
     }
 
@@ -119,8 +107,41 @@ export function useRack() {
       s.devices = s.devices.filter(d => d.name !== draggedDevice.name);
     });
 
-    let finalPosition = targetU;
+    const restoreDevice = () => {
+      if (savedPosition == null || savedPosition < 1) return;
+      placeDeviceInRack(targetRack, {
+        ...draggedDevice,
+        position: savedPosition,
+        orientation: savedOrientation
+      });
+      targetRack.slots = [...targetRack.slots];
+    };
 
+    const finalPosition = targetU;
+
+    if (finalPosition < 1 || finalPosition + dragHeight - 1 > targetRack.size) {
+      toast.error(`Device does not fit: exceeds rack height (Max ${targetRack.size}U).`);
+      restoreDevice();
+      return;
+    }
+
+    const ourStart = finalPosition;
+    const ourEnd = finalPosition + dragHeight - 1;
+
+    for (const slot of targetRack.slots) {
+      for (const existing of slot.devices) {
+        if (existing.orientation !== side) continue;
+        const exHeight = Number(existing.height) || 1;
+        const exStart = existing.position;
+        const exEnd = exStart + exHeight - 1;
+        const overlaps = ourStart <= exEnd && exStart <= ourEnd;
+        if (!overlaps) continue;
+        if (exStart === finalPosition) continue;
+        toast.error(`Slot overlaps with ${existing.name} (${exStart}U–${exEnd}U).`);
+        restoreDevice();
+        return;
+      }
+    }
 
     const tempDevice = { ...draggedDevice, position: finalPosition, orientation: side };
 
