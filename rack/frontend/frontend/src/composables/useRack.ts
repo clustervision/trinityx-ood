@@ -51,7 +51,8 @@ export function useRack() {
       type: d.type || 'node',
       orientation: currentSide,
       vendor: d.vendor || null,
-      status: 'ok'
+      status: 'ok',
+      powerState: d.powerState === 'ON' ? 'ON' : 'OFF'
     });
   };
 

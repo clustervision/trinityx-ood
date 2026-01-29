@@ -42,7 +42,7 @@
           @drop="onDropBackToPool"
         >
           <div v-if="UnassignedNodes.length > 0">
-             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;">
+             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;" :title="device.name">
                 <DeviceItem
                   :device="device"
                   :is-rack-view="false"

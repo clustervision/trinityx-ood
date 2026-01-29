@@ -186,6 +186,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         props.rack.powerOn = true;
         props.rack.backPowerOn = true;
     }
+    checkPowerStatus();
   };
 
   isActionLoading.value = true;
@@ -309,10 +310,18 @@ const checkPowerStatus = async () => {
       const data = await response.json();
 
       if (data.status && Array.isArray(data.message)) {
+        props.rack.slots.forEach(slot => {
+          slot.devices.forEach(device => {
+            const item = data.message.find((m: any) => (m.node || m.name) === device.name);
+            if (item) {
+              const isOn = String(item.state || item).toUpperCase() === 'ON';
+              device.powerState = isOn ? 'ON' : 'OFF';
+            }
+          });
+        });
         const isAnyDeviceOn = data.message.some((item: any) =>
-          item.state && item.state.toUpperCase() === 'ON'
+          String(item.state || item).toUpperCase() === 'ON'
         );
-
         props.rack.powerOn = isAnyDeviceOn;
         props.rack.backPowerOn = isAnyDeviceOn;
       }
@@ -324,29 +333,26 @@ const checkPowerStatus = async () => {
   else {
     const source = new EventSource(url);
 
-    const handleStatusData = (data: any) => {
-      console.log("Initial status received:", data);
-          console.log("Status received:", data);
+    const handleStatusData = (raw: any) => {
+      // Normalize: backend may send { message: [ { node, state } ], status } or { node001: "ON", ... } or array
+      const list: Array<{ name: string; state: string }> = [];
+      if (Array.isArray(raw.message)) {
+        raw.message.forEach((m: any) => list.push({ name: m.node || m.name, state: m.state ?? m }));
+      } else if (Array.isArray(raw)) {
+        raw.forEach((m: any) => list.push({ name: m.node || m.name, state: m.state ?? m }));
+      } else if (raw && typeof raw === 'object' && !raw.message) {
+        Object.entries(raw).forEach(([name, val]) => list.push({ name, state: String(val) }));
+      }
       props.rack.slots.forEach(slot => {
         slot.devices.forEach(device => {
-
-
-          const deviceStatus = Array.isArray(data)
-              ? data.find((d: any) => d.name === device.name)
-              : data[device.name];
-
-
-          if (deviceStatus) {
-             const isOn = (deviceStatus.state || deviceStatus).toUpperCase() === 'ON';
-             device.powerState = isOn ? 'ON' : 'OFF';
+          const item = list.find((d) => d.name === device.name);
+          if (item) {
+            const isOn = String(item.state).toUpperCase() === 'ON';
+            device.powerState = isOn ? 'ON' : 'OFF';
           }
         });
       });
-      const values = Object.values(data);
-      const isAnyDeviceOn = values.some((val: any) =>
-         typeof val === 'string' && val.toUpperCase() === 'ON'
-      );
-
+      const isAnyDeviceOn = list.some((d) => String(d.state).toUpperCase() === 'ON');
       props.rack.powerOn = isAnyDeviceOn;
       props.rack.backPowerOn = isAnyDeviceOn;
       source.close();
@@ -507,11 +513,14 @@ const clearPreview = () => {
           </div>
           <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
               <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-              <i class='bx bx-power-off cursor-pointer'
-                :class="rack.powerOn ? 'text-danger' : 'text-success'"
+              <span
+                class="power-btn-circle cursor-pointer"
+                :class="rack.powerOn ? 'power-btn-on' : 'power-btn-off'"
                 :title="powerButtonTooltip"
-                @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
-              </i>
+                @click="handleRackAction(rack.powerOn ? 'off' : 'on')"
+              >
+                <i class="bx bx-power-off"></i>
+              </span>
               <span class="u-header-label ms-1">U</span>
             </div>
         </div>
@@ -586,11 +595,14 @@ const clearPreview = () => {
           <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
               <template v-if="rack.showFrontSide === false">
                 <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-                <i class='bx bx-power-off cursor-pointer'
-                  :class="rack.backPowerOn ? 'text-danger' : 'text-success'"
+                <span
+                  class="power-btn-circle cursor-pointer"
+                  :class="rack.backPowerOn ? 'power-btn-on' : 'power-btn-off'"
                   :title="powerButtonTooltip"
-                  @click="handleRackAction(rack.powerOn ? 'off' : 'on')">
-                </i>
+                  @click="handleRackAction(rack.backPowerOn ? 'off' : 'on')"
+                >
+                  <i class="bx bx-power-off"></i>
+                </span>
               </template>
               <span class="u-header-label">U</span>
             </div>
@@ -669,6 +681,32 @@ const clearPreview = () => {
 <style scoped>
 
 .cursor-pointer { cursor: pointer; }
+.power-btn-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.power-btn-circle i {
+  color: #fff;
+  font-size: 10px;
+}
+.power-btn-on {
+  background-color: #dc3545;
+}
+.power-btn-on:hover {
+  background-color: #c82333;
+}
+.power-btn-off {
+  background-color: #28a745;
+}
+.power-btn-off:hover {
+  background-color: #218838;
+}
 .placement-preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   background-color: rgba(0, 242, 255, 0.3); border: 1px solid #00f2ff;
