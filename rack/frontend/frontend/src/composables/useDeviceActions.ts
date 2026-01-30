@@ -13,7 +13,6 @@ export function useDeviceActions() {
     const baseUrl = (typeof window !== 'undefined' && (window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL) || '';
     const appUrl = (typeof window !== 'undefined' && (window as unknown as { APP_URL?: string }).APP_URL) || '';
 
-    // 1. URL Navigation Actions (跳转逻辑)
     if (['details', 'edit', 'rename', 'clone'].includes(action)) {
       let route = '';
       const typeMap: Record<string, string> = {
@@ -47,7 +46,7 @@ export function useDeviceActions() {
       isActionLoading.value = true;
       try {
         const response = await axios.get(
-          `${appUrl}perform/${action}/${subAction}/${device.name}`
+          `${appUrl}/perform/${action}/${subAction}/${device.name}`
         );
         return {
           success: true,

@@ -10,7 +10,7 @@ menuVisible<template>
             type="button"
             @click="showDropdown1 = !showDropdown1"
           >
-            {{ metric1 ? metric1 : 'Select 1st Metric' }}
+            {{ metric1 ? metric1 : 'No Scale' }}
           </button>
 
           <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block; position: absolute; z-index: 1000;">
@@ -25,10 +25,10 @@ menuVisible<template>
           </ul>
         </div>
 
-        <div v-if="metric1" class="d-flex align-items-center gap-2 fade-in">
+        <div class="d-flex align-items-center gap-2">
           <span class="text-muted small">{{ range1?.min ?? 0 }}</span>
-          <div class="legend-bar"></div>
-          <span class="text-muted small">{{ range1?.max ?? 100 }}</span>
+          <div :class="metric1 ? 'legend-bar' : 'legend-bar-empty'"></div>
+          <span class="text-muted small">{{ range1?.max ?? 90 }}</span>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ menuVisible<template>
             type="button"
             @click="showDropdown2 = !showDropdown2"
           >
-            {{ metric2 ? metric2 : 'Select 2nd Metric' }}
+            {{ metric2 ? metric2 : 'No Scale' }}
           </button>
 
           <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block; position: absolute; z-index: 1000;">
@@ -54,10 +54,10 @@ menuVisible<template>
           </ul>
         </div>
 
-        <div v-if="metric2" class="d-flex align-items-center gap-2 fade-in">
+        <div class="d-flex align-items-center gap-2">
           <span class="text-muted small">{{ range2?.min ?? 0 }}</span>
-          <div class="legend-bar"></div>
-          <span class="text-muted small">{{ range2?.max ?? 100 }}</span>
+          <div :class="metric2 ? 'legend-bar' : 'legend-bar-empty'"></div>
+          <span class="text-muted small">{{ range2?.max ?? 90 }}</span>
         </div>
       </div>
 
@@ -127,6 +127,14 @@ const selectMetric2 = (val: string | null) => {
   width: 250px;
   height: 20px;
   background: linear-gradient(120deg, hsl(246, 100%, 50%),hsl(129, 95%, 43%),hsl(62, 93%, 46%), hsl(0, 100%, 50%));
+  border: 1px solid #ddd;
+  border-radius: 2px;
+}
+
+.legend-bar-empty {
+  width: 250px;
+  height: 20px;
+  background: #f0f0f0;
   border: 1px solid #ddd;
   border-radius: 2px;
 }

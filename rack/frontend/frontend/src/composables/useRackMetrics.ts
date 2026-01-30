@@ -28,8 +28,8 @@ const QUERY_MAP: Record<string, string> = {
 export function useRackMetrics() {
   //@ts-ignore
   const prome_url = window.PROMETHEUS_URL;
-  const metric1 = ref<string | null>('No Scale');
-  const metric2 = ref<string | null>('No Scale');
+  const metric1 = ref<string | null>(null);
+  const metric2 = ref<string | null>(null);
   const metricDataMap = ref<Record<string, Record<string, number>>>({});
 
   const metric1Range = ref<MetricRange>({ min: 0, max: 100 });

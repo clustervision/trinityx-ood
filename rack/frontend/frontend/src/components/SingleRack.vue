@@ -131,6 +131,11 @@ const hasSwitch = computed(() => {
   );
 });
 
+const truncatedRackName = computed(() => {
+  const name = props.rack?.name || '';
+  return name.length > 10 ? name.slice(0, 10) + '...' : name;
+});
+
 const powerButtonTooltip = computed(() => {
   const baseState = props.rack.powerOn
     ? 'Click to Turn Off (Power is ON)'
@@ -509,7 +514,7 @@ const clearPreview = () => {
 
           <div class="d-flex align-items-center position-relative" style="z-index: 4;">
             <span class="u-header-label">U</span>
-            <span class="rack-title text-white">{{ rack.name }}</span>
+            <span class="rack-title text-white" :title="rack.name">{{ truncatedRackName }}</span>
           </div>
           <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
               <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
@@ -590,7 +595,7 @@ const clearPreview = () => {
 
           <div class="d-flex align-items-center position-relative" style="z-index: 4;">
             <span class="u-header-label">U</span>
-            <span class="rack-title text-white">{{ rack.name }}</span>
+            <span class="rack-title text-white" :title="rack.name">{{ truncatedRackName }}</span>
           </div>
           <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
               <template v-if="rack.showFrontSide === false">
