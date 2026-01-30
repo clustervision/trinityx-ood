@@ -4,7 +4,7 @@ menuVisible<template>
     <div class="d-flex flex-column gap-3">
 
       <div class="d-flex align-items-center gap-3">
-        <div class="dropdown">
+        <div class="dropdown" ref="dropdown1Ref">
           <button
             class="btn dropdown-toggle text-white custom-btn-cyan"
             type="button"
@@ -33,7 +33,7 @@ menuVisible<template>
       </div>
 
       <div class="d-flex align-items-center gap-3">
-        <div class="dropdown">
+        <div class="dropdown" ref="dropdown2Ref">
           <button
             class="btn dropdown-toggle text-white btn-secondary custom-btn-width"
             type="button"
@@ -66,7 +66,7 @@ menuVisible<template>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps<{
   metric1: string | null;
@@ -86,6 +86,27 @@ const emit = defineEmits(['update:metric1', 'update:metric2', 'refresh']);
 
 const showDropdown1 = ref(false);
 const showDropdown2 = ref(false);
+const dropdown1Ref = ref<HTMLElement | null>(null);
+const dropdown2Ref = ref<HTMLElement | null>(null);
+
+// Close dropdowns when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as Node;
+  if (dropdown1Ref.value && !dropdown1Ref.value.contains(target)) {
+    showDropdown1.value = false;
+  }
+  if (dropdown2Ref.value && !dropdown2Ref.value.contains(target)) {
+    showDropdown2.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 // Update type to allow null (for Reset functionality)
 const selectMetric1 = (val: string | null) => {
