@@ -695,16 +695,16 @@ const clearPreview = () => {
   color: #fff;
   font-size: 10px;
 }
-.power-btn-on {
+.power-btn-off {
   background-color: #dc3545;
 }
-.power-btn-on:hover {
+.power-btn-off:hover {
   background-color: #c82333;
 }
-.power-btn-off {
+.power-btn-on {
   background-color: #28a745;
 }
-.power-btn-off:hover {
+.power-btn-on:hover {
   background-color: #218838;
 }
 .placement-preview {

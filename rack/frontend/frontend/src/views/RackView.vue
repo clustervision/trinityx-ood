@@ -14,7 +14,7 @@ const { isDarkMode, toggleTheme, setTheme } = useTheme();
 const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
 const toast = useToast();
 const racks = ref<Rack[]>([]);
-const { fetchSingleRack, handleRackDrop} = useRack();
+const { fetchSingleRack, handleRackDrop, syncRackPowerFromNodes } = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 const loadingRackName = ref('');
 
@@ -183,6 +183,7 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
            r.slots.forEach(slot => {
              slot.devices = slot.devices.filter(d => d.name !== deviceName);
            });
+           syncRackPowerFromNodes(r);
          }
        });
     },

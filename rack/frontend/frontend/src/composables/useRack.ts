@@ -178,5 +178,5 @@ export function useRack() {
     }
   };
 
-  return { fetchSingleRack, placeDeviceInRack, handleRackDrop };
+  return { fetchSingleRack, placeDeviceInRack, handleRackDrop, syncRackPowerFromNodes };
 }
