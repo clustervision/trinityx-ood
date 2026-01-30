@@ -26,9 +26,9 @@ menuVisible<template>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">{{ range1?.min ?? 0 }}</span>
+          <span class="text-muted small">0</span>
           <div :class="metric1 ? 'legend-bar' : 'legend-bar-empty'"></div>
-          <span class="text-muted small">{{ range1?.max ?? 90 }}</span>
+          <span class="text-muted small">{{ metric1 ? (range1?.max ?? 100) : 100 }}</span>
         </div>
       </div>
 
@@ -55,9 +55,9 @@ menuVisible<template>
         </div>
 
         <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">{{ range2?.min ?? 0 }}</span>
+          <span class="text-muted small">0</span>
           <div :class="metric2 ? 'legend-bar' : 'legend-bar-empty'"></div>
-          <span class="text-muted small">{{ range2?.max ?? 90 }}</span>
+          <span class="text-muted small">{{ metric2 ? (range2?.max ?? 100) : 100 }}</span>
         </div>
       </div>
 
