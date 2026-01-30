@@ -40,6 +40,16 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {
+      // Update device power state for LED blinking
+      if (action === 'power') {
+        if (subAction === 'on') {
+          device.powerState = 'ON';
+        } else if (subAction === 'off') {
+          device.powerState = 'OFF';
+        }
+        // Update rack power button state based on all devices
+        updateRackPowerState();
+      }
       alert(result.message);
     }
   } catch {
@@ -47,6 +57,21 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   } finally {
     isActionLoading.value = false;
   }
+};
+
+const updateRackPowerState = () => {
+  let anyNodeOn = false;
+  for (const slot of props.rack.slots) {
+    for (const device of slot.devices) {
+      if (device.type === 'node' && device.powerState === 'ON') {
+        anyNodeOn = true;
+        break;
+      }
+    }
+    if (anyNodeOn) break;
+  }
+  props.rack.powerOn = anyNodeOn;
+  props.rack.backPowerOn = anyNodeOn;
 };
 
 
