@@ -486,7 +486,7 @@ code {
 
   /* Servers Skins Depends on the size and availability.  */
 
-.noname {
+/* .noname {
   background-image: url('@/assets/img/noname.png');
 }
 .noname span {
@@ -525,7 +525,7 @@ code {
   background-size: 218px  88px;
 }
 
-/* .supermicro-4 {
+.supermicro-4 {
   background-image: url('/img/supermicro-4.png');
   background-size: 218px  118px;
 } */
@@ -547,7 +547,7 @@ code {
 }
 
 
-
+/*
 .asus-1 {
   background-image: url('@/assets/img/asus-1.png');
   background-size: 218px  28px;
@@ -566,7 +566,7 @@ code {
 .asus-4 {
   background-image: url('@/assets/img/asus-4.png');
   background-size: 218px  118px;
-}
+} */
 
 .asus-1 span {
   color: #ffffff;
@@ -584,7 +584,7 @@ code {
   color: #ffffff;
 }
 
-
+/*
 .dell-1 {
   background-image: url('@/assets/img/dell-1.png');
   background-size: 218px  28px;
@@ -598,7 +598,7 @@ code {
 .dell-4 {
   background-image: url('@/assets/img/dell-4.png');
   background-size: 218px  118px;
-}
+} */
 
 .dell-1 span {
   color: #ffffff;
@@ -612,7 +612,7 @@ code {
   color: #ffffff;
 }
 
-
+/*
 .gigabyte-1 {
   background-image: url('@/assets/img/gigabyte-1.png');
   background-size: 218px  28px;
@@ -626,7 +626,7 @@ code {
 .gigabyte-4 {
   background-image: url('@/assets/img/gigabyte-4.png');
   background-size: 218px  118px;
-}
+} */
 
 .gigabyte-1 span {
   color: #ffffff;
@@ -640,7 +640,7 @@ code {
   color: #ffffff;
 }
 
-
+/*
 .hp-1 {
   background-image: url('@/assets/img/hp-1.png');
   background-size: 218px  28px;
@@ -654,7 +654,7 @@ code {
 .hp-4 {
   background-image: url('@/assets/img/hp-4.png');
   background-size: 218px  118px;
-}
+} */
 
 .hp-1 span {
   color: #ffffff;
