@@ -8,8 +8,20 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 import { useTheme } from '@/composables/useTheme';
+import switchOnImg from '@/assets/img/switch-on.png';
+import switchOffImg from '@/assets/img/switch-off.png';
+import switchMiddleImg from '@/assets/img/switch-middle.png';
 
 const { isDarkMode, toggleTheme, setTheme } = useTheme();
+const lightSwitchAnimating = ref(false);
+
+const onLightSwitchClick = () => {
+  lightSwitchAnimating.value = true;
+  toggleTheme();
+  setTimeout(() => {
+    lightSwitchAnimating.value = false;
+  }, 40);
+};
 
 const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
 const toast = useToast();
@@ -205,22 +217,23 @@ onUnmounted(() => {
   <div class="container-fluid flex-grow-1 container-p-y">
     <div class="card-body position-relative"> <div style="position: absolute; right: 80px; top: 55px; z-index: 10;">
     <button
-      class="btn fw-bold"
+      class="btn fw-bold flip-view-btn"
       :class="isBackViewMode ? 'btn-custom-grey': 'btn-dark'"
       @click="toggleGlobalView"
-      style="font-size: 12px; padding: 4px 15px;"
     >
       {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
     </button>
-    <button
-          class="btn fw-bold"
-          :class="isDarkMode ? 'btn-light' : 'btn-secondary'"
-          @click="toggleTheme"
-          style="font-size: 12px; padding: 4px 15px;"
+    <span
+          class="light-switch-btn"
+          :title="isDarkMode ? 'Light On (click to turn off blinking)' : 'Light Off (click to turn on blinking)'"
+          @click="onLightSwitchClick"
         >
-          <i class='bx' :class="isDarkMode ? 'bx-sun' : 'bx-moon'"></i>
-          {{ isDarkMode ? 'Light On' : 'Light Off' }}
-        </button>
+          <img
+            :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOnImg : switchOffImg)"
+            :alt="isDarkMode ? 'Light On' : 'Light Off'"
+            class="light-switch-img"
+          />
+        </span>
   </div>
       <RackMetricsHeader v-model:metric1="metric1"
        v-model:metric2="metric2"
@@ -258,5 +271,40 @@ onUnmounted(() => {
 
 .btn-custom-grey:hover {
   background-color: #bebebe;
+}
+
+.flip-view-btn {
+  font-size: 11px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.light-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 90px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  vertical-align: middle;
+}
+
+.light-switch-btn:hover {
+  transform: scale(1.05);
+}
+
+.light-switch-img {
+  height: 90px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: opacity 0.08s ease;
+}
+
+.light-switch-btn:active .light-switch-img {
+  opacity: 0.9;
 }
 </style>
