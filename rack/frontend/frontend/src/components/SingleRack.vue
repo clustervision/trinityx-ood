@@ -47,6 +47,9 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
         } else if (subAction === 'off') {
           device.powerState = 'OFF';
         }
+        else if (subAction === 'reset') {
+          device.powerState = 'RESET';
+        }
         // Update rack power button state based on all devices
         updateRackPowerState();
       }
@@ -60,10 +63,12 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
 };
 
 const updateRackPowerState = () => {
+  // Check if any node device is ON or RESET (treat RESET as ON, case-insensitive)
   let anyNodeOn = false;
   for (const slot of props.rack.slots) {
     for (const device of slot.devices) {
-      if (device.type === 'node' && device.powerState === 'ON') {
+      const state = (device.powerState || '').toUpperCase();
+      if (device.type === 'node' && (state === 'ON' || state === 'RESET')) {
         anyNodeOn = true;
         break;
       }
@@ -77,11 +82,15 @@ const updateRackPowerState = () => {
 
 const LED_COLORS = ['#28c76f', '#00cfe8', '#ff9f43', '#00e676', '#00b0ff'];
 
-/** Node + powerState ON: blinking LEDs. Node + OFF: no LEDs. Controller/switch/no-type: always blinking LEDs. */
+/** Node + powerState ON/RESET: blinking LEDs. Node + OFF: no LEDs. Controller/switch/no-type: always blinking LEDs. */
 const getDeviceLeds = (device: Device): Array<{ left: string; top: string; color: string; animationDuration: string; animationDelay: string; blinking: boolean }> => {
   const type = (device.type || '').toLowerCase();
   const isNode = type === 'node';
-  const powerOn = device.powerState === 'ON';
+  // Treat RESET as ON for LED display (case-insensitive)
+  const state = (device.powerState || '').toUpperCase();
+  const powerOn = state === 'ON' || state === 'RESET';
+  
+  console.log(`getDeviceLeds for ${device.name}: type=${type}, isNode=${isNode}, powerState=${device.powerState}, state=${state}, powerOn=${powerOn}, will return ${isNode && !powerOn ? 0 : 'many'} LEDs`);
 
   if (isNode && !powerOn) return [];
 
@@ -344,14 +353,31 @@ const checkPowerStatus = async () => {
           slot.devices.forEach(device => {
             const item = data.message.find((m: any) => (m.node || m.name) === device.name);
             if (item) {
-              const isOn = String(item.state || item).toUpperCase() === 'ON';
-              device.powerState = isOn ? 'ON' : 'OFF';
+              let stateStr = String(item.state || item).toUpperCase();
+              // Extract actual state from "success with unparsable output: RESET" format
+              if (stateStr.includes('RESET')) {
+                stateStr = 'RESET';
+              } else if (stateStr.includes('ON')) {
+                stateStr = 'ON';
+              } else if (stateStr.includes('OFF')) {
+                stateStr = 'OFF';
+              }
+              // Handle RESET state from backend
+              device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
+              console.log(`Device ${device.name}: raw state = ${item.state || item}, normalized = ${stateStr}, final powerState = ${device.powerState}`);
             }
           });
         });
-        const isAnyDeviceOn = data.message.some((item: any) =>
-          String(item.state || item).toUpperCase() === 'ON'
-        );
+        const isAnyDeviceOn = data.message.some((item: any) => {
+          let stateStr = String(item.state || item).toUpperCase();
+          // Extract actual state from "success with unparsable output: RESET" format
+          if (stateStr.includes('RESET')) {
+            stateStr = 'RESET';
+          } else if (stateStr.includes('ON')) {
+            stateStr = 'ON';
+          }
+          return stateStr === 'ON' || stateStr === 'RESET';
+        });
         props.rack.powerOn = isAnyDeviceOn;
         props.rack.backPowerOn = isAnyDeviceOn;
       }
@@ -377,12 +403,31 @@ const checkPowerStatus = async () => {
         slot.devices.forEach(device => {
           const item = list.find((d) => d.name === device.name);
           if (item) {
-            const isOn = String(item.state).toUpperCase() === 'ON';
-            device.powerState = isOn ? 'ON' : 'OFF';
+            let stateStr = String(item.state).toUpperCase();
+            // Extract actual state from "success with unparsable output: RESET" format
+            if (stateStr.includes('RESET')) {
+              stateStr = 'RESET';
+            } else if (stateStr.includes('ON')) {
+              stateStr = 'ON';
+            } else if (stateStr.includes('OFF')) {
+              stateStr = 'OFF';
+            }
+            // Handle RESET state from backend
+            device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
+            console.log(`Device ${device.name}: raw state = ${item.state}, normalized = ${stateStr}, final powerState = ${device.powerState}`);
           }
         });
       });
-      const isAnyDeviceOn = list.some((d) => String(d.state).toUpperCase() === 'ON');
+      const isAnyDeviceOn = list.some((d) => {
+        let stateStr = String(d.state).toUpperCase();
+        // Extract actual state from "success with unparsable output: RESET" format
+        if (stateStr.includes('RESET')) {
+          stateStr = 'RESET';
+        } else if (stateStr.includes('ON')) {
+          stateStr = 'ON';
+        }
+        return stateStr === 'ON' || stateStr === 'RESET';
+      });
       props.rack.powerOn = isAnyDeviceOn;
       props.rack.backPowerOn = isAnyDeviceOn;
       source.close();

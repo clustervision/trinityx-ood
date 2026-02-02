@@ -16,10 +16,13 @@ export function useRack() {
     return order === 'ascending' ? slots : slots.reverse();
   };
 
-  /** Update rack power button state from nodes only (controller/switch/other types ignored). */
+  /** Update rack power button state from nodes only. Treat RESET as ON (case-insensitive). */
   const syncRackPowerFromNodes = (rack: Rack) => {
     const hasNodeOn = rack.slots.some((s) =>
-      s.devices.some((d) => d.type === 'node' && d.powerState === 'ON')
+      s.devices.some((d) => {
+        const state = (d.powerState || '').toUpperCase();
+        return d.type === 'node' && (state === 'ON' || state === 'RESET');
+      })
     );
     rack.powerOn = hasNodeOn;
     rack.backPowerOn = hasNodeOn;
@@ -53,6 +56,9 @@ export function useRack() {
       d.height = existingHeight;
     }
 
+    // Normalize powerState to uppercase (backend may use powerState or power_state)
+    const rawState = d.powerState ?? d.power_state ?? '';
+    const stateUpper = String(rawState).toUpperCase();
     targetSlot.devices.push({
       name: deviceName,
       position,
@@ -61,7 +67,8 @@ export function useRack() {
       orientation: currentSide,
       vendor: d.vendor || null,
       status: 'ok',
-      powerState: d.powerState === 'ON' ? 'ON' : 'OFF'
+      // Preserve RESET state, otherwise treat as ON or OFF
+      powerState: stateUpper === 'ON' ? 'ON' : stateUpper === 'RESET' ? 'RESET' : 'OFF'
     });
   };
 
@@ -85,6 +92,7 @@ export function useRack() {
     if (data.devices) {
       data.devices.forEach((d: any) => placeDeviceInRack(rackObj, d));
     }
+    syncRackPowerFromNodes(rackObj);
     return rackObj;
   };
 
