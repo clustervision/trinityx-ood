@@ -1,0 +1,53 @@
+# 
+# This file is written to support the CI/CD process of Gitlab.
+# Author: Sumit Sharma
+# Maintainer: Sumit Sharma
+# E-mail: sumit.sharma@clustervision.com"
+# Status: Development
+# copyright: Copyright 2025, AlertX [AlertX]
+# license: GPL
+# 
+
+stages:
+  - production
+  - development
+
+variables:
+  #NODE_ENV: production
+  BUILD_DIR: dist
+
+production:
+  stage: production
+  image: node:20-alpine
+  only:
+    - main
+  script:
+    - npm install -g
+    - npm i typescript -g
+    - npm i vite -g
+    - npm i vue-tsc -g
+    - npm i npm-run-all -g
+    - npm ci --omit-dev
+    - npm run build
+    - cd $BUILD_DIR
+    - tar -zcvf rack-gui-1.0.latest.tar.gz *
+    - apk add openssh-client sshpass
+    - sshpass -p $SSH_PASSWORD scp -r -oStrictHostKeyChecking=no rack-gui-1.0.latest.tar.gz $SSH_USER@$IPADDRESS:$LOCATION
+
+development:
+  stage: development
+  image: node:20-alpine
+  only:
+    - development
+  script:
+    - npm install -g
+    - npm i typescript -g
+    - npm i vite -g
+    - npm i vue-tsc -g
+    - npm i npm-run-all -g
+    - npm ci --omit-dev
+    - npm run build
+    - cd $BUILD_DIR
+    - tar -zcvf rack-gui-1.0.latest.tar.gz *
+    - apk add openssh-client sshpass
+    - sshpass -p $SSH_PASSWORD scp -r -oStrictHostKeyChecking=no rack-gui-1.0.latest.tar.gz $SSH_USER@$IPADDRESS:$DEV_LOCATION
