@@ -4,12 +4,12 @@
 }
 .grad {
   /* background-image: linear-gradient(to right, lightblue, green, yellow, orange, red); */
-  background: linear-gradient(to right, 
+  background: linear-gradient(to right,
       /* lightblue 0%,  */
-      blue 15%, 
-      green 25%, 
-      yellow 50%, 
-      orange 75%, 
+      blue 15%,
+      green 25%,
+      yellow 50%,
+      orange 75%,
       red 100%);
   width: 60%;
 }
@@ -43,7 +43,7 @@
   height: 100%;
   width:90%;
   margin-left: 5%;
-  margin-right: 5%; 
+  margin-right: 5%;
 }
 
 #devices .draggable{
@@ -342,7 +342,7 @@ code {
 .hp-4 span {
   color: #ffffff;
 }
- 
+
 
 /* Servers Skins Depends on the size and availability.  */
 
@@ -362,34 +362,34 @@ code {
     margin: 0;
     text-align: center;
   }
-  
+
   .ui-widget-content {
       border: null;
       background: #363636;
       color: #ffffff;
   }
-  
+
   #devices {
     background-color: rgb(203, 209, 209);
     height: 100%;
     width:90%;
     margin-left: 5%;
-    margin-right: 5%; 
+    margin-right: 5%;
   }
-  
+
   #devices .draggable{
     margin: 2%;
   }
-  
-  
+
+
   .ui-state-hover {
     border: 1px solid #cccccc;
     background: #067a19;
     font-weight:bolder;
     color: #ffffff;
   }
-  
-  
+
+
   .right-click {
     display: inline-block;
     text-align: center;
@@ -400,13 +400,13 @@ code {
     padding: 0;
     overflow: hidden; /* Clearfix to contain floated elements */
   }
-  
+
   .color_metric_2 {
     margin: 0;
     padding: 0;
     overflow: hidden; /* Clearfix to contain floated elements */
   }
-  
+
   code {
     font-size: 100%;
     height: 20px;
@@ -418,14 +418,14 @@ code {
   .row {
     flex-wrap: nowrap;
   }
-  
+
   .playground {
     display: inline-block;
     float: none;
     margin-right: 30px;
   }
-  
-  
+
+
   .rack-pillar {
     width: 15px;
     background-color: #3a3a3a;
@@ -444,7 +444,7 @@ code {
     color:#000000;
     font-size:small;
   }
-  
+
   .rack-pillar-front {
     width: 15px;
     background-color: #cecece;
@@ -463,7 +463,7 @@ code {
     color:#000000;
     font-size:small;
   }
-  
+
   .rack-unit {
     width: 25px;
     height: 30px;
@@ -525,10 +525,10 @@ code {
   background-size: 218px  88px;
 }
 
-.supermicro-4 {
+/* .supermicro-4 {
   background-image: url('/img/supermicro-4.png');
   background-size: 218px  118px;
-}
+} */
 
 .supermicro-1 span {
   color: #ffffff;

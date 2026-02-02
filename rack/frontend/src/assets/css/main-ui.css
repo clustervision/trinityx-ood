@@ -112,7 +112,7 @@
 }
 
 
-.ui-touch-feedback-icon {
+/* .ui-touch-feedback-icon {
    background-image: url('../img/touch_sprite_feedback.png');
    width: 300px;
    height: 120px;
@@ -156,7 +156,7 @@
    background: url('../img/touch_sprite_feedback.png') -212px -10px no-repeat;
    width: 27px;
    height: 100px;
-}
+} */
 
 .trackPad-cursor {
    background: none !important;
