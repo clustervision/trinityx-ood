@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted,watch, useAttrs } from 'vue';
+import { ref, reactive, onMounted,watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 

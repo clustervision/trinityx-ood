@@ -21,11 +21,6 @@
 
 @media only screen and (max-width: 1920px) {
 
-  .rack_button {
-    padding: 1px 2px;
-    font-size: 7px;
-  }
-
 .draggable {
   height: 10px;
   padding: 0;
@@ -95,59 +90,6 @@ code {
   flex-wrap: nowrap;
 }
 
-.playground {
-  display: inline-block;
-  float: none;
-  margin-right: 30px;
-}
-
-
-.rack-pillar {
-  width: 5px;
-  background-color: #3a3a3a;
-  color:#ffffff;
-  padding: 1%;
-}
-.rack-base {
-  width: 160px;
-  height: 5px;
-  background-color: #3a3a3a;
-  color:#ffffff;
-}
-.rack-name {
-  width: 120px;
-  background-color: #bebebe;
-  color:#000000;
-  font-size: xx-small;
-}
-
-.rack-pillar-front {
-  width: 5px;
-  background-color: #cecece;
-  color:#000000;
-  padding: 1%;
-}
-.rack-base-front {
-  width: 160px;
-  height: 5px;
-  background-color: #cecece;
-  color:#000000;
-}
-.rack-name-front {
-  width: 120px;
-  background-color: #e7e7e7;
-  color:#000000;
-  font-size: xx-small;
-}
-
-.rack-unit {
-  width: 15px;
-  height: 15px;
-  background-color: #aaaaaa;
-  color:#000000;
-  padding: 0%;
-  font-size: xx-small;
-}
 .rack-slot {
   width: 120px;
   height: 15px;
@@ -158,10 +100,24 @@ code {
 .rack-slot p {
   margin: 0;
 }
-
 }
 
-/* ------------ Small Screen View ----------------- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /* ------------ Large Screen View ----------------- */
@@ -174,49 +130,6 @@ code {
     text-align: center;
   }
 
-  .ui-widget-content {
-      border: null;
-      background: #363636;
-      color: #ffffff;
-  }
-
-  #devices {
-    background-color: rgb(203, 209, 209);
-    height: 100%;
-    width:90%;
-    margin-left: 5%;
-    margin-right: 5%;
-  }
-
-  #devices .draggable{
-    margin: 2%;
-  }
-
-
-  .ui-state-hover {
-    border: 1px solid #cccccc;
-    background: #067a19;
-    font-weight:bolder;
-    color: #ffffff;
-  }
-
-
-  .right-click {
-    display: inline-block;
-    text-align: center;
-  }
-
-  .color_metric_1 {
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Clearfix to contain floated elements */
-  }
-
-  .color_metric_2 {
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Clearfix to contain floated elements */
-  }
 
   code {
     font-size: 100%;
@@ -230,58 +143,6 @@ code {
     flex-wrap: nowrap;
   }
 
-  .playground {
-    display: inline-block;
-    float: none;
-    margin-right: 30px;
-  }
-
-
-  .rack-pillar {
-    width: 15px;
-    background-color: #3a3a3a;
-    color:#ffffff;
-    padding: 1%;
-  }
-  .rack-base {
-    width: 300px;
-    height: 15px;
-    background-color: #3a3a3a;
-    color:#ffffff;
-  }
-  .rack-name {
-    width: 220px;
-    background-color: #bebebe;
-    color:#000000;
-    font-size:small;
-  }
-
-  .rack-pillar-front {
-    width: 15px;
-    background-color: #cecece;
-    color:#000000;
-    padding: 1%;
-  }
-  .rack-base-front {
-    width: 300px;
-    height: 15px;
-    background-color: #cecece;
-    color:#000000;
-  }
-  .rack-name-front {
-    width: 220px;
-    background-color: #e7e7e7;
-    color:#000000;
-    font-size:small;
-  }
-
-  .rack-unit {
-    width: 25px;
-    height: 30px;
-    background-color: #aaaaaa;
-    color:#000000;
-    padding: 1%;
-  }
   .rack-slot {
     width: 220px;
     height: 30px;
@@ -295,9 +156,5 @@ code {
 
 
 
-
 }
 
-/* ------------ Large Screen View ----------------- */
-
-/* ------------ Introducing Media Query to Make Large and Small Layouts for Rack and it's components. ----------------- */

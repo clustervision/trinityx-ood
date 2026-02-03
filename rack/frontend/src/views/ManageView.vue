@@ -92,7 +92,6 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
 import {useToast} from "vue-toastification"
-import type { I } from 'vue-router/dist/router-CWoNjPRp.mjs';
 
 //@ts-ignore
 const Url = window.APP_URL;
