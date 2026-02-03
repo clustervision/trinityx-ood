@@ -112,52 +112,6 @@
 }
 
 
-.ui-touch-feedback-icon {
-   background-image: url('../img/touch_sprite_feedback.png');
-   width: 300px;
-   height: 120px;
-   position: absolute;
-   left: -9999px;
-   top: -9999px;
-   z-index: 2;
-}
-
-.feedback-container {
-   z-index: 2;
-   position: absolute;
-   display: none;
-}
-
-.feedback-container.cursor-icon {
-   background: url('../img/touch_sprite_feedback.png') -260px -15px no-repeat;
-   width: 17px;
-   height: 23px;
-}
-
-.feedback-container.tap-icon {
-   background: url('../img/touch_sprite_feedback.png') -300px -15px no-repeat;
-   width: 36px;
-   height: 36px;
-}
-
-.feedback-container.drag-icon {
-   background: url('../img/touch_sprite_feedback.png') -10px -10px no-repeat;
-   width: 100px;
-   height: 100px;
-}
-
-.feedback-container.pulse-icon {
-   background: url('../img/touch_sprite_feedback.png') -111px -10px no-repeat;
-   width: 100px;
-   height: 100px;
-}
-
-.feedback-container.scroll-icon {
-   background: url('../img/touch_sprite_feedback.png') -212px -10px no-repeat;
-   width: 27px;
-   height: 100px;
-}
-
 .trackPad-cursor {
    background: none !important;
 }
