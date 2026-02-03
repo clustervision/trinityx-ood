@@ -8,9 +8,9 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 import { useTheme } from '@/composables/useTheme';
-import switchOnImg from '@/assets/img/switch-on.png';
-import switchOffImg from '@/assets/img/switch-off.png';
-import switchMiddleImg from '@/assets/img/switch-middle.png';
+import switchOnImg from '@/assets/img/Switch-on.png';
+import switchOffImg from '@/assets/img/Switch-off.png';
+import switchMiddleImg from '@/assets/img/Switch-middle.png';
 
 const { isDarkMode, toggleTheme, setTheme } = useTheme();
 const lightSwitchAnimating = ref(false);
