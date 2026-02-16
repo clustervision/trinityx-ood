@@ -41,7 +41,6 @@ from rest import Rest
 from constant import LICENSE, TOKEN_FILE, APP_STATE, APP_KEY
 from log import Log
 from helper import Helper
-from multiprocessing import Process
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -64,6 +63,7 @@ if APP_STATE is False: # FOR Development Only
     CORS(app, resources = {r"/perform/*":           {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/license":             {"origins": "http://localhost:5173"}} )
     CORS(app, resources = {r"/rack_power/*":        {"origins": "*"}} )
+
 
 @app.before_request
 def validate_home_directory():
