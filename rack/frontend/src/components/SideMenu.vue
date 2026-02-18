@@ -37,12 +37,21 @@
         <ul
           class="menu-sub ps-3 pe-3 pt-2"
           v-show="showUnassigned"
-          style="display: block; list-style: none; min-height: 520px; border: 2px dashed #ddd; width: 240px"
+          style="display: block; list-style: none; min-height: 120px; max-height: 520px; border: 2px dashed #ddd; width: 240px; flex-direction: column;"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
-          <div v-if="UnassignedNodes.length > 0">
-             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;" :title="device.name">
+          <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-header">
+            <input
+              v-model="unassignedSearch"
+              type="text"
+              class="form-control form-control-sm mb-2"
+              placeholder="Search devices..."
+              style="width: 100%; font-size: 12px;"
+            />
+          </div>
+          <div class="unassigned-pool-list" v-if="UnassignedNodes.length > 0">
+             <div v-for="device in filteredUnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;" :title="device.name">
                 <DeviceItem
                   :device="device"
                   :is-rack-view="false"
@@ -63,15 +72,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import { useToast } from 'vue-toastification';
-//@ts-ignore
+// @ts-ignore
 const Url = window.APP_URL;
 const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true);
-const toast = useToast()
+const unassignedSearch = ref('');
+const toast = useToast();
+
+const filteredUnassignedNodes = computed(() => {
+  const q = unassignedSearch.value.trim().toLowerCase();
+  if (!q) return UnassignedNodes.value;
+  return UnassignedNodes.value.filter((d) => (d.name || '').toLowerCase().includes(q));
+});
 const emit = defineEmits(['change-view', 'pool-updated']);
 
 const fetchUnassignedNodes = async () => {
@@ -139,5 +155,14 @@ onMounted(() => {
 <style scoped>
   .layout-menu { width: 250px !important; min-width: 250px !important; max-width: 250px !important; }
   .menu-item .router-link-active { background-color: rgba(67, 89, 113, 0.1); color: #696cff; font-weight: bold; }
-  .menu-sub { transition: all 0.3s ease; background-color: transparent; }
+  .menu-sub { transition: all 0.3s ease; background-color: transparent; display: flex; flex-direction: column; overflow: hidden; }
+  .unassigned-pool-header { flex-shrink: 0; }
+  .unassigned-pool-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    max-height: 420px;
+    -webkit-overflow-scrolling: touch;
+  }
 </style>
