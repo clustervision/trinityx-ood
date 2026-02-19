@@ -119,13 +119,30 @@ const deleteItem = async (item: any) => {
   if (!confirm(confirmText)) return;
 
   const previousItems = [...items.value];
+
+  if (props.pageType === 'rack') {
+    try {
+      const rackRes = await axios.get(Url + `/show_rack/${item.name}`);
+      const rackData = rackRes.data?.message;
+      const devices = rackData?.devices;
+      const hasDevices = Array.isArray(devices) && devices.length > 0;
+      if (hasDevices) {
+        toast.error(`Cannot delete Rack ${item.name}: it has devices. Remove all devices first.`);
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to check rack contents", e);
+      toast.error("Could not verify rack contents.");
+      return;
+    }
+  }
+
   items.value = items.value.filter(i => String(i.name) !== String(item.name));
 
   try {
     const timestamp = new Date().getTime();
 
     if (props.pageType === 'rack') {
-
       const deleteUrl = Url + `/delete_rack/${item.name}?t=${timestamp}`;
       await axios.get(deleteUrl);
       toast.success(`Rack ${item.name} is deleted.`);
@@ -149,9 +166,9 @@ const deleteItem = async (item: any) => {
     console.log("Action confirmed by backend.");
 
   } catch (e: any) {
-       console.error("Action failed", e);
-       items.value = previousItems;
-       alert("Failed to process request.");
+    console.error("Action failed", e);
+    items.value = previousItems;
+    toast.error("Failed to process request.");
   }
 };
 

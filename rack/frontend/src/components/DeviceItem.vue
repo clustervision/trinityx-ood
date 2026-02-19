@@ -55,9 +55,11 @@ import { useRackSizing } from '@/composables/useRackSizing';
 import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
+import { useToast } from 'vue-toastification';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 
 const { isDarkMode } = useTheme();
+const toast = useToast();
 const { setDraggedDevice } = useDraggedDevice();
 const { executeDeviceAction } = useDeviceActions();
 const props = defineProps<{
@@ -98,10 +100,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {
-      alert(result.message);
+      toast.success(result.message);
     }
   } catch {
-    alert('Action failed');
+    toast.error('Action failed');
   }
 };
 

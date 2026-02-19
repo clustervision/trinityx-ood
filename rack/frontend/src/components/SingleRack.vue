@@ -53,10 +53,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
         // Update rack power button state based on all devices
         updateRackPowerState();
       }
-      alert(result.message);
+      toast.success(result.message);
     }
   } catch {
-    alert('Action failed');
+    toast.error('Action failed');
   } finally {
     isActionLoading.value = false;
   }
