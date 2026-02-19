@@ -215,31 +215,35 @@ onUnmounted(() => {
 
 <template>
   <div class="container-fluid flex-grow-1 container-p-y">
-    <div class="card-body position-relative"> <div style="position: absolute; right: 80px; top: 55px; z-index: 10;">
-    <button
-      class="btn fw-bold flip-view-btn"
-      :class="isBackViewMode ? 'btn-custom-grey': 'btn-dark'"
-      @click="toggleGlobalView"
-    >
-      {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
-    </button>
-    <span
-          class="light-switch-btn"
-          :title="isDarkMode ? 'Light On (click to turn off blinking)' : 'Light Off (click to turn on blinking)'"
-          @click="onLightSwitchClick"
-        >
-          <img
-            :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOnImg : switchOffImg)"
-            :alt="isDarkMode ? 'Light On' : 'Light Off'"
-            class="light-switch-img"
-          />
-        </span>
-  </div>
-      <RackMetricsHeader v-model:metric1="metric1"
-       v-model:metric2="metric2"
-       :range1="metric1Range"
+    <div class="card-body position-relative rack-view-header-wrap">
+      <RackMetricsHeader
+        v-model:metric1="metric1"
+        v-model:metric2="metric2"
+        :range1="metric1Range"
         :range2="metric2Range"
-        @refresh="loadRacks" />
+        @refresh="loadRacks"
+      >
+        <template #right>
+          <button
+            class="btn fw-bold flip-view-btn"
+            :class="isBackViewMode ? 'btn-custom-grey' : 'btn-dark'"
+            @click="toggleGlobalView"
+          >
+            {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
+          </button>
+          <span
+            class="light-switch-btn"
+            :title="isDarkMode ? 'Light On (click to turn off blinking)' : 'Light Off (click to turn on blinking)'"
+            @click="onLightSwitchClick"
+          >
+            <img
+              :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOnImg : switchOffImg)"
+              :alt="isDarkMode ? 'Light On' : 'Light Off'"
+              class="light-switch-img"
+            />
+          </span>
+        </template>
+      </RackMetricsHeader>
       <div class="card-body" :class="{ 'rack-view-dark': isDarkMode }" >
         <div class="racks-container">
           <SingleRack
@@ -262,6 +266,9 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.rack-view-header-wrap {
+  overflow: visible;
+}
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .btn-custom-grey {
   background-color: #d3d3d3;
@@ -274,22 +281,31 @@ onUnmounted(() => {
 }
 
 .flip-view-btn {
-  font-size: 11px;
-  padding: 4px 8px;
+  min-width: 200px;
+  height: 38px;
+  font-size: 14px;
+  padding: 0.375rem 0.75rem;
   white-space: nowrap;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .light-switch-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 90px;
-  padding: 0 8px;
+  height: 58px;
+  width: 58px;
+  padding: 0;
+  margin: 0;
   border: none;
   background: transparent;
   cursor: pointer;
   transition: transform 0.1s ease;
-  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .light-switch-btn:hover {
@@ -297,8 +313,9 @@ onUnmounted(() => {
 }
 
 .light-switch-img {
-  height: 90px;
+  height: 58px;
   width: auto;
+  max-width: 58px;
   object-fit: contain;
   display: block;
   transition: opacity 0.08s ease;
