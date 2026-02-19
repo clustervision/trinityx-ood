@@ -49,7 +49,15 @@
           <div class="row mb-3">
             <label class="col-sm-2 col-form-label">Size Of Rack</label>
             <div class="col-sm-10">
-              <input type="number" v-model="form.size" class="form-control" min="0" max="1000" required />
+              <input
+                type="number"
+                v-model="form.size"
+                class="form-control"
+                :min="hasDevices ? initialSize : 1"
+                max="1000"
+                required
+              />
+              <small v-if="hasDevices" class="text-muted">Cannot reduce size when rack has devices.</small>
             </div>
           </div>
 
@@ -84,6 +92,8 @@ const emit = defineEmits(['close']);
 
 const isSubmitting = ref(false);
 const errorMessage = ref('');
+const initialSize = ref(0);
+const hasDevices = ref(false);
 
 const form = reactive({
   name: '',
@@ -110,6 +120,9 @@ const loadRackData = async () => {
       form.room = rackData.room || '';
       form.order = (rackData.order || 'ascending').toLowerCase();
       form.size = rackData.size;
+      initialSize.value = Number(rackData.size) || 0;
+      const devices = rackData.devices;
+      hasDevices.value = Array.isArray(devices) && devices.length > 0;
     } else {
       errorMessage.value = `Rack '${rackName}' details not found.`;
     }
@@ -131,10 +144,15 @@ const submitForm = async () => {
   errorMessage.value = '';
 
   if (Number(form.size) <= 0) {
-      errorMessage.value = 'Rack Size must be greater than 0.';
-      isSubmitting.value = false;
-      return;
-    }
+    errorMessage.value = 'Rack Size must be greater than 0.';
+    isSubmitting.value = false;
+    return;
+  }
+  if (hasDevices.value && Number(form.size) < initialSize.value) {
+    errorMessage.value = 'Cannot reduce rack size when it already has devices.';
+    isSubmitting.value = false;
+    return;
+  }
 
   try {
     const params = new URLSearchParams();
