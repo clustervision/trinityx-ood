@@ -167,8 +167,8 @@ const submitForm = async () => {
     const response = await axios.post(Url + '/change_inventory', params);
 
     if (response.data.status) {
-      emit('inventory-updated'); // Ensure pool refreshes
-      emit('close');
+      emit('inventory-updated');
+      emit('close', { inventory: true });
       toast.success(`${form.name} Updated.`);
     } else {
       errorMessage.value = response.data.message || 'Update failed';

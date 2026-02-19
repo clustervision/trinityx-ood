@@ -139,11 +139,11 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
     u,
     side,
     (deviceName: string) => {
-       emit('device-taken', deviceName);
+      emit('device-taken', deviceName);
+      emit('pool-updated');
     },
     () => {
-
-       loadRackData();
+      loadRackData();
     }
   );
 };

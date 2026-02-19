@@ -147,7 +147,7 @@ const submitForm = async () => {
     const response = await axios.post(Url + '/change_rack', params);
 
     if (response.data.status) {
-      emit('close');
+      emit('close', { rack: true });
       toast.success(`Rack ${form.name} Updated.`);
     } else {
       errorMessage.value = response.data.message || "Update failed.";
