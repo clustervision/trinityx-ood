@@ -120,5 +120,19 @@ const refreshPoolData = () => syncAllViews();
 </template>
 
 <style>
-html, body, #app { height: 100%; margin: 0; }
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.layout-wrapper {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+.layout-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
 </style>

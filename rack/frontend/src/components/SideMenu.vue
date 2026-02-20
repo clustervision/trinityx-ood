@@ -28,16 +28,16 @@
         </a>
       </li>
 
-       <li class="menu-item open">
+       <li class="menu-item menu-item-pool open">
         <a href="javascript:void(0);" class="menu-link menu-toggle" @click="showUnassigned = !showUnassigned">
           <i class="menu-icon tf-icons bx bx-unlink"></i>
           <div data-i18n="Unassigned">Unassigned Device Pool</div>
         </a>
 
         <ul
-          class="menu-sub ps-3 pe-3 pt-2"
+          class="menu-sub menu-sub-pool ps-3 pe-3 pt-2"
           v-show="showUnassigned"
-          style="display: block; list-style: none; min-height: 120px; max-height: 520px; border: 2px dashed #ddd; width: 240px; flex-direction: column;"
+          style="list-style: none; border: 2px dashed #ddd; width: 240px;"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
@@ -197,16 +197,43 @@ onMounted(() => {
 </script>
 
 <style scoped>
-  .layout-menu { width: 250px !important; min-width: 250px !important; max-width: 250px !important; }
+  .layout-menu {
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .layout-menu .menu-inner {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
   .menu-item .router-link-active { background-color: rgba(67, 89, 113, 0.1); color: #696cff; font-weight: bold; }
-  .menu-sub { transition: all 0.3s ease; background-color: transparent; display: flex; flex-direction: column; overflow: hidden; }
+  .menu-item-pool {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-item-pool .menu-link { flex-shrink: 0; }
+  .menu-sub-pool {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: transparent;
+  }
   .unassigned-pool-header { flex-shrink: 0; }
   .unassigned-pool-list {
     overflow-y: auto;
     overflow-x: hidden;
-    flex: 1;
+    flex: 1 1 auto;
     min-height: 0;
-    max-height: 420px;
     -webkit-overflow-scrolling: touch;
   }
   .pool-device-wrap {
