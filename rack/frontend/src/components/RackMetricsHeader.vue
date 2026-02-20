@@ -1,38 +1,36 @@
-menuVisible<template>
-  <div class="card-header p-4 bg-white border-bottom">
-
-    <div class="d-flex flex-column gap-3">
-
-      <div class="d-flex align-items-center gap-3">
-        <div class="dropdown" ref="dropdown1Ref">
-          <button
-            class="btn dropdown-toggle text-white custom-btn-cyan"
-            type="button"
-            @click="showDropdown1 = !showDropdown1"
-          >
-            {{ metric1 ? metric1 : 'No Scale' }}
-          </button>
-
-          <ul class="dropdown-menu show" v-if="showDropdown1" style="display: block; position: absolute; z-index: 1000;">
-
+<template>
+  <div class="card-header p-4 bg-white border-bottom metrics-header">
+    <div class="metrics-grid">
+      <div class="metrics-row metrics-row-with-right">
+        <div class="metrics-main d-flex align-items-center gap-3">
+          <div class="dropdown" ref="dropdown1Ref">
+            <button
+              class="btn dropdown-toggle text-white custom-btn-cyan"
+              type="button"
+              @click="showDropdown1 = !showDropdown1"
+            >
+              {{ metric1 ? metric1 : 'No Scale' }}
+            </button>
+            <ul class="dropdown-menu show dropdown-menu-visible" v-if="showDropdown1">
               <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1(null)">No Scale</a></li>
-
               <template v-for="opt in metricOptions" :key="opt">
                 <li v-if="opt !== metric2">
-                  <a class="dropdown-item" href="#" @click.prevent="selectMetric1(opt)" style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt   }}</a>
+                  <a class="dropdown-item" href="#" @click.prevent="selectMetric1(opt)" style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt }}</a>
                 </li>
               </template>
-          </ul>
+            </ul>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">0</span>
+            <div :class="metric1 ? 'legend-bar' : 'legend-bar-empty'"></div>
+            <span class="text-muted small">{{ metric1 ? (range1?.max ?? 100) : 100 }}</span>
+          </div>
         </div>
-
-        <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">0</span>
-          <div :class="metric1 ? 'legend-bar' : 'legend-bar-empty'"></div>
-          <span class="text-muted small">{{ metric1 ? (range1?.max ?? 100) : 100 }}</span>
+        <div class="header-right-controls">
+          <slot name="right"></slot>
         </div>
       </div>
-
-      <div class="d-flex align-items-center gap-3">
+      <div class="metrics-row d-flex align-items-center gap-3">
         <div class="dropdown" ref="dropdown2Ref">
           <button
             class="btn dropdown-toggle text-white btn-secondary custom-btn-width"
@@ -41,26 +39,21 @@ menuVisible<template>
           >
             {{ metric2 ? metric2 : 'No Scale' }}
           </button>
-
-          <ul class="dropdown-menu show" v-if="showDropdown2" style="display: block; position: absolute; z-index: 1000;">
-
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2(null)">No Scale</a></li>
-
-              <template v-for="opt in metricOptions" :key="opt">
-                <li v-if="opt !== metric1">
-                  <a class="dropdown-item" href="#" @click.prevent="selectMetric2(opt)"style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt   }}</a>
-                </li>
-              </template>
+          <ul class="dropdown-menu show dropdown-menu-visible" v-if="showDropdown2">
+            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2(null)">No Scale</a></li>
+            <template v-for="opt in metricOptions" :key="opt">
+              <li v-if="opt !== metric1">
+                <a class="dropdown-item" href="#" @click.prevent="selectMetric2(opt)" style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt }}</a>
+              </li>
+            </template>
           </ul>
         </div>
-
         <div class="d-flex align-items-center gap-2">
           <span class="text-muted small">0</span>
           <div :class="metric2 ? 'legend-bar' : 'legend-bar-empty'"></div>
           <span class="text-muted small">{{ metric2 ? (range2?.max ?? 100) : 100 }}</span>
         </div>
       </div>
-
     </div>
   </div>
 </template>
@@ -121,7 +114,56 @@ const selectMetric2 = (val: string | null) => {
 </script>
 
 <style scoped>
-/* Your existing styles... */
+.metrics-header {
+  overflow: visible;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0.75rem 0;
+  overflow: visible;
+}
+.metrics-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: visible;
+}
+.metrics-row-with-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  overflow: visible;
+}
+.metrics-row-with-right .metrics-main {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.metrics-row-with-right .header-right-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-shrink: 0;
+}
+/* Dropdown not clipped: absolute + high z-index, parent overflow visible */
+.dropdown {
+  position: relative;
+}
+.dropdown-menu-visible {
+  position: absolute;
+  z-index: 1050;
+  display: block;
+  min-width: 10em;
+  max-height: 70vh;
+  overflow-y: auto;
+}
 .custom-btn-cyan {
   background-color: #00C4FF;
   border-color: #00C4FF;

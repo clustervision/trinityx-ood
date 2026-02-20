@@ -28,24 +28,43 @@
         </a>
       </li>
 
-       <li class="menu-item open">
+       <li class="menu-item menu-item-pool open">
         <a href="javascript:void(0);" class="menu-link menu-toggle" @click="showUnassigned = !showUnassigned">
           <i class="menu-icon tf-icons bx bx-unlink"></i>
           <div data-i18n="Unassigned">Unassigned Device Pool</div>
         </a>
 
         <ul
-          class="menu-sub ps-3 pe-3 pt-2"
+          class="menu-sub menu-sub-pool ps-3 pe-3 pt-2"
           v-show="showUnassigned"
-          style="display: block; list-style: none; min-height: 520px; border: 2px dashed #ddd; width: 240px"
+          style="list-style: none; border: 2px dashed #ddd; width: 240px;"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
-          <div v-if="UnassignedNodes.length > 0">
-             <div v-for="device in UnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;" :title="device.name">
+          <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-header">
+            <input
+              v-model="unassignedSearch"
+              type="text"
+              class="form-control form-control-sm mb-2"
+              placeholder="Search devices..."
+              style="width: 100%; font-size: 12px;"
+            />
+          </div>
+          <div class="unassigned-pool-list" v-if="UnassignedNodes.length > 0">
+             <div
+               v-for="device in filteredUnassignedNodes"
+               :key="device.name"
+               class="mb-2 pool-device-wrap"
+               :class="{ 'pool-device-selected': selectedPoolNames.has(device.name) }"
+               style="width: 138px;"
+               :title="device.name"
+               @click="onPoolDeviceClick($event, device)"
+             >
                 <DeviceItem
                   :device="device"
                   :is-rack-view="false"
+                  :selected="selectedPoolNames.has(device.name)"
+                  :selected-devices-for-drag="selectedDevicesForDrag"
                 />
              </div>
           </div>
@@ -63,15 +82,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import { useToast } from 'vue-toastification';
-//@ts-ignore
+// @ts-ignore
 const Url = window.APP_URL;
 const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true);
-const toast = useToast()
+const unassignedSearch = ref('');
+const toast = useToast();
+
+const filteredUnassignedNodes = computed(() => {
+  const q = unassignedSearch.value.trim().toLowerCase();
+  if (!q) return UnassignedNodes.value;
+  return UnassignedNodes.value.filter((d) => (d.name || '').toLowerCase().includes(q));
+});
+
+const selectedPoolNames = ref<Set<string>>(new Set());
+const selectedDevicesForDrag = computed(() =>
+  filteredUnassignedNodes.value.filter((d) => selectedPoolNames.value.has(d.name))
+);
+const onPoolDeviceClick = (event: MouseEvent, device: any) => {
+  if (event.ctrlKey || event.metaKey) {
+    const next = new Set(selectedPoolNames.value);
+    if (next.has(device.name)) next.delete(device.name);
+    else next.add(device.name);
+    selectedPoolNames.value = next;
+  } else {
+    selectedPoolNames.value = new Set([device.name]);
+  }
+};
+
+watch(
+  () => UnassignedNodes.value.map((n) => n.name),
+  (names) => {
+    const nameSet = new Set(names);
+    const next = new Set<string>();
+    selectedPoolNames.value.forEach((n) => {
+      if (nameSet.has(n)) next.add(n);
+    });
+    if (next.size !== selectedPoolNames.value.size) selectedPoolNames.value = next;
+  }
+);
+
 const emit = defineEmits(['change-view', 'pool-updated']);
 
 const fetchUnassignedNodes = async () => {
@@ -92,7 +146,13 @@ const fetchUnassignedNodes = async () => {
 const onDropBackToPool = async (event: DragEvent) => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
-  const device = JSON.parse(data);
+  const parsed = JSON.parse(data);
+
+  if (parsed.multi === true && Array.isArray(parsed.devices)) {
+    return;
+  }
+
+  const device = parsed;
   const isRack = 'size' in device || device.type === 'rack';
   if (device.dragSource === 'pool') return;
 
@@ -137,7 +197,51 @@ onMounted(() => {
 </script>
 
 <style scoped>
-  .layout-menu { width: 250px !important; min-width: 250px !important; max-width: 250px !important; }
+  .layout-menu {
+    width: 250px !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .layout-menu .menu-inner {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
   .menu-item .router-link-active { background-color: rgba(67, 89, 113, 0.1); color: #696cff; font-weight: bold; }
-  .menu-sub { transition: all 0.3s ease; background-color: transparent; }
+  .menu-item-pool {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .menu-item-pool .menu-link { flex-shrink: 0; }
+  .menu-sub-pool {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: transparent;
+  }
+  .unassigned-pool-header { flex-shrink: 0; }
+  .unassigned-pool-list {
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1 1 auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .pool-device-wrap {
+    cursor: grab;
+    border-radius: 4px;
+  }
+  .pool-device-selected {
+    outline: 2px solid #696cff;
+    outline-offset: 2px;
+  }
 </style>

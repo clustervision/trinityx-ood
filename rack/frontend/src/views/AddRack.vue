@@ -145,8 +145,7 @@ const submitForm = async () => {
     const response = await axios.post(Url + '/change_rack', params);
 
     if (response.data.status) {
-      // 2. EMIT CLOSE ON SUCCESS
-      emit('close');
+      emit('close', { rack: true });
       toast.success(`Add Rack ${form.name} as New Rack`);
     } else {
       errorMessage.value = response.data.message || 'Failed to add rack';

@@ -107,7 +107,73 @@ export function useRack() {
     const data = event.dataTransfer?.getData('application/json');
     if (!data) return;
 
-    const draggedDevice = JSON.parse(data);
+    const parsed = JSON.parse(data);
+
+    if (parsed.multi === true && Array.isArray(parsed.devices) && parsed.devices.length > 0) {
+      const devices: any[] = parsed.devices;
+      let currentU = targetU;
+      const placedNames: string[] = [];
+      for (const draggedDevice of devices) {
+        const dragHeight = parseInt(draggedDevice.height) || 1;
+        if (currentU < 1 || currentU + dragHeight - 1 > targetRack.size) {
+          toast.error(
+            `Device ${draggedDevice.name} does not fit rack ${targetRack.name}: exceeds rack height (Max ${targetRack.size}U).`
+          );
+          break;
+        }
+        const ourStart = currentU;
+        const ourEnd = currentU + dragHeight - 1;
+        let overlaps = false;
+        for (const slot of targetRack.slots) {
+          for (const existing of slot.devices) {
+            if (existing.orientation !== side) continue;
+            const exHeight = Number(existing.height) || 1;
+            const exStart = existing.position;
+            const exEnd = exStart + exHeight - 1;
+            if (ourStart <= exEnd && exStart <= ourEnd) {
+              overlaps = true;
+              break;
+            }
+          }
+          if (overlaps) break;
+        }
+        if (overlaps) {
+          toast.error(`Device ${draggedDevice.name} would overlap existing equipment.`);
+          break;
+        }
+        const tempDevice = { ...draggedDevice, position: currentU, orientation: side };
+        placeDeviceInRack(targetRack, tempDevice);
+        targetRack.slots = [...targetRack.slots];
+        syncRackPowerFromNodes(targetRack);
+        try {
+          const payload = { ...tempDevice, rack: targetRack.name };
+          const doubleEncoded = JSON.stringify(JSON.stringify(payload));
+          await axios.post(`${Url}/update_rack`, doubleEncoded, {
+            headers: { 'Content-Type': 'application/json' }
+          });
+          placedNames.push(draggedDevice.name);
+        } catch (e) {
+          console.error('Drop failed for', draggedDevice.name, e);
+          toast.error(`Failed to add ${draggedDevice.name} to rack.`);
+          if (onError) onError();
+          break;
+        }
+        currentU += dragHeight;
+      }
+      if (placedNames.length > 0 && onSuccess) {
+        onSuccess(placedNames.length === 1 ? placedNames[0] : placedNames);
+      }
+      if (placedNames.length > 0) {
+        toast.success(
+          placedNames.length === devices.length
+            ? `${placedNames.length} device(s) added to rack ${targetRack.name}`
+            : `${placedNames.length} of ${devices.length} device(s) added to rack ${targetRack.name}`
+        );
+      }
+      return;
+    }
+
+    const draggedDevice = parsed;
     const dragHeight = parseInt(draggedDevice.height) || 1;
 
     let savedPosition: number | null = null;

@@ -10,8 +10,9 @@ export function useDeviceActions() {
     subAction: string | undefined,
     device: Device
   ): Promise<{ success: true; message: string } | undefined> => {
-    const baseUrl = (typeof window !== 'undefined' && (window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL) || '';
     const appUrl = (typeof window !== 'undefined' && (window as unknown as { APP_URL?: string }).APP_URL) || '';
+    const contextUrl = (typeof window !== 'undefined' && (window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL) || '';
+    const baseForLinks = contextUrl.replace(/\/$/, '') + '/pun/sys';
 
     if (['details', 'edit', 'rename', 'clone'].includes(action)) {
       let route = '';
@@ -25,13 +26,13 @@ export function useDeviceActions() {
       const section = typeMap[device.type] || 'trinity_node';
 
       if (device.type === 'controller') {
-        if (action === 'details') route = `${baseUrl}/${section}/`;
-        if (action === 'edit') route = `${baseUrl}/${section}/edit`;
+        if (action === 'details') route = `${baseForLinks}/${section}/`;
+        if (action === 'edit') route = `${baseForLinks}/${section}/edit`;
       } else {
-        if (action === 'details') route = `${baseUrl}/${section}/show/${device.name}`;
-        if (action === 'edit') route = `${baseUrl}/${section}/edit/${device.name}`;
-        if (action === 'rename') route = `${baseUrl}/${section}/rename/${device.name}`;
-        if (action === 'clone') route = `${baseUrl}/${section}/clone/${device.name}`;
+        if (action === 'details') route = `${baseForLinks}/${section}/show/${device.name}`;
+        if (action === 'edit') route = `${baseForLinks}/${section}/edit/${device.name}`;
+        if (action === 'rename') route = `${baseForLinks}/${section}/rename/${device.name}`;
+        if (action === 'clone') route = `${baseForLinks}/${section}/clone/${device.name}`;
       }
 
       if (route) {
@@ -40,7 +41,7 @@ export function useDeviceActions() {
       }
     }
 
-    // 2. API Actions (API 请求逻辑)
+    // API actions (power, sel, chassis)
     if (['power', 'sel', 'chassis'].includes(action)) {
       console.log(`Executing ${action} - ${subAction} on ${device.name}`);
       isActionLoading.value = true;

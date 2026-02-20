@@ -55,9 +55,11 @@ import { useRackSizing } from '@/composables/useRackSizing';
 import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
+import { useToast } from 'vue-toastification';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 
 const { isDarkMode } = useTheme();
+const toast = useToast();
 const { setDraggedDevice } = useDraggedDevice();
 const { executeDeviceAction } = useDeviceActions();
 const props = defineProps<{
@@ -67,6 +69,8 @@ const props = defineProps<{
   metric2Value?: number;
   metric2Type?: string | null;
   isRackView?: boolean;
+  selected?: boolean;
+  selectedDevicesForDrag?: Device[];
 }>();
 const emit = defineEmits(['device-right-click']);
 const isDragging = ref(false);
@@ -98,10 +102,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {
-      alert(result.message);
+      toast.success(result.message);
     }
   } catch {
-    alert('Action failed');
+    toast.error('Action failed');
   }
 };
 
@@ -227,12 +231,28 @@ const onDragStart = (event: DragEvent) => {
     const uOffset = Math.floor(offsetY / unitPixelHeight.value);
 
     event.dataTransfer.effectAllowed = 'move';
-    const payload = {
-      ...props.device,
-      dragSource: props.isRackView ? 'rack' : 'pool',
-      uOffset: uOffset
-    };
-    event.dataTransfer.setData('application/json', JSON.stringify(payload));
+    const fromPool = !props.isRackView;
+    const multi =
+      fromPool &&
+      props.selectedDevicesForDrag &&
+      props.selectedDevicesForDrag.length > 1 &&
+      props.selectedDevicesForDrag.some((d) => d.name === props.device.name);
+
+    if (multi && props.selectedDevicesForDrag) {
+      const payload = {
+        multi: true,
+        devices: props.selectedDevicesForDrag.map((d) => ({ ...d, dragSource: 'pool' as const })),
+        uOffset
+      };
+      event.dataTransfer.setData('application/json', JSON.stringify(payload));
+    } else {
+      const payload = {
+        ...props.device,
+        dragSource: props.isRackView ? 'rack' : 'pool',
+        uOffset
+      };
+      event.dataTransfer.setData('application/json', JSON.stringify(payload));
+    }
   }
 };
 

@@ -138,12 +138,13 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
     targetRack,
     u,
     side,
-    (deviceName: string) => {
-       emit('device-taken', deviceName);
+    (nameOrNames: string | string[]) => {
+      const names = Array.isArray(nameOrNames) ? nameOrNames : [nameOrNames];
+      names.forEach((n) => emit('device-taken', n));
+      emit('pool-updated');
     },
     () => {
-
-       loadRackData();
+      loadRackData();
     }
   );
 };

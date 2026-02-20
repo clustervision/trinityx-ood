@@ -14,7 +14,10 @@
       </h5>
 
       <div class="card-body">
-        <div class="table-responsive text-nowrap">
+        <div v-if="loading" class="d-flex align-items-center justify-content-center p-5">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+        <div v-else class="table-responsive text-nowrap">
           <table class="table table-bordered table-hover table-striped">
             <thead>
               <tr v-if="props.pageType === 'rack'">
@@ -96,12 +99,13 @@ import {useToast} from "vue-toastification"
 //@ts-ignore
 const Url = window.APP_URL;
 const items = ref<any[]>([]);
-const toast = useToast()
+const loading = ref(true);
+const toast = useToast();
 const props = defineProps<{
   pageType: string
 }>();
 
-const emit = defineEmits(['add-click', 'edit-click', 'show-click', 'inventory-updated']);
+const emit = defineEmits(['add-click', 'edit-click', 'show-click', 'inventory-updated', 'rack-deleted']);
 
 const pageName = computed(() => {
   if (!props.pageType) return '';
@@ -115,19 +119,34 @@ const deleteItem = async (item: any) => {
   if (!confirm(confirmText)) return;
 
   const previousItems = [...items.value];
-  if(props.pageType === 'rack'){
-    items.value = items.value.filter(i => String(i.name) !== String(item.name));
+
+  if (props.pageType === 'rack') {
+    try {
+      const rackRes = await axios.get(Url + `/show_rack/${item.name}`);
+      const rackData = rackRes.data?.message;
+      const devices = rackData?.devices;
+      const hasDevices = Array.isArray(devices) && devices.length > 0;
+      if (hasDevices) {
+        toast.error(`Cannot delete Rack ${item.name}: it has devices. Remove all devices first.`);
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to check rack contents", e);
+      toast.error("Could not verify rack contents.");
+      return;
+    }
   }
 
+  items.value = items.value.filter(i => String(i.name) !== String(item.name));
 
- try {
+  try {
     const timestamp = new Date().getTime();
 
     if (props.pageType === 'rack') {
-
       const deleteUrl = Url + `/delete_rack/${item.name}?t=${timestamp}`;
       await axios.get(deleteUrl);
       toast.success(`Rack ${item.name} is deleted.`);
+      emit('rack-deleted');
     } else {
 
       const payload = {
@@ -143,47 +162,50 @@ const deleteItem = async (item: any) => {
       );
       toast.success(`${item.name} returned to device pool.`);
     }
-
     emit('inventory-updated');
     console.log("Action confirmed by backend.");
 
   } catch (e: any) {
-       console.error("Action failed", e);
-       items.value = previousItems;
-       alert("Failed to process request.");
+    console.error("Action failed", e);
+    items.value = previousItems;
+    toast.error("Failed to process request.");
   }
 };
 
 const fetchData = async () => {
-  items.value = [];
+  const key = props.pageType === 'rack' ? 'rack' : props.pageType === 'inventory' ? 'inventory' : null;
+  if (!key) return;
+
+  loading.value = true;
   try {
-    const timestamp = new Date().getTime();
-    let fetchUrl = '';
-    if (props.pageType === 'rack') fetchUrl = Url + `/manage_racks?t=${timestamp}`;
-    else if (props.pageType === 'inventory') fetchUrl = Url + `/manage_inventory?t=${timestamp}`;
-    else return;
-
+    const timestamp = Date.now();
+    const fetchUrl = key === 'rack' ? Url + `/manage_racks?t=${timestamp}` : Url + `/manage_inventory?t=${timestamp}`;
     const response = await axios.get(fetchUrl);
-
     const rawMsg = response.data.message;
     if (Array.isArray(rawMsg)) {
-        const extractedItems: any[] = [];
-        rawMsg.forEach((entry: any) => {
-          if (entry.name && (entry.size || entry.type)) extractedItems.push(entry);
-          else extractedItems.push(...Object.values(entry));
-        });
-        items.value = extractedItems;
+      const out: any[] = [];
+      rawMsg.forEach((entry: any) => {
+        if (entry.name && (entry.size || entry.type)) out.push(entry);
+        else out.push(...Object.values(entry));
+      });
+      items.value = out;
     } else if (typeof rawMsg === 'object' && rawMsg !== null) {
-         items.value = Object.values(rawMsg);
+      items.value = Object.values(rawMsg);
+    } else {
+      items.value = [];
     }
-
   } catch (e) {
     console.error("Failed to load table data", e);
+    items.value = [];
+  } finally {
+    loading.value = false;
   }
 };
 
+const refresh = () => fetchData();
+
+defineExpose({ refresh });
 onMounted(fetchData);
-watch(() => props.pageType, fetchData);
 </script>
 
 <style scoped>
