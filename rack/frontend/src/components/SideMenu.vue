@@ -51,10 +51,20 @@
             />
           </div>
           <div class="unassigned-pool-list" v-if="UnassignedNodes.length > 0">
-             <div v-for="device in filteredUnassignedNodes" :key="device.name" class="mb-2" style="width: 138px;" :title="device.name">
+             <div
+               v-for="device in filteredUnassignedNodes"
+               :key="device.name"
+               class="mb-2 pool-device-wrap"
+               :class="{ 'pool-device-selected': selectedPoolNames.has(device.name) }"
+               style="width: 138px;"
+               :title="device.name"
+               @click="onPoolDeviceClick($event, device)"
+             >
                 <DeviceItem
                   :device="device"
                   :is-rack-view="false"
+                  :selected="selectedPoolNames.has(device.name)"
+                  :selected-devices-for-drag="selectedDevicesForDrag"
                 />
              </div>
           </div>
@@ -72,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import DeviceItem from '@/components/DeviceItem.vue';
 import { useToast } from 'vue-toastification';
@@ -88,6 +98,34 @@ const filteredUnassignedNodes = computed(() => {
   if (!q) return UnassignedNodes.value;
   return UnassignedNodes.value.filter((d) => (d.name || '').toLowerCase().includes(q));
 });
+
+const selectedPoolNames = ref<Set<string>>(new Set());
+const selectedDevicesForDrag = computed(() =>
+  filteredUnassignedNodes.value.filter((d) => selectedPoolNames.value.has(d.name))
+);
+const onPoolDeviceClick = (event: MouseEvent, device: any) => {
+  if (event.ctrlKey || event.metaKey) {
+    const next = new Set(selectedPoolNames.value);
+    if (next.has(device.name)) next.delete(device.name);
+    else next.add(device.name);
+    selectedPoolNames.value = next;
+  } else {
+    selectedPoolNames.value = new Set([device.name]);
+  }
+};
+
+watch(
+  () => UnassignedNodes.value.map((n) => n.name),
+  (names) => {
+    const nameSet = new Set(names);
+    const next = new Set<string>();
+    selectedPoolNames.value.forEach((n) => {
+      if (nameSet.has(n)) next.add(n);
+    });
+    if (next.size !== selectedPoolNames.value.size) selectedPoolNames.value = next;
+  }
+);
+
 const emit = defineEmits(['change-view', 'pool-updated']);
 
 const fetchUnassignedNodes = async () => {
@@ -108,7 +146,13 @@ const fetchUnassignedNodes = async () => {
 const onDropBackToPool = async (event: DragEvent) => {
   const data = event.dataTransfer?.getData('application/json');
   if (!data) return;
-  const device = JSON.parse(data);
+  const parsed = JSON.parse(data);
+
+  if (parsed.multi === true && Array.isArray(parsed.devices)) {
+    return;
+  }
+
+  const device = parsed;
   const isRack = 'size' in device || device.type === 'rack';
   if (device.dragSource === 'pool') return;
 
@@ -164,5 +208,13 @@ onMounted(() => {
     min-height: 0;
     max-height: 420px;
     -webkit-overflow-scrolling: touch;
+  }
+  .pool-device-wrap {
+    cursor: grab;
+    border-radius: 4px;
+  }
+  .pool-device-selected {
+    outline: 2px solid #696cff;
+    outline-offset: 2px;
   }
 </style>

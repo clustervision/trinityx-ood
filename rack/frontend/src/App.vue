@@ -26,7 +26,7 @@ const handleDeviceTakenFromPool = (deviceName: string) => {
   }
 };
 
-// 数据变更时同步刷新所有页面
+// Sync all views when data changes
 const syncAllViews = () => {
   if (rackViewRef.value) rackViewRef.value.loadRacks();
   if (sideMenuRef.value) sideMenuRef.value.fetchUnassignedNodes();
@@ -59,7 +59,7 @@ const goBackToManage = (needsRefresh?: { rack?: boolean; inventory?: boolean }) 
   if (needsRefresh?.rack || needsRefresh?.inventory) syncAllViews();
 };
 
-// inventory/rack 变更时同步所有页面
+// Sync all views on inventory/rack change
 const refreshPoolData = () => syncAllViews();
 </script>
 

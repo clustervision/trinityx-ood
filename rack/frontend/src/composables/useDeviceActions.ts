@@ -41,7 +41,7 @@ export function useDeviceActions() {
       }
     }
 
-    // 2. API Actions (API 请求逻辑)
+    // API actions (power, sel, chassis)
     if (['power', 'sel', 'chassis'].includes(action)) {
       console.log(`Executing ${action} - ${subAction} on ${device.name}`);
       isActionLoading.value = true;

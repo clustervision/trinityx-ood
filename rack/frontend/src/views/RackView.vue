@@ -187,17 +187,20 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
     targetRack,
     u,
     side,
-    (deviceName: string) => {
-       emit('device-taken', deviceName);
-
-       racks.value.forEach(r => {
-         if (r.name !== targetRack.name) {
-           r.slots.forEach(slot => {
-             slot.devices = slot.devices.filter(d => d.name !== deviceName);
-           });
-           syncRackPowerFromNodes(r);
-         }
-       });
+    (nameOrNames: string | string[]) => {
+      const names = Array.isArray(nameOrNames) ? nameOrNames : [nameOrNames];
+      names.forEach((deviceName) => {
+        emit('device-taken', deviceName);
+        racks.value.forEach((r) => {
+          if (r.name !== targetRack.name) {
+            r.slots.forEach((slot) => {
+              slot.devices = slot.devices.filter((d) => d.name !== deviceName);
+            });
+            syncRackPowerFromNodes(r);
+          }
+        });
+      });
+      if (names.length > 0) emit('pool-updated');
     },
     () => {
 

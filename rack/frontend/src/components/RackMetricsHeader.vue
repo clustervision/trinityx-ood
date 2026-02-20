@@ -152,7 +152,7 @@ const selectMetric2 = (val: string | null) => {
   gap: 12px;
   flex-shrink: 0;
 }
-/* 下拉菜单不被裁剪：绝对定位 + 高层级，父级 overflow:visible */
+/* Dropdown not clipped: absolute + high z-index, parent overflow visible */
 .dropdown {
   position: relative;
 }
