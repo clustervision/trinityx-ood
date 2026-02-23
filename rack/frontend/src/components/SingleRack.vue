@@ -89,7 +89,7 @@ const getDeviceLeds = (device: Device): Array<{ left: string; top: string; color
   // Treat RESET as ON for LED display (case-insensitive)
   const state = (device.powerState || '').toUpperCase();
   const powerOn = state === 'ON' || state === 'RESET';
-  
+
   console.log(`getDeviceLeds for ${device.name}: type=${type}, isNode=${isNode}, powerState=${device.powerState}, state=${state}, powerOn=${powerOn}, will return ${isNode && !powerOn ? 0 : 'many'} LEDs`);
 
   if (isNode && !powerOn) return [];
@@ -478,7 +478,6 @@ const checkPowerStatus = async () => {
     source.addEventListener("failed", (e: MessageEvent) => {
       statusErrorHandled = true;
       const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
-      console.warn("[Rack Status SSE] Failure from server event 'failed', showing toast:", msg);
       toast.error(`Status check failed: ${msg}`);
       source.close();
     });
@@ -486,7 +485,6 @@ const checkPowerStatus = async () => {
       if (e.data) {
         statusErrorHandled = true;
         const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
-        console.warn("[Rack Status SSE] Failure from server event 'error', showing toast:", msg);
         toast.error(`Status check failed: ${msg}`);
       }
       source.close();
@@ -494,7 +492,6 @@ const checkPowerStatus = async () => {
 
     source.onerror = () => {
       if (!statusErrorHandled) {
-        console.error("[Rack Status SSE] Connection error (no server 'failed' event). Showing toast now.");
         toast.error("Status check failed or connection lost.");
       }
       source.close();

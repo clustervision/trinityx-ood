@@ -100,17 +100,36 @@ const filteredUnassignedNodes = computed(() => {
 });
 
 const selectedPoolNames = ref<Set<string>>(new Set());
+const lastClickedIndex = ref<number>(-1);
+
 const selectedDevicesForDrag = computed(() =>
   filteredUnassignedNodes.value.filter((d) => selectedPoolNames.value.has(d.name))
 );
+
 const onPoolDeviceClick = (event: MouseEvent, device: any) => {
-  if (event.ctrlKey || event.metaKey) {
+  const list = filteredUnassignedNodes.value;
+  const currentIndex = list.findIndex((d) => d.name === device.name);
+  if (currentIndex < 0) return;
+
+  if (event.shiftKey) {
+    const anchor = lastClickedIndex.value >= 0 ? lastClickedIndex.value : currentIndex;
+    const start = Math.min(anchor, currentIndex);
+    const end = Math.max(anchor, currentIndex);
+    const next = new Set(selectedPoolNames.value);
+    for (let i = start; i <= end; i++) {
+      next.add(list[i].name);
+    }
+    selectedPoolNames.value = next;
+    lastClickedIndex.value = currentIndex;
+  } else if (event.ctrlKey || event.metaKey) {
     const next = new Set(selectedPoolNames.value);
     if (next.has(device.name)) next.delete(device.name);
     else next.add(device.name);
     selectedPoolNames.value = next;
+    lastClickedIndex.value = currentIndex;
   } else {
     selectedPoolNames.value = new Set([device.name]);
+    lastClickedIndex.value = currentIndex;
   }
 };
 
