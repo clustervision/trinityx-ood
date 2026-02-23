@@ -249,6 +249,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
   } else {
     console.log(`Multi-node detected, using SSE: ${url}`);
     let isTaskCompleted = false;
+    let taskFailedHandled = false;
     const source = new EventSource(url);
 
     const closeConnection = () => {
@@ -271,23 +272,43 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       closeConnection();
     });
 
-    source.onerror = async (err) => {
+    source.addEventListener("failed", (e: MessageEvent) => {
+      if (isTaskCompleted) return;
+      taskFailedHandled = true;
+      const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
+      console.warn("[Rack Power SSE] Failure from server event 'failed', showing toast:", msg);
+      toast.error(`Action Failed: ${msg}`);
+      closeConnection();
+    });
+    source.addEventListener("error", (e: MessageEvent) => {
+      if (isTaskCompleted) return;
+      if (e.data) {
+        taskFailedHandled = true;
+        const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
+        console.warn("[Rack Power SSE] Failure from server event 'error', showing toast:", msg);
+        toast.error(`Action Failed: ${msg}`);
+      }
+      closeConnection();
+    });
+
+    source.onerror = async () => {
       if (isTaskCompleted) {
         console.log("Connection closed after completion (Normal behavior).");
         return;
       }
-      console.error("SSE connection error:", err);
+      console.error("[Rack Power SSE] Connection error (no server 'failed' event). Showing toast now.");
       source.close();
-      try {
+      if (!taskFailedHandled) {
+        toast.error("Action failed or connection lost.");
+        try {
           const response = await fetch(url);
           const data = await response.json();
-          if (data && !data.status) {
+          if (data && !data.status && data.message) {
             toast.error(`Action Failed: ${data.message}`);
-          } else {
-             toast.error("Action failed or connection lost.");
           }
-      } catch (e) {
-          toast.error("Action failed or connection lost.");
+        } catch {
+          // Already showed generic toast
+        }
       }
       isActionLoading.value = false;
     };
@@ -382,12 +403,14 @@ const checkPowerStatus = async () => {
         props.rack.backPowerOn = isAnyDeviceOn;
       }
     } catch (e) {
-      console.error("Single node status check failed:", e);
+      console.error("[Rack Status] Single-node fetch failed, showing toast:", e);
+      toast.error("Status check failed.");
     }
   }
   // --- CASE B: Multi Node (Use SSE) ---
   else {
     const source = new EventSource(url);
+    let statusErrorHandled = false;
 
     const handleStatusData = (raw: any) => {
       // Normalize: backend may send { message: [ { node, state } ], status } or { node001: "ON", ... } or array
@@ -452,7 +475,28 @@ const checkPowerStatus = async () => {
       }
     });
 
-    source.onerror = (err) => {
+    source.addEventListener("failed", (e: MessageEvent) => {
+      statusErrorHandled = true;
+      const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
+      console.warn("[Rack Status SSE] Failure from server event 'failed', showing toast:", msg);
+      toast.error(`Status check failed: ${msg}`);
+      source.close();
+    });
+    source.addEventListener("error", (e: MessageEvent) => {
+      if (e.data) {
+        statusErrorHandled = true;
+        const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
+        console.warn("[Rack Status SSE] Failure from server event 'error', showing toast:", msg);
+        toast.error(`Status check failed: ${msg}`);
+      }
+      source.close();
+    });
+
+    source.onerror = () => {
+      if (!statusErrorHandled) {
+        console.error("[Rack Status SSE] Connection error (no server 'failed' event). Showing toast now.");
+        toast.error("Status check failed or connection lost.");
+      }
       source.close();
     };
   }
