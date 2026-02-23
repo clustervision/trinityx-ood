@@ -54,10 +54,11 @@
                 v-model="form.size"
                 class="form-control"
                 :min="hasDevices ? initialSize : 1"
-                max="1000"
+                max="60"
                 required
               />
-              <small v-if="hasDevices" class="text-muted">Cannot reduce size when rack has devices.</small>
+              <small class="text-muted">Max height is 60U.</small>
+              <small v-if="hasDevices" class="text-muted d-block">Cannot reduce size when rack has devices.</small>
             </div>
           </div>
 
@@ -145,6 +146,11 @@ const submitForm = async () => {
 
   if (Number(form.size) <= 0) {
     errorMessage.value = 'Rack Size must be greater than 0.';
+    isSubmitting.value = false;
+    return;
+  }
+  if (Number(form.size) > 60) {
+    errorMessage.value = 'Rack size cannot exceed 60U.';
     isSubmitting.value = false;
     return;
   }
