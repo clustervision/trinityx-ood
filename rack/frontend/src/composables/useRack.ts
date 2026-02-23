@@ -202,7 +202,7 @@ export function useRack() {
       syncRackPowerFromNodes(targetRack);
     };
 
-    const finalPosition = targetU;
+    let finalPosition = targetU;
 
     if (finalPosition < 1 || finalPosition + dragHeight - 1 > targetRack.size) {
       toast.error(`Device does not fit rack ${targetRack.name}: exceeds rack height (Max ${targetRack.size}U).`);
@@ -210,8 +210,9 @@ export function useRack() {
       return;
     }
 
-    const ourStart = finalPosition;
-    const ourEnd = finalPosition + dragHeight - 1;
+    let ourStart = finalPosition;
+    let ourEnd = finalPosition + dragHeight - 1;
+    let mergeHeight: number | null = null;
 
     for (const slot of targetRack.slots) {
       for (const existing of slot.devices) {
@@ -221,14 +222,27 @@ export function useRack() {
         const exEnd = exStart + exHeight - 1;
         const overlaps = ourStart <= exEnd && exStart <= ourEnd;
         if (!overlaps) continue;
-        if (exStart === finalPosition) continue;
+        if (exStart === finalPosition && dragHeight <= exHeight) continue;
+        if (dragHeight <= exHeight) {
+          finalPosition = exStart;
+          ourStart = exStart;
+          ourEnd = exStart + exHeight - 1;
+          mergeHeight = exHeight;
+          break;
+        }
         toast.error(`Slot overlaps with ${existing.name} (${exStart}U–${exEnd}U).`);
         restoreDevice();
         return;
       }
+      if (mergeHeight != null) break;
     }
 
-    const tempDevice = { ...draggedDevice, position: finalPosition, orientation: side };
+    const tempDevice = {
+      ...draggedDevice,
+      position: finalPosition,
+      orientation: side,
+      ...(mergeHeight != null ? { height: mergeHeight } : {})
+    };
 
     placeDeviceInRack(targetRack, tempDevice);
     targetRack.slots = [...targetRack.slots];
