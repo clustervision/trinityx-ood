@@ -52,7 +52,8 @@ const menuItems = computed(() => {
     { label: 'Details', action: 'details', icon: 'bx bx-detail' },
   ];
 
-  if (type === 'node') {
+  const hasEditInInventory = ['node', 'switch', 'controller'].includes(type);
+  if (hasEditInInventory) {
     items.push({ label: 'Edit in Inventory', action: 'edit-inventory', icon: 'bx bx-edit' });
     items.push({ label: 'Edit in Console', action: 'edit', icon: 'bx bx-link-external' });
   } else {
