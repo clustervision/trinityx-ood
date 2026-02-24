@@ -45,10 +45,11 @@
                 v-model="form.height"
                 class="form-control"
                 min="1"
-                max="80"
+                max="8"
                 required
                 :disabled="isAssigned"
               />
+              <small class="text-muted">Max 8U.</small>
             </div>
           </div>
 
@@ -153,6 +154,11 @@ const submitForm = async () => {
   // MODIFIED: Guard Clause - Totally forbid action if assigned
   if (isAssigned.value) {
     errorMessage.value = "Action Forbidden: This device is currently in a rack.";
+    return;
+  }
+  const h = parseInt(String(form.height), 10);
+  if (isNaN(h) || h < 1 || h > 8) {
+    errorMessage.value = "Device height must be between 1 and 8U.";
     return;
   }
 
