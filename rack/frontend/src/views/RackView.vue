@@ -23,7 +23,11 @@ const onLightSwitchClick = () => {
   }, 40);
 };
 
-const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
+const emit = defineEmits(['rack-updated', 'device-taken', 'pool-updated', 'edit-inventory']);
+
+const onEditInventory = (device: { name: string }) => {
+  emit('edit-inventory', device.name);
+};
 const toast = useToast();
 const racks = ref<Rack[]>([]);
 const { fetchSingleRack, handleRackDrop, syncRackPowerFromNodes } = useRack();
@@ -260,6 +264,7 @@ onUnmounted(() => {
             @drop="onDrop"
             @reset="resetRack"
             @power-toggle="handlePowerToggle"
+            @edit-inventory="onEditInventory"
             :is-busy="loadingRackName === rack.name"
           />
         </div>

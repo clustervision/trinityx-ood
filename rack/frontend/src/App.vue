@@ -43,9 +43,9 @@ const handleEditRack = (item: any) => {
   currentView.value = 'edit-rack';
 };
 const handleEditInventory = (item: any) => {
-  selectedItemName.value = item.name;
+  selectedItemName.value = typeof item === 'string' ? item : item?.name ?? '';
   currentView.value = 'edit-inventory';
-}
+};
 const handleShowRack = (item: any) => {
   selectedItemName.value = item.name;
   currentView.value = 'show-rack';
@@ -68,7 +68,8 @@ const refreshPoolData = () => syncAllViews();
     <SideMenu 
        ref="sideMenuRef"
        @change-view="setView" 
-       @pool-updated="handlePoolUpdated" 
+       @pool-updated="handlePoolUpdated"
+       @edit-inventory="handleEditInventory"
     />
 
     <div class="layout-page">
@@ -76,7 +77,8 @@ const refreshPoolData = () => syncAllViews();
          v-show="currentView === 'dashboard'" 
          ref="rackViewRef"
          @device-taken="handleDeviceTakenFromPool"
-         @pool-updated="refreshPoolData" 
+         @pool-updated="refreshPoolData"
+         @edit-inventory="handleEditInventory"
       />
 
       <ManageView 
@@ -108,6 +110,7 @@ const refreshPoolData = () => syncAllViews();
         @close="() => { goBackToManage(); syncAllViews(); }"
         @device-taken="handleDeviceTakenFromPool"
         @pool-updated="refreshPoolData"
+        @edit-inventory="handleEditInventory"
       />
       <EditInventory 
         v-if="currentView === 'edit-inventory'"

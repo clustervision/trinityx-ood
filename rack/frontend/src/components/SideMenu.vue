@@ -65,6 +65,7 @@
                   :is-rack-view="false"
                   :selected="selectedPoolNames.has(device.name)"
                   :selected-devices-for-drag="selectedDevicesForDrag"
+                  @edit-inventory="onEditInventory"
                 />
              </div>
           </div>
@@ -145,7 +146,11 @@ watch(
   }
 );
 
-const emit = defineEmits(['change-view', 'pool-updated']);
+const emit = defineEmits(['change-view', 'pool-updated', 'edit-inventory']);
+
+const onEditInventory = (device: { name: string }) => {
+  emit('edit-inventory', device.name);
+};
 
 const fetchUnassignedNodes = async () => {
   try {

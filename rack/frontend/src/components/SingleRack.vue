@@ -36,6 +36,10 @@ const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
 
 const handleMenuAction = async (payload: { action: string; subAction?: string; device: Device }) => {
   const { action, subAction, device } = payload;
+  if (action === 'edit-inventory') {
+    emit('edit-inventory', device);
+    return;
+  }
   isActionLoading.value = true;
   try {
     const result = await executeDeviceAction(action, subAction, device);
@@ -503,7 +507,7 @@ onMounted(() => {
   checkPowerStatus();
 });
 
-const emit = defineEmits(['drop', 'reset', 'power-toggle']);
+const emit = defineEmits(['drop', 'reset', 'power-toggle', 'edit-inventory']);
 
 const toggleBack = () => {
   props.rack.showBackSide = !props.rack.showBackSide;

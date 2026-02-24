@@ -50,8 +50,14 @@ const menuItems = computed(() => {
   
   const items = [
     { label: 'Details', action: 'details', icon: 'bx bx-detail' },
-    { label: 'Edit', action: 'edit', icon: 'bx bx-edit' },
   ];
+
+  if (type === 'node') {
+    items.push({ label: 'Edit in Inventory', action: 'edit-inventory', icon: 'bx bx-edit' });
+    items.push({ label: 'Edit in Console', action: 'edit', icon: 'bx bx-link-external' });
+  } else {
+    items.push({ label: 'Edit', action: 'edit', icon: 'bx bx-edit' });
+  }
 
   if (type !== 'controller') {
     items.push({ label: 'Rename', action: 'rename', icon: 'bx bx-pencil' });
@@ -65,7 +71,7 @@ const menuItems = computed(() => {
 const isNode = computed(() => props.device?.type === 'node');
 
 const triggerAction = (action: string, subAction?: string) => {
-  emit('action', { action, subAction, device: props.device });
+  emit('action', { action, subAction, device: props.device! });
   emit('close');
 };
 </script>
