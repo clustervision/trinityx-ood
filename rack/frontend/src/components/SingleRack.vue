@@ -689,9 +689,7 @@ const clearPreview = () => {
                     height: ((slot.devices.find(d => d.orientation === 'front')?.height ?? 1) * 20 - 2) + 'px',
                     [rack.order === 'descending' ? 'bottom' : 'top']: '0'
                   }"
-                  :title="slot.devices.filter(d => d.orientation === 'front').length > 1
-                    ? slot.devices.filter(d => d.orientation === 'front').map(d => d.name).join('\n')
-                    : undefined">
+                  :title="slot.devices.filter(d => d.orientation === 'front').map(d => d.name).join('\n')">
                   <div
                     v-for="(row, rowIdx) in getDeviceRowsForSlot(slot, 'front')"
                     :key="'front-' + slot.number + '-' + rowIdx"
@@ -789,9 +787,7 @@ const clearPreview = () => {
                     height: ((slot.devices.find(d => d.orientation === 'back')?.height ?? 1) * 20 - 2) + 'px',
                     [rack.order === 'descending' ? 'bottom' : 'top']: '0'
                   }"
-                  :title="slot.devices.filter(d => d.orientation === 'back').length > 1
-                    ? slot.devices.filter(d => d.orientation === 'back').map(d => d.name).join('\n')
-                    : undefined">
+                  :title="slot.devices.filter(d => d.orientation === 'back').map(d => d.name).join('\n')">
                   <div
                     v-for="(row, rowIdx) in getDeviceRowsForSlot(slot, 'back')"
                     :key="'back-' + slot.number + '-' + rowIdx"

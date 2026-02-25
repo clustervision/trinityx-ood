@@ -14,7 +14,7 @@
   >
 
   <div class="device-content">
-      <div v-if="!isDarkMode">
+      <div v-if="!isDarkMode || !isRackView">
       <span class="device-name">{{ device.name }}</span>
       </div>
     </div>
