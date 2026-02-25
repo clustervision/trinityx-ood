@@ -104,9 +104,13 @@ export function useRack() {
       }
     }
 
-    // Normalize powerState to uppercase (backend may use powerState or power_state)
+    // Normalize powerState (backend/drag may use powerState, power_state, or strings like "success with unparsable output: RESET")
     const rawState = d.powerState ?? d.power_state ?? '';
-    const stateUpper = String(rawState).toUpperCase();
+    let stateStr = String(rawState).toUpperCase();
+    if (stateStr.includes('RESET')) stateStr = 'RESET';
+    else if (stateStr.includes('ON')) stateStr = 'ON';
+    else stateStr = 'OFF';
+    const powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF' as const;
     targetSlot.devices.push({
       name: deviceName,
       position,
@@ -115,8 +119,7 @@ export function useRack() {
       orientation: currentSide,
       vendor: d.vendor || null,
       status: 'ok',
-      // Preserve RESET state, otherwise treat as ON or OFF
-      powerState: stateUpper === 'ON' ? 'ON' : stateUpper === 'RESET' ? 'RESET' : 'OFF'
+      powerState
     });
     return true;
   };
@@ -233,11 +236,13 @@ export function useRack() {
 
     let savedPosition: number | null = null;
     let savedOrientation: 'front' | 'back' = side;
+    let savedPowerState: string | undefined;
     for (const s of targetRack.slots) {
       const found = s.devices.find(d => d.name === draggedDevice.name);
       if (found) {
         savedPosition = found.position;
         savedOrientation = (found.orientation as 'front' | 'back') || side;
+        savedPowerState = found.powerState;
         break;
       }
     }
@@ -301,14 +306,16 @@ export function useRack() {
       ...draggedDevice,
       position: finalPosition,
       orientation: side,
-      ...(mergeHeight != null ? { height: mergeHeight } : {})
+      ...(mergeHeight != null ? { height: mergeHeight } : {}),
+      powerState: draggedDevice.powerState ?? draggedDevice.power_state ?? savedPowerState ?? 'OFF'
     };
 
     if (!placeDeviceInRack(targetRack, tempDevice)) {
       restoreDevice();
       return;
     }
-    targetRack.slots = [...targetRack.slots];
+    // New slot refs so Vue detects change and re-renders LEDs (device refs preserved)
+    targetRack.slots = targetRack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
     syncRackPowerFromNodes(targetRack);
 
     try {

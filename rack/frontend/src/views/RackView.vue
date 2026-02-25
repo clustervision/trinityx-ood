@@ -204,7 +204,8 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
           }
         });
       });
-      if (names.length > 0) emit('pool-updated');
+      // Do not emit('pool-updated') here: it triggers loadRacks() which refetches all racks
+      // and overwrites device.powerState (backend show_rack often has no power state), so all LEDs and power buttons go OFF.
     },
     () => {
 
