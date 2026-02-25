@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import SideMenu from '@/components/SideMenu.vue';
+import HeaderBar from '@/components/HeaderBar.vue';
 import RackView from '@/views/RackView.vue';
 import ManageView from '@/views/ManageView.vue';
 import AddRack from '@/views/AddRack.vue';
@@ -16,31 +17,72 @@ const sideMenuRef = ref<InstanceType<typeof SideMenu> | null>(null);
 const rackViewRef = ref<InstanceType<typeof RackView> | null>(null);
 const manageRackRef = ref<InstanceType<typeof ManageView> | null>(null);
 const manageInventoryRef = ref<InstanceType<typeof ManageView> | null>(null);
+const HEADER_HEIGHT = 52;
 const scrollWrapperRef = ref<HTMLElement | null>(null);
 const layoutPageRef = ref<HTMLElement | null>(null);
+const wrapperScrollTop = ref(0);
 const footerRevealed = ref(false);
+const sidebarPinned = ref(false);
 
 const BOTTOM_THRESHOLD = 2;
 
 function onWrapperScroll() {
   const w = scrollWrapperRef.value;
-  footerRevealed.value = w ? w.scrollTop > 0 : false;
+  if (!w) return;
+  wrapperScrollTop.value = w.scrollTop;
+  footerRevealed.value = w.scrollTop > HEADER_HEIGHT;
+  sidebarPinned.value = w.scrollTop >= HEADER_HEIGHT;
 }
-let touchStartY = 0;
 
 function isRightAtBottom(el: HTMLElement): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_THRESHOLD;
 }
 
-function onRightWheel(e: WheelEvent) {
-  const page = layoutPageRef.value;
-  const wrapper = scrollWrapperRef.value;
-  if (!page || !wrapper || e.deltaY <= 0) return;
-  if (!isRightAtBottom(page)) return;
-  e.preventDefault();
-  wrapper.scrollTop = Math.min(wrapper.scrollHeight - wrapper.clientHeight, wrapper.scrollTop + e.deltaY);
-  onWrapperScroll();
+function isRightAtTop(el: HTMLElement): boolean {
+  return el.scrollTop <= BOTTOM_THRESHOLD;
 }
+
+function onUnifiedWheel(e: WheelEvent) {
+  const wrapper = scrollWrapperRef.value;
+  const page = layoutPageRef.value;
+  if (!wrapper || !page) return;
+  const st = wrapper.scrollTop;
+  const deltaY = e.deltaY;
+
+  if (st < HEADER_HEIGHT) {
+    e.preventDefault();
+    wrapper.scrollTop = Math.max(0, Math.min(HEADER_HEIGHT, st + deltaY));
+    onWrapperScroll();
+    return;
+  }
+
+  e.preventDefault();
+
+  if (st > HEADER_HEIGHT) {
+    const max = wrapper.scrollHeight - wrapper.clientHeight;
+    wrapper.scrollTop = Math.max(HEADER_HEIGHT, Math.min(max, st + deltaY));
+    onWrapperScroll();
+    return;
+  }
+
+  if (deltaY > 0) {
+    if (isRightAtBottom(page)) {
+      wrapper.scrollTop = st + deltaY;
+      onWrapperScroll();
+    } else {
+      page.scrollTop = Math.min(page.scrollHeight - page.clientHeight, page.scrollTop + deltaY);
+    }
+  } else {
+    if (isRightAtTop(page)) {
+      wrapper.scrollTop = Math.max(0, st + deltaY);
+      onWrapperScroll();
+    } else {
+      page.scrollTop = Math.max(0, page.scrollTop + deltaY);
+    }
+  }
+}
+
+let touchStartY = 0;
 
 function onRightTouchStart(e: TouchEvent) {
   touchStartY = e.touches[0]?.clientY ?? 0;
@@ -60,19 +102,23 @@ function onRightTouchMove(e: TouchEvent) {
   onWrapperScroll();
 }
 
-function onWrapperWheel(e: WheelEvent) {
-  const wrapper = scrollWrapperRef.value;
-  if (!wrapper || e.deltaY >= 0) return;
-  if (wrapper.scrollTop <= 0) return;
-  e.preventDefault();
-  wrapper.scrollTop = Math.max(0, wrapper.scrollTop + e.deltaY);
-  onWrapperScroll();
-}
-
 const setView = (viewName: string) => {
   currentView.value = viewName;
   selectedItemName.value = '';
 };
+
+const headerBreadcrumbs = computed(() => {
+  const map: Record<string, { label: string; view?: string }[]> = {
+    'dashboard': [{ label: 'Home', view: 'dashboard' }, { label: 'Rack' }],
+    'manage-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack Frames' }],
+    'manage-inventory': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Inventory' }],
+    'add-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack Frames', view: 'manage-rack' }, { label: 'Add Rack' }],
+    'edit-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack Frames', view: 'manage-rack' }, { label: 'Edit Rack' }],
+    'show-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack Frames', view: 'manage-rack' }, { label: 'Show Rack' }],
+    'edit-inventory': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Inventory', view: 'manage-inventory' }, { label: 'Edit Inventory' }],
+  };
+  return map[currentView.value] ?? [{ label: 'Home', view: 'dashboard' }, { label: 'Page' }];
+});
 
 const handleDeviceTakenFromPool = (deviceName: string) => {
   if (sideMenuRef.value) {
@@ -120,13 +166,14 @@ onMounted(() => {
   nextTick(() => {
     const page = layoutPageRef.value;
     const wrapper = scrollWrapperRef.value;
+    if (wrapper) {
+      wrapper.scrollTop = 0;
+      onWrapperScroll();
+      wrapper.addEventListener('wheel', onUnifiedWheel, { passive: false, capture: true });
+    }
     if (page) {
-      page.addEventListener('wheel', onRightWheel, { passive: false });
       page.addEventListener('touchstart', onRightTouchStart, { passive: true });
       page.addEventListener('touchmove', onRightTouchMove, { passive: false });
-    }
-    if (wrapper) {
-      wrapper.addEventListener('wheel', onWrapperWheel, { passive: false, capture: true });
     }
   });
 });
@@ -135,19 +182,27 @@ onUnmounted(() => {
   const page = layoutPageRef.value;
   const wrapper = scrollWrapperRef.value;
   if (page) {
-    page.removeEventListener('wheel', onRightWheel);
     page.removeEventListener('touchstart', onRightTouchStart);
     page.removeEventListener('touchmove', onRightTouchMove);
   }
   if (wrapper) {
-    wrapper.removeEventListener('wheel', onWrapperWheel, true);
+    wrapper.removeEventListener('wheel', onUnifiedWheel, true);
   }
 });
 </script>
 
 <template>
-  <div class="layout-outer" :class="{ 'footer-revealed': footerRevealed }">
-    <div ref="scrollWrapperRef" class="layout-scroll-wrapper" @scroll="onWrapperScroll">
+  <div class="layout-outer" :class="{ 'sidebar-pinned': sidebarPinned, 'footer-revealed': footerRevealed }">
+    <div
+      ref="scrollWrapperRef"
+      class="layout-scroll-wrapper"
+      :class="{ 'wrapper-pinned': sidebarPinned }"
+      @scroll="onWrapperScroll"
+    >
+      <HeaderBar
+        :breadcrumbs="headerBreadcrumbs"
+        @navigate="setView"
+      />
       <div class="layout-main layout-wrapper">
         <aside class="layout-sidebar">
           <SideMenu
@@ -157,7 +212,8 @@ onUnmounted(() => {
             @edit-inventory="handleEditInventory"
           />
         </aside>
-        <div ref="layoutPageRef" class="layout-page">
+        <div class="layout-right">
+          <div ref="layoutPageRef" class="layout-page">
         <RackView
           v-show="currentView === 'dashboard'"
           ref="rackViewRef"
@@ -203,6 +259,7 @@ onUnmounted(() => {
           @inventory-updated="refreshPoolData"
           @close="(r?: any) => goBackToManage(r)"
         />
+          </div>
         </div>
       </div>
       <footer v-if="footerBaseUrl" class="layout-footer">
@@ -219,20 +276,31 @@ html, body, #app {
   overflow: hidden;
 }
 
-/* 外层固定，不滚动 */
 .layout-outer {
   height: 100vh;
   overflow: hidden;
+  --header-height: 52px;
 }
 
-/* 此层仅用于「右边滑到底后再滑」时露出 footer；不显示自身滚动条，由 JS 滚动；禁止 transform 以免 fixed 失效 */
 .layout-scroll-wrapper {
   height: 100%;
-  overflow-y: hidden;
+  overflow-y: auto;
   overflow-x: hidden;
 }
+.layout-scroll-wrapper.wrapper-pinned {
+  overflow-y: hidden !important;
+}
 
-/* 一整块固定一屏高，避免 main 被内容撑高导致整页滚动；只有右侧 layout-page 内部滚动 */
+.layout-scroll-wrapper > header {
+  position: relative;
+  z-index: 20;
+}
+
+.layout-scroll-wrapper > .layout-main.layout-wrapper {
+  position: relative;
+  z-index: 0;
+}
+
 .layout-main.layout-wrapper {
   height: 100vh;
   max-height: 100vh;
@@ -242,14 +310,13 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-/* 左侧 sidemenu：对右边固定，高度 100vh，有自己滚动条；footer 露出时改为流式，永远在 footer 上面 */
 .layout-sidebar {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
 }
-.layout-outer:not(.footer-revealed) .layout-sidebar {
+.layout-outer.sidebar-pinned:not(.footer-revealed) .layout-sidebar {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -266,20 +333,27 @@ html, body, #app {
   left: auto !important;
 }
 
-/* 右侧只滑 rack representation；sidemenu 固定时留出左边距 */
+.layout-right {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.layout-outer.sidebar-pinned:not(.footer-revealed) .layout-right {
+  margin-left: 250px;
+}
+
 .layout-page {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
-.layout-outer:not(.footer-revealed) .layout-page {
-  margin-left: 250px;
-}
 
-/* 当右边滚动条滑出整个 rack representation 时，再滑就显示 footer */
 .layout-footer {
   flex-shrink: 0;
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 </style>
