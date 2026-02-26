@@ -706,7 +706,7 @@ const clearPreview = () => {
                           [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                           zIndex: 10
                         }">
-                        <template v-if="isDarkMode">
+                        <template v-if="isDarkMode && !isDragOverRack">
                           <div v-for="(led, index) in getCachedDeviceLeds(device, getLedDensityKey(slot.devices.filter(d => d.orientation === 'front').length))" :key="index"
                               :class="['device-led', { 'device-led-static': !led.blinking }]"
                               :style="{
@@ -804,7 +804,7 @@ const clearPreview = () => {
                           [rack.order === 'descending' ? 'bottom' : 'top']: '0',
                           zIndex: 10
                         }">
-                        <template v-if="isDarkMode">
+                        <template v-if="isDarkMode && !isDragOverRack">
                           <div v-for="(led, index) in getCachedDeviceLeds(device, getLedDensityKey(slot.devices.filter(d => d.orientation === 'back').length))" :key="index"
                               :class="['device-led', { 'device-led-static': !led.blinking }]"
                               :style="{
