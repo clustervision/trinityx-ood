@@ -18,34 +18,51 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-This File is a Main File Luna 2 Monitor.
-This file will provide the functionality to observe the Luna status and queue.
+This File is a Main File Luna 2 Rack View.
+This file will provide the functionality to manage the Rack and the inventory in it.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2026, Luna2 Project[OOD]'
 __license__     = 'GPL'
 __version__     = '2.0'
 __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
+__status__      = 'Production'
 
 import os
+import time
 import json
 from textwrap import wrap
-from html import unescape
-from flask import Flask, render_template, request, flash, url_for, redirect, jsonify
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
+import urllib3
+from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE
+from constant import LICENSE, TOKEN_FILE, APP_STATE, APP_KEY
 from log import Log
 from helper import Helper
-from presenter import Presenter
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = Log.init_log('INFO')
-TABLE = 'rack'
-TABLE_CAP = 'Rack'
-app = Flask(__name__, static_folder="static")
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app = Flask(__name__, static_folder="app/assets", template_folder="app")
+app.secret_key = APP_KEY
+
+if APP_STATE is False: # FOR Development Only
+    CORS(app, resources = {r"/get_nodes/*":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/device_pool":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/manage_racks":        {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/manage_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/show_rack/*":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/change_rack":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/change_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/delete_rack/*":       {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/delete_inventory/*":  {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/update_rack":         {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/update_inventory":    {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/perform/*":           {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/license":             {"origins": "http://localhost:5173"}} )
+    CORS(app, resources = {r"/rack_power/*":        {"origins": "*"}} )
 
 
 @app.before_request
@@ -55,8 +72,9 @@ def validate_home_directory():
     """
     if request.path.startswith('/static/'):
         return
-    if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    if "does not exist" in TOKEN_FILE:
+        response = {"status": False, "message": TOKEN_FILE}
+        return response
     return None
 
 
@@ -65,33 +83,23 @@ def home():
     """
     This is the main method of application. It will Show Monitor Options.
     """
-    metric = get_temperature()
-    metric_data = metric.get_data(as_text=True)
-    metric = json.loads(metric_data)
-    metric = True if metric else None
-    table_data = Rest().get_data(TABLE)
-    if table_data:
-        rack_data = table_data["config"]["rack"]
-    else:
-        rack_data = {}
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    return render_template("rack.html", table=TABLE_CAP, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', data=None, metric=metric)
+    url = Helper().app_url(request)
+    return render_template(
+        "index.html",
+        PROMETHEUS_URL  = url['PROMETHEUS_URL'],
+        APP_URL         = url['APP_URL']
+    )
 
 
-@app.route('/get_temperature', methods=['GET'])
-def get_temperature():
+@app.route('/device_pool', methods=['GET'])
+def device_pool():
     """
-    This route will call the prometheus URL to collect the temperature for the machines.
+    This is the main method of application. It will Show Monitor Options.
     """
-    response = []
-    response = Helper().get_metrics('temperature', data=response)
-    response = Helper().get_metrics('load', data=response)
-    response = Helper().get_metrics('power', data=response)
-    response = Helper().get_metrics('gpu_temp', data=response)
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data("rack", "inventory/unconfigured")
+    if table_data:
+        response["message"] = table_data["config"]["rack"]["inventory"]
     return jsonify(response)
 
 
@@ -100,209 +108,178 @@ def get_nodes(rack_name=None):
     """
     This route will call the prometheus URL to collect the temperature for the machines.
     """
-    response = []
-    table_data = Rest().get_data(TABLE, rack_name)
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data("rack", rack_name)
     if isinstance(table_data, dict):
         rack_data = table_data["config"]["rack"][rack_name]["devices"]
         for node in rack_data:
             if node["type"] == "node":
-                response.append(node["name"])
+                response["status"] = True
+                response["message"].append(node["name"])
     return jsonify(response)
 
-@app.route('/get_screen_size', methods=['POST'])
-def get_screen_size():
-    data = request.json
-    width = data['width']
-    if width >= 1921:
-        width = 220
-        height = 30
-    else:
-        width = 120
-        height = 20
-    # print(f"Screen Width: {width}, Screen Height: {height}")
-    return jsonify({'width': width, 'height': height})
 
-
-@app.route('/manage/<string:page>', methods=['GET'])
-def manage(page=None):
+@app.route('/manage_racks', methods=['GET'])
+def manage_racks():
     """
     This is the main route to manage things.
     """
-    # nav = types.SimpleNamespace()
-    # nav.name = f"Manage {TABLE_CAP}"
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    data, error = "", ""
-    if page == "site":
-        table_data = {"config": {"rack": {"site": [{"name": "ClusterVision Amsterdam", "rooms": 2}, {"name": "ClusterVision Schiphol", "rooms": 3}] } } }
-    elif page == "room":
-        table_data = {"config": {"rack": {"room": [
-            {"name": "Basement", "site": "ClusterVision Amsterdam", "racks": 20}, {"name": "1st Floor", "site": "ClusterVision Amsterdam", "racks": 10},
-            {"name": "Basement", "site": "ClusterVision Schiphol", "racks": 10}, {"name": "1st Floor", "site": "ClusterVision Schiphol", "racks": 20}, {"name": "2nd Floor", "site": "ClusterVision Schiphol", "racks": 30}
-            ] } } }
-    elif page == "rack":
-        table_data = Rest().get_data(TABLE)
-    elif page == "inventory":
-        table_data = Rest().get_data(TABLE, "inventory")
-
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data("rack")
     LOGGER.info(table_data)
     if table_data:
-        if page in ["site", "room", "inventory"]:
-            raw_data = table_data['config']['rack'][page]
-            fields, rows  = Helper().filter_data_list(page, raw_data)
-        elif page == "rack":
-            raw_data = table_data['config']['rack']
-            fields, rows  = Helper().filter_data(page, raw_data)
-        data = Presenter().show_table(fields, rows)
-        data = unescape(data)
-
-    if page in ["site", "room", "rack", "inventory"]:
-        page_cap = page.capitalize()
-    return render_template("manage.html", table=TABLE_CAP, page=page_cap, inventory=inventory, data=data, error=error)
+        raw_data = table_data['config']['rack']
+        response["status"] = True
+        response["message"].append(raw_data)
+    return jsonify(response)
 
 
-@app.route('/show/<string:page>/<string:record>', methods=['GET'])
-def show(page=None, record=None):
-    metric = get_temperature()
-    metric_data = metric.get_data(as_text=True)
-    metric = json.loads(metric_data)
-    metric = True if metric else None
-    table_data = Rest().get_data(TABLE, record)
-    if table_data:
-        rack_data = table_data["config"]["rack"][record]
-    else:
-        rack_data = {}
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    page_cap = page.capitalize()
-    return render_template("show.html", table=TABLE_CAP, page=page_cap, record=record, rack_data=rack_data, inventory=inventory, rack_size=52, title='Status', metric=metric)
-
-
-@app.route('/update', methods=['POST'])
-def update():
+@app.route('/manage_inventory', methods=['GET'])
+def manage_inventory():
     """
-    This API route will update the position of a device in a rack.
+    This is the main route to manage things.
     """
-    payload = {}
-    request_data = json.loads(request.get_json())
-    if request_data['rack']:
-        rack_name = request_data['rack']
-        del request_data['rack']
-        payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
-        uri = f'config/rack/{rack_name}'
-        result = Rest().post_raw(uri, payload)
-    else:
-        uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
-        result = Rest().get_delete(TABLE, uri)
-        LOGGER.info(f'Response {result.content} & HTTP Code {result.status_code}')
-    response = json.dumps(payload)
-    return response
-
-
-@app.route('/edit/<string:page>', methods=['GET', 'POST'])
-@app.route('/edit/<string:page>/<string:record>', methods=['GET', 'POST'])
-def edit(page=None, record=None):
-    data, error = "", ""
-    site_list = ''
-    if page.lower() == "rack":
-        table_data = Rest().get_data(TABLE, record)
-    else:
-        table_data = Rest().get_data(TABLE, page)
+    response = {"status": False, "message": []}
+    table_data = Rest().get_data("rack", "inventory")
+    LOGGER.info(table_data)
     if table_data:
-        if page.lower() == "rack":
-            if record in table_data["config"]["rack"]:
-                data = table_data["config"]["rack"][record]
-        else:
-            tmp_data = table_data["config"]["rack"][page]
-            for each in tmp_data:
-                if each['name'] == record:
-                    data = each
-    else:
-        data = {}
+        raw_data = table_data['config']['rack']["inventory"]
+        response["status"] = True
+        response["message"] = raw_data
+    return jsonify(response)
+
+
+@app.route('/show_rack/<string:rack_name>', methods=['GET'])
+def show_rack(rack_name: str):
+    """
+    This route will return the provided rack data.
+    """
+    response = {"status": False, "message": {}}
+    table_data = Rest().get_data("rack", rack_name)
+    if table_data:
+        rack_data = table_data["config"]["rack"][rack_name]
+        response["message"] = rack_data
+    return jsonify(response)
+
+
+@app.route('/change_rack', methods=['POST'])
+def change_rack():
+    """
+    This route will be used to update the rack from Manage Rack.
+    """
+    response = {"status": False, "message": ""}
     payload = {}
     if request.method == 'POST':
         payload = {
             k: v
             for k, v in request.form.items() if v not in [None, '']
         }
-        payload = Helper().prepare_payload(None, payload)
-        if page.lower() == "rack":
-            payload['size'] = int(payload['size'])
-            request_data = {'config': {TABLE: {payload['name']: payload}}}
+        request_data = {'config': {"rack": {payload['name']: payload}}}
+        post_response = Rest().post_data("rack", payload['name'], request_data)
+        LOGGER.info("%s -> %s", post_response.status_code, post_response.content)
+        if post_response.status_code == 204:
+            response = {"status": True, "message": f'Rack, {payload["name"]} Updated.'}
         else:
-            request_data = { 'config': { TABLE: { "inventory": [payload] } } }
-        if page.lower() == "rack":
-            if table_data:
-                if payload['name'] in table_data['config'][TABLE]:
-                    if 'devices' in table_data['config'][TABLE][payload['name']]:
-                        if table_data['config'][TABLE][payload['name']]['devices']:
-                            if table_data['config'][TABLE][payload['name']]['order'] != payload['order']:
-                                error = "Rack have devices, Kindly remove them before changing the Order of Rack"
-                                flash(error, "danger")
-                                return redirect(url_for('edit', page=page, record=record), code=302)
-                            if table_data['config'][TABLE][payload['name']]['size'] != payload['size']:
-                                error = "Rack have devices, Kindly remove them before changing the Size of Rack"
-                                flash(error, "danger")
-                                return redirect(url_for('edit', page=page, record=record), code=302)
+            response_json = post_response.json()
+            msg = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+            response["message"] = msg
+    return jsonify(response)
 
-            response = Rest().post_data(TABLE, payload['name'], request_data)
+
+@app.route('/change_inventory', methods=['POST'])
+def change_inventory():
+    """
+    This route will be used to update the inventory from Manage Inventory.
+    """
+    response = {"status": False, "message": ""}
+    payload = {}
+    if request.method == 'POST':
+        payload = {
+            k: v
+            for k, v in request.form.items() if v not in [None, '']
+        }
+        request_data = { 'config': { "rack": { "inventory": [payload] } } }
+        post_response = Rest().post_data("rack", "inventory", request_data)
+        LOGGER.info("%s -> %s", post_response.status_code, post_response.content)
+        if post_response.status_code == 204:
+            response = {"status": True, "message": f'Rack, {payload["name"]} Updated.'}
         else:
-            configured = Rest().get_data(TABLE, "inventory/configured")
-            if 'config' in configured:
-                inventory = configured['config']['rack']['inventory']
-                for each in inventory:
-                    if each['name'] == payload['name'] and each['type'] == payload['type']:
-                        if int(each['height']) != int(payload['height']):
-                            error = "Inventory is configured in a Rack, Kindly remove it from there to change the height."
-                            flash(error, "danger")
-                            return redirect(url_for('edit', page=page, record=record), code=302)
-                        if each['orientation'] != payload['orientation']:
-                            error = "Inventory is configured in a Rack, Kindly remove it from there to change the orientation."
-                            flash(error, "danger")
-                            return redirect(url_for('edit', page=page, record=record), code=302)
-            response = Rest().post_data(TABLE, page, request_data)
-        LOGGER.info(f'{response.status_code} -> {response.content}')
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "danger")
-        return redirect(url_for('edit', page=page, record=record), code=302)
-    page_cap = page.capitalize()
-
-    
-    table_data = Rest().get_data(TABLE, "inventory/unconfigured")
-    if table_data:
-        inventory = table_data["config"]["rack"]["inventory"]
-    else:
-        inventory = {}
-    return render_template("change.html", table=TABLE_CAP, page=page_cap, record=record, data=data, inventory=inventory, site_list=site_list, error=error)
+            response_json = post_response.json()
+            msg = f'HTTP ERROR :: {post_response.status_code} - {response_json["message"]}'
+            response["message"] = msg
+    return jsonify(response)
 
 
-@app.route('/delete/<string:page>/<string:record>', methods=['GET'])
-@app.route('/delete/<string:page>/<string:record>/<string:device>', methods=['GET'])
-def delete(page=None, record=None, device=None):
-    if page == "rack":
-        response = Rest().get_delete(TABLE, record)
+@app.route('/delete_rack/<string:rack_name>', methods=['GET'])
+def delete_rack(rack_name: str):
+    """
+    This route will remove the rack from the luna.
+    """
+    response = {"status": False, "message": ""}
+    delete_response = Rest().get_delete("rack", rack_name)
+    LOGGER.info("%s -> %s", delete_response.status_code, delete_response.content)
+    if delete_response.status_code == 204:
+        response = {"status": True, "message": f'Rack, {rack_name} is deleted.'}
+    elif delete_response.status_code == 201:
+        response_json = delete_response.json()
+        response["message"] = response_json["message"]
     else:
-        response = Rest().get_delete(TABLE, f'inventory/{record}/type/{device}')
-    LOGGER.info(f'{response.status_code} -> {response.content}')
-    if response.status_code == 204:
-        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
-    elif response.status_code == 201:
-        response_json = response.json()
-        flash(response_json["message"], "success")
+        response_json = delete_response.json()
+        response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
+    return jsonify(response)
+
+
+@app.route('/delete_inventory/<string:device>/<string:inventory>', methods=['GET'])
+def delete_inventory(device: str, inventory: str):
+    """
+    This route will remove the inventory from the luna.
+    """
+    response = {"status": False, "message": ""}
+    delete_response = Rest().get_delete("rack", f'inventory/{inventory}/type/{device}')
+    LOGGER.info("%s -> %s", delete_response.status_code, delete_response.content)
+    if delete_response.status_code == 204:
+        response = {"status": True, "message": f'Rack, {inventory} is deleted.'}
+    elif delete_response.status_code == 201:
+        response_json = delete_response.json()
+        response["message"] = response_json["message"]
     else:
-        response_json = response.json()
-        flash(f'ERROR {response.status_code} :: {response_json["message"]}', "danger")
-    return redirect(url_for('manage', page=page), code=302)
+        response_json = delete_response.json()
+        response["message"] = f'ERROR {delete_response.status_code} :: {response_json["message"]}'
+    return jsonify(response)
+
+
+@app.route('/update_rack', methods=['POST'])
+def update_rack():
+    """
+    This API route will update the position of a device in a rack.
+    """
+    response = {"status": False, "message": {}}
+    payload = {}
+    request_data = json.loads(request.get_json())
+    rack_name = request_data['rack']
+    del request_data['rack']
+    payload = {'config': {'rack': {rack_name: {'devices': [request_data]} } } }
+    uri = f'config/rack/{rack_name}'
+    result = Rest().post_raw(uri, payload)
+    LOGGER.info("Response %s & HTTP Code %s", result.status_code, result.content)
+    response = {"status": True, "message": json.dumps(payload)}
+    return jsonify(response)
+
+
+@app.route('/update_inventory', methods=['POST'])
+def update_inventory():
+    """
+    This API route will update the position of a device in a rack.
+    """
+    response = {"status": False, "message": {}}
+    payload = {}
+    request_data = json.loads(request.get_json())
+    uri = f'inventory/{request_data["name"]}/type/{request_data["type"]}'
+    result = Rest().get_delete("rack", uri)
+    LOGGER.info("Response %s & HTTP Code %s", result.status_code, result.content)
+    response = {"status": True, "message": json.dumps(payload)}
+    return jsonify(response)
+
 
 
 @app.route('/perform/<string:system>/<string:action>/<string:nodename>', methods=['GET'])
@@ -311,7 +288,7 @@ def perform(system=None, action=None, nodename=None):
     This is the main method of application.
     It will list all Control which is available with daemon.
     """
-    response = {"status": "danger", "message": ""}
+    response = {"status": False, "message": ""}
     message = ''
     if system and action and nodename:
         uri = f'control/action/{system}/{nodename}/_{action}'
@@ -331,15 +308,146 @@ def perform(system=None, action=None, nodename=None):
             message = f'<br />{message}'
         if result.status_code in [200, 204]:
             if 'off' in message:
-                response['status'] = "danger"
-                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+                response['message'] = f'Node {nodename} {system} {action} :: {message}.'
             else:
-                response['status'] = "success"
-                response['message'] = f'<strong>Node {nodename} {system} {action} :: {message}.</strong>'
+                response['status'] = True
+                response['message'] = f'Node {nodename} {system} {action} :: {message}.'
         else:
-            response['status'] = "warning"
-            response['message'] = f'<strong>{nodename} {system} {action} :: {message}.</strong>'
+            response['message'] = f'{nodename} {system} {action} :: {message}.'
     return response
+
+
+@app.route('/rack_power/<string:rack_name>', methods=['GET'])
+@app.route('/rack_power/<string:rack_name>/<string:action>', methods=['GET'])
+def rack_power(rack_name: str, action: str = "status"):
+    """
+    Stream rack node power status using SSE
+    """
+    table_data = Rest().get_data("rack", rack_name)
+    if not table_data:
+        return jsonify({"status": False, "message": f"{rack_name}, Rack Not found"})
+
+    rack_data = table_data["config"]["rack"][rack_name]
+
+    node_list = [
+        device["name"]
+        for device in rack_data["devices"]
+        if device["type"] == "node"
+    ]
+
+    if not node_list:
+        return jsonify({"status": False, "message": f"{rack_name}, Rack has no nodes."})
+
+    # ---------------- SINGLE NODE (normal response) ----------------
+    if len(node_list) == 1:
+        if action != "status":
+            uri = f'control/action/power/{node_list[0]}/_{action}'
+            one_node_action = Rest().get_raw(uri)
+            if one_node_action.status_code == 204:
+                return jsonify({
+                    "status": True,
+                    "message": [{
+                        "node": node_list[0],
+                        "state": action.upper()
+                    }]
+                })
+            else:
+                return jsonify({
+                    "status": False,
+                    "message": f"Failed to perform {action} on {node_list[0]}."
+                })
+        else:
+            uri = f'control/action/power/{node_list[0]}/_status'
+            result = Rest().get_raw(uri)
+            content = result.json()
+            return jsonify({
+                "status": True,
+                "message": [{
+                    "node": node_list[0],
+                    "state": content["control"]["power"]
+                }]
+            })
+
+    # ---------------- MULTI NODE (SSE streaming) ----------------
+    construct_hostlist = Helper().get_hostlist(node_list)
+    if construct_hostlist["status"] is False:
+        return jsonify({"status": False, "message": construct_hostlist["message"]})
+
+    hostlist = construct_hostlist["message"]
+
+    def event_stream():
+        uri = f"control/action/power/_{action}"
+        payload = {"control": {"power": {action: {"hostlist": hostlist} } } }
+
+        start_resp = Rest().post_raw(uri, payload)
+        if start_resp.status_code != 200:
+            yield f"event: error\ndata: {json.dumps({'error': 'Failed to start power status'})}\n\n"
+            return
+
+        content = start_resp.json()
+        request_id = content.get("request_id")
+
+        if not request_id:
+            yield f"event: error\ndata: {json.dumps({'error': 'request_id missing'})}\n\n"
+            return
+
+        ipmi_response = {}
+        possible_cases = ['ok', 'on', 'off']
+        if 'failed' in content['control']:
+            for key, value in content['control']['failed'].items():
+                ipmi_response[key] = value
+
+        if "power" in content['control']:
+            for case in possible_cases:
+                if case in content['control']["power"]:
+                    for key, value in content['control']["power"][case].items():
+                        if case == "ok":
+                            ipmi_response[key] = action.upper()
+                        else:
+                            ipmi_response[key] = case.upper()
+        ipmi_response = dict(sorted(ipmi_response.items()))
+
+        yield f"event: started\ndata: {json.dumps(ipmi_response)}\n\n"
+        
+        while True:
+            status_uri = f"control/status/{request_id}"
+            resp = Rest().get_raw(status_uri)
+
+            if resp.status_code == 404:
+                yield "event: completed\ndata: {}\n\n"
+                break
+
+            if resp.status_code != 200:
+                yield f"event: error\ndata: {json.dumps({'error': 'Status polling failed'})}\n\n"
+                break
+
+            data = resp.json()
+
+            ipmi_response = {}
+            possible_cases = ['ok', 'on', 'off']
+            if 'failed' in data['control']:
+                for key, value in data['control']['failed'].items():
+                    ipmi_response[key] = value
+
+            if "power" in data['control']:
+                for case in possible_cases:
+                    if case in data['control']["power"]:
+                        for key, value in data['control']["power"][case].items():
+                            ipmi_response[key] = case.upper()
+            ipmi_response = dict(sorted(ipmi_response.items()))
+
+            if "unknown" in data["control"]:
+                yield f"event: update\ndata: {json.dumps(ipmi_response)}\n\n"
+            else:
+                yield f"event: update\ndata: {json.dumps(ipmi_response)}\n\n"
+
+            time.sleep(2)
+
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype="text/event-stream",
+        headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )
 
 
 @app.route('/license', methods=['GET'])
@@ -358,5 +466,15 @@ def license_info():
 
 
 if __name__ == "__main__":
-    # app.run(host='0.0.0.0', port=7059, debug=True)
-    app.run()
+    if APP_STATE is False:
+        dev_context=(
+            '/trinity/local/etc/ssl/vmware-controller1.cluster.crt',
+            '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        )
+        app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
+    else:
+        app.run()
+
+# Run in Dev mode:
+# sudo setfacl -m u:admin:r /trinity/local/etc/ssl/vmware-controller1.cluster.*
+# sudo -u admin bash -c '. /trinity/local/python/bin/activate && python app.py'

@@ -23,11 +23,11 @@ This file is used by Open On Demands internal module passenger.
 """
 
 __author__      = "Sumit Sharma"
-__copyright__   = "Copyright 2022, Luna2 Project [WEB]"
+__copyright__   = "Copyright 2026, Luna2 Project [WEB]"
 __license__     = "GPL"
 __version__     = "2.0"
 __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
-__status__      = "Development"
+__status__      = "Production"
 
-from app import app as application
+from app import app as application # pylint: disable=unused-import

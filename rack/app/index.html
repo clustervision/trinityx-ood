@@ -1,0 +1,47 @@
+<!--
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
+-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="{{ url_for( 'static', filename='favicon.ico') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rack View :: Luna</title>
+    <script type="module" crossorigin src="{{ url_for( 'static', filename='index.js') }}"></script>
+    <link rel="stylesheet" crossorigin href="{{ url_for( 'static', filename='index.css') }}" />
+    <script>
+      window.PROMETHEUS_URL = "{{ PROMETHEUS_URL }}";
+      window.APP_URL = "{{ APP_URL }}";
+      window.CONTEXT_URL = "{{ CONTEXT_URL }}";
+    </script>
+    <!-- <script>
+      window.PROMETHEUS_URL = "https://yixin3-dev-ctrl001:9090";
+      window.APP_URL = "https://yixin3-dev-ctrl001:7755";
+      window.CONTEXT_URL = "https://yixin3-dev-ctrl001:8080";
+    </script> -->
+    <!-- <script>
+      window.PROMETHEUS_URL = "https://vmware-controller1.cluster:9090";
+      window.APP_URL = "http://vmware-controller1.cluster:7755";
+      window.CONTEXT_URL = 'https://vmware-controller1:8080/pun/sys'
+    </script> -->
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
