@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="./favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rack View</title>
+    <script>
+      window.PROMETHEUS_URL = "{{ PROMQL_URL }}";
+      window.APP_URL = "{{ APP_URL }}";
+      window.CONTEXT_URL = "{{ CONTEXT_URL }}";
+    </script>
+    <!-- <script>
+      window.PROMETHEUS_URL = "https://yixin3-dev-ctrl001:9090";
+      window.APP_URL = "https://yixin3-dev-ctrl001:7755";
+      window.CONTEXT_URL = "https://yixin3-dev-ctrl001:8080";
+    </script> -->
+    <!-- <script>
+      window.PROMETHEUS_URL = "https://rocky9-controller1.cluster:9090";
+      window.APP_URL = "https://rocky9-controller1.cluster:7755";
+      window.CONTEXT_URL = "https://rocky9-controller1.cluster:8080";
+    </script> -->
+    <script type="module" crossorigin src="./index.js"></script>
+    <link rel="stylesheet" crossorigin href="./index.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

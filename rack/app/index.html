@@ -17,11 +17,11 @@
 -->
 
 <!doctype html>
-<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-assets-path="../assets/">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="{{ url_for( 'static', filename='favicon.ico') }}" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rack View :: Luna</title>
     <script type="module" crossorigin src="{{ url_for( 'static', filename='index.js') }}"></script>
     <link rel="stylesheet" crossorigin href="{{ url_for( 'static', filename='index.css') }}" />
@@ -30,6 +30,11 @@
       window.APP_URL = "{{ APP_URL }}";
       window.CONTEXT_URL = "{{ CONTEXT_URL }}";
     </script>
+    <!-- <script>
+      window.PROMETHEUS_URL = "https://yixin3-dev-ctrl001:9090";
+      window.APP_URL = "https://yixin3-dev-ctrl001:7755";
+      window.CONTEXT_URL = "https://yixin3-dev-ctrl001:8080";
+    </script> -->
     <!-- <script>
       window.PROMETHEUS_URL = "https://vmware-controller1.cluster:9090";
       window.APP_URL = "http://vmware-controller1.cluster:7755";

@@ -30,7 +30,6 @@ __status__      = "Production"
 
 
 import os
-from types import SimpleNamespace
 from typing import cast
 from configparser import RawConfigParser
 import requests
@@ -210,7 +209,6 @@ class Rest():
         It will fetch the records from Luna 2 Daemon
         via REST API's.
         """
-        # response: SimpleNamespace = SimpleNamespace(status_code=0, content={})
         response = False
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}'
@@ -249,7 +247,6 @@ class Rest():
         It will post data to Luna 2 Daemon via REST API's.
         And use for creating and updating records.
         """
-        # response: SimpleNamespace = SimpleNamespace(status_code=0, content="")
         response = False
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}'
