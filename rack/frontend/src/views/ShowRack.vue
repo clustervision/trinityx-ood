@@ -9,7 +9,11 @@ import type { Rack } from '@/types/rack';
 import { useToast } from 'vue-toastification';
 
 const props = defineProps<{ rackName: string; }>();
-const emit = defineEmits(['close', 'pool-updated', 'device-taken']);
+const emit = defineEmits(['close', 'pool-updated', 'device-taken', 'edit-inventory']);
+
+const onEditInventory = (device: { name: string }) => {
+  emit('edit-inventory', device.name);
+};
 const { fetchSingleRack , handleRackDrop} = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice, fetchMetricData } = useRackMetrics();
 const toast = useToast()
@@ -193,6 +197,7 @@ onMounted(() => {
                 @reset="resetRack"
                 @dragend="onDragEnd"
                 @power-toggle="handlePowerToggle"
+                @edit-inventory="onEditInventory"
                 :is-busy="loadingRackName === rack.name"
               />
             </div>

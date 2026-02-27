@@ -2,11 +2,12 @@
 import DeviceItem from '@/components/DeviceItem.vue';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import type { Rack, Device } from '@/types/rack';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useToast } from 'vue-toastification';
 import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
+import { useRack } from '@/composables/useRack';
 
 const props = defineProps<{
   rack: Rack;
@@ -22,6 +23,13 @@ const props = defineProps<{
 const { isDarkMode } = useTheme();
 const toast = useToast();
 const { executeDeviceAction } = useDeviceActions();
+const { getDeviceRows, syncRackPowerFromNodes } = useRack();
+
+const getDeviceRowsForSlot = (slot: { devices: Device[] }, side: 'front' | 'back') => {
+  const list = slot.devices.filter((d) => (d.orientation || 'front') === side);
+  const heightU = list[0]?.height ?? 1;
+  return getDeviceRows(list, heightU);
+};
 const isActionLoading = ref(false);
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
@@ -36,22 +44,30 @@ const handleDeviceRightClick = (event: MouseEvent, device: Device) => {
 
 const handleMenuAction = async (payload: { action: string; subAction?: string; device: Device }) => {
   const { action, subAction, device } = payload;
+  if (action === 'edit-inventory') {
+    emit('edit-inventory', device);
+    return;
+  }
   isActionLoading.value = true;
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {
       // Update device power state for LED blinking
       if (action === 'power') {
-        if (subAction === 'on') {
-          device.powerState = 'ON';
-        } else if (subAction === 'off') {
-          device.powerState = 'OFF';
+        if (subAction === 'status') {
+          // Parse single-device power status from API message and update this device's LED
+          const msg = String(result.message ?? '').toUpperCase();
+          if (msg.includes('RESET')) device.powerState = 'RESET';
+          else if (msg.includes('ON')) device.powerState = 'ON';
+          else device.powerState = 'OFF';
+          syncRackPowerFromNodes(props.rack);
+          props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+        } else {
+          if (subAction === 'on') device.powerState = 'ON';
+          else if (subAction === 'off') device.powerState = 'OFF';
+          else if (subAction === 'reset') device.powerState = 'RESET';
+          syncRackPowerFromNodes(props.rack);
         }
-        else if (subAction === 'reset') {
-          device.powerState = 'RESET';
-        }
-        // Update rack power button state based on all devices
-        updateRackPowerState();
       }
       toast.success(result.message);
     }
@@ -62,52 +78,44 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   }
 };
 
-const updateRackPowerState = () => {
-  // Check if any node device is ON or RESET (treat RESET as ON, case-insensitive)
-  let anyNodeOn = false;
-  for (const slot of props.rack.slots) {
-    for (const device of slot.devices) {
-      const state = (device.powerState || '').toUpperCase();
-      if (device.type === 'node' && (state === 'ON' || state === 'RESET')) {
-        anyNodeOn = true;
-        break;
-      }
-    }
-    if (anyNodeOn) break;
-  }
-  props.rack.powerOn = anyNodeOn;
-  props.rack.backPowerOn = anyNodeOn;
-};
-
-
 const LED_COLORS = ['#28c76f', '#00cfe8', '#ff9f43', '#00e676', '#00b0ff'];
 
-/** Node + powerState ON/RESET: blinking LEDs. Node + OFF: no LEDs. Controller/switch/no-type: always blinking LEDs. */
-const getDeviceLeds = (device: Device): Array<{ left: string; top: string; color: string; animationDuration: string; animationDelay: string; blinking: boolean }> => {
+type Led = { left: string; top: string; color: string; animationDuration: string; animationDelay: string; blinking: boolean };
+type LedDensityKey = 'high' | 'medium' | 'low';
+
+const ledCache = new Map<string, Led[]>();
+
+/** Normalize powerState for LED display: ON/RESET -> powerOn, else OFF. Matches checkPowerStatus/placeDeviceInRack. */
+function isDevicePowerOnForLeds(device: Device): boolean {
+  const state = (device.powerState || '').toUpperCase();
+  if (state.includes('RESET')) return true;
+  if (state.includes('ON')) return true;
+  return false;
+}
+
+/** Pure: build LED array for a device given density. Node+OFF returns []. No logging. */
+function buildDeviceLeds(device: Device, densityKey: LedDensityKey): Led[] {
   const type = (device.type || '').toLowerCase();
   const isNode = type === 'node';
-  // Treat RESET as ON for LED display (case-insensitive)
-  const state = (device.powerState || '').toUpperCase();
-  const powerOn = state === 'ON' || state === 'RESET';
-  
-  console.log(`getDeviceLeds for ${device.name}: type=${type}, isNode=${isNode}, powerState=${device.powerState}, state=${state}, powerOn=${powerOn}, will return ${isNode && !powerOn ? 0 : 'many'} LEDs`);
-
+  const powerOn = isDevicePowerOnForLeds(device);
   if (isNode && !powerOn) return [];
 
   let seed = 0;
   for (let i = 0; i < device.name.length; i++) seed += device.name.charCodeAt(i);
-
   const rand = () => {
     const x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
   };
 
   const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
-  const allLeds: Array<{ left: string; top: string; color: string; animationDuration: string; animationDelay: string; blinking: boolean }> = [];
+  const allLeds: Led[] = [];
+
+  // Count per row by density: high 2-4, medium 1-2, low 1 (merge 时再少一点)
+  const countRange: [number, number] = densityKey === 'high' ? [2, 4] : densityKey === 'medium' ? [1, 2] : [1, 1];
+  const countSpread = countRange[1] - countRange[0] + 1;
 
   for (let u = 0; u < device.height; u++) {
-    const countPerRow = Math.floor(rand() * 4) + 3;
-
+    const countPerRow = countRange[0] + Math.floor(rand() * countSpread);
     const rowSlots: number[] = [];
     let attempts = 0;
 
@@ -115,40 +123,53 @@ const getDeviceLeds = (device: Device): Array<{ left: string; top: string; color
       attempts++;
       const slotIndex = Math.floor(rand() * gridSlots.length);
       const slotPos = gridSlots[slotIndex];
-
       if (slotPos === undefined) continue;
       if (rowSlots.includes(slotPos)) continue;
-
       const leftNeighbor = gridSlots[slotIndex - 1];
       const rightNeighbor = gridSlots[slotIndex + 1];
       const hasLeft = leftNeighbor !== undefined && rowSlots.includes(leftNeighbor);
       const hasRight = rightNeighbor !== undefined && rowSlots.includes(rightNeighbor);
-
       if (hasLeft && hasRight) continue;
-
       rowSlots.push(slotPos);
     }
 
-    const rowLeds = rowSlots.map(leftPos => {
-      const heightPerU = 100 / device.height;
-
-      const baseTop = (u * heightPerU) + (heightPerU / 2);
-
-      return {
+    const heightPerU = 100 / device.height;
+    const baseTop = (u * heightPerU) + (heightPerU / 2);
+    for (const leftPos of rowSlots) {
+      allLeds.push({
         left: leftPos + '%',
         top: baseTop + '%',
         color: LED_COLORS[Math.floor(rand() * LED_COLORS.length)] ?? '#28c76f',
         animationDuration: (0.8 + rand() * 1.7) + 's',
         animationDelay: (rand() * 2) + 's',
         blinking: true
-      };
-    });
-
-    allLeds.push(...rowLeds);
+      });
+    }
   }
-
   return allLeds;
-};
+}
+
+/** Cached LED array. Key excludes powerState so OFF->ON reuses pattern. */
+function getCachedDeviceLeds(device: Device, densityKey: LedDensityKey): Led[] {
+  const type = (device.type || '').toLowerCase();
+  const isNode = type === 'node';
+  const powerOn = isDevicePowerOnForLeds(device);
+  if (isNode && !powerOn) return [];
+
+  const cacheKey = `${device.name}|${device.height}|${device.type ?? ''}|${densityKey}`;
+  let cached = ledCache.get(cacheKey);
+  if (cached) return cached;
+  cached = buildDeviceLeds(device, densityKey);
+  ledCache.set(cacheKey, cached);
+  return cached;
+}
+
+/** Density key from merged device count at same slot/side. */
+function getLedDensityKey(mergedCount: number): LedDensityKey {
+  if (mergedCount <= 4) return 'high';
+  if (mergedCount <= 10) return 'medium';
+  return 'low';
+}
 
 const hasController = computed(() => {
   if (!props.rack?.slots) return false;
@@ -249,6 +270,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
   } else {
     console.log(`Multi-node detected, using SSE: ${url}`);
     let isTaskCompleted = false;
+    let taskFailedHandled = false;
     const source = new EventSource(url);
 
     const closeConnection = () => {
@@ -271,23 +293,43 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       closeConnection();
     });
 
-    source.onerror = async (err) => {
+    source.addEventListener("failed", (e: MessageEvent) => {
+      if (isTaskCompleted) return;
+      taskFailedHandled = true;
+      const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
+      console.warn("[Rack Power SSE] Failure from server event 'failed', showing toast:", msg);
+      toast.error(`Action Failed: ${msg}`);
+      closeConnection();
+    });
+    source.addEventListener("error", (e: MessageEvent) => {
+      if (isTaskCompleted) return;
+      if (e.data) {
+        taskFailedHandled = true;
+        const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
+        console.warn("[Rack Power SSE] Failure from server event 'error', showing toast:", msg);
+        toast.error(`Action Failed: ${msg}`);
+      }
+      closeConnection();
+    });
+
+    source.onerror = async () => {
       if (isTaskCompleted) {
         console.log("Connection closed after completion (Normal behavior).");
         return;
       }
-      console.error("SSE connection error:", err);
+      console.error("[Rack Power SSE] Connection error (no server 'failed' event). Showing toast now.");
       source.close();
-      try {
+      if (!taskFailedHandled) {
+        toast.error("Action failed or connection lost.");
+        try {
           const response = await fetch(url);
           const data = await response.json();
-          if (data && !data.status) {
+          if (data && !data.status && data.message) {
             toast.error(`Action Failed: ${data.message}`);
-          } else {
-             toast.error("Action failed or connection lost.");
           }
-      } catch (e) {
-          toast.error("Action failed or connection lost.");
+        } catch {
+          // Already showed generic toast
+        }
       }
       isActionLoading.value = false;
     };
@@ -364,30 +406,22 @@ const checkPowerStatus = async () => {
               }
               // Handle RESET state from backend
               device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
-              console.log(`Device ${device.name}: raw state = ${item.state || item}, normalized = ${stateStr}, final powerState = ${device.powerState}`);
             }
           });
         });
-        const isAnyDeviceOn = data.message.some((item: any) => {
-          let stateStr = String(item.state || item).toUpperCase();
-          // Extract actual state from "success with unparsable output: RESET" format
-          if (stateStr.includes('RESET')) {
-            stateStr = 'RESET';
-          } else if (stateStr.includes('ON')) {
-            stateStr = 'ON';
-          }
-          return stateStr === 'ON' || stateStr === 'RESET';
-        });
-        props.rack.powerOn = isAnyDeviceOn;
-        props.rack.backPowerOn = isAnyDeviceOn;
+        syncRackPowerFromNodes(props.rack);
+        // New slot refs so Vue re-renders blinking lights and power button
+        props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
       }
     } catch (e) {
-      console.error("Single node status check failed:", e);
+      console.error("[Rack Status] Single-node fetch failed, showing toast:", e);
+      toast.error("Status check failed.");
     }
   }
   // --- CASE B: Multi Node (Use SSE) ---
   else {
     const source = new EventSource(url);
+    let statusErrorHandled = false;
 
     const handleStatusData = (raw: any) => {
       // Normalize: backend may send { message: [ { node, state } ], status } or { node001: "ON", ... } or array
@@ -414,22 +448,12 @@ const checkPowerStatus = async () => {
             }
             // Handle RESET state from backend
             device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
-            console.log(`Device ${device.name}: raw state = ${item.state}, normalized = ${stateStr}, final powerState = ${device.powerState}`);
           }
         });
       });
-      const isAnyDeviceOn = list.some((d) => {
-        let stateStr = String(d.state).toUpperCase();
-        // Extract actual state from "success with unparsable output: RESET" format
-        if (stateStr.includes('RESET')) {
-          stateStr = 'RESET';
-        } else if (stateStr.includes('ON')) {
-          stateStr = 'ON';
-        }
-        return stateStr === 'ON' || stateStr === 'RESET';
-      });
-      props.rack.powerOn = isAnyDeviceOn;
-      props.rack.backPowerOn = isAnyDeviceOn;
+      syncRackPowerFromNodes(props.rack);
+      // New slot refs so Vue re-renders blinking lights and power button
+      props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
       source.close();
     };
 
@@ -452,17 +476,59 @@ const checkPowerStatus = async () => {
       }
     });
 
-    source.onerror = (err) => {
+    source.addEventListener("failed", (e: MessageEvent) => {
+      statusErrorHandled = true;
+      const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
+      toast.error(`Status check failed: ${msg}`);
+      source.close();
+    });
+    source.addEventListener("error", (e: MessageEvent) => {
+      if (e.data) {
+        statusErrorHandled = true;
+        const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
+        toast.error(`Status check failed: ${msg}`);
+      }
+      source.close();
+    });
+
+    source.onerror = () => {
+      if (!statusErrorHandled) {
+        toast.error("Status check failed or connection lost.");
+      }
       source.close();
     };
   }
 };
 
+const powerStatusIntervalId = ref<ReturnType<typeof setInterval> | null>(null);
+const POWER_STATUS_INTERVAL_MS = 60 * 1000;
+
 onMounted(() => {
   checkPowerStatus();
 });
 
-const emit = defineEmits(['drop', 'reset', 'power-toggle']);
+watch(
+  () => isDarkMode.value,
+  (dark) => {
+    if (powerStatusIntervalId.value) {
+      clearInterval(powerStatusIntervalId.value);
+      powerStatusIntervalId.value = null;
+    }
+    if (dark) {
+      powerStatusIntervalId.value = setInterval(() => checkPowerStatus(), POWER_STATUS_INTERVAL_MS);
+    }
+  },
+  { immediate: true }
+);
+
+onUnmounted(() => {
+  if (powerStatusIntervalId.value) {
+    clearInterval(powerStatusIntervalId.value);
+    powerStatusIntervalId.value = null;
+  }
+});
+
+const emit = defineEmits(['drop', 'reset', 'power-toggle', 'edit-inventory']);
 
 const toggleBack = () => {
   props.rack.showBackSide = !props.rack.showBackSide;
@@ -615,42 +681,59 @@ const clearPreview = () => {
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'front'" class="placement-preview"></div>
                 <div v-if="conflictSlots.has(slot.number) && hoveredSide === 'front'" class="placement-preview placement-preview-conflict"></div>
 
-               <div v-for="device in slot.devices.filter(d => d.orientation === 'front')" :key="device.name"
-                class="flex-fill h-100 position-relative"
-                :style="{ pointerEvents: isDragOverRack ? 'none' : 'auto' }">
-
-                <div class="position-absolute w-100"
-                    :style="{
-                        height: (device.height * 20 - 2) + 'px',
-                        [rack.order === 'descending' ? 'bottom' : 'top']: '0',
-                        zIndex: 10
-                    }"
-                    :title="isDarkMode ? device.name : undefined">
-                    <template v-if="isDarkMode">
-                        <div v-for="(led, index) in getDeviceLeds(device)" :key="index"
-                            :class="['device-led', { 'device-led-static': !led.blinking }]"
-                            :style="{
-                              top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color,
-                              ...(led.blinking ? { animationDuration: led.animationDuration, animationDelay: led.animationDelay } : {}),
-                              zIndex: 40, pointerEvents: 'none'
-                            }">
-                        </div>
-                    </template>
-                    <div v-if="isDarkMode" class="device-dark-overlay"style="pointer-events: none;"></div>
-                    <DeviceItem
-                        :device="device"
-                        :metric1-value="getMetric(device, metric1,true)?.value"
-                        :metric1-color="getMetric(device, metric1, true)?.color"
-                        :metric1-type="metric1"
-                        :metric2-value="getMetric(device, metric2,true)?.value"
-                        :metric2-color="getMetric(device, metric2, true)?.color"
-                        :metric2-type="metric2"
-                        :is-rack-view="true"
-                        style="width: 100%; height: 100%; display: block;"
-                        @device-right-click="handleDeviceRightClick"
-                    />
+               <template v-if="slot.devices.filter(d => d.orientation === 'front').length > 0">
+                <div
+                  class="merged-devices-wrapper flex-fill position-relative d-flex flex-column"
+                  :style="{
+                    pointerEvents: isDragOverRack ? 'none' : 'auto',
+                    height: ((slot.devices.find(d => d.orientation === 'front')?.height ?? 1) * 20 - 2) + 'px',
+                    [rack.order === 'descending' ? 'bottom' : 'top']: '0'
+                  }"
+                  :title="slot.devices.filter(d => d.orientation === 'front').map(d => d.name).join('\n')">
+                  <div
+                    v-for="(row, rowIdx) in getDeviceRowsForSlot(slot, 'front')"
+                    :key="'front-' + slot.number + '-' + rowIdx"
+                    class="merged-devices-row d-flex"
+                    :style="{ flex: '1 1 0', minHeight: 0 }">
+                    <div
+                      v-for="device in row"
+                      :key="'front-' + device.name + '-' + slot.number + '-' + slot.devices.filter(d => d.orientation === 'front').map(d => d.name).sort().join(',')"
+                      class="merged-devices-cell position-relative"
+                      :style="{ flex: `0 0 ${100 / row.length}%`, maxWidth: `${100 / row.length}%` }">
+                      <div
+                        class="position-absolute w-100 h-100"
+                        :style="{
+                          [rack.order === 'descending' ? 'bottom' : 'top']: '0',
+                          zIndex: 10
+                        }">
+                        <template v-if="isDarkMode && !isDragOverRack">
+                          <div v-for="(led, index) in getCachedDeviceLeds(device, getLedDensityKey(slot.devices.filter(d => d.orientation === 'front').length))" :key="index"
+                              :class="['device-led', { 'device-led-static': !led.blinking }]"
+                              :style="{
+                                top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color,
+                                ...(led.blinking ? { animationDuration: led.animationDuration, animationDelay: led.animationDelay } : {}),
+                                zIndex: 40, pointerEvents: 'none'
+                              }">
+                          </div>
+                        </template>
+                        <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
+                        <DeviceItem
+                          :device="device"
+                          :metric1-value="getMetric(device, metric1,true)?.value"
+                          :metric1-color="getMetric(device, metric1, true)?.color"
+                          :metric1-type="metric1"
+                          :metric2-value="getMetric(device, metric2,true)?.value"
+                          :metric2-color="getMetric(device, metric2, true)?.color"
+                          :metric2-type="metric2"
+                          :is-rack-view="true"
+                          style="width: 100%; height: 100%; display: block;"
+                          @device-right-click="handleDeviceRightClick"
+                        />
+                      </div>
+                    </div>
                   </div>
-            </div>
+                </div>
+               </template>
             </div>
              <div class="rack-label">{{ slot.number }}</div>
           </div>
@@ -696,44 +779,59 @@ const clearPreview = () => {
                 <div v-if="hoveredSlot === slot.number && hoveredSide === 'back'" class="placement-preview"></div>
                 <div v-if="conflictSlots.has(slot.number) && hoveredSide === 'back'" class="placement-preview placement-preview-conflict"></div>
 
-                <div v-for="device in slot.devices.filter(d => d.orientation === 'back')"
-                    :key="device.name"
-                    class="flex-fill h-100 position-relative"
-                    :style="{ pointerEvents: isDragOverRack ? 'none' : 'auto' }">
-
-                    <div class="position-absolute w-100"
+                <template v-if="slot.devices.filter(d => d.orientation === 'back').length > 0">
+                <div
+                  class="merged-devices-wrapper flex-fill position-relative d-flex flex-column"
+                  :style="{
+                    pointerEvents: isDragOverRack ? 'none' : 'auto',
+                    height: ((slot.devices.find(d => d.orientation === 'back')?.height ?? 1) * 20 - 2) + 'px',
+                    [rack.order === 'descending' ? 'bottom' : 'top']: '0'
+                  }"
+                  :title="slot.devices.filter(d => d.orientation === 'back').map(d => d.name).join('\n')">
+                  <div
+                    v-for="(row, rowIdx) in getDeviceRowsForSlot(slot, 'back')"
+                    :key="'back-' + slot.number + '-' + rowIdx"
+                    class="merged-devices-row d-flex"
+                    :style="{ flex: '1 1 0', minHeight: 0 }">
+                    <div
+                      v-for="device in row"
+                      :key="'back-' + device.name + '-' + slot.number + '-' + slot.devices.filter(d => d.orientation === 'back').map(d => d.name).sort().join(',')"
+                      class="merged-devices-cell position-relative"
+                      :style="{ flex: `0 0 ${100 / row.length}%`, maxWidth: `${100 / row.length}%` }">
+                      <div
+                        class="position-absolute w-100 h-100"
                         :style="{
-                            height: (device.height * 20 - 2) + 'px',
-                            [rack.order === 'descending' ? 'bottom' : 'top']: '0',
-                            zIndex: 10
-                        }"
-                        :title="isDarkMode ? device.name : undefined">
-
-                        <template v-if="isDarkMode">
-                            <div v-for="(led, index) in getDeviceLeds(device)" :key="index"
-                                :class="['device-led', { 'device-led-static': !led.blinking }]"
-                                :style="{
-                                  top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color,
-                                  ...(led.blinking ? { animationDuration: led.animationDuration, animationDelay: led.animationDelay } : {}),
-                                  zIndex: 40, pointerEvents: 'none'
-                                }">
-                            </div>
+                          [rack.order === 'descending' ? 'bottom' : 'top']: '0',
+                          zIndex: 10
+                        }">
+                        <template v-if="isDarkMode && !isDragOverRack">
+                          <div v-for="(led, index) in getCachedDeviceLeds(device, getLedDensityKey(slot.devices.filter(d => d.orientation === 'back').length))" :key="index"
+                              :class="['device-led', { 'device-led-static': !led.blinking }]"
+                              :style="{
+                                top: led.top, left: led.left, backgroundColor: led.color, boxShadow: '0 0 3px ' + led.color,
+                                ...(led.blinking ? { animationDuration: led.animationDuration, animationDelay: led.animationDelay } : {}),
+                                zIndex: 40, pointerEvents: 'none'
+                              }">
+                          </div>
                         </template>
                         <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
                         <DeviceItem
-                            :device="device"
-                            :metric1-value="getMetric(device, metric1,true)?.value"
-                            :metric1-color="getMetric(device, metric1, true)?.color"
-                            :metric1-type="metric1"
-                            :metric2-value="getMetric(device, metric2,true)?.value"
-                            :metric2-color="getMetric(device, metric2, true)?.color"
-                            :metric2-type="metric2"
-                            :is-rack-view="true"
-                            style="width: 100%; height: 100%; display: block;"
-                            @device-right-click="handleDeviceRightClick"
+                          :device="device"
+                          :metric1-value="getMetric(device, metric1,true)?.value"
+                          :metric1-color="getMetric(device, metric1, true)?.color"
+                          :metric1-type="metric1"
+                          :metric2-value="getMetric(device, metric2,true)?.value"
+                          :metric2-color="getMetric(device, metric2, true)?.color"
+                          :metric2-type="metric2"
+                          :is-rack-view="true"
+                          style="width: 100%; height: 100%; display: block;"
+                          @device-right-click="handleDeviceRightClick"
                         />
+                      </div>
                     </div>
+                  </div>
                 </div>
+               </template>
                 </div>
               <div class="rack-label">{{ slot.number }}</div>
           </div>
@@ -921,4 +1019,6 @@ const clearPreview = () => {
 .rack-label { width: 20px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6;z-index: 3; }
 .rack-label:last-child { border-right: none; border-left: 1px solid #dee2e6; z-index: 4;}
 .rack-slot { flex-grow: 1; }
+.merged-devices-wrapper { overflow: hidden; }
+.merged-devices-cell { min-width: 0; }
 </style>

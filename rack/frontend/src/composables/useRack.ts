@@ -16,6 +16,42 @@ export function useRack() {
     return order === 'ascending' ? slots : slots.reverse();
   };
 
+  /** Max devices that can merge at one position by height (U). 1U->4, 2U->8, 3U->15, ..., 8U->40. */
+  const getMaxDevicesForHeight = (heightU: number): number => {
+    const h = Math.min(8, Math.max(1, Math.floor(heightU)));
+    return h <= 2 ? 4 * h : 5 * h;
+  };
+
+  /**
+   * Chunk devices into rows for display:
+   * 1U: one row, cols = count (1–4).
+   * 2U and all U when count <= 4*h: rows of 4 (last row 1–4). E.g. 5 devices → 4+1, 8 → 4+4.
+   * 3U+ when count > 4*h: all in rows of 5 (e.g. 15 devices → 5+5+5, not 4+4+4+3).
+   */
+  const getDeviceRows = (devices: any[], heightU: number): any[][] => {
+    const h = Math.min(8, Math.max(1, Math.floor(heightU)));
+    const n = devices.length;
+    const rows: any[][] = [];
+    if (h === 1) {
+      if (n > 0) rows.push(devices);
+      return rows;
+    }
+    const firstCount = 4 * h;
+    let i = 0;
+    if (n <= firstCount) {
+      while (i < n) {
+        rows.push(devices.slice(i, i + 4));
+        i += 4;
+      }
+    } else {
+      while (i < n) {
+        rows.push(devices.slice(i, i + 5));
+        i += 5;
+      }
+    }
+    return rows;
+  };
+
   /** Update rack power button state from nodes only. Treat RESET as ON (case-insensitive). */
   const syncRackPowerFromNodes = (rack: Rack) => {
     const hasNodeOn = rack.slots.some((s) =>
@@ -28,7 +64,8 @@ export function useRack() {
     rack.backPowerOn = hasNodeOn;
   };
 
-  const placeDeviceInRack = (rack: any, d: any) => {
+  const placeDeviceInRack = (rack: any, d: any, options?: { enforceMergeLimit?: boolean }): boolean => {
+    const enforceMergeLimit = options?.enforceMergeLimit !== false;
     const height = parseInt(d.height) || 1;
     const position = Number(d.position);
     const deviceName = d.name;
@@ -40,7 +77,7 @@ export function useRack() {
 
 
     const targetSlot = rack.slots.find((s: any) => s.number === position);
-    if (!targetSlot) return;
+    if (!targetSlot) return false;
 
     const devicesOnSameSide = targetSlot.devices.filter(
       (dev: any) => (dev.orientation || 'front') === currentSide
@@ -49,16 +86,31 @@ export function useRack() {
     if (devicesOnSameSide.length > 0) {
       const existingHeight = devicesOnSameSide[0].height;
       if (height > existingHeight) {
-
-        alert(`Forbidden: New device is taller than existing equipment on the ${currentSide} side.`);
-        return;
+        if (enforceMergeLimit) toast.error(`Forbidden: New device is taller than existing equipment on the ${currentSide} side.`);
+        return false;
       }
       d.height = existingHeight;
+      if (enforceMergeLimit) {
+        const maxAllowed = getMaxDevicesForHeight(existingHeight);
+        if (devicesOnSameSide.length >= maxAllowed) {
+          toast.error(`Max ${maxAllowed} devices allowed at this ${existingHeight}U position.`);
+          return false;
+        }
+      }
+    } else {
+      if (enforceMergeLimit && height > 8) {
+        toast.error('Device height cannot exceed 8U.');
+        return false;
+      }
     }
 
-    // Normalize powerState to uppercase (backend may use powerState or power_state)
+    // Normalize powerState (backend/drag may use powerState, power_state, or strings like "success with unparsable output: RESET")
     const rawState = d.powerState ?? d.power_state ?? '';
-    const stateUpper = String(rawState).toUpperCase();
+    let stateStr = String(rawState).toUpperCase();
+    if (stateStr.includes('RESET')) stateStr = 'RESET';
+    else if (stateStr.includes('ON')) stateStr = 'ON';
+    else stateStr = 'OFF';
+    const powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF' as const;
     targetSlot.devices.push({
       name: deviceName,
       position,
@@ -67,9 +119,9 @@ export function useRack() {
       orientation: currentSide,
       vendor: d.vendor || null,
       status: 'ok',
-      // Preserve RESET state, otherwise treat as ON or OFF
-      powerState: stateUpper === 'ON' ? 'ON' : stateUpper === 'RESET' ? 'RESET' : 'OFF'
+      powerState
     });
+    return true;
   };
 
   const fetchSingleRack = async (rackName: string): Promise<Rack> => {
@@ -90,7 +142,7 @@ export function useRack() {
 
     rackObj.slots = generateSlots(rackObj.size, rackObj.order);
     if (data.devices) {
-      data.devices.forEach((d: any) => placeDeviceInRack(rackObj, d));
+      data.devices.forEach((d: any) => placeDeviceInRack(rackObj, d, { enforceMergeLimit: false }));
     }
     syncRackPowerFromNodes(rackObj);
     return rackObj;
@@ -115,6 +167,10 @@ export function useRack() {
       const placedNames: string[] = [];
       for (const draggedDevice of devices) {
         const dragHeight = parseInt(draggedDevice.height) || 1;
+        if (dragHeight > 8) {
+          toast.error(`Device ${draggedDevice.name}: height cannot exceed 8U.`);
+          break;
+        }
         if (currentU < 1 || currentU + dragHeight - 1 > targetRack.size) {
           toast.error(
             `Device ${draggedDevice.name} does not fit rack ${targetRack.name}: exceeds rack height (Max ${targetRack.size}U).`
@@ -142,7 +198,9 @@ export function useRack() {
           break;
         }
         const tempDevice = { ...draggedDevice, position: currentU, orientation: side };
-        placeDeviceInRack(targetRack, tempDevice);
+        if (!placeDeviceInRack(targetRack, tempDevice)) {
+          break;
+        }
         targetRack.slots = [...targetRack.slots];
         syncRackPowerFromNodes(targetRack);
         try {
@@ -178,11 +236,13 @@ export function useRack() {
 
     let savedPosition: number | null = null;
     let savedOrientation: 'front' | 'back' = side;
+    let savedPowerState: string | undefined;
     for (const s of targetRack.slots) {
       const found = s.devices.find(d => d.name === draggedDevice.name);
       if (found) {
         savedPosition = found.position;
         savedOrientation = (found.orientation as 'front' | 'back') || side;
+        savedPowerState = found.powerState;
         break;
       }
     }
@@ -202,16 +262,22 @@ export function useRack() {
       syncRackPowerFromNodes(targetRack);
     };
 
-    const finalPosition = targetU;
+    let finalPosition = targetU;
 
+    if (dragHeight > 8) {
+      toast.error('Device height cannot exceed 8U.');
+      restoreDevice();
+      return;
+    }
     if (finalPosition < 1 || finalPosition + dragHeight - 1 > targetRack.size) {
       toast.error(`Device does not fit rack ${targetRack.name}: exceeds rack height (Max ${targetRack.size}U).`);
       restoreDevice();
       return;
     }
 
-    const ourStart = finalPosition;
-    const ourEnd = finalPosition + dragHeight - 1;
+    let ourStart = finalPosition;
+    let ourEnd = finalPosition + dragHeight - 1;
+    let mergeHeight: number | null = null;
 
     for (const slot of targetRack.slots) {
       for (const existing of slot.devices) {
@@ -221,17 +287,35 @@ export function useRack() {
         const exEnd = exStart + exHeight - 1;
         const overlaps = ourStart <= exEnd && exStart <= ourEnd;
         if (!overlaps) continue;
-        if (exStart === finalPosition) continue;
+        if (exStart === finalPosition && dragHeight <= exHeight) continue;
+        if (dragHeight <= exHeight) {
+          finalPosition = exStart;
+          ourStart = exStart;
+          ourEnd = exStart + exHeight - 1;
+          mergeHeight = exHeight;
+          break;
+        }
         toast.error(`Slot overlaps with ${existing.name} (${exStart}U–${exEnd}U).`);
         restoreDevice();
         return;
       }
+      if (mergeHeight != null) break;
     }
 
-    const tempDevice = { ...draggedDevice, position: finalPosition, orientation: side };
+    const tempDevice = {
+      ...draggedDevice,
+      position: finalPosition,
+      orientation: side,
+      ...(mergeHeight != null ? { height: mergeHeight } : {}),
+      powerState: draggedDevice.powerState ?? draggedDevice.power_state ?? savedPowerState ?? 'OFF'
+    };
 
-    placeDeviceInRack(targetRack, tempDevice);
-    targetRack.slots = [...targetRack.slots];
+    if (!placeDeviceInRack(targetRack, tempDevice)) {
+      restoreDevice();
+      return;
+    }
+    // New slot refs so Vue detects change and re-renders LEDs (device refs preserved)
+    targetRack.slots = targetRack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
     syncRackPowerFromNodes(targetRack);
 
     try {
@@ -252,5 +336,5 @@ export function useRack() {
     }
   };
 
-  return { fetchSingleRack, placeDeviceInRack, handleRackDrop, syncRackPowerFromNodes };
+  return { fetchSingleRack, placeDeviceInRack, handleRackDrop, syncRackPowerFromNodes, getMaxDevicesForHeight, getDeviceRows };
 }

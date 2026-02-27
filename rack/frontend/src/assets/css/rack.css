@@ -2,6 +2,11 @@
 .layout-menu-fixed:not(.layout-menu-collapsed) .layout-page, .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
   padding: 0rem;
 }
+
+/* When footer is revealed (outer scrolled), sidebar scrolls with page instead of being fixed */
+.layout-footer-revealed .layout-menu {
+  position: relative;
+}
 .grad {
   /* background-image: linear-gradient(to right, lightblue, green, yellow, orange, red); */
   background: linear-gradient(to right,

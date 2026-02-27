@@ -14,7 +14,7 @@
   >
 
   <div class="device-content">
-      <div v-if="!isDarkMode">
+      <div v-if="!isDarkMode || !isRackView">
       <span class="device-name">{{ device.name }}</span>
       </div>
     </div>
@@ -72,7 +72,7 @@ const props = defineProps<{
   selected?: boolean;
   selectedDevicesForDrag?: Device[];
 }>();
-const emit = defineEmits(['device-right-click']);
+const emit = defineEmits(['device-right-click', 'edit-inventory']);
 const isDragging = ref(false);
 const { unitPixelHeight } = useRackSizing();
 
@@ -99,6 +99,10 @@ const closeMenu = () => {
 
 const handleMenuAction = async (payload: { action: string; subAction?: string; device: Device }) => {
   const { action, subAction, device } = payload;
+  if (action === 'edit-inventory') {
+    emit('edit-inventory', device);
+    return;
+  }
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {

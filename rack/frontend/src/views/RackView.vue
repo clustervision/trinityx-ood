@@ -23,7 +23,11 @@ const onLightSwitchClick = () => {
   }, 40);
 };
 
-const emit = defineEmits(['rack-updated', 'device-taken','pool-updated']);
+const emit = defineEmits(['rack-updated', 'device-taken', 'pool-updated', 'edit-inventory']);
+
+const onEditInventory = (device: { name: string }) => {
+  emit('edit-inventory', device.name);
+};
 const toast = useToast();
 const racks = ref<Rack[]>([]);
 const { fetchSingleRack, handleRackDrop, syncRackPowerFromNodes } = useRack();
@@ -200,7 +204,8 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
           }
         });
       });
-      if (names.length > 0) emit('pool-updated');
+      // Do not emit('pool-updated') here: it triggers loadRacks() which refetches all racks
+      // and overwrites device.powerState (backend show_rack often has no power state), so all LEDs and power buttons go OFF.
     },
     () => {
 
@@ -260,6 +265,7 @@ onUnmounted(() => {
             @drop="onDrop"
             @reset="resetRack"
             @power-toggle="handlePowerToggle"
+            @edit-inventory="onEditInventory"
             :is-busy="loadingRackName === rack.name"
           />
         </div>
