@@ -1,4 +1,4 @@
-name: Slurm
+name: SLURM Configurator
 description: Manage slurm partitions
 icon: fa://tasks
 category: Utilities
