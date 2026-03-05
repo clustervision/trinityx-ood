@@ -1,7 +1,7 @@
 name: Cluster
 description: Luna2 Cluster Operations
 icon: fa://atom
-category: Luna
+category: Luna Provisioning Engine
 new_window: false
 
 tile:

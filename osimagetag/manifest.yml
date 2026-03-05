@@ -1,7 +1,7 @@
 name: OS Image Tag
 description: Luna2 OS Image Tags Operations
 icon: fa://tags
-category: Luna
+category: Luna Provisioning Engine
 new_window: false
 
 tile:
