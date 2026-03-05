@@ -1,6 +1,6 @@
 name: Infiniband
 description: View the infiniband connection network
-icon: fa://network-wired
+icon: /icon.png
 category: Monitoring
 new_window: false
 

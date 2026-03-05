@@ -1,6 +1,6 @@
 name: Other Devices
 description: Luna2 Other Devices Operations
-icon: fa://cogs
+icon: /icon.png
 category: Luna Provisioning Engine
 new_window: false
 

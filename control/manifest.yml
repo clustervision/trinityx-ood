@@ -1,6 +1,6 @@
 name: Control
 description: Luna2 Control Operations
-icon: fa://bolt
+icon: /icon.png
 category: Luna Provisioning Engine
 new_window: false
 

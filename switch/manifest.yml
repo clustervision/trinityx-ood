@@ -1,6 +1,6 @@
 name: Switch
 description: Luna2 Switch Operations
-icon: fa://draw-polygon
+icon: /icon.png
 category: Luna Provisioning Engine
 new_window: false
 

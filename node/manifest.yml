@@ -1,6 +1,6 @@
 name: Nodes
 description: Luna2 Nodes Operations
-icon: fa://cube
+icon: /icon.png
 category: Luna Provisioning Engine
 new_window: false
 
