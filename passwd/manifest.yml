@@ -1,10 +1,10 @@
-name: Passwd
+name: PASSWD
 description: Change Password
-icon: fa://key
+icon: /assets/icon.png
 category: Utilities
 new_window: false
 
 tile:
-  title: "PASSWD"
+  title: "Passwd"
   sub_caption: |
    Change Password

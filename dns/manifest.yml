@@ -1,6 +1,6 @@
 name: DNS Records
 description: DNS Records
-icon: fa://code-branch
+icon: /assets/icon.png
 category: Luna Provisioning Engine
 new_window: false
 

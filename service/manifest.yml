@@ -1,6 +1,6 @@
 name: Service
 description: Luna2 Service Operations
-icon: fa://dice-d20
+icon: /assets/icon.png
 category: Luna Provisioning Engine
 new_window: false
 

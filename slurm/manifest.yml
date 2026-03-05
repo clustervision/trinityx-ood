@@ -1,10 +1,10 @@
-name: SLURM Configurator
+name: SLURM
 description: Manage slurm partitions
-icon: fa://tasks
+icon: /assets/icon.png
 category: Utilities
 new_window: false
 
 tile:
-  title: Slurm
+  title: "Slurm Configurator"
   sub_caption: |
    Manage slurm partitions

@@ -1,6 +1,6 @@
 name: AlertX
 description: Node Health Check
-icon: fa://ghost
+icon: /app/assets/icon.png
 category: Monitoring
 new_window: false
 
