@@ -1,6 +1,6 @@
 name: Racks
 description: Rack View
-icon: /icon.png
+icon: /app/assets/icon.png
 category: Luna Provisioning Engine
 new_window: false
 

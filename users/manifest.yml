@@ -1,6 +1,6 @@
 name: System Users
 description: Manage LDAP users and groups
-icon: /icon.png
+icon: /assets/icon.png
 category: Utilities
 new_window: false
 

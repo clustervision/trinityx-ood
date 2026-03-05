@@ -1,6 +1,6 @@
 name: SLURM
 description: Manage slurm partitions
-icon: /icon.png
+icon: /assets/icon.png
 category: Utilities
 new_window: false
 

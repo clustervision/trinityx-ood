@@ -1,6 +1,6 @@
 name: Groups
 description: Luna2 Groups Operations
-icon: /icon.png
+icon: /assets/icon.png
 category: Luna Provisioning Engine
 new_window: false
 
