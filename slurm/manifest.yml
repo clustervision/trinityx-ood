@@ -5,6 +5,6 @@ category: Utilities
 new_window: false
 
 tile:
-  title: "Slurm Configurator"
+  title: "SLURM Configurator"
   sub_caption: |
    Manage slurm partitions
