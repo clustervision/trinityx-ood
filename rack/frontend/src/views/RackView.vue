@@ -34,7 +34,7 @@ const { fetchSingleRack, handleRackDrop, syncRackPowerFromNodes } = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 const loadingRackName = ref('');
 
-//@ts-ignore
+// @ts-expect-error APP_URL is injected globally at runtime
 const Url = window.APP_URL;
 const isBackViewMode = ref(false);
 const toggleGlobalView = () => {
@@ -55,21 +55,22 @@ const loadRacks = async () => {
   try {
     const t = new Date().getTime();
     const response = await axios.get(`${Url}/manage_racks?t=${t}`);
-    const rawMsg = response.data.message;
+    const rawMsg = response.data.message as unknown;
 
     if (rawMsg) {
-      let flatList: any[] = [];
+      let flatList: Rack[] = [];
       if (Array.isArray(rawMsg)) {
-        rawMsg.forEach((item: any) => {
-          if (item.name && item.size) flatList.push(item);
-          else flatList.push(...Object.values(item));
+        rawMsg.forEach((item: unknown) => {
+          const rec = item as Rack | Record<string, Rack>;
+          if ((rec as Rack).name && (rec as Rack).size) flatList.push(rec as Rack);
+          else flatList.push(...Object.values(rec as Record<string, Rack>));
         });
       } else {
-        flatList = Object.values(rawMsg);
+        flatList = Object.values(rawMsg as Record<string, Rack>);
       }
 
       const currentStates = new Map(racks.value.map(r => [r.name, r.showBackSide]));
-      const parsedRacks = await Promise.all(flatList.map(async (r: any) => {
+      const parsedRacks = await Promise.all(flatList.map(async (r) => {
           const fullRack = await fetchSingleRack(r.name);
 
           fullRack.showBackSide = currentStates.get(r.name) || false;
@@ -78,19 +79,19 @@ const loadRacks = async () => {
 
       racks.value = parsedRacks;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to load racks:", error);
   }
 };
 
-const resetRack = async (targetRack: any, side: 'front' | 'back') => {
+const resetRack = async (targetRack: Rack, side: 'front' | 'back') => {
   if (!confirm(`Power Reset all nodes on ${targetRack.name} ${side} side? (Switches & Controllers ignored)`)) return;
   loadingRackName.value = targetRack.name;
 
 
-  const nodesToReset: any[] = [];
-  targetRack.slots.forEach((slot: any) => {
-    slot.devices.forEach((device: any) => {
+  const nodesToReset: Rack['slots'][number]['devices'][number][] = [];
+  targetRack.slots.forEach((slot) => {
+    slot.devices.forEach((device) => {
 
       if (device.orientation === side &&
           device.type !== 'switch' &&
@@ -123,7 +124,7 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
     if (successCount > 0) toast.success(`Power reset signal sent to ${successCount} nodes.`);
     if (failCount > 0) toast.warning(`Failed to reset ${failCount} nodes.`);
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Batch reset failed", e);
     toast.error("An error occurred during batch reset.");
   }
@@ -134,16 +135,16 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
 
 // Add this function inside <script setup>
 
-const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
+const handlePowerToggle = async (targetRack: Rack, side: 'front' | 'back') => {
   const isCurrentlyOn = side === 'front' ? targetRack.powerOn : targetRack.backPowerOn;
   const action = isCurrentlyOn ? 'off' : 'on';
 
   if (!confirm(`Power ${action.toUpperCase()} all nodes on ${targetRack.name} ${side} side?`)) return;
   loadingRackName.value = targetRack.name;
 
-  const nodesToToggle: any[] = [];
-  targetRack.slots.forEach((slot: any) => {
-    slot.devices.forEach((device: any) => {
+  const nodesToToggle: Rack['slots'][number]['devices'][number][] = [];
+  targetRack.slots.forEach((slot) => {
+    slot.devices.forEach((device) => {
       if (device.orientation === side &&
           device.type !== 'switch' &&
           device.type !== 'controller') {
@@ -176,7 +177,8 @@ const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
       if (side === 'front') targetRack.powerOn = !isCurrentlyOn;
       else targetRack.backPowerOn = !isCurrentlyOn;
     }
-  } catch (e) {
+  } catch (e: unknown) {
+    console.error(e);
     toast.error("Batch power failed");
   } finally {
     // 2. Clear Loading

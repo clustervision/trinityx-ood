@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   metric1: string | null;
   metric2: string | null;
   range1?: { min: number; max: number };
