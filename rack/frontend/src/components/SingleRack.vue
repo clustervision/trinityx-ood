@@ -62,11 +62,13 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
           else device.powerState = 'OFF';
           syncRackPowerFromNodes(props.rack);
           props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+          saveRackPowerCache();
         } else {
           if (subAction === 'on') device.powerState = 'ON';
           else if (subAction === 'off') device.powerState = 'OFF';
           else if (subAction === 'reset') device.powerState = 'RESET';
           syncRackPowerFromNodes(props.rack);
+          saveRackPowerCache();
         }
       }
       toast.success(result.message);
@@ -84,6 +86,67 @@ type Led = { left: string; top: string; color: string; animationDuration: string
 type LedDensityKey = 'high' | 'medium' | 'low';
 
 const ledCache = new Map<string, Led[]>();
+
+type RackPowerCache = {
+  powerOn?: boolean;
+  backPowerOn?: boolean;
+  devices: Record<string, string | undefined>;
+};
+
+const getRackCacheKey = (rackName: string | undefined) => `rackPowerCache:${rackName || 'unknown'}`;
+
+function applyRackPowerCache() {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getRackCacheKey(props.rack?.name);
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return;
+    const cache = JSON.parse(raw) as RackPowerCache | null;
+    if (!cache || !cache.devices) return;
+
+    if (props.rack && props.rack.slots) {
+      props.rack.slots.forEach(slot => {
+        slot.devices.forEach(device => {
+          const cachedState = cache.devices[device.name];
+          if (cachedState === 'ON' || cachedState === 'OFF' || cachedState === 'RESET') {
+            device.powerState = cachedState;
+          } 
+        });
+      });
+      if (typeof cache.powerOn === 'boolean') props.rack.powerOn = cache.powerOn;
+      if (typeof cache.backPowerOn === 'boolean') props.rack.backPowerOn = cache.backPowerOn;
+      syncRackPowerFromNodes(props.rack);
+      // trigger re-render for LEDs and power button
+      props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+    }
+  } catch (e) {
+    console.error('[Rack Power Cache] Failed to apply cache', e);
+  }
+}
+
+function saveRackPowerCache() {
+  if (typeof window === 'undefined') return;
+  try {
+    if (!props.rack || !props.rack.slots) return;
+    const devices: Record<string, string | undefined> = {};
+    props.rack.slots.forEach(slot => {
+      slot.devices.forEach(device => {
+        if (device.name) {
+          devices[device.name] = device.powerState;
+        }
+      });
+    });
+    const payload: RackPowerCache = {
+      powerOn: props.rack.powerOn,
+      backPowerOn: props.rack.backPowerOn,
+      devices,
+    };
+    const key = getRackCacheKey(props.rack.name);
+    window.localStorage.setItem(key, JSON.stringify(payload));
+  } catch (e) {
+    console.error('[Rack Power Cache] Failed to save cache', e);
+  }
+}
 
 /** Normalize powerState for LED display: ON/RESET -> powerOn, else OFF. Matches checkPowerStatus/placeDeviceInRack. */
 function isDevicePowerOnForLeds(device: Device): boolean {
@@ -412,6 +475,7 @@ const checkPowerStatus = async () => {
         syncRackPowerFromNodes(props.rack);
         // New slot refs so Vue re-renders blinking lights and power button
         props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+        saveRackPowerCache();
       }
     } catch (e) {
       console.error("[Rack Status] Single-node fetch failed, showing toast:", e);
@@ -454,6 +518,7 @@ const checkPowerStatus = async () => {
       syncRackPowerFromNodes(props.rack);
       // New slot refs so Vue re-renders blinking lights and power button
       props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+      saveRackPowerCache();
       source.close();
     };
 
@@ -504,6 +569,8 @@ const powerStatusIntervalId = ref<ReturnType<typeof setInterval> | null>(null);
 const POWER_STATUS_INTERVAL_MS = 60 * 1000;
 
 onMounted(() => {
+  // Try to restore last known power/LED state from local cache
+  applyRackPowerCache();
   checkPowerStatus();
 });
 
