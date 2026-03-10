@@ -54,6 +54,9 @@
           <span class="text-muted small">{{ metric2 ? (range2?.max ?? 100) : 100 }}</span>
         </div>
       </div>
+      <div class="metrics-row metrics-bottom-row">
+        <slot name="bottom"></slot>
+      </div>
     </div>
   </div>
 </template>
@@ -151,6 +154,10 @@ const selectMetric2 = (val: string | null) => {
   align-items: flex-start;
   gap: 12px;
   flex-shrink: 0;
+}
+.metrics-bottom-row {
+  align-items: center;
+  margin-top: 0.35rem;
 }
 /* Dropdown not clipped: absolute + high z-index, parent overflow visible */
 .dropdown {

@@ -232,13 +232,6 @@ onUnmounted(() => {
         @refresh="loadRacks"
       >
         <template #right>
-          <button
-            class="btn fw-bold flip-view-btn"
-            :class="isBackViewMode ? 'btn-custom-grey' : 'btn-dark'"
-            @click="toggleGlobalView"
-          >
-            {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
-          </button>
           <span
             class="light-switch-btn"
             :title="isDarkMode ? 'Light On (click to turn off blinking)' : 'Light Off (click to turn on blinking)'"
@@ -250,6 +243,15 @@ onUnmounted(() => {
               class="light-switch-img"
             />
           </span>
+        </template>
+        <template #bottom>
+          <button
+            class="btn fw-bold flip-view-btn"
+            :class="isBackViewMode ? 'btn-custom-grey' : 'btn-dark'"
+            @click="toggleGlobalView"
+          >
+            {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
+          </button>
         </template>
       </RackMetricsHeader>
       <div class="card-body" :class="{ 'rack-view-dark': isDarkMode }" >
