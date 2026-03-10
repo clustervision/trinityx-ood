@@ -22,85 +22,7 @@ const scrollWrapperRef = ref<HTMLElement | null>(null);
 const layoutPageRef = ref<HTMLElement | null>(null);
 const wrapperScrollTop = ref(0);
 const footerRevealed = ref(false);
-const sidebarPinned = ref(false);
-
-const BOTTOM_THRESHOLD = 2;
-
-function onWrapperScroll() {
-  const w = scrollWrapperRef.value;
-  if (!w) return;
-  wrapperScrollTop.value = w.scrollTop;
-  footerRevealed.value = w.scrollTop > HEADER_HEIGHT;
-  sidebarPinned.value = w.scrollTop >= HEADER_HEIGHT;
-}
-
-function isRightAtBottom(el: HTMLElement): boolean {
-  return el.scrollHeight - el.scrollTop - el.clientHeight <= BOTTOM_THRESHOLD;
-}
-
-function isRightAtTop(el: HTMLElement): boolean {
-  return el.scrollTop <= BOTTOM_THRESHOLD;
-}
-
-function onUnifiedWheel(e: WheelEvent) {
-  const wrapper = scrollWrapperRef.value;
-  const page = layoutPageRef.value;
-  if (!wrapper || !page) return;
-  const st = wrapper.scrollTop;
-  const deltaY = e.deltaY;
-
-  if (st < HEADER_HEIGHT) {
-    e.preventDefault();
-    wrapper.scrollTop = Math.max(0, Math.min(HEADER_HEIGHT, st + deltaY));
-    onWrapperScroll();
-    return;
-  }
-
-  e.preventDefault();
-
-  if (st > HEADER_HEIGHT) {
-    const max = wrapper.scrollHeight - wrapper.clientHeight;
-    wrapper.scrollTop = Math.max(HEADER_HEIGHT, Math.min(max, st + deltaY));
-    onWrapperScroll();
-    return;
-  }
-
-  if (deltaY > 0) {
-    if (isRightAtBottom(page)) {
-      wrapper.scrollTop = st + deltaY;
-      onWrapperScroll();
-    } else {
-      page.scrollTop = Math.min(page.scrollHeight - page.clientHeight, page.scrollTop + deltaY);
-    }
-  } else {
-    if (isRightAtTop(page)) {
-      wrapper.scrollTop = Math.max(0, st + deltaY);
-      onWrapperScroll();
-    } else {
-      page.scrollTop = Math.max(0, page.scrollTop + deltaY);
-    }
-  }
-}
-
-let touchStartY = 0;
-
-function onRightTouchStart(e: TouchEvent) {
-  touchStartY = e.touches[0]?.clientY ?? 0;
-}
-
-function onRightTouchMove(e: TouchEvent) {
-  const page = layoutPageRef.value;
-  const wrapper = scrollWrapperRef.value;
-  const t = e.touches[0];
-  if (!page || !wrapper || !t) return;
-  const deltaY = touchStartY - t.clientY;
-  touchStartY = t.clientY;
-  if (deltaY <= 0) return;
-  if (!isRightAtBottom(page)) return;
-  e.preventDefault();
-  wrapper.scrollTop = Math.min(wrapper.scrollHeight - wrapper.clientHeight, wrapper.scrollTop + deltaY);
-  onWrapperScroll();
-}
+const sidebarPinned = ref(false); // kept for potential future use, but no longer drives layout
 
 const setView = (viewName: string) => {
   currentView.value = viewName;
@@ -164,29 +86,17 @@ const refreshPoolData = () => syncAllViews();
 
 onMounted(() => {
   nextTick(() => {
-    const page = layoutPageRef.value;
     const wrapper = scrollWrapperRef.value;
     if (wrapper) {
       wrapper.scrollTop = 0;
-      onWrapperScroll();
-      wrapper.addEventListener('wheel', onUnifiedWheel, { passive: false, capture: true });
-    }
-    if (page) {
-      page.addEventListener('touchstart', onRightTouchStart, { passive: true });
-      page.addEventListener('touchmove', onRightTouchMove, { passive: false });
     }
   });
 });
 
 onUnmounted(() => {
-  const page = layoutPageRef.value;
   const wrapper = scrollWrapperRef.value;
-  if (page) {
-    page.removeEventListener('touchstart', onRightTouchStart);
-    page.removeEventListener('touchmove', onRightTouchMove);
-  }
   if (wrapper) {
-    wrapper.removeEventListener('wheel', onUnifiedWheel, true);
+    // no-op for now
   }
 });
 </script>
@@ -196,8 +106,6 @@ onUnmounted(() => {
     <div
       ref="scrollWrapperRef"
       class="layout-scroll-wrapper"
-      :class="{ 'wrapper-pinned': sidebarPinned }"
-      @scroll="onWrapperScroll"
     >
       <HeaderBar
         :breadcrumbs="headerBreadcrumbs"
@@ -273,24 +181,19 @@ onUnmounted(() => {
 html, body, #app {
   height: 100%;
   margin: 0;
-  overflow-y: hidden;
   overflow-x: auto;
+  overflow-y: auto;
 }
 
 .layout-outer {
-  height: 100vh;
-  overflow-y: hidden;
-  overflow-x: auto;
+  min-height: 100vh;
+  overflow: visible;
   --header-height: 52px;
 }
 
 .layout-scroll-wrapper {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: auto;
-}
-.layout-scroll-wrapper.wrapper-pinned {
-  overflow-y: hidden !important;
+  height: auto;
+  overflow: visible;
 }
 
 .layout-scroll-wrapper > header {
@@ -304,31 +207,20 @@ html, body, #app {
 }
 
 .layout-main.layout-wrapper {
-  height: 100vh;
-  max-height: 100vh;
-  min-height: 100vh;
   display: flex;
   flex-direction: row;
   flex-shrink: 0;
   min-width: 1200px;
+  min-height: calc(100vh - 52px);
 }
 
 .layout-sidebar {
-  height: 100vh;
+  height: auto;
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
   width: 250px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.layout-menu {
-  position: relative !important;
-  top: auto !important;
-  bottom: auto !important;
-  left: auto !important;
+  position: relative;
 }
 
 .layout-right {
@@ -353,14 +245,10 @@ html, body, #app {
   z-index: 1;
 }
 
-/* When viewport is narrow (often due to high zoom), hide sidebar and let content use full width */
-@media (max-width: 1400px) {
-  .layout-sidebar {
+/* On very narrow viewports / high zoom, hide footer to avoid layout crowding */
+@media (max-width: 1199.98px) {
+  .layout-footer {
     display: none;
-  }
-
-  .layout-right {
-    margin-left: 0;
   }
 }
 </style>
