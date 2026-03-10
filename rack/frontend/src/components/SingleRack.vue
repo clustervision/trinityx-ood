@@ -193,17 +193,17 @@ const truncatedRackName = computed(() => {
 
 const powerButtonTooltip = computed(() => {
   const baseState = props.rack.powerOn
-    ? 'Click to Turn Off (Power is ON)'
-    : 'Click to Turn On (Power is OFF)';
+    ? 'Click to power OFF all rack nodes (power control is only for nodes).'
+    : 'Click to power ON all rack nodes (power control is only for nodes).';
 
-  if (hasController.value && !hasSwitch.value ) {
-    return `${baseState}\n⚠️ Note: A Controller is present.\nIt will remain ON and is excluded from this action.`;
+  if (hasController.value && !hasSwitch.value) {
+    return `${baseState}\n⚠️ Note: A controller is present.\nControllers cannot be powered off by this button; only nodes are affected.`;
   }
   if (hasSwitch.value && !hasController.value) {
-    return `${baseState}\n⚠️ Note: A Switch is present.\nIt will remain ON and is excluded from this action.`;
+    return `${baseState}\n⚠️ Note: A switch is present.\nSwitches cannot be powered off by this button; only nodes are affected.`;
   }
   if (hasSwitch.value && hasController.value) {
-    return `${baseState}\n⚠️ Note: Controller and Switch is present.\nThey will remain ON and is excluded from this action.`;
+    return `${baseState}\n⚠️ Note: A controller and a switch are present.\nThis power operation only applies to nodes; controllers and switches stay ON.`;
   }
   return baseState;
 });
