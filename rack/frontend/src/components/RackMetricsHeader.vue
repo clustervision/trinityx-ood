@@ -195,6 +195,7 @@ const selectMetric2 = (val: string | null) => {
 
 .legend-bar {
   width: 250px;
+  max-width: 100%;
   height: 20px;
   background: linear-gradient(120deg, hsl(246, 100%, 50%),hsl(129, 95%, 43%),hsl(62, 93%, 46%), hsl(0, 100%, 50%));
   border: 1px solid #ddd;
@@ -203,6 +204,7 @@ const selectMetric2 = (val: string | null) => {
 
 .legend-bar-empty {
   width: 250px;
+  max-width: 100%;
   height: 20px;
   background: #f0f0f0;
   border: 1px solid #ddd;

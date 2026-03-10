@@ -293,10 +293,11 @@ onUnmounted(() => {
 
 .flip-view-btn {
   min-width: 200px;
+  max-width: 100%;
   height: 38px;
   font-size: 14px;
   padding: 0.375rem 0.75rem;
-  white-space: nowrap;
+  white-space: normal;
   border-radius: 5px;
   display: inline-flex;
   align-items: center;

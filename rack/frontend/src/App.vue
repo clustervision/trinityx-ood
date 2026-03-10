@@ -273,19 +273,21 @@ onUnmounted(() => {
 html, body, #app {
   height: 100%;
   margin: 0;
-  overflow: hidden;
+  overflow-y: hidden;
+  overflow-x: auto;
 }
 
 .layout-outer {
   height: 100vh;
-  overflow: hidden;
+  overflow-y: hidden;
+  overflow-x: auto;
   --header-height: 52px;
 }
 
 .layout-scroll-wrapper {
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 .layout-scroll-wrapper.wrapper-pinned {
   overflow-y: hidden !important;
@@ -308,6 +310,7 @@ html, body, #app {
   display: flex;
   flex-direction: row;
   flex-shrink: 0;
+  min-width: 1200px;
 }
 
 .layout-sidebar {
@@ -315,15 +318,10 @@ html, body, #app {
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
-}
-.layout-outer.sidebar-pinned:not(.footer-revealed) .layout-sidebar {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
+  width: 250px;
+  position: sticky;
+  top: 0;
   z-index: 10;
-}
-.layout-outer.footer-revealed .layout-sidebar {
-  position: relative !important;
 }
 
 .layout-menu {
@@ -338,16 +336,14 @@ html, body, #app {
   min-width: 0;
   display: flex;
   flex-direction: column;
-}
-.layout-outer.sidebar-pinned:not(.footer-revealed) .layout-right {
-  margin-left: 250px;
+  margin-left: 0;
 }
 
 .layout-page {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 
 .layout-footer {
@@ -355,5 +351,16 @@ html, body, #app {
   width: 100%;
   position: relative;
   z-index: 1;
+}
+
+/* When viewport is narrow (often due to high zoom), hide sidebar and let content use full width */
+@media (max-width: 1400px) {
+  .layout-sidebar {
+    display: none;
+  }
+
+  .layout-right {
+    margin-left: 0;
+  }
 }
 </style>
