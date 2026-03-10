@@ -157,7 +157,7 @@ const selectMetric2 = (val: string | null) => {
 }
 .metrics-bottom-row {
   align-items: center;
-  margin-top: 0.35rem;
+  margin-top: 0.45rem;
 }
 /* Dropdown not clipped: absolute + high z-index, parent overflow visible */
 .dropdown {
@@ -180,6 +180,7 @@ const selectMetric2 = (val: string | null) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: none;
 }
 .custom-btn-cyan:hover { background-color: #00b0e6; }
 
@@ -191,6 +192,7 @@ const selectMetric2 = (val: string | null) => {
   align-items: center;
   background-color: #7d899b;
   border-color: #7d899b;
+  box-shadow: none;
 }
 
 .legend-bar {

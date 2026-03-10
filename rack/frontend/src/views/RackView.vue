@@ -305,6 +305,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: none;
 }
 
 .light-switch-btn {
@@ -314,7 +315,7 @@ onUnmounted(() => {
   height: 58px;
   width: 58px;
   padding: 0;
-  margin: 0;
+  margin: 10px 0 0 0;
   border: none;
   background: transparent;
   cursor: pointer;
