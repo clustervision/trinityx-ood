@@ -318,6 +318,7 @@ onUnmounted(() => {
   width: 86px;
   padding: 0;
   margin: 0;
+  margin-right: -16px;
   border: none;
   background: transparent;
   cursor: pointer;
