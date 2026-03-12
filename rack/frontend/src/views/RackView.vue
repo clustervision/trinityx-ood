@@ -311,13 +311,13 @@ onUnmounted(() => {
 }
 
 .light-switch-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 58px;
-  width: 58px;
+  height: 100%;
+  width: 86px;
   padding: 0;
-  margin: 10px 0 0 0;
+  margin: 0;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -330,9 +330,10 @@ onUnmounted(() => {
 }
 
 .light-switch-img {
-  height: 58px;
+  height: 100%;
   width: auto;
-  max-width: 58px;
+  max-height: 86px;
+  max-width: 86px;
   object-fit: contain;
   display: block;
   transition: opacity 0.08s ease;
