@@ -236,19 +236,19 @@ onUnmounted(() => {
         <template #right>
           <span
             class="light-switch-btn"
-            :title="isDarkMode ? 'Light On (click to turn off blinking)' : 'Light Off (click to turn on blinking)'"
+            :title="isDarkMode ? 'Light Off (click to turn on blinking)' : 'Light On (click to turn off blinking)'"
             @click="onLightSwitchClick"
           >
             <img
-              :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOnImg : switchOffImg)"
-              :alt="isDarkMode ? 'Light On' : 'Light Off'"
+              :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOffImg : switchOnImg)"
+              :alt="isDarkMode ? 'Light Off' : 'Light On'"
               class="light-switch-img"
             />
           </span>
         </template>
         <template #bottom>
           <button
-            class="btn fw-bold flip-view-btn"
+            class="btn flip-view-btn"
             :class="isBackViewMode ? 'btn-custom-grey' : 'btn-dark'"
             @click="toggleGlobalView"
           >
@@ -297,7 +297,9 @@ onUnmounted(() => {
   min-width: 200px;
   max-width: 100%;
   height: 38px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
+  font-weight: normal;
   padding: 0.375rem 0.75rem;
   white-space: normal;
   border-radius: 5px;
