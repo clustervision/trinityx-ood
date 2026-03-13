@@ -268,4 +268,16 @@ onMounted(() => {
     outline: 2px solid #696cff;
     outline-offset: 2px;
   }
+
+  /* Remove dropdown arrow icon next to "Unassigned Device Pool" */
+  ::v-deep(.menu-item-pool > .menu-link.menu-toggle::after) {
+    display: none !important;
+  }
+
+  /* Do not darken the pool header when menu-item is open */
+  ::v-deep(.menu-item-pool.menu-item.open > .menu-link) {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: inherit !important;
+  }
 </style>

@@ -34,7 +34,7 @@ const { fetchSingleRack, handleRackDrop, syncRackPowerFromNodes } = useRack();
 const { metric1, metric2, metric1Range, metric2Range, getMetricForDevice } = useRackMetrics();
 const loadingRackName = ref('');
 
-//@ts-ignore
+// @ts-expect-error APP_URL is injected globally at runtime
 const Url = window.APP_URL;
 const isBackViewMode = ref(false);
 const toggleGlobalView = () => {
@@ -55,21 +55,22 @@ const loadRacks = async () => {
   try {
     const t = new Date().getTime();
     const response = await axios.get(`${Url}/manage_racks?t=${t}`);
-    const rawMsg = response.data.message;
+    const rawMsg = response.data.message as unknown;
 
     if (rawMsg) {
-      let flatList: any[] = [];
+      let flatList: Rack[] = [];
       if (Array.isArray(rawMsg)) {
-        rawMsg.forEach((item: any) => {
-          if (item.name && item.size) flatList.push(item);
-          else flatList.push(...Object.values(item));
+        rawMsg.forEach((item: unknown) => {
+          const rec = item as Rack | Record<string, Rack>;
+          if ((rec as Rack).name && (rec as Rack).size) flatList.push(rec as Rack);
+          else flatList.push(...Object.values(rec as Record<string, Rack>));
         });
       } else {
-        flatList = Object.values(rawMsg);
+        flatList = Object.values(rawMsg as Record<string, Rack>);
       }
 
       const currentStates = new Map(racks.value.map(r => [r.name, r.showBackSide]));
-      const parsedRacks = await Promise.all(flatList.map(async (r: any) => {
+      const parsedRacks = await Promise.all(flatList.map(async (r) => {
           const fullRack = await fetchSingleRack(r.name);
 
           fullRack.showBackSide = currentStates.get(r.name) || false;
@@ -78,19 +79,19 @@ const loadRacks = async () => {
 
       racks.value = parsedRacks;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Failed to load racks:", error);
   }
 };
 
-const resetRack = async (targetRack: any, side: 'front' | 'back') => {
+const resetRack = async (targetRack: Rack, side: 'front' | 'back') => {
   if (!confirm(`Power Reset all nodes on ${targetRack.name} ${side} side? (Switches & Controllers ignored)`)) return;
   loadingRackName.value = targetRack.name;
 
 
-  const nodesToReset: any[] = [];
-  targetRack.slots.forEach((slot: any) => {
-    slot.devices.forEach((device: any) => {
+  const nodesToReset: Rack['slots'][number]['devices'][number][] = [];
+  targetRack.slots.forEach((slot) => {
+    slot.devices.forEach((device) => {
 
       if (device.orientation === side &&
           device.type !== 'switch' &&
@@ -123,7 +124,7 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
     if (successCount > 0) toast.success(`Power reset signal sent to ${successCount} nodes.`);
     if (failCount > 0) toast.warning(`Failed to reset ${failCount} nodes.`);
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Batch reset failed", e);
     toast.error("An error occurred during batch reset.");
   }
@@ -134,16 +135,16 @@ const resetRack = async (targetRack: any, side: 'front' | 'back') => {
 
 // Add this function inside <script setup>
 
-const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
+const handlePowerToggle = async (targetRack: Rack, side: 'front' | 'back') => {
   const isCurrentlyOn = side === 'front' ? targetRack.powerOn : targetRack.backPowerOn;
   const action = isCurrentlyOn ? 'off' : 'on';
 
   if (!confirm(`Power ${action.toUpperCase()} all nodes on ${targetRack.name} ${side} side?`)) return;
   loadingRackName.value = targetRack.name;
 
-  const nodesToToggle: any[] = [];
-  targetRack.slots.forEach((slot: any) => {
-    slot.devices.forEach((device: any) => {
+  const nodesToToggle: Rack['slots'][number]['devices'][number][] = [];
+  targetRack.slots.forEach((slot) => {
+    slot.devices.forEach((device) => {
       if (device.orientation === side &&
           device.type !== 'switch' &&
           device.type !== 'controller') {
@@ -176,7 +177,8 @@ const handlePowerToggle = async (targetRack: any, side: 'front' | 'back') => {
       if (side === 'front') targetRack.powerOn = !isCurrentlyOn;
       else targetRack.backPowerOn = !isCurrentlyOn;
     }
-  } catch (e) {
+  } catch (e: unknown) {
+    console.error(e);
     toast.error("Batch power failed");
   } finally {
     // 2. Clear Loading
@@ -232,24 +234,26 @@ onUnmounted(() => {
         @refresh="loadRacks"
       >
         <template #right>
+          <span
+            class="light-switch-btn"
+            :title="isDarkMode ? 'Light Off (click to turn on blinking)' : 'Light On (click to turn off blinking)'"
+            @click="onLightSwitchClick"
+          >
+            <img
+              :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOffImg : switchOnImg)"
+              :alt="isDarkMode ? 'Light Off' : 'Light On'"
+              class="light-switch-img"
+            />
+          </span>
+        </template>
+        <template #bottom>
           <button
-            class="btn fw-bold flip-view-btn"
+            class="btn flip-view-btn"
             :class="isBackViewMode ? 'btn-custom-grey' : 'btn-dark'"
             @click="toggleGlobalView"
           >
             {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
           </button>
-          <span
-            class="light-switch-btn"
-            :title="isDarkMode ? 'Light On (click to turn off blinking)' : 'Light Off (click to turn on blinking)'"
-            @click="onLightSwitchClick"
-          >
-            <img
-              :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOnImg : switchOffImg)"
-              :alt="isDarkMode ? 'Light On' : 'Light Off'"
-              class="light-switch-img"
-            />
-          </span>
         </template>
       </RackMetricsHeader>
       <div class="card-body" :class="{ 'rack-view-dark': isDarkMode }" >
@@ -291,25 +295,30 @@ onUnmounted(() => {
 
 .flip-view-btn {
   min-width: 200px;
+  max-width: 100%;
   height: 38px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
+  font-weight: normal;
   padding: 0.375rem 0.75rem;
-  white-space: nowrap;
+  white-space: normal;
   border-radius: 5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: none;
 }
 
 .light-switch-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 58px;
-  width: 58px;
+  height: 100%;
+  width: 86px;
   padding: 0;
   margin: 0;
+  margin-right: -16px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -322,9 +331,10 @@ onUnmounted(() => {
 }
 
 .light-switch-img {
-  height: 58px;
+  height: 100%;
   width: auto;
-  max-width: 58px;
+  max-height: 86px;
+  max-width: 86px;
   object-fit: contain;
   display: block;
   transition: opacity 0.08s ease;

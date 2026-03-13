@@ -1,7 +1,7 @@
 <template>
   <div class="card-header p-4 bg-white border-bottom metrics-header">
     <div class="metrics-grid">
-      <div class="metrics-row metrics-row-with-right">
+      <div class="metrics-row metrics-row-1">
         <div class="metrics-main d-flex align-items-center gap-3">
           <div class="dropdown" ref="dropdown1Ref">
             <button
@@ -26,11 +26,11 @@
             <span class="text-muted small">{{ metric1 ? (range1?.max ?? 100) : 100 }}</span>
           </div>
         </div>
-        <div class="header-right-controls">
-          <slot name="right"></slot>
-        </div>
       </div>
-      <div class="metrics-row d-flex align-items-center gap-3">
+      <div class="header-right-controls">
+        <slot name="right"></slot>
+      </div>
+      <div class="metrics-row metrics-row-2 d-flex align-items-center gap-3">
         <div class="dropdown" ref="dropdown2Ref">
           <button
             class="btn dropdown-toggle text-white btn-secondary custom-btn-width"
@@ -53,6 +53,7 @@
           <div :class="metric2 ? 'legend-bar' : 'legend-bar-empty'"></div>
           <span class="text-muted small">{{ metric2 ? (range2?.max ?? 100) : 100 }}</span>
         </div>
+        <slot name="bottom"></slot>
       </div>
     </div>
   </div>
@@ -61,7 +62,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   metric1: string | null;
   metric2: string | null;
   range1?: { min: number; max: number };
@@ -82,7 +83,6 @@ const showDropdown2 = ref(false);
 const dropdown1Ref = ref<HTMLElement | null>(null);
 const dropdown2Ref = ref<HTMLElement | null>(null);
 
-// Close dropdowns when clicking outside
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as Node;
   if (dropdown1Ref.value && !dropdown1Ref.value.contains(target)) {
@@ -101,7 +101,6 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 });
 
-// Update type to allow null (for Reset functionality)
 const selectMetric1 = (val: string | null) => {
   emit('update:metric1', val);
   showDropdown1.value = false;
@@ -119,9 +118,9 @@ const selectMetric2 = (val: string | null) => {
 }
 .metrics-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem 0;
   overflow: visible;
 }
@@ -131,25 +130,28 @@ const selectMetric2 = (val: string | null) => {
   gap: 0.75rem;
   overflow: visible;
 }
-.metrics-row-with-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: nowrap;
-  overflow: visible;
+.metrics-row-1 {
+  grid-column: 1;
+  grid-row: 1;
 }
-.metrics-row-with-right .metrics-main {
-  flex: 0 0 auto;
+.metrics-row-2 {
+  grid-column: 1;
+  grid-row: 2;
+}
+.metrics-row-1 .metrics-main {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
 }
-.metrics-row-with-right .header-right-controls {
-  margin-left: auto;
+/* Light switch: spans both rows, same horizontal padding as left (card p-4), stretch vertically */
+.header-right-controls {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: stretch;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: stretch;
+  justify-content: flex-end;
   flex-shrink: 0;
 }
 /* Dropdown not clipped: absolute + high z-index, parent overflow visible */
@@ -173,6 +175,7 @@ const selectMetric2 = (val: string | null) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: none;
 }
 .custom-btn-cyan:hover { background-color: #00b0e6; }
 
@@ -184,10 +187,12 @@ const selectMetric2 = (val: string | null) => {
   align-items: center;
   background-color: #7d899b;
   border-color: #7d899b;
+  box-shadow: none;
 }
 
 .legend-bar {
   width: 250px;
+  max-width: 100%;
   height: 20px;
   background: linear-gradient(120deg, hsl(246, 100%, 50%),hsl(129, 95%, 43%),hsl(62, 93%, 46%), hsl(0, 100%, 50%));
   border: 1px solid #ddd;
@@ -196,6 +201,7 @@ const selectMetric2 = (val: string | null) => {
 
 .legend-bar-empty {
   width: 250px;
+  max-width: 100%;
   height: 20px;
   background: #f0f0f0;
   border: 1px solid #ddd;
