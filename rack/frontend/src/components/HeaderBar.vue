@@ -6,7 +6,7 @@
           href="javascript:void(0);"
           class="breadcrumb-logo"
           aria-current="page"
-          @click="$emit('navigate', 'dashboard')"
+          @click.prevent="goHome"
         >
           <img src="/logo.png" class="img-logo" alt="trinityX" />
         </a>
@@ -20,7 +20,7 @@
             v-if="i < breadcrumbs.length - 1 && crumb.view"
             href="javascript:void(0);"
             class="align-middle"
-            @click="$emit('navigate', crumb.view)"
+            @click.prevent="handleCrumbClick(crumb, i, breadcrumbs.length - 1)"
           >
             {{ crumb.label }}
           </a>
@@ -35,9 +35,31 @@
 defineProps<{
   breadcrumbs: Array<{ label: string; view?: string }>
 }>()
-defineEmits<{
+
+const emit = defineEmits<{
   navigate: [view: string]
 }>()
+
+const goHome = () => {
+  if (typeof window !== 'undefined') {
+    const contextUrl = (window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL || '';
+    if (contextUrl) {
+      window.location.href = contextUrl;
+    } else {
+      window.location.href = window.location.origin;
+    }
+  }
+};
+
+const handleCrumbClick = (crumb: { label: string; view?: string }, index: number, lastIndex: number) => {
+  if (index === lastIndex || !crumb.view) return;
+
+  if (crumb.label === 'Home') {
+    goHome();
+  } else {
+    emit('navigate', crumb.view);
+  }
+};
 </script>
 
 <style scoped>
