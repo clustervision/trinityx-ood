@@ -3,7 +3,7 @@
     <nav class="navbar navbar-light">
       <ol class="breadcrumb bg-transparent d-flex align-items-center">
         <a
-          href="javascript:void(0);"
+          :href="contextUrl || 'javascript:void(0);'"
           class="breadcrumb-logo"
           aria-current="page"
           @click.prevent="goHome"
@@ -18,7 +18,7 @@
         >
           <a
             v-if="i < breadcrumbs.length - 1 && crumb.view"
-            href="javascript:void(0);"
+            :href="crumb.label === 'Home' && contextUrl ? contextUrl : 'javascript:void(0);'"
             class="align-middle"
             @click.prevent="handleCrumbClick(crumb, i, breadcrumbs.length - 1)"
           >
@@ -40,15 +40,14 @@ const emit = defineEmits<{
   navigate: [view: string]
 }>()
 
+const contextUrl =
+  typeof window !== 'undefined'
+    ? ((window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL || window.location.origin)
+    : '';
+
 const goHome = () => {
-  if (typeof window !== 'undefined') {
-    const contextUrl = (window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL || '';
-    if (contextUrl) {
-      window.location.href = contextUrl;
-    } else {
-      window.location.href = window.location.origin;
-    }
-  }
+  if (!contextUrl) return;
+  window.location.href = contextUrl;
 };
 
 const handleCrumbClick = (crumb: { label: string; view?: string }, index: number, lastIndex: number) => {
