@@ -42,14 +42,15 @@
             <div class="col-sm-10">
               <input
                 type="number"
-                v-model="form.height"
+                v-model.number="form.height"
                 class="form-control"
-                min="1"
+                :min="heightMin"
                 max="8"
                 required
                 :disabled="isAssigned"
               />
-              <small class="text-muted">Max 8U.</small>
+              <small v-if="isOtherDevices" class="text-muted">otherdevices: 0U (pool only) or 1–8U. Max 8U.</small>
+              <small v-else class="text-muted">Height 1–8U (other types cannot be 0).</small>
             </div>
           </div>
 
@@ -89,9 +90,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted,watch } from 'vue';
+import { ref, reactive, onMounted, watch, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
+import { deviceHeightU, isOtherDevicesType } from '@/utils/deviceKind';
 
 //@ts-ignore
 const Url = window.APP_URL;
@@ -115,6 +117,9 @@ const form = reactive({
   orientation: 'front'
 });
 
+const isOtherDevices = computed(() => isOtherDevicesType(form.type));
+const heightMin = computed(() => (isOtherDevices.value ? 0 : 1));
+
 
 const loadInventoryData=async () => {
   const inventoryName = props.inventoryName;
@@ -134,7 +139,9 @@ const loadInventoryData=async () => {
 
     if (target) {
       form.type = target.type;
-      form.height = parseInt(target.height) || 1;
+      const parsedH = parseInt(String(target.height), 10);
+      const defaultH = isOtherDevicesType(target.type) ? 0 : 1;
+      form.height = Number.isFinite(parsedH) ? parsedH : defaultH;
       form.orientation = target.orientation || 'front';
     } else {
       errorMessage.value = `Inventory item '${inventoryName}' not found.`;
@@ -157,8 +164,11 @@ const submitForm = async () => {
     return;
   }
   const h = parseInt(String(form.height), 10);
-  if (isNaN(h) || h < 1 || h > 8) {
-    errorMessage.value = "Device height must be between 1 and 8U.";
+  const minH = isOtherDevicesType(form.type) ? 0 : 1;
+  if (isNaN(h) || h < minH || h > 8) {
+    errorMessage.value = minH === 0
+      ? 'For otherdevices, height must be between 0 and 8U. Other types: 1–8U.'
+      : 'Device height must be between 1 and 8U.';
     return;
   }
 
@@ -191,6 +201,15 @@ onMounted(() => {
 });
 
 watch(() => props.inventoryName, loadInventoryData);
+
+watch(
+  () => form.type,
+  (t, prev) => {
+    if (!isOtherDevicesType(t) && isOtherDevicesType(prev) && deviceHeightU(form.height) === 0) {
+      form.height = 1;
+    }
+  }
+);
 </script>
 
 <style scoped>

@@ -3,11 +3,11 @@
     class="device-item draggable"
     :class="[
        vendorClass,
-       { 'is-dragging': isDragging },
+       { 'is-dragging': isDragging, 'no-drag': !canDrag },
        isRackView ? 'is-absolute' : 'is-relative'
     ]"
     :style="deviceBackgroundStyle"
-    draggable="true"
+    :draggable="canDrag"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
     @contextmenu.prevent="onRightClick"
@@ -57,6 +57,7 @@ import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
 import { useToast } from 'vue-toastification';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
+import { deviceHeightU, isOtherDevices0U, isOtherDevicesType } from '@/utils/deviceKind';
 
 const { isDarkMode } = useTheme();
 const toast = useToast();
@@ -79,8 +80,14 @@ const { unitPixelHeight } = useRackSizing();
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 
+const isOtherDevice = computed(() => isOtherDevicesType(props.device.type));
+const isOtherDevice0U = computed(() => isOtherDevices0U(props.device));
+const canDrag = computed(() => !isOtherDevice0U.value);
+
 const heightPixels = computed(() => {
-  return (props.device.height * unitPixelHeight.value) - 2;
+  const h = deviceHeightU(props.device.height);
+  const px = (h * unitPixelHeight.value) - 2;
+  return h === 0 ? Math.max(20, unitPixelHeight.value - 2) : px;
 });
 
 const onRightClick = (event: MouseEvent) => {
@@ -114,6 +121,11 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
 };
 
 const getVendorImageUrl = (size: number) => {
+  if (isOtherDevice.value) {
+    const otherDeviceSizes = [0, 1, 2, 3, 4, 8];
+    const safeSize = otherDeviceSizes.includes(size) ? size : 1;
+    return new URL(`../assets/img/devices-${safeSize}u.png`, import.meta.url).href;
+  }
   let vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
   if (vendor.includes('supermicro')) vendor = 'supermicro';
   else if (vendor.includes('dell')) vendor = 'dell';
@@ -132,9 +144,11 @@ const getVendorImageUrl = (size: number) => {
 };
 
 const getImageStack = (totalHeight: number) => {
+  const h = deviceHeightU(totalHeight);
+  if (isOtherDevice.value && h === 0) return [0];
   const availableSizes = [8, 4, 3, 2, 1];
 
-  let remaining = totalHeight;
+  let remaining = h;
   const parts: number[] = [];
   for (const size of availableSizes) {
     while (remaining >= size) {
@@ -162,7 +176,7 @@ const deviceBackgroundStyle = computed(() => {
     };
   }
 
-  const heightParts = getImageStack(props.device.height);
+  const heightParts = getImageStack(deviceHeightU(props.device.height));
 
   const bgImages: string[] = [];
   const bgPositions: string[] = [];
@@ -172,7 +186,7 @@ const deviceBackgroundStyle = computed(() => {
 
   heightParts.forEach((sizeU) => {
     const url = getVendorImageUrl(sizeU);
-    const pixelH = sizeU * unitPixelHeight.value;
+    const pixelH = sizeU === 0 ? Math.max(20, unitPixelHeight.value) : sizeU * unitPixelHeight.value;
     bgImages.push(`url(${url})`);
     bgPositions.push(`0px ${currentOffsetY}px`);
     bgSizes.push(`100% ${pixelH}px`);
@@ -219,15 +233,20 @@ const getColor = (val: number | undefined | null, type: string | null) => {
 };
 
 const vendorClass = computed(() => {
-  const type = props.device.type;
+  const type = (props.device.type || '').toLowerCase();
   const vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
   const height = props.device.height;
   if (type === 'switch') return 'switch';
+  if (isOtherDevicesType(props.device.type)) return 'otherdevices';
   if (!vendor || vendor === 'none') return 'default';
   return `${vendor}-${height}`;
 });
 
 const onDragStart = (event: DragEvent) => {
+  if (!canDrag.value) {
+    event.preventDefault();
+    return;
+  }
   isDragging.value = true;
   setDraggedDevice(props.device);
   if (event.dataTransfer) {
@@ -243,9 +262,10 @@ const onDragStart = (event: DragEvent) => {
       props.selectedDevicesForDrag.some((d) => d.name === props.device.name);
 
     if (multi && props.selectedDevicesForDrag) {
+      const draggableDevices = props.selectedDevicesForDrag.filter((d) => !isOtherDevices0U(d));
       const payload = {
         multi: true,
-        devices: props.selectedDevicesForDrag.map((d) => ({ ...d, dragSource: 'pool' as const })),
+        devices: draggableDevices.map((d) => ({ ...d, dragSource: 'pool' as const })),
         uOffset
       };
       event.dataTransfer.setData('application/json', JSON.stringify(payload));
@@ -279,6 +299,9 @@ const onDragEnd = () => {
   align-items: center;
   padding-left: 5px;
   overflow: hidden;
+}
+.device-item.no-drag {
+  cursor: not-allowed;
 }
 
 .device-item.is-absolute { position: absolute; }

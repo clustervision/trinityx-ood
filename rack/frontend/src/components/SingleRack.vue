@@ -8,6 +8,7 @@ import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
 import { useRack } from '@/composables/useRack';
+import { handle401Disconnect, isSessionExpired } from '@/utils/connectionStatus';
 
 const props = defineProps<{
   rack: Rack;
@@ -318,6 +319,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     console.log(`Single node detected (${nodeCount}), using standard fetch: ${url}`);
     try {
       const response = await fetch(url);
+      if (response.status === 401) {
+        handle401Disconnect();
+        isActionLoading.value = false;
+        return;
+      }
       const data = await response.json();
       if (data.status) {
         handleSuccess();
@@ -380,18 +386,23 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         console.log("Connection closed after completion (Normal behavior).");
         return;
       }
-      console.error("[Rack Power SSE] Connection error (no server 'failed' event). Showing toast now.");
+      console.error("[Rack Power SSE] Connection error (no server 'failed' event).");
       source.close();
       if (!taskFailedHandled) {
-        toast.error("Action failed or connection lost.");
         try {
           const response = await fetch(url);
-          const data = await response.json();
-          if (data && !data.status && data.message) {
-            toast.error(`Action Failed: ${data.message}`);
+          if (response.status === 401) {
+            handle401Disconnect();
+          } else {
+            const data = await response.json();
+            if (data && !data.status && data.message) {
+              toast.error(`Action Failed: ${data.message}`);
+            } else {
+              toast.error("Action failed or connection lost.");
+            }
           }
         } catch {
-          // Already showed generic toast
+          toast.error("Action failed or connection lost.");
         }
       }
       isActionLoading.value = false;
@@ -400,6 +411,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 };
 
 const checkPowerStatus = async () => {
+  if (isSessionExpired.value) return;
   let hasController = false;
   let hasSwitch = false;
   if (props.rack && props.rack.slots) {
@@ -451,6 +463,10 @@ const checkPowerStatus = async () => {
   if (nodeCount === 1) {
     try {
       const response = await fetch(url);
+      if (response.status === 401) {
+        handle401Disconnect();
+        return;
+      }
       const data = await response.json();
 
       if (data.status && Array.isArray(data.message)) {
@@ -556,9 +572,18 @@ const checkPowerStatus = async () => {
       source.close();
     });
 
-    source.onerror = () => {
+    source.onerror = async () => {
       if (!statusErrorHandled) {
-        toast.error("Status check failed or connection lost.");
+        try {
+          const response = await fetch(url);
+          if (response.status === 401) {
+            handle401Disconnect();
+          } else {
+            toast.error("Status check failed or connection lost.");
+          }
+        } catch {
+          toast.error("Status check failed or connection lost.");
+        }
       }
       source.close();
     };
@@ -581,12 +606,19 @@ watch(
       clearInterval(powerStatusIntervalId.value);
       powerStatusIntervalId.value = null;
     }
-    if (dark) {
+    if (dark && !isSessionExpired.value) {
       powerStatusIntervalId.value = setInterval(() => checkPowerStatus(), POWER_STATUS_INTERVAL_MS);
     }
   },
   { immediate: true }
 );
+
+watch(isSessionExpired, (expired) => {
+  if (expired && powerStatusIntervalId.value) {
+    clearInterval(powerStatusIntervalId.value);
+    powerStatusIntervalId.value = null;
+  }
+});
 
 onUnmounted(() => {
   if (powerStatusIntervalId.value) {

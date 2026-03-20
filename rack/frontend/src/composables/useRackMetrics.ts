@@ -1,5 +1,6 @@
-import { ref, watch, triggerRef, onMounted, onUnmounted } from 'vue'; // Added onMounted, onUnmounted
+import { ref, watch, triggerRef, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
+import { isSessionExpired } from '@/utils/connectionStatus';
 import type { Device } from '@/types/rack';
 
 interface PrometheusResult {
@@ -80,6 +81,7 @@ export function useRackMetrics() {
   };
 
   const fetchMetricData = async () => {
+    if (isSessionExpired.value) return;
     const m1Active = metric1.value && metric1.value !== 'No Scale';
     const m2Active = metric2.value && metric2.value !== 'No Scale';
 
@@ -126,6 +128,9 @@ export function useRackMetrics() {
   });
 
   watch([metric1, metric2], fetchMetricData);
+  watch(isSessionExpired, (expired) => {
+    if (expired) stopAutoRefresh();
+  });
 
   return { metric1, metric2, metric1Range, metric2Range, getMetricForDevice, fetchMetricData };
 }

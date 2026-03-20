@@ -23,7 +23,8 @@ export function useDeviceActions() {
         otherdevices: 'trinity_otherdev'
       };
 
-      const section = typeMap[device.type] || 'trinity_node';
+      const typeKey = (device.type || '').toLowerCase();
+      const section = typeMap[typeKey] || 'trinity_node';
 
       if (device.type === 'controller') {
         if (action === 'details') route = `${baseForLinks}/${section}/`;

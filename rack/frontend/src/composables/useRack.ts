@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useToast } from "vue-toastification";
 import type { Rack, RackSlot, Device } from '@/types/rack';
+import { isOtherDevices0U } from '@/utils/deviceKind';
 
 export function useRack() {
   //@ts-ignore
@@ -163,6 +164,10 @@ export function useRack() {
 
     if (parsed.multi === true && Array.isArray(parsed.devices) && parsed.devices.length > 0) {
       const devices: any[] = parsed.devices;
+      if (devices.some((d) => isOtherDevices0U(d))) {
+        toast.error('0U devices cannot be placed on rack. It stays in Unassigned Pool only.');
+        return;
+      }
       let currentU = targetU;
       const placedNames: string[] = [];
       for (const draggedDevice of devices) {
@@ -232,6 +237,10 @@ export function useRack() {
     }
 
     const draggedDevice = parsed;
+    if (isOtherDevices0U(draggedDevice)) {
+      toast.error('0U device cannot be placed on rack. It stays in Unassigned Pool only.');
+      return;
+    }
     const dragHeight = parseInt(draggedDevice.height) || 1;
 
     let savedPosition: number | null = null;

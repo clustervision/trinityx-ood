@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useToast } from 'vue-toastification';
+import { initConnectionStatus, isSessionExpired } from '@/utils/connectionStatus';
 import SideMenu from '@/components/SideMenu.vue';
 import HeaderBar from '@/components/HeaderBar.vue';
 import RackView from '@/views/RackView.vue';
@@ -9,6 +11,8 @@ import EditRack from '@/views/EditRack.vue';
 import ShowRack from '@/views/ShowRack.vue';
 import EditInventory from '@/views/EditInventory.vue';
 import FooterBar from '@/components/FooterBar.vue';
+
+initConnectionStatus(useToast());
 
 const currentView = ref('dashboard');
 const footerBaseUrl = typeof window !== 'undefined' ? window.location.origin : '';
@@ -42,6 +46,7 @@ const headerBreadcrumbs = computed(() => {
   return map[currentView.value] ?? [{ label: 'Home', view: 'dashboard' }, { label: 'Page' }];
 });
 
+const reloadPage = () => { window.location.reload(); };
 const handleDeviceTakenFromPool = (deviceName: string) => {
   if (sideMenuRef.value) {
     sideMenuRef.value.removeNode(deviceName);
@@ -103,6 +108,11 @@ onUnmounted(() => {
 
 <template>
   <div class="layout-outer" :class="{ 'sidebar-pinned': sidebarPinned, 'footer-revealed': footerRevealed }">
+    <div v-if="isSessionExpired" class="session-expired-banner">
+      Session expired (401). Please
+      <a href="#" class="session-expired-link" @click.prevent="reloadPage">refresh the page</a>
+      and log in to OOD again.
+    </div>
     <div
       ref="scrollWrapperRef"
       class="layout-scroll-wrapper"
@@ -183,6 +193,25 @@ html, body, #app {
   margin: 0;
   overflow-x: auto;
   overflow-y: auto;
+}
+
+.session-expired-banner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #dc3545;
+  color: white;
+  text-align: center;
+  padding: 10px 16px;
+  font-weight: 500;
+}
+.session-expired-banner .session-expired-link {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.session-expired-banner .session-expired-link:hover {
+  color: #ffe0e0;
 }
 
 .layout-outer {
