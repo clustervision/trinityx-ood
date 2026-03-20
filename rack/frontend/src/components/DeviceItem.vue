@@ -58,6 +58,7 @@ import { useDraggedDevice } from '@/composables/useDraggedDevice';
 import { useToast } from 'vue-toastification';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import { deviceHeightU, isOtherDevices0U, isOtherDevicesType } from '@/utils/deviceKind';
+import { getImageStack, getSwitchImageUrl, getVendorImageUrl } from '@/utils/deviceImageUrls';
 
 const { isDarkMode } = useTheme();
 const toast = useToast();
@@ -80,7 +81,6 @@ const { unitPixelHeight } = useRackSizing();
 const menuVisible = ref(false);
 const menuPos = ref({ x: 0, y: 0 });
 
-const isOtherDevice = computed(() => isOtherDevicesType(props.device.type));
 const isOtherDevice0U = computed(() => isOtherDevices0U(props.device));
 const canDrag = computed(() => !isOtherDevice0U.value);
 
@@ -120,52 +120,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   }
 };
 
-const getVendorImageUrl = (size: number) => {
-  if (isOtherDevice.value) {
-    const otherDeviceSizes = [0, 1, 2, 3, 4, 8];
-    const safeSize = otherDeviceSizes.includes(size) ? size : 1;
-    return new URL(`../assets/img/devices-${safeSize}u.png`, import.meta.url).href;
-  }
-  let vendor = props.device.vendor ? props.device.vendor.toLowerCase() : '';
-  if (vendor.includes('supermicro')) vendor = 'supermicro';
-  else if (vendor.includes('dell')) vendor = 'dell';
-  else if (vendor.includes('asus')) vendor = 'asus';
-  else if (vendor.includes('hp')) vendor = 'hp';
-  else if (vendor.includes('lenovo')) vendor = 'lenovo';
-  else if (vendor.includes('gigabyte')) vendor = 'gigabyte';
-  else vendor = '';
-  const validSizes = [1, 2, 3, 4, 8];
-  const safeSize = validSizes.includes(size) ? size : 1;
-
-  if (!vendor) {
-    return new URL(`../assets/img/default-${safeSize}u.png`, import.meta.url).href;
-  }
-  return new URL(`../assets/img/${vendor}-${safeSize}u.png`, import.meta.url).href;
-};
-
-const getImageStack = (totalHeight: number) => {
-  const h = deviceHeightU(totalHeight);
-  if (isOtherDevice.value && h === 0) return [0];
-  const availableSizes = [8, 4, 3, 2, 1];
-
-  let remaining = h;
-  const parts: number[] = [];
-  for (const size of availableSizes) {
-    while (remaining >= size) {
-      parts.push(size);
-      remaining -= size;
-    }
-    if (remaining === 0) break;
-  }
-  if (remaining > 0) parts.push(1);
-
-  return parts;
-};
-
 const deviceBackgroundStyle = computed(() => {
 
   if (props.device.type === 'switch') {
-    const url = new URL('@/assets/img/switch.png', import.meta.url).href;
+    const url = getSwitchImageUrl();
     return {
       height: heightPixels.value + 'px',
       backgroundImage: `url(${url})`,
@@ -176,7 +134,7 @@ const deviceBackgroundStyle = computed(() => {
     };
   }
 
-  const heightParts = getImageStack(deviceHeightU(props.device.height));
+  const heightParts = getImageStack(props.device);
 
   const bgImages: string[] = [];
   const bgPositions: string[] = [];
@@ -185,7 +143,7 @@ const deviceBackgroundStyle = computed(() => {
   let currentOffsetY = 0;
 
   heightParts.forEach((sizeU) => {
-    const url = getVendorImageUrl(sizeU);
+    const url = getVendorImageUrl(props.device, sizeU);
     const pixelH = sizeU === 0 ? Math.max(20, unitPixelHeight.value) : sizeU * unitPixelHeight.value;
     bgImages.push(`url(${url})`);
     bgPositions.push(`0px ${currentOffsetY}px`);

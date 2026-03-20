@@ -8,6 +8,7 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 import { useTheme } from '@/composables/useTheme';
+import { collectRackDeviceImageUrls, preloadImageUrls } from '@/utils/deviceImageUrls';
 import switchOnImg from '@/assets/img/switch-on.png';
 import switchOffImg from '@/assets/img/switch-off.png';
 
@@ -102,6 +103,7 @@ const loadRacks = async () => {
       }));
 
       racks.value = parsedRacks;
+      preloadImageUrls(collectRackDeviceImageUrls(parsedRacks));
     }
   } catch (error: unknown) {
     console.error("Failed to load racks:", error);

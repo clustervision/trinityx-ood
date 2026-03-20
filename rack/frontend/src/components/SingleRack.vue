@@ -8,7 +8,12 @@ import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
 import { useRack } from '@/composables/useRack';
-import { handle401Disconnect, isSessionExpired } from '@/utils/connectionStatus';
+import {
+  handleSessionExpired,
+  isSessionExpired,
+  readJsonApiResponse,
+  messageIndicatesSessionLost,
+} from '@/utils/connectionStatus';
 
 const props = defineProps<{
   rack: Rack;
@@ -319,12 +324,16 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     console.log(`Single node detected (${nodeCount}), using standard fetch: ${url}`);
     try {
       const response = await fetch(url);
-      if (response.status === 401) {
-        handle401Disconnect();
-        isActionLoading.value = false;
+      const parsed = await readJsonApiResponse(response);
+      if (parsed.kind === 'session_lost') {
+        handleSessionExpired();
         return;
       }
-      const data = await response.json();
+      if (parsed.kind !== 'ok') {
+        toast.error('Action failed: Request was not successful.');
+        return;
+      }
+      const data = parsed.data as { status?: boolean; message?: string };
       if (data.status) {
         handleSuccess();
       } else {
@@ -367,7 +376,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       taskFailedHandled = true;
       const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
       console.warn("[Rack Power SSE] Failure from server event 'failed', showing toast:", msg);
-      toast.error(`Action Failed: ${msg}`);
+      if (messageIndicatesSessionLost(msg)) {
+        handleSessionExpired();
+      } else {
+        toast.error(`Action Failed: ${msg}`);
+      }
       closeConnection();
     });
     source.addEventListener("error", (e: MessageEvent) => {
@@ -376,7 +389,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         taskFailedHandled = true;
         const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
         console.warn("[Rack Power SSE] Failure from server event 'error', showing toast:", msg);
-        toast.error(`Action Failed: ${msg}`);
+        if (messageIndicatesSessionLost(msg)) {
+          handleSessionExpired();
+        } else {
+          toast.error(`Action Failed: ${msg}`);
+        }
       }
       closeConnection();
     });
@@ -391,15 +408,21 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       if (!taskFailedHandled) {
         try {
           const response = await fetch(url);
-          if (response.status === 401) {
-            handle401Disconnect();
-          } else {
-            const data = await response.json();
+          const parsed = await readJsonApiResponse(response);
+          if (parsed.kind === 'session_lost') {
+            handleSessionExpired();
+          } else if (parsed.kind === 'ok') {
+            const data = parsed.data as {
+              status?: boolean;
+              message?: string;
+            };
             if (data && !data.status && data.message) {
               toast.error(`Action Failed: ${data.message}`);
             } else {
-              toast.error("Action failed or connection lost.");
+              toast.error('Action failed or connection lost.');
             }
+          } else {
+            toast.error('Action failed or connection lost.');
           }
         } catch {
           toast.error("Action failed or connection lost.");
@@ -463,18 +486,31 @@ const checkPowerStatus = async () => {
   if (nodeCount === 1) {
     try {
       const response = await fetch(url);
-      if (response.status === 401) {
-        handle401Disconnect();
+      const parsed = await readJsonApiResponse(response);
+      if (parsed.kind === 'session_lost') {
+        handleSessionExpired();
         return;
       }
-      const data = await response.json();
+      if (parsed.kind !== 'ok') {
+        if (!isSessionExpired.value) {
+          toast.error('Status check failed.');
+        }
+        return;
+      }
+      const data = parsed.data as {
+        status?: boolean;
+        message?: Array<{ node?: string; name?: string; state?: unknown }>;
+      };
 
       if (data.status && Array.isArray(data.message)) {
+        const statusMessages = data.message;
         props.rack.slots.forEach(slot => {
           slot.devices.forEach(device => {
-            const item = data.message.find((m: any) => (m.node || m.name) === device.name);
+            const item = statusMessages.find(
+              (m) => (m.node || m.name) === device.name
+            );
             if (item) {
-              let stateStr = String(item.state || item).toUpperCase();
+              let stateStr = String(item.state ?? item).toUpperCase();
               // Extract actual state from "success with unparsable output: RESET" format
               if (stateStr.includes('RESET')) {
                 stateStr = 'RESET';
@@ -494,8 +530,10 @@ const checkPowerStatus = async () => {
         saveRackPowerCache();
       }
     } catch (e) {
-      console.error("[Rack Status] Single-node fetch failed, showing toast:", e);
-      toast.error("Status check failed.");
+      console.error('[Rack Status] Single-node fetch failed:', e);
+      if (!isSessionExpired.value) {
+        toast.error('Status check failed.');
+      }
     }
   }
   // --- CASE B: Multi Node (Use SSE) ---
@@ -560,14 +598,22 @@ const checkPowerStatus = async () => {
     source.addEventListener("failed", (e: MessageEvent) => {
       statusErrorHandled = true;
       const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
-      toast.error(`Status check failed: ${msg}`);
+      if (messageIndicatesSessionLost(msg)) {
+        handleSessionExpired();
+      } else if (!isSessionExpired.value) {
+        toast.error(`Status check failed: ${msg}`);
+      }
       source.close();
     });
     source.addEventListener("error", (e: MessageEvent) => {
       if (e.data) {
         statusErrorHandled = true;
         const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
-        toast.error(`Status check failed: ${msg}`);
+        if (messageIndicatesSessionLost(msg)) {
+          handleSessionExpired();
+        } else if (!isSessionExpired.value) {
+          toast.error(`Status check failed: ${msg}`);
+        }
       }
       source.close();
     });
@@ -576,13 +622,16 @@ const checkPowerStatus = async () => {
       if (!statusErrorHandled) {
         try {
           const response = await fetch(url);
-          if (response.status === 401) {
-            handle401Disconnect();
-          } else {
-            toast.error("Status check failed or connection lost.");
+          const parsed = await readJsonApiResponse(response);
+          if (parsed.kind === 'session_lost') {
+            handleSessionExpired();
+          } else if (!isSessionExpired.value) {
+            toast.error('Status check failed or connection lost.');
           }
         } catch {
-          toast.error("Status check failed or connection lost.");
+          if (!isSessionExpired.value) {
+            toast.error('Status check failed or connection lost.');
+          }
         }
       }
       source.close();
