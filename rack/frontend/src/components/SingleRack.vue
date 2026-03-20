@@ -745,7 +745,11 @@ const clearPreview = () => {
       <div class="rack-column" v-if="rack.showFrontSide !== false">
 
         <div class="rack-header-light position-relative">
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
           <div class="d-flex align-items-center position-relative" style="z-index: 4;">
             <span class="u-header-label">U</span>
@@ -770,7 +774,11 @@ const clearPreview = () => {
              @dragleave="onFrameDragLeave"
              @dragover.prevent="handleDragOver($event, 'front')"
              @drop.prevent="handleDrop($event, 'front')">
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number">
 
@@ -815,7 +823,10 @@ const clearPreview = () => {
                               }">
                           </div>
                         </template>
-                        <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
+                        <div
+                          class="device-dark-overlay"
+                          :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+                        ></div>
                         <DeviceItem
                           :device="device"
                           :metric1-value="getMetric(device, metric1,true)?.value"
@@ -843,7 +854,11 @@ const clearPreview = () => {
 
         <div class="rack-header-dark position-relative">
 
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
           <div class="d-flex align-items-center position-relative" style="z-index: 4;">
             <span class="u-header-label">U</span>
@@ -870,7 +885,11 @@ const clearPreview = () => {
              @dragleave="onFrameDragLeave"
              @dragover.prevent="handleDragOver($event, 'back')"
              @drop.prevent="handleDrop($event, 'back')">
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number">
 
@@ -913,7 +932,10 @@ const clearPreview = () => {
                               }">
                           </div>
                         </template>
-                        <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
+                        <div
+                          class="device-dark-overlay"
+                          :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+                        ></div>
                         <DeviceItem
                           :device="device"
                           :metric1-value="getMetric(device, metric1,true)?.value"
@@ -1031,6 +1053,10 @@ const clearPreview = () => {
   z-index: 8;
   pointer-events: none !important;
   /* backdrop-filter: blur(1px); */
+}
+
+.device-dark-overlay--inactive {
+  opacity: 0;
 }
 
 .flex-fill .device-dark-overlay {

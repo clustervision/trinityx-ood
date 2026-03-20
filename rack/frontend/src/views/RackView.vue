@@ -256,7 +256,7 @@ onUnmounted(() => {
           </button>
         </template>
       </RackMetricsHeader>
-      <div class="card-body" :class="{ 'rack-view-dark': isDarkMode }" >
+      <div class="card-body rack-view-racks" :class="{ 'rack-view-dark': isDarkMode }" >
         <div class="racks-container">
           <SingleRack
             v-for="rack in racks"
@@ -281,6 +281,10 @@ onUnmounted(() => {
 <style scoped>
 .rack-view-header-wrap {
   overflow: visible;
+}
+
+.rack-view-racks {
+  margin-top: 10px;
 }
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .btn-custom-grey {
