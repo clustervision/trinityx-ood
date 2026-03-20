@@ -25,7 +25,7 @@
             <div :class="metric1 ? 'legend-bar' : 'legend-bar-empty'"></div>
             <span class="text-muted small">{{ metric1 ? (range1?.max ?? 100) : 100 }}</span>
           </div>
-          <slot name="zoom"></slot>
+          <slot name="fullscreen"></slot>
         </div>
         <div class="metrics-row metrics-row-2 d-flex align-items-center gap-3">
           <div class="dropdown" ref="dropdown2Ref">
@@ -139,7 +139,7 @@ const selectMetric2 = (val: string | null) => {
   gap: 0.75rem;
   overflow: visible;
 }
-.metrics-row-1 :deep(.rack-zoom-toggle-btn) {
+.metrics-row-1 :deep(.rack-fullscreen-btn) {
   flex-shrink: 0;
   min-width: 200px;
 }

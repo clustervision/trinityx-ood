@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
@@ -38,59 +38,26 @@ const loadingRackName = ref('');
 const Url = window.APP_URL;
 const isBackViewMode = ref(false);
 
-const RACK_ZOOM_SCALE = 1.6;
-const rackZoomActive = ref(false);
-const rackZoomPanX = ref(0);
-const rackZoomPanY = ref(0);
-const rackZoomPanning = ref(false);
-let rackZoomPanGrabX = 0;
-let rackZoomPanGrabY = 0;
-let rackZoomPanStartX = 0;
-let rackZoomPanStartY = 0;
+const rackFullscreenEl = ref<HTMLElement | null>(null);
+const rackIsFullscreen = ref(false);
 
-const rackZoomInnerStyle = computed(() => {
-  if (!rackZoomActive.value) return undefined;
-  return {
-    transform: `translate(${rackZoomPanX.value}px, ${rackZoomPanY.value}px) scale(${RACK_ZOOM_SCALE})`,
-    transformOrigin: '0 0' as const,
-  };
-});
-
-const isRackZoomPanBlockedTarget = (target: EventTarget | null) => {
-  if (!target || !(target instanceof Element)) return false;
-  return !!target.closest(
-    'button, a, input, select, textarea, [role="button"], .dropdown-menu, .dropdown-toggle, .dropdown-item, .power-btn-circle, .reset-btn'
-  );
+const syncRackFullscreenState = () => {
+  rackIsFullscreen.value = document.fullscreenElement === rackFullscreenEl.value;
 };
 
-const toggleRackZoom = () => {
-  rackZoomActive.value = !rackZoomActive.value;
-  if (!rackZoomActive.value) {
-    rackZoomPanX.value = 0;
-    rackZoomPanY.value = 0;
-    rackZoomPanning.value = false;
+const toggleRackFullscreen = async () => {
+  const el = rackFullscreenEl.value;
+  if (!el) return;
+  try {
+    if (document.fullscreenElement === el) {
+      await document.exitFullscreen();
+    } else {
+      await el.requestFullscreen();
+    }
+  } catch (e) {
+    console.error(e);
+    toast.error('Fullscreen is not available in this browser or was blocked.');
   }
-};
-
-const onRackZoomViewportMouseDown = (e: MouseEvent) => {
-  if (!rackZoomActive.value || e.button !== 0) return;
-  if (isRackZoomPanBlockedTarget(e.target)) return;
-  rackZoomPanning.value = true;
-  rackZoomPanGrabX = e.clientX;
-  rackZoomPanGrabY = e.clientY;
-  rackZoomPanStartX = rackZoomPanX.value;
-  rackZoomPanStartY = rackZoomPanY.value;
-  e.preventDefault();
-};
-
-const onWindowRackZoomMouseMove = (e: MouseEvent) => {
-  if (!rackZoomPanning.value) return;
-  rackZoomPanX.value = rackZoomPanStartX + (e.clientX - rackZoomPanGrabX);
-  rackZoomPanY.value = rackZoomPanStartY + (e.clientY - rackZoomPanGrabY);
-};
-
-const onWindowRackZoomMouseUp = () => {
-  rackZoomPanning.value = false;
 };
 
 const toggleGlobalView = () => {
@@ -275,12 +242,17 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
 defineExpose({ loadRacks });
 onMounted(() => {
   loadRacks();
-  window.addEventListener('mousemove', onWindowRackZoomMouseMove);
-  window.addEventListener('mouseup', onWindowRackZoomMouseUp);
+  document.addEventListener('fullscreenchange', syncRackFullscreenState);
 });
-onUnmounted(() => {
-  window.removeEventListener('mousemove', onWindowRackZoomMouseMove);
-  window.removeEventListener('mouseup', onWindowRackZoomMouseUp);
+onUnmounted(async () => {
+  document.removeEventListener('fullscreenchange', syncRackFullscreenState);
+  if (document.fullscreenElement === rackFullscreenEl.value) {
+    try {
+      await document.exitFullscreen();
+    } catch {
+      /* ignore */
+    }
+  }
   setTheme(false);
 });
 </script>
@@ -308,14 +280,14 @@ onUnmounted(() => {
             />
           </span>
         </template>
-        <template #zoom>
+        <template #fullscreen>
           <button
             type="button"
-            class="btn rack-zoom-toggle-btn"
-            :title="rackZoomActive ? 'Zoom out (drag rack area to pan when zoomed)' : 'Zoom in (drag rack area to pan)'"
-            @click="toggleRackZoom"
+            class="btn rack-fullscreen-btn"
+            :title="rackIsFullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen rack view'"
+            @click="toggleRackFullscreen"
           >
-            {{ rackZoomActive ? 'Zoom out' : 'Zoom in' }}
+            {{ rackIsFullscreen ? 'Exit fullscreen' : 'Fullscreen' }}
           </button>
         </template>
         <template #bottom>
@@ -328,34 +300,31 @@ onUnmounted(() => {
           </button>
         </template>
       </RackMetricsHeader>
-      <div class="card-body rack-view-racks" :class="{ 'rack-view-dark': isDarkMode }" >
-        <div
-          class="rack-zoom-viewport"
-          :class="{ 'rack-zoom-viewport--active': rackZoomActive }"
-          @mousedown="onRackZoomViewportMouseDown"
-        >
-          <div
-            class="rack-zoom-inner"
-            :class="{ 'rack-zoom-inner--scaled': rackZoomActive }"
-            :style="rackZoomInnerStyle"
-          >
-            <div class="racks-container">
-              <SingleRack
-                v-for="rack in racks"
-                :key="rack.name"
-                :rack="rack"
-                :metric1="metric1"
-                :metric2="metric2"
-                :get-metric="getMetricForDevice"
-                :is-back-view-mode="isBackViewMode"
-                @drop="onDrop"
-                @reset="resetRack"
-                @power-toggle="handlePowerToggle"
-                @edit-inventory="onEditInventory"
-                :is-busy="loadingRackName === rack.name"
-              />
-            </div>
-          </div>
+      <div
+        ref="rackFullscreenEl"
+        class="card-body rack-view-racks"
+        :class="{ 'rack-view-dark': isDarkMode }"
+      >
+        <div v-if="rackIsFullscreen" class="rack-fullscreen-exit-bar">
+          <button type="button" class="btn btn-sm rack-fullscreen-exit-btn" @click="toggleRackFullscreen">
+            Exit fullscreen
+          </button>
+        </div>
+        <div class="racks-container">
+          <SingleRack
+            v-for="rack in racks"
+            :key="rack.name"
+            :rack="rack"
+            :metric1="metric1"
+            :metric2="metric2"
+            :get-metric="getMetricForDevice"
+            :is-back-view-mode="isBackViewMode"
+            @drop="onDrop"
+            @reset="resetRack"
+            @power-toggle="handlePowerToggle"
+            @edit-inventory="onEditInventory"
+            :is-busy="loadingRackName === rack.name"
+          />
         </div>
       </div>
     </div>
@@ -369,26 +338,44 @@ onUnmounted(() => {
 
 .rack-view-racks {
   margin-top: 10px;
+  position: relative;
 }
 
-.rack-zoom-viewport {
+.rack-fullscreen-exit-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 10px 0;
+  margin: -4px 0 4px;
+  pointer-events: none;
+}
+
+.rack-fullscreen-exit-btn {
+  pointer-events: auto;
+  background-color: #8692a4;
+  border-color: #8692a4;
+  color: #fff;
+}
+
+.rack-fullscreen-exit-btn:hover {
+  background-color: #778496;
+  border-color: #778496;
+  color: #fff;
+}
+
+.rack-view-racks:fullscreen {
+  margin-top: 0;
   width: 100%;
+  height: 100%;
+  overflow: auto;
+  box-sizing: border-box;
+  background-color: #f5f5f9;
 }
 
-.rack-zoom-viewport--active {
-  overflow: hidden;
-  min-height: min(70vh, 900px);
-  cursor: grab;
-  border-radius: 6px;
-  user-select: none;
-}
-
-.rack-zoom-viewport--active:active {
-  cursor: grabbing;
-}
-
-.rack-zoom-inner--scaled {
-  will-change: transform;
+.rack-view-racks.rack-view-dark:fullscreen {
+  background-color: #191919;
 }
 
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
@@ -402,7 +389,7 @@ onUnmounted(() => {
   background-color: #bebebe;
 }
 
-.rack-zoom-toggle-btn {
+.rack-fullscreen-btn {
   background-color: #8692a4;
   border-color: #8692a4;
   color: #fff;
@@ -415,13 +402,13 @@ onUnmounted(() => {
   box-shadow: none;
 }
 
-.rack-zoom-toggle-btn:hover {
+.rack-fullscreen-btn:hover {
   background-color: #778496;
   border-color: #778496;
   color: #fff;
 }
 
-.rack-zoom-toggle-btn:focus {
+.rack-fullscreen-btn:focus {
   color: #fff;
   box-shadow: 0 0 0 0.2rem rgba(134, 146, 164, 0.35);
 }
