@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
@@ -37,6 +37,62 @@ const loadingRackName = ref('');
 // @ts-expect-error APP_URL is injected globally at runtime
 const Url = window.APP_URL;
 const isBackViewMode = ref(false);
+
+const RACK_ZOOM_SCALE = 1.6;
+const rackZoomActive = ref(false);
+const rackZoomPanX = ref(0);
+const rackZoomPanY = ref(0);
+const rackZoomPanning = ref(false);
+let rackZoomPanGrabX = 0;
+let rackZoomPanGrabY = 0;
+let rackZoomPanStartX = 0;
+let rackZoomPanStartY = 0;
+
+const rackZoomInnerStyle = computed(() => {
+  if (!rackZoomActive.value) return undefined;
+  return {
+    transform: `translate(${rackZoomPanX.value}px, ${rackZoomPanY.value}px) scale(${RACK_ZOOM_SCALE})`,
+    transformOrigin: '0 0' as const,
+  };
+});
+
+const isRackZoomPanBlockedTarget = (target: EventTarget | null) => {
+  if (!target || !(target instanceof Element)) return false;
+  return !!target.closest(
+    'button, a, input, select, textarea, [role="button"], .dropdown-menu, .dropdown-toggle, .dropdown-item, .power-btn-circle, .reset-btn'
+  );
+};
+
+const toggleRackZoom = () => {
+  rackZoomActive.value = !rackZoomActive.value;
+  if (!rackZoomActive.value) {
+    rackZoomPanX.value = 0;
+    rackZoomPanY.value = 0;
+    rackZoomPanning.value = false;
+  }
+};
+
+const onRackZoomViewportMouseDown = (e: MouseEvent) => {
+  if (!rackZoomActive.value || e.button !== 0) return;
+  if (isRackZoomPanBlockedTarget(e.target)) return;
+  rackZoomPanning.value = true;
+  rackZoomPanGrabX = e.clientX;
+  rackZoomPanGrabY = e.clientY;
+  rackZoomPanStartX = rackZoomPanX.value;
+  rackZoomPanStartY = rackZoomPanY.value;
+  e.preventDefault();
+};
+
+const onWindowRackZoomMouseMove = (e: MouseEvent) => {
+  if (!rackZoomPanning.value) return;
+  rackZoomPanX.value = rackZoomPanStartX + (e.clientX - rackZoomPanGrabX);
+  rackZoomPanY.value = rackZoomPanStartY + (e.clientY - rackZoomPanGrabY);
+};
+
+const onWindowRackZoomMouseUp = () => {
+  rackZoomPanning.value = false;
+};
+
 const toggleGlobalView = () => {
   isBackViewMode.value = !isBackViewMode.value;
   racks.value.forEach(rack => {
@@ -217,8 +273,14 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
 };
 
 defineExpose({ loadRacks });
-onMounted(loadRacks);
+onMounted(() => {
+  loadRacks();
+  window.addEventListener('mousemove', onWindowRackZoomMouseMove);
+  window.addEventListener('mouseup', onWindowRackZoomMouseUp);
+});
 onUnmounted(() => {
+  window.removeEventListener('mousemove', onWindowRackZoomMouseMove);
+  window.removeEventListener('mouseup', onWindowRackZoomMouseUp);
   setTheme(false);
 });
 </script>
@@ -246,6 +308,16 @@ onUnmounted(() => {
             />
           </span>
         </template>
+        <template #zoom>
+          <button
+            type="button"
+            class="btn rack-zoom-toggle-btn"
+            :title="rackZoomActive ? 'Zoom out (drag rack area to pan when zoomed)' : 'Zoom in (drag rack area to pan)'"
+            @click="toggleRackZoom"
+          >
+            {{ rackZoomActive ? 'Zoom out' : 'Zoom in' }}
+          </button>
+        </template>
         <template #bottom>
           <button
             class="btn flip-view-btn"
@@ -257,21 +329,33 @@ onUnmounted(() => {
         </template>
       </RackMetricsHeader>
       <div class="card-body rack-view-racks" :class="{ 'rack-view-dark': isDarkMode }" >
-        <div class="racks-container">
-          <SingleRack
-            v-for="rack in racks"
-            :key="rack.name"
-            :rack="rack"
-            :metric1="metric1"
-            :metric2="metric2"
-            :get-metric="getMetricForDevice"
-            :is-back-view-mode="isBackViewMode"
-            @drop="onDrop"
-            @reset="resetRack"
-            @power-toggle="handlePowerToggle"
-            @edit-inventory="onEditInventory"
-            :is-busy="loadingRackName === rack.name"
-          />
+        <div
+          class="rack-zoom-viewport"
+          :class="{ 'rack-zoom-viewport--active': rackZoomActive }"
+          @mousedown="onRackZoomViewportMouseDown"
+        >
+          <div
+            class="rack-zoom-inner"
+            :class="{ 'rack-zoom-inner--scaled': rackZoomActive }"
+            :style="rackZoomInnerStyle"
+          >
+            <div class="racks-container">
+              <SingleRack
+                v-for="rack in racks"
+                :key="rack.name"
+                :rack="rack"
+                :metric1="metric1"
+                :metric2="metric2"
+                :get-metric="getMetricForDevice"
+                :is-back-view-mode="isBackViewMode"
+                @drop="onDrop"
+                @reset="resetRack"
+                @power-toggle="handlePowerToggle"
+                @edit-inventory="onEditInventory"
+                :is-busy="loadingRackName === rack.name"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -286,6 +370,27 @@ onUnmounted(() => {
 .rack-view-racks {
   margin-top: 10px;
 }
+
+.rack-zoom-viewport {
+  width: 100%;
+}
+
+.rack-zoom-viewport--active {
+  overflow: hidden;
+  min-height: min(70vh, 900px);
+  cursor: grab;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.rack-zoom-viewport--active:active {
+  cursor: grabbing;
+}
+
+.rack-zoom-inner--scaled {
+  will-change: transform;
+}
+
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
 .btn-custom-grey {
   background-color: #d3d3d3;
@@ -295,6 +400,30 @@ onUnmounted(() => {
 
 .btn-custom-grey:hover {
   background-color: #bebebe;
+}
+
+.rack-zoom-toggle-btn {
+  background-color: #8692a4;
+  border-color: #8692a4;
+  color: #fff;
+  height: 38px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  font-weight: normal;
+  padding: 0.375rem 0.75rem;
+  border-radius: 5px;
+  box-shadow: none;
+}
+
+.rack-zoom-toggle-btn:hover {
+  background-color: #778496;
+  border-color: #778496;
+  color: #fff;
+}
+
+.rack-zoom-toggle-btn:focus {
+  color: #fff;
+  box-shadow: 0 0 0 0.2rem rgba(134, 146, 164, 0.35);
 }
 
 .flip-view-btn {

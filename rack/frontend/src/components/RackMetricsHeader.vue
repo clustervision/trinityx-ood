@@ -1,8 +1,8 @@
 <template>
   <div class="card-header p-4 bg-white border-bottom metrics-header">
     <div class="metrics-grid">
-      <div class="metrics-row metrics-row-1">
-        <div class="metrics-main d-flex align-items-center gap-3">
+      <div class="metrics-left-stack">
+        <div class="metrics-row metrics-row-1 d-flex align-items-center gap-3">
           <div class="dropdown" ref="dropdown1Ref">
             <button
               class="btn dropdown-toggle text-white custom-btn-cyan"
@@ -25,35 +25,36 @@
             <div :class="metric1 ? 'legend-bar' : 'legend-bar-empty'"></div>
             <span class="text-muted small">{{ metric1 ? (range1?.max ?? 100) : 100 }}</span>
           </div>
+          <slot name="zoom"></slot>
+        </div>
+        <div class="metrics-row metrics-row-2 d-flex align-items-center gap-3">
+          <div class="dropdown" ref="dropdown2Ref">
+            <button
+              class="btn dropdown-toggle text-white btn-secondary custom-btn-width"
+              type="button"
+              @click="showDropdown2 = !showDropdown2"
+            >
+              {{ metric2 ? metric2 : 'No Scale' }}
+            </button>
+            <ul class="dropdown-menu show dropdown-menu-visible" v-if="showDropdown2">
+              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2(null)">No Scale</a></li>
+              <template v-for="opt in metricOptions" :key="opt">
+                <li v-if="opt !== metric1">
+                  <a class="dropdown-item" href="#" @click.prevent="selectMetric2(opt)" style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt }}</a>
+                </li>
+              </template>
+            </ul>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">0</span>
+            <div :class="metric2 ? 'legend-bar' : 'legend-bar-empty'"></div>
+            <span class="text-muted small">{{ metric2 ? (range2?.max ?? 100) : 100 }}</span>
+          </div>
+          <slot name="bottom"></slot>
         </div>
       </div>
       <div class="header-right-controls">
         <slot name="right"></slot>
-      </div>
-      <div class="metrics-row metrics-row-2 d-flex align-items-center gap-3">
-        <div class="dropdown" ref="dropdown2Ref">
-          <button
-            class="btn dropdown-toggle text-white btn-secondary custom-btn-width"
-            type="button"
-            @click="showDropdown2 = !showDropdown2"
-          >
-            {{ metric2 ? metric2 : 'No Scale' }}
-          </button>
-          <ul class="dropdown-menu show dropdown-menu-visible" v-if="showDropdown2">
-            <li><a class="dropdown-item" href="#" @click.prevent="selectMetric2(null)">No Scale</a></li>
-            <template v-for="opt in metricOptions" :key="opt">
-              <li v-if="opt !== metric1">
-                <a class="dropdown-item" href="#" @click.prevent="selectMetric2(opt)" style="min-width: 10em; text-align: left; white-space: nowrap;">{{ opt }}</a>
-              </li>
-            </template>
-          </ul>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">0</span>
-          <div :class="metric2 ? 'legend-bar' : 'legend-bar-empty'"></div>
-          <span class="text-muted small">{{ metric2 ? (range2?.max ?? 100) : 100 }}</span>
-        </div>
-        <slot name="bottom"></slot>
       </div>
     </div>
   </div>
@@ -119,10 +120,18 @@ const selectMetric2 = (val: string | null) => {
 .metrics-grid {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
+  grid-template-rows: auto;
   align-items: flex-start;
-  gap: 0.75rem 0;
+  column-gap: 0;
   overflow: visible;
+}
+.metrics-left-stack {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
 }
 .metrics-row {
   display: flex;
@@ -130,24 +139,17 @@ const selectMetric2 = (val: string | null) => {
   gap: 0.75rem;
   overflow: visible;
 }
-.metrics-row-1 {
-  grid-column: 1;
-  grid-row: 1;
+.metrics-row-1 :deep(.rack-zoom-toggle-btn) {
+  flex-shrink: 0;
+  min-width: 200px;
 }
-.metrics-row-2 {
-  grid-column: 1;
-  grid-row: 2;
+.metrics-row-2 :deep(.flip-view-btn) {
+  flex-shrink: 0;
 }
-.metrics-row-1 .metrics-main {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
-}
-/* Light switch: spans both rows, same horizontal padding as left (card p-4), stretch vertically */
+/* Light switch: same horizontal padding as left, stretch to full height of left stack */
 .header-right-controls {
   grid-column: 2;
-  grid-row: 1 / -1;
+  grid-row: 1;
   align-self: stretch;
   display: flex;
   align-items: stretch;

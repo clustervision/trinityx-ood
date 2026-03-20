@@ -983,7 +983,7 @@ const clearPreview = () => {
   height: 16px;
   border-radius: 50%;
   border: none;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow: none;
 }
 .power-btn-circle i {
   color: #fff;
