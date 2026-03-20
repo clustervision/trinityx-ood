@@ -8,20 +8,21 @@ import { useRack} from '@/composables/useRack';
 import { useRackMetrics } from '../composables/useRackMetrics';
 import type { Rack } from '@/types/rack';
 import { useTheme } from '@/composables/useTheme';
-import switchOnImg from '@/assets/img/Switch-on.png';
-import switchOffImg from '@/assets/img/Switch-off.png';
-import switchMiddleImg from '@/assets/img/Switch-middle.png';
+import switchOnImg from '@/assets/img/switch-on.png';
+import switchOffImg from '@/assets/img/switch-off.png';
 
 const { isDarkMode, toggleTheme, setTheme } = useTheme();
-const lightSwitchAnimating = ref(false);
 
 const onLightSwitchClick = () => {
-  lightSwitchAnimating.value = true;
   toggleTheme();
-  setTimeout(() => {
-    lightSwitchAnimating.value = false;
-  }, 40);
 };
+
+function preloadLightSwitchImages() {
+  for (const url of [switchOnImg, switchOffImg]) {
+    const img = new Image();
+    img.src = url;
+  }
+}
 
 const emit = defineEmits(['rack-updated', 'device-taken', 'pool-updated', 'edit-inventory']);
 
@@ -241,6 +242,7 @@ const onDrop = (event: DragEvent, targetRack: Rack, u: number, side: 'front' | '
 
 defineExpose({ loadRacks });
 onMounted(() => {
+  preloadLightSwitchImages();
   loadRacks();
   document.addEventListener('fullscreenchange', syncRackFullscreenState);
 });
@@ -274,9 +276,18 @@ onUnmounted(async () => {
             @click="onLightSwitchClick"
           >
             <img
-              :src="lightSwitchAnimating ? switchMiddleImg : (isDarkMode ? switchOffImg : switchOnImg)"
-              :alt="isDarkMode ? 'Light Off' : 'Light On'"
+              v-show="!isDarkMode"
+              :src="switchOnImg"
+              alt="Light On"
               class="light-switch-img"
+              loading="eager"
+            />
+            <img
+              v-show="isDarkMode"
+              :src="switchOffImg"
+              alt="Light Off"
+              class="light-switch-img"
+              loading="eager"
             />
           </span>
         </template>
@@ -442,12 +453,7 @@ onUnmounted(async () => {
   border: none;
   background: transparent;
   cursor: pointer;
-  transition: transform 0.1s ease;
   flex-shrink: 0;
-}
-
-.light-switch-btn:hover {
-  transform: scale(1.05);
 }
 
 .light-switch-img {
