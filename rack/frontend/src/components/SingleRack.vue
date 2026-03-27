@@ -13,6 +13,7 @@ import {
   isSessionExpired,
   readJsonApiResponse,
   messageIndicatesSessionLost,
+  fetchFailureLikelySessionRelated,
 } from '@/utils/connectionStatus';
 
 const props = defineProps<{
@@ -531,7 +532,10 @@ const checkPowerStatus = async () => {
       }
     } catch (e) {
       console.error('[Rack Status] Single-node fetch failed:', e);
-      if (!isSessionExpired.value) {
+      if (isSessionExpired.value) return;
+      if (fetchFailureLikelySessionRelated(e)) {
+        handleSessionExpired();
+      } else {
         toast.error('Status check failed.');
       }
     }
@@ -619,17 +623,28 @@ const checkPowerStatus = async () => {
     });
 
     source.onerror = async () => {
+      if (isSessionExpired.value) {
+        source.close();
+        return;
+      }
       if (!statusErrorHandled) {
         try {
           const response = await fetch(url);
+          if (isSessionExpired.value) {
+            source.close();
+            return;
+          }
           const parsed = await readJsonApiResponse(response);
           if (parsed.kind === 'session_lost') {
             handleSessionExpired();
-          } else if (!isSessionExpired.value) {
+          } else if (parsed.kind === 'error' && !isSessionExpired.value) {
             toast.error('Status check failed or connection lost.');
           }
-        } catch {
-          if (!isSessionExpired.value) {
+        } catch (e) {
+          // SSE died; fallback fetch often throws when session ends (Firefox: can't establish connection)
+          if (fetchFailureLikelySessionRelated(e)) {
+            handleSessionExpired();
+          } else if (!isSessionExpired.value) {
             toast.error('Status check failed or connection lost.');
           }
         }

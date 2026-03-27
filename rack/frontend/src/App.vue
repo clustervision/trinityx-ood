@@ -109,9 +109,9 @@ onUnmounted(() => {
 <template>
   <div class="layout-outer" :class="{ 'sidebar-pinned': sidebarPinned, 'footer-revealed': footerRevealed }">
     <div v-if="isSessionExpired" class="session-expired-banner">
-      Session expired (401). Please
-      <a href="#" class="session-expired-link" @click.prevent="reloadPage">refresh the page</a>
-      and log in to OOD again.
+      Session expired. Please log in to OOD again —
+      <a href="#" class="session-expired-link" @click.prevent="reloadPage">refresh this page</a>
+      after logging in.
     </div>
     <div
       ref="scrollWrapperRef"

@@ -3,9 +3,12 @@
  * Sets isSessionExpired so polling stops; shows at most one toast per page load.
  */
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
-type ToastInstance = { clear: () => void; error: (msg: string) => void };
+type ToastInstance = {
+  clear: () => void;
+  error: (msg: string, options?: { timeout?: number }) => void;
+};
 
 let toastInstance: ToastInstance | null = null;
 
@@ -18,6 +21,22 @@ export const isSessionExpired = ref(false);
 /** Only the first detection shows a toast (avoids N racks × N intervals). */
 let sessionExpiredToastShown = false;
 
+/** Console once per page load when UI state flips (same moment as top banner). */
+let sessionExpiredUiLogged = false;
+
+watch(
+  isSessionExpired,
+  (expired) => {
+    if (!expired || sessionExpiredUiLogged) return;
+    sessionExpiredUiLogged = true;
+    console.warn(
+      '[rack-app] Session expired — UI updated (banner + toast). Polling/fetch hooks stop.',
+      SESSION_EXPIRED_MESSAGE
+    );
+  },
+  { flush: 'sync' }
+);
+
 export function initConnectionStatus(toast: ToastInstance) {
   toastInstance = toast;
 }
@@ -29,7 +48,8 @@ export function handleSessionExpired() {
   sessionExpiredToastShown = true;
 
   toastInstance.clear();
-  toastInstance.error(SESSION_EXPIRED_MESSAGE);
+  // Longer than default 4000ms so the message is not missed before a manual refresh
+  toastInstance.error(SESSION_EXPIRED_MESSAGE, { timeout: 60_000 });
 }
 
 /** @deprecated Use handleSessionExpired; kept for axios interceptors and existing imports */
@@ -53,6 +73,19 @@ export function bodyLooksLikeLoginHtml(text: string): boolean {
   if (t.startsWith('<') && (t.includes('login') || t.includes('sign in') || t.includes('session')))
     return true;
   return false;
+}
+
+/** Fetch/EventSource failures common when session expires or browser blocks connection */
+export function fetchFailureLikelySessionRelated(e: unknown): boolean {
+  if (e instanceof TypeError) return true;
+  const m = String(e instanceof Error ? e.message : e).toLowerCase();
+  return (
+    m.includes('failed to fetch') ||
+    m.includes('networkerror') ||
+    m.includes('load failed') ||
+    m.includes("can't establish") ||
+    m.includes('network request failed')
+  );
 }
 
 export function messageIndicatesSessionLost(raw: unknown): boolean {
@@ -90,6 +123,11 @@ export async function readJsonApiResponse(
   }
 
   if (!response.ok) {
+    const st = response.status;
+    // OOD/proxy often returns 5xx when session is gone or upstream is unreachable
+    if (st === 502 || st === 503 || st === 504) {
+      return { kind: 'session_lost' };
+    }
     return { kind: 'error' };
   }
 
