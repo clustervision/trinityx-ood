@@ -114,6 +114,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   }
   try {
     const result = await executeDeviceAction(action, subAction, device);
+    if (result && !result.success) {
+      toast.error(result.message || 'Action failed');
+      return;
+    }
     if (result?.success) {
       if (action === 'power') {
         if (subAction === 'status') {

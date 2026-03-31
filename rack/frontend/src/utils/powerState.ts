@@ -1,3 +1,5 @@
+import { isPerformCommandFailureMessage } from '@/utils/performCommandResponse';
+
 /**
  * Parse API/drag text into a single UI power state.
  * Only ON / OFF / RESET (exact token or whole-word match) count; anything else -> OFF
@@ -6,7 +8,9 @@
 export type PowerStateUi = 'ON' | 'OFF' | 'RESET';
 
 export function parsePowerStateFromMessage(text: unknown): PowerStateUi {
-  const u = String(text ?? '').trim().toUpperCase();
+  const s = String(text ?? '').trim();
+  if (s && isPerformCommandFailureMessage(s)) return 'OFF';
+  const u = s.toUpperCase();
   if (!u) return 'OFF';
   if (u === 'ON' || u === 'OFF' || u === 'RESET') return u;
   // Order: RESET, OFF, then ON — avoids substring false positives (e.g. "MONITOR" vs \bON\b)
@@ -18,7 +22,9 @@ export function parsePowerStateFromMessage(text: unknown): PowerStateUi {
 
 /** Same token rules as parsePowerStateFromMessage, but returns null when no ON/OFF/RESET can be inferred (for toasts). */
 export function tryParsePowerStateMessage(text: unknown): PowerStateUi | null {
-  const u = String(text ?? '').trim().toUpperCase();
+  const s = String(text ?? '').trim();
+  if (s && isPerformCommandFailureMessage(s)) return null;
+  const u = s.toUpperCase();
   if (!u) return null;
   if (u === 'ON' || u === 'OFF' || u === 'RESET') return u;
   if (/\bRESET\b/.test(u)) return 'RESET';

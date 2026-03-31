@@ -22,6 +22,11 @@ import {
   mergeRackPowerCacheFromStorage,
   type RackPowerCachePayload,
 } from '@/utils/rackPowerCache';
+import { isPerformCommandFailureMessage } from '@/utils/performCommandResponse';
+import {
+  applyRackPowerNodeResultPayload,
+  isRackPowerNodeResultPayload,
+} from '@/utils/rackPowerStreamApply';
 
 const props = defineProps<{
   rack: Rack;
@@ -65,6 +70,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   isActionLoading.value = true;
   try {
     const result = await executeDeviceAction(action, subAction, device);
+    if (result && !result.success) {
+      toast.error(result.message || 'Action failed');
+      return;
+    }
     if (result?.success) {
       if (action === 'power') {
         if (subAction === 'status') {
@@ -313,11 +322,13 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         toast.error('Action failed: Request was not successful.');
         return;
       }
-      const data = parsed.data as { status?: boolean; message?: string };
-      if (data.status) {
+      const data = parsed.data as { message?: string };
+      const msg =
+        typeof data.message === 'string' ? data.message : String(data.message ?? '');
+      if (!isPerformCommandFailureMessage(msg)) {
         handleSuccess();
       } else {
-        toast.error(`Action Failed: ${data.message || 'Unknown error'}`);
+        toast.error(`Action Failed: ${msg || 'Unknown error'}`);
       }
     } catch (e) {
       console.error(e);
@@ -329,6 +340,55 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     console.log(`Multi-node detected, using SSE: ${url}`);
     let isTaskCompleted = false;
     let taskFailedHandled = false;
+    const sseFailedNodes = new Set<string>();
+    let sawNodeResultPayload = false;
+
+    const showBulkSuccessToasts = () => {
+      const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+      if (hasController.value) {
+        toast.success(`${actionName} action successful!\n(Controller remained ON)`);
+      }
+      if (hasSwitch.value) {
+        toast.success(`${actionName} action successful!\n(Switch remained ON)`);
+      } else if (!hasController.value) {
+        toast.success(`${actionName} action successful!`);
+      }
+    };
+
+    const tryApplySsePayload = (dataStr: string | null | undefined) => {
+      if (dataStr == null || dataStr === '') return;
+      try {
+        const parsed: unknown = JSON.parse(dataStr);
+        if (!isRackPowerNodeResultPayload(parsed)) return;
+        sawNodeResultPayload = true;
+        const { failedNodes, succeededNodes } = applyRackPowerNodeResultPayload(
+          props.rack,
+          parsed
+        );
+        failedNodes.forEach((n) => sseFailedNodes.add(n));
+        succeededNodes.forEach((n) => sseFailedNodes.delete(n));
+        syncRackPowerFromNodes(props.rack);
+        props.rack.slots = props.rack.slots.map((slot) => ({
+          ...slot,
+          devices: [...slot.devices],
+        }));
+        saveRackPowerCache();
+      } catch (err) {
+        console.warn('[Rack Power SSE] Ignoring non-JSON or parse error:', err);
+      }
+    };
+
+    const finishRackPowerSse = () => {
+      if (sseFailedNodes.size > 0) {
+        toast.warning(
+          `Power action incomplete. Failed nodes: ${[...sseFailedNodes].join(', ')}`
+        );
+      } else if (sawNodeResultPayload) {
+        showBulkSuccessToasts();
+      }
+      checkPowerStatus();
+    };
+
     const source = new EventSource(url);
 
     const closeConnection = () => {
@@ -338,16 +398,25 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 
     source.addEventListener("started", (e: MessageEvent) => {
       console.log("Task started:", e.data);
+      tryApplySsePayload(e.data);
     });
 
     source.addEventListener("update", (e: MessageEvent) => {
       console.log("Status update:", e.data);
+      tryApplySsePayload(e.data);
     });
 
-    source.addEventListener("completed", () => {
+    // Default SSE event type (no `event:` line) — many backends only emit `message`.
+    source.addEventListener("message", (e: MessageEvent) => {
+      console.log("[Rack Power SSE] message:", e.data);
+      tryApplySsePayload(e.data);
+    });
+
+    source.addEventListener("completed", (e: MessageEvent) => {
       console.log("Task completed");
       isTaskCompleted = true;
-      handleSuccess();
+      tryApplySsePayload(e.data);
+      finishRackPowerSse();
       closeConnection();
     });
 
@@ -383,8 +452,17 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         console.log("Connection closed after completion (Normal behavior).");
         return;
       }
-      console.error("[Rack Power SSE] Connection error (no server 'failed' event).");
       source.close();
+
+      // Stream ended without a custom `completed` event but we already parsed node results.
+      if (!taskFailedHandled && (sawNodeResultPayload || sseFailedNodes.size > 0)) {
+        finishRackPowerSse();
+        isTaskCompleted = true;
+        isActionLoading.value = false;
+        return;
+      }
+
+      console.error("[Rack Power SSE] Connection error (no server 'failed' event).");
       if (!taskFailedHandled) {
         try {
           const response = await fetch(url);
@@ -392,12 +470,13 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
           if (parsed.kind === 'session_lost') {
             handleSessionExpired();
           } else if (parsed.kind === 'ok') {
-            const data = parsed.data as {
-              status?: boolean;
-              message?: string;
-            };
-            if (data && !data.status && data.message) {
-              toast.error(`Action Failed: ${data.message}`);
+            const data = parsed.data as { message?: string };
+            const msg =
+              typeof data?.message === 'string'
+                ? data.message
+                : String(data?.message ?? '');
+            if (msg && isPerformCommandFailureMessage(msg)) {
+              toast.error(`Action Failed: ${msg}`);
             } else {
               toast.error('Action failed or connection lost.');
             }
@@ -524,6 +603,7 @@ const checkPowerStatus = async () => {
       } else if (raw && typeof raw === 'object' && !raw.message) {
         Object.entries(raw).forEach(([name, val]) => list.push({ name, state: String(val) }));
       }
+      if (list.length === 0) return;
       props.rack.slots.forEach(slot => {
         slot.devices.forEach(device => {
           const item = list.find((d) => d.name === device.name);
@@ -555,6 +635,15 @@ const checkPowerStatus = async () => {
           handleStatusData(data);
       } catch (err) {
           source.close();
+      }
+    });
+
+    source.addEventListener("message", (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        handleStatusData(data);
+      } catch {
+        source.close();
       }
     });
 
