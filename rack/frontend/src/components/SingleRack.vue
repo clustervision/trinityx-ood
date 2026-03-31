@@ -15,6 +15,13 @@ import {
   messageIndicatesSessionLost,
   fetchFailureLikelySessionRelated,
 } from '@/utils/connectionStatus';
+import { parsePowerStateFromMessage } from '@/utils/powerState';
+import { showPowerOperationToast } from '@/utils/powerToast';
+import {
+  getRackPowerCacheKey,
+  mergeRackPowerCacheFromStorage,
+  type RackPowerCachePayload,
+} from '@/utils/rackPowerCache';
 
 const props = defineProps<{
   rack: Rack;
@@ -59,14 +66,9 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {
-      // Update device power state for LED blinking
       if (action === 'power') {
         if (subAction === 'status') {
-          // Parse single-device power status from API message and update this device's LED
-          const msg = String(result.message ?? '').toUpperCase();
-          if (msg.includes('RESET')) device.powerState = 'RESET';
-          else if (msg.includes('ON')) device.powerState = 'ON';
-          else device.powerState = 'OFF';
+          device.powerState = parsePowerStateFromMessage(result.message);
           syncRackPowerFromNodes(props.rack);
           props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
           saveRackPowerCache();
@@ -77,8 +79,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
           syncRackPowerFromNodes(props.rack);
           saveRackPowerCache();
         }
+        showPowerOperationToast(toast, device.name, subAction, result.message);
+      } else {
+        toast.success(result.message);
       }
-      toast.success(result.message);
     }
   } catch {
     toast.error('Action failed');
@@ -94,38 +98,12 @@ type LedDensityKey = 'high' | 'medium' | 'low';
 
 const ledCache = new Map<string, Led[]>();
 
-type RackPowerCache = {
-  powerOn?: boolean;
-  backPowerOn?: boolean;
-  devices: Record<string, string | undefined>;
-};
-
-const getRackCacheKey = (rackName: string | undefined) => `rackPowerCache:${rackName || 'unknown'}`;
-
 function applyRackPowerCache() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !props.rack?.slots) return;
   try {
-    const key = getRackCacheKey(props.rack?.name);
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return;
-    const cache = JSON.parse(raw) as RackPowerCache | null;
-    if (!cache || !cache.devices) return;
-
-    if (props.rack && props.rack.slots) {
-      props.rack.slots.forEach(slot => {
-        slot.devices.forEach(device => {
-          const cachedState = cache.devices[device.name];
-          if (cachedState === 'ON' || cachedState === 'OFF' || cachedState === 'RESET') {
-            device.powerState = cachedState;
-          } 
-        });
-      });
-      if (typeof cache.powerOn === 'boolean') props.rack.powerOn = cache.powerOn;
-      if (typeof cache.backPowerOn === 'boolean') props.rack.backPowerOn = cache.backPowerOn;
-      syncRackPowerFromNodes(props.rack);
-      // trigger re-render for LEDs and power button
-      props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
-    }
+    mergeRackPowerCacheFromStorage(props.rack);
+    syncRackPowerFromNodes(props.rack);
+    props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
   } catch (e) {
     console.error('[Rack Power Cache] Failed to apply cache', e);
   }
@@ -143,24 +121,22 @@ function saveRackPowerCache() {
         }
       });
     });
-    const payload: RackPowerCache = {
+    const payload: RackPowerCachePayload = {
       powerOn: props.rack.powerOn,
       backPowerOn: props.rack.backPowerOn,
       devices,
     };
-    const key = getRackCacheKey(props.rack.name);
+    const key = getRackPowerCacheKey(props.rack.name);
     window.localStorage.setItem(key, JSON.stringify(payload));
   } catch (e) {
     console.error('[Rack Power Cache] Failed to save cache', e);
   }
 }
 
-/** Normalize powerState for LED display: ON/RESET -> powerOn, else OFF. Matches checkPowerStatus/placeDeviceInRack. */
+/** ON/RESET only (strict); aligns with syncRackPowerFromNodes / parsePowerStateFromMessage. */
 function isDevicePowerOnForLeds(device: Device): boolean {
-  const state = (device.powerState || '').toUpperCase();
-  if (state.includes('RESET')) return true;
-  if (state.includes('ON')) return true;
-  return false;
+  const state = (device.powerState || '').trim().toUpperCase();
+  return state === 'ON' || state === 'RESET';
 }
 
 /** Pure: build LED array for a device given density. Node+OFF returns []. No logging. */
@@ -300,22 +276,25 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
   const handleSuccess = () => {
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
     if (hasController.value) {
-        toast.success(`${actionName} action successful!\n(Controller remained ON)`);
+      toast.success(`${actionName} action successful!\n(Controller remained ON)`);
     }
-    if (hasSwitch.value){
-        toast.success(`${actionName} action successful!\n(Switch remained ON)`);
-    }
-    else {
-        toast.success(`${actionName} action successful!`);
+    if (hasSwitch.value) {
+      toast.success(`${actionName} action successful!\n(Switch remained ON)`);
+    } else if (!hasController.value) {
+      toast.success(`${actionName} action successful!`);
     }
 
-    if (action === 'off') {
-        props.rack.powerOn = false;
-        props.rack.backPowerOn = false;
-    } else if (action === 'on') {
-        props.rack.powerOn = true;
-        props.rack.backPowerOn = true;
-    }
+    props.rack.slots.forEach(slot => {
+      slot.devices.forEach(device => {
+        if (device.type !== 'node') return;
+        if (action === 'on') device.powerState = 'ON';
+        else if (action === 'off') device.powerState = 'OFF';
+        else if (action === 'reset') device.powerState = 'RESET';
+      });
+    });
+    syncRackPowerFromNodes(props.rack);
+    props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+    saveRackPowerCache();
     checkPowerStatus();
   };
 
@@ -511,17 +490,7 @@ const checkPowerStatus = async () => {
               (m) => (m.node || m.name) === device.name
             );
             if (item) {
-              let stateStr = String(item.state ?? item).toUpperCase();
-              // Extract actual state from "success with unparsable output: RESET" format
-              if (stateStr.includes('RESET')) {
-                stateStr = 'RESET';
-              } else if (stateStr.includes('ON')) {
-                stateStr = 'ON';
-              } else if (stateStr.includes('OFF')) {
-                stateStr = 'OFF';
-              }
-              // Handle RESET state from backend
-              device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
+              device.powerState = parsePowerStateFromMessage(item.state ?? item);
             }
           });
         });
@@ -559,17 +528,7 @@ const checkPowerStatus = async () => {
         slot.devices.forEach(device => {
           const item = list.find((d) => d.name === device.name);
           if (item) {
-            let stateStr = String(item.state).toUpperCase();
-            // Extract actual state from "success with unparsable output: RESET" format
-            if (stateStr.includes('RESET')) {
-              stateStr = 'RESET';
-            } else if (stateStr.includes('ON')) {
-              stateStr = 'ON';
-            } else if (stateStr.includes('OFF')) {
-              stateStr = 'OFF';
-            }
-            // Handle RESET state from backend
-            device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
+            device.powerState = parsePowerStateFromMessage(item.state);
           }
         });
       });

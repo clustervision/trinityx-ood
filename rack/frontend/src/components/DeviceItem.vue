@@ -59,6 +59,8 @@ import { useToast } from 'vue-toastification';
 import DeviceContextMenu from '@/components/DeviceContextMenu.vue';
 import { deviceHeightU, isOtherDevices0U, isOtherDevicesType } from '@/utils/deviceKind';
 import { getImageStack, getSwitchImageUrl, getVendorImageUrl } from '@/utils/deviceImageUrls';
+import { parsePowerStateFromMessage } from '@/utils/powerState';
+import { showPowerOperationToast } from '@/utils/powerToast';
 
 const { isDarkMode } = useTheme();
 const toast = useToast();
@@ -113,7 +115,16 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   try {
     const result = await executeDeviceAction(action, subAction, device);
     if (result?.success) {
-      toast.success(result.message);
+      if (action === 'power') {
+        if (subAction === 'status') {
+          device.powerState = parsePowerStateFromMessage(result.message);
+        } else if (subAction === 'on') device.powerState = 'ON';
+        else if (subAction === 'off') device.powerState = 'OFF';
+        else if (subAction === 'reset') device.powerState = 'RESET';
+        showPowerOperationToast(toast, device.name, subAction, result.message);
+      } else {
+        toast.success(result.message);
+      }
     }
   } catch {
     toast.error('Action failed');

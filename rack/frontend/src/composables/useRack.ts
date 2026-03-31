@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useToast } from "vue-toastification";
 import type { Rack, RackSlot, Device } from '@/types/rack';
 import { isOtherDevices0U } from '@/utils/deviceKind';
+import { parsePowerStateFromMessage } from '@/utils/powerState';
+import { mergeRackPowerCacheFromStorage } from '@/utils/rackPowerCache';
 
 export function useRack() {
   //@ts-ignore
@@ -53,16 +55,29 @@ export function useRack() {
     return rows;
   };
 
-  /** Update rack power button state from nodes only. Treat RESET as ON (case-insensitive). */
+  /**
+   * Rack power button: power-btn-on iff rack.powerOn.
+   * With a controller: always green (on).
+   * Without a controller: green if any node has ON or RESET; otherwise off (power-btn-off).
+   */
   const syncRackPowerFromNodes = (rack: Rack) => {
-    const hasNodeOn = rack.slots.some((s) =>
+    const hasController = rack.slots.some((s) =>
+      s.devices.some((d) => d.type === 'controller')
+    );
+    if (hasController) {
+      rack.powerOn = true;
+      rack.backPowerOn = true;
+      return;
+    }
+    const anyNodeOnOrReset = rack.slots.some((s) =>
       s.devices.some((d) => {
-        const state = (d.powerState || '').toUpperCase();
-        return d.type === 'node' && (state === 'ON' || state === 'RESET');
+        if (d.type !== 'node') return false;
+        const state = (d.powerState || '').trim().toUpperCase();
+        return state === 'ON' || state === 'RESET';
       })
     );
-    rack.powerOn = hasNodeOn;
-    rack.backPowerOn = hasNodeOn;
+    rack.powerOn = anyNodeOnOrReset;
+    rack.backPowerOn = anyNodeOnOrReset;
   };
 
   const placeDeviceInRack = (rack: any, d: any, options?: { enforceMergeLimit?: boolean }): boolean => {
@@ -105,13 +120,8 @@ export function useRack() {
       }
     }
 
-    // Normalize powerState (backend/drag may use powerState, power_state, or strings like "success with unparsable output: RESET")
     const rawState = d.powerState ?? d.power_state ?? '';
-    let stateStr = String(rawState).toUpperCase();
-    if (stateStr.includes('RESET')) stateStr = 'RESET';
-    else if (stateStr.includes('ON')) stateStr = 'ON';
-    else stateStr = 'OFF';
-    const powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF' as const;
+    const powerState = parsePowerStateFromMessage(rawState);
     targetSlot.devices.push({
       name: deviceName,
       position,
@@ -145,6 +155,7 @@ export function useRack() {
     if (data.devices) {
       data.devices.forEach((d: any) => placeDeviceInRack(rackObj, d, { enforceMergeLimit: false }));
     }
+    mergeRackPowerCacheFromStorage(rackObj);
     syncRackPowerFromNodes(rackObj);
     return rackObj;
   };
