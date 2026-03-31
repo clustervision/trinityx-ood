@@ -165,7 +165,7 @@ function buildDeviceLeds(device: Device, densityKey: LedDensityKey): Led[] {
   const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
   const allLeds: Led[] = [];
 
-  // Count per row by density: high 2-4, medium 1-2, low 1 (merge 时再少一点)
+  // Count per row by density: high 2-4, medium 1-2, low 1 (slightly fewer when merged)
   const countRange: [number, number] = densityKey === 'high' ? [2, 4] : densityKey === 'medium' ? [1, 2] : [1, 1];
   const countSpread = countRange[1] - countRange[0] + 1;
 

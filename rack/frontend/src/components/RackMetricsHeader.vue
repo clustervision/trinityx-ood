@@ -12,7 +12,7 @@
       </div>
 
       <div class="metrics-scales">
-        <div class="scale-row">
+        <div class="scale-bundle">
           <div class="dropdown" ref="dropdown1Ref">
             <button
               class="btn scale-dropdown-btn dropdown-toggle"
@@ -22,35 +22,25 @@
               {{ metric1 ? metric1 : 'Choose Scale' }}
             </button>
             <ul class="dropdown-menu show dropdown-menu-visible" v-if="showDropdown1">
-              <li><a class="dropdown-item" href="#" @click.prevent="selectMetric1(null)">No Scale</a></li>
+              <li>
+                <a class="dropdown-item scale-dropdown-item" href="#" @click.prevent="selectMetric1(null)">No Scale</a>
+              </li>
               <template v-for="opt in metricOptions" :key="opt">
                 <li v-if="opt !== metric2">
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    @click.prevent="selectMetric1(opt)"
-                    style="min-width: 10em; text-align: left; white-space: nowrap;"
-                  >{{ opt }}</a>
+                  <a class="dropdown-item scale-dropdown-item" href="#" @click.prevent="selectMetric1(opt)">{{ opt }}</a>
                 </li>
               </template>
             </ul>
           </div>
-          <div class="scale-slider-wrap">
+          <div class="scale-display-wrap" aria-hidden="true">
             <span class="scale-edge">0</span>
-            <input
-              type="range"
-              class="metric-scale-slider"
-              min="0"
-              max="100"
-              :value="slider1Value"
-              disabled
-              tabindex="-1"
-              aria-hidden="true"
-            />
+            <div class="scale-track">
+              <div class="scale-track-fill" :style="{ width: displayBarPercent1 + '%' }"></div>
+            </div>
             <span class="scale-edge">100</span>
           </div>
         </div>
-        <div class="scale-row">
+        <div class="scale-bundle">
           <div class="dropdown" ref="dropdown2Ref">
             <button
               class="btn scale-dropdown-btn dropdown-toggle"
@@ -73,18 +63,11 @@
               </template>
             </ul>
           </div>
-          <div class="scale-slider-wrap">
+          <div class="scale-display-wrap" aria-hidden="true">
             <span class="scale-edge">0</span>
-            <input
-              type="range"
-              class="metric-scale-slider"
-              min="0"
-              max="100"
-              :value="slider2Value"
-              disabled
-              tabindex="-1"
-              aria-hidden="true"
-            />
+            <div class="scale-track">
+              <div class="scale-track-fill" :style="{ width: displayBarPercent2 + '%' }"></div>
+            </div>
             <span class="scale-edge">100</span>
           </div>
         </div>
@@ -114,14 +97,15 @@ const metricOptions = [
   'GPU Temperature'
 ];
 
-const slider1Value = computed(() => {
-  if (!props.metric1) return 50;
+/** 0–100 for static data bar fill (not a slider). */
+const displayBarPercent1 = computed(() => {
+  if (!props.metric1) return 0;
   const max = props.range1?.max ?? 100;
   return Math.min(100, Math.max(0, Math.round(max)));
 });
 
-const slider2Value = computed(() => {
-  if (!props.metric2) return 50;
+const displayBarPercent2 = computed(() => {
+  if (!props.metric2) return 0;
   const max = props.range2?.max ?? 100;
   return Math.min(100, Math.max(0, Math.round(max)));
 });
@@ -212,20 +196,27 @@ const selectMetric2 = (val: string | null) => {
 }
 
 .metrics-scales {
-  flex: 1 1 280px;
+  flex: 1 1 320px;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-width: 240px;
-  max-width: 520px;
+  min-width: 280px;
+  max-width: 640px;
 }
 
-.scale-row {
+.scale-bundle {
+  --rack-toolbar-height: 30px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.75rem 1rem;
+  gap: 0.5rem;
+  padding: 4px 6px;
+  min-height: var(--rack-toolbar-height);
+  background: #eef3ff;
+  border: none;
+  border-radius: 8px;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 .dropdown {
@@ -237,61 +228,97 @@ const selectMetric2 = (val: string | null) => {
   position: absolute;
   z-index: 1050;
   display: block;
-  min-width: 10em;
+  /* Narrower than theme .dropdown-menu (12rem); width still grows with longest label */
+  min-width: 6.75rem;
+  width: max-content;
+  max-width: min(100vw - 1.5rem, 18rem);
   max-height: 70vh;
   overflow-y: auto;
   left: 0;
   top: 100%;
   margin-top: 4px;
+  box-sizing: border-box;
+}
+
+.dropdown-menu-visible .scale-dropdown-item {
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .scale-dropdown-btn {
-  min-width: 160px;
+  min-width: 96px;
+  height: var(--rack-toolbar-height, 38px);
   text-align: left;
-  display: flex;
+  display: inline-flex;
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
-  font-weight: 500;
-  font-size: 0.875rem;
+  font-weight: 550;
+  font-size: 13px;
+  line-height: 1;
   background: #eef3ff !important;
-  border: 1px solid #5376ea !important;
+  border: none !important;
+  outline: none !important;
   color: #5376ea !important;
   border-radius: 8px;
-  padding: 0.45rem 0.85rem;
-  box-shadow: none;
+  padding: 0 8px;
+  box-shadow: none !important;
+  box-sizing: border-box;
 }
 
 .scale-dropdown-btn:hover,
-.scale-dropdown-btn:focus {
-  background: #eef3ff !important;
-  border-color: #5376ea !important;
+.scale-dropdown-btn:focus,
+.scale-dropdown-btn:focus-visible {
+  background: #e2e9fc !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   color: #5376ea !important;
 }
 
-.scale-slider-wrap {
+/* 0–track–100: white background, prefer wider flex growth */
+.scale-display-wrap {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1 1 200px;
-  min-width: 160px;
+  flex: 1 1 220px;
+  min-width: 180px;
+  min-height: var(--rack-toolbar-height, 38px);
+  padding: 0 12px;
+  background: #fff;
+  border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .scale-edge {
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 550;
   color: #5376ea;
   min-width: 1.25rem;
   text-align: center;
   font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
 }
 
-.metric-scale-slider {
+.scale-track {
   flex: 1 1 auto;
   height: 6px;
-  border-radius: 3px;
-  accent-color: #5376ea;
-  cursor: default;
+  border-radius: 999px;
+  background: #dfe3ea;
+  border: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scale-track-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #b8c0d0;
+  max-width: 100%;
+  transition: width 0.2s ease;
 }
 
 .metrics-far-right {

@@ -249,7 +249,7 @@ html, body, #app {
   overflow-y: auto;
   overflow-x: hidden;
   flex-shrink: 0;
-  width: 250px;
+  width: 232px;
   position: relative;
 }
 

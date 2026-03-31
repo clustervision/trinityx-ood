@@ -24,55 +24,45 @@
         </a>
       </li>
 
-       <li class="menu-item menu-item-pool open">
-        <a href="javascript:void(0);" class="menu-link menu-toggle side-rack-pool-toggle" @click="showUnassigned = !showUnassigned">
-          <i class="menu-icon tf-icons bx bx-unlink"></i>
-          <div data-i18n="Unassigned">Unassigned Devices</div>
-        </a>
-
-        <ul
-          class="menu-sub menu-sub-pool ps-3 pe-3 pt-2"
-          v-show="showUnassigned"
-          style="list-style: none; border: 1px solid #c5d9ec; border-radius: 10px; width: 240px;"
+      <li class="menu-item side-pool-block">
+        <div class="side-nav-divider" role="presentation"></div>
+        <div class="side-search-wrap">
+          <i class="bx bx-search side-search-icon" aria-hidden="true"></i>
+          <input
+            v-model="unassignedSearch"
+            type="search"
+            class="side-search-input"
+            placeholder="Search Devices"
+            autocomplete="off"
+          />
+        </div>
+        <div
+          class="side-pool-drop"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
-          <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-header">
-            <input
-              v-model="unassignedSearch"
-              type="search"
-              class="form-control form-control-sm mb-2 side-pool-search"
-              placeholder="Search Devices"
-            />
+          <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-list">
+            <div
+              v-for="device in filteredUnassignedNodes"
+              :key="device.name"
+              class="mb-2 pool-device-wrap"
+              :class="{ 'pool-device-selected': selectedPoolNames.has(device.name) }"
+              style="width: 138px;"
+              :title="device.name"
+              @click="onPoolDeviceClick($event, device)"
+            >
+              <DeviceItem
+                :device="device"
+                :is-rack-view="false"
+                :selected="selectedPoolNames.has(device.name)"
+                :selected-devices-for-drag="selectedDevicesForDrag"
+                @edit-inventory="onEditInventory"
+              />
+            </div>
           </div>
-          <div class="unassigned-pool-list" v-if="UnassignedNodes.length > 0">
-             <div
-               v-for="device in filteredUnassignedNodes"
-               :key="device.name"
-               class="mb-2 pool-device-wrap"
-               :class="{ 'pool-device-selected': selectedPoolNames.has(device.name) }"
-               style="width: 138px;"
-               :title="device.name"
-               @click="onPoolDeviceClick($event, device)"
-             >
-                <DeviceItem
-                  :device="device"
-                  :is-rack-view="false"
-                  :selected="selectedPoolNames.has(device.name)"
-                  :selected-devices-for-drag="selectedDevicesForDrag"
-                  @edit-inventory="onEditInventory"
-                />
-             </div>
-          </div>
-          <li v-else class="menu-item">
-             <a href="javascript:void(0)" class="menu-link">
-                <div class="text-muted small text-center p-2">
-                  Drag devices here to unassign
-                </div>
-             </a>
-          </li>
-        </ul>
-        </li>
+          <p v-else class="side-pool-empty">Drag devices here to unassign</p>
+        </div>
+      </li>
     </ul>
   </aside>
 </template>
@@ -99,7 +89,6 @@ const isManageInventoryActive = computed(() =>
 );
 
 const UnassignedNodes = ref<any[]>([]);
-const showUnassigned = ref(true);
 const unassignedSearch = ref('');
 const toast = useToast();
 
@@ -161,7 +150,6 @@ const onEditInventory = (device: { name: string }) => {
   emit('edit-inventory', device.name);
 };
 
-/** Accept array or object-shaped `message` from /device_pool (minimal robustness). */
 function normalizeDevicePoolMessage(raw: unknown): any[] {
   if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === 'object') return Object.values(raw as Record<string, unknown>);
@@ -234,37 +222,106 @@ onMounted(() => {
 
 <style scoped>
   .layout-menu {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
+    --side-h-inset: 12px;
+    --side-border-width: 3px;
+    width: 232px !important;
+    min-width: 232px !important;
+    max-width: 232px !important;
     height: 100%;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
   }
   .layout-menu .menu-inner {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+  }
+  /* core.css fixes .menu-item at 16.25rem; narrow sidebar clips — pin to menu width */
+  .layout-menu :deep(.menu-inner > .menu-item),
+  .layout-menu :deep(.menu-inner > .menu-header) {
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .menu-item .router-link-active { background-color: rgba(67, 89, 113, 0.1); color: #696cff; font-weight: bold; }
-  .menu-item-pool {
+
+  /* Between Manage Inventory and Search Devices */
+  .side-nav-divider {
+    flex-shrink: 0;
+    height: 0;
+    margin: 0 0 10px;
+    border: 0;
+    border-top: 2px dashed rgba(83, 118, 234, 0.5);
+  }
+
+  .side-pool-block {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--side-h-inset);
+    box-sizing: border-box;
+    width: 100%;
   }
-  .menu-item-pool .menu-link { flex-shrink: 0; }
-  .menu-sub-pool {
+
+  .side-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    min-height: 36px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: var(--side-border-width) solid #5376ea;
+    background: #fff;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .side-search-icon {
+    font-size: 1rem;
+    color: #5376ea;
+    flex-shrink: 0;
+  }
+
+  .side-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: #334155;
+  }
+
+  .side-search-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .side-pool-drop {
     flex: 1 1 auto;
-    min-height: 0;
-    display: flex !important;
+    min-height: 120px;
+    border-radius: 10px;
+    border: none;
+    background: #fafbfd;
+    padding: 8px;
+    display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: all 0.3s ease;
-    background-color: transparent;
+    box-sizing: border-box;
+    width: 100%;
   }
-  .unassigned-pool-header { flex-shrink: 0; }
+
   .unassigned-pool-list {
     overflow-y: auto;
     overflow-x: hidden;
@@ -281,78 +338,46 @@ onMounted(() => {
     outline-offset: 2px;
   }
 
-  .side-pool-search {
-    width: 100%;
-    font-size: 12px;
-    border-radius: 8px;
-    border: 1px solid #c5d9ec;
+  .side-pool-empty {
+    margin: auto;
+    padding: 16px 8px;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: #94a3b8;
     font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
     font-weight: 400;
   }
 
-  /* Pill nav: inactive #eef3ff, active #5376ea, hover #eef3ff + border */
   :deep(.side-rack-nav > .menu-link) {
-    margin: 6px 10px !important;
+    margin: 4px var(--side-h-inset) !important;
+    padding: 5px 8px !important;
+    min-height: 0 !important;
     border-radius: 10px !important;
     font-family: var(--font-geist, 'Geist', system-ui, sans-serif) !important;
     font-weight: 500 !important;
-    font-size: 0.875rem !important;
-    background-color: #eef3ff !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.25 !important;
+    background-color: #fff !important;
     color: #5376ea !important;
-    border: 1px solid transparent !important;
+    border: var(--side-border-width) solid #d0d7e2 !important;
     box-shadow: none !important;
+    box-sizing: border-box !important;
   }
 
   :deep(.side-rack-nav:not(.is-active) > .menu-link:hover) {
-    background-color: #eef3ff !important;
+    background-color: #f8fafc !important;
     color: #5376ea !important;
-    border-color: #5376ea !important;
+    border-color: #c5d0de !important;
   }
 
   :deep(.side-rack-nav.is-active > .menu-link) {
-    background-color: #5376ea !important;
-    color: #fff !important;
-    border-color: #5376ea !important;
-  }
-
-  :deep(.side-rack-nav.is-active .menu-icon) {
-    color: #fff !important;
-  }
-
-  :deep(.side-rack-nav:not(.is-active) .menu-icon) {
-    color: #5376ea !important;
-  }
-
-  :deep(.side-rack-pool-toggle) {
-    margin: 6px 10px !important;
-    border-radius: 10px !important;
-    font-family: var(--font-geist, 'Geist', system-ui, sans-serif) !important;
-    font-weight: 500 !important;
-    font-size: 0.875rem !important;
     background-color: #eef3ff !important;
     color: #5376ea !important;
-    border: 1px solid transparent !important;
+    border: var(--side-border-width) solid #5376ea !important;
   }
 
-  :deep(.side-rack-pool-toggle:hover) {
-    background-color: #eef3ff !important;
-    border-color: #5376ea !important;
+  :deep(.side-rack-nav .menu-icon) {
     color: #5376ea !important;
-  }
-
-  :deep(.side-rack-pool-toggle .menu-icon) {
-    color: #5376ea !important;
-  }
-
-  /* Remove dropdown arrow icon next to "Unassigned Device Pool" */
-  ::v-deep(.menu-item-pool > .menu-link.menu-toggle::after) {
-    display: none !important;
-  }
-
-  /* Do not darken the pool header when menu-item is open */
-  ::v-deep(.menu-item-pool.menu-item.open > .menu-link) {
-    background-color: transparent !important;
-    box-shadow: none !important;
-    color: inherit !important;
+    font-size: 1.1rem !important;
   }
 </style>
