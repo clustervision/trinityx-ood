@@ -9,8 +9,9 @@
         <div v-if="loading" class="d-flex align-items-center justify-content-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
         </div>
-        <div v-else class="table-responsive text-nowrap">
-          <table class="table table-bordered table-hover table-striped manage-data-table">
+        <div v-else class="manage-table-shell">
+          <div class="table-responsive text-nowrap">
+            <table class="table table-hover table-striped manage-data-table">
             <thead>
               <tr v-if="props.pageType === 'rack'">
                 <th class="text-center">No.</th>
@@ -76,7 +77,8 @@
                  </td>
               </tr>
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
         <div v-if="props.pageType === 'rack'" class="manage-page-actions">
           <button type="button" class="manage-add-btn" @click="$emit('add-click')">
@@ -272,16 +274,75 @@ defineExpose({ refresh: fetchData });
   padding-top: 0.25rem;
 }
 
+.manage-table-shell {
+  --manage-table-border: #d8e6fd;
+  --manage-table-border-width: 2px;
+  --manage-table-radius: 6px;
+  border: none;
+  border-radius: var(--manage-table-radius);
+  overflow: hidden;
+}
+
+.manage-table-shell .table-responsive {
+  margin-bottom: 0;
+}
+
+/* separate + 0 spacing: every grid line is full width; corners can be rounded */
+.manage-data-table {
+  margin-bottom: 0;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.manage-data-table > tbody {
+  border-top: none !important;
+}
+
+.manage-data-table > :not(caption) > * > * {
+  border-style: solid;
+  border-color: var(--manage-table-border, #d8e6fd);
+  border-width: 0;
+  border-right-width: var(--manage-table-border-width, 2px);
+  border-bottom-width: var(--manage-table-border-width, 2px);
+}
+
+.manage-data-table > thead > tr:first-child > th {
+  border-top-width: var(--manage-table-border-width, 2px);
+}
+
+.manage-data-table > thead > tr > th:first-child,
+.manage-data-table > tbody > tr > td:first-child {
+  border-left-width: var(--manage-table-border-width, 2px);
+}
+
+.manage-data-table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--manage-table-radius, 6px);
+}
+
 .manage-data-table thead th {
-  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
   font-weight: 500;
+  font-size: 1.0625rem;
   color: #5376ea;
   vertical-align: middle;
 }
 
 .manage-data-table tbody td {
-  font-family: var(--font-geist, 'Geist', sans-serif);
-  font-weight: 400;
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 1rem;
   vertical-align: middle;
 }
 </style>
