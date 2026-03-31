@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
@@ -22,6 +22,13 @@ const rack = ref<any>(null);
 //@ts-ignore
 const Url = window.APP_URL;
 
+const RACK_ZOOM_LEVEL = 2;
+const rackViewZoom = ref(1);
+const rackZoomMagnified = computed(() => rackViewZoom.value >= RACK_ZOOM_LEVEL);
+
+const toggleRackZoom = () => {
+  rackViewZoom.value = rackViewZoom.value >= RACK_ZOOM_LEVEL ? 1 : RACK_ZOOM_LEVEL;
+};
 
 const loadRackData = async () => {
   if (!props.rackName) return;
@@ -178,11 +185,25 @@ onMounted(() => {
         :range1="metric1Range"
         :range2="metric2Range"
         @refresh="loadRackData"
-      />
+      >
+        <template #zoom>
+          <button
+            type="button"
+            class="btn rack-zoom-btn"
+            :class="{ 'rack-zoom-btn-on': rackZoomMagnified }"
+            :title="rackZoomMagnified ? 'Zoom out (1×)' : 'Zoom in (2×)'"
+            :aria-pressed="rackZoomMagnified"
+            aria-label="Toggle rack zoom 2×"
+            @click="toggleRackZoom"
+          >
+            <i class="bx bx-search" aria-hidden="true"></i>
+          </button>
+        </template>
+      </RackMetricsHeader>
 
       <div class="card-body">
         <div class="racks-container d-flex justify-content-center">
-          <div v-if="rack" class="single-rack-wrapper">
+          <div v-if="rack" class="single-rack-wrapper rack-zoom-inner" :style="{ zoom: rackViewZoom }">
             <div class="racks-container">
               <SingleRack
                 :key="rack.name"
@@ -214,4 +235,32 @@ onMounted(() => {
 
 <style scoped>
 .racks-container { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100%; }
+
+.rack-zoom-inner {
+  width: 100%;
+}
+
+.rack-zoom-btn {
+  width: 40px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #5376ea !important;
+  border: 1px solid #5376ea !important;
+  color: #fff !important;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.rack-zoom-btn:hover,
+.rack-zoom-btn.rack-zoom-btn-on,
+.rack-zoom-btn.rack-zoom-btn-on:hover {
+  background-color: #ffba30 !important;
+  border-color: #ffba30 !important;
+  color: #1a1a1a !important;
+}
 </style>

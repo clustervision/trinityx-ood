@@ -125,6 +125,7 @@ onUnmounted(() => {
         <aside class="layout-sidebar">
           <SideMenu
             ref="sideMenuRef"
+            :current-view="currentView"
             @change-view="setView"
             @pool-updated="handlePoolUpdated"
             @edit-inventory="handleEditInventory"

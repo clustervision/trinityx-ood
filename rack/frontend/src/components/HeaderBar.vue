@@ -129,16 +129,16 @@ const handleCrumbClick = (crumb: { label: string; view?: string }, index: number
 .breadcrumb-item + .breadcrumb-item::before {
   content: "/";
   padding: 0 0.5rem;
-  color: #007bff;
+  color: #5376ea;
 }
 
 .breadcrumb-item .align-middle {
-  color: #007bff;
+  color: #5376ea;
   text-decoration: none;
   background-color: transparent;
-  font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
   font-size: 0.9375rem;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .breadcrumb-item a.align-middle:hover {

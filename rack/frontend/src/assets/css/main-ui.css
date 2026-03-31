@@ -1,5 +1,10 @@
-
 :root {
+  --font-geist: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-ui-blue: #5376ea;
+  --color-ui-blue-hover: #3e66d6;
+  --color-ui-tint: #eef3ff;
+  --color-zoom-accent: #ffba30;
+
   --bg-app: #f5f5f9;
   --text-main: #566a7f;
   --border-color: #d9dee3;
@@ -9,6 +14,18 @@
   --rack-slot-bg: #ffffff;
   --rack-text: #444;
   --rack-label-bg: #e9ecef;
+}
+
+body,
+#app {
+  font-family: var(--font-geist);
+  font-weight: 400;
+}
+
+/* Geist Medium for UI controls / blue labels (opt-in via class) */
+.font-geist-medium {
+  font-family: var(--font-geist);
+  font-weight: 500;
 }
 
 

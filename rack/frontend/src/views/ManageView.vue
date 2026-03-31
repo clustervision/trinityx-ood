@@ -1,27 +1,19 @@
 <template>
-  <div class="container-fluid flex-grow-1 container-p-y">
-    <div class="card">
-      <h5 class="card-header d-flex justify-content-between align-items-center">
-        Manage {{ pageName }} Frames
+  <div class="container-fluid flex-grow-1 container-p-y manage-page">
+    <div class="manage-page-card">
+      <div class="manage-page-header">
+        <h5 class="manage-page-title">Manage {{ pageName }} Frames</h5>
+      </div>
 
-        <button
-          v-if="props.pageType === 'rack'"
-          class="btn btn-success btn-sm"
-          @click="$emit('add-click')"
-        >
-          Add New {{ pageName }}
-        </button>
-      </h5>
-
-      <div class="card-body">
+      <div class="manage-page-body">
         <div v-if="loading" class="d-flex align-items-center justify-content-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
         </div>
         <div v-else class="table-responsive text-nowrap">
-          <table class="table table-bordered table-hover table-striped">
+          <table class="table table-bordered table-hover table-striped manage-data-table">
             <thead>
               <tr v-if="props.pageType === 'rack'">
-                <th class="text-center">S. No.</th>
+                <th class="text-center">No.</th>
                 <th class="text-center">NAME</th>
                 <th class="text-center">SIZE</th>
                 <th class="text-center">ORDER</th>
@@ -31,7 +23,7 @@
               </tr>
 
               <tr v-else>
-                <th class="text-center">S. No.</th>
+                <th class="text-center">No.</th>
                 <th class="text-center">NAME</th>
                 <th class="text-center">TYPE</th>
                 <th class="text-center">HEIGHT</th>
@@ -85,6 +77,11 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <div v-if="props.pageType === 'rack'" class="manage-page-actions">
+          <button type="button" class="manage-add-btn" @click="$emit('add-click')">
+            Add Rack
+          </button>
         </div>
       </div>
     </div>
@@ -202,14 +199,89 @@ const fetchData = async () => {
   }
 };
 
-const refresh = () => fetchData();
-
-defineExpose({ refresh });
 onMounted(fetchData);
+
+watch(() => props.pageType, fetchData);
+
+defineExpose({ refresh: fetchData });
 </script>
 
 <style scoped>
-.fs-4 { font-size: 1.3rem !important; }
-a { text-decoration: none; }
-a:hover { opacity: 0.8; }
+.manage-page-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.manage-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.manage-page-title {
+  margin: 0;
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+  font-size: 1.125rem;
+  color: #5376ea;
+}
+
+.manage-add-btn {
+  margin: 0;
+  padding: 0.45rem 1.25rem;
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: #fff;
+  background: #5376ea;
+  border: 1px solid #5376ea;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.manage-add-btn:hover {
+  background: #3e66d6;
+  border-color: #3e66d6;
+  color: #fff;
+}
+
+.manage-add-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(62, 102, 214, 0.35);
+}
+
+.manage-page-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.manage-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 0.25rem;
+}
+
+.manage-data-table thead th {
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+  color: #5376ea;
+  vertical-align: middle;
+}
+
+.manage-data-table tbody td {
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 400;
+  vertical-align: middle;
+}
 </style>

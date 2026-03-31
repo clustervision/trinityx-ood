@@ -2,12 +2,12 @@
   <div class="container-fluid flex-grow-1 container-p-y">
     <div class="card mb-4">
       <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="mb-0">Add Rack</h5>
+        <h5 class="mb-0 add-rack-title">Add Rack</h5>
 
-        <button class="btn btn-warning" @click="$emit('close')">Back</button>
+        <button type="button" class="btn btn-warning" @click="$emit('close')">Back</button>
       </div>
 
-      <div class="card-body">
+      <div class="card-body add-rack-form-body">
         <form @submit.prevent="submitForm">
 
           <div class="row mb-3">
@@ -80,7 +80,7 @@
 
           <div class="row justify-content-end">
             <div class="col-sm-10">
-              <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+              <button type="submit" class="btn btn-primary add-rack-submit-btn" :disabled="isSubmitting">
                 {{ isSubmitting ? 'Adding...' : 'Add Rack' }}
               </button>
             </div>
@@ -164,3 +164,29 @@ const submitForm = async () => {
   }
 };
 </script>
+
+<style scoped>
+.add-rack-title {
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+  color: #5376ea;
+}
+
+.add-rack-submit-btn {
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+}
+
+.add-rack-submit-btn:hover:not(:disabled) {
+  background-color: #3e66d6 !important;
+  border-color: #3e66d6 !important;
+}
+
+.add-rack-form-body,
+.add-rack-form-body :deep(.col-form-label),
+.add-rack-form-body :deep(.form-control),
+.add-rack-form-body :deep(small) {
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-weight: 400;
+}
+</style>

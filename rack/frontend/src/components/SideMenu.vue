@@ -3,25 +3,21 @@
     <div class="menu-inner-shadow"></div>
 
     <ul class="menu-inner py-1">
-      <li class="menu-item">
+      <li class="menu-item side-rack-nav" :class="{ 'is-active': isDashboardActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'dashboard')">
           <i class="menu-icon tf-icons bx bx-server"></i>
           <div data-i18n="Analytics">Rack Representation</div>
         </a>
       </li>
 
-      <li class="menu-header small text-uppercase">
-        <span class="menu-header-text">Manage</span>
-      </li>
-
-      <li class="menu-item">
+      <li class="menu-item side-rack-nav" :class="{ 'is-active': isManageRackActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-rack')">
-          <i class="menu-icon tf-icons bx bx-grid-alt"></i>
+          <i class="menu-icon tf-icons bx bx-menu"></i>
           <div data-i18n="Rack">Manage Rack Frames</div>
         </a>
       </li>
 
-      <li class="menu-item">
+      <li class="menu-item side-rack-nav" :class="{ 'is-active': isManageInventoryActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-inventory')">
           <i class="menu-icon tf-icons bx bx-hdd"></i>
           <div data-i18n="Inventory">Manage Inventory</div>
@@ -29,25 +25,24 @@
       </li>
 
        <li class="menu-item menu-item-pool open">
-        <a href="javascript:void(0);" class="menu-link menu-toggle" @click="showUnassigned = !showUnassigned">
+        <a href="javascript:void(0);" class="menu-link menu-toggle side-rack-pool-toggle" @click="showUnassigned = !showUnassigned">
           <i class="menu-icon tf-icons bx bx-unlink"></i>
-          <div data-i18n="Unassigned">Unassigned Device Pool</div>
+          <div data-i18n="Unassigned">Unassigned Devices</div>
         </a>
 
         <ul
           class="menu-sub menu-sub-pool ps-3 pe-3 pt-2"
           v-show="showUnassigned"
-          style="list-style: none; border: 2px dashed #ddd; width: 240px;"
+          style="list-style: none; border: 1px solid #c5d9ec; border-radius: 10px; width: 240px;"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
           <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-header">
             <input
               v-model="unassignedSearch"
-              type="text"
-              class="form-control form-control-sm mb-2"
-              placeholder="Search devices..."
-              style="width: 100%; font-size: 12px;"
+              type="search"
+              class="form-control form-control-sm mb-2 side-pool-search"
+              placeholder="Search Devices"
             />
           </div>
           <div class="unassigned-pool-list" v-if="UnassignedNodes.length > 0">
@@ -89,6 +84,20 @@ import DeviceItem from '@/components/DeviceItem.vue';
 import { useToast } from 'vue-toastification';
 // @ts-ignore
 const Url = window.APP_URL;
+
+const props = withDefaults(
+  defineProps<{ currentView?: string }>(),
+  { currentView: 'dashboard' }
+);
+
+const isDashboardActive = computed(() => props.currentView === 'dashboard');
+const isManageRackActive = computed(() =>
+  ['manage-rack', 'add-rack', 'edit-rack', 'show-rack'].includes(props.currentView)
+);
+const isManageInventoryActive = computed(() =>
+  ['manage-inventory', 'edit-inventory'].includes(props.currentView)
+);
+
 const UnassignedNodes = ref<any[]>([]);
 const showUnassigned = ref(true);
 const unassignedSearch = ref('');
@@ -152,15 +161,18 @@ const onEditInventory = (device: { name: string }) => {
   emit('edit-inventory', device.name);
 };
 
+/** Accept array or object-shaped `message` from /device_pool (minimal robustness). */
+function normalizeDevicePoolMessage(raw: unknown): any[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') return Object.values(raw as Record<string, unknown>);
+  return [];
+}
+
 const fetchUnassignedNodes = async () => {
   try {
     const response = await axios.get(Url + '/device_pool');
     const data = response.data;
-    if (data.message && Array.isArray(data.message)) {
-       UnassignedNodes.value = data.message;
-    } else {
-       UnassignedNodes.value = [];
-    }
+    UnassignedNodes.value = normalizeDevicePoolMessage(data?.message);
   } catch (error) {
     console.error("Failed to load Unassigned Inventory:", error);
     UnassignedNodes.value = [];
@@ -265,8 +277,71 @@ onMounted(() => {
     border-radius: 4px;
   }
   .pool-device-selected {
-    outline: 2px solid #696cff;
+    outline: 2px solid #5376ea;
     outline-offset: 2px;
+  }
+
+  .side-pool-search {
+    width: 100%;
+    font-size: 12px;
+    border-radius: 8px;
+    border: 1px solid #c5d9ec;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+    font-weight: 400;
+  }
+
+  /* Pill nav: inactive #eef3ff, active #5376ea, hover #eef3ff + border */
+  :deep(.side-rack-nav > .menu-link) {
+    margin: 6px 10px !important;
+    border-radius: 10px !important;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    background-color: #eef3ff !important;
+    color: #5376ea !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+  }
+
+  :deep(.side-rack-nav:not(.is-active) > .menu-link:hover) {
+    background-color: #eef3ff !important;
+    color: #5376ea !important;
+    border-color: #5376ea !important;
+  }
+
+  :deep(.side-rack-nav.is-active > .menu-link) {
+    background-color: #5376ea !important;
+    color: #fff !important;
+    border-color: #5376ea !important;
+  }
+
+  :deep(.side-rack-nav.is-active .menu-icon) {
+    color: #fff !important;
+  }
+
+  :deep(.side-rack-nav:not(.is-active) .menu-icon) {
+    color: #5376ea !important;
+  }
+
+  :deep(.side-rack-pool-toggle) {
+    margin: 6px 10px !important;
+    border-radius: 10px !important;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif) !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    background-color: #eef3ff !important;
+    color: #5376ea !important;
+    border: 1px solid transparent !important;
+  }
+
+  :deep(.side-rack-pool-toggle:hover) {
+    background-color: #eef3ff !important;
+    border-color: #5376ea !important;
+    color: #5376ea !important;
+  }
+
+  :deep(.side-rack-pool-toggle .menu-icon) {
+    color: #5376ea !important;
   }
 
   /* Remove dropdown arrow icon next to "Unassigned Device Pool" */

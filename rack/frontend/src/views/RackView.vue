@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import RackMetricsHeader from '@/components/RackMetricsHeader.vue';
 import SingleRack from '@/components/SingleRack.vue';
@@ -42,6 +42,14 @@ const isBackViewMode = ref(false);
 
 const rackFullscreenEl = ref<HTMLElement | null>(null);
 const rackIsFullscreen = ref(false);
+
+const RACK_ZOOM_LEVEL = 2;
+const rackViewZoom = ref(1);
+const rackZoomMagnified = computed(() => rackViewZoom.value >= RACK_ZOOM_LEVEL);
+
+const toggleRackZoom = () => {
+  rackViewZoom.value = rackViewZoom.value >= RACK_ZOOM_LEVEL ? 1 : RACK_ZOOM_LEVEL;
+};
 
 const syncRackFullscreenState = () => {
   rackIsFullscreen.value = document.fullscreenElement === rackFullscreenEl.value;
@@ -300,16 +308,25 @@ onUnmounted(async () => {
             :title="rackIsFullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen rack view'"
             @click="toggleRackFullscreen"
           >
-            {{ rackIsFullscreen ? 'Exit fullscreen' : 'Fullscreen' }}
+            {{ rackIsFullscreen ? 'Exit Full Screen' : 'Full Screen' }}
+          </button>
+        </template>
+        <template #zoom>
+          <button
+            type="button"
+            class="btn rack-zoom-btn"
+            :class="{ 'rack-zoom-btn-on': rackZoomMagnified }"
+            :title="rackZoomMagnified ? 'Zoom out (1×)' : 'Zoom in (2×)'"
+            :aria-pressed="rackZoomMagnified"
+            aria-label="Toggle rack zoom 2×"
+            @click="toggleRackZoom"
+          >
+            <i class="bx bx-search" aria-hidden="true"></i>
           </button>
         </template>
         <template #bottom>
-          <button
-            class="btn flip-view-btn"
-            :class="isBackViewMode ? 'btn-custom-grey' : 'btn-dark'"
-            @click="toggleGlobalView"
-          >
-            {{ isBackViewMode ? 'Flip to Front View' : 'Flip to Back View' }}
+          <button type="button" class="btn flip-view-btn" @click="toggleGlobalView">
+            {{ isBackViewMode ? 'Flip to Front view' : 'Flip to Back view' }}
           </button>
         </template>
       </RackMetricsHeader>
@@ -323,21 +340,23 @@ onUnmounted(async () => {
             Exit fullscreen
           </button>
         </div>
-        <div class="racks-container">
-          <SingleRack
-            v-for="rack in racks"
-            :key="rack.name"
-            :rack="rack"
-            :metric1="metric1"
-            :metric2="metric2"
-            :get-metric="getMetricForDevice"
-            :is-back-view-mode="isBackViewMode"
-            @drop="onDrop"
-            @reset="resetRack"
-            @power-toggle="handlePowerToggle"
-            @edit-inventory="onEditInventory"
-            :is-busy="loadingRackName === rack.name"
-          />
+        <div class="rack-zoom-inner" :style="{ zoom: rackViewZoom }">
+          <div class="racks-container">
+            <SingleRack
+              v-for="rack in racks"
+              :key="rack.name"
+              :rack="rack"
+              :metric1="metric1"
+              :metric2="metric2"
+              :get-metric="getMetricForDevice"
+              :is-back-view-mode="isBackViewMode"
+              @drop="onDrop"
+              @reset="resetRack"
+              @power-toggle="handlePowerToggle"
+              @edit-inventory="onEditInventory"
+              :is-busy="loadingRackName === rack.name"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -367,14 +386,16 @@ onUnmounted(async () => {
 
 .rack-fullscreen-exit-btn {
   pointer-events: auto;
-  background-color: #8692a4;
-  border-color: #8692a4;
-  color: #fff;
+  background-color: #fff;
+  border: 2px solid #5376ea;
+  color: #5376ea;
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-weight: 500;
 }
 
 .rack-fullscreen-exit-btn:hover {
-  background-color: #778496;
-  border-color: #778496;
+  background-color: #5376ea;
+  border-color: #5376ea;
   color: #fff;
 }
 
@@ -392,55 +413,94 @@ onUnmounted(async () => {
 }
 
 .racks-container { display: flex;flex-wrap: wrap; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-end; width:100% }
-.btn-custom-grey {
-  background-color: #d3d3d3;
-  border-color: #c0c0c0;
-  color: #000;
-}
 
-.btn-custom-grey:hover {
-  background-color: #bebebe;
+.rack-zoom-inner {
+  width: 100%;
 }
 
 .rack-fullscreen-btn {
-  background-color: #8692a4;
-  border-color: #8692a4;
-  color: #fff;
+  background-color: #fff;
+  border: 2px solid #5376ea;
+  color: #5376ea;
   height: 38px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
   font-size: 14px;
-  font-weight: normal;
-  padding: 0.375rem 0.75rem;
-  border-radius: 5px;
+  font-weight: 500;
+  padding: 0.375rem 1rem;
+  border-radius: 8px;
   box-shadow: none;
 }
 
 .rack-fullscreen-btn:hover {
-  background-color: #778496;
-  border-color: #778496;
+  background-color: #5376ea;
+  border-color: #5376ea;
   color: #fff;
 }
 
 .rack-fullscreen-btn:focus {
   color: #fff;
-  box-shadow: 0 0 0 0.2rem rgba(134, 146, 164, 0.35);
+  background-color: #5376ea;
+  border-color: #5376ea;
+  box-shadow: 0 0 0 0.2rem rgba(83, 118, 234, 0.35);
+}
+
+.rack-zoom-btn {
+  width: 40px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #5376ea !important;
+  border: 1px solid #5376ea !important;
+  color: #fff !important;
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.rack-zoom-btn:hover,
+.rack-zoom-btn.rack-zoom-btn-on,
+.rack-zoom-btn.rack-zoom-btn-on:hover {
+  background-color: #ffba30 !important;
+  border-color: #ffba30 !important;
+  color: #1a1a1a !important;
+}
+
+.rack-zoom-btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 186, 48, 0.45);
 }
 
 .flip-view-btn {
-  min-width: 200px;
-  max-width: 100%;
+  min-width: 160px;
   height: 38px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 14px;
-  font-weight: normal;
-  padding: 0.375rem 0.75rem;
-  white-space: normal;
-  border-radius: 5px;
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.35rem 0.85rem;
+  white-space: nowrap;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   box-shadow: none;
+  background: #111 !important;
+  border: 1px solid #111 !important;
+  color: #fff !important;
+}
+
+.flip-view-btn:hover {
+  background: #2a2a2a !important;
+  border-color: #2a2a2a !important;
+  color: #fff !important;
+}
+
+.flip-view-btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(17, 17, 17, 0.35);
+  color: #fff !important;
 }
 
 .light-switch-btn {
