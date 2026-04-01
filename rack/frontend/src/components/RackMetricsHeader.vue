@@ -19,7 +19,7 @@
               type="button"
               @click="showDropdown1 = !showDropdown1"
             >
-              {{ metric1 ? metric1 : 'Choose Scale' }}
+              <span class="scale-dropdown-label">{{ metric1 ? metric1 : 'Choose Scale' }}</span>
             </button>
             <ul class="dropdown-menu show dropdown-menu-visible" v-if="showDropdown1">
               <li>
@@ -35,9 +35,12 @@
           <div class="scale-display-wrap" aria-hidden="true">
             <span class="scale-edge">0</span>
             <div class="scale-track">
-              <div class="scale-track-fill" :style="{ width: displayBarPercent1 + '%' }"></div>
+              <div
+                class="scale-track-fill"
+                :style="barFillStyle1"
+              ></div>
             </div>
-            <span class="scale-edge">100</span>
+            <span class="scale-edge scale-edge-max" :title="maxLabel1">{{ maxLabel1 }}</span>
           </div>
         </div>
         <div class="scale-bundle">
@@ -66,9 +69,12 @@
           <div class="scale-display-wrap" aria-hidden="true">
             <span class="scale-edge">0</span>
             <div class="scale-track">
-              <div class="scale-track-fill" :style="{ width: displayBarPercent2 + '%' }"></div>
+              <div
+                class="scale-track-fill"
+                :style="barFillStyle2"
+              ></div>
             </div>
-            <span class="scale-edge">100</span>
+            <span class="scale-edge scale-edge-max" :title="maxLabel2">{{ maxLabel2 }}</span>
           </div>
         </div>
       </div>
@@ -83,11 +89,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
+type HeaderMetricRange = {
+  min: number;
+  max: number;
+  hasData?: boolean;
+  peak?: number;
+  avg?: number;
+};
+
 const props = defineProps<{
   metric1: string | null;
   metric2: string | null;
-  range1?: { min: number; max: number };
-  range2?: { min: number; max: number };
+  range1?: HeaderMetricRange;
+  range2?: HeaderMetricRange;
 }>();
 
 const metricOptions = [
@@ -97,17 +111,38 @@ const metricOptions = [
   'GPU Temperature'
 ];
 
-/** 0–100 for static data bar fill (not a slider). */
-const displayBarPercent1 = computed(() => {
-  if (!props.metric1) return 0;
-  const max = props.range1?.max ?? 100;
-  return Math.min(100, Math.max(0, Math.round(max)));
+/** 红→黄→绿→青→蓝→紫 彩虹条（所有指标共用） */
+const RAINBOW_BAR =
+  'linear-gradient(90deg, #ff0000 0%, #ffaa00 14%, #ffee00 28%, #22c55e 42%, #06b6d4 56%, #2563eb 70%, #7c3aed 84%, #db2777 100%)';
+
+function formatPeak(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  const a = Math.abs(n);
+  if (a >= 100) return n.toFixed(0);
+  if (a >= 10) return n.toFixed(1);
+  return n.toFixed(2);
+}
+
+const barFillStyle1 = computed(() => ({
+  width: props.metric1 ? '100%' : '0%',
+  background: props.metric1 ? RAINBOW_BAR : '#b8c0d0',
+}));
+
+const barFillStyle2 = computed(() => ({
+  width: props.metric2 ? '100%' : '0%',
+  background: props.metric2 ? RAINBOW_BAR : '#b8c0d0',
+}));
+
+const maxLabel1 = computed(() => {
+  if (!props.metric1) return '';
+  if (props.range1?.hasData) return formatPeak(props.range1.peak ?? 0);
+  return '—';
 });
 
-const displayBarPercent2 = computed(() => {
-  if (!props.metric2) return 0;
-  const max = props.range2?.max ?? 100;
-  return Math.min(100, Math.max(0, Math.round(max)));
+const maxLabel2 = computed(() => {
+  if (!props.metric2) return '';
+  if (props.range2?.hasData) return formatPeak(props.range2.peak ?? 0);
+  return '—';
 });
 
 const emit = defineEmits(['update:metric1', 'update:metric2', 'refresh']);
@@ -154,6 +189,7 @@ const selectMetric2 = (val: string | null) => {
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   padding: 1rem 1.25rem;
+  margin-top: -6px;
   margin-bottom: 0.5rem;
   font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
   font-weight: 500;
@@ -221,7 +257,10 @@ const selectMetric2 = (val: string | null) => {
 
 .dropdown {
   position: relative;
-  flex: 0 0 auto;
+  flex: 0 0 152px;
+  width: 152px;
+  min-width: 152px;
+  max-width: 152px;
 }
 
 .dropdown-menu-visible {
@@ -250,12 +289,13 @@ const selectMetric2 = (val: string | null) => {
 }
 
 .scale-dropdown-btn {
-  min-width: 96px;
+  width: 100%;
   height: var(--rack-toolbar-height, 38px);
   text-align: left;
   display: inline-flex;
   justify-content: space-between;
   align-items: center;
+  overflow: hidden;
   font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
   font-weight: 550;
   font-size: 13px;
@@ -268,6 +308,15 @@ const selectMetric2 = (val: string | null) => {
   padding: 0 8px;
   box-shadow: none !important;
   box-sizing: border-box;
+}
+
+.scale-dropdown-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .scale-dropdown-btn:hover,
@@ -301,6 +350,14 @@ const selectMetric2 = (val: string | null) => {
   min-width: 1.25rem;
   text-align: center;
   font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+}
+
+.scale-edge-max {
+  min-width: 2.5rem;
+  max-width: 4.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .scale-track {

@@ -856,29 +856,27 @@ const clearPreview = () => {
 
       <div class="rack-column" v-if="rack.showFrontSide !== false">
 
-        <div class="rack-header-light position-relative">
+        <div class="rack-header-light rack-header-bar position-relative">
           <div
             class="device-dark-overlay"
             :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
             style="z-index: 5;"
           ></div>
 
-          <div class="d-flex align-items-center position-relative" style="z-index: 4;">
-            <span class="u-header-label">U</span>
-            <span class="rack-title text-white" :title="rack.name">{{ truncatedRackName }}</span>
+          <span class="u-header-label rack-header-u">U</span>
+          <span class="rack-title text-white rack-header-title" :title="rack.name">{{ truncatedRackName }}</span>
+          <div class="rack-header-actions d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
+            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
+            <span
+              class="power-btn-circle cursor-pointer"
+              :class="rack.powerOn ? 'power-btn-on' : 'power-btn-off'"
+              :title="powerButtonTooltip"
+              @click="handleRackAction(rack.powerOn ? 'off' : 'on')"
+            >
+              <i class="bx bx-power-off"></i>
+            </span>
           </div>
-          <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
-              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-              <span
-                class="power-btn-circle cursor-pointer"
-                :class="rack.powerOn ? 'power-btn-on' : 'power-btn-off'"
-                :title="powerButtonTooltip"
-                @click="handleRackAction(rack.powerOn ? 'off' : 'on')"
-              >
-                <i class="bx bx-power-off"></i>
-              </span>
-              <span class="u-header-label ms-1">U</span>
-            </div>
+          <span class="u-header-label rack-header-u">U</span>
         </div>
 
         <div ref="frontFrameRef" class="rack-frame"
@@ -964,7 +962,7 @@ const clearPreview = () => {
 
       <div class="rack-column" v-if="rack.showBackSide">
 
-        <div class="rack-header-dark position-relative">
+        <div class="rack-header-dark rack-header-bar position-relative">
 
           <div
             class="device-dark-overlay"
@@ -972,24 +970,22 @@ const clearPreview = () => {
             style="z-index: 5;"
           ></div>
 
-          <div class="d-flex align-items-center position-relative" style="z-index: 4;">
-            <span class="u-header-label">U</span>
-            <span class="rack-title text-white" :title="rack.name">{{ truncatedRackName }}</span>
+          <span class="u-header-label rack-header-u">U</span>
+          <span class="rack-title text-white rack-header-title" :title="rack.name">{{ truncatedRackName }}</span>
+          <div class="rack-header-actions d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
+            <template v-if="rack.showFrontSide === false">
+              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
+              <span
+                class="power-btn-circle cursor-pointer"
+                :class="rack.backPowerOn ? 'power-btn-on' : 'power-btn-off'"
+                :title="powerButtonTooltip"
+                @click="handleRackAction(rack.backPowerOn ? 'off' : 'on')"
+              >
+                <i class="bx bx-power-off"></i>
+              </span>
+            </template>
           </div>
-          <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
-              <template v-if="rack.showFrontSide === false">
-                <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-                <span
-                  class="power-btn-circle cursor-pointer"
-                  :class="rack.backPowerOn ? 'power-btn-on' : 'power-btn-off'"
-                  :title="powerButtonTooltip"
-                  @click="handleRackAction(rack.backPowerOn ? 'off' : 'on')"
-                >
-                  <i class="bx bx-power-off"></i>
-                </span>
-              </template>
-              <span class="u-header-label">U</span>
-            </div>
+          <span class="u-header-label rack-header-u">U</span>
         </div>
 
         <div ref="backFrameRef" class="rack-frame"
@@ -1182,11 +1178,9 @@ const clearPreview = () => {
 
 .rack-header-light {
   background-color: var(--rack-header-bg);
-  border: 2px solid var(--border-color);
+  /* Match rack-frame outer border (#222); theme --border-color can disappear on grey header */
+  border: 2px solid #222;
   border-bottom: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 0;
   height: 20px;
   overflow: hidden;
@@ -1196,9 +1190,6 @@ const clearPreview = () => {
   background-color: #222;
   border: 2px solid #222;
   border-bottom: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 0;
   height: 20px;
   overflow: hidden;
@@ -1236,7 +1227,6 @@ const clearPreview = () => {
   z-index: 5;
 }
 .rack-title {
-  margin-left: 10px;
   font-size: 0.8rem;
   font-weight: bold;
   color: #fff !important;
@@ -1246,11 +1236,54 @@ const clearPreview = () => {
 .front-label { background-color: #6666ff; border-top-left-radius: 5px; border-top-right-radius: 5px; }
 .back-toggle { background-color: #333; cursor: pointer; border-top-left-radius: 5px; border-top-right-radius: 5px; }
 .rack-column { min-width: 180px; display: flex; flex-direction: column; flex:1; }
-.u-header-label { width: 20px; text-align: center; font-size: 10px; font-weight: bold; color: #444; background-color: #e9ecef; display: inline-block; line-height: 16px; z-index: 3;}
-.rack-header-dark { background-color: #222; display: flex; justify-content: space-between; align-items: center; padding: 0; height: 20px; overflow: hidden; border: 2px solid #222; border-bottom: none; }
-.rack-header-light { background-color: #aaaaaa; display: flex; justify-content: space-between; align-items: center; padding: 0; height: 20px; overflow: hidden; border: 2px solid #222; border-bottom: none; }
-.rack-title { margin-left: 10px; font-size: 0.8rem; font-weight: bold; }
-.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; z-index: 3}
+/* Same 20px track + line-height as .rack-label so U lines up with number columns */
+.u-header-label {
+  width: 20px;
+  min-width: 20px;
+  max-width: 20px;
+  flex-shrink: 0;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #444;
+  background-color: #e9ecef;
+  display: block;
+  z-index: 6;
+  box-sizing: border-box;
+}
+/* Fixed columns: left U | title (shrinks) | actions | right U — no horizontal padding/gap (matches rack-row) */
+.rack-header-bar {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto 20px;
+  align-items: stretch;
+  column-gap: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.rack-header-title {
+  margin-left: 10px;
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  z-index: 6;
+}
+.rack-header-u {
+  justify-self: stretch;
+  align-self: stretch;
+}
+.rack-header-actions {
+  flex-shrink: 0;
+  justify-self: end;
+  align-self: center;
+  margin-left: 6px;
+  z-index: 6;
+}
+.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; z-index: 3; flex-shrink: 0; }
 .rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; z-index: 5;}
 .rack-row { display: flex; height: 20px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
 .rack-label { width: 20px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6;z-index: 3; }

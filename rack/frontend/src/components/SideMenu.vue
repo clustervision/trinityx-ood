@@ -2,7 +2,7 @@
   <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="menu-inner-shadow"></div>
 
-    <ul class="menu-inner py-1">
+    <ul class="menu-inner side-menu-inner">
       <li class="menu-item side-rack-nav" :class="{ 'is-active': isDashboardActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'dashboard')">
           <i class="menu-icon tf-icons bx bx-server"></i>
@@ -238,6 +238,7 @@ onMounted(() => {
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
+    padding-top: 16px;
   }
   /* core.css fixes .menu-item at 16.25rem; narrow sidebar clips — pin to menu width */
   .layout-menu :deep(.menu-inner > .menu-item),
@@ -377,5 +378,11 @@ onMounted(() => {
   :deep(.side-rack-nav .menu-icon) {
     color: #5376ea !important;
     font-size: 1.1rem !important;
+  }
+
+  /* py-1 uses padding !important — replace with explicit top inset so nav moves down */
+  .layout-menu .menu-inner.side-menu-inner {
+    padding-top: 1.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 </style>

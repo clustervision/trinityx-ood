@@ -13,17 +13,41 @@ interface PrometheusResponse {
   data: { resultType: string; result: PrometheusResult[]; };
 }
 
-interface MetricRange {
+/** max = scale for normalization (≥ any sample; use 1 when all samples are 0). */
+export interface MetricRange {
   min: number;
   max: number;
+  hasData: boolean;
+  peak: number;
+  avg: number;
 }
 
+const EMPTY_RANGE: MetricRange = { min: 0, max: 1, hasData: false, peak: 0, avg: 0 };
+
+/**
+ * Same shape as your browser URL query=… string: `+` means space in x-www-form-urlencoded.
+ * We store `+` in source so it matches pasted URLs; convert to real PromQL before calling Prometheus.
+ */
 const QUERY_MAP: Record<string, string> = {
-  'System Load': 'avg by (hostname, luna_group) (node_load5)',
-  'Temperature': 'max by (hostname, luna_group) (ipmi_temperature_celsius{name=~"[cC][pP][uU].*[tT][eE][mM][pP].*"})',
-  'Power Consumption': 'avg by (hostname, luna_group) (ipmi_dcmi_power_consumption_watts)',
-  'GPU Temperature': 'avg by (hostname, luna_group) (nvidia_smi_temperature_gpu)',
+  'System Load': 'avg+by+(hostname,+luna_group)+(node_load5)',
+  'Temperature':
+    'max+by+(hostname,+luna_group)+(ipmi_temperature_celsius{+name=~"[cC][pP][uU].*[tT][eE][mM][pP].*"+})',
+  'Power Consumption': 'avg+by+(hostname,+luna_group)+(ipmi_dcmi_power_consumption_watts)',
+  'GPU Temperature': 'avg+by+(hostname,+luna_group)+(nvidia_smi_temperature_gpu)',
 };
+
+function plusFormToPromQL(plusForm: string): string {
+  return plusForm.replace(/\+/g, ' ');
+}
+
+/** Encode like your working URLs: spaces → `+` (not `%20`) inside the query param value. */
+function encodeQueryParamValue(value: string): string {
+  return encodeURIComponent(value).replace(/%20/g, '+');
+}
+
+function prometheusInstantQueryParams(query: string): string {
+  return `query=${encodeQueryParamValue(query)}`;
+}
 
 
 export function useRackMetrics() {
@@ -33,8 +57,8 @@ export function useRackMetrics() {
   const metric2 = ref<string | null>(null);
   const metricDataMap = ref<Record<string, Record<string, number>>>({});
 
-  const metric1Range = ref<MetricRange>({ min: 0, max: 100 });
-  const metric2Range = ref<MetricRange>({ min: 0, max: 100 });
+  const metric1Range = ref<MetricRange>({ ...EMPTY_RANGE });
+  const metric2Range = ref<MetricRange>({ ...EMPTY_RANGE });
 
   let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -50,16 +74,27 @@ export function useRackMetrics() {
     const query = QUERY_MAP[metricType];
     if (!query) return;
 
+    rangeRef.value = { ...EMPTY_RANGE };
+
     try {
-      const response = await axios.get<PrometheusResponse>(`${prome_url}/api/v1/query`, {
-        params: { query: query }
-      });
+      const promql = plusFormToPromQL(query);
+      const response = await axios.get<PrometheusResponse>(
+        `${prome_url}/api/v1/query?${prometheusInstantQueryParams(promql)}`
+      );
 
       if (response.data.status !== 'success') return;
 
       const results = response.data.data.result;
 
+      if (!results.length) {
+        rangeRef.value = { ...EMPTY_RANGE };
+        triggerRef(metricDataMap);
+        return;
+      }
+
       let maxVal = 0;
+      let sum = 0;
+      let count = 0;
 
       results.forEach((item) => {
         const rawHostname = item.metric.hostname;
@@ -67,16 +102,36 @@ export function useRackMetrics() {
         const parts = rawHostname.split('.');
         const hostname = parts[0];
         if (!hostname) return;
-        const value = parseFloat(item.value[1]) || 0;
+        const value = parseFloat(item.value[1]);
+        if (!Number.isFinite(value)) return;
         if (value > maxVal) maxVal = value;
+        sum += value;
+        count += 1;
 
         if (!metricDataMap.value[hostname]) metricDataMap.value[hostname] = {};
         metricDataMap.value[hostname][metricType] = value;
       });
-      rangeRef.value = { min: 0, max: maxVal === 0 ? 100 : maxVal };
+
+      if (count === 0) {
+        rangeRef.value = { ...EMPTY_RANGE };
+        triggerRef(metricDataMap);
+        return;
+      }
+
+      const avg = sum / count;
+      const scaleMax = maxVal === 0 ? 1 : maxVal;
+
+      rangeRef.value = {
+        min: 0,
+        max: scaleMax,
+        hasData: true,
+        peak: maxVal,
+        avg,
+      };
       triggerRef(metricDataMap);
     } catch (e) {
       console.error(`Fetch error ${metricType}`, e);
+      rangeRef.value = { ...EMPTY_RANGE };
     }
   };
 

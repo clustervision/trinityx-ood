@@ -270,7 +270,8 @@ onUnmounted(async () => {
 </script>
 
 <template>
-  <div class="container-fluid flex-grow-1 container-p-y">
+  <!-- pt-2 opts out of container-p-y top (core.css) so metrics sit higher; bottom padding unchanged -->
+  <div class="container-fluid flex-grow-1 container-p-y pt-2">
     <div class="card-body position-relative rack-view-header-wrap">
       <RackMetricsHeader
         v-model:metric1="metric1"
