@@ -52,7 +52,7 @@
                   min="1"
                   max="60"
                   required
-                  placeholder="| Max: 60U"
+                  placeholder=" Max: 60U"
                 />
               </label>
 
