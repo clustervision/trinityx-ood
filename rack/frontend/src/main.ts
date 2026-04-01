@@ -1,5 +1,6 @@
 import '@fontsource/geist/400.css'
 import '@fontsource/geist/500.css'
+import './styles/manage-form-modal.css'
 import './assets/css/main-ui.css'
 import './assets/css/rack.css'
 import './assets/fonts/boxicons.css'

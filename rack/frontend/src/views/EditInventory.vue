@@ -1,96 +1,89 @@
 <template>
-  <div class="container-fluid flex-grow-1 container-p-y">
-    <div class="card mb-4">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="mb-0">Update Inventory - {{ form.name }}</h5>
-         <button class="btn btn-warning" @click="$emit('close')">Back</button>
-      </div>
+  <Teleport to="body">
+    <Transition name="mfm-fade">
+      <div
+        v-if="open"
+        ref="overlayRef"
+        class="mfm-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-inv-dialog-title"
+        tabindex="-1"
+        @keydown.esc="closeModal"
+      >
+        <div class="mfm-backdrop" @click="closeModal" />
+        <div class="mfm-dialog" @click.stop>
+          <button type="button" class="mfm-close" aria-label="Close" @click="closeModal">
+            <i class="bx bx-x" aria-hidden="true"></i>
+          </button>
 
-      <div class="card-body">
-        <div v-if="isAssigned" class="alert alert-warning mb-3">
-          <i class='bx bx-lock-alt'></i>
-          This device is currently placed in a rack. Data cannot be changed.
-        </div>
-        <form @submit.prevent="submitForm">
+          <h2 id="edit-inv-dialog-title" class="mfm-title">Update Inventory — {{ form.name || inventoryName }}</h2>
 
-          <div class="row mb-3">
-            <label class="col-sm-2 col-form-label text-uppercase fs-7">Name</label>
-            <div class="col-sm-10">
-              <input
-                type="text"
-                v-model="form.name"
-                class="form-control bg-light"
-                :disabled="isAssigned"
-              />
+          <form class="mfm-form" @submit.prevent="submitForm">
+            <div v-if="isAssigned" class="mfm-banner">
+              <i class="bx bx-lock-alt" aria-hidden="true"></i>
+              This device is currently placed in a rack. Data cannot be changed.
             </div>
-          </div>
 
-          <div class="row mb-3">
-            <label class="col-sm-2 col-form-label text-uppercase fs-7">Select Type</label>
-            <div class="col-sm-10">
-              <input
-                type="text"
-                v-model="form.type"
-                class="form-control bg-light"
-                :disabled="isAssigned"
-              />
+            <div class="mfm-fields-grid mfm-fields-grid--2">
+              <label class="mfm-field" :class="isAssigned ? 'mfm-field--readonly' : 'mfm-field--optional'">
+                <span class="mfm-field-label">NAME:</span>
+                <input v-model="form.name" type="text" class="mfm-field-control" :disabled="isAssigned" />
+              </label>
+              <label class="mfm-field" :class="isAssigned ? 'mfm-field--readonly' : 'mfm-field--optional'">
+                <span class="mfm-field-label">TYPE:</span>
+                <input v-model="form.type" type="text" class="mfm-field-control" :disabled="isAssigned" />
+              </label>
+              <label class="mfm-field" :class="isAssigned ? 'mfm-field--readonly' : 'mfm-field--required'">
+                <span class="mfm-field-label">HEIGHT:</span>
+                <input
+                  v-model.number="form.height"
+                  type="number"
+                  class="mfm-field-control"
+                  :min="heightMin"
+                  max="8"
+                  :required="!isAssigned"
+                  :disabled="isAssigned"
+                />
+              </label>
+              <label class="mfm-field" :class="isAssigned ? 'mfm-field--readonly' : 'mfm-field--required'">
+                <span class="mfm-field-label">ORIENTATION:</span>
+                <span class="mfm-select-wrap">
+                  <select
+                    v-model="form.orientation"
+                    class="mfm-field-control mfm-select"
+                    :required="!isAssigned"
+                    :disabled="isAssigned"
+                  >
+                    <option value="front">Front Side</option>
+                    <option value="back">Back Side</option>
+                  </select>
+                  <i class="bx bx-chevron-down mfm-select-chevron" aria-hidden="true"></i>
+                </span>
+              </label>
             </div>
-          </div>
 
-          <div class="row mb-3">
-            <label class="col-sm-2 col-form-label text-uppercase fs-7">Inventory Height</label>
-            <div class="col-sm-10">
-              <input
-                type="number"
-                v-model.number="form.height"
-                class="form-control"
-                :min="heightMin"
-                max="8"
-                required
-                :disabled="isAssigned"
-              />
-              <small v-if="isOtherDevices" class="text-muted">otherdevices: 0U (pool only) or 1–8U. Max 8U.</small>
-              <small v-else class="text-muted">Height 1–8U (other types cannot be 0).</small>
-            </div>
-          </div>
+            <p v-if="!isAssigned && isOtherDevices" class="mfm-hint">
+              otherdevices: 0U (pool only) or 1–8U. Max 8U.
+            </p>
+            <p v-else-if="!isAssigned" class="mfm-hint">Height 1–8U (other types cannot be 0).</p>
 
-          <div class="row mb-3">
-            <label class="col-sm-2 col-form-label text-uppercase fs-7">Inventory Orientation</label>
-            <div class="col-sm-10">
-              <select
-                v-model="form.orientation"
-                class="form-select"
-                required
-                :disabled="isAssigned"
-              >
-                <option value="front">Front Side</option>
-                <option value="back">Back Side</option>
-              </select>
-            </div>
-          </div>
+            <div v-if="errorMessage" class="mfm-error" role="alert">{{ errorMessage }}</div>
 
-          <div class="row mt-4">
-            <div class="col-sm-10 offset-sm-2">
-              <button
-                type="submit"
-                class="btn btn-primary"
-                :disabled="isSubmitting || isAssigned"
-              >
+            <div class="mfm-footer">
+              <button type="submit" class="mfm-submit" :disabled="isSubmitting || isAssigned">
                 {{ isSubmitting ? 'Updating...' : 'Update Inventory ' + form.name }}
               </button>
             </div>
-          </div>
-
-          <div v-if="errorMessage" class="alert alert-danger mt-3">{{ errorMessage }}</div>
-
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
-  </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch, computed } from 'vue';
+import { ref, reactive, watch, nextTick, computed } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import { deviceHeightU, isOtherDevicesType } from '@/utils/deviceKind';
@@ -98,39 +91,48 @@ import { deviceHeightU, isOtherDevicesType } from '@/utils/deviceKind';
 //@ts-ignore
 const Url = window.APP_URL;
 const toast = useToast();
-const isAssigned = ref(false);
-const props = defineProps<{
-  inventoryName: string;
+
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    inventoryName: string;
+    modalHostActive?: boolean;
+  }>(),
+  { modalHostActive: true }
+);
+
+const emit = defineEmits<{
+  (e: 'update:open', value: boolean): void;
+  (e: 'close', payload?: { inventory?: boolean }): void;
+  (e: 'inventory-updated'): void;
 }>();
 
-
-// Note: Ensure you have 'inventory-updated' here if you need the parent to refresh
-const emit = defineEmits(['close', 'inventory-updated']);
-
+const isAssigned = ref(false);
 const isSubmitting = ref(false);
 const errorMessage = ref('');
+const overlayRef = ref<HTMLElement | null>(null);
 
 const form = reactive({
   name: '',
   type: '',
   height: 1,
-  orientation: 'front'
+  orientation: 'front',
 });
 
 const isOtherDevices = computed(() => isOtherDevicesType(form.type));
 const heightMin = computed(() => (isOtherDevices.value ? 0 : 1));
 
-
-const loadInventoryData=async () => {
+const loadInventoryData = async () => {
   const inventoryName = props.inventoryName;
-  if (!inventoryName) return ;
+  if (!inventoryName || !props.open) return;
 
   form.name = inventoryName;
+  errorMessage.value = '';
 
   try {
     const response = await axios.get(Url + '/manage_inventory');
 
-    let items = [];
+    let items: any[] = [];
     if (response.data.status && Array.isArray(response.data.message)) {
       items = response.data.message;
     }
@@ -152,23 +154,58 @@ const loadInventoryData=async () => {
     const isInPool = poolItems.find((p: any) => p.name === inventoryName);
     isAssigned.value = !isInPool;
   } catch (e) {
-    console.error("Failed to load details", e);
-    errorMessage.value = "Failed to load details.";
+    console.error('Failed to load details', e);
+    errorMessage.value = 'Failed to load details.';
   }
 };
 
+watch(
+  () => [props.open, props.inventoryName] as const,
+  async ([isOpen]) => {
+    if (isOpen) {
+      await loadInventoryData();
+      await nextTick();
+      overlayRef.value?.focus({ preventScroll: true });
+    }
+  }
+);
+
+watch(
+  () => props.modalHostActive,
+  (active) => {
+    if (active === false) {
+      emit('update:open', false);
+      emit('close');
+    }
+  }
+);
+
+watch(
+  () => form.type,
+  (t, prev) => {
+    if (!isOtherDevicesType(t) && isOtherDevicesType(prev) && deviceHeightU(form.height) === 0) {
+      form.height = 1;
+    }
+  }
+);
+
+const closeModal = () => {
+  emit('update:open', false);
+  emit('close');
+};
+
 const submitForm = async () => {
-  // MODIFIED: Guard Clause - Totally forbid action if assigned
   if (isAssigned.value) {
-    errorMessage.value = "Action Forbidden: This device is currently in a rack.";
+    errorMessage.value = 'Action Forbidden: This device is currently in a rack.';
     return;
   }
   const h = parseInt(String(form.height), 10);
   const minH = isOtherDevicesType(form.type) ? 0 : 1;
   if (isNaN(h) || h < minH || h > 8) {
-    errorMessage.value = minH === 0
-      ? 'For otherdevices, height must be between 0 and 8U. Other types: 1–8U.'
-      : 'Device height must be between 1 and 8U.';
+    errorMessage.value =
+      minH === 0
+        ? 'For otherdevices, height must be between 0 and 8U. Other types: 1–8U.'
+        : 'Device height must be between 1 and 8U.';
     return;
   }
 
@@ -184,34 +221,16 @@ const submitForm = async () => {
 
     if (response.data.status) {
       emit('inventory-updated');
+      emit('update:open', false);
       emit('close', { inventory: true });
       toast.success(`${form.name} Updated.`);
     } else {
       errorMessage.value = response.data.message || 'Update failed';
     }
   } catch (error: any) {
-    errorMessage.value = error.response?.data?.message || "Network error.";
+    errorMessage.value = error.response?.data?.message || 'Network error.';
   } finally {
     isSubmitting.value = false;
   }
 };
-
-onMounted(() => {
-  loadInventoryData();
-});
-
-watch(() => props.inventoryName, loadInventoryData);
-
-watch(
-  () => form.type,
-  (t, prev) => {
-    if (!isOtherDevicesType(t) && isOtherDevicesType(prev) && deviceHeightU(form.height) === 0) {
-      form.height = 1;
-    }
-  }
-);
 </script>
-
-<style scoped>
-.fs-7 { font-size: 0.85rem; font-weight: 500; color: #566a7f; }
-</style>

@@ -81,17 +81,24 @@
           </div>
         </div>
         <div v-if="props.pageType === 'rack'" class="manage-page-actions">
-          <button type="button" class="manage-add-btn" @click="$emit('add-click')">
+          <button type="button" class="manage-add-btn" @click="addRackOpen = true">
             Add Rack
           </button>
         </div>
       </div>
     </div>
+
+    <AddRack
+      v-if="props.pageType === 'rack'"
+      v-model:open="addRackOpen"
+      @close="onAddRackClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
+import AddRack from '@/views/AddRack.vue';
 import axios from 'axios';
 import {useToast} from "vue-toastification"
 
@@ -100,11 +107,24 @@ const Url = window.APP_URL;
 const items = ref<any[]>([]);
 const loading = ref(true);
 const toast = useToast();
-const props = defineProps<{
-  pageType: string
-}>();
+const props = withDefaults(
+  defineProps<{
+    pageType: string;
+    /** When false (e.g. navigated away), close rack add modal — Teleport ignores parent v-show. */
+    modalHostActive?: boolean;
+  }>(),
+  { modalHostActive: true }
+);
 
-const emit = defineEmits(['add-click', 'edit-click', 'show-click', 'inventory-updated', 'rack-deleted']);
+const emit = defineEmits(['edit-click', 'show-click', 'inventory-updated', 'rack-deleted', 'rack-added']);
+
+const addRackOpen = ref(false);
+
+const onAddRackClose = (payload?: { rack?: boolean }) => {
+  if (payload?.rack) {
+    emit('rack-added');
+  }
+};
 
 const pageName = computed(() => {
   if (!props.pageType) return '';
@@ -204,6 +224,15 @@ const fetchData = async () => {
 onMounted(fetchData);
 
 watch(() => props.pageType, fetchData);
+
+watch(
+  () => props.modalHostActive,
+  (active) => {
+    if (active === false) {
+      addRackOpen.value = false;
+    }
+  }
+);
 
 defineExpose({ refresh: fetchData });
 </script>

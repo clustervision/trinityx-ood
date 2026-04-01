@@ -82,11 +82,9 @@ const props = withDefaults(
 
 const isDashboardActive = computed(() => props.currentView === 'dashboard');
 const isManageRackActive = computed(() =>
-  ['manage-rack', 'add-rack', 'edit-rack', 'show-rack'].includes(props.currentView)
+  ['manage-rack', 'show-rack'].includes(props.currentView)
 );
-const isManageInventoryActive = computed(() =>
-  ['manage-inventory', 'edit-inventory'].includes(props.currentView)
-);
+const isManageInventoryActive = computed(() => props.currentView === 'manage-inventory');
 
 const UnassignedNodes = ref<any[]>([]);
 const unassignedSearch = ref('');
