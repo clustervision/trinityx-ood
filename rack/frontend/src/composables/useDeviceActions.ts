@@ -1,6 +1,10 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import type { Device } from '@/types/rack';
+import { isPerformCommandFailureMessage } from '@/utils/performCommandResponse';
+
+/** Result of /perform/... calls; success is derived from message (not `status`, which is on/off). */
+export type DevicePerformResult = { success: boolean; message: string };
 
 export function useDeviceActions() {
   const isActionLoading = ref(false);
@@ -9,7 +13,7 @@ export function useDeviceActions() {
     action: string,
     subAction: string | undefined,
     device: Device
-  ): Promise<{ success: true; message: string } | undefined> => {
+  ): Promise<DevicePerformResult | undefined> => {
     const appUrl = (typeof window !== 'undefined' && (window as unknown as { APP_URL?: string }).APP_URL) || '';
     const contextUrl = (typeof window !== 'undefined' && (window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL) || '';
     const baseForLinks = contextUrl.replace(/\/$/, '') + '/pun/sys';
@@ -23,7 +27,8 @@ export function useDeviceActions() {
         otherdevices: 'trinity_otherdev'
       };
 
-      const section = typeMap[device.type] || 'trinity_node';
+      const typeKey = (device.type || '').toLowerCase();
+      const section = typeMap[typeKey] || 'trinity_node';
 
       if (device.type === 'controller') {
         if (action === 'details') route = `${baseForLinks}/${section}/`;
@@ -49,10 +54,13 @@ export function useDeviceActions() {
         const response = await axios.get(
           `${appUrl}/perform/${action}/${subAction}/${device.name}`
         );
-        return {
-          success: true,
-          message: response.data.message || `Command sent: ${subAction}`
-        };
+        const data = response.data as { message?: string };
+        const message =
+          typeof data.message === 'string' && data.message.trim() !== ''
+            ? data.message
+            : `Command sent: ${subAction}`;
+        const success = !isPerformCommandFailureMessage(message);
+        return { success, message };
       } catch (e) {
         console.error(e);
         throw new Error('Action failed');

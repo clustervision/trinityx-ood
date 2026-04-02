@@ -1,27 +1,20 @@
 <template>
-  <div class="container-fluid flex-grow-1 container-p-y">
-    <div class="card">
-      <h5 class="card-header d-flex justify-content-between align-items-center">
-        Manage {{ pageName }} Frames
+  <div class="container-fluid flex-grow-1 container-p-y manage-page">
+    <div class="manage-page-card">
+      <div class="manage-page-header">
+        <h5 class="manage-page-title">Manage {{ pageName }} Frames</h5>
+      </div>
 
-        <button
-          v-if="props.pageType === 'rack'"
-          class="btn btn-success btn-sm"
-          @click="$emit('add-click')"
-        >
-          Add New {{ pageName }}
-        </button>
-      </h5>
-
-      <div class="card-body">
+      <div class="manage-page-body">
         <div v-if="loading" class="d-flex align-items-center justify-content-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
         </div>
-        <div v-else class="table-responsive text-nowrap">
-          <table class="table table-bordered table-hover table-striped">
+        <div v-else class="manage-table-shell">
+          <div class="table-responsive text-nowrap">
+            <table class="table table-hover table-striped manage-data-table">
             <thead>
               <tr v-if="props.pageType === 'rack'">
-                <th class="text-center">S. No.</th>
+                <th class="text-center">No.</th>
                 <th class="text-center">NAME</th>
                 <th class="text-center">SIZE</th>
                 <th class="text-center">ORDER</th>
@@ -31,7 +24,7 @@
               </tr>
 
               <tr v-else>
-                <th class="text-center">S. No.</th>
+                <th class="text-center">No.</th>
                 <th class="text-center">NAME</th>
                 <th class="text-center">TYPE</th>
                 <th class="text-center">HEIGHT</th>
@@ -84,15 +77,28 @@
                  </td>
               </tr>
             </tbody>
-          </table>
+            </table>
+          </div>
+        </div>
+        <div v-if="props.pageType === 'rack'" class="manage-page-actions">
+          <button type="button" class="manage-add-btn" @click="addRackOpen = true">
+            Add Rack
+          </button>
         </div>
       </div>
     </div>
+
+    <AddRack
+      v-if="props.pageType === 'rack'"
+      v-model:open="addRackOpen"
+      @close="onAddRackClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
+import AddRack from '@/views/AddRack.vue';
 import axios from 'axios';
 import {useToast} from "vue-toastification"
 
@@ -101,11 +107,24 @@ const Url = window.APP_URL;
 const items = ref<any[]>([]);
 const loading = ref(true);
 const toast = useToast();
-const props = defineProps<{
-  pageType: string
-}>();
+const props = withDefaults(
+  defineProps<{
+    pageType: string;
+    /** When false (e.g. navigated away), close rack add modal — Teleport ignores parent v-show. */
+    modalHostActive?: boolean;
+  }>(),
+  { modalHostActive: true }
+);
 
-const emit = defineEmits(['add-click', 'edit-click', 'show-click', 'inventory-updated', 'rack-deleted']);
+const emit = defineEmits(['edit-click', 'show-click', 'inventory-updated', 'rack-deleted', 'rack-added']);
+
+const addRackOpen = ref(false);
+
+const onAddRackClose = (payload?: { rack?: boolean }) => {
+  if (payload?.rack) {
+    emit('rack-added');
+  }
+};
 
 const pageName = computed(() => {
   if (!props.pageType) return '';
@@ -202,14 +221,157 @@ const fetchData = async () => {
   }
 };
 
-const refresh = () => fetchData();
-
-defineExpose({ refresh });
 onMounted(fetchData);
+
+watch(() => props.pageType, fetchData);
+
+watch(
+  () => props.modalHostActive,
+  (active) => {
+    if (active === false) {
+      addRackOpen.value = false;
+    }
+  }
+);
+
+defineExpose({ refresh: fetchData });
 </script>
 
 <style scoped>
-.fs-4 { font-size: 1.3rem !important; }
-a { text-decoration: none; }
-a:hover { opacity: 0.8; }
+.manage-page-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.manage-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.manage-page-title {
+  margin: 0;
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+  font-size: 1.125rem;
+  color: #5376ea;
+}
+
+.manage-add-btn {
+  margin: 0;
+  padding: 0.45rem 1.25rem;
+  font-family: var(--font-geist, 'Geist', sans-serif);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: #fff;
+  background: #5376ea;
+  border: 1px solid #5376ea;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.manage-add-btn:hover {
+  background: #3e66d6;
+  border-color: #3e66d6;
+  color: #fff;
+}
+
+.manage-add-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(62, 102, 214, 0.35);
+}
+
+.manage-page-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.manage-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 0.25rem;
+}
+
+.manage-table-shell {
+  --manage-table-border: #d8e6fd;
+  --manage-table-border-width: 2px;
+  --manage-table-radius: 6px;
+  border: none;
+  border-radius: var(--manage-table-radius);
+  overflow: hidden;
+}
+
+.manage-table-shell .table-responsive {
+  margin-bottom: 0;
+}
+
+/* separate + 0 spacing: every grid line is full width; corners can be rounded */
+.manage-data-table {
+  margin-bottom: 0;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+.manage-data-table > tbody {
+  border-top: none !important;
+}
+
+.manage-data-table > :not(caption) > * > * {
+  border-style: solid;
+  border-color: var(--manage-table-border, #d8e6fd);
+  border-width: 0;
+  border-right-width: var(--manage-table-border-width, 2px);
+  border-bottom-width: var(--manage-table-border-width, 2px);
+}
+
+.manage-data-table > thead > tr:first-child > th {
+  border-top-width: var(--manage-table-border-width, 2px);
+}
+
+.manage-data-table > thead > tr > th:first-child,
+.manage-data-table > tbody > tr > td:first-child {
+  border-left-width: var(--manage-table-border-width, 2px);
+}
+
+.manage-data-table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: var(--manage-table-radius, 6px);
+}
+
+.manage-data-table thead th {
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 1.0625rem;
+  color: #5376ea;
+  vertical-align: middle;
+}
+
+.manage-data-table tbody td {
+  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 1rem;
+  vertical-align: middle;
+}
 </style>

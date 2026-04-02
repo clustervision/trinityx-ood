@@ -2,82 +2,67 @@
   <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="menu-inner-shadow"></div>
 
-    <ul class="menu-inner py-1">
-      <li class="menu-item">
+    <ul class="menu-inner side-menu-inner">
+      <li class="menu-item side-rack-nav" :class="{ 'is-active': isDashboardActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'dashboard')">
           <i class="menu-icon tf-icons bx bx-server"></i>
           <div data-i18n="Analytics">Rack Representation</div>
         </a>
       </li>
 
-      <li class="menu-header small text-uppercase">
-        <span class="menu-header-text">Manage</span>
-      </li>
-
-      <li class="menu-item">
+      <li class="menu-item side-rack-nav" :class="{ 'is-active': isManageRackActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-rack')">
-          <i class="menu-icon tf-icons bx bx-grid-alt"></i>
+          <i class="menu-icon tf-icons bx bx-menu"></i>
           <div data-i18n="Rack">Manage Rack Frames</div>
         </a>
       </li>
 
-      <li class="menu-item">
+      <li class="menu-item side-rack-nav" :class="{ 'is-active': isManageInventoryActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-inventory')">
           <i class="menu-icon tf-icons bx bx-hdd"></i>
           <div data-i18n="Inventory">Manage Inventory</div>
         </a>
       </li>
 
-       <li class="menu-item menu-item-pool open">
-        <a href="javascript:void(0);" class="menu-link menu-toggle" @click="showUnassigned = !showUnassigned">
-          <i class="menu-icon tf-icons bx bx-unlink"></i>
-          <div data-i18n="Unassigned">Unassigned Device Pool</div>
-        </a>
-
-        <ul
-          class="menu-sub menu-sub-pool ps-3 pe-3 pt-2"
-          v-show="showUnassigned"
-          style="list-style: none; border: 2px dashed #ddd; width: 240px;"
+      <li class="menu-item side-pool-block">
+        <div class="side-nav-divider" role="presentation"></div>
+        <div class="side-search-wrap">
+          <i class="bx bx-search side-search-icon" aria-hidden="true"></i>
+          <input
+            v-model="unassignedSearch"
+            type="search"
+            class="side-search-input"
+            placeholder="Search Devices"
+            autocomplete="off"
+          />
+        </div>
+        <div
+          class="side-pool-drop"
           @dragover.prevent
           @drop="onDropBackToPool"
         >
-          <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-header">
-            <input
-              v-model="unassignedSearch"
-              type="text"
-              class="form-control form-control-sm mb-2"
-              placeholder="Search devices..."
-              style="width: 100%; font-size: 12px;"
-            />
+          <div v-if="UnassignedNodes.length > 0" class="unassigned-pool-list">
+            <div
+              v-for="device in filteredUnassignedNodes"
+              :key="device.name"
+              class="mb-2 pool-device-wrap"
+              :class="{ 'pool-device-selected': selectedPoolNames.has(device.name) }"
+              style="width: 138px;"
+              :title="device.name"
+              @click="onPoolDeviceClick($event, device)"
+            >
+              <DeviceItem
+                :device="device"
+                :is-rack-view="false"
+                :selected="selectedPoolNames.has(device.name)"
+                :selected-devices-for-drag="selectedDevicesForDrag"
+                @edit-inventory="onEditInventory"
+              />
+            </div>
           </div>
-          <div class="unassigned-pool-list" v-if="UnassignedNodes.length > 0">
-             <div
-               v-for="device in filteredUnassignedNodes"
-               :key="device.name"
-               class="mb-2 pool-device-wrap"
-               :class="{ 'pool-device-selected': selectedPoolNames.has(device.name) }"
-               style="width: 138px;"
-               :title="device.name"
-               @click="onPoolDeviceClick($event, device)"
-             >
-                <DeviceItem
-                  :device="device"
-                  :is-rack-view="false"
-                  :selected="selectedPoolNames.has(device.name)"
-                  :selected-devices-for-drag="selectedDevicesForDrag"
-                  @edit-inventory="onEditInventory"
-                />
-             </div>
-          </div>
-          <li v-else class="menu-item">
-             <a href="javascript:void(0)" class="menu-link">
-                <div class="text-muted small text-center p-2">
-                  Drag devices here to unassign
-                </div>
-             </a>
-          </li>
-        </ul>
-        </li>
+          <p v-else class="side-pool-empty">Drag devices here to unassign</p>
+        </div>
+      </li>
     </ul>
   </aside>
 </template>
@@ -89,8 +74,19 @@ import DeviceItem from '@/components/DeviceItem.vue';
 import { useToast } from 'vue-toastification';
 // @ts-ignore
 const Url = window.APP_URL;
+
+const props = withDefaults(
+  defineProps<{ currentView?: string }>(),
+  { currentView: 'dashboard' }
+);
+
+const isDashboardActive = computed(() => props.currentView === 'dashboard');
+const isManageRackActive = computed(() =>
+  ['manage-rack', 'show-rack'].includes(props.currentView)
+);
+const isManageInventoryActive = computed(() => props.currentView === 'manage-inventory');
+
 const UnassignedNodes = ref<any[]>([]);
-const showUnassigned = ref(true);
 const unassignedSearch = ref('');
 const toast = useToast();
 
@@ -152,15 +148,17 @@ const onEditInventory = (device: { name: string }) => {
   emit('edit-inventory', device.name);
 };
 
+function normalizeDevicePoolMessage(raw: unknown): any[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') return Object.values(raw as Record<string, unknown>);
+  return [];
+}
+
 const fetchUnassignedNodes = async () => {
   try {
     const response = await axios.get(Url + '/device_pool');
     const data = response.data;
-    if (data.message && Array.isArray(data.message)) {
-       UnassignedNodes.value = data.message;
-    } else {
-       UnassignedNodes.value = [];
-    }
+    UnassignedNodes.value = normalizeDevicePoolMessage(data?.message);
   } catch (error) {
     console.error("Failed to load Unassigned Inventory:", error);
     UnassignedNodes.value = [];
@@ -222,37 +220,107 @@ onMounted(() => {
 
 <style scoped>
   .layout-menu {
-    width: 250px !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
+    --side-h-inset: 12px;
+    --side-border-width: 3px;
+    width: 232px !important;
+    min-width: 232px !important;
+    max-width: 232px !important;
     height: 100%;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
   }
   .layout-menu .menu-inner {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    padding-top: 16px;
+  }
+  /* core.css fixes .menu-item at 16.25rem; narrow sidebar clips — pin to menu width */
+  .layout-menu :deep(.menu-inner > .menu-item),
+  .layout-menu :deep(.menu-inner > .menu-header) {
+    width: 100% !important;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .menu-item .router-link-active { background-color: rgba(67, 89, 113, 0.1); color: #696cff; font-weight: bold; }
-  .menu-item-pool {
+
+  /* Between Manage Inventory and Search Devices */
+  .side-nav-divider {
+    flex-shrink: 0;
+    height: 0;
+    margin: 0 0 10px;
+    border: 0;
+    border-top: 2px dashed rgba(83, 118, 234, 0.5);
+  }
+
+  .side-pool-block {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0 var(--side-h-inset);
+    box-sizing: border-box;
+    width: 100%;
   }
-  .menu-item-pool .menu-link { flex-shrink: 0; }
-  .menu-sub-pool {
+
+  .side-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    min-height: 36px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: var(--side-border-width) solid #5376ea;
+    background: #fff;
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .side-search-icon {
+    font-size: 1rem;
+    color: #5376ea;
+    flex-shrink: 0;
+  }
+
+  .side-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+    font-weight: 400;
+    font-size: 0.8125rem;
+    color: #334155;
+  }
+
+  .side-search-input::placeholder {
+    color: #94a3b8;
+  }
+
+  .side-pool-drop {
     flex: 1 1 auto;
-    min-height: 0;
-    display: flex !important;
+    min-height: 120px;
+    border-radius: 10px;
+    border: none;
+    background: #fafbfd;
+    padding: 8px;
+    display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: all 0.3s ease;
-    background-color: transparent;
+    box-sizing: border-box;
+    width: 100%;
   }
-  .unassigned-pool-header { flex-shrink: 0; }
+
   .unassigned-pool-list {
     overflow-y: auto;
     overflow-x: hidden;
@@ -265,19 +333,56 @@ onMounted(() => {
     border-radius: 4px;
   }
   .pool-device-selected {
-    outline: 2px solid #696cff;
+    outline: 2px solid #5376ea;
     outline-offset: 2px;
   }
 
-  /* Remove dropdown arrow icon next to "Unassigned Device Pool" */
-  ::v-deep(.menu-item-pool > .menu-link.menu-toggle::after) {
-    display: none !important;
+  .side-pool-empty {
+    margin: auto;
+    padding: 16px 8px;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: #94a3b8;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
+    font-weight: 400;
   }
 
-  /* Do not darken the pool header when menu-item is open */
-  ::v-deep(.menu-item-pool.menu-item.open > .menu-link) {
-    background-color: transparent !important;
+  :deep(.side-rack-nav > .menu-link) {
+    margin: 4px var(--side-h-inset) !important;
+    padding: 5px 8px !important;
+    min-height: 0 !important;
+    border-radius: 10px !important;
+    font-family: var(--font-geist, 'Geist', system-ui, sans-serif) !important;
+    font-weight: 500 !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.25 !important;
+    background-color: #fff !important;
+    color: #5376ea !important;
+    border: var(--side-border-width) solid #d0d7e2 !important;
     box-shadow: none !important;
-    color: inherit !important;
+    box-sizing: border-box !important;
+  }
+
+  :deep(.side-rack-nav:not(.is-active) > .menu-link:hover) {
+    background-color: #f8fafc !important;
+    color: #5376ea !important;
+    border-color: #c5d0de !important;
+  }
+
+  :deep(.side-rack-nav.is-active > .menu-link) {
+    background-color: #eef3ff !important;
+    color: #5376ea !important;
+    border: var(--side-border-width) solid #5376ea !important;
+  }
+
+  :deep(.side-rack-nav .menu-icon) {
+    color: #5376ea !important;
+    font-size: 1.1rem !important;
+  }
+
+  /* py-1 uses padding !important — replace with explicit top inset so nav moves down */
+  .layout-menu .menu-inner.side-menu-inner {
+    padding-top: 1.25rem !important;
+    padding-bottom: 0.25rem !important;
   }
 </style>

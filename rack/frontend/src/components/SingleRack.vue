@@ -8,6 +8,25 @@ import { useTheme } from '@/composables/useTheme';
 import { useDeviceActions } from '@/composables/useDeviceActions';
 import { useDraggedDevice } from '@/composables/useDraggedDevice';
 import { useRack } from '@/composables/useRack';
+import {
+  handleSessionExpired,
+  isSessionExpired,
+  readJsonApiResponse,
+  messageIndicatesSessionLost,
+  fetchFailureLikelySessionRelated,
+} from '@/utils/connectionStatus';
+import { parsePowerStateFromMessage } from '@/utils/powerState';
+import { showPowerOperationToast } from '@/utils/powerToast';
+import {
+  getRackPowerCacheKey,
+  mergeRackPowerCacheFromStorage,
+  type RackPowerCachePayload,
+} from '@/utils/rackPowerCache';
+import { isPerformCommandFailureMessage } from '@/utils/performCommandResponse';
+import {
+  applyRackPowerNodeResultPayload,
+  isRackPowerNodeResultPayload,
+} from '@/utils/rackPowerStreamApply';
 
 const props = defineProps<{
   rack: Rack;
@@ -51,15 +70,14 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
   isActionLoading.value = true;
   try {
     const result = await executeDeviceAction(action, subAction, device);
+    if (result && !result.success) {
+      toast.error(result.message || 'Action failed');
+      return;
+    }
     if (result?.success) {
-      // Update device power state for LED blinking
       if (action === 'power') {
         if (subAction === 'status') {
-          // Parse single-device power status from API message and update this device's LED
-          const msg = String(result.message ?? '').toUpperCase();
-          if (msg.includes('RESET')) device.powerState = 'RESET';
-          else if (msg.includes('ON')) device.powerState = 'ON';
-          else device.powerState = 'OFF';
+          device.powerState = parsePowerStateFromMessage(result.message);
           syncRackPowerFromNodes(props.rack);
           props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
           saveRackPowerCache();
@@ -70,8 +88,10 @@ const handleMenuAction = async (payload: { action: string; subAction?: string; d
           syncRackPowerFromNodes(props.rack);
           saveRackPowerCache();
         }
+        showPowerOperationToast(toast, device.name, subAction, result.message);
+      } else {
+        toast.success(result.message);
       }
-      toast.success(result.message);
     }
   } catch {
     toast.error('Action failed');
@@ -87,38 +107,12 @@ type LedDensityKey = 'high' | 'medium' | 'low';
 
 const ledCache = new Map<string, Led[]>();
 
-type RackPowerCache = {
-  powerOn?: boolean;
-  backPowerOn?: boolean;
-  devices: Record<string, string | undefined>;
-};
-
-const getRackCacheKey = (rackName: string | undefined) => `rackPowerCache:${rackName || 'unknown'}`;
-
 function applyRackPowerCache() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !props.rack?.slots) return;
   try {
-    const key = getRackCacheKey(props.rack?.name);
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return;
-    const cache = JSON.parse(raw) as RackPowerCache | null;
-    if (!cache || !cache.devices) return;
-
-    if (props.rack && props.rack.slots) {
-      props.rack.slots.forEach(slot => {
-        slot.devices.forEach(device => {
-          const cachedState = cache.devices[device.name];
-          if (cachedState === 'ON' || cachedState === 'OFF' || cachedState === 'RESET') {
-            device.powerState = cachedState;
-          } 
-        });
-      });
-      if (typeof cache.powerOn === 'boolean') props.rack.powerOn = cache.powerOn;
-      if (typeof cache.backPowerOn === 'boolean') props.rack.backPowerOn = cache.backPowerOn;
-      syncRackPowerFromNodes(props.rack);
-      // trigger re-render for LEDs and power button
-      props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
-    }
+    mergeRackPowerCacheFromStorage(props.rack);
+    syncRackPowerFromNodes(props.rack);
+    props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
   } catch (e) {
     console.error('[Rack Power Cache] Failed to apply cache', e);
   }
@@ -136,24 +130,22 @@ function saveRackPowerCache() {
         }
       });
     });
-    const payload: RackPowerCache = {
+    const payload: RackPowerCachePayload = {
       powerOn: props.rack.powerOn,
       backPowerOn: props.rack.backPowerOn,
       devices,
     };
-    const key = getRackCacheKey(props.rack.name);
+    const key = getRackPowerCacheKey(props.rack.name);
     window.localStorage.setItem(key, JSON.stringify(payload));
   } catch (e) {
     console.error('[Rack Power Cache] Failed to save cache', e);
   }
 }
 
-/** Normalize powerState for LED display: ON/RESET -> powerOn, else OFF. Matches checkPowerStatus/placeDeviceInRack. */
+/** ON/RESET only (strict); aligns with syncRackPowerFromNodes / parsePowerStateFromMessage. */
 function isDevicePowerOnForLeds(device: Device): boolean {
-  const state = (device.powerState || '').toUpperCase();
-  if (state.includes('RESET')) return true;
-  if (state.includes('ON')) return true;
-  return false;
+  const state = (device.powerState || '').trim().toUpperCase();
+  return state === 'ON' || state === 'RESET';
 }
 
 /** Pure: build LED array for a device given density. Node+OFF returns []. No logging. */
@@ -173,7 +165,7 @@ function buildDeviceLeds(device: Device, densityKey: LedDensityKey): Led[] {
   const gridSlots = [8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88];
   const allLeds: Led[] = [];
 
-  // Count per row by density: high 2-4, medium 1-2, low 1 (merge 时再少一点)
+  // Count per row by density: high 2-4, medium 1-2, low 1 (slightly fewer when merged)
   const countRange: [number, number] = densityKey === 'high' ? [2, 4] : densityKey === 'medium' ? [1, 2] : [1, 1];
   const countSpread = countRange[1] - countRange[0] + 1;
 
@@ -293,22 +285,25 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
   const handleSuccess = () => {
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
     if (hasController.value) {
-        toast.success(`${actionName} action successful!\n(Controller remained ON)`);
+      toast.success(`${actionName} action successful!\n(Controller remained ON)`);
     }
-    if (hasSwitch.value){
-        toast.success(`${actionName} action successful!\n(Switch remained ON)`);
-    }
-    else {
-        toast.success(`${actionName} action successful!`);
+    if (hasSwitch.value) {
+      toast.success(`${actionName} action successful!\n(Switch remained ON)`);
+    } else if (!hasController.value) {
+      toast.success(`${actionName} action successful!`);
     }
 
-    if (action === 'off') {
-        props.rack.powerOn = false;
-        props.rack.backPowerOn = false;
-    } else if (action === 'on') {
-        props.rack.powerOn = true;
-        props.rack.backPowerOn = true;
-    }
+    props.rack.slots.forEach(slot => {
+      slot.devices.forEach(device => {
+        if (device.type !== 'node') return;
+        if (action === 'on') device.powerState = 'ON';
+        else if (action === 'off') device.powerState = 'OFF';
+        else if (action === 'reset') device.powerState = 'RESET';
+      });
+    });
+    syncRackPowerFromNodes(props.rack);
+    props.rack.slots = props.rack.slots.map(slot => ({ ...slot, devices: [...slot.devices] }));
+    saveRackPowerCache();
     checkPowerStatus();
   };
 
@@ -318,11 +313,22 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     console.log(`Single node detected (${nodeCount}), using standard fetch: ${url}`);
     try {
       const response = await fetch(url);
-      const data = await response.json();
-      if (data.status) {
+      const parsed = await readJsonApiResponse(response);
+      if (parsed.kind === 'session_lost') {
+        handleSessionExpired();
+        return;
+      }
+      if (parsed.kind !== 'ok') {
+        toast.error('Action failed: Request was not successful.');
+        return;
+      }
+      const data = parsed.data as { message?: string };
+      const msg =
+        typeof data.message === 'string' ? data.message : String(data.message ?? '');
+      if (!isPerformCommandFailureMessage(msg)) {
         handleSuccess();
       } else {
-        toast.error(`Action Failed: ${data.message || 'Unknown error'}`);
+        toast.error(`Action Failed: ${msg || 'Unknown error'}`);
       }
     } catch (e) {
       console.error(e);
@@ -334,6 +340,55 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
     console.log(`Multi-node detected, using SSE: ${url}`);
     let isTaskCompleted = false;
     let taskFailedHandled = false;
+    const sseFailedNodes = new Set<string>();
+    let sawNodeResultPayload = false;
+
+    const showBulkSuccessToasts = () => {
+      const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+      if (hasController.value) {
+        toast.success(`${actionName} action successful!\n(Controller remained ON)`);
+      }
+      if (hasSwitch.value) {
+        toast.success(`${actionName} action successful!\n(Switch remained ON)`);
+      } else if (!hasController.value) {
+        toast.success(`${actionName} action successful!`);
+      }
+    };
+
+    const tryApplySsePayload = (dataStr: string | null | undefined) => {
+      if (dataStr == null || dataStr === '') return;
+      try {
+        const parsed: unknown = JSON.parse(dataStr);
+        if (!isRackPowerNodeResultPayload(parsed)) return;
+        sawNodeResultPayload = true;
+        const { failedNodes, succeededNodes } = applyRackPowerNodeResultPayload(
+          props.rack,
+          parsed
+        );
+        failedNodes.forEach((n) => sseFailedNodes.add(n));
+        succeededNodes.forEach((n) => sseFailedNodes.delete(n));
+        syncRackPowerFromNodes(props.rack);
+        props.rack.slots = props.rack.slots.map((slot) => ({
+          ...slot,
+          devices: [...slot.devices],
+        }));
+        saveRackPowerCache();
+      } catch (err) {
+        console.warn('[Rack Power SSE] Ignoring non-JSON or parse error:', err);
+      }
+    };
+
+    const finishRackPowerSse = () => {
+      if (sseFailedNodes.size > 0) {
+        toast.warning(
+          `Power action incomplete. Failed nodes: ${[...sseFailedNodes].join(', ')}`
+        );
+      } else if (sawNodeResultPayload) {
+        showBulkSuccessToasts();
+      }
+      checkPowerStatus();
+    };
+
     const source = new EventSource(url);
 
     const closeConnection = () => {
@@ -343,16 +398,25 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 
     source.addEventListener("started", (e: MessageEvent) => {
       console.log("Task started:", e.data);
+      tryApplySsePayload(e.data);
     });
 
     source.addEventListener("update", (e: MessageEvent) => {
       console.log("Status update:", e.data);
+      tryApplySsePayload(e.data);
     });
 
-    source.addEventListener("completed", () => {
+    // Default SSE event type (no `event:` line) — many backends only emit `message`.
+    source.addEventListener("message", (e: MessageEvent) => {
+      console.log("[Rack Power SSE] message:", e.data);
+      tryApplySsePayload(e.data);
+    });
+
+    source.addEventListener("completed", (e: MessageEvent) => {
       console.log("Task completed");
       isTaskCompleted = true;
-      handleSuccess();
+      tryApplySsePayload(e.data);
+      finishRackPowerSse();
       closeConnection();
     });
 
@@ -361,7 +425,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
       taskFailedHandled = true;
       const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
       console.warn("[Rack Power SSE] Failure from server event 'failed', showing toast:", msg);
-      toast.error(`Action Failed: ${msg}`);
+      if (messageIndicatesSessionLost(msg)) {
+        handleSessionExpired();
+      } else {
+        toast.error(`Action Failed: ${msg}`);
+      }
       closeConnection();
     });
     source.addEventListener("error", (e: MessageEvent) => {
@@ -370,7 +438,11 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         taskFailedHandled = true;
         const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Action failed.');
         console.warn("[Rack Power SSE] Failure from server event 'error', showing toast:", msg);
-        toast.error(`Action Failed: ${msg}`);
+        if (messageIndicatesSessionLost(msg)) {
+          handleSessionExpired();
+        } else {
+          toast.error(`Action Failed: ${msg}`);
+        }
       }
       closeConnection();
     });
@@ -380,18 +452,39 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
         console.log("Connection closed after completion (Normal behavior).");
         return;
       }
-      console.error("[Rack Power SSE] Connection error (no server 'failed' event). Showing toast now.");
       source.close();
+
+      // Stream ended without a custom `completed` event but we already parsed node results.
+      if (!taskFailedHandled && (sawNodeResultPayload || sseFailedNodes.size > 0)) {
+        finishRackPowerSse();
+        isTaskCompleted = true;
+        isActionLoading.value = false;
+        return;
+      }
+
+      console.error("[Rack Power SSE] Connection error (no server 'failed' event).");
       if (!taskFailedHandled) {
-        toast.error("Action failed or connection lost.");
         try {
           const response = await fetch(url);
-          const data = await response.json();
-          if (data && !data.status && data.message) {
-            toast.error(`Action Failed: ${data.message}`);
+          const parsed = await readJsonApiResponse(response);
+          if (parsed.kind === 'session_lost') {
+            handleSessionExpired();
+          } else if (parsed.kind === 'ok') {
+            const data = parsed.data as { message?: string };
+            const msg =
+              typeof data?.message === 'string'
+                ? data.message
+                : String(data?.message ?? '');
+            if (msg && isPerformCommandFailureMessage(msg)) {
+              toast.error(`Action Failed: ${msg}`);
+            } else {
+              toast.error('Action failed or connection lost.');
+            }
+          } else {
+            toast.error('Action failed or connection lost.');
           }
         } catch {
-          // Already showed generic toast
+          toast.error("Action failed or connection lost.");
         }
       }
       isActionLoading.value = false;
@@ -400,6 +493,7 @@ const handleRackAction = async (action: 'reset' | 'on' | 'off') => {
 };
 
 const checkPowerStatus = async () => {
+  if (isSessionExpired.value) return;
   let hasController = false;
   let hasSwitch = false;
   if (props.rack && props.rack.slots) {
@@ -451,24 +545,31 @@ const checkPowerStatus = async () => {
   if (nodeCount === 1) {
     try {
       const response = await fetch(url);
-      const data = await response.json();
+      const parsed = await readJsonApiResponse(response);
+      if (parsed.kind === 'session_lost') {
+        handleSessionExpired();
+        return;
+      }
+      if (parsed.kind !== 'ok') {
+        if (!isSessionExpired.value) {
+          toast.error('Status check failed.');
+        }
+        return;
+      }
+      const data = parsed.data as {
+        status?: boolean;
+        message?: Array<{ node?: string; name?: string; state?: unknown }>;
+      };
 
       if (data.status && Array.isArray(data.message)) {
+        const statusMessages = data.message;
         props.rack.slots.forEach(slot => {
           slot.devices.forEach(device => {
-            const item = data.message.find((m: any) => (m.node || m.name) === device.name);
+            const item = statusMessages.find(
+              (m) => (m.node || m.name) === device.name
+            );
             if (item) {
-              let stateStr = String(item.state || item).toUpperCase();
-              // Extract actual state from "success with unparsable output: RESET" format
-              if (stateStr.includes('RESET')) {
-                stateStr = 'RESET';
-              } else if (stateStr.includes('ON')) {
-                stateStr = 'ON';
-              } else if (stateStr.includes('OFF')) {
-                stateStr = 'OFF';
-              }
-              // Handle RESET state from backend
-              device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
+              device.powerState = parsePowerStateFromMessage(item.state ?? item);
             }
           });
         });
@@ -478,8 +579,13 @@ const checkPowerStatus = async () => {
         saveRackPowerCache();
       }
     } catch (e) {
-      console.error("[Rack Status] Single-node fetch failed, showing toast:", e);
-      toast.error("Status check failed.");
+      console.error('[Rack Status] Single-node fetch failed:', e);
+      if (isSessionExpired.value) return;
+      if (fetchFailureLikelySessionRelated(e)) {
+        handleSessionExpired();
+      } else {
+        toast.error('Status check failed.');
+      }
     }
   }
   // --- CASE B: Multi Node (Use SSE) ---
@@ -497,21 +603,12 @@ const checkPowerStatus = async () => {
       } else if (raw && typeof raw === 'object' && !raw.message) {
         Object.entries(raw).forEach(([name, val]) => list.push({ name, state: String(val) }));
       }
+      if (list.length === 0) return;
       props.rack.slots.forEach(slot => {
         slot.devices.forEach(device => {
           const item = list.find((d) => d.name === device.name);
           if (item) {
-            let stateStr = String(item.state).toUpperCase();
-            // Extract actual state from "success with unparsable output: RESET" format
-            if (stateStr.includes('RESET')) {
-              stateStr = 'RESET';
-            } else if (stateStr.includes('ON')) {
-              stateStr = 'ON';
-            } else if (stateStr.includes('OFF')) {
-              stateStr = 'OFF';
-            }
-            // Handle RESET state from backend
-            device.powerState = stateStr === 'ON' ? 'ON' : stateStr === 'RESET' ? 'RESET' : 'OFF';
+            device.powerState = parsePowerStateFromMessage(item.state);
           }
         });
       });
@@ -541,24 +638,64 @@ const checkPowerStatus = async () => {
       }
     });
 
+    source.addEventListener("message", (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        handleStatusData(data);
+      } catch {
+        source.close();
+      }
+    });
+
     source.addEventListener("failed", (e: MessageEvent) => {
       statusErrorHandled = true;
       const msg = (e.data && typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
-      toast.error(`Status check failed: ${msg}`);
+      if (messageIndicatesSessionLost(msg)) {
+        handleSessionExpired();
+      } else if (!isSessionExpired.value) {
+        toast.error(`Status check failed: ${msg}`);
+      }
       source.close();
     });
     source.addEventListener("error", (e: MessageEvent) => {
       if (e.data) {
         statusErrorHandled = true;
         const msg = (typeof e.data === 'string') ? e.data : (e.data?.message ?? 'Status check failed.');
-        toast.error(`Status check failed: ${msg}`);
+        if (messageIndicatesSessionLost(msg)) {
+          handleSessionExpired();
+        } else if (!isSessionExpired.value) {
+          toast.error(`Status check failed: ${msg}`);
+        }
       }
       source.close();
     });
 
-    source.onerror = () => {
+    source.onerror = async () => {
+      if (isSessionExpired.value) {
+        source.close();
+        return;
+      }
       if (!statusErrorHandled) {
-        toast.error("Status check failed or connection lost.");
+        try {
+          const response = await fetch(url);
+          if (isSessionExpired.value) {
+            source.close();
+            return;
+          }
+          const parsed = await readJsonApiResponse(response);
+          if (parsed.kind === 'session_lost') {
+            handleSessionExpired();
+          } else if (parsed.kind === 'error' && !isSessionExpired.value) {
+            toast.error('Status check failed or connection lost.');
+          }
+        } catch (e) {
+          // SSE died; fallback fetch often throws when session ends (Firefox: can't establish connection)
+          if (fetchFailureLikelySessionRelated(e)) {
+            handleSessionExpired();
+          } else if (!isSessionExpired.value) {
+            toast.error('Status check failed or connection lost.');
+          }
+        }
       }
       source.close();
     };
@@ -581,12 +718,19 @@ watch(
       clearInterval(powerStatusIntervalId.value);
       powerStatusIntervalId.value = null;
     }
-    if (dark) {
+    if (dark && !isSessionExpired.value) {
       powerStatusIntervalId.value = setInterval(() => checkPowerStatus(), POWER_STATUS_INTERVAL_MS);
     }
   },
   { immediate: true }
 );
+
+watch(isSessionExpired, (expired) => {
+  if (expired && powerStatusIntervalId.value) {
+    clearInterval(powerStatusIntervalId.value);
+    powerStatusIntervalId.value = null;
+  }
+});
 
 onUnmounted(() => {
   if (powerStatusIntervalId.value) {
@@ -712,25 +856,27 @@ const clearPreview = () => {
 
       <div class="rack-column" v-if="rack.showFrontSide !== false">
 
-        <div class="rack-header-light position-relative">
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5;"></div>
+        <div class="rack-header-light rack-header-bar position-relative">
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
-          <div class="d-flex align-items-center position-relative" style="z-index: 4;">
-            <span class="u-header-label">U</span>
-            <span class="rack-title text-white" :title="rack.name">{{ truncatedRackName }}</span>
+          <span class="u-header-label rack-header-u">U</span>
+          <span class="rack-title text-white rack-header-title" :title="rack.name">{{ truncatedRackName }}</span>
+          <div class="rack-header-actions d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
+            <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
+            <span
+              class="power-btn-circle cursor-pointer"
+              :class="rack.powerOn ? 'power-btn-on' : 'power-btn-off'"
+              :title="powerButtonTooltip"
+              @click="handleRackAction(rack.powerOn ? 'off' : 'on')"
+            >
+              <i class="bx bx-power-off"></i>
+            </span>
           </div>
-          <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
-              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-              <span
-                class="power-btn-circle cursor-pointer"
-                :class="rack.powerOn ? 'power-btn-on' : 'power-btn-off'"
-                :title="powerButtonTooltip"
-                @click="handleRackAction(rack.powerOn ? 'off' : 'on')"
-              >
-                <i class="bx bx-power-off"></i>
-              </span>
-              <span class="u-header-label ms-1">U</span>
-            </div>
+          <span class="u-header-label rack-header-u">U</span>
         </div>
 
         <div ref="frontFrameRef" class="rack-frame"
@@ -738,7 +884,11 @@ const clearPreview = () => {
              @dragleave="onFrameDragLeave"
              @dragover.prevent="handleDragOver($event, 'front')"
              @drop.prevent="handleDrop($event, 'front')">
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number">
 
@@ -783,7 +933,10 @@ const clearPreview = () => {
                               }">
                           </div>
                         </template>
-                        <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
+                        <div
+                          class="device-dark-overlay"
+                          :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+                        ></div>
                         <DeviceItem
                           :device="device"
                           :metric1-value="getMetric(device, metric1,true)?.value"
@@ -809,28 +962,30 @@ const clearPreview = () => {
 
       <div class="rack-column" v-if="rack.showBackSide">
 
-        <div class="rack-header-dark position-relative">
+        <div class="rack-header-dark rack-header-bar position-relative">
 
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
-          <div class="d-flex align-items-center position-relative" style="z-index: 4;">
-            <span class="u-header-label">U</span>
-            <span class="rack-title text-white" :title="rack.name">{{ truncatedRackName }}</span>
+          <span class="u-header-label rack-header-u">U</span>
+          <span class="rack-title text-white rack-header-title" :title="rack.name">{{ truncatedRackName }}</span>
+          <div class="rack-header-actions d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
+            <template v-if="rack.showFrontSide === false">
+              <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
+              <span
+                class="power-btn-circle cursor-pointer"
+                :class="rack.backPowerOn ? 'power-btn-on' : 'power-btn-off'"
+                :title="powerButtonTooltip"
+                @click="handleRackAction(rack.backPowerOn ? 'off' : 'on')"
+              >
+                <i class="bx bx-power-off"></i>
+              </span>
+            </template>
           </div>
-          <div class="d-flex align-items-center gap-1 position-relative" style="z-index: 4;">
-              <template v-if="rack.showFrontSide === false">
-                <button class="btn btn-light btn-xs fw-bold reset-btn" @click="handleRackAction('reset')">RESET</button>
-                <span
-                  class="power-btn-circle cursor-pointer"
-                  :class="rack.backPowerOn ? 'power-btn-on' : 'power-btn-off'"
-                  :title="powerButtonTooltip"
-                  @click="handleRackAction(rack.backPowerOn ? 'off' : 'on')"
-                >
-                  <i class="bx bx-power-off"></i>
-                </span>
-              </template>
-              <span class="u-header-label">U</span>
-            </div>
+          <span class="u-header-label rack-header-u">U</span>
         </div>
 
         <div ref="backFrameRef" class="rack-frame"
@@ -838,7 +993,11 @@ const clearPreview = () => {
              @dragleave="onFrameDragLeave"
              @dragover.prevent="handleDragOver($event, 'back')"
              @drop.prevent="handleDrop($event, 'back')">
-          <div v-if="isDarkMode" class="device-dark-overlay" style="z-index: 5; pointer-events: none;"></div>
+          <div
+            class="device-dark-overlay"
+            :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+            style="z-index: 5;"
+          ></div>
 
           <div class="rack-row" v-for="slot in rack.slots" :key="slot.number">
 
@@ -881,7 +1040,10 @@ const clearPreview = () => {
                               }">
                           </div>
                         </template>
-                        <div v-if="isDarkMode" class="device-dark-overlay" style="pointer-events: none;"></div>
+                        <div
+                          class="device-dark-overlay"
+                          :class="{ 'device-dark-overlay--inactive': !isDarkMode }"
+                        ></div>
                         <DeviceItem
                           :device="device"
                           :metric1-value="getMetric(device, metric1,true)?.value"
@@ -929,7 +1091,7 @@ const clearPreview = () => {
   height: 16px;
   border-radius: 50%;
   border: none;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow: none;
 }
 .power-btn-circle i {
   color: #fff;
@@ -1001,6 +1163,10 @@ const clearPreview = () => {
   /* backdrop-filter: blur(1px); */
 }
 
+.device-dark-overlay--inactive {
+  opacity: 0;
+}
+
 .flex-fill .device-dark-overlay {
     z-index: 20;
 }
@@ -1012,11 +1178,9 @@ const clearPreview = () => {
 
 .rack-header-light {
   background-color: var(--rack-header-bg);
-  border: 2px solid var(--border-color);
+  /* Match rack-frame outer border (#222); theme --border-color can disappear on grey header */
+  border: 2px solid #222;
   border-bottom: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 0;
   height: 20px;
   overflow: hidden;
@@ -1026,9 +1190,6 @@ const clearPreview = () => {
   background-color: #222;
   border: 2px solid #222;
   border-bottom: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 0;
   height: 20px;
   overflow: hidden;
@@ -1066,7 +1227,6 @@ const clearPreview = () => {
   z-index: 5;
 }
 .rack-title {
-  margin-left: 10px;
   font-size: 0.8rem;
   font-weight: bold;
   color: #fff !important;
@@ -1076,11 +1236,54 @@ const clearPreview = () => {
 .front-label { background-color: #6666ff; border-top-left-radius: 5px; border-top-right-radius: 5px; }
 .back-toggle { background-color: #333; cursor: pointer; border-top-left-radius: 5px; border-top-right-radius: 5px; }
 .rack-column { min-width: 180px; display: flex; flex-direction: column; flex:1; }
-.u-header-label { width: 20px; text-align: center; font-size: 10px; font-weight: bold; color: #444; background-color: #e9ecef; display: inline-block; line-height: 16px; z-index: 3;}
-.rack-header-dark { background-color: #222; display: flex; justify-content: space-between; align-items: center; padding: 0; height: 20px; overflow: hidden; border: 2px solid #222; border-bottom: none; }
-.rack-header-light { background-color: #aaaaaa; display: flex; justify-content: space-between; align-items: center; padding: 0; height: 20px; overflow: hidden; border: 2px solid #222; border-bottom: none; }
-.rack-title { margin-left: 10px; font-size: 0.8rem; font-weight: bold; }
-.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; z-index: 3}
+/* Same 20px track + line-height as .rack-label so U lines up with number columns */
+.u-header-label {
+  width: 20px;
+  min-width: 20px;
+  max-width: 20px;
+  flex-shrink: 0;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: #444;
+  background-color: #e9ecef;
+  display: block;
+  z-index: 6;
+  box-sizing: border-box;
+}
+/* Fixed columns: left U | title (shrinks) | actions | right U — no horizontal padding/gap (matches rack-row) */
+.rack-header-bar {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto 20px;
+  align-items: stretch;
+  column-gap: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.rack-header-title {
+  margin-left: 10px;
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  z-index: 6;
+}
+.rack-header-u {
+  justify-self: stretch;
+  align-self: stretch;
+}
+.rack-header-actions {
+  flex-shrink: 0;
+  justify-self: end;
+  align-self: center;
+  margin-left: 6px;
+  z-index: 6;
+}
+.reset-btn { font-size: 0.55rem; padding: 1px 2px; height: 12px; line-height: 0.5; z-index: 3; flex-shrink: 0; }
 .rack-frame { background: #e9ecef; border: 2px solid #222; border-top: none; padding: 0; z-index: 5;}
 .rack-row { display: flex; height: 20px; border-bottom: 1px solid #adb5bd; background-color: #fff; }
 .rack-label { width: 20px; text-align: center; line-height: 20px; font-size: 11px; font-weight: bold; color: #444; background-color: #e9ecef; border-right: 1px solid #dee2e6;z-index: 3; }

@@ -30,7 +30,7 @@ const menuStyle = computed(() => {
     return {
       left: `${x}px`,
       bottom: `${windowHeight - y}px`,
-      top: 'auto' 
+      top: 'auto'
     };
   } else {
     return {
@@ -46,13 +46,13 @@ onUnmounted(() => document.removeEventListener('mousedown', handleClickOutside))
 
 const menuItems = computed(() => {
   if (!props.device) return [];
-  const type = props.device.type || 'node';
+  const type = (props.device.type || 'node').toLowerCase();
   
   const items = [
     { label: 'Details', action: 'details', icon: 'bx bx-detail' },
   ];
 
-  const hasEditInInventory = ['node', 'switch', 'controller'].includes(type);
+  const hasEditInInventory = ['node', 'switch', 'controller', 'otherdevices'].includes(type);
   if (hasEditInInventory) {
     items.push({ label: 'Edit in Inventory', action: 'edit-inventory', icon: 'bx bx-edit' });
     items.push({ label: 'Edit in Console', action: 'edit', icon: 'bx bx-link-external' });
@@ -78,15 +78,15 @@ const triggerAction = (action: string, subAction?: string) => {
 </script>
 
 <template>
-  <div 
-    v-if="visible && device" 
+  <div
+    v-if="visible && device"
     ref="menuRef"
-    class="context-menu" 
+    class="context-menu"
     :style="menuStyle"
     @wheel.stop
   >
     <div class="menu-header">
-      <i class="bx bx-chip me-2"></i> 
+      <i class="bx bx-chip me-2"></i>
       <strong>{{ device.name }} Settings</strong>
     </div>
 
@@ -102,7 +102,7 @@ const triggerAction = (action: string, subAction?: string) => {
         <li @click="triggerAction('power', 'off')"><i class="bx bx-power-off text-danger"></i> Power Off</li>
         <li @click="triggerAction('power', 'on')"><i class="bx bx-power-off text-success"></i> Power ON</li>
         <li @click="triggerAction('power', 'reset')"><i class="bx bx-reset"></i> Power Reset</li>
-        
+
         <li class="divider"></li>
         <li @click="triggerAction('sel', 'list')"><i class="bx bx-list-ul"></i> Sel List</li>
         <li @click="triggerAction('sel', 'clear')"><i class="bx bx-list-minus"></i> Sel Clear</li>
