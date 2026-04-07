@@ -22,31 +22,27 @@
   </head>
 
   <body>
-    {% if request.args.get('popup') == '1' %}
-      <div class="layout-wrapper">
-        <div class="layout-container">
+    {% set is_popup = request.args.get('popup') == '1' %}
+    {% if not is_popup %}
+    <header>
+      {% include "layout/navbar.html" %}
+    </header>
+    {% endif %}
+    <div class="layout-wrapper {% if not is_popup %}layout-content-navbar{% endif %}">
+      <div class="layout-container">
           <div class="content-wrapper">
             {% block content %}
             {% endblock content %}
+            {% if not is_popup %}
+            {% include "layout/footer.html" %}
+            <div class="content-backdrop fade"></div>
+            {% endif %}
           </div>
-        </div>
       </div>
-    {% else %}
-      <header>
-        {% include "layout/navbar.html" %}
-      </header>
-      <div class="layout-wrapper layout-content-navbar">
-        <div class="layout-container">
-            <div class="content-wrapper">
-              {% block content %}
-              {% endblock content %}
-              {% include "layout/footer.html" %}
-              <div class="content-backdrop fade"></div>
-            </div>
-        </div>
-        <div class="layout-overlay layout-menu-toggle"></div>
-      </div>
-    {% endif %}
+      {% if not is_popup %}
+      <div class="layout-overlay layout-menu-toggle"></div>
+      {% endif %}
+    </div>
     {% include "layout/footer_js.html" %}
   </body>
 </html>
