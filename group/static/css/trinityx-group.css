@@ -4,7 +4,16 @@
 
 /* ---------- Page background ---------- */
 body.tx-dark-bg {
+  --bs-body-bg: #4a4a5a;
   background: #4a4a5a !important;
+  background-color: #4a4a5a !important;
+}
+body.tx-dark-bg .layout-wrapper,
+body.tx-dark-bg .layout-container,
+body.tx-dark-bg .content-wrapper,
+body.tx-dark-bg .layout-page {
+  background: #4a4a5a !important;
+  background-color: #4a4a5a !important;
 }
 
 /* ---------- White rounded shell ---------- */
@@ -279,8 +288,8 @@ body.tx-dark-bg {
   font-size: 0.85rem;
 }
 .tx-shell table thead th {
-  background: #e8edfe;
-  color: #3a56c7;
+  background: #e8edfe !important;
+  color: #3a56c7 !important;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.78rem;
@@ -291,14 +300,22 @@ body.tx-dark-bg {
   padding: 0.55rem 0.75rem;
   border: 1px solid #e8ecf4;
 }
+.tx-shell table.table-striped tbody tr:nth-child(even),
 .tx-shell table tbody tr:nth-child(even) {
-  background: #f4f7fe;
+  background: #f4f7fe !important;
 }
+.tx-shell table.table-striped tbody tr:nth-child(odd),
 .tx-shell table tbody tr:nth-child(odd) {
-  background: #fff;
+  background: #fff !important;
 }
 .tx-shell table tbody tr:hover {
-  background: #eaf0ff;
+  background: #eaf0ff !important;
+}
+
+/* Hide the "S. No." serial number column */
+.tx-shell #datatable th:first-child,
+.tx-shell #datatable td:first-child {
+  display: none;
 }
 
 /* DataTables overrides */
@@ -343,29 +360,17 @@ body.tx-dark-bg {
   padding: 0;
 }
 
-/* ---------- Footer ---------- */
-.tx-dark-bg .content-footer {
+/* ---------- Footer on dark background ---------- */
+body.tx-dark-bg .content-footer {
   background: transparent !important;
-  color: #a0a0b0;
+  color: #ccc;
   font-size: 0.8rem;
 }
-.tx-dark-bg .content-footer a {
-  color: #c0c0d0;
+body.tx-dark-bg .content-footer a {
+  color: #ddd;
 }
-.tx-dark-bg .content-footer a:hover {
+body.tx-dark-bg .content-footer a:hover {
   color: #fff;
-}
-
-/* ---------- Navbar on dark bg ---------- */
-.tx-dark-bg .navbar {
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-.tx-dark-bg .breadcrumb-item a {
-  color: #c0c0d0 !important;
-}
-.tx-dark-bg .breadcrumb-item + .breadcrumb-item::before {
-  color: #888;
 }
 
 /* ---------- Misc ---------- */
