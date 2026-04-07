@@ -1,0 +1,407 @@
+/* ========================================================
+   TrinityX OOD – Group App Theme
+   ======================================================== */
+
+/* ---------- Page background ---------- */
+body.tx-dark-bg {
+  background: #4a4a5a !important;
+}
+
+/* ---------- White rounded shell ---------- */
+.tx-shell {
+  max-width: 1400px;
+  margin: 1.5rem auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+}
+
+/* ---------- Page title ---------- */
+.tx-title {
+  color: #4a6cf7;
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ---------- Header bar (title + actions) ---------- */
+.tx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.tx-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Compact field rows ---------- */
+.tx-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.75rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+/* ---------- Blue field (input-group style) ---------- */
+.tx-field {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid #a3b3f7;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.tx-field .tx-label {
+  background: #e8edfe;
+  color: #3a56c7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+  border-right: 1.5px solid #a3b3f7;
+  line-height: 1.5;
+}
+.tx-field input,
+.tx-field select,
+.tx-field textarea {
+  border: none;
+  outline: none;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+  background: transparent;
+  min-width: 100px;
+}
+.tx-field select {
+  min-width: 120px;
+  cursor: pointer;
+}
+.tx-field input:focus,
+.tx-field select:focus,
+.tx-field textarea:focus {
+  box-shadow: none;
+}
+.tx-field input[type="checkbox"] {
+  min-width: auto;
+  width: 1rem;
+  height: 1rem;
+  margin: 0 0.3rem;
+  cursor: pointer;
+}
+.tx-field input[type="number"] {
+  min-width: 80px;
+  max-width: 100px;
+}
+
+/* ---------- Orange field (interface fields) ---------- */
+.tx-field-orange {
+  border-color: #f0a848;
+}
+.tx-field-orange .tx-label {
+  background: #fef0d5;
+  color: #b57714;
+  border-right-color: #f0a848;
+}
+
+/* ---------- Interface section ---------- */
+.tx-interface-section {
+  background: #fffaf2;
+  border: 1.5px solid #f0dbb8;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.tx-interface-block {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed #e8d8c0;
+}
+.tx-interface-block:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.tx-interface-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* ---------- Buttons ---------- */
+.tx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 1.1rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.5;
+  transition: opacity 0.15s;
+}
+.tx-btn:hover {
+  opacity: 0.85;
+  text-decoration: none;
+}
+
+.tx-btn-blue {
+  background: #4a6cf7;
+  color: #fff;
+}
+.tx-btn-blue:hover, .tx-btn-blue:focus {
+  color: #fff;
+}
+
+.tx-btn-orange {
+  background: #f0a848;
+  color: #fff;
+}
+.tx-btn-orange:hover, .tx-btn-orange:focus {
+  color: #fff;
+}
+
+.tx-btn-dark {
+  background: #2c2c3a;
+  color: #fff;
+}
+.tx-btn-dark:hover, .tx-btn-dark:focus {
+  color: #fff;
+}
+
+.tx-btn-outline-blue {
+  background: transparent;
+  color: #4a6cf7;
+  border: 1.5px solid #4a6cf7;
+}
+.tx-btn-outline-blue:hover, .tx-btn-outline-blue:focus {
+  color: #4a6cf7;
+}
+
+.tx-btn-help {
+  background: #f0a848;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.tx-btn-wide {
+  min-width: 180px;
+}
+
+/* ---------- Footer actions row (Advanced left, Submit right) ---------- */
+.tx-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  gap: 0.75rem;
+}
+
+/* ---------- Advanced collapsible ---------- */
+.tx-advanced-body {
+  margin-top: 0.75rem;
+}
+.tx-advanced-body .tx-adv-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+.tx-advanced-body .tx-adv-label {
+  min-width: 160px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  padding-top: 0.4rem;
+  text-transform: capitalize;
+}
+.tx-advanced-body .tx-adv-input {
+  flex: 1;
+}
+.tx-advanced-body textarea {
+  width: 100%;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+.tx-advanced-body input[type="text"] {
+  width: 100%;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.82rem;
+}
+.tx-advanced-body .input-group {
+  flex: 1;
+}
+
+/* ---------- Alerts ---------- */
+.tx-shell .alert-error,
+.tx-shell .alert-danger {
+  background: #fde0db;
+  border: 1.5px solid #f5b8ac;
+  color: #6b3a30;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+.tx-shell .alert-success {
+  background: #dff5e3;
+  border: 1.5px solid #a8ddb5;
+  color: #2a6b3a;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Table (inventory list) ---------- */
+.tx-shell table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.tx-shell table thead th {
+  background: #e8edfe;
+  color: #3a56c7;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d0d8f0;
+}
+.tx-shell table tbody td {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #e8ecf4;
+}
+.tx-shell table tbody tr:nth-child(even) {
+  background: #f4f7fe;
+}
+.tx-shell table tbody tr:nth-child(odd) {
+  background: #fff;
+}
+.tx-shell table tbody tr:hover {
+  background: #eaf0ff;
+}
+
+/* DataTables overrides */
+.tx-shell .dataTables_wrapper .dataTables_length,
+.tx-shell .dataTables_wrapper .dataTables_filter,
+.tx-shell .dataTables_wrapper .dataTables_info,
+.tx-shell .dataTables_wrapper .dataTables_paginate {
+  font-size: 0.82rem;
+  padding: 0.5rem 0;
+}
+.tx-shell .dataTables_wrapper .dataTables_paginate .paginate_button {
+  border-radius: 6px !important;
+  padding: 0.25rem 0.6rem !important;
+}
+
+/* ---------- Breadcrumb bar ---------- */
+.tx-breadcrumb-bar {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.78rem;
+  color: #b0b0c0;
+}
+.tx-breadcrumb-bar a {
+  color: #c0c0d0;
+  text-decoration: none;
+}
+.tx-breadcrumb-bar a:hover {
+  color: #fff;
+}
+
+/* ---------- Hide Bootstrap card chrome when inside tx-shell ---------- */
+.tx-shell .card {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+.tx-shell .card-header {
+  display: none;
+}
+.tx-shell .card-body {
+  padding: 0;
+}
+
+/* ---------- Footer ---------- */
+.tx-dark-bg .content-footer {
+  background: transparent !important;
+  color: #a0a0b0;
+  font-size: 0.8rem;
+}
+.tx-dark-bg .content-footer a {
+  color: #c0c0d0;
+}
+.tx-dark-bg .content-footer a:hover {
+  color: #fff;
+}
+
+/* ---------- Navbar on dark bg ---------- */
+.tx-dark-bg .navbar {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+.tx-dark-bg .breadcrumb-item a {
+  color: #c0c0d0 !important;
+}
+.tx-dark-bg .breadcrumb-item + .breadcrumb-item::before {
+  color: #888;
+}
+
+/* ---------- Misc ---------- */
+.tx-shell hr {
+  display: none;
+}
+.tx-separator {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 1rem 0;
+}
+
+/* Form status inline message */
+.tx-shell #form-status {
+  font-size: 0.82rem;
+}
+
+/* ---------- Server-rendered interface blocks (from app.py) ---------- */
+.tx-interface-section > .input-group {
+  margin-bottom: 0.35rem;
+}
+.tx-interface-section > .input-group .input-group-text {
+  background: #fef0d5;
+  color: #b57714;
+  border-color: #f0a848;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tx-interface-section > .input-group .form-control {
+  border-color: #f0a848;
+  font-size: 0.82rem;
+}
+.tx-interface-section > .input-group .btn-danger {
+  background: #2c2c3a;
+  border-color: #2c2c3a;
+  border-radius: 20px;
+  font-size: 0.82rem;
+}

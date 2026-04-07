@@ -177,7 +177,7 @@
     }
 
     function get_list(table, select){
-        var network = '';
+        var options = '';
         var url = window.location.href;
         url = url.replace(window.location.search,'');
         if  (url.includes('/edit/') || url.includes('/clone/')){
@@ -198,37 +198,32 @@
             type: 'GET',
             dataType: 'json',
             success: function(res) {
-                network += '<span class="input-group-text">'+ucwords(table)+'</span><select name="'+table+'" class="form-control" id="id_'+table+'">';
+                options += '<select name="'+table+'" id="id_'+table+'">';
                 for (var i=0; i<res.length; i++) {
                     if (select == res[i][0]){
-                        network += '<option value="'+res[i][0]+'" selected>'+res[i][1]+'</option>';
+                        options += '<option value="'+res[i][0]+'" selected>'+res[i][1]+'</option>';
                     } else {
-                        network += '<option value="'+res[i][0]+'">'+res[i][1]+'</option>';
+                        options += '<option value="'+res[i][0]+'">'+res[i][1]+'</option>';
                     }
-                
                 }
-                network += '</select>';
-            },
-            //error: function() {
-            //    alert('Error occured');
-           // }
+                options += '</select>';
+            }
         });
-        return network;
+        return options;
     }
 
-    group_interface = `<br />
-    <div class="input-group">
-        <span class="input-group-text">Interface</span><input type="text" name="interface" required class="form-control" placeholder="interface" />
-        ${get_list("network", null)}
-        <span class="input-group-text">MTU</span><input type="number" name="mtu" class="form-control" min="68" max="65535" id="id_mtu" placeholder="68-65535" />
-        <span class="input-group-text">Options</span><input type="text" name="options" class="form-control" placeholder="options" />
-    </div>
-    <div class="input-group">
-        <span class="input-group-text">VLAN ID</span><input type="text" name="vlanid" class="form-control" placeholder="VLAN ID" />
-        <span class="input-group-text">VLAN Parent</span><input type="text" name="vlan_parent" class="form-control" placeholder="VLAN Parent" value="" />
-        <span class="input-group-text">Bond Mode</span>
-        <select name="bond_mode" class="form-control">
-            <option value=''>--- Select Bond Mode ---</option>
+    group_interface = `
+    <div class="tx-interface-block">
+      <div class="tx-fields">
+        <div class="tx-field tx-field-orange"><span class="tx-label">Interface:</span><input type="text" name="interface" required placeholder="interface" /></div>
+        <div class="tx-field tx-field-orange"><span class="tx-label">Network:</span>${get_list("network", null)}</div>
+        <div class="tx-field tx-field-orange"><span class="tx-label">MTU:</span><input type="number" name="mtu" min="68" max="65535" placeholder="68-65535" /></div>
+        <div class="tx-field tx-field-orange"><span class="tx-label">DHCP</span><input type="checkbox" class="form-check-input" onclick="toggleDHCP(this)" /><input type="hidden" name="dhcp" value="false" /></div>
+      </div>
+      <div class="tx-fields">
+        <div class="tx-field tx-field-orange"><span class="tx-label">Bond Mode:</span>
+          <select name="bond_mode">
+            <option value=''>--- Select ---</option>
             <option value='balance-rr'>balance-rr</option>
             <option value='active-backup'>active-backup</option>
             <option value='balance-xor'>balance-xor</option>
@@ -236,15 +231,22 @@
             <option value='802.3ad'>802.3ad</option>
             <option value='balance-tlb'>balance-tlb</option>
             <option value='balance-alb'>balance-alb</option>
-        </select>
-        <span class="input-group-text">Bond Slaves</span>
-        <input type="text" name="bond_slaves" class="form-control" placeholder="Bond Slaves Interfaces" value="" />
-
-        <span class="input-group-text">DHCP&nbsp;<input type="checkbox" class="form-check-input" id="id_dhcp" onclick="toggleDHCP(this)" /><input type="hidden" name="dhcp" value="false" /></span>
-        
-        <button type="button" class="btn btn-sm btn-danger" id="remove_nodeinterface">Remove Interface</button></div>`
-    $("#add_nodeinterface").click(function () {
-        $("#nodeinterface").append(group_interface);    
+          </select>
+        </div>
+        <div class="tx-field tx-field-orange"><span class="tx-label">Bond Child:</span><input type="text" name="bond_slaves" placeholder="Bond Child Interfaces" /></div>
+        <div class="tx-field tx-field-orange"><span class="tx-label">VLAN ID:</span><input type="text" name="vlanid" placeholder="VLAN ID" /></div>
+      </div>
+      <div class="tx-fields">
+        <div class="tx-field tx-field-orange"><span class="tx-label">Options:</span><input type="text" name="options" placeholder="options" /></div>
+        <div class="tx-field tx-field-orange"><span class="tx-label">VLAN Parent:</span><input type="text" name="vlan_parent" placeholder="VLAN Parent" /></div>
+      </div>
+      <div class="tx-interface-actions">
+        <button type="button" class="tx-btn tx-btn-dark" id="remove_nodeinterface">Remove Interface</button>
+        <button type="button" class="tx-btn tx-btn-orange" id="add_nodeinterface">+ Add</button>
+      </div>
+    </div>`;
+    $('body').on('click', '#add_nodeinterface', function () {
+        $("#nodeinterface").append(group_interface);
     });
 
 
@@ -292,28 +294,42 @@
     }
 
      $('body').on('click', '#remove_nodeinterface', function() {
-        
-        var interface = $(this).parent().prev().find('input[type="text"]').val();
+        var $block = $(this).closest('.tx-interface-block');
         var url = window.location.href;
         url = url.split('/');
         var node = url[url.length-1];
-        if (interface){
-            var response = remove_interface(node, interface);
-            if ('error' in response){
-                if ($(this).parent().next().next().children().is("span") || $(this).parent().next().next().next().length == 0){
-                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">'+response.error+'</p></div>');
+
+        if ($block.length) {
+            var iface = $block.find('input[name="interface"]').val();
+            if (iface) {
+                var response = remove_interface(node, iface);
+                if ('error' in response) {
+                    $block.after('<div class="alert alert-danger" role="alert">'+response.error+'</div>');
                 }
-            }
-            if ('success' in response){
-                $(this).parent().after('<br /><div class="input-group"><p class="alert alert-success" role="alert">'+response.success+'</p></div>');
-                $(this).parent().prev().remove();
-                $(this).parent().remove()
+                if ('success' in response) {
+                    $block.after('<div class="alert alert-success" role="alert">'+response.success+'</div>');
+                    $block.remove();
+                }
+            } else {
+                $block.remove();
             }
         } else {
-            $(this).parent().prev().remove();
-            $(this).parent().remove()
+            var iface = $(this).parent().prev().find('input[type="text"]').val();
+            if (iface) {
+                var response = remove_interface(node, iface);
+                if ('error' in response) {
+                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">'+response.error+'</p></div>');
+                }
+                if ('success' in response) {
+                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-success" role="alert">'+response.success+'</p></div>');
+                    $(this).parent().prev().remove();
+                    $(this).parent().remove();
+                }
+            } else {
+                $(this).parent().prev().remove();
+                $(this).parent().remove();
+            }
         }
-        
      });
 
 </script>

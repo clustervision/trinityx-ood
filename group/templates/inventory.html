@@ -1,19 +1,8 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<style>
-  .group-main-shell {
-    max-width: 1400px;
-    margin: 0 auto;
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 1.5rem;
-  }
-</style>
+<div class="tx-shell">
 
-<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
-  <div class="group-main-shell">
-  
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
@@ -22,26 +11,18 @@
     {% endif %}
   {% endwith %}
 
-{% if data %}
-  <!-- Bordered Table -->
-  <div class="card">
-    <h5 class="card-header">{{ table }} List <span><a style="float: right;" href="{{ url_for('add') }}" class="btn btn-success">Add New {{ table }}</a></span></h5>
-    <div class="card-body">
-      <div class="text-nowrap">{{ data  | safe }}</div>
+  <div class="tx-header">
+    <h2 class="tx-title">{{ table }}s</h2>
+    <div class="tx-header-actions">
+      <a href="{{ url_for('add') }}" class="tx-btn tx-btn-blue">Add {{ table }}</a>
     </div>
   </div>
-  <!--/ Bordered Table -->
-  {% else %}
-  <!-- Bordered Table -->
-  <div class="card">
-    <h5 class="card-header">{{ table }} List <span><a style="float: right;" href="{{ url_for('add') }}" class="btn btn-success">Add New {{ table }}</a></span></h5>
-  </div>
-  <!--/ Bordered Table -->
 
+  {% if data %}
+    <div class="text-nowrap">{{ data | safe }}</div>
+  {% else %}
+    <p style="color:#888;">No {{ table }} available at this time.</p>
   {% endif %}
 
-  </div>
 </div>
-<!-- / Content -->
-<hr class="my-5" />
 {% endblock content %}
