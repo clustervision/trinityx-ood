@@ -4,17 +4,16 @@
 
 /* ---------- Page background (aggressive overrides) ---------- */
 html.light-style,
-html.light-style body,
-body.tx-dark-bg {
-  --bs-body-bg: #4a4a5a;
+html.light-style body {
+  --bs-body-bg: #ffffff;
 }
-body.tx-dark-bg,
-body.tx-dark-bg .layout-wrapper,
-body.tx-dark-bg .layout-container,
-body.tx-dark-bg .layout-page,
-body.tx-dark-bg .content-wrapper {
-  background: #4a4a5a !important;
-  background-color: #4a4a5a !important;
+body,
+body .layout-wrapper,
+body .layout-container,
+body .layout-page,
+body .content-wrapper {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 /* ---------- White rounded shell ---------- */
@@ -80,10 +79,13 @@ body.tx-dark-bg .content-wrapper {
 .tx-field {
   display: inline-flex;
   align-items: center;
-  border: 2px solid #4a6cf7;
+  border: 2px solid #a3b3f7;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
+}
+.tx-field.tx-field-strong {
+  border-color: #4a6cf7;
 }
 .tx-field .tx-label {
   background: #e8edfe;
@@ -382,16 +384,16 @@ body.tx-dark-bg .content-wrapper {
 }
 
 /* ---------- Footer on dark background ---------- */
-body.tx-dark-bg .content-footer {
+body .content-footer {
   background: transparent !important;
-  color: #ccc;
+  color: #666;
   font-size: 0.8rem;
 }
-body.tx-dark-bg .content-footer a {
-  color: #ddd;
+body .content-footer a {
+  color: #666;
 }
-body.tx-dark-bg .content-footer a:hover {
-  color: #fff;
+body .content-footer a:hover {
+  color: #222;
 }
 
 /* ---------- Misc ---------- */

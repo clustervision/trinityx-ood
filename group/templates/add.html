@@ -20,11 +20,11 @@
 
     <!-- Row 1: NAME, OS IMAGE, SETUP BMC, BMC SETUP NAME -->
     <div class="tx-fields">
-      <div class="tx-field">
+      <div class="tx-field tx-field-strong">
         <span class="tx-label">Name:</span>
         <input type="text" name="name" onkeypress="return event.charCode != 32" maxlength="100" required id="id_name" />
       </div>
-      <div class="tx-field">
+      <div class="tx-field tx-field-strong">
         <span class="tx-label">OS Image:</span>
         <select name="osimage" id="id_osimage">{{ osimage_list | safe }}</select>
       </div>

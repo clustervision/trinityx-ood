@@ -15,7 +15,7 @@
     <h2 class="tx-title">{{ table }}s</h2>
     <div class="tx-header-actions">
       <button class="tx-btn tx-btn-help" title="Help">?</button>
-      <a href="{{ url_for('add') }}" class="tx-btn tx-btn-blue">Add {{ table }}</a>
+      <button type="button" class="tx-btn tx-btn-blue" data-bs-toggle="modal" data-bs-target="#addGroupModal">Add {{ table }}</button>
     </div>
   </div>
 
@@ -25,5 +25,20 @@
     <p style="color:#888;">No {{ table }} available at this time.</p>
   {% endif %}
 
+</div>
+
+<div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius: 20px;">
+      <div class="modal-body p-0">
+        <iframe
+          id="addGroupFrame"
+          src="{{ url_for('add') }}?popup=1"
+          title="Add Group"
+          style="width: 100%; height: 82vh; border: 0; border-radius: 20px;"
+        ></iframe>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock content %}
