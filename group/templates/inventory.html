@@ -1,7 +1,18 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
+<style>
+  .group-main-shell {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+  }
+</style>
+
 <div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
+  <div class="group-main-shell">
   
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -29,6 +40,7 @@
 
   {% endif %}
 
+  </div>
 </div>
 <!-- / Content -->
 <hr class="my-5" />
