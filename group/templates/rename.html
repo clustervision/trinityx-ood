@@ -2,6 +2,7 @@
 {% block content %}
 
 <div class="tx-shell">
+  <a href="{{ url_for('home') }}" class="tx-close">&times;</a>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -32,7 +33,7 @@
     </div>
     <div class="tx-form-footer">
       <span id="form-status"></span>
-      <button type="submit" class="tx-btn tx-btn-dark">Rename {{ data.name }}</button>
+      <button type="submit" class="tx-btn tx-btn-blue">Rename {{ data.name }}</button>
     </div>
   </form>
 

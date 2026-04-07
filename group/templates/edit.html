@@ -2,6 +2,7 @@
 {% block content %}
 
 <div class="tx-shell">
+  <a href="{{ url_for('home') }}" class="tx-close">&times;</a>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -14,14 +15,10 @@
   {% if data %}
   <div class="tx-header">
     <h2 class="tx-title">Edit {{ record }}</h2>
-    <div class="tx-header-actions">
-      <a href="{{ url_for('home') }}" class="tx-btn tx-btn-orange">Back</a>
-    </div>
   </div>
 
   <form id="formAuthentication" class="mb-3" action="" method="POST">
 
-    <!-- Row 1: NAME, OS IMAGE, SETUP BMC, BMC SETUP NAME -->
     <div class="tx-fields">
       <div class="tx-field">
         <span class="tx-label">Name:</span>
@@ -33,11 +30,7 @@
       </div>
       <div class="tx-field">
         <span class="tx-label">Setup BMC:</span>
-        {% if data.setupbmc_source and data.setupbmc_source == 'group' or data._setupbmc_source == 'group' %}
-          <input type="checkbox" name="setupbmc" id="id_setupbmc" value="true" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} />
-        {% else %}
-          <input type="checkbox" name="setupbmc" id="id_setupbmc" value="true" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} />
-        {% endif %}
+        <input type="checkbox" name="setupbmc" id="id_setupbmc" value="true" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} />
       </div>
       <div class="tx-field">
         <span class="tx-label">BMC Setup Name:</span>
@@ -45,7 +38,6 @@
       </div>
     </div>
 
-    <!-- Row 2: ROLES, SCRIPTS, NET BOOT, BOOT MENU, Interfaces toggle -->
     <div class="tx-fields">
       <div class="tx-field">
         <span class="tx-label">Roles:</span>
@@ -57,24 +49,15 @@
       </div>
       <div class="tx-field">
         <span class="tx-label">Net Boot:</span>
-        {% if data.netboot_source and data.netboot_source == 'group' or data._netboot_source == 'group' %}
-          <input type="checkbox" name="netboot" id="id_netboot" value="true" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} />
-        {% else %}
-          <input type="checkbox" name="netboot" id="id_netboot" value="true" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} />
-        {% endif %}
+        <input type="checkbox" name="netboot" id="id_netboot" value="true" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} />
       </div>
       <div class="tx-field">
         <span class="tx-label">Boot Menu:</span>
-        {% if data.bootmenu_source and data.bootmenu_source == 'group' or data._bootmenu_source == 'group' %}
-          <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} />
-        {% else %}
-          <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} />
-        {% endif %}
+        <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} />
       </div>
       <button type="button" id="toggle_interfaces" class="tx-btn tx-btn-orange tx-btn-wide">{% if interface_html %}Hide Interfaces{% else %}+ Interfaces{% endif %}</button>
     </div>
 
-    <!-- Interface section -->
     <div id="interface_section" style="{% if interface_html %}display:block{% else %}display:none{% endif %}">
       <div class="tx-interface-section">
         {{ interface_html | safe }}
@@ -85,127 +68,102 @@
       </div>
     </div>
 
-    <!-- Footer: Advanced + Submit -->
     <div class="tx-form-footer">
       <button type="button" id="toggle_advanced" class="tx-btn tx-btn-outline-blue">Advanced &#9662;</button>
-      <button type="submit" class="tx-btn tx-btn-dark">Update {{ record }}</button>
+      <button type="submit" class="tx-btn tx-btn-blue">Update {{ record }}</button>
     </div>
 
     <div id="advanced_section" style="display:none;">
       <div class="tx-advanced-body">
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Domain</span>
-          <div class="tx-adv-input"><input type="text" name="domain" maxlength="100" id="id_domain" value="{{ data.domain }}" /></div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Kernel Options</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.kerneloptions_source }}{{ data._kerneloptions_source }}</span>
-              {% if data.kerneloptions_source and data.kerneloptions_source != 'group' or data._kerneloptions_source != 'group' %}
-                <textarea disabled cols="5" rows="3" class="form-control">{{ data.kerneloptions }}</textarea>
-              {% endif %}
-              <textarea name="kerneloptions" cols="5" rows="3" class="form-control">{% if data.kerneloptions_source == 'group' or data._kerneloptions_source == 'group' %}{{ data.kerneloptions }}{% endif %}</textarea>
-            </div>
+        <div class="tx-adv-grid">
+
+          <div class="tx-field" style="width:100%">
+            <span class="tx-label">Domain:</span>
+            <input type="text" name="domain" maxlength="100" id="id_domain" value="{{ data.domain }}" style="flex:1" />
           </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Pre Script</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.prescript_source }}{{ data._prescript_source }}</span>
-              {% if data.prescript_source and data.prescript_source != 'group' or data._prescript_source != 'group' %}
-                <textarea disabled cols="5" rows="3" class="form-control">{{ data.prescript }}</textarea>
-              {% endif %}
-              <textarea name="prescript" cols="5" rows="3" class="form-control">{% if data.prescript_source == 'group' or data._prescript_source == 'group' %}{{ data.prescript }}{% endif %}</textarea>
-            </div>
+          <div class="tx-field" style="width:100%">
+            <span class="tx-label">Unmanaged BMC Users:</span>
+            <input type="text" name="unmanaged_bmc_users" maxlength="100" id="id_unmanaged_bmc_users" value="{{ data.unmanaged_bmc_users }}" style="flex:1" />
           </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Part Script</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.partscript_source }}{{ data._partscript_source }}</span>
-              {% if data.partscript_source and data.partscript_source != 'group' or data._partscript_source != 'group' %}
-                <textarea disabled cols="5" rows="3" class="form-control">{{ data.partscript }}</textarea>
-              {% endif %}
-              <textarea name="partscript" cols="5" rows="3" class="form-control">{% if data.partscript_source == 'group' or data._partscript_source == 'group' %}{{ data.partscript }}{% endif %}</textarea>
+
+          <div class="tx-field-block">
+            <div class="tx-label-row">
+              <span class="tx-label">Kernel Options:</span>
+              <span class="tx-source">| {{ data.kerneloptions_source }}{{ data._kerneloptions_source }}</span>
             </div>
+            {% if data.kerneloptions_source and data.kerneloptions_source != 'group' or data._kerneloptions_source != 'group' %}
+              <textarea disabled rows="3">{{ data.kerneloptions }}</textarea>
+            {% endif %}
+            <textarea name="kerneloptions" rows="3">{% if data.kerneloptions_source == 'group' or data._kerneloptions_source == 'group' %}{{ data.kerneloptions }}{% endif %}</textarea>
           </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Post Script</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.postscript_source }}{{ data._postscript_source }}</span>
-              {% if data.postscript_source and data.postscript_source != 'group' or data._postscript_source != 'group' %}
-                <textarea disabled cols="5" rows="3" class="form-control">{{ data.postscript }}</textarea>
-              {% endif %}
-              <textarea name="postscript" cols="5" rows="3" class="form-control">{% if data.postscript_source == 'group' or data._postscript_source == 'group' %}{{ data.postscript }}{% endif %}</textarea>
+          <div class="tx-field-block">
+            <div class="tx-label-row">
+              <span class="tx-label">Pre Script:</span>
+              <span class="tx-source">| {{ data.prescript_source }}{{ data._prescript_source }}</span>
             </div>
+            {% if data.prescript_source and data.prescript_source != 'group' or data._prescript_source != 'group' %}
+              <textarea disabled rows="3">{{ data.prescript }}</textarea>
+            {% endif %}
+            <textarea name="prescript" rows="3">{% if data.prescript_source == 'group' or data._prescript_source == 'group' %}{{ data.prescript }}{% endif %}</textarea>
           </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Provision Interface</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.provision_interface_source }}{{ data._provision_interface_source }}</span>
-              {% if data.provision_interface_source and data.provision_interface_source != 'group' or data._provision_interface_source != 'group' %}
-                <input type="text" disabled class="form-control" maxlength="100" value="{{ data.provision_interface }}" />
-              {% endif %}
-              <input type="text" name="provision_interface" class="form-control" maxlength="100" value="{% if data.provision_interface_source == 'group' or data._provision_interface_source == 'group' %}{{ data.provision_interface }}{% endif %}" />
+
+          <div class="tx-field-block">
+            <div class="tx-label-row">
+              <span class="tx-label">Part Script:</span>
+              <span class="tx-source">| {{ data.partscript_source }}{{ data._partscript_source }}</span>
             </div>
+            {% if data.partscript_source and data.partscript_source != 'group' or data._partscript_source != 'group' %}
+              <textarea disabled rows="3">{{ data.partscript }}</textarea>
+            {% endif %}
+            <textarea name="partscript" rows="3">{% if data.partscript_source == 'group' or data._partscript_source == 'group' %}{{ data.partscript }}{% endif %}</textarea>
           </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Provision Method</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.provision_method_source }}{{ data._provision_method_source }}</span>
-              {% if data.provision_method_source and data.provision_method_source != 'group' or data._provision_method_source != 'group' %}
-                <input type="text" disabled class="form-control" maxlength="100" value="{{ data.provision_method }}" />
-              {% endif %}
-              <input type="text" name="provision_method" class="form-control" maxlength="100" value="{% if data.provision_method_source == 'group' or data._provision_method_source == 'group' %}{{ data.provision_method }}{% endif %}" />
+          <div class="tx-field-block">
+            <div class="tx-label-row">
+              <span class="tx-label">Post Script:</span>
+              <span class="tx-source">| {{ data.postscript_source }}{{ data._postscript_source }}</span>
             </div>
+            {% if data.postscript_source and data.postscript_source != 'group' or data._postscript_source != 'group' %}
+              <textarea disabled rows="3">{{ data.postscript }}</textarea>
+            {% endif %}
+            <textarea name="postscript" rows="3">{% if data.postscript_source == 'group' or data._postscript_source == 'group' %}{{ data.postscript }}{% endif %}</textarea>
           </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Provision Fallback</span>
-          <div class="tx-adv-input">
-            <div class="input-group">
-              <span class="input-group-text">{{ data.provision_fallback_source }}{{ data._provision_fallback_source }}</span>
-              {% if data.provision_fallback_source and data.provision_fallback_source != 'group' or data._provision_fallback_source != 'group' %}
-                <input type="text" disabled class="form-control" maxlength="100" value="{{ data.provision_fallback }}" />
-              {% endif %}
-              <input type="text" name="provision_fallback" class="form-control" maxlength="100" value="{% if data.provision_fallback_source == 'group' or data._provision_fallback_source == 'group' %}{{ data.provision_fallback }}{% endif %}" />
-            </div>
-          </div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Unmanaged BMC Users</span>
-          <div class="tx-adv-input"><input type="text" name="unmanaged_bmc_users" maxlength="100" id="id_unmanaged_bmc_users" value="{{ data.unmanaged_bmc_users }}" /></div>
-        </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">OS Image Tag</span>
-          <div class="tx-adv-input">
-            {% if data.osimagetag_source %}
-            <div class="input-group">
-              <span class="input-group-text">{{ data.osimagetag_source }}</span>
-              <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
-            </div>
-            {% elif data._osimagetag_source %}
-            <div class="input-group">
-              <span class="input-group-text">{{ data._osimagetag_source }}</span>
-              <input type="text" name="osimagetag" class="form-control" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
-            </div>
-            {% else %}
-            <input type="text" name="osimagetag" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" />
+
+          <div class="tx-field" style="width:100%">
+            <span class="tx-label">OS Image Tag:</span>
+            <input type="text" name="osimagetag" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" style="flex:1" />
+            {% if data.osimagetag_source or data._osimagetag_source %}
+            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.osimagetag_source }}{{ data._osimagetag_source }}</span>
             {% endif %}
           </div>
+          <div class="tx-field" style="width:100%">
+            <span class="tx-label">Provision Interface:</span>
+            <input type="text" name="provision_interface" maxlength="100" value="{% if data.provision_interface_source == 'group' or data._provision_interface_source == 'group' %}{{ data.provision_interface }}{% endif %}" style="flex:1" />
+            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.provision_interface_source }}{{ data._provision_interface_source }}</span>
+          </div>
+
+          <div class="tx-field" style="width:100%">
+            <span class="tx-label">Provision Fallback:</span>
+            <input type="text" name="provision_fallback" maxlength="100" value="{% if data.provision_fallback_source == 'group' or data._provision_fallback_source == 'group' %}{{ data.provision_fallback }}{% endif %}" style="flex:1" />
+            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.provision_fallback_source }}{{ data._provision_fallback_source }}</span>
+          </div>
+          <div class="tx-field" style="width:100%">
+            <span class="tx-label">Provision Method:</span>
+            <input type="text" name="provision_method" maxlength="100" value="{% if data.provision_method_source == 'group' or data._provision_method_source == 'group' %}{{ data.provision_method }}{% endif %}" style="flex:1" />
+            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.provision_method_source }}{{ data._provision_method_source }}</span>
+          </div>
+
+          <div class="tx-field-block tx-adv-full">
+            <div class="tx-label-row">
+              <span class="tx-label">Comment:</span>
+            </div>
+            <textarea name="comment" rows="3">{{ data.comment }}</textarea>
+          </div>
+
         </div>
-        <div class="tx-adv-row">
-          <span class="tx-adv-label">Comment</span>
-          <div class="tx-adv-input"><textarea name="comment" cols="5" rows="3">{{ data.comment }}</textarea></div>
+
+        <div class="tx-form-footer">
+          <span></span>
+          <button type="submit" class="tx-btn tx-btn-blue">Update {{ record }}</button>
         </div>
       </div>
     </div>
@@ -214,7 +172,7 @@
   </form>
 
   {% else %}
-    <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. If you want to create this click <a href="{{ url_for('add') }}" class="tx-btn tx-btn-blue">Create</a> or go back to the main page <a href="{{ url_for('home') }}" class="tx-btn tx-btn-orange">Back</a></div>
+    <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. <a href="{{ url_for('add') }}" class="tx-btn tx-btn-blue">Create</a> <a href="{{ url_for('home') }}" class="tx-btn tx-btn-orange">Back</a></div>
   {% endif %}
 </div>
 

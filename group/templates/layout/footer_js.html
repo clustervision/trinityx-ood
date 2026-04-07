@@ -241,10 +241,14 @@
         <div class="tx-field tx-field-orange"><span class="tx-label">VLAN Parent:</span><input type="text" name="vlan_parent" placeholder="VLAN Parent" /></div>
       </div>
       <div class="tx-interface-actions">
-        <button type="button" class="tx-btn tx-btn-dark" id="remove_nodeinterface">Remove Interface</button>
-        <button type="button" class="tx-btn tx-btn-orange" id="add_nodeinterface">+ Add</button>
+        <button type="button" class="tx-btn tx-btn-dark js-remove-interface">Remove Interface</button>
+        <button type="button" class="tx-btn tx-btn-orange js-add-interface">+ Add</button>
       </div>
     </div>`;
+
+    $('body').on('click', '.js-add-interface', function () {
+        $(this).closest('.tx-interface-block').after(group_interface);
+    });
     $('body').on('click', '#add_nodeinterface', function () {
         $("#nodeinterface").append(group_interface);
     });
@@ -293,7 +297,7 @@
         return response;
     }
 
-     $('body').on('click', '#remove_nodeinterface', function() {
+     $('body').on('click', '#remove_nodeinterface, .js-remove-interface', function() {
         var $block = $(this).closest('.tx-interface-block');
         var url = window.location.href;
         url = url.split('/');

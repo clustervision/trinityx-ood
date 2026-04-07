@@ -2,27 +2,45 @@
    TrinityX OOD – Group App Theme
    ======================================================== */
 
-/* ---------- Page background ---------- */
+/* ---------- Page background (aggressive overrides) ---------- */
+html.light-style,
+html.light-style body,
 body.tx-dark-bg {
   --bs-body-bg: #4a4a5a;
-  background: #4a4a5a !important;
-  background-color: #4a4a5a !important;
 }
+body.tx-dark-bg,
 body.tx-dark-bg .layout-wrapper,
 body.tx-dark-bg .layout-container,
-body.tx-dark-bg .content-wrapper,
-body.tx-dark-bg .layout-page {
+body.tx-dark-bg .layout-page,
+body.tx-dark-bg .content-wrapper {
   background: #4a4a5a !important;
   background-color: #4a4a5a !important;
 }
 
 /* ---------- White rounded shell ---------- */
 .tx-shell {
+  position: relative;
   max-width: 1400px;
   margin: 1.5rem auto;
   background: #ffffff;
   border-radius: 20px;
   padding: 2rem 2.5rem;
+}
+
+/* Close button (for popup-style pages) */
+.tx-close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  font-size: 1.4rem;
+  color: #666;
+  text-decoration: none;
+  line-height: 1;
+  cursor: pointer;
+}
+.tx-close:hover {
+  color: #333;
+  text-decoration: none;
 }
 
 /* ---------- Page title ---------- */
@@ -62,7 +80,7 @@ body.tx-dark-bg .layout-page {
 .tx-field {
   display: inline-flex;
   align-items: center;
-  border: 1.5px solid #a3b3f7;
+  border: 2px solid #4a6cf7;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
@@ -75,8 +93,10 @@ body.tx-dark-bg .layout-page {
   text-transform: uppercase;
   padding: 0.35rem 0.6rem;
   white-space: nowrap;
-  border-right: 1.5px solid #a3b3f7;
   line-height: 1.5;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
 }
 .tx-field input,
 .tx-field select,
@@ -116,14 +136,54 @@ body.tx-dark-bg .layout-page {
 .tx-field-orange .tx-label {
   background: #fef0d5;
   color: #b57714;
-  border-right-color: #f0a848;
+}
+
+/* ---------- Block-style field (label on top, textarea below) ---------- */
+.tx-field-block {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #4a6cf7;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+.tx-field-block .tx-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e8edfe;
+  padding: 0.3rem 0.6rem;
+}
+.tx-field-block .tx-label-row .tx-label {
+  background: transparent;
+  color: #3a56c7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0;
+  border: none;
+}
+.tx-field-block .tx-label-row .tx-source {
+  font-size: 0.7rem;
+  color: #666;
+  margin-left: 0.5rem;
+}
+.tx-field-block textarea,
+.tx-field-block input[type="text"] {
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.82rem;
+  resize: vertical;
 }
 
 /* ---------- Interface section ---------- */
 .tx-interface-section {
   background: #fffaf2;
-  border: 1.5px solid #f0dbb8;
-  border-radius: 10px;
+  border: 2px solid #f0dbb8;
+  border-radius: 6px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
 }
@@ -191,7 +251,7 @@ body.tx-dark-bg .layout-page {
 .tx-btn-outline-blue {
   background: transparent;
   color: #4a6cf7;
-  border: 1.5px solid #4a6cf7;
+  border: 2px solid #4a6cf7;
 }
 .tx-btn-outline-blue:hover, .tx-btn-outline-blue:focus {
   color: #4a6cf7;
@@ -212,7 +272,7 @@ body.tx-dark-bg .layout-page {
   min-width: 180px;
 }
 
-/* ---------- Footer actions row (Advanced left, Submit right) ---------- */
+/* ---------- Footer actions row ---------- */
 .tx-form-footer {
   display: flex;
   align-items: center;
@@ -221,43 +281,17 @@ body.tx-dark-bg .layout-page {
   gap: 0.75rem;
 }
 
-/* ---------- Advanced collapsible ---------- */
+/* ---------- Advanced section (two-column grid) ---------- */
 .tx-advanced-body {
   margin-top: 0.75rem;
 }
-.tx-advanced-body .tx-adv-row {
-  display: flex;
-  align-items: flex-start;
+.tx-adv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  margin-bottom: 0.6rem;
 }
-.tx-advanced-body .tx-adv-label {
-  min-width: 160px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #555;
-  padding-top: 0.4rem;
-  text-transform: capitalize;
-}
-.tx-advanced-body .tx-adv-input {
-  flex: 1;
-}
-.tx-advanced-body textarea {
-  width: 100%;
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-.tx-advanced-body input[type="text"] {
-  width: 100%;
-  border: 1.5px solid #ccc;
-  border-radius: 6px;
-  padding: 0.35rem 0.55rem;
-  font-size: 0.82rem;
-}
-.tx-advanced-body .input-group {
-  flex: 1;
+.tx-adv-grid .tx-adv-full {
+  grid-column: 1 / -1;
 }
 
 /* ---------- Alerts ---------- */
@@ -294,22 +328,25 @@ body.tx-dark-bg .layout-page {
   text-transform: uppercase;
   font-size: 0.78rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #d0d8f0;
+  border: 1px solid #d0d8f0 !important;
 }
 .tx-shell table tbody td {
   padding: 0.55rem 0.75rem;
-  border: 1px solid #e8ecf4;
+  border: 1px solid #e8ecf4 !important;
 }
-.tx-shell table.table-striped tbody tr:nth-child(even),
-.tx-shell table tbody tr:nth-child(even) {
+.tx-shell table.table-striped > tbody > tr:nth-of-type(even) > *,
+.tx-shell table tbody tr:nth-child(even) td {
   background: #f4f7fe !important;
+  --bs-table-accent-bg: #f4f7fe !important;
 }
-.tx-shell table.table-striped tbody tr:nth-child(odd),
-.tx-shell table tbody tr:nth-child(odd) {
+.tx-shell table.table-striped > tbody > tr:nth-of-type(odd) > *,
+.tx-shell table tbody tr:nth-child(odd) td {
   background: #fff !important;
+  --bs-table-accent-bg: #fff !important;
 }
-.tx-shell table tbody tr:hover {
+.tx-shell table tbody tr:hover td {
   background: #eaf0ff !important;
+  --bs-table-accent-bg: #eaf0ff !important;
 }
 
 /* Hide the "S. No." serial number column */
@@ -329,22 +366,6 @@ body.tx-dark-bg .layout-page {
 .tx-shell .dataTables_wrapper .dataTables_paginate .paginate_button {
   border-radius: 6px !important;
   padding: 0.25rem 0.6rem !important;
-}
-
-/* ---------- Breadcrumb bar ---------- */
-.tx-breadcrumb-bar {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0.5rem 0.25rem;
-  font-size: 0.78rem;
-  color: #b0b0c0;
-}
-.tx-breadcrumb-bar a {
-  color: #c0c0d0;
-  text-decoration: none;
-}
-.tx-breadcrumb-bar a:hover {
-  color: #fff;
 }
 
 /* ---------- Hide Bootstrap card chrome when inside tx-shell ---------- */
@@ -377,13 +398,7 @@ body.tx-dark-bg .content-footer a:hover {
 .tx-shell hr {
   display: none;
 }
-.tx-separator {
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 1rem 0;
-}
 
-/* Form status inline message */
 .tx-shell #form-status {
   font-size: 0.82rem;
 }
