@@ -162,7 +162,9 @@
     if (closeBtn && window.location.search.indexOf('popup=1') !== -1) {
       closeBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'group-popup-close' }, '*');
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'group-popup-close' }, '*');
+        }
       });
     }
   })();
