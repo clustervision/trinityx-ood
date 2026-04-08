@@ -57,13 +57,28 @@ body .content-wrapper {
   justify-content: space-between;
   margin-bottom: 1.25rem;
   gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+.tx-header .tx-title {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .tx-header-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: nowrap;
+  flex: 0 1 auto;
+  margin-left: auto;
+  min-width: 0;
+}
+/* Keep Search + Add Group on one row */
+.tx-header-actions .dataTables_filter {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.tx-header-actions .dataTables_filter input[type="search"] {
+  max-width: min(220px, 36vw);
 }
 
 /* ---------- Compact field rows ---------- */
@@ -351,11 +366,9 @@ body .content-wrapper {
   --bs-table-accent-bg: #eaf0ff !important;
 }
 
-/* Hide the "S. No." serial number column */
-.tx-shell #datatable th:first-child,
-.tx-shell #datatable td:first-child {
-  display: none;
-}
+/* S. No. column: hidden only via DataTables (columnDefs visible:false).
+   Do NOT use :first-child { display:none } here — after DT removes hidden
+   cells from the DOM, :first-child would hide the Name column instead. */
 .tx-shell #datatable th:last-child:empty,
 .tx-shell #datatable td:last-child:empty {
   display: none;
@@ -428,6 +441,40 @@ body .content-footer a:hover {
 /* ---------- Misc ---------- */
 .tx-shell hr {
   display: none;
+}
+
+/* Modal popup: iframe fills dialog; height set from JS (postMessage) */
+.tx-modal-popup {
+  border-radius: 20px;
+  overflow: hidden;
+}
+.tx-popup-iframe {
+  width: 100%;
+  min-height: 260px;
+  height: 420px;
+  border: 0;
+  border-radius: 20px;
+  display: block;
+  vertical-align: top;
+}
+
+/* Slot below table for "entries per page" (moved from DataTables wrapper) */
+.tx-table-length-below {
+  margin-top: 0.75rem;
+}
+.tx-table-length-below .dataTables_length {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .tx-header {
+    flex-wrap: wrap;
+  }
+  .tx-header-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .tx-shell #form-status {

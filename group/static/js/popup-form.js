@@ -107,4 +107,22 @@
         tellParent('group-popup-saved');
       });
   }, true);
+
+  // Tell parent iframe height so the modal can shrink to content (no fixed 68vh).
+  function sendIframeHeight() {
+    try {
+      if (!window.parent || window.parent === window) return;
+      var h = Math.max(
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0
+      );
+      if (h > 0) {
+        window.parent.postMessage({ type: 'group-iframe-height', height: h }, '*');
+      }
+    } catch (e) {}
+  }
+  $(function () { sendIframeHeight(); });
+  window.addEventListener('load', sendIframeHeight);
+  setTimeout(sendIframeHeight, 300);
+  setTimeout(sendIframeHeight, 900);
 })();

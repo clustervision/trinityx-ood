@@ -22,7 +22,7 @@
 
   {% if data %}
     <div class="text-nowrap">{{ data | safe }}</div>
-    <div id="txTableLengthSlot" style="margin-top: 8px;"></div>
+    <div id="txTableLengthSlot" class="tx-table-length-below"></div>
   {% else %}
     <p style="color:#888;">No {{ table }} available at this time.</p>
   {% endif %}
@@ -30,26 +30,38 @@
 </div>
 
 <div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content" style="border-radius: 20px;">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content tx-modal-popup">
       <div class="modal-body p-0">
         <iframe
           id="addGroupFrame"
           src="about:blank"
           title="Add Group"
-          style="width: 100%; height: 68vh; border: 0; border-radius: 20px;"
+          class="tx-popup-iframe"
         ></iframe>
       </div>
     </div>
   </div>
 </div>
 
+{% endblock content %}
+
+{% block extra_js %}
 <script>
   (function() {
     var frame = document.getElementById('addGroupFrame');
+    if (!frame) return;
+
+    function setIframeHeight(px) {
+      var n = parseInt(px, 10);
+      if (!n || n < 200) return;
+      var max = Math.round(window.innerHeight * 0.92);
+      frame.style.height = Math.min(n + 24, max) + 'px';
+    }
 
     function openPopup(url) {
       frame.src = url;
+      frame.style.height = Math.min(Math.round(window.innerHeight * 0.72), 560) + 'px';
       $('#addGroupModal').modal('show');
     }
 
@@ -71,29 +83,38 @@
       if (length && lengthSlot && !lengthSlot.contains(length)) lengthSlot.appendChild(length);
     }
 
-    function hideTrailingEmptyColumn() {
+    var trailingEmptyColsDone = false;
+
+    /** Hide trailing columns that are completely empty (e.g. extra PrettyTable column). Never hides Actions. */
+    function hideTrailingEmptyColumnsDT() {
+      if (trailingEmptyColsDone) return;
       var table = document.getElementById('datatable');
-      if (!table) return;
-      var ths = table.querySelectorAll('thead th');
-      if (!ths.length) return;
-      var lastIndex = ths.length - 1;
-      var lastHeaderText = (ths[lastIndex].textContent || '').replace(/\u00a0/g, '').trim();
-      var rows = table.querySelectorAll('tbody tr');
-      var allEmpty = true;
-      rows.forEach(function(r) {
-        var tds = r.querySelectorAll('td');
-        if (!tds[lastIndex]) return;
-        var hasIcon = tds[lastIndex].querySelector('a,button,i');
-        var txt = (tds[lastIndex].textContent || '').replace(/\u00a0/g, '').trim();
-        if (hasIcon || txt !== '') allEmpty = false;
-      });
-      if ((lastHeaderText === '' || lastHeaderText === '&nbsp;') && allEmpty) {
-        ths[lastIndex].style.display = 'none';
-        rows.forEach(function(r) {
-          var tds = r.querySelectorAll('td');
-          if (tds[lastIndex]) tds[lastIndex].style.display = 'none';
+      if (!table || typeof DataTable === 'undefined' || !DataTable.isDataTable(table)) return;
+      var api = $(table).DataTable();
+      var n = api.columns().count();
+      for (var i = n - 1; i >= 0; i--) {
+        var col = api.column(i);
+        if (!col.visible()) continue;
+        var $th = $(col.header());
+        var headerText = ($th.text() || '').replace(/\u00a0/g, '').trim().toLowerCase();
+        if (headerText === 'actions') break;
+
+        var hasIcons = false;
+        var hasText = false;
+        col.nodes().each(function() {
+          var $c = $(this);
+          if ($c.find('a,button,i,.bx').length) hasIcons = true;
+          var t = ($c.text() || '').replace(/\u00a0/g, '').trim();
+          if (t) hasText = true;
         });
+        if (!hasIcons && !hasText && !headerText) {
+          col.visible(false, false);
+        } else {
+          break;
+        }
       }
+      api.columns.adjust();
+      trailingEmptyColsDone = true;
     }
 
     function keepOnlyFourActionIcons() {
@@ -118,50 +139,81 @@
       });
     }
 
-    function bindGroupNameClick() {
+    var tableDelegatesBound = false;
+
+    function bindTableDelegates() {
+      if (tableDelegatesBound) return;
       var table = document.getElementById('datatable');
-      if (!table) return;
-      var rows = table.querySelectorAll('tbody tr');
-      rows.forEach(function(row) {
-        var firstVisibleCell = null;
-        var cells = row.querySelectorAll('td');
-        cells.forEach(function(td) {
-          if (!firstVisibleCell && td.offsetParent !== null) firstVisibleCell = td;
-        });
-        if (!firstVisibleCell) return;
-        firstVisibleCell.style.cursor = 'pointer';
-        firstVisibleCell.style.color = '#4a6cf7';
-        firstVisibleCell.style.fontWeight = '600';
-        firstVisibleCell.addEventListener('click', function() {
-          var raw = (firstVisibleCell.textContent || '').trim();
-          var name = raw.replace(/\s+\*$/, '');
-          if (!name) return;
-          openPopup("/edit/" + encodeURIComponent(name) + "?popup=1");
-        });
+      if (!table || !table.querySelector('tbody')) return;
+      tableDelegatesBound = true;
+
+      table.querySelector('tbody').addEventListener('click', function(e) {
+        var link = e.target.closest('a[href]');
+        if (link) {
+          var href = link.getAttribute('href') || '';
+          if (href.indexOf('/edit/') === 0 || href.indexOf('/clone/') === 0 || href.indexOf('/ospush/') === 0) {
+            e.preventDefault();
+            openPopup(href + (href.indexOf('?') >= 0 ? '&popup=1' : '?popup=1'));
+          }
+          return;
+        }
+        var td = e.target.closest('td');
+        if (!td) return;
+        var tr = td.parentElement;
+        if (!tr || tr.parentElement.tagName !== 'TBODY') return;
+        var cells = tr.querySelectorAll('td');
+        var firstVisible = null;
+        for (var i = 0; i < cells.length; i++) {
+          if (cells[i].offsetParent !== null) {
+            firstVisible = cells[i];
+            break;
+          }
+        }
+        if (td !== firstVisible) return;
+        td.style.cursor = 'pointer';
+        td.style.color = '#4a6cf7';
+        td.style.fontWeight = '600';
+        var raw = (td.textContent || '').trim();
+        var name = raw.replace(/\s+\*$/, '');
+        if (!name) return;
+        openPopup("/edit/" + encodeURIComponent(name) + "?popup=1");
       });
     }
 
-    function bindActionPopupLinks() {
+    function styleNameColumnCells() {
       var table = document.getElementById('datatable');
       if (!table) return;
-      table.addEventListener('click', function(e) {
-        var link = e.target.closest('a[href]');
-        if (!link) return;
-        var href = link.getAttribute('href') || '';
-        if (href.indexOf('/edit/') === 0 || href.indexOf('/clone/') === 0 || href.indexOf('/ospush/') === 0) {
-          e.preventDefault();
-          openPopup(href + (href.indexOf('?') >= 0 ? '&popup=1' : '?popup=1'));
+      table.querySelectorAll('tbody tr').forEach(function(row) {
+        var cells = row.querySelectorAll('td');
+        for (var i = 0; i < cells.length; i++) {
+          if (cells[i].offsetParent !== null) {
+            cells[i].style.cursor = 'pointer';
+            cells[i].style.color = '#4a6cf7';
+            cells[i].style.fontWeight = '600';
+            break;
+          }
         }
       });
     }
 
-    setTimeout(function() {
+    function runTableChrome() {
       moveDataTableControls();
       keepOnlyFourActionIcons();
-      hideTrailingEmptyColumn();
-      bindGroupNameClick();
-      bindActionPopupLinks();
-    }, 100);
+      hideTrailingEmptyColumnsDT();
+      bindTableDelegates();
+      styleNameColumnCells();
+    }
+
+    $(function() {
+      var $dt = $('#datatable');
+      if ($dt.length) {
+        $dt.on('init.dt draw.dt', function() {
+          runTableChrome();
+        });
+      }
+      setTimeout(runTableChrome, 50);
+      setTimeout(runTableChrome, 300);
+    });
 
     window.addEventListener('message', function(event) {
       var data = event.data || {};
@@ -173,11 +225,15 @@
         frame.src = 'about:blank';
         window.location.reload();
       }
+      if (data.type === 'group-iframe-height' && typeof data.height === 'number') {
+        setIframeHeight(data.height);
+      }
     });
 
     $('#addGroupModal').on('hidden.bs.modal', function () {
       frame.src = 'about:blank';
+      frame.style.height = '';
     });
   })();
 </script>
-{% endblock content %}
+{% endblock extra_js %}

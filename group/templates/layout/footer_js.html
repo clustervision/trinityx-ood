@@ -70,7 +70,17 @@
         new DataTable('#datatable', {
             columnDefs: [
                 { targets: 0, visible: false, searchable: false }
-            ]
+            ],
+            /* Clear defaults, then: search above table (moved to header on home),
+               pageLength + info + paging below table (see inventory extra_js). */
+            layout: {
+                topStart: null,
+                topEnd: null,
+                bottomStart: null,
+                bottomEnd: null,
+                top: ['search'],
+                bottom: ['pageLength', 'info', 'paging']
+            }
         });
     }
 
