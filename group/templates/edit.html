@@ -177,16 +177,6 @@
 </div>
 
 <script>
-  (function() {
-    var closeBtn = document.querySelector('.tx-close');
-    if (closeBtn && window.location.search.indexOf('popup=1') !== -1) {
-      closeBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'group-popup-close' }, '*');
-      });
-    }
-  })();
-
   document.getElementById('toggle_interfaces').addEventListener('click', function() {
     var section = document.getElementById('interface_section');
     if (section.style.display === 'none') {

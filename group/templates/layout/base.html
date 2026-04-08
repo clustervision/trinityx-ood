@@ -43,19 +43,6 @@
       <div class="layout-overlay layout-menu-toggle"></div>
       {% endif %}
     </div>
-    <script>
-      (function () {
-        try {
-          var inFrame = window.parent && window.parent !== window;
-          var isPopupQuery = window.location.search.indexOf('popup=1') !== -1;
-          if (inFrame && !isPopupQuery) {
-            window.parent.postMessage({ type: 'group-popup-saved' }, '*');
-          }
-        } catch (e) {
-          // ignore
-        }
-      })();
-    </script>
     {% include "layout/footer_js.html" %}
   </body>
 </html>
