@@ -66,7 +66,13 @@
 </script>
 <script>
     
-    new DataTable('#datatable');
+    if (document.getElementById('datatable')) {
+        new DataTable('#datatable', {
+            columnDefs: [
+                { targets: 0, visible: false, searchable: false }
+            ]
+        });
+    }
 
 
     function color_message(message=null){

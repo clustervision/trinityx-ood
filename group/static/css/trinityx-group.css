@@ -63,7 +63,7 @@ body .content-wrapper {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 /* ---------- Compact field rows ---------- */
@@ -354,6 +354,10 @@ body .content-wrapper {
 /* Hide the "S. No." serial number column */
 .tx-shell #datatable th:first-child,
 .tx-shell #datatable td:first-child {
+  display: none;
+}
+.tx-shell #datatable th:last-child:empty,
+.tx-shell #datatable td:last-child:empty {
   display: none;
 }
 
