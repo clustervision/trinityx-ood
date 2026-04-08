@@ -15,7 +15,7 @@
     <h2 class="tx-title">{{ table }}s</h2>
     <div class="tx-header-actions">
       <button class="tx-btn tx-btn-help" title="Help">?</button>
-      <button type="button" class="tx-btn tx-btn-blue" data-bs-toggle="modal" data-bs-target="#addGroupModal">Add {{ table }}</button>
+      <button type="button" id="openAddGroupBtn" class="tx-btn tx-btn-blue">Add {{ table }}</button>
       <div id="txTableSearchSlot"></div>
     </div>
   </div>
@@ -46,6 +46,22 @@
 
 <script>
   (function() {
+    var modalEl = document.getElementById('addGroupModal');
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    var frame = document.getElementById('addGroupFrame');
+
+    function openPopup(url) {
+      frame.src = url;
+      modal.show();
+    }
+
+    var addBtn = document.getElementById('openAddGroupBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function() {
+        openPopup("{{ url_for('add') }}?popup=1");
+      });
+    }
+
     function moveDataTableControls() {
       var wrapper = document.querySelector('.dataTables_wrapper');
       if (!wrapper) return;
@@ -64,14 +80,9 @@
       if (!ths.length) return;
       var lastIndex = ths.length - 1;
       var lastHeaderText = (ths[lastIndex].textContent || '').trim();
-      var rows = table.querySelectorAll('tbody tr');
-      var allEmpty = true;
-      rows.forEach(function(r) {
-        var tds = r.querySelectorAll('td');
-        if (tds[lastIndex] && (tds[lastIndex].textContent || '').trim() !== '') allEmpty = false;
-      });
-      if (lastHeaderText === '' || allEmpty) {
+      if (lastHeaderText === '') {
         ths[lastIndex].style.display = 'none';
+        var rows = table.querySelectorAll('tbody tr');
         rows.forEach(function(r) {
           var tds = r.querySelectorAll('td');
           if (tds[lastIndex]) tds[lastIndex].style.display = 'none';
@@ -79,27 +90,45 @@
       }
     }
 
+    function bindGroupNameClick() {
+      var table = document.getElementById('datatable');
+      if (!table) return;
+      var rows = table.querySelectorAll('tbody tr');
+      rows.forEach(function(row) {
+        var firstVisibleCell = null;
+        var cells = row.querySelectorAll('td');
+        cells.forEach(function(td) {
+          if (!firstVisibleCell && td.offsetParent !== null) firstVisibleCell = td;
+        });
+        if (!firstVisibleCell) return;
+        firstVisibleCell.style.cursor = 'pointer';
+        firstVisibleCell.style.color = '#4a6cf7';
+        firstVisibleCell.style.fontWeight = '600';
+        firstVisibleCell.addEventListener('click', function() {
+          var raw = (firstVisibleCell.textContent || '').trim();
+          var name = raw.replace(/\s+\*$/, '');
+          if (!name) return;
+          openPopup("/edit/" + encodeURIComponent(name) + "?popup=1");
+        });
+      });
+    }
+
     setTimeout(function() {
       moveDataTableControls();
       hideTrailingEmptyColumn();
+      bindGroupNameClick();
     }, 100);
 
-    var frame = document.getElementById('addGroupFrame');
-    if (frame) {
-      frame.addEventListener('load', function() {
-        try {
-          var href = frame.contentWindow.location.href || '';
-          if (href.indexOf('/add') === -1) {
-            var modalEl = document.getElementById('addGroupModal');
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.hide();
-            window.location.reload();
-          }
-        } catch (e) {
-          // ignore cross-frame transient access issues
-        }
-      });
-    }
+    window.addEventListener('message', function(event) {
+      var data = event.data || {};
+      if (data.type === 'group-popup-close') {
+        modal.hide();
+      }
+      if (data.type === 'group-popup-saved') {
+        modal.hide();
+        window.location.reload();
+      }
+    });
   })();
 </script>
 {% endblock content %}
