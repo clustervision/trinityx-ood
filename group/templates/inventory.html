@@ -16,11 +16,13 @@
     <div class="tx-header-actions">
       <button class="tx-btn tx-btn-help" title="Help">?</button>
       <button type="button" class="tx-btn tx-btn-blue" data-bs-toggle="modal" data-bs-target="#addGroupModal">Add {{ table }}</button>
+      <div id="txTableSearchSlot"></div>
     </div>
   </div>
 
   {% if data %}
     <div class="text-nowrap">{{ data | safe }}</div>
+    <div id="txTableLengthSlot" style="margin-top: 8px;"></div>
   {% else %}
     <p style="color:#888;">No {{ table }} available at this time.</p>
   {% endif %}
@@ -41,4 +43,63 @@
     </div>
   </div>
 </div>
+
+<script>
+  (function() {
+    function moveDataTableControls() {
+      var wrapper = document.querySelector('.dataTables_wrapper');
+      if (!wrapper) return;
+      var search = wrapper.querySelector('.dataTables_filter');
+      var length = wrapper.querySelector('.dataTables_length');
+      var searchSlot = document.getElementById('txTableSearchSlot');
+      var lengthSlot = document.getElementById('txTableLengthSlot');
+      if (search && searchSlot && !searchSlot.contains(search)) searchSlot.appendChild(search);
+      if (length && lengthSlot && !lengthSlot.contains(length)) lengthSlot.appendChild(length);
+    }
+
+    function hideTrailingEmptyColumn() {
+      var table = document.getElementById('datatable');
+      if (!table) return;
+      var ths = table.querySelectorAll('thead th');
+      if (!ths.length) return;
+      var lastIndex = ths.length - 1;
+      var lastHeaderText = (ths[lastIndex].textContent || '').trim();
+      var rows = table.querySelectorAll('tbody tr');
+      var allEmpty = true;
+      rows.forEach(function(r) {
+        var tds = r.querySelectorAll('td');
+        if (tds[lastIndex] && (tds[lastIndex].textContent || '').trim() !== '') allEmpty = false;
+      });
+      if (lastHeaderText === '' || allEmpty) {
+        ths[lastIndex].style.display = 'none';
+        rows.forEach(function(r) {
+          var tds = r.querySelectorAll('td');
+          if (tds[lastIndex]) tds[lastIndex].style.display = 'none';
+        });
+      }
+    }
+
+    setTimeout(function() {
+      moveDataTableControls();
+      hideTrailingEmptyColumn();
+    }, 100);
+
+    var frame = document.getElementById('addGroupFrame');
+    if (frame) {
+      frame.addEventListener('load', function() {
+        try {
+          var href = frame.contentWindow.location.href || '';
+          if (href.indexOf('/add') === -1) {
+            var modalEl = document.getElementById('addGroupModal');
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.hide();
+            window.location.reload();
+          }
+        } catch (e) {
+          // ignore cross-frame transient access issues
+        }
+      });
+    }
+  })();
+</script>
 {% endblock content %}

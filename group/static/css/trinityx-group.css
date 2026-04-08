@@ -212,7 +212,7 @@ body .content-wrapper {
   align-items: center;
   justify-content: center;
   padding: 0.4rem 1.1rem;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 0.82rem;
   font-weight: 600;
   border: none;
@@ -264,7 +264,7 @@ body .content-wrapper {
   color: #fff;
   width: 30px;
   height: 30px;
-  border-radius: 50%;
+  border-radius: 6px;
   padding: 0;
   font-size: 0.9rem;
   font-weight: 700;
@@ -330,11 +330,11 @@ body .content-wrapper {
   text-transform: uppercase;
   font-size: 0.78rem;
   padding: 0.6rem 0.75rem;
-  border: 1px solid #d0d8f0 !important;
+  border: 2px solid #c6d3fb !important;
 }
 .tx-shell table tbody td {
   padding: 0.55rem 0.75rem;
-  border: 1px solid #e8ecf4 !important;
+  border: 2px solid #d8e1fb !important;
 }
 .tx-shell table.table-striped > tbody > tr:nth-of-type(even) > *,
 .tx-shell table tbody tr:nth-child(even) td {
@@ -368,6 +368,31 @@ body .content-wrapper {
 .tx-shell .dataTables_wrapper .dataTables_paginate .paginate_button {
   border-radius: 6px !important;
   padding: 0.25rem 0.6rem !important;
+}
+.tx-shell .dataTables_filter {
+  margin: 0;
+}
+.tx-shell .dataTables_filter label {
+  margin: 0;
+  color: #4a6cf7;
+  font-size: 0.88rem;
+}
+.tx-shell .dataTables_filter input {
+  border: 2px solid #c6d3fb !important;
+  border-radius: 6px !important;
+  color: #4a6cf7;
+  margin-left: 6px !important;
+}
+.tx-shell .dataTables_length {
+  margin-top: 6px;
+}
+.tx-shell .dataTables_length label {
+  color: #4a6cf7;
+}
+.tx-shell .dataTables_length select {
+  border: 2px solid #c6d3fb !important;
+  border-radius: 6px !important;
+  color: #4a6cf7;
 }
 
 /* ---------- Hide Bootstrap card chrome when inside tx-shell ---------- */
@@ -424,6 +449,6 @@ body .content-footer a:hover {
 .tx-interface-section > .input-group .btn-danger {
   background: #2c2c3a;
   border-color: #2c2c3a;
-  border-radius: 20px;
+  border-radius: 6px;
   font-size: 0.82rem;
 }
