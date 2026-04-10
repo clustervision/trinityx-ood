@@ -322,24 +322,25 @@
 
       return (
         '<div class="tx-interface-block">' +
-          '<div class="tx-fields">' +
+          '<div class="tx-iface-grid">' +
             '<div class="tx-field tx-field-orange"><span class="tx-label">Interface:</span><input type="text" name="interface" required placeholder="interface" value="' + gfAttr(val('interface')) + '" /></div>' +
             networkSelectHtml(iface.network) +
             '<div class="tx-field tx-field-orange"><span class="tx-label">MTU:</span><input type="number" name="mtu" min="68" max="65535" placeholder="68-65535" value="' + gfAttr(val('mtu')) + '" /></div>' +
-            '<div class="tx-field tx-field-orange"><span class="tx-label">Options:</span><input type="text" name="options" placeholder="options" maxlength="100" value="' + gfAttr(val('options')) + '" /></div>' +
-          '</div>' +
-          '<div class="tx-fields">' +
-            '<div class="tx-field tx-field-orange"><span class="tx-label">VLAN ID:</span><input type="number" name="vlanid" min="0" max="4094" placeholder="VLAN ID" value="' + gfAttr(val('vlanid')) + '" /></div>' +
-            '<div class="tx-field tx-field-orange"><span class="tx-label">VLAN Parent:</span><input type="text" name="vlan_parent" placeholder="VLAN Parent" value="' + gfAttr(val('vlan_parent')) + '" /></div>' +
-            bondSelectHtml(iface.bond_mode) +
-            '<div class="tx-field tx-field-orange"><span class="tx-label">Bond Slaves:</span><input type="text" name="bond_slaves" placeholder="Bond Slaves Interfaces" value="' + gfAttr(val('bond_slaves')) + '" /></div>' +
             '<div class="tx-field tx-field-orange"><span class="tx-label">DHCP</span>' +
               '<input type="checkbox" class="form-check-input"' + dhcpChecked + ' onclick="toggleDHCP(this)" />' +
               '<input type="hidden" name="dhcp" value="' + dhcpHidden + '" /></div>' +
           '</div>' +
+          '<div class="tx-iface-grid">' +
+            bondSelectHtml(iface.bond_mode) +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">Bond Member:</span><input type="text" name="bond_slaves" placeholder="Bond Member Interfaces" value="' + gfAttr(val('bond_slaves')) + '" /></div>' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">VLAN ID:</span><input type="number" name="vlanid" min="0" max="4094" placeholder="VLAN ID" value="' + gfAttr(val('vlanid')) + '" /></div>' +
+          '</div>' +
+          '<div class="tx-iface-grid">' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">Options:</span><input type="text" name="options" placeholder="options" maxlength="100" value="' + gfAttr(val('options')) + '" /></div>' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">VLAN Parent:</span><input type="text" name="vlan_parent" placeholder="VLAN Parent" value="' + gfAttr(val('vlan_parent')) + '" /></div>' +
+          '</div>' +
           '<div class="tx-interface-actions">' +
             '<button type="button" class="tx-btn tx-btn-dark js-remove-interface">Remove Interface</button>' +
-            '<button type="button" class="tx-btn tx-btn-orange js-add-interface">+ Add</button>' +
           '</div>' +
         '</div>'
       );
@@ -409,10 +410,27 @@
       }
     }
 
+    function hydrateOspushForm(payload) {
+      var d = payload.data || {};
+      var $name = $('#id_ospush_name');
+      var $os = $('#id_ospush_osimage');
+      if ($name.length) {
+        fillGroupSelect($name, payload.group_list, 'Select Group');
+      }
+      if ($os.length) {
+        fillGroupSelect($os, payload.osimage_list, 'Select Osimage');
+      }
+      $('.js-gf-record-title').text(payload.record || d.name || '');
+    }
+
     function hydrateGroupFormBody(payload) {
       var $pageShell = $('#groupModal .tx-shell[data-group-page]');
       if (!$pageShell.length) $pageShell = $('.tx-shell[data-group-page]').first();
       var page = $pageShell.data('group-page');
+      if (page === 'ospush') {
+        hydrateOspushForm(payload);
+        return;
+      }
       var d = payload.data || {};
       if (page === 'edit' || page === 'clone') {
         if (!d.name) {
@@ -471,14 +489,10 @@
         ifaces.forEach(function (row) {
           $rows.append(appendGroupInterfaceRowString(row));
         });
-        $('#interface_section').show();
-        var $ti = $('#toggle_interfaces');
-        if ($ti.length) $ti.text('Hide Interfaces');
-      } else {
-        $('#interface_section').hide();
-        var $ti2 = $('#toggle_interfaces');
-        if ($ti2.length) $ti2.text('+ Interfaces');
       }
+      $('#interface_section').hide();
+      var $ti2 = $('#toggle_interfaces');
+      if ($ti2.length) $ti2.text('+ Interfaces');
     }
 
     function resetGroupFormSerializedBaseline() {

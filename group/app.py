@@ -377,13 +377,16 @@ def ospush(record=None):
             raw_data = table_data['config'][TABLE][record]
             data = Helper().prepare_json(raw_data)
             osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
-        return jsonify({
+        body = {
             "table": TABLE_CAP,
             "record": record,
             "data": data,
             "group_list": group_list,
             "osimage_list": osimage_list,
-        })
+        }
+        if _wants_json():
+            return jsonify(body)
+        return render_template('osimage.html', table=TABLE_CAP, record=record, data=data)
 
 
 @app.route('/check_status/<string:status>/status/<string:request_id>', methods=['GET'])

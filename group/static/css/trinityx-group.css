@@ -155,6 +155,19 @@ body .content-wrapper {
   color: #b57714;
 }
 
+/* Interface grid layout (3-col rows matching design) */
+.tx-iface-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.75rem;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+.tx-iface-grid .tx-field {
+  flex: 1 1 0;
+  min-width: 140px;
+}
+
 /* ---------- Block-style field (label on top, textarea below) ---------- */
 .tx-field-block {
   display: flex;
@@ -199,7 +212,7 @@ body .content-wrapper {
 /* ---------- Interface section ---------- */
 .tx-interface-section {
   background: #fffaf2;
-  border: 2px solid #f0dbb8;
+  border: none;
   border-radius: 6px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
@@ -541,11 +554,13 @@ body .content-footer a:hover {
 }
 .tx-inventory-page table thead th {
   color: #111111 !important;
-  background: linear-gradient(180deg, #ffffff 0%, #e8edfe 100%) !important;
+  background: #E6EEFF !important;
+  border-width: 2px !important;
 }
 .tx-inventory-page table tbody td {
   color: #111111 !important;
   vertical-align: middle;
+  border-width: 2px !important;
 }
 .tx-inventory-page .tx-name-link {
   border: none;
@@ -566,12 +581,12 @@ body .content-footer a:hover {
   min-width: 7rem;
   padding: 0.25rem 0.55rem;
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: #555555;
-  background: #ececec;
-  border: 1px solid #c8c8c8;
+  color: #AEAEAE;
+  background: #E8E8E8;
+  border: 2px solid #AEAEAE;
   border-radius: 4px;
   text-align: center;
 }
@@ -597,21 +612,21 @@ body .content-footer a:hover {
   color: #333333;
   cursor: pointer;
   flex: 0 0 auto;
+  font-size: 1rem;
 }
 .tx-icon-act:hover {
   background: #f4f7fe;
   border-color: #4a6cf7;
   color: #4a6cf7;
 }
-.tx-icon-slot {
-  display: inline-block;
-  width: 2.1rem;
-  height: 2.1rem;
-  border: 2px dashed #d0d0d0;
-  border-radius: 6px;
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  vertical-align: middle;
+.tx-icon-act-danger {
+  border-color: #f0a0a0;
+  color: #d44;
+}
+.tx-icon-act-danger:hover {
+  border-color: #d44;
+  color: #c00;
+  background: #fff0f0;
 }
 .tx-col-actions {
   white-space: nowrap;
@@ -704,3 +719,60 @@ body .content-footer a:hover {
 .tx-form-page .tx-title {
   color: #4a6cf7;
 }
+
+/* ---------- Inventory table: rounded border, thick border ---------- */
+.tx-inventory-table-wrap {
+  border: 3px solid #c6d3fb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.tx-inventory-page .tx-inventory-table-wrap table {
+  margin-bottom: 0;
+}
+
+/* ---------- Modal close button: blue bold × ---------- */
+.tx-modal-close-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #5376EA;
+  cursor: pointer;
+  opacity: 1;
+}
+.tx-modal-close-btn:hover {
+  color: #3a5cd0;
+}
+
+/* ---------- Inline search (next to Add Group) ---------- */
+.tx-inline-search {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.tx-inline-search label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #4a6cf7;
+  white-space: nowrap;
+}
+.tx-inline-search input[type="search"] {
+  border: 2px solid #c6d3fb;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.85rem;
+  color: #111;
+  outline: none;
+  max-width: min(220px, 36vw);
+}
+.tx-inline-search input[type="search"]:focus {
+  border-color: #4a6cf7;
+}
+

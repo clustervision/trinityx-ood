@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<div class="tx-shell">
+<div class="tx-shell tx-form-page" data-group-page="ospush" data-record="{{ record }}">
   <a href="{{ url_for('home') }}" class="tx-close">&times;</a>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -12,20 +12,22 @@
     {% endif %}
   {% endwith %}
 
-  {% if data %}
+  <div id="group-form-error" class="alert alert-danger" style="display:none;" role="alert"></div>
+
+  <div id="group-form-body">
   <div class="tx-header">
-    <h2 class="tx-title">Push OS Image for {{ table }}</h2>
+    <h2 class="tx-title">Push OS Image — <span class="js-gf-record-title">{{ record }}</span></h2>
   </div>
 
-  <form class="mb-3" action="" method="POST">
+  <form id="formOspush" class="mb-3" action="" method="POST">
     <div class="tx-fields">
       <div class="tx-field">
         <span class="tx-label">Group:</span>
-        <select name="name" required id="id_name">{{ group_list | safe }}</select>
+        <select name="name" required id="id_ospush_name"></select>
       </div>
       <div class="tx-field">
         <span class="tx-label">OS Image:</span>
-        <select name="osimage" id="id_osimage">{{ osimage_list | safe }}</select>
+        <select name="osimage" id="id_ospush_osimage"></select>
       </div>
       <div class="tx-field">
         <span class="tx-label">No Dry:</span>
@@ -37,9 +39,6 @@
       <button type="submit" class="tx-btn tx-btn-blue">Push OS Image</button>
     </div>
   </form>
-
-  {% else %}
-    <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. If you want to create this click <a href="{{ url_for('add') }}" class="tx-btn tx-btn-blue">Create</a> or go back to the main page <a href="{{ url_for('home') }}" class="tx-btn tx-btn-orange">Back</a></div>
-  {% endif %}
+  </div>
 </div>
 {% endblock content %}

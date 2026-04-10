@@ -16,7 +16,9 @@
     <div class="tx-header-actions">
       <button class="tx-btn tx-btn-help" title="Help" type="button">?</button>
       <button type="button" id="openAddGroupBtn" class="tx-btn tx-btn-blue">Add {{ table }}</button>
-      <div id="txTableSearchSlot"></div>
+      <div class="tx-inline-search">
+        <label>Search: <input type="search" id="txManualSearch" /></label>
+      </div>
     </div>
   </div>
 
@@ -34,9 +36,7 @@
     <div class="modal-content tx-modal-popup">
       <div class="modal-header">
         <h5 class="modal-title" id="groupModalTitle"></h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+        <button type="button" class="tx-modal-close-btn" id="groupModalCloseBtn" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body p-0" id="groupModalBody"></div>
     </div>

@@ -114,16 +114,16 @@
         var key = canonicalName(raw);
         if (!key) return '';
         return (
-          '<div class="tx-action-icons" role="group" aria-label="Row actions">' +
-          '<button type="button" class="tx-icon-act js-gf-edit" title="Edit" data-name="' +
+          '<div class="tx-action-icons">' +
+          '<button type="button" class="tx-icon-act js-gf-clone" title="Clone" data-name="' +
           escapeAttr(key) +
-          '"><i class="bx bx-edit-alt" aria-hidden="true"></i></button>' +
-          '<button type="button" class="tx-icon-act js-gf-member" title="Members" data-name="' +
+          '"><i class="bx bx-copy-alt"></i></button>' +
+          '<button type="button" class="tx-icon-act js-gf-ospush" title="OS Push" data-name="' +
           escapeAttr(key) +
-          '"><i class="bx bx-group" aria-hidden="true"></i></button>' +
-          '<span class="tx-icon-slot" title="Reserved"></span>' +
-          '<span class="tx-icon-slot" title="Reserved"></span>' +
-          '<span class="tx-icon-slot" title="Reserved"></span>' +
+          '"><i class="bx bx-upload"></i></button>' +
+          '<button type="button" class="tx-icon-act tx-icon-act-danger js-gf-delete" title="Delete" data-name="' +
+          escapeAttr(key) +
+          '"><i class="bx bx-trash"></i></button>' +
           '</div>'
         );
       },
@@ -163,33 +163,28 @@
           data: groups,
           columns: cols,
           autoWidth: true,
+          searching: true,
           layout: {
             topStart: null,
             topEnd: null,
             bottomStart: null,
             bottomEnd: null,
-            top: ['search'],
+            top: null,
             bottom: ['pageLength', 'info', 'paging'],
           },
         });
-        moveGroupTableControls();
-        $('#groupTable').on('draw.dt', function () {
-          moveGroupTableControls();
-        });
+        moveLengthSlot();
       })
       .catch(function () {
         showListError('Network error while loading list.');
       });
   }
 
-  function moveGroupTableControls() {
+  function moveLengthSlot() {
     var wrapper = document.querySelector('#groupTable_wrapper');
     if (!wrapper) return;
-    var search = wrapper.querySelector('.dataTables_filter');
     var length = wrapper.querySelector('.dataTables_length');
-    var searchSlot = document.getElementById('txTableSearchSlot');
     var lengthSlot = document.getElementById('txTableLengthSlot');
-    if (search && searchSlot && !searchSlot.contains(search)) searchSlot.appendChild(search);
     if (length && lengthSlot && !lengthSlot.contains(length)) lengthSlot.appendChild(length);
   }
 
@@ -236,6 +231,7 @@
         $('#groupModalBody').empty().append(shell);
         $('#groupModalBody .tx-close').remove();
         var $form = $('#groupModal #formAuthentication');
+        if (!$form.length) $form = $('#groupModal #formOspush');
         $form.data('gf-record', recordName);
         $form.data('gf-remove-prefix', root);
         var action = opts.formAction;
@@ -307,23 +303,61 @@
   }
 
   function bindEvents() {
+    $('#txManualSearch').on('input', function () {
+      if (groupTable) groupTable.search(this.value).draw();
+    });
+
+    $('#groupModalCloseBtn').on('click', function () {
+      $('#groupModal').modal('hide');
+    });
+
     $('#openAddGroupBtn').on('click', function () {
       openAdd();
     });
 
-    $('#groupTable').on('click', '.js-gf-edit', function (e) {
-      e.preventDefault();
-      openEdit($(this).data('name'));
-    });
     $('#groupTable').on('click', '.js-gf-open-edit', function (e) {
       e.preventDefault();
       openEdit($(this).data('name'));
     });
-    $('#groupTable').on('click', '.js-gf-member', function () {
+    $('#groupTable').on('click', '.js-gf-clone', function (e) {
+      e.preventDefault();
+      var key = $(this).data('name');
+      var enc = encodeURIComponent(key);
+      var root = window.GROUP_GET_LIST_ROOT != null ? String(window.GROUP_GET_LIST_ROOT).replace(/\/$/, '') : '';
+      loadFormModal({
+        htmlUrl: pathJoin(root, '/clone/' + enc),
+        jsonUrl: pathJoin(root, '/clone/' + enc + '?format=json'),
+        title: 'Clone ' + key,
+        formAction: pathJoin(root, '/clone/' + enc),
+        recordName: key,
+      });
+    });
+    $('#groupTable').on('click', '.js-gf-ospush', function (e) {
+      e.preventDefault();
+      var key = $(this).data('name');
+      var enc = encodeURIComponent(key);
+      var root = window.GROUP_GET_LIST_ROOT != null ? String(window.GROUP_GET_LIST_ROOT).replace(/\/$/, '') : '';
+      loadFormModal({
+        htmlUrl: pathJoin(root, '/ospush/' + enc),
+        jsonUrl: pathJoin(root, '/ospush/' + enc + '?format=json'),
+        title: 'OS Push — ' + key,
+        formAction: pathJoin(root, '/ospush/' + enc),
+        recordName: key,
+      });
+    });
+    $('#groupTable').on('click', '.js-gf-delete', function () {
       var n = $(this).data('name');
-      if (n && typeof window.member === 'function') {
-        window.member('group', n);
-      }
+      if (!n || !window.confirm('Delete group "' + n + '"?')) return;
+      var root = window.GROUP_GET_LIST_ROOT != null ? String(window.GROUP_GET_LIST_ROOT).replace(/\/$/, '') : '';
+      fetch(pathJoin(root, '/delete/' + encodeURIComponent(n)), { headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          return r.json().then(function (j) { return { ok: r.ok, body: j }; });
+        })
+        .then(function (x) {
+          if (x.ok && x.body && x.body.status === 'success') loadList();
+          else alert((x.body && x.body.message) || 'Delete failed');
+        })
+        .catch(function () { alert('Delete request failed.'); });
     });
 
     $(document).on('submit', '#groupModal #formAuthentication', function (e) {
@@ -349,10 +383,34 @@
         });
     });
 
+    $(document).on('submit', '#groupModal #formOspush', function (e) {
+      e.preventDefault();
+      var form = e.target;
+      var fd = new FormData(form);
+      var action = form.getAttribute('action') || '';
+      fetch(action, {
+        method: 'POST',
+        body: fd,
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+      })
+        .then(function (r) {
+          return r.text().then(function (text) {
+            return { res: r, data: parseJsonResponse(r, text) };
+          });
+        })
+        .then(function (x) {
+          handleJsonFormResponse(x.res, x.data);
+        })
+        .catch(function () {
+          $('#group-form-error').text('Network error on submit.').show();
+        });
+    });
+
     $(document).on('click', '#toggle_interfaces', function () {
       var section = document.getElementById('interface_section');
       if (!section) return;
-      if (section.style.display === 'none' || section.style.display === '') {
+      var isHidden = section.style.display === 'none' || section.style.display === '';
+      if (isHidden) {
         section.style.display = 'block';
         $(this).text('Hide Interfaces');
         if ($('#group-interface-rows').children('.tx-interface-block').length === 0 && window.group_interface) {
