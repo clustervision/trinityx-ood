@@ -701,19 +701,23 @@ class Helper():
     def filter_data_json(self, table=None, data=None):
         """
         JSON version of filter_data for the list view.
-        Returns a list of dicts with only the columns from filter_columns,
-        plus _override metadata per record. No HTML formatting.
+        Returns a list of dicts with only the columns from filter_columns.
+        Keeps legacy override behavior:
+        - if _override is True, append " *" to name
+        - do not expose _override key in output rows
         """
         fields = filter_columns(table)
         result = []
         for name, record in data.items():
             item = {}
-            has_override = False
-            if '_override' in record:
-                has_override = bool(record['_override'])
+            record_name = record.get('name')
+            if record.get('_override') and isinstance(record_name, str):
+                record_name = f"{record_name} *"
             for field in fields:
-                item[field] = record.get(field)
-            item['_override'] = has_override
+                if field == 'name':
+                    item[field] = record_name
+                else:
+                    item[field] = record.get(field)
             result.append(item)
         return fields, result
 
@@ -721,24 +725,18 @@ class Helper():
     def filter_data_col_json(self, table=None, data=None):
         """
         JSON version of filter_data_col for single record detail view.
-        Keeps _source fields as separate keys (structured, not merged).
-        Returns the record dict sorted by sortby order, with
-        _override bool and overridden_fields list appended.
+        Keeps legacy _source behavior by using merge_source().
+        Keeps legacy override behavior:
+        - if _override is True, inject
+          info = "Config differs from parent - local overrides"
+        - remove _override from response
         """
         defined_keys = sortby(table)
-        override_list = overrides(table)
-
-        has_override = bool(data.get('_override', False))
-        overridden = []
-        for key, value in data.items():
-            if '_source' in key:
-                raw_name = key.replace('_source', '')
-                if raw_name.startswith('_'):
-                    raw_name = raw_name[1:]
-                if str(value) == str(table) and override_list and raw_name in override_list:
-                    overridden.append(raw_name)
-
-        result = {k: v for k, v in data.items() if k != '_override'}
+        merge_exception = None
+        result, _ = self.merge_source(table, data, merge_exception)
+        if result.get('_override'):
+            result['info'] = "Config differs from parent - local overrides"
+        result.pop('_override', None)
 
         for new_key in list(result.keys()):
             if new_key not in defined_keys:
@@ -747,9 +745,6 @@ class Helper():
         sorted_result = dict(
             sorted(result.items(), key=lambda pair: index_map.get(pair[0], len(defined_keys)))
         )
-
-        sorted_result['_override'] = has_override
-        sorted_result['overridden_fields'] = overridden
         return sorted_result
 
 
