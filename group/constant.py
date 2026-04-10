@@ -44,7 +44,7 @@ LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript', 'grab_filesystems', 'grab_exclude', 'kerneloptions']
 OVERRIDE_COLOR = "table-info"
-APP_STATE = True # False for Development, True for Production
+APP_STATE =     False # False for Development, True for Production
 
 
 def overrides(table=None):
