@@ -697,3 +697,68 @@ class Helper():
                 del response[key]
         return response, resp_overrides
 
+
+    def filter_data_json(self, table=None, data=None):
+        """
+        JSON version of filter_data for the list view.
+        Returns a list of dicts with only the columns from filter_columns,
+        plus _override metadata per record. No HTML formatting.
+        """
+        fields = filter_columns(table)
+        result = []
+        for name, record in data.items():
+            item = {}
+            has_override = False
+            if '_override' in record:
+                has_override = bool(record['_override'])
+            for field in fields:
+                item[field] = record.get(field)
+            item['_override'] = has_override
+            result.append(item)
+        return fields, result
+
+
+    def filter_data_col_json(self, table=None, data=None):
+        """
+        JSON version of filter_data_col for single record detail view.
+        Keeps _source fields as separate keys (structured, not merged).
+        Returns the record dict sorted by sortby order, with
+        _override bool and overridden_fields list appended.
+        """
+        defined_keys = sortby(table)
+        override_list = overrides(table)
+
+        has_override = bool(data.get('_override', False))
+        overridden = []
+        for key, value in data.items():
+            if '_source' in key:
+                raw_name = key.replace('_source', '')
+                if raw_name.startswith('_'):
+                    raw_name = raw_name[1:]
+                if str(value) == str(table) and override_list and raw_name in override_list:
+                    overridden.append(raw_name)
+
+        result = {k: v for k, v in data.items() if k != '_override'}
+
+        for new_key in list(result.keys()):
+            if new_key not in defined_keys:
+                defined_keys.append(new_key)
+        index_map = {v: i for i, v in enumerate(defined_keys)}
+        sorted_result = dict(
+            sorted(result.items(), key=lambda pair: index_map.get(pair[0], len(defined_keys)))
+        )
+
+        sorted_result['_override'] = has_override
+        sorted_result['overridden_fields'] = overridden
+        return sorted_result
+
+
+    def get_bond_mode_list(self):
+        """
+        Returns bond mode options as a plain list (no HTML).
+        """
+        return [
+            'balance-rr', 'active-backup', 'balance-xor',
+            'broadcast', '802.3ad', 'balance-tlb', 'balance-alb'
+        ]
+
