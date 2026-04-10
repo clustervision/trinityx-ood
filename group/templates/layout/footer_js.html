@@ -41,23 +41,35 @@
 
 <script>
     $(function() {
-        var $form = $('#formAuthentication');
-        var initialState = $form.serialize();
+        /* Skip forms that live inside the home-page modal (handled by group-app.js + fetch). */
+        var $form = $('#formAuthentication').filter(function () {
+            return $(this).closest('#groupModal').length === 0;
+        });
+        if (!$form.length) return;
 
         $form.submit(function (e) {
-          if (initialState === $form.serialize()) {
+          var baseline = $form.data('gf-initial');
+          if (baseline === undefined) baseline = '';
+          if (baseline === $form.serialize()) {
             $('#form-status').html();
             $('#form-status').addClass("alert alert-danger");
             $('#form-status').html('Nothing is changed!');
           } else {
-            console.log('Form has changed!');
-            if ($('#id_name').val() && $('#id_newname').val()){
-                if ($('#id_name').val() == $('#id_newname').val()){
+            var nnv = $('#id_newname').val();
+            if (!nnv) nnv = $('#id_newgroupname').val();
+            if ($('#id_name').val() && nnv){
+                if ($('#id_name').val() == nnv){
                     $('#form-status').html();
                     $('#form-status').addClass("alert alert-danger");
                     $('#form-status').html('Both Name can not be same, Kindly choose a different name.');
-                } else { $form.submit(); }
-            } else { $form.submit(); }
+                } else {
+                  var el = $form.get(0);
+                  if (el) HTMLFormElement.prototype.submit.call(el);
+                }
+            } else {
+              var el2 = $form.get(0);
+              if (el2) HTMLFormElement.prototype.submit.call(el2);
+            }
           }
           e.preventDefault();
         });
@@ -66,7 +78,7 @@
 </script>
 <script>
     
-    if (document.getElementById('datatable')) {
+    if (document.getElementById('datatable') && !document.getElementById('groupTable')) {
         new DataTable('#datatable', {
             columnDefs: [
                 { targets: 0, visible: false, searchable: false }
@@ -122,13 +134,18 @@
         $('#run-time-logs').html(text);
         var run_time_div = document.getElementById("run-time-body");
 
-        var url = window.location.href
-        url = url.replace(window.location.search,'');
-        url = url.split('/');
-        url.pop();
-        url.pop();
-        url = url.join("/");
-        url = url+"/check_status/config/status/"+request_id;
+        var url;
+        if (typeof window.groupCheckStatusUrl === 'function') {
+            url = window.groupCheckStatusUrl(request_id);
+        } else {
+            url = window.location.href
+            url = url.replace(window.location.search,'');
+            url = url.split('/');
+            url.pop();
+            url.pop();
+            url = url.join("/");
+            url = url+"/check_status/config/status/"+request_id;
+        }
 
         var intervalId;
         intervalId = setInterval(function(){
@@ -156,8 +173,15 @@
         $('#logmodalLabel').empty();
         $('#logmodalLabel').html('<span>Member Nodes Of '+table+' >> '+record+' </span>');
         $('#run-time-logs').empty();
+        var memberUrl;
+        if (window.GROUP_GET_LIST_ROOT !== undefined && window.GROUP_GET_LIST_ROOT !== null) {
+            var root = String(window.GROUP_GET_LIST_ROOT).replace(/\/$/, '');
+            memberUrl = (root ? root : '') + '/member/' + table + '/' + encodeURIComponent(record);
+        } else {
+            memberUrl = window.location.href+"/member/"+table+"/"+record;
+        }
         $.ajax({
-            url: window.location.href+"/member/"+table+"/"+record,
+            url: memberUrl,
             type: 'GET',
             contentType: 'application/json; charset=UTF-8',
             dataType: 'json',
@@ -194,19 +218,25 @@
 
     function get_list(table, select){
         var options = '';
-        var url = window.location.href;
-        url = url.replace(window.location.search,'');
-        if  (url.includes('/edit/') || url.includes('/clone/')){
-            url = url.split('/');
-            url.pop();
-            url.pop();
-            url = url.join("/");
+        var url;
+        if (window.GROUP_GET_LIST_ROOT !== undefined && window.GROUP_GET_LIST_ROOT !== null) {
+            var root = String(window.GROUP_GET_LIST_ROOT).replace(/\/$/, '');
+            url = (root ? root : '') + '/get_list/' + table;
         } else {
-            url = url.split('/');
-            url.pop();
-            url = url.join("/");
+            url = window.location.href;
+            url = url.replace(window.location.search,'');
+            if  (url.includes('/edit/') || url.includes('/clone/')){
+                url = url.split('/');
+                url.pop();
+                url.pop();
+                url = url.join("/");
+            } else {
+                url = url.split('/');
+                url.pop();
+                url = url.join("/");
+            }
+            url = url+"/get_list/"+table;
         }
-        url = url+"/get_list/"+table;
         $.ajax({
             async: false,
             global: false,
@@ -228,106 +258,312 @@
         return options;
     }
 
-    group_interface = `
-    <div class="tx-interface-block">
-      <div class="tx-fields">
-        <div class="tx-field tx-field-orange"><span class="tx-label">Interface:</span><input type="text" name="interface" required placeholder="interface" /></div>
-        <div class="tx-field tx-field-orange"><span class="tx-label">Network:</span>${get_list("network", null)}</div>
-        <div class="tx-field tx-field-orange"><span class="tx-label">MTU:</span><input type="number" name="mtu" min="68" max="65535" placeholder="68-65535" /></div>
-        <div class="tx-field tx-field-orange"><span class="tx-label">DHCP</span><input type="checkbox" class="form-check-input" onclick="toggleDHCP(this)" /><input type="hidden" name="dhcp" value="false" /></div>
-      </div>
-      <div class="tx-fields">
-        <div class="tx-field tx-field-orange"><span class="tx-label">Bond Mode:</span>
-          <select name="bond_mode">
-            <option value=''>--- Select ---</option>
-            <option value='balance-rr'>balance-rr</option>
-            <option value='active-backup'>active-backup</option>
-            <option value='balance-xor'>balance-xor</option>
-            <option value='broadcast'>broadcast</option>
-            <option value='802.3ad'>802.3ad</option>
-            <option value='balance-tlb'>balance-tlb</option>
-            <option value='balance-alb'>balance-alb</option>
-          </select>
-        </div>
-        <div class="tx-field tx-field-orange"><span class="tx-label">Bond Child:</span><input type="text" name="bond_slaves" placeholder="Bond Child Interfaces" /></div>
-        <div class="tx-field tx-field-orange"><span class="tx-label">VLAN ID:</span><input type="text" name="vlanid" placeholder="VLAN ID" /></div>
-      </div>
-      <div class="tx-fields">
-        <div class="tx-field tx-field-orange"><span class="tx-label">Options:</span><input type="text" name="options" placeholder="options" /></div>
-        <div class="tx-field tx-field-orange"><span class="tx-label">VLAN Parent:</span><input type="text" name="vlan_parent" placeholder="VLAN Parent" /></div>
-      </div>
-      <div class="tx-interface-actions">
-        <button type="button" class="tx-btn tx-btn-dark js-remove-interface">Remove Interface</button>
-        <button type="button" class="tx-btn tx-btn-orange js-add-interface">+ Add</button>
-      </div>
-    </div>`;
+    /* Group form: network/bond lists + interface rows from JSON API (not server HTML) */
+    var GROUP_NET_LIST = { options: [], selected: null };
+    var GROUP_BOND_MODES = [];
+    var DEFAULT_BOND_MODES = ['balance-rr', 'active-backup', 'balance-xor', 'broadcast', '802.3ad', 'balance-tlb', 'balance-alb'];
+
+    function gfAttr(s) {
+      if (s == null) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+    var gfEscapeHtml = gfAttr;
+
+    function fillGroupSelect($sel, listObj, emptyLabel) {
+      if (!$sel || !$sel.length) return;
+      var opts = (listObj && listObj.options) ? listObj.options : [];
+      var selected = listObj && listObj.selected != null && listObj.selected !== '' ? String(listObj.selected) : '';
+      $sel.empty();
+      $sel.append($('<option></option>').val('').text(emptyLabel || '---'));
+      opts.forEach(function (name) {
+        var o = $('<option></option>').val(name).text(name);
+        if (String(name) === selected) o.prop('selected', true);
+        $sel.append(o);
+      });
+    }
+
+    function networkSelectHtml(selectedVal) {
+      var opts = GROUP_NET_LIST.options || [];
+      var html = '<div class="tx-field tx-field-orange"><span class="tx-label">Network:</span><select name="network" class="form-control">';
+      html += '<option value="">Select Network</option>';
+      var sel = selectedVal != null ? String(selectedVal) : '';
+      for (var i = 0; i < opts.length; i++) {
+        var n = opts[i];
+        var isSel = String(n) === sel ? ' selected' : '';
+        html += '<option value="' + gfAttr(n) + '"' + isSel + '>' + gfAttr(n) + '</option>';
+      }
+      html += '</select></div>';
+      return html;
+    }
+
+    function bondSelectHtml(selectedVal) {
+      var modes = (GROUP_BOND_MODES && GROUP_BOND_MODES.length) ? GROUP_BOND_MODES : DEFAULT_BOND_MODES;
+      var html = '<div class="tx-field tx-field-orange"><span class="tx-label">Bond Mode:</span><select name="bond_mode" class="form-control">';
+      html += '<option value="">--- Select Bond Mode ---</option>';
+      var sel = selectedVal != null ? String(selectedVal) : '';
+      for (var i = 0; i < modes.length; i++) {
+        var m = modes[i];
+        var isSel = String(m) === sel ? ' selected' : '';
+        html += '<option value="' + gfAttr(m) + '"' + isSel + '>' + gfAttr(m) + '</option>';
+      }
+      html += '</select></div>';
+      return html;
+    }
+
+    function appendGroupInterfaceRowString(iface) {
+      iface = iface || {};
+      var val = function (k) {
+        if (iface[k] == null || iface[k] === '') return '';
+        return String(iface[k]);
+      };
+      var dhcpOn = iface.dhcp === true || iface.dhcp === 'True';
+      var dhcpHidden = dhcpOn ? 'true' : 'false';
+      var dhcpChecked = dhcpOn ? ' checked' : '';
+
+      return (
+        '<div class="tx-interface-block">' +
+          '<div class="tx-fields">' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">Interface:</span><input type="text" name="interface" required placeholder="interface" value="' + gfAttr(val('interface')) + '" /></div>' +
+            networkSelectHtml(iface.network) +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">MTU:</span><input type="number" name="mtu" min="68" max="65535" placeholder="68-65535" value="' + gfAttr(val('mtu')) + '" /></div>' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">Options:</span><input type="text" name="options" placeholder="options" maxlength="100" value="' + gfAttr(val('options')) + '" /></div>' +
+          '</div>' +
+          '<div class="tx-fields">' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">VLAN ID:</span><input type="number" name="vlanid" min="0" max="4094" placeholder="VLAN ID" value="' + gfAttr(val('vlanid')) + '" /></div>' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">VLAN Parent:</span><input type="text" name="vlan_parent" placeholder="VLAN Parent" value="' + gfAttr(val('vlan_parent')) + '" /></div>' +
+            bondSelectHtml(iface.bond_mode) +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">Bond Slaves:</span><input type="text" name="bond_slaves" placeholder="Bond Slaves Interfaces" value="' + gfAttr(val('bond_slaves')) + '" /></div>' +
+            '<div class="tx-field tx-field-orange"><span class="tx-label">DHCP</span>' +
+              '<input type="checkbox" class="form-check-input"' + dhcpChecked + ' onclick="toggleDHCP(this)" />' +
+              '<input type="hidden" name="dhcp" value="' + dhcpHidden + '" /></div>' +
+          '</div>' +
+          '<div class="tx-interface-actions">' +
+            '<button type="button" class="tx-btn tx-btn-dark js-remove-interface">Remove Interface</button>' +
+            '<button type="button" class="tx-btn tx-btn-orange js-add-interface">+ Add</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    var group_interface = appendGroupInterfaceRowString(null);
+
+    function gfBool(v) {
+      return v === true || v === 'True';
+    }
+
+    function hydrateGroupAdvTextarea(prefix, d) {
+      var s1 = d[prefix + '_source'] || '';
+      var s2 = d['_' + prefix + '_source'] || '';
+      var inherited = (s1 && s1 !== 'group') || (s2 && s2 !== 'group');
+      var $block = $('[data-gf-adv="' + prefix + '"]');
+      if (!$block.length) return;
+      $block.find('.js-' + prefix + '-s1').text(s1 || '');
+      $block.find('.js-' + prefix + '-s2').text(s2 || '');
+      var $ro = $block.find('.js-' + prefix + '-ro');
+      var $ed = $block.find('textarea[name="' + prefix + '"]');
+      var valMain = d[prefix] != null ? String(d[prefix]) : '';
+      $ro.hide().val('');
+      $ed.val('');
+      if (inherited) {
+        $ro.show().val(valMain);
+      } else {
+        $ed.val(valMain);
+      }
+    }
+
+    function hydrateGroupProvisionField(name, d) {
+      var src1 = d[name + '_source'] || '';
+      var src2 = d['_' + name + '_source'] || '';
+      var hint = (src1 || src2) ? ('| ' + src1 + src2) : '';
+      var $inp = $('[name="' + name + '"]');
+      $('.js-' + name + '-hint').text(hint);
+      var ok = (src1 === 'group' || src2 === 'group' || (!src1 && !src2));
+      var val = d[name] != null ? String(d[name]) : '';
+      if (name === 'provision_interface' || name === 'provision_fallback' || name === 'provision_method') {
+        $inp.val(ok ? val : '');
+      }
+    }
+
+    function hydrateGroupFormBody(payload) {
+      var $pageShell = $('#groupModal .tx-shell[data-group-page]');
+      if (!$pageShell.length) $pageShell = $('.tx-shell[data-group-page]').first();
+      var page = $pageShell.data('group-page');
+      var d = payload.data || {};
+      if (page === 'edit' || page === 'clone') {
+        if (!d.name) {
+          $('#group-form-error').text('This group is not available at this moment.').show();
+          $('#group-form-body').hide();
+          return;
+        }
+      }
+      $('#group-form-error').hide();
+      $('#group-form-body').show();
+      $('.js-gf-record-title').text(payload.record || d.name || '');
+
+      $('#id_name').val(d.name || '');
+      fillGroupSelect($('#id_bmcsetupname'), payload.bmcsetup_list, 'Select Bmcsetup');
+      fillGroupSelect($('#id_osimage'), payload.osimage_list, 'Select Osimage');
+      $('#id_setupbmc').prop('checked', gfBool(d.setupbmc));
+      $('#id_roles').val(d.roles != null ? d.roles : '');
+      $('#id_scripts').val(d.scripts != null ? d.scripts : '');
+      $('#id_netboot').prop('checked', gfBool(d.netboot));
+      $('#id_bootmenu').prop('checked', gfBool(d.bootmenu));
+
+      $('#id_domain').val(d.domain != null ? d.domain : '');
+      $('#id_unmanaged_bmc_users').val(d.unmanaged_bmc_users != null ? d.unmanaged_bmc_users : '');
+      hydrateGroupAdvTextarea('kerneloptions', d);
+      hydrateGroupAdvTextarea('prescript', d);
+      hydrateGroupAdvTextarea('partscript', d);
+      hydrateGroupAdvTextarea('postscript', d);
+
+      var otag = d.osimagetag != null && d.osimagetag !== 'default' ? d.osimagetag : '';
+      $('#id_osimagetag').val(otag);
+      var osl = '';
+      if (d.osimagetag_source || d._osimagetag_source) {
+        osl = '| ' + (d.osimagetag_source || '') + (d._osimagetag_source || '');
+      }
+      $('.js-osimagetag-hint').text(osl);
+
+      hydrateGroupProvisionField('provision_interface', d);
+      hydrateGroupProvisionField('provision_fallback', d);
+      hydrateGroupProvisionField('provision_method', d);
+
+      $('#id_comment').val(d.comment != null ? d.comment : '');
+
+      GROUP_NET_LIST = payload.network_list || { options: [], selected: null };
+      GROUP_BOND_MODES = payload.bond_modes || [];
+      group_interface = appendGroupInterfaceRowString(null);
+
+      var $rows = $('#group-interface-rows');
+      $rows.empty();
+      var ifaces = d.interfaces || [];
+      if (Array.isArray(ifaces) && ifaces.length) {
+        ifaces.forEach(function (row) {
+          $rows.append(appendGroupInterfaceRowString(row));
+        });
+        $('#interface_section').show();
+        var $ti = $('#toggle_interfaces');
+        if ($ti.length) $ti.text('Hide Interfaces');
+      } else {
+        $('#interface_section').hide();
+        var $ti2 = $('#toggle_interfaces');
+        if ($ti2.length) $ti2.text('+ Interfaces');
+      }
+    }
+
+    function resetGroupFormSerializedBaseline() {
+      var $form = $('#formAuthentication');
+      if ($form.length) $form.data('gf-initial', $form.serialize());
+    }
+
+    window.hydrateGroupFormBody = hydrateGroupFormBody;
+    window.resetGroupFormSerializedBaseline = resetGroupFormSerializedBaseline;
+    window.fillGroupSelect = fillGroupSelect;
+
+    $(function () {
+      var $shell = $('.tx-shell[data-group-page]').filter(function () {
+        return $(this).closest('#groupModal').length === 0;
+      });
+      if (!$shell.length) return;
+      $('#group-form-loading').show();
+      var base = window.location.href.split('?')[0];
+      var url = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'format=json';
+      $.getJSON(url, function (payload) {
+        $('#group-form-loading').hide();
+        hydrateGroupFormBody(payload);
+        resetGroupFormSerializedBaseline();
+      }).fail(function (xhr) {
+        $('#group-form-loading').hide();
+        var msg = 'Failed to load form data.';
+        try {
+          var j = JSON.parse(xhr.responseText);
+          if (j && j.error) msg = j.error;
+        } catch (e) {}
+        $('#group-form-error').text(msg).show();
+      });
+    });
 
     $('body').on('click', '.js-add-interface', function () {
-        $(this).closest('.tx-interface-block').after(group_interface);
+        $(this).closest('.tx-interface-block').after(appendGroupInterfaceRowString(null));
     });
     $('body').on('click', '#add_nodeinterface', function () {
-        $("#nodeinterface").append(group_interface);
+        $('#group-interface-rows').append(appendGroupInterfaceRowString(null));
     });
 
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const mtuFields = document.querySelectorAll("input[name='mtu']");
-
-        if (mtuFields.length > 0) {
-            mtuFields.forEach(field => {
-                field.addEventListener("blur", function () {
-                    let value = parseInt(this.value, 10);
-
-                    if (!isNaN(value)) {
-                        if (value < 68) this.value = 68;
-                        if (value > 65535) this.value = 65535;
-                    }
-                });
-            });
-        }
+    $('body').on('blur', "input[name='mtu']", function () {
+      var value = parseInt(this.value, 10);
+      if (!isNaN(value)) {
+        if (value < 68) this.value = 68;
+        if (value > 65535) this.value = 65535;
+      }
     });
 
 
     function remove_interface(node, interface){
         var response = {};
-
-        var url = window.location.href
-        url = url.replace(window.location.search,'');
-        url = url.split('/');
-        url.pop();
-        if (url.includes("edit") || url.includes("clone")){
+        var url;
+        if ($('#formAuthentication').data('gf-remove-prefix') !== undefined) {
+            var prefix = $('#formAuthentication').data('gf-remove-prefix');
+            prefix = prefix == null ? '' : String(prefix).replace(/\/$/, '');
+            url = (prefix ? prefix : '') + '/remove/' + encodeURIComponent(node) + '/' + encodeURIComponent(interface);
+        } else {
+            url = window.location.href.replace(window.location.search, '');
+            url = url.split('/');
             url.pop();
+            if (url.includes('edit') || url.includes('clone')) {
+                url.pop();
+            }
+            url = url.join('/');
+            url = url + '/remove/' + encodeURIComponent(node) + '/' + encodeURIComponent(interface);
         }
-        url = url.join("/");
-        url = url+"/remove/"+node+"/"+interface;
         $.ajax({
             async: false,
             global: false,
             url: url,
             type: 'GET',
             dataType: 'json',
-            success: function(res) {
-                response = res;
+            complete: function (xhr) {
+                try {
+                    response = xhr.responseJSON || JSON.parse(xhr.responseText || '{}');
+                } catch (e) {
+                    response = { message: xhr.responseText || 'Request failed', status: 'error' };
+                }
             }
         });
         return response;
     }
 
+    function gfRemoveMsg(res) {
+        if (!res) return '';
+        if (res.message) return res.message;
+        if (res.success) return res.success;
+        if (res.error) return res.error;
+        return '';
+    }
+
+    function gfRemoveOk(res) {
+        if (!res) return false;
+        if (res.status === 'success') return true;
+        if (res.success) return true;
+        return false;
+    }
+
      $('body').on('click', '#remove_nodeinterface, .js-remove-interface', function() {
         var $block = $(this).closest('.tx-interface-block');
-        var url = window.location.href;
-        url = url.split('/');
-        var node = url[url.length-1];
+        var node = $('#formAuthentication').data('gf-record');
+        if (!node) {
+            var path = window.location.pathname.replace(/\/$/, '').split('/');
+            node = path[path.length - 1];
+        }
 
         if ($block.length) {
             var iface = $block.find('input[name="interface"]').val();
             if (iface) {
                 var response = remove_interface(node, iface);
-                if ('error' in response) {
-                    $block.after('<div class="alert alert-danger" role="alert">'+response.error+'</div>');
-                }
-                if ('success' in response) {
-                    $block.after('<div class="alert alert-success" role="alert">'+response.success+'</div>');
+                if (!gfRemoveOk(response)) {
+                    $block.after('<div class="alert alert-danger" role="alert">' + gfEscapeHtml(gfRemoveMsg(response)) + '</div>');
+                } else {
+                    $block.after('<div class="alert alert-success" role="alert">' + gfEscapeHtml(gfRemoveMsg(response)) + '</div>');
                     $block.remove();
                 }
             } else {
@@ -337,11 +573,10 @@
             var iface = $(this).parent().prev().find('input[type="text"]').val();
             if (iface) {
                 var response = remove_interface(node, iface);
-                if ('error' in response) {
-                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">'+response.error+'</p></div>');
-                }
-                if ('success' in response) {
-                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-success" role="alert">'+response.success+'</p></div>');
+                if (!gfRemoveOk(response)) {
+                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-danger" role="alert">' + gfEscapeHtml(gfRemoveMsg(response)) + '</p></div>');
+                } else {
+                    $(this).parent().after('<br /><div class="input-group"><p class="alert alert-success" role="alert">' + gfEscapeHtml(gfRemoveMsg(response)) + '</p></div>');
                     $(this).parent().prev().remove();
                     $(this).parent().remove();
                 }

@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<div class="tx-shell">
+<div class="tx-shell" data-group-page="add">
   <a href="{{ url_for('home') }}" class="tx-close">&times;</a>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -12,6 +12,10 @@
     {% endif %}
   {% endwith %}
 
+  <div id="group-form-error" class="alert alert-danger" style="display:none;" role="alert"></div>
+  <p id="group-form-loading" class="text-muted" style="display:none;">Loading…</p>
+
+  <div id="group-form-body">
   <div class="tx-header">
     <h2 class="tx-title">Add {{ table }}</h2>
   </div>
@@ -26,7 +30,7 @@
       </div>
       <div class="tx-field tx-field-strong">
         <span class="tx-label">OS Image:</span>
-        <select name="osimage" id="id_osimage">{{ osimage_list | safe }}</select>
+        <select name="osimage" id="id_osimage"></select>
       </div>
       <div class="tx-field">
         <span class="tx-label">Setup BMC:</span>
@@ -34,7 +38,7 @@
       </div>
       <div class="tx-field">
         <span class="tx-label">BMC Setup Name:</span>
-        <select name="bmcsetupname" id="id_bmcsetupname">{{ bmcsetup_list | safe }}</select>
+        <select name="bmcsetupname" id="id_bmcsetupname"></select>
       </div>
     </div>
 
@@ -62,7 +66,10 @@
     <!-- Interface section (collapsible) -->
     <div id="interface_section" style="display:none;">
       <div class="tx-interface-section">
-        <div id="nodeinterface"></div>
+        <div id="group-interface-rows"></div>
+        <div class="tx-interface-actions">
+          <button type="button" id="add_nodeinterface" class="tx-btn tx-btn-orange">+ Add</button>
+        </div>
       </div>
     </div>
 
@@ -148,6 +155,7 @@
 
     <span id="form-status"></span>
   </form>
+  </div>
 </div>
 
 <script>
@@ -156,8 +164,8 @@
     if (section.style.display === 'none') {
       section.style.display = 'block';
       this.textContent = 'Hide Interfaces';
-      if ($('#nodeinterface').children('.tx-interface-block').length === 0) {
-        $('#nodeinterface').append(group_interface);
+      if ($('#group-interface-rows').children('.tx-interface-block').length === 0) {
+        $('#group-interface-rows').append(group_interface);
       }
     } else {
       section.style.display = 'none';

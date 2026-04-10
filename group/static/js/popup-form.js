@@ -67,7 +67,7 @@
       }
 
       var nameEl  = document.getElementById('id_name');
-      var newName = document.getElementById('id_newname');
+      var newName = document.getElementById('id_newname') || document.getElementById('id_newgroupname');
       if (nameEl && newName && nameEl.value && newName.value && nameEl.value === newName.value) {
         if (statusEl) {
           statusEl.className = 'alert alert-danger';

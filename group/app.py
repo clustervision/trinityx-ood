@@ -32,7 +32,7 @@ __status__      = 'Development'
 
 import os
 import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from rest import Rest
 from constant import LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
@@ -48,6 +48,20 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 if APP_STATE is False: 
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
+
+
+def _wants_json():
+    """
+    API clients: ?format=json or Accept prefers application/json.
+    Browsers: default HTML for GET form pages.
+    """
+    fmt = (request.args.get('format') or '').lower()
+    if fmt == 'json':
+        return True
+    if fmt == 'html':
+        return False
+    best = request.accept_mimetypes.best_match(['application/json', 'text/html'], 'text/html')
+    return best == 'application/json'
 
 
 @app.before_request
@@ -74,7 +88,10 @@ def page_not_found(e):
 def home():
     """
     This is the main method of application. It will list all Groups which is available with daemon.
+    Browsers get the inventory shell (pure client table + modals); API clients use ?format=json or Accept: application/json.
     """
+    if not _wants_json():
+        return render_template('inventory.html', table=TABLE_CAP)
     table_data = Rest().get_data(TABLE)
     LOGGER.info(table_data)
     if table_data:
@@ -138,13 +155,17 @@ def add():
         bmcsetup_list = Model().get_list_options_json('bmcsetup')
         osimage_list = Model().get_list_options_json('osimage')
         network_list = Model().get_list_options_json('network')
-        return jsonify({
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
             "table": TABLE_CAP,
             "bmcsetup_list": bmcsetup_list,
             "osimage_list": osimage_list,
             "network_list": network_list,
-            "bond_modes": Helper().get_bond_mode_list(),
-        })
+            "bond_modes": bond_modes,
+        }
+        if _wants_json():
+            return jsonify(body)
+        return render_template('add.html', table=TABLE_CAP)
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
@@ -214,16 +235,19 @@ def edit(record=None):
         bmcsetup_list = Model().get_list_options_json('bmcsetup', data.get('bmcsetupname'))
         osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
         network_list = Model().get_list_options_json('network')
-
-        return jsonify({
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
             "table": TABLE_CAP,
             "record": record,
             "data": data,
             "bmcsetup_list": bmcsetup_list,
             "osimage_list": osimage_list,
             "network_list": network_list,
-            "bond_modes": Helper().get_bond_mode_list(),
-        })
+            "bond_modes": bond_modes,
+        }
+        if _wants_json():
+            return jsonify(body)
+        return render_template('edit.html', record=record)
 
 
 @app.route('/delete/<string:record>', methods=['GET'])
@@ -294,16 +318,19 @@ def clone(record=None):
         bmcsetup_list = Model().get_list_options_json('bmcsetup', data.get('bmcsetupname'))
         osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
         network_list = Model().get_list_options_json('network')
-
-        return jsonify({
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
             "table": TABLE_CAP,
             "record": record,
             "data": data,
             "bmcsetup_list": bmcsetup_list,
             "osimage_list": osimage_list,
             "network_list": network_list,
-            "bond_modes": Helper().get_bond_mode_list(),
-        })
+            "bond_modes": bond_modes,
+        }
+        if _wants_json():
+            return jsonify(body)
+        return render_template('clone.html', record=record)
 
 
 @app.route('/member/<string:table>/<string:record>', methods=['GET'])

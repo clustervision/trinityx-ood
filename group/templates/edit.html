@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<div class="tx-shell">
+<div class="tx-shell" data-group-page="edit" data-record="{{ record }}">
   <a href="{{ url_for('home') }}" class="tx-close">&times;</a>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -12,9 +12,12 @@
     {% endif %}
   {% endwith %}
 
-  {% if data %}
+  <div id="group-form-error" class="alert alert-danger" style="display:none;" role="alert"></div>
+  <p id="group-form-loading" class="text-muted" style="display:none;">Loading…</p>
+
+  <div id="group-form-body">
   <div class="tx-header">
-    <h2 class="tx-title">Edit {{ record }}</h2>
+    <h2 class="tx-title">Edit <span class="js-gf-record-title">{{ record }}</span></h2>
   </div>
 
   <form id="formAuthentication" class="mb-3" action="" method="POST">
@@ -22,46 +25,45 @@
     <div class="tx-fields">
       <div class="tx-field">
         <span class="tx-label">Name:</span>
-        <input type="text" name="name" readonly maxlength="100" required id="id_name" value="{{ data.name }}" />
+        <input type="text" name="name" readonly maxlength="100" required id="id_name" value="" />
       </div>
       <div class="tx-field">
         <span class="tx-label">OS Image:</span>
-        <select name="osimage" id="id_osimage">{{ osimage_list | safe }}</select>
+        <select name="osimage" id="id_osimage"></select>
       </div>
       <div class="tx-field">
         <span class="tx-label">Setup BMC:</span>
-        <input type="checkbox" name="setupbmc" id="id_setupbmc" value="true" {% if data.setupbmc == True or data.setupbmc == 'True' %}checked{% endif %} />
+        <input type="checkbox" name="setupbmc" id="id_setupbmc" value="true" />
       </div>
       <div class="tx-field">
         <span class="tx-label">BMC Setup Name:</span>
-        <select name="bmcsetupname" id="id_bmcsetupname">{{ bmcsetup_list | safe }}</select>
+        <select name="bmcsetupname" id="id_bmcsetupname"></select>
       </div>
     </div>
 
     <div class="tx-fields">
       <div class="tx-field">
         <span class="tx-label">Roles:</span>
-        <input type="text" name="roles" maxlength="100" id="id_roles" value="{{ data.roles }}" />
+        <input type="text" name="roles" maxlength="100" id="id_roles" value="" />
       </div>
       <div class="tx-field">
         <span class="tx-label">Scripts:</span>
-        <input type="text" name="scripts" maxlength="100" id="id_scripts" value="{{ data.scripts }}" />
+        <input type="text" name="scripts" maxlength="100" id="id_scripts" value="" />
       </div>
       <div class="tx-field">
         <span class="tx-label">Net Boot:</span>
-        <input type="checkbox" name="netboot" id="id_netboot" value="true" {% if data.netboot == True or data.netboot == 'True' %}checked{% endif %} />
+        <input type="checkbox" name="netboot" id="id_netboot" value="true" />
       </div>
       <div class="tx-field">
         <span class="tx-label">Boot Menu:</span>
-        <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" {% if data.bootmenu == True or data.bootmenu == 'True' %}checked{% endif %} />
+        <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" />
       </div>
-      <button type="button" id="toggle_interfaces" class="tx-btn tx-btn-orange tx-btn-wide">{% if interface_html %}Hide Interfaces{% else %}+ Interfaces{% endif %}</button>
+      <button type="button" id="toggle_interfaces" class="tx-btn tx-btn-orange tx-btn-wide">+ Interfaces</button>
     </div>
 
-    <div id="interface_section" style="{% if interface_html %}display:block{% else %}display:none{% endif %}">
+    <div id="interface_section" style="display:none;">
       <div class="tx-interface-section">
-        {{ interface_html | safe }}
-        <div id="nodeinterface"></div>
+        <div id="group-interface-rows"></div>
         <div class="tx-interface-actions">
           <button type="button" id="add_nodeinterface" class="tx-btn tx-btn-orange">+ Add</button>
         </div>
@@ -70,7 +72,7 @@
 
     <div class="tx-form-footer">
       <button type="button" id="toggle_advanced" class="tx-btn tx-btn-outline-blue">Advanced &#9662;</button>
-      <button type="submit" class="tx-btn tx-btn-blue">Update {{ record }}</button>
+      <button type="submit" class="tx-btn tx-btn-blue">Update <span class="js-gf-record-title">{{ record }}</span></button>
     </div>
 
     <div id="advanced_section" style="display:none;">
@@ -79,123 +81,116 @@
 
           <div class="tx-field" style="width:100%">
             <span class="tx-label">Domain:</span>
-            <input type="text" name="domain" maxlength="100" id="id_domain" value="{{ data.domain }}" style="flex:1" />
+            <input type="text" name="domain" maxlength="100" id="id_domain" value="" style="flex:1" />
           </div>
           <div class="tx-field" style="width:100%">
             <span class="tx-label">Unmanaged BMC Users:</span>
-            <input type="text" name="unmanaged_bmc_users" maxlength="100" id="id_unmanaged_bmc_users" value="{{ data.unmanaged_bmc_users }}" style="flex:1" />
+            <input type="text" name="unmanaged_bmc_users" maxlength="100" id="id_unmanaged_bmc_users" value="" style="flex:1" />
           </div>
 
-          <div class="tx-field-block">
+          <div class="tx-field-block" data-gf-adv="kerneloptions">
             <div class="tx-label-row">
               <span class="tx-label">Kernel Options:</span>
-              <span class="tx-source">| {{ data.kerneloptions_source }}{{ data._kerneloptions_source }}</span>
+              <span class="tx-source">| <span class="js-kerneloptions-s1"></span><span class="js-kerneloptions-s2"></span></span>
             </div>
-            {% if data.kerneloptions_source and data.kerneloptions_source != 'group' or data._kerneloptions_source != 'group' %}
-              <textarea disabled rows="3">{{ data.kerneloptions }}</textarea>
-            {% endif %}
-            <textarea name="kerneloptions" rows="3">{% if data.kerneloptions_source == 'group' or data._kerneloptions_source == 'group' %}{{ data.kerneloptions }}{% endif %}</textarea>
+            <textarea class="js-kerneloptions-ro" disabled rows="3" style="display:none;"></textarea>
+            <textarea name="kerneloptions" rows="3"></textarea>
           </div>
-          <div class="tx-field-block">
+          <div class="tx-field-block" data-gf-adv="prescript">
             <div class="tx-label-row">
               <span class="tx-label">Pre Script:</span>
-              <span class="tx-source">| {{ data.prescript_source }}{{ data._prescript_source }}</span>
+              <span class="tx-source">| <span class="js-prescript-s1"></span><span class="js-prescript-s2"></span></span>
             </div>
-            {% if data.prescript_source and data.prescript_source != 'group' or data._prescript_source != 'group' %}
-              <textarea disabled rows="3">{{ data.prescript }}</textarea>
-            {% endif %}
-            <textarea name="prescript" rows="3">{% if data.prescript_source == 'group' or data._prescript_source == 'group' %}{{ data.prescript }}{% endif %}</textarea>
+            <textarea class="js-prescript-ro" disabled rows="3" style="display:none;"></textarea>
+            <textarea name="prescript" rows="3"></textarea>
           </div>
 
-          <div class="tx-field-block">
+          <div class="tx-field-block" data-gf-adv="partscript">
             <div class="tx-label-row">
               <span class="tx-label">Part Script:</span>
-              <span class="tx-source">| {{ data.partscript_source }}{{ data._partscript_source }}</span>
+              <span class="tx-source">| <span class="js-partscript-s1"></span><span class="js-partscript-s2"></span></span>
             </div>
-            {% if data.partscript_source and data.partscript_source != 'group' or data._partscript_source != 'group' %}
-              <textarea disabled rows="3">{{ data.partscript }}</textarea>
-            {% endif %}
-            <textarea name="partscript" rows="3">{% if data.partscript_source == 'group' or data._partscript_source == 'group' %}{{ data.partscript }}{% endif %}</textarea>
+            <textarea class="js-partscript-ro" disabled rows="3" style="display:none;"></textarea>
+            <textarea name="partscript" rows="3"></textarea>
           </div>
-          <div class="tx-field-block">
+          <div class="tx-field-block" data-gf-adv="postscript">
             <div class="tx-label-row">
               <span class="tx-label">Post Script:</span>
-              <span class="tx-source">| {{ data.postscript_source }}{{ data._postscript_source }}</span>
+              <span class="tx-source">| <span class="js-postscript-s1"></span><span class="js-postscript-s2"></span></span>
             </div>
-            {% if data.postscript_source and data.postscript_source != 'group' or data._postscript_source != 'group' %}
-              <textarea disabled rows="3">{{ data.postscript }}</textarea>
-            {% endif %}
-            <textarea name="postscript" rows="3">{% if data.postscript_source == 'group' or data._postscript_source == 'group' %}{{ data.postscript }}{% endif %}</textarea>
+            <textarea class="js-postscript-ro" disabled rows="3" style="display:none;"></textarea>
+            <textarea name="postscript" rows="3"></textarea>
           </div>
 
           <div class="tx-field" style="width:100%">
             <span class="tx-label">OS Image Tag:</span>
-            <input type="text" name="osimagetag" maxlength="100" id="id_osimagetag" value="{% if data.osimagetag != 'default' %}{{ data.osimagetag }}{% endif %}" style="flex:1" />
-            {% if data.osimagetag_source or data._osimagetag_source %}
-            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.osimagetag_source }}{{ data._osimagetag_source }}</span>
-            {% endif %}
+            <input type="text" name="osimagetag" maxlength="100" id="id_osimagetag" value="" style="flex:1" />
+            <span class="js-osimagetag-hint" style="font-size:0.7rem;color:#666;padding-right:0.5rem"></span>
           </div>
           <div class="tx-field" style="width:100%">
             <span class="tx-label">Provision Interface:</span>
-            <input type="text" name="provision_interface" maxlength="100" value="{% if data.provision_interface_source == 'group' or data._provision_interface_source == 'group' %}{{ data.provision_interface }}{% endif %}" style="flex:1" />
-            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.provision_interface_source }}{{ data._provision_interface_source }}</span>
+            <input type="text" name="provision_interface" maxlength="100" id="id_provision_interface" value="" style="flex:1" />
+            <span class="js-provision_interface-hint" style="font-size:0.7rem;color:#666;padding-right:0.5rem"></span>
           </div>
 
           <div class="tx-field" style="width:100%">
             <span class="tx-label">Provision Fallback:</span>
-            <input type="text" name="provision_fallback" maxlength="100" value="{% if data.provision_fallback_source == 'group' or data._provision_fallback_source == 'group' %}{{ data.provision_fallback }}{% endif %}" style="flex:1" />
-            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.provision_fallback_source }}{{ data._provision_fallback_source }}</span>
+            <input type="text" name="provision_fallback" maxlength="100" id="id_provision_fallback" value="" style="flex:1" />
+            <span class="js-provision_fallback-hint" style="font-size:0.7rem;color:#666;padding-right:0.5rem"></span>
           </div>
           <div class="tx-field" style="width:100%">
             <span class="tx-label">Provision Method:</span>
-            <input type="text" name="provision_method" maxlength="100" value="{% if data.provision_method_source == 'group' or data._provision_method_source == 'group' %}{{ data.provision_method }}{% endif %}" style="flex:1" />
-            <span style="font-size:0.7rem;color:#666;padding-right:0.5rem">| {{ data.provision_method_source }}{{ data._provision_method_source }}</span>
+            <input type="text" name="provision_method" maxlength="100" id="id_provision_method" value="" style="flex:1" />
+            <span class="js-provision_method-hint" style="font-size:0.7rem;color:#666;padding-right:0.5rem"></span>
           </div>
 
           <div class="tx-field-block tx-adv-full">
             <div class="tx-label-row">
               <span class="tx-label">Comment:</span>
             </div>
-            <textarea name="comment" rows="3">{{ data.comment }}</textarea>
+            <textarea name="comment" rows="3" id="id_comment"></textarea>
           </div>
 
         </div>
 
         <div class="tx-form-footer">
           <span></span>
-          <button type="submit" class="tx-btn tx-btn-blue">Update {{ record }}</button>
+          <button type="submit" class="tx-btn tx-btn-blue">Update <span class="js-gf-record-title">{{ record }}</span></button>
         </div>
       </div>
     </div>
 
     <span id="form-status"></span>
   </form>
-
-  {% else %}
-    <div class="alert alert-danger" role="alert">This {{ record }} is not available at this moment. <a href="{{ url_for('add') }}" class="tx-btn tx-btn-blue">Create</a> <a href="{{ url_for('home') }}" class="tx-btn tx-btn-orange">Back</a></div>
-  {% endif %}
+  </div>
 </div>
 
 <script>
-  document.getElementById('toggle_interfaces').addEventListener('click', function() {
-    var section = document.getElementById('interface_section');
-    if (section.style.display === 'none') {
-      section.style.display = 'block';
-      this.textContent = 'Hide Interfaces';
-    } else {
-      section.style.display = 'none';
-      this.textContent = '+ Interfaces';
-    }
-  });
-  document.getElementById('toggle_advanced').addEventListener('click', function() {
-    var section = document.getElementById('advanced_section');
-    if (section.style.display === 'none') {
-      section.style.display = 'block';
-      this.innerHTML = 'Advanced &#9652;';
-    } else {
-      section.style.display = 'none';
-      this.innerHTML = 'Advanced &#9662;';
-    }
-  });
+  (function() {
+    var tIf = document.getElementById('toggle_interfaces');
+    var tAd = document.getElementById('toggle_advanced');
+    if (tIf) tIf.addEventListener('click', function() {
+      var section = document.getElementById('interface_section');
+      if (!section) return;
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        this.textContent = 'Hide Interfaces';
+      } else {
+        section.style.display = 'none';
+        this.textContent = '+ Interfaces';
+      }
+    });
+    if (tAd) tAd.addEventListener('click', function() {
+      var section = document.getElementById('advanced_section');
+      if (!section) return;
+      if (section.style.display === 'none') {
+        section.style.display = 'block';
+        this.innerHTML = 'Advanced &#9652;';
+      } else {
+        section.style.display = 'none';
+        this.innerHTML = 'Advanced &#9662;';
+      }
+    });
+  })();
 </script>
 {% endblock content %}

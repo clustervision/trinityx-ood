@@ -14,32 +14,31 @@
   <div class="tx-header">
     <h2 class="tx-title">{{ table }}s</h2>
     <div class="tx-header-actions">
-      <button class="tx-btn tx-btn-help" title="Help">?</button>
+      <button class="tx-btn tx-btn-help" title="Help" type="button">?</button>
       <button type="button" id="openAddGroupBtn" class="tx-btn tx-btn-blue">Add {{ table }}</button>
       <div id="txTableSearchSlot"></div>
     </div>
   </div>
 
-  {% if data %}
-    <div class="text-nowrap">{{ data | safe }}</div>
-    <div id="txTableLengthSlot" class="tx-table-length-below"></div>
-  {% else %}
-    <p style="color:#888;">No {{ table }} available at this time.</p>
-  {% endif %}
+  <p id="groupListError" class="alert alert-danger" style="display:none;" role="alert"></p>
+
+  <div class="table-responsive">
+    <table id="groupTable" class="table table-striped table-bordered align-middle" style="width:100%;"></table>
+  </div>
+  <div id="txTableLengthSlot" class="tx-table-length-below"></div>
 
 </div>
 
-<div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+<div class="modal fade" id="groupModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
     <div class="modal-content tx-modal-popup">
-      <div class="modal-body p-0">
-        <iframe
-          id="addGroupFrame"
-          src="about:blank"
-          title="Add Group"
-          class="tx-popup-iframe"
-        ></iframe>
+      <div class="modal-header">
+        <h5 class="modal-title" id="groupModalTitle"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
+      <div class="modal-body p-0" id="groupModalBody"></div>
     </div>
   </div>
 </div>
@@ -47,193 +46,13 @@
 {% endblock content %}
 
 {% block extra_js %}
+{% set _chk_rid = '__REQ__' %}
 <script>
-  (function() {
-    var frame = document.getElementById('addGroupFrame');
-    if (!frame) return;
-
-    function setIframeHeight(px) {
-      var n = parseInt(px, 10);
-      if (!n || n < 200) return;
-      var max = Math.round(window.innerHeight * 0.92);
-      frame.style.height = Math.min(n + 24, max) + 'px';
-    }
-
-    function openPopup(url) {
-      frame.src = url;
-      frame.style.height = Math.min(Math.round(window.innerHeight * 0.72), 560) + 'px';
-      $('#addGroupModal').modal('show');
-    }
-
-    var addBtn = document.getElementById('openAddGroupBtn');
-    if (addBtn) {
-      addBtn.addEventListener('click', function() {
-        openPopup("{{ url_for('add') }}?popup=1");
-      });
-    }
-
-    function moveDataTableControls() {
-      var wrapper = document.querySelector('.dataTables_wrapper');
-      if (!wrapper) return;
-      var search = wrapper.querySelector('.dataTables_filter');
-      var length = wrapper.querySelector('.dataTables_length');
-      var searchSlot = document.getElementById('txTableSearchSlot');
-      var lengthSlot = document.getElementById('txTableLengthSlot');
-      if (search && searchSlot && !searchSlot.contains(search)) searchSlot.appendChild(search);
-      if (length && lengthSlot && !lengthSlot.contains(length)) lengthSlot.appendChild(length);
-    }
-
-    var trailingEmptyColsDone = false;
-
-    /** Hide trailing columns that are completely empty (e.g. extra PrettyTable column). Never hides Actions. */
-    function hideTrailingEmptyColumnsDT() {
-      if (trailingEmptyColsDone) return;
-      var table = document.getElementById('datatable');
-      if (!table || typeof DataTable === 'undefined' || !DataTable.isDataTable(table)) return;
-      var api = $(table).DataTable();
-      var n = api.columns().count();
-      for (var i = n - 1; i >= 0; i--) {
-        var col = api.column(i);
-        if (!col.visible()) continue;
-        var $th = $(col.header());
-        var headerText = ($th.text() || '').replace(/\u00a0/g, '').trim().toLowerCase();
-        if (headerText === 'actions') break;
-
-        var hasIcons = false;
-        var hasText = false;
-        col.nodes().each(function() {
-          var $c = $(this);
-          if ($c.find('a,button,i,.bx').length) hasIcons = true;
-          var t = ($c.text() || '').replace(/\u00a0/g, '').trim();
-          if (t) hasText = true;
-        });
-        if (!hasIcons && !hasText && !headerText) {
-          col.visible(false, false);
-        } else {
-          break;
-        }
-      }
-      api.columns.adjust();
-      trailingEmptyColsDone = true;
-    }
-
-    function keepOnlyFourActionIcons() {
-      var table = document.getElementById('datatable');
-      if (!table) return;
-      var headers = table.querySelectorAll('thead th');
-      var actionIndex = -1;
-      headers.forEach(function(th, idx) {
-        var t = (th.textContent || '').toLowerCase().trim();
-        if (t === 'actions') actionIndex = idx;
-      });
-      if (actionIndex < 0) return;
-      table.querySelectorAll('tbody tr').forEach(function(row) {
-        var td = row.querySelectorAll('td')[actionIndex];
-        if (!td) return;
-        td.querySelectorAll('a').forEach(function(a) {
-          var tip = (a.getAttribute('data-bs-original-title') || '').toLowerCase();
-          if (tip.includes('detail information') || tip.includes('member nodes')) {
-            a.remove();
-          }
-        });
-      });
-    }
-
-    var tableDelegatesBound = false;
-
-    function bindTableDelegates() {
-      if (tableDelegatesBound) return;
-      var table = document.getElementById('datatable');
-      if (!table || !table.querySelector('tbody')) return;
-      tableDelegatesBound = true;
-
-      table.querySelector('tbody').addEventListener('click', function(e) {
-        var link = e.target.closest('a[href]');
-        if (link) {
-          var href = link.getAttribute('href') || '';
-          if (href.indexOf('/edit/') === 0 || href.indexOf('/clone/') === 0 || href.indexOf('/ospush/') === 0) {
-            e.preventDefault();
-            openPopup(href + (href.indexOf('?') >= 0 ? '&popup=1' : '?popup=1'));
-          }
-          return;
-        }
-        var td = e.target.closest('td');
-        if (!td) return;
-        var tr = td.parentElement;
-        if (!tr || tr.parentElement.tagName !== 'TBODY') return;
-        var cells = tr.querySelectorAll('td');
-        var firstVisible = null;
-        for (var i = 0; i < cells.length; i++) {
-          if (cells[i].offsetParent !== null) {
-            firstVisible = cells[i];
-            break;
-          }
-        }
-        if (td !== firstVisible) return;
-        td.style.cursor = 'pointer';
-        td.style.color = '#4a6cf7';
-        td.style.fontWeight = '600';
-        var raw = (td.textContent || '').trim();
-        var name = raw.replace(/\s+\*$/, '');
-        if (!name) return;
-        openPopup("/edit/" + encodeURIComponent(name) + "?popup=1");
-      });
-    }
-
-    function styleNameColumnCells() {
-      var table = document.getElementById('datatable');
-      if (!table) return;
-      table.querySelectorAll('tbody tr').forEach(function(row) {
-        var cells = row.querySelectorAll('td');
-        for (var i = 0; i < cells.length; i++) {
-          if (cells[i].offsetParent !== null) {
-            cells[i].style.cursor = 'pointer';
-            cells[i].style.color = '#4a6cf7';
-            cells[i].style.fontWeight = '600';
-            break;
-          }
-        }
-      });
-    }
-
-    function runTableChrome() {
-      moveDataTableControls();
-      keepOnlyFourActionIcons();
-      hideTrailingEmptyColumnsDT();
-      bindTableDelegates();
-      styleNameColumnCells();
-    }
-
-    $(function() {
-      var $dt = $('#datatable');
-      if ($dt.length) {
-        $dt.on('init.dt draw.dt', function() {
-          runTableChrome();
-        });
-      }
-      setTimeout(runTableChrome, 50);
-      setTimeout(runTableChrome, 300);
-    });
-
-    window.addEventListener('message', function(event) {
-      var data = event.data || {};
-      if (data.type === 'group-popup-close') {
-        $('#addGroupModal').modal('hide');
-      }
-      if (data.type === 'group-popup-saved') {
-        $('#addGroupModal').modal('hide');
-        frame.src = 'about:blank';
-        window.location.reload();
-      }
-      if (data.type === 'group-iframe-height' && typeof data.height === 'number') {
-        setIframeHeight(data.height);
-      }
-    });
-
-    $('#addGroupModal').on('hidden.bs.modal', function () {
-      frame.src = 'about:blank';
-      frame.style.height = '';
-    });
-  })();
+  window.GROUP_GET_LIST_ROOT = {{ url_for('home') | tojson }};
+  window.groupCheckStatusUrl = function (requestId) {
+    var u = {{ url_for('check_status', status='config', request_id=_chk_rid) | tojson }};
+    return u.replace('__REQ__', encodeURIComponent(requestId));
+  };
 </script>
+<script src="{{ url_for('static', filename='js/group-app.js') }}"></script>
 {% endblock extra_js %}
