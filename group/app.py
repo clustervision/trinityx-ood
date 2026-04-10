@@ -273,7 +273,8 @@ def clone(record=None):
         response = Rest().post_clone(TABLE, payload['name'], request_data)
         LOGGER.info(f'{response.status_code} {response.content}')
         if response.status_code == 201:
-            return jsonify({"message": f'{TABLE_CAP} cloned as {payload["name"]}.', "status": "success"}), 201
+            new_name = payload.get('newgroupname') or payload.get('name')
+            return jsonify({"message": f'{TABLE_CAP} cloned as {new_name}.', "status": "success"}), 201
         else:
             try:
                 response_json = response.json()
@@ -366,7 +367,18 @@ def check_status(status=None, request_id=None):
     if request:
         uri = f'{status}/status/{request_id}'
         result = Rest().get_raw(uri)
-        return jsonify(result.json())
+        if not result:
+            return jsonify({"message": "No response from daemon", "status_code": None}), 502
+        try:
+            body = result.json()
+        except ValueError:
+            text = (result.text or "").strip()
+            return jsonify({
+                "message": "Daemon returned non-JSON body",
+                "status_code": result.status_code,
+                "body": text,
+            }),200 if result.ok else result.status_code
+        return jsonify(body), result.status_code
     return jsonify({"message": "No Response"})
 
 
