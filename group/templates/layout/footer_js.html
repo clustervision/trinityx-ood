@@ -351,6 +351,31 @@
       return v === true || v === 'True';
     }
 
+    function gfTriValue(v) {
+      if (v === true || v === 'True' || v === 'true') return 'true';
+      if (v === false || v === 'False' || v === 'false') return 'false';
+      return '';
+    }
+
+    function setTriFieldState($field, valueAttr) {
+      if (!$field || !$field.length) return;
+      var v = valueAttr === 'true' || valueAttr === 'false' ? valueAttr : '';
+      var $inp = $field.find('input[type="hidden"]').first();
+      if ($inp.length) $inp.val(v);
+      $field.find('.tx-seg').removeClass('is-active');
+      $field.find('.tx-seg').each(function () {
+        if (($(this).attr('data-v') || '') === v) $(this).addClass('is-active');
+      });
+    }
+
+    $('body').on('click', '.tx-tri-field .tx-seg', function (e) {
+      e.preventDefault();
+      var $f = $(this).closest('.tx-tri-field');
+      var raw = $(this).attr('data-v');
+      if (raw === 'true' || raw === 'false') setTriFieldState($f, raw);
+      else setTriFieldState($f, '');
+    });
+
     function hydrateGroupAdvTextarea(prefix, d) {
       var s1 = d[prefix + '_source'] || '';
       var s2 = d['_' + prefix + '_source'] || '';
@@ -401,12 +426,17 @@
       $('.js-gf-record-title').text(payload.record || d.name || '');
 
       $('#id_name').val(d.name || '');
+      if ($('#id_newgroupname').length) $('#id_newgroupname').val(d.newgroupname != null ? d.newgroupname : '');
       fillGroupSelect($('#id_bmcsetupname'), payload.bmcsetup_list, 'Select Bmcsetup');
       fillGroupSelect($('#id_osimage'), payload.osimage_list, 'Select Osimage');
-      $('#id_setupbmc').prop('checked', gfBool(d.setupbmc));
+      var $sbTri = $('#id_setupbmc').closest('.tx-tri-field');
+      if ($sbTri.length) setTriFieldState($sbTri, gfTriValue(d.setupbmc));
+      else $('#id_setupbmc').prop('checked', gfBool(d.setupbmc));
       $('#id_roles').val(d.roles != null ? d.roles : '');
       $('#id_scripts').val(d.scripts != null ? d.scripts : '');
-      $('#id_netboot').prop('checked', gfBool(d.netboot));
+      var $nbTri = $('#id_netboot').closest('.tx-tri-field');
+      if ($nbTri.length) setTriFieldState($nbTri, gfTriValue(d.netboot));
+      else $('#id_netboot').prop('checked', gfBool(d.netboot));
       $('#id_bootmenu').prop('checked', gfBool(d.bootmenu));
 
       $('#id_domain').val(d.domain != null ? d.domain : '');
@@ -459,6 +489,8 @@
     window.hydrateGroupFormBody = hydrateGroupFormBody;
     window.resetGroupFormSerializedBaseline = resetGroupFormSerializedBaseline;
     window.fillGroupSelect = fillGroupSelect;
+    window.setTriFieldState = setTriFieldState;
+    window.gfTriValue = gfTriValue;
 
     $(function () {
       var $shell = $('.tx-shell[data-group-page]').filter(function () {

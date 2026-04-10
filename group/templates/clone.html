@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<div class="tx-shell" data-group-page="clone" data-record="{{ record }}">
+<div class="tx-shell tx-form-page" data-group-page="clone" data-record="{{ record }}">
   <a href="{{ url_for('home') }}" class="tx-close">&times;</a>
 
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -22,47 +22,64 @@
 
   <form id="formAuthentication" class="mb-3" action="" method="POST">
 
-    <div class="tx-fields">
-      <div class="tx-field">
-        <span class="tx-label">Name:</span>
-        <input type="text" name="name" readonly maxlength="100" required id="id_name" value="" />
+    <div class="tx-add-grid">
+      <div class="tx-add-col">
+        <div class="tx-field tx-field-strong">
+          <span class="tx-label">Name:</span>
+          <input type="text" name="name" readonly maxlength="100" required id="id_name" value="" />
+        </div>
+        <div class="tx-field tx-field-strong">
+          <span class="tx-label">New Group Name:</span>
+          <input type="text" name="newgroupname" onkeypress="return event.charCode != 32" maxlength="100" required id="id_newgroupname" />
+        </div>
+        <div class="tx-field">
+          <span class="tx-label">Roles:</span>
+          <input type="text" name="roles" maxlength="100" id="id_roles" value="" />
+        </div>
+        <div class="tx-field tx-tri-field">
+          <span class="tx-label">Net Boot:</span>
+          <div class="tx-tri-inner">
+            <input type="hidden" name="netboot" id="id_netboot" value="" />
+            <div class="tx-segmented" role="group" aria-label="Net boot">
+              <button type="button" class="tx-seg is-active" data-v="">DEFAULT (YES)</button>
+              <button type="button" class="tx-seg" data-v="true">YES</button>
+              <button type="button" class="tx-seg" data-v="false">NO</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="tx-field">
-        <span class="tx-label">New Group Name:</span>
-        <input type="text" name="newgroupname" onkeypress="return event.charCode != 32" maxlength="100" required id="id_newgroupname" />
+      <div class="tx-add-col">
+        <div class="tx-field tx-field-strong">
+          <span class="tx-label">OS Image:</span>
+          <select name="osimage" id="id_osimage"></select>
+        </div>
+        <div class="tx-field">
+          <span class="tx-label">Scripts:</span>
+          <input type="text" name="scripts" maxlength="100" id="id_scripts" value="" />
+        </div>
+        <div class="tx-field">
+          <span class="tx-label">Boot Menu:</span>
+          <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" />
+        </div>
       </div>
-      <div class="tx-field">
-        <span class="tx-label">OS Image:</span>
-        <select name="osimage" id="id_osimage"></select>
+      <div class="tx-add-col">
+        <div class="tx-field tx-tri-field">
+          <span class="tx-label">BMC Setup:</span>
+          <div class="tx-tri-inner">
+            <input type="hidden" name="setupbmc" id="id_setupbmc" value="" />
+            <div class="tx-segmented" role="group" aria-label="BMC setup">
+              <button type="button" class="tx-seg is-active" data-v="">DEFAULT (YES)</button>
+              <button type="button" class="tx-seg" data-v="true">YES</button>
+              <button type="button" class="tx-seg" data-v="false">NO</button>
+            </div>
+          </div>
+        </div>
+        <div class="tx-field">
+          <span class="tx-label">BMC Setup Name:</span>
+          <select name="bmcsetupname" id="id_bmcsetupname"></select>
+        </div>
+        <button type="button" id="toggle_interfaces" class="tx-btn tx-btn-orange tx-btn-block-col">+ Interfaces</button>
       </div>
-      <div class="tx-field">
-        <span class="tx-label">Setup BMC:</span>
-        <input type="checkbox" name="setupbmc" id="id_setupbmc" value="true" />
-      </div>
-      <div class="tx-field">
-        <span class="tx-label">BMC Setup Name:</span>
-        <select name="bmcsetupname" id="id_bmcsetupname"></select>
-      </div>
-    </div>
-
-    <div class="tx-fields">
-      <div class="tx-field">
-        <span class="tx-label">Roles:</span>
-        <input type="text" name="roles" maxlength="100" id="id_roles" value="" />
-      </div>
-      <div class="tx-field">
-        <span class="tx-label">Scripts:</span>
-        <input type="text" name="scripts" maxlength="100" id="id_scripts" value="" />
-      </div>
-      <div class="tx-field">
-        <span class="tx-label">Net Boot:</span>
-        <input type="checkbox" name="netboot" id="id_netboot" value="true" />
-      </div>
-      <div class="tx-field">
-        <span class="tx-label">Boot Menu:</span>
-        <input type="checkbox" name="bootmenu" id="id_bootmenu" value="true" />
-      </div>
-      <button type="button" id="toggle_interfaces" class="tx-btn tx-btn-orange tx-btn-wide">+ Interfaces</button>
     </div>
 
     <div id="interface_section" style="display:none;">
@@ -168,33 +185,4 @@
   </form>
   </div>
 </div>
-
-<script>
-  (function() {
-    var tIf = document.getElementById('toggle_interfaces');
-    var tAd = document.getElementById('toggle_advanced');
-    if (tIf) tIf.addEventListener('click', function() {
-      var section = document.getElementById('interface_section');
-      if (!section) return;
-      if (section.style.display === 'none') {
-        section.style.display = 'block';
-        this.textContent = 'Hide Interfaces';
-      } else {
-        section.style.display = 'none';
-        this.textContent = '+ Interfaces';
-      }
-    });
-    if (tAd) tAd.addEventListener('click', function() {
-      var section = document.getElementById('advanced_section');
-      if (!section) return;
-      if (section.style.display === 'none') {
-        section.style.display = 'block';
-        this.innerHTML = 'Advanced &#9652;';
-      } else {
-        section.style.display = 'none';
-        this.innerHTML = 'Advanced &#9662;';
-      }
-    });
-  })();
-</script>
 {% endblock content %}

@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 {% block content %}
 
-<div class="tx-shell">
+<div class="tx-shell tx-inventory-page">
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -22,15 +22,15 @@
 
   <p id="groupListError" class="alert alert-danger" style="display:none;" role="alert"></p>
 
-  <div class="table-responsive">
-    <table id="groupTable" class="table table-striped table-bordered align-middle" style="width:100%;"></table>
+  <div class="table-responsive tx-inventory-table-wrap">
+    <table id="groupTable" class="table table-striped table-bordered tx-inventory-table" style="width:100%;"></table>
   </div>
   <div id="txTableLengthSlot" class="tx-table-length-below"></div>
 
 </div>
 
 <div class="modal fade" id="groupModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
     <div class="modal-content tx-modal-popup">
       <div class="modal-header">
         <h5 class="modal-title" id="groupModalTitle"></h5>
