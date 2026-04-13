@@ -481,8 +481,12 @@
       if (isHidden) {
         section.style.display = 'block';
         $(this).text('Hide Interfaces');
-        if ($('#group-interface-rows').children('.tx-interface-block').length === 0 && window.group_interface) {
-          $('#group-interface-rows').append(window.group_interface);
+        if ($('#group-interface-rows').children('.tx-interface-block').length === 0) {
+          if (typeof window.appendGroupInterfaceRowString === 'function') {
+            $('#group-interface-rows').append(window.appendGroupInterfaceRowString(null));
+          } else if (window.group_interface) {
+            $('#group-interface-rows').append(window.group_interface);
+          }
         }
       } else {
         section.style.display = 'none';

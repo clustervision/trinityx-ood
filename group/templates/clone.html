@@ -32,11 +32,11 @@
           <span class="tx-label">New Group Name:</span>
           <input type="text" name="newgroupname" onkeypress="return event.charCode != 32" maxlength="100" required id="id_newgroupname" />
         </div>
-        <div class="tx-field">
+        <div class="tx-field tx-field-match">
           <span class="tx-label">Roles:</span>
           <input type="text" name="roles" maxlength="100" id="id_roles" value="" />
         </div>
-        <div class="tx-field tx-tri-field">
+        <div class="tx-field tx-tri-field tx-field-match">
           <span class="tx-label">Net Boot:</span>
           <div class="tx-tri-inner">
             <input type="hidden" name="netboot" id="id_netboot" value="" />
@@ -53,13 +53,13 @@
           <span class="tx-label">OS Image:</span>
           <select name="osimage" id="id_osimage"></select>
         </div>
-        <div class="tx-field">
+        <div class="tx-field tx-field-match">
           <span class="tx-label">Scripts:</span>
           <input type="text" name="scripts" maxlength="100" id="id_scripts" value="" />
         </div>
       </div>
       <div class="tx-add-col">
-        <div class="tx-field tx-tri-field">
+        <div class="tx-field tx-tri-field tx-field-match">
           <span class="tx-label">Setup BMC:</span>
           <div class="tx-tri-inner">
             <input type="hidden" name="setupbmc" id="id_setupbmc" value="" />
@@ -70,7 +70,7 @@
             </div>
           </div>
         </div>
-        <div class="tx-field">
+        <div class="tx-field tx-field-match">
           <span class="tx-label">BMC Setup Name:</span>
           <select name="bmcsetupname" id="id_bmcsetupname"></select>
         </div>
@@ -81,9 +81,6 @@
     <div id="interface_section" style="display:none;">
       <div class="tx-interface-section">
         <div id="group-interface-rows"></div>
-        <div class="tx-interface-actions">
-          <button type="button" id="add_nodeinterface" class="tx-btn tx-btn-orange">+ Add</button>
-        </div>
       </div>
     </div>
 

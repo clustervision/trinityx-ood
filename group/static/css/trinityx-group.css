@@ -16,6 +16,11 @@ body .content-wrapper {
   background-color: #ffffff !important;
 }
 
+.tx-inventory-page,
+.tx-form-page {
+  font-family: "Geist Sans", "Geist", system-ui, sans-serif;
+}
+
 /* ---------- White rounded shell ---------- */
 .tx-shell {
   position: relative;
@@ -100,7 +105,19 @@ body .content-wrapper {
   background: #fff;
 }
 .tx-field.tx-field-strong {
-  border-color: #4a6cf7;
+  border: 2px solid #5376EA;
+}
+.tx-field.tx-field-strong .tx-label {
+  background: #E6EEFF;
+  color: #5376EA;
+}
+/* Lighter frame: border matches label strip (#E6EEFF) — Roles, Scripts, BMC Setup Name, toggles */
+.tx-field.tx-field-match {
+  border: 2px solid #E6EEFF;
+}
+.tx-field.tx-field-match .tx-label {
+  background: #E6EEFF;
+  color: #5376EA;
 }
 .tx-field .tx-label {
   background: #e8edfe;
@@ -148,11 +165,11 @@ body .content-wrapper {
 
 /* ---------- Orange field (interface fields) ---------- */
 .tx-field-orange {
-  border-color: #f0a848;
+  border: 2px solid #F58B00;
 }
 .tx-field-orange .tx-label {
-  background: #fef0d5;
-  color: #b57714;
+  background: #FFF5EB;
+  color: #F58B00;
 }
 
 /* Interface grid layout (3-col rows matching design) */
@@ -172,7 +189,7 @@ body .content-wrapper {
 .tx-field-block {
   display: flex;
   flex-direction: column;
-  border: 2px solid #4a6cf7;
+  border: 2px solid #5376EA;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
@@ -181,12 +198,12 @@ body .content-wrapper {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #e8edfe;
+  background: #E6EEFF;
   padding: 0.3rem 0.6rem;
 }
 .tx-field-block .tx-label-row .tx-label {
   background: transparent;
-  color: #3a56c7;
+  color: #5376EA;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -230,6 +247,8 @@ body .content-wrapper {
 .tx-interface-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
@@ -255,7 +274,7 @@ body .content-wrapper {
 }
 
 .tx-btn-blue {
-  background: #4a6cf7;
+  background: #5376EA;
   color: #fff;
 }
 .tx-btn-blue:hover, .tx-btn-blue:focus {
@@ -280,11 +299,11 @@ body .content-wrapper {
 
 .tx-btn-outline-blue {
   background: transparent;
-  color: #4a6cf7;
-  border: 2px solid #4a6cf7;
+  color: #5376EA;
+  border: 2px solid #5376EA;
 }
 .tx-btn-outline-blue:hover, .tx-btn-outline-blue:focus {
-  color: #4a6cf7;
+  color: #5376EA;
 }
 
 .tx-btn-help {
@@ -541,6 +560,23 @@ body .content-footer a:hover {
 }
 .tx-inventory-page .tx-title {
   color: #5376EA;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+.tx-inventory-page .tx-inline-search-label,
+.tx-inventory-page .tx-inline-search-input {
+  font-size: 18px;
+}
+.tx-inventory-page .dataTables_wrapper,
+.tx-inventory-page .dataTables_info,
+.tx-inventory-page .dataTables_length,
+.tx-inventory-page .dataTables_paginate {
+  font-size: 18px;
+  font-weight: 400;
+}
+.tx-inventory-page .tx-na-box {
+  font-size: 14px;
 }
 .tx-inventory-page .dataTables_filter label,
 .tx-inventory-page .dataTables_length label {
@@ -558,19 +594,25 @@ body .content-footer a:hover {
   background: #ffffff !important;
   border-width: 2px !important;
   border-color: #c6d3fb !important;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
 }
 .tx-inventory-page table tbody td {
   color: #111111 !important;
   vertical-align: middle;
   border-width: 2px !important;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
 }
-/* Body striping: white / light blue (not Bootstrap grey) */
+/* Body striping: first data row light blue, then white (design图一) */
 .tx-inventory-page table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network) {
-  background: #ffffff !important;
+  background: #E6EEFF !important;
   --bs-table-accent-bg: transparent !important;
 }
 .tx-inventory-page table tbody tr:nth-child(even) td:not(.tx-iface-name):not(.tx-iface-network) {
-  background: #E6EEFF !important;
+  background: #ffffff !important;
   --bs-table-accent-bg: transparent !important;
 }
 .tx-inventory-page table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network) {
@@ -581,10 +623,17 @@ body .content-footer a:hover {
   background: none;
   padding: 0;
   margin: 0;
-  font: inherit;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
   color: #111111;
   text-decoration: underline;
+  text-decoration-style: solid;
+  text-underline-offset: 0;
+  text-decoration-thickness: auto;
+  text-decoration-skip-ink: auto;
   cursor: pointer;
   text-align: left;
 }
@@ -707,18 +756,25 @@ body .content-footer a:hover {
   display: flex;
   flex: 1;
   min-width: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid #a3b3f7;
+}
+.tx-field-match .tx-segmented {
+  border-color: #E6EEFF;
+}
+.tx-field-strong .tx-segmented {
+  border-color: #5376EA;
 }
 .tx-seg {
   flex: 1;
   min-width: 0;
-  border: none;
+  border: 2px solid transparent;
+  box-sizing: border-box;
   padding: 0.38rem 0.45rem;
   font-size: 0.68rem;
   font-weight: 600;
-  background: #f0f2f8;
+  background: #f5f7fb;
   color: #444444;
   cursor: pointer;
   line-height: 1.25;
@@ -726,20 +782,36 @@ body .content-footer a:hover {
 .tx-seg + .tx-seg {
   border-left: 1px solid #a3b3f7;
 }
+.tx-field-match .tx-seg + .tx-seg {
+  border-left-color: #E6EEFF;
+}
+.tx-field-strong .tx-seg + .tx-seg {
+  border-left-color: #5376EA;
+}
 .tx-seg.is-active[data-v="true"] {
-  background: #2e9e5b;
-  color: #ffffff;
+  background: #D2FFD7;
+  color: #67C67B;
+  border-color: #67C67B;
 }
 .tx-seg.is-active[data-v="false"] {
-  background: #f0a848;
-  color: #ffffff;
+  background: #FFE3CE;
+  color: #F58B00;
+  border-color: #F58B00;
 }
 .tx-seg.is-active[data-v=""] {
-  background: #e0e4ec;
-  color: #333333;
+  background: #E8E8E8;
+  color: #AEAEAE;
+  border-color: #AEAEAE;
 }
 
-/* Modal: form pages (no second close control) */
+/* Modal: single in-content title; hide duplicate Bootstrap modal title */
+#groupModal .modal-title {
+  display: none !important;
+}
+#groupModal .modal-header {
+  border-bottom: none;
+  padding: 0.5rem 0.75rem 0;
+}
 #groupModal .tx-shell {
   padding: 1.25rem 1.5rem;
   margin: 0;
@@ -750,44 +822,42 @@ body .content-footer a:hover {
   display: none !important;
 }
 
-/* Form pages: body labels black (page title stays .tx-title blue) */
-.tx-form-page .tx-field .tx-label {
-  color: #111111;
+/* Form pages: Geist 18px body; labels follow field variant (strong/match/orange) */
+.tx-form-page .tx-field input,
+.tx-form-page .tx-field select,
+.tx-form-page .tx-field textarea {
+  font-size: 18px;
+  font-weight: 400;
+}
+.tx-form-page .tx-field-block textarea,
+.tx-form-page .tx-field-block input[type="text"] {
+  font-size: 18px;
 }
 .tx-form-page .tx-field-block .tx-label-row .tx-label {
-  color: #111111;
+  color: #5376EA;
+  font-size: 0.75rem;
 }
 .tx-form-page .tx-title {
-  color: #4a6cf7;
+  color: #5376EA;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 /*
- * Rounded table corners:
- * - `border-collapse: collapse` (see .tx-shell table) makes `border-radius` on <table> ineffective in most browsers.
- * - Fix: use `separate` + `border-spacing: 0` on this table only, and round the four corner cells.
- * - Outer frame: light border on the wrapper + overflow clip as a fallback.
+ * Single2px grid: no outer wrapper border (avoids double frame).
+ * border-collapse: collapse merges adjacent cell borders so lines stay 2px, not doubled.
  */
 .tx-inventory-table-wrap {
-  border: 2px solid #c6d3fb;
+  border: none;
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .tx-inventory-page .tx-inventory-table-wrap table.tx-inventory-table {
   margin-bottom: 0;
-  border-collapse: separate;
+  border-collapse: collapse;
   border-spacing: 0;
-}
-.tx-inventory-page .tx-inventory-table thead tr:first-child th:first-child {
-  border-top-left-radius: 10px;
-}
-.tx-inventory-page .tx-inventory-table thead tr:first-child th:last-child {
-  border-top-right-radius: 10px;
-}
-.tx-inventory-page .tx-inventory-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 10px;
-}
-.tx-inventory-page .tx-inventory-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 10px;
 }
 
 /* ---------- Modal close button: blue bold × ---------- */
@@ -853,9 +923,10 @@ body .content-footer a:hover {
   text-align: center;
 }
 .tx-inventory-page table thead th.tx-iface-subheader {
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
-  font-size: 0.78rem;
+  font-size: 18px;
+  line-height: 1;
   padding: 0.6rem 0.75rem;
 }
 .tx-iface-cell {
@@ -865,22 +936,25 @@ body .content-footer a:hover {
 }
 .tx-iface-entry {
   padding: 0.45rem 0.75rem;
-  font-size: 0.85rem;
-  color: #EE9E39;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+  color: #111111;
 }
 .tx-iface-entry + .tx-iface-entry {
   border-top: 1px solid #F6E7CB;
 }
-.tx-inventory-page table tbody td.tx-iface-name {
+/* Interface columns: alternating row backgrounds (light / dark orange); both NAME & NETWORK same row */
+.tx-inventory-page table tbody tr:nth-child(odd) td.tx-iface-name,
+.tx-inventory-page table tbody tr:nth-child(odd) td.tx-iface-network {
   background: #FDF9F3 !important;
 }
-.tx-inventory-page table tbody td.tx-iface-network {
+.tx-inventory-page table tbody tr:nth-child(even) td.tx-iface-name,
+.tx-inventory-page table tbody tr:nth-child(even) td.tx-iface-network {
   background: #FAF0E0 !important;
 }
-.tx-inventory-page table tbody tr:hover td.tx-iface-name {
-  background: #f5efe6 !important;
-}
+.tx-inventory-page table tbody tr:hover td.tx-iface-name,
 .tx-inventory-page table tbody tr:hover td.tx-iface-network {
-  background: #f0e6d4 !important;
+  filter: brightness(0.97);
 }
 

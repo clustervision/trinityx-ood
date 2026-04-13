@@ -341,12 +341,15 @@
           '</div>' +
           '<div class="tx-interface-actions">' +
             '<button type="button" class="tx-btn tx-btn-dark js-remove-interface">Remove Interface</button>' +
+            '<button type="button" class="tx-btn tx-btn-orange js-add-interface">+ Add</button>' +
           '</div>' +
         '</div>'
       );
     }
 
     var group_interface = appendGroupInterfaceRowString(null);
+    window.appendGroupInterfaceRowString = appendGroupInterfaceRowString;
+    window.group_interface = group_interface;
 
     function gfBool(v) {
       return v === true || v === 'True';
@@ -481,6 +484,7 @@
       GROUP_NET_LIST = payload.network_list || { options: [], selected: null };
       GROUP_BOND_MODES = payload.bond_modes || [];
       group_interface = appendGroupInterfaceRowString(null);
+      window.group_interface = group_interface;
 
       var $rows = $('#group-interface-rows');
       $rows.empty();
@@ -531,9 +535,6 @@
 
     $('body').on('click', '.js-add-interface', function () {
         $(this).closest('.tx-interface-block').after(appendGroupInterfaceRowString(null));
-    });
-    $('body').on('click', '#add_nodeinterface', function () {
-        $('#group-interface-rows').append(appendGroupInterfaceRowString(null));
     });
 
     $('body').on('blur', "input[name='mtu']", function () {
