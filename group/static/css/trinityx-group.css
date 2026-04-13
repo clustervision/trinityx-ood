@@ -99,7 +99,7 @@ body .content-wrapper {
 .tx-field {
   display: inline-flex;
   align-items: center;
-  border: 2px solid #a3b3f7;
+  border: 2px solid #E6EEFF;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
@@ -120,8 +120,8 @@ body .content-wrapper {
   color: #5376EA;
 }
 .tx-field .tx-label {
-  background: #e8edfe;
-  color: #3a56c7;
+  background: #E6EEFF;
+  color: #5376EA;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -171,6 +171,18 @@ body .content-wrapper {
   background: #FFF5EB;
   color: #F58B00;
 }
+.tx-field-orange.tx-field-dhcp {
+  background: #ffe6c5 !important;
+}
+.tx-field-orange.tx-field-dhcp .tx-label {
+  background: transparent !important;
+  color: #f58b00;
+}
+.tx-field-orange.tx-field-dhcp .tx-dhcp-check {
+  background: #fff !important;
+  border: 2px solid #f58b00 !important;
+  border-radius: 4px;
+}
 
 /* Interface grid layout (3-col rows matching design) */
 .tx-iface-grid {
@@ -189,7 +201,7 @@ body .content-wrapper {
 .tx-field-block {
   display: flex;
   flex-direction: column;
-  border: 2px solid #5376EA;
+  border: 2px solid #E6EEFF;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
@@ -223,14 +235,62 @@ body .content-wrapper {
   width: 100%;
   padding: 0.4rem 0.6rem;
   font-size: 0.82rem;
-  resize: vertical;
+  resize: none;
+  min-height: 5rem;
+}
+.tx-field-block .tx-field-block-body {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tx-field-block .tx-field-block-body textarea {
+  flex: 1;
+  min-height: 5rem;
+  padding-bottom: 1.75rem;
+}
+.tx-expand-text-trigger {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  border: 2px solid #5376ea;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.tx-expand-text-trigger:hover {
+  background: #f0f4ff;
+}
+.tx-adv-heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.tx-label-title-blue {
+  color: #5376ea;
+}
+.tx-label-title-sep {
+  color: #111;
+  font-weight: 600;
+}
+.tx-label-title-black {
+  color: #111;
+  font-weight: 600;
 }
 
-/* ---------- Interface section ---------- */
+/* ---------- Interface section (expanded) ---------- */
 .tx-interface-section {
-  background: #fffaf2;
-  border: none;
-  border-radius: 6px;
+  background: #fffbf5;
+  border: 2px solid #f6e7cb;
+  border-radius: 8px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
 }
@@ -558,11 +618,12 @@ body .content-footer a:hover {
   gap: 0.65rem;
   align-items: center;
 }
+/* Page title larger than table headers (~18px column titles) */
 .tx-inventory-page .tx-title {
   color: #5376EA;
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.15;
 }
 .tx-inventory-page .tx-inline-search-label,
 .tx-inventory-page .tx-inline-search-input {
@@ -588,15 +649,22 @@ body .content-footer a:hover {
 .tx-inventory-page .dataTables_length select {
   color: #111111 !important;
 }
-/* Inventory thead: white cells, blue labels (#5376EA); interface group uses orange text */
+/* Table header and body (except Interfaces): 2px #E6EEFF */
 .tx-inventory-page table thead th:not(.tx-iface-header):not(.tx-iface-subheader) {
   color: #5376EA !important;
   background: #ffffff !important;
-  border-width: 2px !important;
-  border-color: #c6d3fb !important;
+  border: 2px solid #E6EEFF !important;
   font-size: 18px;
   font-weight: 500;
   line-height: 1;
+  box-sizing: border-box;
+}
+.tx-inventory-page table thead th[rowspan="2"] {
+  min-height: 130px;
+  vertical-align: middle;
+}
+.tx-inventory-page table tbody td:not(.tx-iface-name):not(.tx-iface-network) {
+  border: 2px solid #E6EEFF !important;
 }
 .tx-inventory-page table tbody td {
   color: #111111 !important;
@@ -605,8 +673,9 @@ body .content-footer a:hover {
   font-size: 18px;
   font-weight: 400;
   line-height: 1;
+  box-sizing: border-box;
 }
-/* Body striping: first data row light blue, then white (design图一) */
+/* Body striping: odd rows light blue, even rows white */
 .tx-inventory-page table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network) {
   background: #E6EEFF !important;
   --bs-table-accent-bg: transparent !important;
@@ -756,7 +825,7 @@ body .content-footer a:hover {
   display: flex;
   flex: 1;
   min-width: 0;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
   border: 1px solid #a3b3f7;
 }
@@ -765,6 +834,13 @@ body .content-footer a:hover {
 }
 .tx-field-strong .tx-segmented {
   border-color: #5376EA;
+}
+/* Add/Edit/Clone: tighter tri-state buttons; outer radius from .tx-segmented */
+.tx-form-page .tx-seg {
+  padding: 2px 8px;
+  min-height: 26px;
+  font-size: 0.62rem;
+  line-height: 1.2;
 }
 .tx-seg {
   flex: 1;
@@ -822,20 +898,82 @@ body .content-footer a:hover {
   display: none !important;
 }
 
-/* Form pages: Geist 18px body; labels follow field variant (strong/match/orange) */
+/* Full-screen text editor modal (advanced fields + comment) */
+#txExpandTextModal .modal-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+#txExpandTextModal .tx-expand-header-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+#txExpandTextModal .tx-upload-text-pill {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  cursor: pointer;
+}
+#txExpandTextModal .tx-upload-text-pill input[type="file"] {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+#txExpandTextModal .tx-upload-text-pill span {
+  display: inline-block;
+  background: #fff;
+  color: #5376ea;
+  border: 2px solid #5376ea;
+  border-radius: 6px;
+  padding: 0.28rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+#txExpandTextModal .tx-upload-text-pill:hover span {
+  background: #f5f7ff;
+}
+
+/* Form: label 16px, inputs 15px */
+.tx-form-page .tx-field .tx-label {
+  font-size: 16px;
+  font-weight: 600;
+}
 .tx-form-page .tx-field input,
 .tx-form-page .tx-field select,
 .tx-form-page .tx-field textarea {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 400;
 }
 .tx-form-page .tx-field-block textarea,
 .tx-form-page .tx-field-block input[type="text"] {
-  font-size: 18px;
+  font-size: 15px;
 }
 .tx-form-page .tx-field-block .tx-label-row .tx-label {
   color: #5376EA;
-  font-size: 0.75rem;
+  font-size: 16px;
+}
+.tx-form-page .tx-field-block .tx-label-row .tx-adv-heading {
+  font-size: 16px;
+}
+/* Advanced section: border matches label strip */
+.tx-form-page #advanced_section .tx-field:not(.tx-field-strong):not(.tx-field-orange),
+.tx-form-page #advanced_section .tx-field-block {
+  border: 2px solid #E6EEFF;
+}
+.tx-form-page #advanced_section .tx-field:not(.tx-field-strong):not(.tx-field-orange):not(.tx-field-adv-sys) .tx-label {
+  background: #E6EEFF;
+  color: #5376EA;
+}
+.tx-form-page #advanced_section .tx-field.tx-field-adv-sys .tx-label {
+  background: #e6eeff;
+  color: #5376ea;
 }
 .tx-form-page .tx-title {
   color: #5376EA;
@@ -845,19 +983,35 @@ body .content-footer a:hover {
 }
 
 /*
- * Single2px grid: no outer wrapper border (avoids double frame).
- * border-collapse: collapse merges adjacent cell borders so lines stay 2px, not doubled.
+ * Rounded wrapper: light border + overflow hidden; table uses 2px collapse borders.
+ * Hide horizontal overflow on DataTables footer row to avoid dt-layout scrollbars.
  */
 .tx-inventory-table-wrap {
-  border: none;
+  border: 2px solid #E6EEFF;
   border-radius: 10px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
+  max-width: 100%;
 }
 .tx-inventory-page .tx-inventory-table-wrap table.tx-inventory-table {
   margin-bottom: 0;
   border-collapse: collapse;
   border-spacing: 0;
+  width: 100% !important;
+}
+.tx-inventory-page #groupTable_wrapper {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+.tx-inventory-page #groupTable_wrapper .dt-layout-row,
+.tx-inventory-page #groupTable_wrapper .dt-layout-table,
+.tx-inventory-page #groupTable_wrapper .dt-layout-full,
+.tx-inventory-page #groupTable_wrapper .row {
+  overflow-x: hidden !important;
+  max-width: 100%;
+}
+.tx-inventory-page #groupTable_wrapper .dt-layout-cell {
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 /* ---------- Modal close button: blue bold × ---------- */
@@ -914,25 +1068,27 @@ body .content-footer a:hover {
   box-shadow: inset 0 0 0 1px #4a6cf7;
 }
 
-/* ---------- Interface column: white headers; body NAME / NETWORK two orange tones per row ---------- */
+/* Interface columns: same size as other columns; 2px #F6E7CB */
 .tx-inventory-page table thead th.tx-iface-header,
 .tx-inventory-page table thead th.tx-iface-subheader {
   background: #ffffff !important;
   color: #EE9E39 !important;
   border: 2px solid #F6E7CB !important;
   text-align: center;
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  box-sizing: border-box;
 }
 .tx-inventory-page table thead th.tx-iface-subheader {
-  font-weight: 500;
   text-transform: uppercase;
-  font-size: 18px;
-  line-height: 1;
   padding: 0.6rem 0.75rem;
 }
 .tx-iface-cell {
-  border-color: #F6E7CB !important;
+  border: 2px solid #F6E7CB !important;
   padding: 0 !important;
   vertical-align: middle !important;
+  box-sizing: border-box;
 }
 .tx-iface-entry {
   padding: 0.45rem 0.75rem;
@@ -942,7 +1098,7 @@ body .content-footer a:hover {
   color: #111111;
 }
 .tx-iface-entry + .tx-iface-entry {
-  border-top: 1px solid #F6E7CB;
+  border-top: 2px solid #F6E7CB;
 }
 /* Interface columns: alternating row backgrounds (light / dark orange); both NAME & NETWORK same row */
 .tx-inventory-page table tbody tr:nth-child(odd) td.tx-iface-name,

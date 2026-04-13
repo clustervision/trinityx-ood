@@ -93,47 +93,64 @@
       <div class="tx-advanced-body">
         <div class="tx-adv-grid">
 
-          <div class="tx-field" style="width:100%">
+          <div class="tx-field tx-field-adv-sys" style="width:100%">
             <span class="tx-label">Domain:</span>
             <input type="text" name="domain" maxlength="100" id="id_domain" value="" style="flex:1" />
           </div>
-          <div class="tx-field" style="width:100%">
+          <div class="tx-field tx-field-adv-sys" style="width:100%">
             <span class="tx-label">Unmanaged BMC Users:</span>
-            <input type="text" name="unmanaged_bmc_users" maxlength="100" id="id_unmanaged_bmc_users" value="" style="flex:1" />
+            <select name="unmanaged_bmc_users" id="id_unmanaged_bmc_users" class="form-control" style="flex:1">
+              <option value="">---</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
           </div>
 
           <div class="tx-field-block" data-gf-adv="kerneloptions">
             <div class="tx-label-row">
-              <span class="tx-label">Kernel Options:</span>
+              <span class="tx-adv-heading"><span class="tx-label-title-blue">KERNEL OPTIONS</span><span class="tx-label-title-sep"> | </span><span class="tx-label-title-black">OS IMAGE</span></span>
               <span class="tx-source">| <span class="js-kerneloptions-s1"></span><span class="js-kerneloptions-s2"></span></span>
             </div>
-            <textarea class="js-kerneloptions-ro" disabled rows="3" style="display:none;"></textarea>
-            <textarea name="kerneloptions" rows="3"></textarea>
+            <div class="tx-field-block-body">
+              <textarea class="js-kerneloptions-ro" disabled rows="3" style="display:none;"></textarea>
+              <textarea name="kerneloptions" rows="3"></textarea>
+              <button type="button" class="tx-expand-text-trigger" aria-label="Open full editor" title="Open full editor"></button>
+            </div>
           </div>
           <div class="tx-field-block" data-gf-adv="prescript">
             <div class="tx-label-row">
-              <span class="tx-label">Pre Script:</span>
+              <span class="tx-adv-heading"><span class="tx-label-title-blue">PRE SCRIPT</span><span class="tx-label-title-sep"> | </span><span class="tx-label-title-black">DEFAULT</span></span>
               <span class="tx-source">| <span class="js-prescript-s1"></span><span class="js-prescript-s2"></span></span>
             </div>
-            <textarea class="js-prescript-ro" disabled rows="3" style="display:none;"></textarea>
-            <textarea name="prescript" rows="3"></textarea>
+            <div class="tx-field-block-body">
+              <textarea class="js-prescript-ro" disabled rows="3" style="display:none;"></textarea>
+              <textarea name="prescript" rows="3"></textarea>
+              <button type="button" class="tx-expand-text-trigger" aria-label="Open full editor" title="Open full editor"></button>
+            </div>
           </div>
 
           <div class="tx-field-block" data-gf-adv="partscript">
             <div class="tx-label-row">
-              <span class="tx-label">Part Script:</span>
+              <span class="tx-adv-heading"><span class="tx-label-title-blue">PART SCRIPT</span><span class="tx-label-title-sep"> | </span><span class="tx-label-title-black">GROUP</span></span>
               <span class="tx-source">| <span class="js-partscript-s1"></span><span class="js-partscript-s2"></span></span>
             </div>
-            <textarea class="js-partscript-ro" disabled rows="3" style="display:none;"></textarea>
-            <textarea name="partscript" rows="3"></textarea>
+            <div class="tx-field-block-body">
+              <textarea class="js-partscript-ro" disabled rows="3" style="display:none;"></textarea>
+              <textarea name="partscript" rows="3"></textarea>
+              <button type="button" class="tx-expand-text-trigger" aria-label="Open full editor" title="Open full editor"></button>
+            </div>
           </div>
           <div class="tx-field-block" data-gf-adv="postscript">
             <div class="tx-label-row">
-              <span class="tx-label">Post Script:</span>
+              <span class="tx-adv-heading"><span class="tx-label-title-blue">POST SCRIPT</span><span class="tx-label-title-sep"> | </span><span class="tx-label-title-black">GROUP</span></span>
               <span class="tx-source">| <span class="js-postscript-s1"></span><span class="js-postscript-s2"></span></span>
             </div>
-            <textarea class="js-postscript-ro" disabled rows="3" style="display:none;"></textarea>
-            <textarea name="postscript" rows="3"></textarea>
+            <div class="tx-field-block-body">
+              <textarea class="js-postscript-ro" disabled rows="3" style="display:none;"></textarea>
+              <textarea name="postscript" rows="3"></textarea>
+              <button type="button" class="tx-expand-text-trigger" aria-label="Open full editor" title="Open full editor"></button>
+            </div>
           </div>
 
           <div class="tx-field" style="width:100%">
@@ -162,7 +179,10 @@
             <div class="tx-label-row">
               <span class="tx-label">Comment:</span>
             </div>
-            <textarea name="comment" rows="3" id="id_comment"></textarea>
+            <div class="tx-field-block-body">
+              <textarea name="comment" rows="3" id="id_comment"></textarea>
+              <button type="button" class="tx-expand-text-trigger" aria-label="Open full editor" title="Open full editor"></button>
+            </div>
           </div>
 
         </div>

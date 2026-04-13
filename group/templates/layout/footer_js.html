@@ -25,6 +25,31 @@
     </div>
 </div>
 
+<div class="modal fade" id="txExpandTextModal" tabindex="-1" role="dialog" aria-labelledby="txExpandTextModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+    <div class="modal-content">
+      <div class="modal-header d-flex align-items-center flex-wrap">
+        <h5 class="modal-title mb-0" id="txExpandTextModalTitle">Edit</h5>
+        <div class="tx-expand-header-actions ml-auto">
+          <label class="tx-upload-text-pill mb-0">
+            <input type="file" id="txExpandTextFile" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" />
+            <span>Upload</span>
+          </label>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <textarea id="txExpandTextArea" class="form-control" rows="18" spellcheck="false"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="txExpandTextApply">Apply</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="{{ url_for('static', filename='js/jquery-3.6.0.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
@@ -392,11 +417,11 @@
       var $ed = $block.find('textarea[name="' + prefix + '"]');
       var valMain = d[prefix] != null ? String(d[prefix]) : '';
       $ro.hide().val('');
-      $ed.val('');
+      $ed.hide().val('');
       if (inherited) {
         $ro.show().val(valMain);
       } else {
-        $ed.val(valMain);
+        $ed.show().val(valMain);
       }
     }
 
@@ -627,12 +652,78 @@
                     $(this).parent().prev().remove();
                     $(this).parent().remove();
                 }
-            } else {
-                $(this).parent().prev().remove();
-                $(this).parent().remove();
-            }
+        } else {
+            $(this).parent().prev().remove();
+            $(this).parent().remove();
         }
+    }
      });
+
+    var txExpandTarget = null;
+
+    function txExpandBufferLooksBinary(buf) {
+      if (!buf || !buf.byteLength) return false;
+      var view = new Uint8Array(buf);
+      var n = Math.min(view.length, 65536);
+      for (var i = 0; i < n; i++) {
+        if (view[i] === 0) return true;
+      }
+      return false;
+    }
+
+    $('body').on('click', '.tx-expand-text-trigger', function () {
+      var $body = $(this).closest('.tx-field-block-body');
+      var $ta = $body.find('textarea').filter(function () {
+        return $(this).is(':visible');
+      }).first();
+      if (!$ta.length) {
+        $ta = $body.find('textarea').first();
+      }
+      txExpandTarget = $ta.length ? $ta : null;
+      if (!txExpandTarget || !txExpandTarget.length) return;
+      $('#txExpandTextArea').val(txExpandTarget.val());
+      var $block = $(this).closest('.tx-field-block');
+      var title = $block.find('.tx-adv-heading').text().trim() ||
+        $block.find('.tx-label-row .tx-label').first().text().trim() ||
+        'Edit text';
+      $('#txExpandTextModalTitle').text(title);
+      $('#txExpandTextModal').modal('show');
+    });
+
+    $('#txExpandTextApply').on('click', function () {
+      var v = $('#txExpandTextArea').val();
+      if (txExpandTarget && txExpandTarget.length && !txExpandTarget.prop('disabled')) {
+        txExpandTarget.val(v);
+      }
+      $('#txExpandTextModal').modal('hide');
+    });
+
+    $('#txExpandTextFile').on('change', function () {
+      var input = this;
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var buf = fr.result;
+        if (txExpandBufferLooksBinary(buf)) {
+          alert('Please choose a text file only. Binary files are not supported.');
+          input.value = '';
+          return;
+        }
+        var text = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(buf));
+        $('#txExpandTextArea').val(text);
+        input.value = '';
+      };
+      fr.onerror = function () {
+        alert('Could not read the file.');
+        input.value = '';
+      };
+      fr.readAsArrayBuffer(file);
+    });
+
+    $('#txExpandTextModal').on('hidden.bs.modal', function () {
+      txExpandTarget = null;
+    });
 
 </script>
 <script src="{{ url_for('static', filename='js/popup-form.js') }}"></script>
