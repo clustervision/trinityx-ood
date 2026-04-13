@@ -86,7 +86,7 @@
           title: 'Name',
           data: 'interfaces',
           defaultContent: '',
-          className: 'tx-iface-cell',
+          className: 'tx-iface-cell tx-iface-name',
           render: function (data) {
             if (!data || !Array.isArray(data) || data.length === 0) return '';
             return data.map(function (iface) {
@@ -98,7 +98,7 @@
           title: 'Network',
           data: 'interfaces',
           defaultContent: '',
-          className: 'tx-iface-cell',
+          className: 'tx-iface-cell tx-iface-network',
           render: function (data) {
             if (!data || !Array.isArray(data) || data.length === 0) return '';
             return data.map(function (iface) {

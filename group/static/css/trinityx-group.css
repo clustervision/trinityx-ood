@@ -529,7 +529,7 @@ body .content-footer a:hover {
   flex-wrap: nowrap;
   align-items: center;
   background: #ffffff;
-  border-bottom: 4px solid #4a6cf7;
+  border-bottom: none;
   padding-bottom: 0.85rem;
   margin-bottom: 1rem;
   color: #111111;
@@ -540,7 +540,7 @@ body .content-footer a:hover {
   align-items: center;
 }
 .tx-inventory-page .tx-title {
-  color: #4a6cf7;
+  color: #5376EA;
 }
 .tx-inventory-page .dataTables_filter label,
 .tx-inventory-page .dataTables_length label {
@@ -552,15 +552,29 @@ body .content-footer a:hover {
 .tx-inventory-page .dataTables_length select {
   color: #111111 !important;
 }
-.tx-inventory-page table thead th {
-  color: #111111 !important;
-  background: #E6EEFF !important;
+/* Inventory thead: white cells, blue labels (#5376EA); interface group uses orange text */
+.tx-inventory-page table thead th:not(.tx-iface-header):not(.tx-iface-subheader) {
+  color: #5376EA !important;
+  background: #ffffff !important;
   border-width: 2px !important;
+  border-color: #c6d3fb !important;
 }
 .tx-inventory-page table tbody td {
   color: #111111 !important;
   vertical-align: middle;
   border-width: 2px !important;
+}
+/* Body striping: white / light blue (not Bootstrap grey) */
+.tx-inventory-page table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network) {
+  background: #ffffff !important;
+  --bs-table-accent-bg: transparent !important;
+}
+.tx-inventory-page table tbody tr:nth-child(even) td:not(.tx-iface-name):not(.tx-iface-network) {
+  background: #E6EEFF !important;
+  --bs-table-accent-bg: transparent !important;
+}
+.tx-inventory-page table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network) {
+  background: #eaf0ff !important;
 }
 .tx-inventory-page .tx-name-link {
   border: none;
@@ -568,6 +582,7 @@ body .content-footer a:hover {
   padding: 0;
   margin: 0;
   font: inherit;
+  font-weight: 600;
   color: #111111;
   text-decoration: underline;
   cursor: pointer;
@@ -633,6 +648,30 @@ body .content-footer a:hover {
 .tx-col-actions {
   white-space: nowrap;
   width: 1%;
+}
+
+/* Inventory: action icons sit on row background (no filled button boxes) */
+.tx-inventory-page .tx-icon-act {
+  width: auto;
+  height: auto;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0.15rem;
+  border-radius: 0;
+  border: none;
+  background: transparent !important;
+  color: #f0a848;
+}
+.tx-inventory-page .tx-icon-act.js-gf-ospush {
+  background: transparent !important;
+  color: #696cff;
+}
+.tx-inventory-page .tx-icon-act-danger {
+  background: transparent !important;
+  color: #e74c3c;
+}
+.tx-inventory-page .tx-icon-act:hover {
+  opacity: 0.75;
 }
 
 /* ---------- Add / edit / clone3-column grid ---------- */
@@ -722,13 +761,33 @@ body .content-footer a:hover {
   color: #4a6cf7;
 }
 
-/* ---------- Inventory table: rounded corners via wrapper clip, no extra border ---------- */
+/*
+ * Rounded table corners:
+ * - `border-collapse: collapse` (see .tx-shell table) makes `border-radius` on <table> ineffective in most browsers.
+ * - Fix: use `separate` + `border-spacing: 0` on this table only, and round the four corner cells.
+ * - Outer frame: light border on the wrapper + overflow clip as a fallback.
+ */
 .tx-inventory-table-wrap {
+  border: 2px solid #c6d3fb;
   border-radius: 10px;
   overflow: hidden;
 }
-.tx-inventory-page .tx-inventory-table-wrap table {
+.tx-inventory-page .tx-inventory-table-wrap table.tx-inventory-table {
   margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.tx-inventory-page .tx-inventory-table thead tr:first-child th:first-child {
+  border-top-left-radius: 10px;
+}
+.tx-inventory-page .tx-inventory-table thead tr:first-child th:last-child {
+  border-top-right-radius: 10px;
+}
+.tx-inventory-page .tx-inventory-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 10px;
+}
+.tx-inventory-page .tx-inventory-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 10px;
 }
 
 /* ---------- Modal close button: blue bold × ---------- */
@@ -748,47 +807,52 @@ body .content-footer a:hover {
   color: #3a5cd0;
 }
 
-/* ---------- Inline search (next to Add Group) ---------- */
+/* ---------- Inline search (label + input in one 2px #E6EEFF frame; input area white) ---------- */
 .tx-inline-search {
   display: inline-flex;
-  align-items: center;
+  align-items: stretch;
   flex: 0 0 auto;
+  border: 2px solid #E6EEFF;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
 }
-.tx-inline-search label {
+.tx-inline-search-label {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
   margin: 0;
+  padding: 0.3rem 0.55rem;
   font-size: 0.88rem;
   font-weight: 600;
-  color: #4a6cf7;
-  white-space: nowrap;
-}
-.tx-inline-search input[type="search"] {
+  color: #5376EA;
   background: #E6EEFF;
-  border: 2px solid #c6d3fb;
-  border-radius: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tx-inline-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
   padding: 0.3rem 0.55rem;
   font-size: 0.85rem;
   color: #111;
-  outline: none;
+  background: #ffffff;
   max-width: min(220px, 36vw);
 }
-.tx-inline-search input[type="search"]:focus {
-  border-color: #4a6cf7;
+.tx-inline-search-input:focus {
+  box-shadow: inset 0 0 0 1px #4a6cf7;
 }
 
-/* ---------- Interface column: orange theme ---------- */
-.tx-inventory-page table thead th.tx-iface-header {
-  background: #FAF0E0 !important;
+/* ---------- Interface column: white headers; body NAME / NETWORK two orange tones per row ---------- */
+.tx-inventory-page table thead th.tx-iface-header,
+.tx-inventory-page table thead th.tx-iface-subheader {
+  background: #ffffff !important;
   color: #EE9E39 !important;
   border: 2px solid #F6E7CB !important;
   text-align: center;
 }
 .tx-inventory-page table thead th.tx-iface-subheader {
-  background: #FAF0E0 !important;
-  color: #EE9E39 !important;
-  border: 2px solid #F6E7CB !important;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.78rem;
@@ -802,18 +866,21 @@ body .content-footer a:hover {
 .tx-iface-entry {
   padding: 0.45rem 0.75rem;
   font-size: 0.85rem;
-  color: #111111;
+  color: #EE9E39;
 }
 .tx-iface-entry + .tx-iface-entry {
   border-top: 1px solid #F6E7CB;
 }
-.tx-inventory-page table tbody tr:nth-child(odd) td.tx-iface-cell {
+.tx-inventory-page table tbody td.tx-iface-name {
   background: #FDF9F3 !important;
 }
-.tx-inventory-page table tbody tr:nth-child(even) td.tx-iface-cell {
+.tx-inventory-page table tbody td.tx-iface-network {
   background: #FAF0E0 !important;
 }
-.tx-inventory-page table tbody tr:hover td.tx-iface-cell {
-  background: #F8EDDA !important;
+.tx-inventory-page table tbody tr:hover td.tx-iface-name {
+  background: #f5efe6 !important;
+}
+.tx-inventory-page table tbody tr:hover td.tx-iface-network {
+  background: #f0e6d4 !important;
 }
 

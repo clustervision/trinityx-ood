@@ -17,7 +17,8 @@
       <button class="tx-btn tx-btn-help" title="Help" type="button">?</button>
       <button type="button" id="openAddGroupBtn" class="tx-btn tx-btn-blue">Add {{ table }}</button>
       <div class="tx-inline-search">
-        <label>Search: <input type="search" id="txManualSearch" /></label>
+        <label class="tx-inline-search-label" for="txManualSearch">Search:</label>
+        <input type="search" id="txManualSearch" class="tx-inline-search-input" autocomplete="off" />
       </div>
     </div>
   </div>
@@ -25,7 +26,7 @@
   <p id="groupListError" class="alert alert-danger" style="display:none;" role="alert"></p>
 
   <div class="table-responsive tx-inventory-table-wrap">
-    <table id="groupTable" class="table table-striped table-bordered tx-inventory-table" style="width:100%;"></table>
+    <table id="groupTable" class="table table-bordered tx-inventory-table" style="width:100%;"></table>
   </div>
   <div id="txTableLengthSlot" class="tx-table-length-below"></div>
 
