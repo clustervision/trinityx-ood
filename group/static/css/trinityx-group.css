@@ -366,13 +366,13 @@ body .content-wrapper {
 }
 .tx-shell table.table-striped > tbody > tr:nth-of-type(even) > *,
 .tx-shell table tbody tr:nth-child(even) td {
-  background: #f4f7fe !important;
-  --bs-table-accent-bg: #f4f7fe !important;
+  background: #E6EEFF !important;
+  --bs-table-accent-bg: transparent !important;
 }
 .tx-shell table.table-striped > tbody > tr:nth-of-type(odd) > *,
 .tx-shell table tbody tr:nth-child(odd) td {
-  background: #fff !important;
-  --bs-table-accent-bg: #fff !important;
+  background: #ffffff !important;
+  --bs-table-accent-bg: transparent !important;
 }
 .tx-shell table tbody tr:hover td {
   background: #eaf0ff !important;
@@ -607,26 +607,28 @@ body .content-footer a:hover {
   height: 2.1rem;
   padding: 0;
   border-radius: 6px;
-  border: 2px solid #c6d3fb;
-  background: #ffffff;
-  color: #333333;
+  border: none;
+  background: #F0A848;
+  color: #ffffff;
   cursor: pointer;
   flex: 0 0 auto;
   font-size: 1rem;
 }
 .tx-icon-act:hover {
-  background: #f4f7fe;
-  border-color: #4a6cf7;
-  color: #4a6cf7;
+  opacity: 0.85;
+  color: #ffffff;
+}
+.tx-icon-act.js-gf-ospush {
+  background: #8E8E93;
+  color: #ffffff;
 }
 .tx-icon-act-danger {
-  border-color: #f0a0a0;
-  color: #d44;
+  background: #E74C3C;
+  color: #ffffff;
 }
 .tx-icon-act-danger:hover {
-  border-color: #d44;
-  color: #c00;
-  background: #fff0f0;
+  opacity: 0.85;
+  color: #ffffff;
 }
 .tx-col-actions {
   white-space: nowrap;
@@ -720,9 +722,8 @@ body .content-footer a:hover {
   color: #4a6cf7;
 }
 
-/* ---------- Inventory table: rounded border, thick border ---------- */
+/* ---------- Inventory table: rounded corners via wrapper clip, no extra border ---------- */
 .tx-inventory-table-wrap {
-  border: 3px solid #c6d3fb;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -764,6 +765,7 @@ body .content-footer a:hover {
   white-space: nowrap;
 }
 .tx-inline-search input[type="search"] {
+  background: #E6EEFF;
   border: 2px solid #c6d3fb;
   border-radius: 6px;
   padding: 0.3rem 0.55rem;
@@ -774,5 +776,44 @@ body .content-footer a:hover {
 }
 .tx-inline-search input[type="search"]:focus {
   border-color: #4a6cf7;
+}
+
+/* ---------- Interface column: orange theme ---------- */
+.tx-inventory-page table thead th.tx-iface-header {
+  background: #FAF0E0 !important;
+  color: #EE9E39 !important;
+  border: 2px solid #F6E7CB !important;
+  text-align: center;
+}
+.tx-inventory-page table thead th.tx-iface-subheader {
+  background: #FAF0E0 !important;
+  color: #EE9E39 !important;
+  border: 2px solid #F6E7CB !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  padding: 0.6rem 0.75rem;
+}
+.tx-iface-cell {
+  border-color: #F6E7CB !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
+.tx-iface-entry {
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  color: #111111;
+}
+.tx-iface-entry + .tx-iface-entry {
+  border-top: 1px solid #F6E7CB;
+}
+.tx-inventory-page table tbody tr:nth-child(odd) td.tx-iface-cell {
+  background: #FDF9F3 !important;
+}
+.tx-inventory-page table tbody tr:nth-child(even) td.tx-iface-cell {
+  background: #FAF0E0 !important;
+}
+.tx-inventory-page table tbody tr:hover td.tx-iface-cell {
+  background: #F8EDDA !important;
 }
 

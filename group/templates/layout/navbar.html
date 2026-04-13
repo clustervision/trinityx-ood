@@ -1,10 +1,10 @@
 
 <nav class="navbar shadow-sm navbar-light">
     <ol class="breadcrumb bg-transparent d-flex align-items-center">
-        <a href="/" aria-current="page" role="menuitem">
+        <a href="{{ request.scheme }}://{{ request.host.split(':')[0] }}:8080" aria-current="page" role="menuitem">
             <img src="{{ url_for( 'static', filename='/img/logo.png') }}" class="img-logo">
         </a>
-        <li class="breadcrumb-item"><a class="align-middle" href="/">Home</a></li>
+        <li class="breadcrumb-item"><a class="align-middle" href="{{ request.scheme }}://{{ request.host.split(':')[0] }}:8080">Home</a></li>
         <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for('home') }}">{{ table }}</a></li>
         {% if record %}
             <li class="breadcrumb-item"><a class="align-middle" href="{{ url_for(request.endpoint, **request.view_args) }}">{{ request.endpoint | capitalize  }} {{ record }}</a></li>

@@ -78,31 +78,59 @@
   }
 
   function buildColumns(fields) {
-    var cols = fields.map(function (f) {
-      return {
-        title: ucwords(f.replace(/_/g, ' ')),
-        data: f,
-        defaultContent: '',
-        render: function (data) {
-          if (f === 'name') {
-            var raw = data != null ? String(data) : '';
-            var key = canonicalName(raw);
-            if (!key) return escapeHtml(raw);
-            return (
-              '<button type="button" class="tx-name-link js-gf-open-edit" data-name="' +
-              escapeAttr(key) +
-              '">' +
-              escapeHtml(raw) +
-              '</button>'
-            );
-          }
-          if (isEmptyCell(data)) {
-            return '<span class="tx-na-box">NOT AVAILABLE</span>';
-          }
-          return escapeHtml(cellText(data));
-        },
-      };
-    });
+    var cols = [];
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      if (f === 'interfaces') {
+        cols.push({
+          title: 'Name',
+          data: 'interfaces',
+          defaultContent: '',
+          className: 'tx-iface-cell',
+          render: function (data) {
+            if (!data || !Array.isArray(data) || data.length === 0) return '';
+            return data.map(function (iface) {
+              return '<div class="tx-iface-entry">' + escapeHtml(String(iface.interface || '')) + '</div>';
+            }).join('');
+          },
+        });
+        cols.push({
+          title: 'Network',
+          data: 'interfaces',
+          defaultContent: '',
+          className: 'tx-iface-cell',
+          render: function (data) {
+            if (!data || !Array.isArray(data) || data.length === 0) return '';
+            return data.map(function (iface) {
+              return '<div class="tx-iface-entry">' + escapeHtml(String(iface.network || '')) + '</div>';
+            }).join('');
+          },
+        });
+        continue;
+      }
+      cols.push((function (field) {
+        return {
+          title: ucwords(field.replace(/_/g, ' ')),
+          data: field,
+          defaultContent: '',
+          render: function (data) {
+            if (field === 'name') {
+              var raw = data != null ? String(data) : '';
+              var key = canonicalName(raw);
+              if (!key) return escapeHtml(raw);
+              return (
+                '<button type="button" class="tx-name-link js-gf-open-edit" data-name="' +
+                escapeAttr(key) + '">' + escapeHtml(raw) + '</button>'
+              );
+            }
+            if (isEmptyCell(data)) {
+              return '<span class="tx-na-box">NOT AVAILABLE</span>';
+            }
+            return escapeHtml(cellText(data));
+          },
+        };
+      })(f));
+    }
     cols.push({
       title: 'Actions',
       data: null,
@@ -116,19 +144,56 @@
         return (
           '<div class="tx-action-icons">' +
           '<button type="button" class="tx-icon-act js-gf-clone" title="Clone" data-name="' +
-          escapeAttr(key) +
-          '"><i class="bx bx-copy-alt"></i></button>' +
+          escapeAttr(key) + '"><i class="bx bx-copy-alt"></i></button>' +
           '<button type="button" class="tx-icon-act js-gf-ospush" title="OS Push" data-name="' +
-          escapeAttr(key) +
-          '"><i class="bx bx-upload"></i></button>' +
+          escapeAttr(key) + '"><i class="bx bx-upload"></i></button>' +
           '<button type="button" class="tx-icon-act tx-icon-act-danger js-gf-delete" title="Delete" data-name="' +
-          escapeAttr(key) +
-          '"><i class="bx bx-trash"></i></button>' +
+          escapeAttr(key) + '"><i class="bx bx-trash"></i></button>' +
           '</div>'
         );
       },
     });
     return cols;
+  }
+
+  function buildComplexHeader(tableEl, fields) {
+    var thead = document.createElement('thead');
+    var row1 = document.createElement('tr');
+    var row2 = document.createElement('tr');
+    var hasIface = fields.indexOf('interfaces') !== -1;
+
+    for (var i = 0; i < fields.length; i++) {
+      if (fields[i] === 'interfaces') {
+        var thSpan = document.createElement('th');
+        thSpan.setAttribute('colspan', '2');
+        thSpan.className = 'tx-iface-header';
+        thSpan.textContent = 'Interfaces';
+        row1.appendChild(thSpan);
+
+        var thName = document.createElement('th');
+        thName.className = 'tx-iface-subheader';
+        thName.textContent = 'Name';
+        row2.appendChild(thName);
+
+        var thNet = document.createElement('th');
+        thNet.className = 'tx-iface-subheader';
+        thNet.textContent = 'Network';
+        row2.appendChild(thNet);
+      } else {
+        var th = document.createElement('th');
+        th.textContent = ucwords(fields[i].replace(/_/g, ' '));
+        if (hasIface) th.setAttribute('rowspan', '2');
+        row1.appendChild(th);
+      }
+    }
+    var thAct = document.createElement('th');
+    thAct.textContent = 'Actions';
+    if (hasIface) thAct.setAttribute('rowspan', '2');
+    row1.appendChild(thAct);
+
+    thead.appendChild(row1);
+    if (hasIface) thead.appendChild(row2);
+    tableEl.appendChild(thead);
   }
 
   function loadList() {
@@ -154,6 +219,8 @@
         var groups = body.groups || [];
         window.__groupInventoryFields = fields;
         destroyTable();
+        var el = document.getElementById('groupTable');
+        buildComplexHeader(el, fields);
         var cols = buildColumns(fields);
         if (typeof DataTable === 'undefined') {
           showListError('DataTables is not loaded.');
@@ -164,6 +231,7 @@
           columns: cols,
           autoWidth: true,
           searching: true,
+          orderCellsTop: true,
           layout: {
             topStart: null,
             topEnd: null,
