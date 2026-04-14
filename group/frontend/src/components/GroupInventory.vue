@@ -25,17 +25,21 @@
         <thead>
           <tr>
             <th
-              v-for="col in regularColumns"
+              v-for="(col, cIdx) in regularColumns"
               :key="col.field"
               rowspan="2"
               class="tx-th-regular"
-              :class="{ 'tx-th-sortable': true, 'tx-th-sorted': sortField === col.field }"
+              :class="{
+                'tx-th-sortable': true,
+                'tx-th-sorted': sortField === col.field,
+                'tx-th-sep-blue': cIdx > 0,
+              }"
               @click="toggleSort(col.field)"
             >
               {{ col.label }}
               <span class="tx-sort-arrow">{{ sortField === col.field ? (sortAsc ? '\u25B2' : '\u25BC') : '\u25BC' }}</span>
             </th>
-            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header">
+            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header tx-th-sep-orange-left">
               <div class="tx-iface-head-inner">
                 <div class="tx-iface-head-title">Interfaces</div>
                 <div class="tx-iface-head-subs">
@@ -56,7 +60,7 @@
                 </div>
               </div>
             </th>
-            <th rowspan="2" class="tx-th-regular tx-th-actions">Actions</th>
+            <th rowspan="2" class="tx-th-regular tx-th-actions" :class="{ 'tx-th-sep-orange-right': hasInterfaces, 'tx-th-sep-blue': !hasInterfaces }">Actions</th>
           </tr>
           <tr class="tx-iface-thead-spacer"></tr>
         </thead>
@@ -69,8 +73,9 @@
           </tr>
           <tr v-for="(row, idx) in pagedRows" :key="row.name + '-' + idx">
             <td
-              v-for="col in regularColumns"
+              v-for="(col, cIdx) in regularColumns"
               :key="col.field"
+              :class="{ 'tx-td-sep-blue': cIdx > 0 }"
             >
               <template v-if="col.field === 'name'">
                 <button
@@ -86,21 +91,21 @@
                 {{ cellText(row[col.field]) }}
               </template>
             </td>
-            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-name">
+            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-name tx-td-sep-orange-left">
               <div
                 v-for="(iface, iIdx) in (row.interfaces || [])"
                 :key="'n-' + iIdx"
                 class="tx-iface-entry"
               >{{ iface.interface || '' }}</div>
             </td>
-            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-network">
+            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-network tx-td-sep-orange-mid">
               <div
                 v-for="(iface, iIdx) in (row.interfaces || [])"
                 :key="'nw-' + iIdx"
                 class="tx-iface-entry"
               >{{ iface.network || '' }}</div>
             </td>
-            <td class="tx-col-actions">
+            <td class="tx-col-actions" :class="{ 'tx-td-sep-orange-right': hasInterfaces, 'tx-td-sep-blue': !hasInterfaces }">
               <div class="tx-action-icons">
                 <button
                   type="button"
@@ -108,7 +113,10 @@
                   title="Clone"
                   @click="$emit('clone', canonicalName(row.name))"
                 >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  <img src="/icons/icon-clone.png" alt="Clone" width="22" height="22"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 </button>
                 <button
                   type="button"
@@ -116,15 +124,21 @@
                   title="OS Push"
                   @click="$emit('ospush', canonicalName(row.name))"
                 >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                  <img src="/icons/icon-ospush.png" alt="OS Push" width="22" height="22"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
                 </button>
                 <button
                   type="button"
                   class="tx-icon-act tx-icon-danger"
                   title="Delete"
-                  @click="handleDelete(canonicalName(row.name))"
+                  @click="$emit('delete', canonicalName(row.name))"
                 >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  <img src="/icons/icon-delete.png" alt="Delete" width="22" height="22"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
               </div>
             </td>
@@ -134,7 +148,7 @@
     </div>
 
     <div class="tx-table-footer">
-      <div class="tx-page-length">
+      <div class="tx-page-length-box">
         <select v-model.number="pageSize">
           <option v-for="n in pageSizeOptions" :key="n" :value="n">{{ n }}</option>
         </select>
@@ -165,9 +179,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchGroups, deleteGroup } from '../api.js'
+import { fetchGroups } from '../api.js'
 
-const emit = defineEmits(['open-add', 'open-edit', 'clone', 'ospush'])
+const emit = defineEmits(['open-add', 'open-edit', 'clone', 'ospush', 'delete'])
 
 const fields = ref([])
 const groups = ref([])
@@ -300,16 +314,6 @@ async function loadData() {
     errorMsg.value = err.message || 'Network error while loading groups.'
   } finally {
     loading.value = false
-  }
-}
-
-async function handleDelete(name) {
-  if (!name || !confirm(`Delete group "${name}"?`)) return
-  try {
-    await deleteGroup(name)
-    await loadData()
-  } catch (err) {
-    alert(err.message || 'Delete failed')
   }
 }
 
