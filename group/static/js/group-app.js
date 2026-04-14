@@ -239,10 +239,10 @@
           layout: {
             topStart: null,
             topEnd: null,
-            bottomStart: null,
-            bottomEnd: null,
+            bottomStart: 'pageLength',
+            bottomEnd: 'paging',
             top: null,
-            bottom: ['pageLength', 'info', 'paging'],
+            bottom: null,
           },
         });
         if (theadSnapshot) {
@@ -256,7 +256,7 @@
             /* ignore */
           }
         }
-        moveLengthSlot();
+        /* no longer moving length to a separate slot */
       })
       .catch(function () {
         showListError('Network error while loading list.');

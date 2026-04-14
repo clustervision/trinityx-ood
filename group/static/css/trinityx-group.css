@@ -430,7 +430,7 @@ body .content-wrapper {
   border-collapse: collapse;
   font-size: 0.85rem;
 }
-.tx-shell table thead th {
+.tx-shell table:not(.tx-inventory-table) thead th {
   background: #e8edfe !important;
   color: #3a56c7 !important;
   font-weight: 700;
@@ -439,7 +439,7 @@ body .content-wrapper {
   padding: 0.6rem 0.75rem;
   border: 2px solid #c6d3fb !important;
 }
-.tx-shell table tbody td {
+.tx-shell table:not(.tx-inventory-table) tbody td {
   padding: 0.55rem 0.75rem;
   border: 2px solid #d8e1fb !important;
 }
@@ -550,13 +550,61 @@ body .content-footer a:hover {
   vertical-align: top;
 }
 
-/* Slot below table for "entries per page" (moved from DataTables wrapper) */
-.tx-table-length-below {
-  margin-top: 0.75rem;
+/* Bottom controls row: pageLength left, paging right — outside the rounded table */
+.tx-inventory-page #groupTable_wrapper > .row:last-child,
+.tx-inventory-page #groupTable_wrapper > .dt-layout-row:last-child {
+  padding: 0.75rem 0 0;
 }
-.tx-table-length-below .dataTables_length,
-.tx-table-length-below .dt-length {
-  margin-top: 0;
+.tx-inventory-page .dataTables_length label,
+.tx-inventory-page .dt-length label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #5376EA !important;
+  font-size: 18px;
+  font-weight: 500;
+}
+.tx-inventory-page .dataTables_length select,
+.tx-inventory-page .dt-length select {
+  border: 2px solid #e6eeff !important;
+  border-radius: 10px !important;
+  color: #5376EA !important;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 0.35rem 0.65rem;
+  background: #fff;
+}
+.tx-inventory-page .dataTables_paginate,
+.tx-inventory-page .dt-paging {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.tx-inventory-page .dataTables_paginate .paginate_button,
+.tx-inventory-page .dt-paging .dt-paging-button {
+  border: 2px solid #e6eeff !important;
+  border-radius: 10px !important;
+  color: #5376EA !important;
+  font-size: 18px;
+  font-weight: 500;
+  padding: 0.35rem 0.75rem !important;
+  background: #fff !important;
+  cursor: pointer;
+}
+.tx-inventory-page .dataTables_paginate .paginate_button.current,
+.tx-inventory-page .dt-paging .dt-paging-button.current {
+  background: #e6eeff !important;
+  color: #5376EA !important;
+}
+.tx-inventory-page .dataTables_paginate .paginate_button.disabled,
+.tx-inventory-page .dt-paging .dt-paging-button.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* Hide "Showing X to Y of Z entries" info — design doesn't include it */
+.tx-inventory-page .dataTables_info,
+.tx-inventory-page .dt-info {
+  display: none !important;
 }
 
 @media (max-width: 900px) {
@@ -630,65 +678,46 @@ body .content-footer a:hover {
 .tx-inventory-page .tx-inline-search-input {
   font-size: 18px;
 }
-.tx-inventory-page .dataTables_wrapper,
-.tx-inventory-page .dataTables_info,
-.tx-inventory-page .dataTables_length,
-.tx-inventory-page .dataTables_paginate,
-.tx-inventory-page .dt-info,
-.tx-inventory-page .dt-length,
-.tx-inventory-page .dt-paging {
-  font-size: 18px;
-  font-weight: 400;
-}
 .tx-inventory-page .tx-na-box {
   font-size: 14px;
 }
-.tx-inventory-page .dataTables_filter label,
-.tx-inventory-page .dataTables_length label,
-.tx-inventory-page .dt-length label {
-  color: #111111 !important;
-}
-.tx-inventory-page .dataTables_filter input {
-  color: #111111 !important;
-}
-.tx-inventory-page .dataTables_length select,
-.tx-inventory-page .dt-length select {
-  color: #111111 !important;
-}
-/* Table header and body (except Interfaces): 2px #E6EEFF */
+/* Table header: no visible cell borders; column text blue / orange */
 .tx-inventory-page table thead th:not(.tx-iface-header) {
   color: #5376EA !important;
   background: #ffffff !important;
-  border: 2px solid #E6EEFF !important;
+  border: none !important;
   font-size: 18px;
   font-weight: 500;
   line-height: 1;
+  padding: 0.6rem 0.75rem;
   box-sizing: border-box;
+  text-transform: uppercase;
 }
 .tx-inventory-page table thead th[rowspan="2"] {
-  min-height: 130px;
   vertical-align: middle;
 }
-/* Second thead row: no <th> cells (row1 already rowspans 2); keep row for valid table geometry */
+/* Second thead row: spacer for rowspan geometry */
 .tx-inventory-page table thead tr.tx-iface-thead-spacer {
   height: 0;
   line-height: 0;
 }
+/* Body cells: no visible borders — row separation via background only */
 .tx-inventory-page table tbody td:not(.tx-iface-name):not(.tx-iface-network) {
-  border: 2px solid #E6EEFF !important;
+  border: none !important;
 }
 .tx-inventory-page table tbody td {
   color: #111111 !important;
   vertical-align: middle;
-  border-width: 2px !important;
+  border: none !important;
   font-size: 18px;
   font-weight: 400;
   line-height: 1;
+  padding: 0.55rem 0.75rem;
   box-sizing: border-box;
 }
-/* Body striping: odd rows light blue, even rows white */
+/* Body striping: odd rows light blue (60% #E6EEFF), even rows white — per design */
 .tx-inventory-page table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network) {
-  background: #E6EEFF !important;
+  background: rgba(230,238,255,0.6) !important;
   --bs-table-accent-bg: transparent !important;
 }
 .tx-inventory-page table tbody tr:nth-child(even) td:not(.tx-iface-name):not(.tx-iface-network) {
@@ -994,13 +1023,13 @@ body .content-footer a:hover {
 }
 
 /*
- * Rounded frame: only on .row.dt-layout-table (the row that contains the <table>), not on the whole
- * #groupTable_wrapper, so paging/info/length are not visually inside the same box.
+ * Rounded frame lives on .tx-inventory-table-wrap (which wraps ONLY the <table>).
+ * #groupTable_wrapper (dt-container) is transparent so paging/info sit outside the box.
  */
 .tx-inventory-table-wrap {
-  border: none;
-  border-radius: 0;
-  overflow: visible;
+  border: 2px solid #e6eeff;
+  border-radius: 10px;
+  overflow: hidden;
   max-width: 100%;
 }
 .tx-inventory-page .tx-inventory-table-wrap table.tx-inventory-table {
@@ -1009,51 +1038,35 @@ body .content-footer a:hover {
   border-spacing: 0;
   width: 100% !important;
 }
-/*
- * #groupTable_wrapper (dt-container) wraps the table row AND the bottom layout row (info/paging).
- * Border + radius only on the table row (.dt-layout-table) so entries/paging sit outside the rounded box.
- */
 .tx-inventory-page #groupTable_wrapper {
   border: none;
   border-radius: 0;
   overflow: visible;
   max-width: 100%;
 }
-.tx-inventory-page #groupTable_wrapper .dt-layout-row,
-.tx-inventory-page #groupTable_wrapper .dt-layout-full,
-.tx-inventory-page #groupTable_wrapper .row:not(.dt-layout-table) {
-  overflow-x: hidden !important;
-  max-width: 100%;
-}
-.tx-inventory-page #groupTable_wrapper .dt-layout-table.row,
-.tx-inventory-page #groupTable_wrapper .row.dt-layout-table {
-  overflow-x: hidden !important;
-  max-width: 100%;
-  border: 2px solid #e6eeff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-sizing: border-box;
-  margin-bottom: 0.65rem;
-}
-.tx-inventory-page #groupTable_wrapper .dt-layout-cell {
-  overflow-x: hidden;
-  max-width: 100%;
-}
-/* Kill Bootstrap grid gutters inside the table layout row only */
-.tx-inventory-page #groupTable_wrapper .dt-layout-table.row,
-.tx-inventory-page #groupTable_wrapper .row.dt-layout-table {
+/* Kill Bootstrap grid gutters so table fills wrapper edge-to-edge */
+.tx-inventory-page #groupTable_wrapper .row {
   --bs-gutter-x: 0;
   --bs-gutter-y: 0;
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
-.tx-inventory-page #groupTable_wrapper .dt-layout-table > [class*="col-"],
-.tx-inventory-page #groupTable_wrapper .row.dt-layout-table > [class*="col-"] {
+.tx-inventory-page #groupTable_wrapper .row > [class*="col-"] {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
 .tx-inventory-page #groupTable_wrapper table.tx-inventory-table {
   border-collapse: collapse !important;
+}
+/* Override Bootstrap table cell borders for the inventory table */
+.tx-inventory-table > :not(caption) > * > * {
+  border-width: 0 !important;
+  box-shadow: none !important;
+}
+.tx-inventory-table,
+.tx-inventory-table > thead,
+.tx-inventory-table > tbody {
+  border: none !important;
 }
 
 /* ---------- Modal close button: blue bold × ---------- */
@@ -1110,12 +1123,12 @@ body .content-footer a:hover {
   box-shadow: inset 0 0 0 1px #4a6cf7;
 }
 
-/* Interfaces: one th rowspan=2 colspan=2; title + Name/Network share18px like other headers */
+/* Interfaces: one th rowspan=2 colspan=2; title + Name/Network share 18px like other headers */
 .tx-inventory-page table thead th.tx-iface-header {
   padding: 0 !important;
   vertical-align: middle;
   background: #ffffff !important;
-  border: 2px solid #f6e7cb !important;
+  border: none !important;
   text-align: center;
   box-sizing: border-box;
 }
@@ -1140,7 +1153,7 @@ body .content-footer a:hover {
   text-transform: uppercase;
   color: #ee9e39 !important;
   background: #ffffff !important;
-  border-bottom: 2px solid #f6e7cb;
+  border-bottom: none;
   box-sizing: border-box;
 }
 .tx-iface-head-subs {
@@ -1169,7 +1182,7 @@ body .content-footer a:hover {
   border-left: 2px solid #f6e7cb;
 }
 .tx-iface-cell {
-  border: 2px solid #F6E7CB !important;
+  border: none !important;
   padding: 0 !important;
   vertical-align: middle !important;
   box-sizing: border-box;
