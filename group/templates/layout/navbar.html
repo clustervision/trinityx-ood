@@ -1,7 +1,7 @@
 
 <nav class="navbar shadow-sm navbar-light">
     <ol class="breadcrumb bg-transparent d-flex align-items-center">
-        <a href="https://{{ request.host.split(':')[0] }}" aria-current="page" role="menuitem">
+        <a href="https://{{ request.host.split(':')[0]:8080 }}" aria-current="page" role="menuitem">
             <img src="{{ url_for( 'static', filename='/img/logo.png') }}" class="img-logo">
         </a>
         <li class="breadcrumb-item"><a class="align-middle" href="https://{{ request.host.split(':')[0] }}">Home</a></li>

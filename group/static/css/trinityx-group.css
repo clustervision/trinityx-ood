@@ -983,13 +983,14 @@ body .content-footer a:hover {
 }
 
 /*
- * Rounded wrapper: light border + overflow hidden; table uses 2px collapse borders.
+ * Single outer frame: border + radius live on #groupTable_wrapper (DataTables container),
+ * not on .tx-inventory-table-wrap, so we do not stack a rounded box outside a square table-bordered outline.
  * Hide horizontal overflow on DataTables footer row to avoid dt-layout scrollbars.
  */
 .tx-inventory-table-wrap {
-  border: 2px solid #E6EEFF;
-  border-radius: 10px;
-  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
   max-width: 100%;
 }
 .tx-inventory-page .tx-inventory-table-wrap table.tx-inventory-table {
@@ -999,6 +1000,9 @@ body .content-footer a:hover {
   width: 100% !important;
 }
 .tx-inventory-page #groupTable_wrapper {
+  border: 2px solid #e6eeff;
+  border-radius: 10px;
+  overflow: hidden;
   overflow-x: hidden;
   max-width: 100%;
 }
