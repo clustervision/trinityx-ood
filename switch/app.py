@@ -35,7 +35,7 @@ import os
 from html import unescape
 from flask import Flask, request, render_template, flash, url_for, redirect
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE, APP_STATE
+from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from presenter import Presenter
 from log import Log
@@ -62,6 +62,12 @@ def validate_home_directory():
         return
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 
