@@ -7,8 +7,19 @@ export async function fetchGroups() {
   const res = await fetch(`${baseUrl()}/api/groups`, {
     headers: { Accept: 'application/json' },
   })
-  if (!res.ok) throw new Error(`Failed to load groups: ${res.status}`)
-  return res.json()
+  let data = {}
+  try {
+    data = await res.json()
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    const msg =
+      (data && (data.error || data.message)) ||
+      `Failed to load groups: HTTP ${res.status} ${res.statusText || ''}`.trim()
+    throw new Error(msg)
+  }
+  return data
 }
 
 export async function deleteGroup(name) {

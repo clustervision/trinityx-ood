@@ -71,10 +71,17 @@ def _wants_json():
 def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
+    /api/* returns200 + JSON so the Vue client can show error in the UI (not a bare 500).
     """
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
+        if request.path.startswith('/api'):
+            return jsonify({
+                "fields": [],
+                "groups": [],
+                "error": TOKEN_FILE["error"],
+            })
         return jsonify({"error": TOKEN_FILE["error"]}), 500
     return None
 
@@ -106,15 +113,35 @@ def home():
 def api_groups():
     """
     JSON list of all groups for the Vue frontend table.
+    Always returns HTTP 200 with { fields, groups, error } when the handler runs.
     """
-    table_data = Rest().get_data(TABLE)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE]
+    empty = {"fields": [], "groups": [], "error": ""}
+    try:
+        table_data = Rest().get_data(TABLE)
+        LOGGER.info(table_data)
+        if not table_data:
+            empty["error"] = f'No {TABLE_CAP} Available at this time.'
+            return jsonify(empty)
+        if not isinstance(table_data, dict) or 'config' not in table_data:
+            empty["error"] = 'Daemon returned an unexpected JSON shape (missing config).'
+            return jsonify(empty)
+        raw_data = table_data['config'].get(TABLE)
+        if raw_data is None:
+            empty["error"] = f'No {TABLE_CAP} key in daemon config.'
+            return jsonify(empty)
+        if not isinstance(raw_data, dict):
+            empty["error"] = 'Group data from daemon is not a mapping; check Luna daemon response.'
+            return jsonify(empty)
         raw_data = Helper().prepare_json(raw_data, True)
         fields, groups = Helper().filter_data_json(TABLE, raw_data)
         return jsonify({"fields": fields, "groups": groups, "error": ""})
-    return jsonify({"fields": [], "groups": [], "error": f'No {TABLE_CAP} Available at this time.'})
+    except Exception as exc:
+        LOGGER.exception("api_groups failed")
+        return jsonify({
+            "fields": [],
+            "groups": [],
+            "error": f'api_groups: {exc}',
+        })
 
 
 @app.route('/show/<string:record>', methods=['GET'])
