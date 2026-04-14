@@ -159,26 +159,21 @@
   function buildComplexHeader(tableEl, fields) {
     var thead = document.createElement('thead');
     var row1 = document.createElement('tr');
-    var row2 = document.createElement('tr');
     var hasIface = fields.indexOf('interfaces') !== -1;
 
     for (var i = 0; i < fields.length; i++) {
       if (fields[i] === 'interfaces') {
+        /* One th rowspan=2 colspan=2 so height matches other rowspan-2 headers; subs live inside. */
         var thSpan = document.createElement('th');
         thSpan.setAttribute('colspan', '2');
+        thSpan.setAttribute('rowspan', '2');
         thSpan.className = 'tx-iface-header';
-        thSpan.textContent = 'Interfaces';
+        thSpan.innerHTML =
+          '<div class="tx-iface-head-inner">' +
+          '<div class="tx-iface-head-title">Interfaces</div>' +
+          '<div class="tx-iface-head-subs"><span>Name</span><span>Network</span></div>' +
+          '</div>';
         row1.appendChild(thSpan);
-
-        var thName = document.createElement('th');
-        thName.className = 'tx-iface-subheader';
-        thName.textContent = 'Name';
-        row2.appendChild(thName);
-
-        var thNet = document.createElement('th');
-        thNet.className = 'tx-iface-subheader';
-        thNet.textContent = 'Network';
-        row2.appendChild(thNet);
       } else {
         var th = document.createElement('th');
         th.textContent = ucwords(fields[i].replace(/_/g, ' '));
@@ -192,7 +187,12 @@
     row1.appendChild(thAct);
 
     thead.appendChild(row1);
-    if (hasIface) thead.appendChild(row2);
+    /* Second thead row exists only for rowspan=2 column geometry (all cells span from row1). */
+    if (hasIface) {
+      var spacer = document.createElement('tr');
+      spacer.className = 'tx-iface-thead-spacer';
+      thead.appendChild(spacer);
+    }
     tableEl.appendChild(thead);
   }
 

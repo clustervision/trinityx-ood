@@ -650,7 +650,7 @@ body .content-footer a:hover {
   color: #111111 !important;
 }
 /* Table header and body (except Interfaces): 2px #E6EEFF */
-.tx-inventory-page table thead th:not(.tx-iface-header):not(.tx-iface-subheader) {
+.tx-inventory-page table thead th:not(.tx-iface-header) {
   color: #5376EA !important;
   background: #ffffff !important;
   border: 2px solid #E6EEFF !important;
@@ -662,6 +662,12 @@ body .content-footer a:hover {
 .tx-inventory-page table thead th[rowspan="2"] {
   min-height: 130px;
   vertical-align: middle;
+}
+/* Second thead row: no <th> cells (row1 already rowspans 2); keep row for valid table geometry */
+.tx-inventory-page table thead tr.tx-iface-thead-spacer {
+  height: 0;
+  line-height: 0;
+  font-size: 0;
 }
 .tx-inventory-page table tbody td:not(.tx-iface-name):not(.tx-iface-network) {
   border: 2px solid #E6EEFF !important;
@@ -999,6 +1005,11 @@ body .content-footer a:hover {
   border-spacing: 0;
   width: 100% !important;
 }
+/*
+ * #groupTable_wrapper is created by DataTables (class dt-container). It is not optional:
+ * the library wraps your <table> in this div. Border + radius belong here; we strip Bootstrap
+ * row/column gutters below so the table is not inset — that inset looked like a second inner box.
+ */
 .tx-inventory-page #groupTable_wrapper {
   border: 2px solid #e6eeff;
   border-radius: 10px;
@@ -1016,6 +1027,22 @@ body .content-footer a:hover {
 .tx-inventory-page #groupTable_wrapper .dt-layout-cell {
   overflow-x: hidden;
   max-width: 100%;
+}
+/* Kill Bootstrap grid gutters inside DT layout so table meets the wrapper edge (single frame). */
+.tx-inventory-page #groupTable_wrapper .dt-layout-table.row,
+.tx-inventory-page #groupTable_wrapper .row.dt-layout-table {
+  --bs-gutter-x: 0;
+  --bs-gutter-y: 0;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+.tx-inventory-page #groupTable_wrapper .dt-layout-table > [class*="col-"],
+.tx-inventory-page #groupTable_wrapper .row.dt-layout-table > [class*="col-"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.tx-inventory-page #groupTable_wrapper table.tx-inventory-table {
+  border-collapse: collapse !important;
 }
 
 /* ---------- Modal close button: blue bold × ---------- */
@@ -1072,21 +1099,63 @@ body .content-footer a:hover {
   box-shadow: inset 0 0 0 1px #4a6cf7;
 }
 
-/* Interface columns: same size as other columns; 2px #F6E7CB */
-.tx-inventory-page table thead th.tx-iface-header,
-.tx-inventory-page table thead th.tx-iface-subheader {
+/* Interfaces: one th rowspan=2 colspan=2; title + Name/Network share18px like other headers */
+.tx-inventory-page table thead th.tx-iface-header {
+  padding: 0 !important;
+  vertical-align: middle;
   background: #ffffff !important;
-  color: #EE9E39 !important;
-  border: 2px solid #F6E7CB !important;
+  border: 2px solid #f6e7cb !important;
+  text-align: center;
+  box-sizing: border-box;
+}
+.tx-iface-head-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 130px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.tx-iface-head-title {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  font-size: 18px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  text-transform: uppercase;
+  color: #ee9e39 !important;
+  background: #ffffff !important;
+  border-bottom: 2px solid #f6e7cb;
+  box-sizing: border-box;
+}
+.tx-iface-head-subs {
+  display: flex;
+  flex-direction: row;
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+.tx-iface-head-subs span {
+  flex: 1 1 0;
+  margin: 0;
+  padding: 0.6rem 0.75rem;
   text-align: center;
   font-size: 18px !important;
   font-weight: 500 !important;
   line-height: 1 !important;
+  text-transform: uppercase;
+  color: #ee9e39 !important;
+  background: #ffffff !important;
   box-sizing: border-box;
 }
-.tx-inventory-page table thead th.tx-iface-subheader {
-  text-transform: uppercase;
-  padding: 0.6rem 0.75rem;
+.tx-iface-head-subs span + span {
+  border-left: 2px solid #f6e7cb;
 }
 .tx-iface-cell {
   border: 2px solid #F6E7CB !important;
