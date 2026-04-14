@@ -1,0 +1,48 @@
+<!--
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+ Frontend wiring:
+  - window.APP_URL     → Group API on port 7755 (same hostname as the request).
+  - window.CONTEXT_URL → OOD / gateway on port 8080 — for logo and home page links only.
+
+  Local `npm run dev`: set both in group/frontend/index.html (7755 + 8080 on your VM).
+-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Group :: Luna</title>
+    <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
+    <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}" />
+    <script>
+      window.APP_URL = "{{ APP_URL }}";
+      window.CONTEXT_URL = "{{ CONTEXT_URL }}";
+    </script>
+    <!-- Optional: force URLs when opening this HTML from a different host
+    <script>
+      window.APP_URL = "https://yixin3-dev-ctrl001:7755";
+      window.CONTEXT_URL = "https://yixin3-dev-ctrl001:8080";
+    </script>
+    -->
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

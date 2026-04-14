@@ -33,21 +33,24 @@ __status__      = 'Development'
 import os
 import json
 from flask import Flask, request, jsonify, render_template
+import urllib3
+from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 from model import Model
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 LOGGER = Log.init_log('INFO')
 TABLE = 'group'
 TABLE_CAP = 'Group'
-app = Flask(__name__, static_folder="static")
+app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-if APP_STATE is False: 
-    app.config["DEBUG"] = True
-    os.environ["FLASK_ENV"] = "development"
+if APP_STATE is False:
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 
 def _wants_json():
@@ -87,11 +90,23 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application. It will list all Groups which is available with daemon.
-    Browsers get the inventory shell (pure client table + modals); API clients use ?format=json or Accept: application/json.
+    Serve the Vue SPA shell. window.APP_URL is this app's base URL; window.CONTEXT_URL
+    comes from Helper.context_url (OOD / gateway).
     """
-    if not _wants_json():
-        return render_template('inventory.html', table=TABLE_CAP)
+    app_url = Helper().group_app_base_url(request)
+    context_url = Helper().context_url(request)
+    return render_template(
+        "index.html",
+        APP_URL=app_url,
+        CONTEXT_URL=context_url,
+    )
+
+
+@app.route('/api/groups', methods=['GET'])
+def api_groups():
+    """
+    JSON list of all groups for the Vue frontend table.
+    """
     table_data = Rest().get_data(TABLE)
     LOGGER.info(table_data)
     if table_data:
@@ -163,9 +178,7 @@ def add():
             "network_list": network_list,
             "bond_modes": bond_modes,
         }
-        if _wants_json():
-            return jsonify(body)
-        return render_template('add.html', table=TABLE_CAP)
+        return jsonify(body)
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
@@ -245,9 +258,7 @@ def edit(record=None):
             "network_list": network_list,
             "bond_modes": bond_modes,
         }
-        if _wants_json():
-            return jsonify(body)
-        return render_template('edit.html', record=record)
+        return jsonify(body)
 
 
 @app.route('/delete/<string:record>', methods=['GET'])
@@ -328,9 +339,7 @@ def clone(record=None):
             "network_list": network_list,
             "bond_modes": bond_modes,
         }
-        if _wants_json():
-            return jsonify(body)
-        return render_template('clone.html', record=record)
+        return jsonify(body)
 
 
 @app.route('/member/<string:table>/<string:record>', methods=['GET'])
@@ -384,9 +393,7 @@ def ospush(record=None):
             "group_list": group_list,
             "osimage_list": osimage_list,
         }
-        if _wants_json():
-            return jsonify(body)
-        return render_template('osimage.html', table=TABLE_CAP, record=record, data=data)
+        return jsonify(body)
 
 
 @app.route('/check_status/<string:status>/status/<string:request_id>', methods=['GET'])
