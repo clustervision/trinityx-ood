@@ -554,7 +554,8 @@ body .content-footer a:hover {
 .tx-table-length-below {
   margin-top: 0.75rem;
 }
-.tx-table-length-below .dataTables_length {
+.tx-table-length-below .dataTables_length,
+.tx-table-length-below .dt-length {
   margin-top: 0;
 }
 
@@ -632,7 +633,10 @@ body .content-footer a:hover {
 .tx-inventory-page .dataTables_wrapper,
 .tx-inventory-page .dataTables_info,
 .tx-inventory-page .dataTables_length,
-.tx-inventory-page .dataTables_paginate {
+.tx-inventory-page .dataTables_paginate,
+.tx-inventory-page .dt-info,
+.tx-inventory-page .dt-length,
+.tx-inventory-page .dt-paging {
   font-size: 18px;
   font-weight: 400;
 }
@@ -640,13 +644,15 @@ body .content-footer a:hover {
   font-size: 14px;
 }
 .tx-inventory-page .dataTables_filter label,
-.tx-inventory-page .dataTables_length label {
+.tx-inventory-page .dataTables_length label,
+.tx-inventory-page .dt-length label {
   color: #111111 !important;
 }
 .tx-inventory-page .dataTables_filter input {
   color: #111111 !important;
 }
-.tx-inventory-page .dataTables_length select {
+.tx-inventory-page .dataTables_length select,
+.tx-inventory-page .dt-length select {
   color: #111111 !important;
 }
 /* Table header and body (except Interfaces): 2px #E6EEFF */
@@ -667,7 +673,6 @@ body .content-footer a:hover {
 .tx-inventory-page table thead tr.tx-iface-thead-spacer {
   height: 0;
   line-height: 0;
-  font-size: 0;
 }
 .tx-inventory-page table tbody td:not(.tx-iface-name):not(.tx-iface-network) {
   border: 2px solid #E6EEFF !important;
@@ -989,9 +994,8 @@ body .content-footer a:hover {
 }
 
 /*
- * Single outer frame: border + radius live on #groupTable_wrapper (DataTables container),
- * not on .tx-inventory-table-wrap, so we do not stack a rounded box outside a square table-bordered outline.
- * Hide horizontal overflow on DataTables footer row to avoid dt-layout scrollbars.
+ * Rounded frame: only on .row.dt-layout-table (the row that contains the <table>), not on the whole
+ * #groupTable_wrapper, so paging/info/length are not visually inside the same box.
  */
 .tx-inventory-table-wrap {
   border: none;
@@ -1006,29 +1010,36 @@ body .content-footer a:hover {
   width: 100% !important;
 }
 /*
- * #groupTable_wrapper is created by DataTables (class dt-container). It is not optional:
- * the library wraps your <table> in this div. Border + radius belong here; we strip Bootstrap
- * row/column gutters below so the table is not inset — that inset looked like a second inner box.
+ * #groupTable_wrapper (dt-container) wraps the table row AND the bottom layout row (info/paging).
+ * Border + radius only on the table row (.dt-layout-table) so entries/paging sit outside the rounded box.
  */
 .tx-inventory-page #groupTable_wrapper {
-  border: 2px solid #e6eeff;
-  border-radius: 10px;
-  overflow: hidden;
-  overflow-x: hidden;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
   max-width: 100%;
 }
 .tx-inventory-page #groupTable_wrapper .dt-layout-row,
-.tx-inventory-page #groupTable_wrapper .dt-layout-table,
 .tx-inventory-page #groupTable_wrapper .dt-layout-full,
-.tx-inventory-page #groupTable_wrapper .row {
+.tx-inventory-page #groupTable_wrapper .row:not(.dt-layout-table) {
   overflow-x: hidden !important;
   max-width: 100%;
+}
+.tx-inventory-page #groupTable_wrapper .dt-layout-table.row,
+.tx-inventory-page #groupTable_wrapper .row.dt-layout-table {
+  overflow-x: hidden !important;
+  max-width: 100%;
+  border: 2px solid #e6eeff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
+  margin-bottom: 0.65rem;
 }
 .tx-inventory-page #groupTable_wrapper .dt-layout-cell {
   overflow-x: hidden;
   max-width: 100%;
 }
-/* Kill Bootstrap grid gutters inside DT layout so table meets the wrapper edge (single frame). */
+/* Kill Bootstrap grid gutters inside the table layout row only */
 .tx-inventory-page #groupTable_wrapper .dt-layout-table.row,
 .tx-inventory-page #groupTable_wrapper .row.dt-layout-table {
   --bs-gutter-x: 0;

@@ -226,6 +226,10 @@
           showListError('DataTables is not loaded.');
           return;
         }
+        /* DataTables 2 rebuilds <thead> from column titles and drops rowspan/colspan; keep our header. */
+        var theadSnapshot = null;
+        var theadEl0 = el.querySelector('thead');
+        if (theadEl0) theadSnapshot = theadEl0.cloneNode(true);
         groupTable = new DataTable('#groupTable', {
           data: groups,
           columns: cols,
@@ -241,6 +245,17 @@
             bottom: ['pageLength', 'info', 'paging'],
           },
         });
+        if (theadSnapshot) {
+          var theadNow = el.querySelector('thead');
+          if (theadNow) theadNow.replaceWith(theadSnapshot);
+          try {
+            if (groupTable.columns && typeof groupTable.columns.adjust === 'function') {
+              groupTable.columns.adjust();
+            }
+          } catch (e1) {
+            /* ignore */
+          }
+        }
         moveLengthSlot();
       })
       .catch(function () {
@@ -251,7 +266,8 @@
   function moveLengthSlot() {
     var wrapper = document.querySelector('#groupTable_wrapper');
     if (!wrapper) return;
-    var length = wrapper.querySelector('.dataTables_length');
+    var length =
+      wrapper.querySelector('.dataTables_length') || wrapper.querySelector('div.dt-length');
     var lengthSlot = document.getElementById('txTableLengthSlot');
     if (length && lengthSlot && !lengthSlot.contains(length)) lengthSlot.appendChild(length);
   }
