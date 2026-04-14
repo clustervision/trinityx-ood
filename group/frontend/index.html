@@ -4,7 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Group :: Luna (dev)</title>
-    <!-- VM: python app.py；本机: npm run dev。API 用 7755；logo/首页 用 8080。 -->
+    <!--
+      On the VM: run python app.py (optional TLS; see bottom of app.py).
+      On your machine: copy .env.development.example to .env.development and set
+      VITE_GROUP_BACKEND=https://yixin3-dev-ctrl001:7755 (or your host).
+      Keep APP_URL empty below so requests use the Vite proxy (avoids ECONNREFUSED on 127.0.0.1:7755).
+      If you do not use the proxy, set APP_URL to the full backend URL (Flask must allow CORS from http://localhost:5173).
+    -->
     <script>
       window.APP_URL = "";
       window.CONTEXT_URL = "";
