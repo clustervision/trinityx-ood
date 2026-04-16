@@ -46,6 +46,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 LOGGER = Log.init_log('INFO')
 TABLE = 'group'
 TABLE_CAP = 'Group'
+# SPA: Jinja shell in app/index.html; built Vue assets in app/assets (vite outDir).
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
