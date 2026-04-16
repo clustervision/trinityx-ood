@@ -1,6 +1,8 @@
 <template>
-  <AppHeader />
+  <div class="tx-app-layout">
+    <AppHeader />
 
+    <main class="tx-app-main">
   <GroupInventory
     ref="inventoryRef"
     @open-add="openModal('add')"
@@ -9,8 +11,10 @@
     @ospush="openModal('ospush', $event)"
     @delete="openModal('delete', $event)"
   />
+    </main>
 
   <AppFooter />
+  </div>
 
   <!-- Modals -->
   <EditGroupModal

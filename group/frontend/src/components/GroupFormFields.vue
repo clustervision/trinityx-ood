@@ -1,7 +1,7 @@
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form">
     <!-- 3-column top grid -->
-    <div class="tx-add-grid">
+    <div class="tx-add-grid tx-add-form-main">
       <!-- Column 1 -->
       <div class="tx-add-col">
         <div class="tx-field tx-field-strong" v-if="mode === 'clone'">
@@ -53,7 +53,7 @@
       <div class="tx-add-col">
         <div class="tx-field tx-field-strong">
           <span class="tx-label">OS Image:</span>
-          <select v-model="form.osimage">
+          <select v-model="form.osimage" :class="{ 'tx-select-placeholder': !form.osimage }">
             <option value="">--- Select ---</option>
             <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
           </select>
@@ -78,7 +78,7 @@
         </div>
         <div class="tx-field tx-field-match">
           <span class="tx-label">BMC Setup:</span>
-          <select v-model="form.bmcsetupname">
+          <select v-model="form.bmcsetupname" :class="{ 'tx-select-placeholder': !form.bmcsetupname }">
             <option value="">--- Select ---</option>
             <option v-for="b in bmcsetupOptions" :key="b" :value="b">{{ b }}</option>
           </select>

@@ -17,6 +17,24 @@ html, body {
   font-family: "Geist Sans", "Geist", system-ui, -apple-system, sans-serif;
   color: #111111;
   -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-app-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.tx-app-main {
+  flex: 1 1 auto;
 }
 
 /* ---------- Shell (page wrapper) ---------- */
@@ -231,14 +249,21 @@ html, body {
   cursor: default !important;
 }
 
-.tx-sort-arrow {
-  font-size: 10px;
-  margin-left: 3px;
-  color: #c6d3fb;
+/* Uniform DataTables-style dual arrows; color follows column (no change on sort click) */
+.tx-sort-dt {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: #5376EA;
 }
 
-.tx-th-sorted .tx-sort-arrow {
-  color: #5376EA;
+.tx-sort-dt-orange {
+  color: #ee9e39;
+}
+
+.tx-th-actions .tx-sort-dt {
+  display: none;
 }
 
 /* Spacer row for rowspan geometry */
@@ -264,6 +289,17 @@ html, body {
 }
 .tx-td-sep-orange-mid {
   border-left: 2px solid #f6e7cb !important;
+}
+
+/* Interfaces block: strong orange verticals + body dividers */
+.tx-iface-orange-edge {
+  border-left: 2px solid #F58B00 !important;
+}
+.tx-td-iface-orange-left {
+  border-left: 2px solid #F58B00 !important;
+}
+.tx-td-iface-orange-mid {
+  border-left: 2px solid #F58B00 !important;
 }
 
 /* ---------- Interface header ---------- */
@@ -296,6 +332,7 @@ html, body {
   text-transform: uppercase;
   color: #ee9e39;
   background: #ffffff;
+  border-bottom: 2px solid #F58B00;
 }
 
 .tx-iface-head-subs {
@@ -324,7 +361,7 @@ html, body {
 }
 
 .tx-iface-head-subs span + span {
-  border-left: 2px solid #f6e7cb;
+  border-left: 2px solid #F58B00;
 }
 
 /* ---------- Body cells ---------- */
@@ -400,10 +437,12 @@ html, body {
   color: #111111;
   text-decoration: underline;
   text-decoration-style: solid;
-  text-underline-offset: 0;
-  text-decoration-thickness: auto;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+  text-decoration-skip-ink: none;
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
 }
 
 .tx-name-link:hover {
@@ -438,7 +477,7 @@ html, body {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.35rem;
+  gap: 0.75rem;
   white-space: nowrap;
 }
 
@@ -517,29 +556,44 @@ html, body {
 .tx-paging {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 10px;
 }
 
-.tx-paging-btn {
+/* Prev/next: design padding + min size ~ 21×43 */
+.tx-paging-arrow {
+  box-sizing: border-box;
+  min-width: 21px;
+  min-height: 43.5px;
   border: 2px solid #e6eeff;
   border-radius: 10px;
   color: #5376EA;
   font-size: 18px;
   font-weight: 500;
-  padding: 0.35rem 0.75rem;
+  padding: 17px 20px;
+  line-height: 0;
   background: #fff;
   cursor: pointer;
   outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.tx-paging-btn.current {
-  background: #e6eeff;
-  color: #5376EA;
-}
-
-.tx-paging-btn:disabled {
+.tx-paging-arrow:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* Only current page number (center) */
+.tx-paging-current {
+  font-family: "Geist Sans", "Geist", system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 100%;
+  letter-spacing: 0;
+  color: #5376EA;
+  min-width: 1.5ch;
+  text-align: center;
 }
 
 /* ================================================================
@@ -612,6 +666,7 @@ html, body {
   color: #666;
   font-size: 0.8rem;
   padding: 0.75rem 0;
+  margin-top: auto;
 }
 
 .tx-footer-inner {
@@ -670,6 +725,25 @@ html, body {
 
 .tx-modal-lg {
   max-width: 960px;
+}
+
+/* Add Group dialog — design width / height */
+.tx-modal-add-group {
+  width: 100%;
+  max-width: 1711px;
+  height: 364px;
+  max-height: min(364px, calc(100vh - 4rem));
+  overflow-y: auto;
+  border: 1px solid #e6eeff;
+  border-radius: 20px;
+  padding: 1.25rem 1.75rem;
+}
+
+@media (max-height: 520px) {
+  .tx-modal-add-group {
+    height: auto;
+    max-height: calc(100vh - 2rem);
+  }
 }
 
 .tx-modal-md {
@@ -1136,6 +1210,109 @@ html, body {
   background: #E8E8E8;
   color: #AEAEAE;
   border-color: #AEAEAE;
+}
+
+/* Main add/edit grid (not advanced / interfaces): field + tri sizes */
+.tx-add-form-main .tx-field {
+  min-height: 43px;
+  height: 43px;
+  width: 100%;
+  max-width: 449px;
+}
+
+.tx-add-form-main .tx-field input,
+.tx-add-form-main .tx-field select {
+  height: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+.tx-add-form-main .tx-segmented {
+  flex-wrap: nowrap;
+}
+
+.tx-add-form-main .tx-seg {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.tx-add-form-main .tx-seg[data-v="true"],
+.tx-add-form-main .tx-seg[data-v="false"] {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
+  height: 31px;
+  padding: 0;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tx-add-form-main .tx-seg[data-v=""] {
+  width: 137px;
+  min-width: 137px;
+  max-width: 137px;
+  height: 31px;
+  padding: 0;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.4;
+}
+
+.tx-add-form-main .tx-seg[data-v=""].is-active {
+  opacity: 1;
+}
+
+.tx-add-form-main .tx-seg[data-v="true"].is-active,
+.tx-add-form-main .tx-seg[data-v="false"].is-active {
+  opacity: 1;
+}
+
+.tx-select-placeholder,
+.tx-select-placeholder option:first-child {
+  color: #BFBFBF !important;
+}
+
+select.tx-select-placeholder {
+  color: #BFBFBF !important;
+}
+
+/* Help modal (inventory) */
+.tx-help-dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  max-width: 700px;
+  width: calc(100% - 2rem);
+  padding: 1.75rem 2rem 2rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+
+.tx-help-dialog .tx-modal-x {
+  top: 1rem;
+  right: 1rem;
+}
+
+.tx-help-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #5376EA;
+  margin: 0 0 1rem;
+}
+
+.tx-help-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #111;
+}
+
+.tx-help-list li {
+  margin-bottom: 0.5rem;
 }
 
 /* ================================================================

@@ -1,5 +1,5 @@
 <template>
-  <BaseModal size="large" @close="$emit('close')">
+  <BaseModal preset="addGroup" @close="$emit('close')">
     <div class="tx-form-page">
       <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
       <p v-if="loading" class="tx-loading">Loading...</p>

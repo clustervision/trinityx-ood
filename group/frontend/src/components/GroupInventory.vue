@@ -5,8 +5,8 @@
     <div class="tx-header">
       <h2 class="tx-title">Groups</h2>
       <div class="tx-header-actions">
-        <button class="tx-btn tx-btn-help" title="Help" type="button">?</button>
         <button type="button" class="tx-btn tx-btn-blue" @click="$emit('open-add')">Add Group</button>
+        <button class="tx-btn tx-btn-help" title="Help" type="button" @click="helpOpen = true">?</button>
         <div class="tx-inline-search">
           <label class="tx-inline-search-label" for="txManualSearch">Search:</label>
           <input
@@ -29,33 +29,38 @@
               :key="col.field"
               rowspan="2"
               class="tx-th-regular"
-              :class="{
-                'tx-th-sortable': true,
-                'tx-th-sorted': sortField === col.field,
-                'tx-th-sep-blue': cIdx > 0,
-              }"
+              :class="{ 'tx-th-sep-blue': cIdx > 0 }"
               @click="toggleSort(col.field)"
             >
               {{ col.label }}
-              <span class="tx-sort-arrow">{{ sortField === col.field ? (sortAsc ? '\u25B2' : '\u25BC') : '\u25BC' }}</span>
+              <span class="tx-sort-dt" aria-hidden="true">
+                <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
+                  <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
+                </svg>
+              </span>
             </th>
-            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header tx-th-sep-orange-left">
+            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header tx-iface-orange-edge">
               <div class="tx-iface-head-inner">
                 <div class="tx-iface-head-title">Interfaces</div>
                 <div class="tx-iface-head-subs">
-                  <span
-                    :class="{ 'tx-th-sorted': sortField === 'iface_name' }"
-                    @click.stop="toggleSort('iface_name')"
-                  >
+                  <span @click.stop="toggleSort('iface_name')">
                     Name
-                    <span class="tx-sort-arrow">{{ sortField === 'iface_name' ? (sortAsc ? '\u25B2' : '\u25BC') : '\u25BC' }}</span>
+                    <span class="tx-sort-dt tx-sort-dt-orange" aria-hidden="true">
+                      <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
+                        <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
+                      </svg>
+                    </span>
                   </span>
-                  <span
-                    :class="{ 'tx-th-sorted': sortField === 'iface_network' }"
-                    @click.stop="toggleSort('iface_network')"
-                  >
+                  <span @click.stop="toggleSort('iface_network')">
                     Network
-                    <span class="tx-sort-arrow">{{ sortField === 'iface_network' ? (sortAsc ? '\u25B2' : '\u25BC') : '\u25BC' }}</span>
+                    <span class="tx-sort-dt tx-sort-dt-orange" aria-hidden="true">
+                      <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
+                        <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
+                      </svg>
+                    </span>
                   </span>
                 </div>
               </div>
@@ -91,14 +96,14 @@
                 {{ cellText(row[col.field]) }}
               </template>
             </td>
-            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-name tx-td-sep-orange-left">
+            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-name tx-td-iface-orange-left">
               <div
                 v-for="(iface, iIdx) in (row.interfaces || [])"
                 :key="'n-' + iIdx"
                 class="tx-iface-entry"
               >{{ iface.interface || '' }}</div>
             </td>
-            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-network tx-td-sep-orange-mid">
+            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-network tx-td-iface-orange-mid">
               <div
                 v-for="(iface, iIdx) in (row.interfaces || [])"
                 :key="'nw-' + iIdx"
@@ -113,10 +118,10 @@
                   title="Clone"
                   @click="$emit('clone', canonicalName(row.name))"
                 >
-                  <img src="/icons/icon-clone.png" alt="Clone" width="22" height="22"
+                  <img src="/icons/icon-clone.png" alt="Clone" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
-                  <svg style="display:none" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 </button>
                 <button
                   type="button"
@@ -124,10 +129,10 @@
                   title="OS Push"
                   @click="$emit('ospush', canonicalName(row.name))"
                 >
-                  <img src="/icons/icon-ospush.png" alt="OS Push" width="22" height="22"
+                  <img src="/icons/icon-ospush.png" alt="OS Push" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
-                  <svg style="display:none" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
                 </button>
                 <button
                   type="button"
@@ -135,10 +140,10 @@
                   title="Delete"
                   @click="$emit('delete', canonicalName(row.name))"
                 >
-                  <img src="/icons/icon-delete.png" alt="Delete" width="22" height="22"
+                  <img src="/icons/icon-delete.png" alt="Delete" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
-                  <svg style="display:none" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
               </div>
             </td>
@@ -156,24 +161,38 @@
       </div>
       <div class="tx-paging">
         <button
-          class="tx-paging-btn"
+          type="button"
+          class="tx-paging-arrow"
           :disabled="currentPage <= 1"
+          aria-label="Previous page"
           @click="currentPage--"
         >&lt;</button>
+        <span class="tx-paging-current">{{ currentPage }}</span>
         <button
-          v-for="p in visiblePages"
-          :key="p"
-          class="tx-paging-btn"
-          :class="{ current: p === currentPage }"
-          @click="currentPage = p"
-        >{{ p }}</button>
-        <button
-          class="tx-paging-btn"
+          type="button"
+          class="tx-paging-arrow"
           :disabled="currentPage >= totalPages"
+          aria-label="Next page"
           @click="currentPage++"
         >&gt;</button>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="helpOpen" class="tx-modal-overlay" @mousedown.self="helpOpen = false">
+        <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title">
+          <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
+          <h2 id="help-title" class="tx-help-title">How to use this app</h2>
+          <ul class="tx-help-list">
+            <li><strong>Add Group</strong> — Use the button to create a new group.</li>
+            <li><strong>Edit</strong> — Click an underlined group name.</li>
+            <li><strong>Clone / OS Push / Delete</strong> — Use the icons in the Actions column.</li>
+            <li><strong>Search</strong> — Filter the table as you type.</li>
+            <li><strong>Sort</strong> — Click a column header (or Name / Network under Interfaces) to sort; click again to reverse.</li>
+          </ul>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -193,6 +212,7 @@ const sortAsc = ref(true)
 const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 25, 50, 100]
+const helpOpen = ref(false)
 
 const hasInterfaces = computed(() => fields.value.includes('interfaces'))
 
@@ -230,6 +250,13 @@ function isEmpty(val) {
   return false
 }
 
+function ifaceSortKey(row, key) {
+  const list = row.interfaces || []
+  return list
+    .map((item) => String((item && item[key]) || '').toLowerCase())
+    .join('\u0001')
+}
+
 const filteredRows = computed(() => {
   let rows = groups.value
   const q = searchQuery.value.toLowerCase().trim()
@@ -253,13 +280,14 @@ const filteredRows = computed(() => {
     const sf = sortField.value
     const asc = sortAsc.value
     rows = [...rows].sort((a, b) => {
-      let va, vb
+      let va
+      let vb
       if (sf === 'iface_name') {
-        va = (a.interfaces?.[0]?.interface || '').toLowerCase()
-        vb = (b.interfaces?.[0]?.interface || '').toLowerCase()
+        va = ifaceSortKey(a, 'interface')
+        vb = ifaceSortKey(b, 'interface')
       } else if (sf === 'iface_network') {
-        va = (a.interfaces?.[0]?.network || '').toLowerCase()
-        vb = (b.interfaces?.[0]?.network || '').toLowerCase()
+        va = ifaceSortKey(a, 'network')
+        vb = ifaceSortKey(b, 'network')
       } else {
         va = a[sf] != null ? String(a[sf]).toLowerCase() : ''
         vb = b[sf] != null ? String(b[sf]).toLowerCase() : ''
@@ -279,19 +307,11 @@ const pagedRows = computed(() => {
   return filteredRows.value.slice(start, start + pageSize.value)
 })
 
-const visiblePages = computed(() => {
-  const pages = []
-  const total = totalPages.value
-  const current = currentPage.value
-  const delta = 2
-  for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
-    pages.push(i)
-  }
-  return pages
-})
-
 watch(searchQuery, () => { currentPage.value = 1 })
 watch(pageSize, () => { currentPage.value = 1 })
+watch([filteredRows, totalPages], () => {
+  if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
+})
 
 function toggleSort(field) {
   if (sortField.value === field) {
