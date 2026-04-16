@@ -35,6 +35,8 @@ html, body {
 
 .tx-app-main {
   flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
 }
 
 /* ---------- Shell (page wrapper) ---------- */
@@ -50,6 +52,7 @@ html, body {
 .tx-inventory-page.tx-shell {
   max-width: none;
   width: calc(100% - 2.5rem);
+  min-width: 1220px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -216,13 +219,17 @@ html, body {
 .tx-inventory-table-wrap {
   border: 2px solid #e6eeff;
   border-radius: 10px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ---------- Table ---------- */
 .tx-inventory-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   border-spacing: 0;
   font-size: 0.85rem;
@@ -243,6 +250,8 @@ html, body {
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
+  min-width: 7.25rem;
+  overflow: hidden;
 }
 
 .tx-th-actions {
@@ -291,15 +300,30 @@ html, body {
   border-left: 2px solid #f6e7cb !important;
 }
 
-/* Interfaces block: strong orange verticals + body dividers */
-.tx-iface-orange-edge {
-  border-left: 2px solid #F58B00 !important;
+/* Last regular column (e.g. Roles) — vertical before Interfaces block */
+.tx-th-sep-before-iface,
+.tx-td-sep-before-iface {
+  border-right: 2px solid #f6e7cb !important;
 }
-.tx-td-iface-orange-left {
-  border-left: 2px solid #F58B00 !important;
+
+/* Interfaces body: full-height vertical between Name / Network */
+.tx-td-iface-edge {
+  border-left: none !important;
 }
-.tx-td-iface-orange-mid {
-  border-left: 2px solid #F58B00 !important;
+/* Full-height divider (border-collapse can clip cell borders next to stacked rows) */
+.tx-td-iface-between {
+  border-left: none !important;
+  position: relative;
+}
+.tx-td-iface-between::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #f6e7cb;
+  pointer-events: none;
 }
 
 /* ---------- Interface header ---------- */
@@ -332,7 +356,7 @@ html, body {
   text-transform: uppercase;
   color: #ee9e39;
   background: #ffffff;
-  border-bottom: 2px solid #F58B00;
+  border-bottom: 2px solid #f6e7cb;
 }
 
 .tx-iface-head-subs {
@@ -361,7 +385,7 @@ html, body {
 }
 
 .tx-iface-head-subs span + span {
-  border-left: 2px solid #F58B00;
+  border-left: 2px solid #f6e7cb;
 }
 
 /* ---------- Body cells ---------- */
@@ -373,6 +397,32 @@ html, body {
   font-weight: 400;
   line-height: 1;
   padding: 0.55rem 0.75rem;
+  min-width: 0;
+}
+
+/* Sortable headers: keep label + icon stable; clip long titles */
+.tx-th-label-clip {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: calc(100% - 22px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Body text cells: stable column width when sorting */
+.tx-cell-ellipsis {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.tx-name-link.tx-cell-ellipsis {
+  width: 100%;
+  text-align: left;
 }
 
 /* Alternating row backgrounds */
@@ -469,6 +519,20 @@ html, body {
 .tx-col-actions {
   white-space: nowrap;
   width: 1%;
+  min-width: 8.5rem;
+  overflow: visible;
+}
+
+.tx-inventory-table td:not(.tx-col-actions):not(.tx-iface-cell) {
+  min-width: 7.25rem;
+}
+
+.tx-inventory-table th.tx-iface-header {
+  min-width: 14rem;
+}
+
+.tx-inventory-table td.tx-iface-cell {
+  min-width: 6.5rem;
 }
 
 .tx-action-icons {
@@ -559,18 +623,20 @@ html, body {
   gap: 10px;
 }
 
-/* Prev/next: design padding + min size ~ 21×43 */
+/* Prev/next: width:height = 21 : 43.5 (height unchanged from spec) */
 .tx-paging-arrow {
   box-sizing: border-box;
+  width: 21px;
+  height: 43.5px;
   min-width: 21px;
   min-height: 43.5px;
+  padding: 0;
   border: 2px solid #e6eeff;
   border-radius: 10px;
   color: #5376EA;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 500;
-  padding: 17px 20px;
-  line-height: 0;
+  line-height: 1;
   background: #fff;
   cursor: pointer;
   outline: none;
@@ -719,31 +785,16 @@ html, body {
   border-radius: 20px;
   padding: 2rem 2.5rem;
   width: 100%;
-  max-height: none;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2.5rem);
+  overflow-x: hidden;
+  overflow-y: auto;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
 }
 
 .tx-modal-lg {
-  max-width: 960px;
-}
-
-/* Add Group dialog — design width / height */
-.tx-modal-add-group {
-  width: 100%;
-  max-width: 1711px;
-  height: 364px;
-  max-height: min(364px, calc(100vh - 4rem));
-  overflow-y: auto;
-  border: 1px solid #e6eeff;
-  border-radius: 20px;
-  padding: 1.25rem 1.75rem;
-}
-
-@media (max-height: 520px) {
-  .tx-modal-add-group {
-    height: auto;
-    max-height: calc(100vh - 2rem);
-  }
+  max-width: min(960px, calc(100vw - 2rem));
 }
 
 .tx-modal-md {
@@ -777,6 +828,10 @@ html, body {
 /* ================================================================
    FORM PAGE (inside modals: Edit / Add / Clone)
    ================================================================ */
+.tx-form-page {
+  min-width: 1100px;
+}
+
 .tx-form-page .tx-title {
   color: #5376EA;
   font-size: 18px;
@@ -784,9 +839,60 @@ html, body {
   line-height: 1;
 }
 
-.tx-form-page .tx-title strong {
+.tx-form-page .tx-title strong:not(.tx-title-highlight-name) {
   color: #111;
   font-weight: 700;
+}
+
+.tx-title-highlight-name {
+  display: inline-block;
+  background: #321dff;
+  color: #fff !important;
+  font-weight: 700;
+  padding: 0.12em 0.45em;
+  border-radius: 4px;
+  line-height: 1.25;
+}
+
+.tx-group-form-fixed {
+  min-width: 1100px;
+}
+
+/* Forms inside modals: fit the dialog width/height (no wider than the window) */
+.tx-modal-container .tx-form-page {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.tx-modal-container .tx-group-form-fixed {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tx-modal-container .tx-add-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem 0.85rem;
+}
+
+.tx-modal-container .tx-add-form-main .tx-field {
+  max-width: none;
+}
+
+.tx-modal-container .tx-adv-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tx-modal-container .tx-iface-grid--row1 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr) auto;
+}
+
+.tx-modal-container .tx-iface-grid--row2 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr);
+}
+
+.tx-modal-container .tx-iface-grid--row3 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .tx-loading {
@@ -887,23 +993,65 @@ html, body {
   padding-right: 0.5rem;
 }
 
-/* ---------- Orange field (interface fields) ---------- */
-.tx-field-orange {
-  border: 2px solid #F58B00;
+/* ---------- Interface form fields (expanded section) ---------- */
+.tx-field-iface-key {
+  border: 2px solid #f58b00 !important;
+  background: #fff;
 }
 
-.tx-field-orange .tx-label {
-  background: #FFF5EB;
-  color: #F58B00;
+.tx-field-iface-key .tx-label {
+  background: #ffe6c5 !important;
+  color: #f58b00 !important;
 }
 
-.tx-field-dhcp-wrap {
-  background: #ffe6c5;
+.tx-field-iface-muted {
+  border: 2px solid #ffe6c5 !important;
+  background: #fff;
+}
+
+.tx-field-iface-muted .tx-label {
+  background: #ffe6c5 !important;
+  color: #111 !important;
+}
+
+.tx-field-iface-key input,
+.tx-field-iface-key select,
+.tx-field-iface-muted input,
+.tx-field-iface-muted select {
+  background: #fff !important;
+}
+
+.tx-field-dhcp-wrap.tx-field-iface-muted {
+  background: #fff;
 }
 
 .tx-field-dhcp-wrap .tx-label {
-  background: transparent;
-  color: #f58b00;
+  background: #ffe6c5 !important;
+  color: #111 !important;
+}
+
+.tx-field-options-combo .tx-iface-options-input {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  background: #fff;
+}
+
+.tx-field-options-combo .tx-iface-options-input input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-expand-text-trigger--leading {
+  position: static;
+  flex-shrink: 0;
+  margin: 0 0.35rem 0 0.25rem;
+}
+
+.tx-interface-section select.tx-select-placeholder {
+  background-color: #bfbfbf !important;
+  color: #fff !important;
 }
 
 /* ---------- Advanced system fields ---------- */
@@ -1052,23 +1200,23 @@ html, body {
 
 /* ---------- Interface section ---------- */
 .tx-interface-section {
-  background: #fffbf5;
-  border: 2px solid #f6e7cb;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0.25rem 0;
+  margin-bottom: 0.4rem;
 }
 
 .tx-interface-block {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px dashed #e8d8c0;
+  border: 1px solid #fffbf5;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.65rem;
+  background: #fff;
 }
 
 .tx-interface-block:last-child {
   margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
 }
 
 .tx-interface-actions {
@@ -1085,18 +1233,37 @@ html, body {
   padding: 0.5rem 0;
 }
 
-/* Interface grid layout */
+/* Interface grid layout — fixed columns; scroll on narrow viewports */
 .tx-iface-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 0.75rem;
-  align-items: center;
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.4rem;
 }
 
-.tx-iface-grid .tx-field {
-  flex: 1 1 0;
-  min-width: 140px;
+.tx-iface-grid--row1 {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(140px, 0.9fr) auto;
+  gap: 0.35rem 0.45rem;
+  align-items: stretch;
+}
+
+.tx-iface-grid--row2 {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(140px, 0.9fr);
+  gap: 0.35rem 0.45rem;
+  align-items: stretch;
+}
+
+.tx-iface-grid--row3 {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
+  gap: 0.35rem 0.45rem;
+  align-items: stretch;
+}
+
+.tx-iface-grid--row1 .tx-field,
+.tx-iface-grid--row2 .tx-field,
+.tx-iface-grid--row3 .tx-field {
+  min-width: 0;
+  width: 100%;
 }
 
 /* ---------- Footer actions row ---------- */
@@ -1115,7 +1282,7 @@ html, body {
 
 .tx-adv-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
   gap: 0.75rem;
 }
 
@@ -1126,16 +1293,10 @@ html, body {
 /* ---------- 3-column grid (Add / Edit / Clone top section) ---------- */
 .tx-add-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
   gap: 1rem 1.25rem;
   margin-bottom: 1rem;
   align-items: start;
-}
-
-@media (max-width: 992px) {
-  .tx-add-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .tx-add-col {
@@ -1243,10 +1404,18 @@ html, body {
   max-width: 76px;
   height: 31px;
   padding: 0;
-  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* One continuous pill: only outer corners rounded (avoids clipped YES/DEFAULT edges) */
+.tx-add-form-main .tx-seg[data-v="true"] {
+  border-radius: 4px 0 0 4px;
+}
+
+.tx-add-form-main .tx-seg[data-v="false"] {
+  border-radius: 0;
 }
 
 .tx-add-form-main .tx-seg[data-v=""] {
@@ -1255,7 +1424,7 @@ html, body {
   max-width: 137px;
   height: 31px;
   padding: 0;
-  border-radius: 4px;
+  border-radius: 0 4px 4px 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;

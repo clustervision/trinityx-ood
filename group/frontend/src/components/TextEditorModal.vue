@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
@@ -40,6 +40,13 @@ const emit = defineEmits(['close', 'update:modelValue'])
 
 const content = ref(props.modelValue)
 const textareaRef = ref(null)
+
+watch(
+  () => props.modelValue,
+  (v) => {
+    content.value = v
+  },
+)
 
 onMounted(() => {
   if (textareaRef.value) textareaRef.value.focus()

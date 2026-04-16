@@ -29,10 +29,14 @@
               :key="col.field"
               rowspan="2"
               class="tx-th-regular"
-              :class="{ 'tx-th-sep-blue': cIdx > 0 }"
+              :class="{
+                'tx-th-sep-blue': cIdx > 0,
+                'tx-th-sep-before-iface': hasInterfaces && cIdx === regularColumns.length - 1,
+              }"
+              :title="col.label"
               @click="toggleSort(col.field)"
             >
-              {{ col.label }}
+              <span class="tx-th-label-clip">{{ col.label }}</span>
               <span class="tx-sort-dt" aria-hidden="true">
                 <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
@@ -40,7 +44,7 @@
                 </svg>
               </span>
             </th>
-            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header tx-iface-orange-edge">
+            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header">
               <div class="tx-iface-head-inner">
                 <div class="tx-iface-head-title">Interfaces</div>
                 <div class="tx-iface-head-subs">
@@ -80,12 +84,16 @@
             <td
               v-for="(col, cIdx) in regularColumns"
               :key="col.field"
-              :class="{ 'tx-td-sep-blue': cIdx > 0 }"
+              :class="{
+                'tx-td-sep-blue': cIdx > 0,
+                'tx-td-sep-before-iface': hasInterfaces && cIdx === regularColumns.length - 1,
+              }"
             >
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link"
+                  class="tx-name-link tx-cell-ellipsis"
+                  :title="String(row.name ?? '')"
                   @click="$emit('open-edit', canonicalName(row.name))"
                 >{{ row.name }}</button>
               </template>
@@ -93,21 +101,23 @@
                 <span class="tx-na-box">NOT AVAILABLE</span>
               </template>
               <template v-else>
-                {{ cellText(row[col.field]) }}
+                <span class="tx-cell-ellipsis" :title="cellText(row[col.field])">{{ cellText(row[col.field]) }}</span>
               </template>
             </td>
-            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-name tx-td-iface-orange-left">
+            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-name tx-td-iface-edge">
               <div
                 v-for="(iface, iIdx) in (row.interfaces || [])"
                 :key="'n-' + iIdx"
-                class="tx-iface-entry"
+                class="tx-iface-entry tx-cell-ellipsis"
+                :title="String(iface.interface || '')"
               >{{ iface.interface || '' }}</div>
             </td>
-            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-network tx-td-iface-orange-mid">
+            <td v-if="hasInterfaces" class="tx-iface-cell tx-iface-network tx-td-iface-between">
               <div
                 v-for="(iface, iIdx) in (row.interfaces || [])"
                 :key="'nw-' + iIdx"
-                class="tx-iface-entry"
+                class="tx-iface-entry tx-cell-ellipsis"
+                :title="String(iface.network || '')"
               >{{ iface.network || '' }}</div>
             </td>
             <td class="tx-col-actions" :class="{ 'tx-td-sep-orange-right': hasInterfaces, 'tx-td-sep-blue': !hasInterfaces }">

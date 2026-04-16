@@ -6,7 +6,7 @@
 
       <template v-if="!loading && !fatalError">
         <div class="tx-header">
-          <h2 class="tx-title">Update group <strong>{{ groupName }}</strong></h2>
+          <h2 class="tx-title">Update group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
         </div>
 
         <GroupFormFields

@@ -14,13 +14,10 @@ import { computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   size: { type: String, default: 'large' },
-  /** Design spec: 1711×364, radius 20, border 1px */
-  preset: { type: String, default: '' },
 })
 defineEmits(['close'])
 
 const sizeClass = computed(() => {
-  if (props.preset === 'addGroup') return 'tx-modal-add-group'
   if (props.size === 'small') return 'tx-modal-sm'
   if (props.size === 'medium') return 'tx-modal-md'
   return 'tx-modal-lg'

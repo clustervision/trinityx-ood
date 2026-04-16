@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="$emit('submit')" class="tx-group-form">
+  <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
     <!-- 3-column top grid -->
     <div class="tx-add-grid tx-add-form-main">
       <!-- Column 1 -->
@@ -99,6 +99,7 @@
         :bond-modes="bondModeOptions"
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
+        @open-options-editor="openIfaceOptionsEditor(idx)"
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
         <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
@@ -256,16 +257,17 @@
     <!-- Text Editor Modal -->
     <TextEditorModal
       v-if="textEditorOpen"
+      :key="textEditorModalKey"
       :title="textEditorTitle"
-      :model-value="form[textEditorField]"
-      @update:model-value="form[textEditorField] = $event"
-      @close="textEditorOpen = false"
+      :model-value="textEditorModalValue"
+      @update:model-value="onTextEditorModalApply"
+      @close="closeTextEditor"
     />
   </form>
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
 
@@ -287,6 +289,19 @@ const showAdvanced = ref(false)
 const textEditorOpen = ref(false)
 const textEditorTitle = ref('')
 const textEditorField = ref('')
+const ifaceOptionsIdx = ref(-1)
+
+const textEditorModalKey = computed(
+  () => `${ifaceOptionsIdx.value}:${textEditorField.value}`,
+)
+
+const textEditorModalValue = computed(() => {
+  if (ifaceOptionsIdx.value >= 0) {
+    return form.interfaces[ifaceOptionsIdx.value]?.options ?? ''
+  }
+  const f = textEditorField.value
+  return f && form[f] != null ? String(form[f]) : ''
+})
 
 function triValue(v) {
   if (v === true || v === 'True' || v === 'true') return 'true'
@@ -365,7 +380,6 @@ function hydrateForm(d) {
       options: row.options || '',
       vlan_parent: row.vlan_parent || '',
     }))
-    showInterfaces.value = true
   } else {
     form.interfaces = []
   }
@@ -393,9 +407,30 @@ function noSpaces(e) {
 }
 
 function openTextEditor(title, field) {
+  ifaceOptionsIdx.value = -1
   textEditorTitle.value = title
   textEditorField.value = field
   textEditorOpen.value = true
+}
+
+function openIfaceOptionsEditor(idx) {
+  textEditorField.value = ''
+  textEditorTitle.value = 'Options'
+  ifaceOptionsIdx.value = idx
+  textEditorOpen.value = true
+}
+
+function closeTextEditor() {
+  textEditorOpen.value = false
+  ifaceOptionsIdx.value = -1
+}
+
+function onTextEditorModalApply(v) {
+  if (ifaceOptionsIdx.value >= 0 && form.interfaces[ifaceOptionsIdx.value]) {
+    form.interfaces[ifaceOptionsIdx.value].options = v != null ? String(v) : ''
+  } else if (textEditorField.value) {
+    form[textEditorField.value] = v
+  }
 }
 
 function looksLikeBinary(buf) {
