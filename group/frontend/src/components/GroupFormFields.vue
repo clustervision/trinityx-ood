@@ -33,20 +33,40 @@
             required
           />
         </div>
-        <div class="tx-field tx-field-match">
-          <span class="tx-label">Roles:</span>
-          <input type="text" v-model="form.roles" maxlength="100" />
-        </div>
-        <div class="tx-field tx-tri-field tx-field-match">
-          <span class="tx-label">Net Boot:</span>
-          <div class="tx-tri-inner">
-            <div class="tx-segmented" role="group" aria-label="Net boot">
-              <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
-              <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
-              <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''">DEFAULT (YES)</button>
+        <template v-if="mode === 'clone'">
+          <div class="tx-add-form-clone-roles-netboot tx-add-form-main">
+            <div class="tx-field tx-field-match">
+              <span class="tx-label">Roles:</span>
+              <input type="text" v-model="form.roles" maxlength="100" />
+            </div>
+            <div class="tx-field tx-tri-field tx-field-match">
+              <span class="tx-label">Net Boot:</span>
+              <div class="tx-tri-inner">
+                <div class="tx-segmented" role="group" aria-label="Net boot">
+                  <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
+                  <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
+                  <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''">DEFAULT (YES)</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
+        <template v-else>
+          <div class="tx-field tx-field-match">
+            <span class="tx-label">Roles:</span>
+            <input type="text" v-model="form.roles" maxlength="100" />
+          </div>
+          <div class="tx-field tx-tri-field tx-field-match">
+            <span class="tx-label">Net Boot:</span>
+            <div class="tx-tri-inner">
+              <div class="tx-segmented" role="group" aria-label="Net boot">
+                <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
+                <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
+                <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''">DEFAULT (YES)</button>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Column 2 -->
@@ -95,11 +115,13 @@
         v-for="(iface, idx) in form.interfaces"
         :key="idx"
         :iface="iface"
+        :row-key="idx"
         :networks="networkOptions"
         :bond-modes="bondModeOptions"
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
+        @update-dhcp="setInterfaceDhcp(idx, $event)"
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
         <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
@@ -125,7 +147,11 @@
         <!-- Unmanaged BMC Users -->
         <div class="tx-field tx-field-adv-sys" style="width:100%">
           <span class="tx-label">Unmanaged BMC Users:</span>
-          <select v-model="form.unmanaged_bmc_users" style="flex:1">
+          <select
+            v-model="form.unmanaged_bmc_users"
+            style="flex:1"
+            :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }"
+          >
             <option value="">--- Select ---</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -400,6 +426,12 @@ function addInterfaceAfter(idx) {
 
 function removeInterface(idx) {
   form.interfaces.splice(idx, 1)
+}
+
+function setInterfaceDhcp(idx, value) {
+  const row = form.interfaces[idx]
+  if (!row) return
+  row.dhcp = value
 }
 
 function noSpaces(e) {

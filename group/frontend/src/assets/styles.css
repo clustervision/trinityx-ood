@@ -794,7 +794,7 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-modal-lg {
-  max-width: min(960px, calc(100vw - 2rem));
+  max-width: min(1280px, calc(100vw - 2rem));
 }
 
 .tx-modal-md {
@@ -846,8 +846,8 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-title-highlight-name {
   display: inline-block;
-  background: #321dff;
-  color: #fff !important;
+  background: #fff;
+  color: #5376ea !important;
   font-weight: 700;
   padding: 0.12em 0.45em;
   border-radius: 4px;
@@ -883,16 +883,8 @@ button.tx-name-link.tx-cell-ellipsis {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.tx-modal-container .tx-iface-grid--row1 {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr) auto;
-}
-
-.tx-modal-container .tx-iface-grid--row2 {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr);
-}
-
-.tx-modal-container .tx-iface-grid--row3 {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+.tx-modal-container .tx-iface-main-grid {
+  gap: 0.65rem 0.85rem;
 }
 
 .tx-loading {
@@ -953,7 +945,6 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-field input,
-.tx-field select,
 .tx-field textarea {
   border: none;
   outline: none;
@@ -964,8 +955,26 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-field select {
+  border: none;
+  outline: none;
+  padding: 0.35rem 1.45rem 0.35rem 0.55rem;
+  font-size: 15px;
+  background-color: transparent;
   min-width: 120px;
   cursor: pointer;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235376EA' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.12rem center;
+  background-size: 12px 12px;
+}
+
+.tx-field-iface-key select,
+.tx-field-iface-muted select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23f58b00' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
 }
 
 .tx-field input:focus,
@@ -1017,20 +1026,61 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-field-iface-key input,
-.tx-field-iface-key select,
-.tx-field-iface-muted input,
-.tx-field-iface-muted select {
+.tx-field-iface-muted input {
   background: #fff !important;
 }
 
+.tx-field-iface-key select,
+.tx-field-iface-muted select {
+  background-color: #fff !important;
+}
+
+.tx-field-dhcp-wrap {
+  overflow: visible;
+}
+
 .tx-field-dhcp-wrap.tx-field-iface-muted {
-  background: #fff;
+  background: #ffe6c5;
+  overflow: visible;
 }
 
 .tx-field-dhcp-wrap .tx-label {
   background: #ffe6c5 !important;
   color: #f58b00 !important;
   font-weight: 600;
+}
+
+.tx-field-dhcp-wrap input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 0 18px;
+  min-width: 18px;
+  max-width: 18px;
+  width: 18px;
+  height: 18px;
+  margin: 0 0.35rem;
+  border: 2px solid #f58b00;
+  border-radius: 0;
+  background-color: #fff;
+  background-image: none;
+  cursor: pointer;
+  align-self: center;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.tx-field-dhcp-wrap input[type="checkbox"]:checked {
+  background-color: #f58b00;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2.5 6.2l2.3 2.2L9.5 3.5'/%3E%3C/svg%3E");
+  background-size: 12px 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tx-field-dhcp-wrap input[type="checkbox"]:focus-visible {
+  outline: 2px solid #f58b00;
+  outline-offset: 2px;
 }
 
 .tx-field-options-combo .tx-iface-options-input {
@@ -1051,8 +1101,10 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-interface-section select.tx-select-placeholder {
-  background-color: #bfbfbf !important;
-  color: #fff !important;
+  background-color: #fff !important;
+  color: #bfbfbf !important;
+  text-align: center;
+  text-align-last: center;
 }
 
 /* ---------- Advanced system fields ---------- */
@@ -1233,7 +1285,7 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-interface-block {
   border: 1px solid #fffbf5;
   border-radius: 8px;
-  padding: 0.65rem 0.75rem;
+  padding: 0.65rem 0;
   margin-bottom: 0.65rem;
   background: #fff;
 }
@@ -1256,37 +1308,69 @@ button.tx-name-link.tx-cell-ellipsis {
   padding: 0.5rem 0;
 }
 
-/* Interface grid layout — fixed columns; scroll on narrow viewports */
-.tx-iface-grid {
+/* Interface block: 3 columns — line up with .tx-add-grid (Name | OS Image | BMC) */
+.tx-iface-main-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem 0.45rem;
+  align-items: stretch;
   margin-bottom: 0.4rem;
 }
 
-.tx-iface-grid--row1 {
+.tx-iface-cell-mtu-dhcp {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(140px, 0.9fr) auto;
-  gap: 0.35rem 0.45rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.35rem;
   align-items: stretch;
+  min-width: 0;
 }
 
-.tx-iface-grid--row2 {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(140px, 0.9fr);
-  gap: 0.35rem 0.45rem;
-  align-items: stretch;
+.tx-iface-cell-spacer {
+  min-width: 0;
 }
 
-.tx-iface-grid--row3 {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr);
-  gap: 0.35rem 0.45rem;
-  align-items: stretch;
-}
-
-.tx-iface-grid--row1 .tx-field,
-.tx-iface-grid--row2 .tx-field,
-.tx-iface-grid--row3 .tx-field {
+.tx-interface-block .tx-iface-main-grid > .tx-field,
+.tx-interface-block .tx-iface-cell-mtu-dhcp > .tx-field {
   min-width: 0;
   width: 100%;
+}
+
+/* Column 1: Interface, Bond Mode, Options — same label width */
+.tx-interface-block .tx-iface-c1 .tx-label {
+  flex: 0 0 10.5rem;
+  width: 10.5rem;
+  min-width: 10.5rem;
+  max-width: 10.5rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+/* Column 2: Network, Bond Member, VLAN Parent — same label width */
+.tx-interface-block .tx-iface-c2 .tx-label {
+  flex: 0 0 10.5rem;
+  width: 10.5rem;
+  min-width: 10.5rem;
+  max-width: 10.5rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.tx-interface-block .tx-iface-c3-mtu .tx-label {
+  flex: 0 0 3.5rem;
+  width: 3.5rem;
+  min-width: 3.5rem;
+  max-width: 3.5rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.tx-interface-block .tx-iface-c3-vlan .tx-label {
+  flex: 0 0 4.5rem;
+  width: 4.5rem;
+  min-width: 4.5rem;
+  max-width: 4.5rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 /* ---------- Footer actions row ---------- */
@@ -1327,6 +1411,21 @@ button.tx-name-link.tx-cell-ellipsis {
   flex-direction: column;
   gap: 0.65rem;
   min-width: 0;
+}
+
+.tx-add-form-clone-roles-netboot {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.tx-add-form-clone-roles-netboot > .tx-field {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: none;
+  width: auto;
 }
 
 /* ---------- Tri-state toggle (YES / NO / DEFAULT) ---------- */
@@ -1398,8 +1497,8 @@ button.tx-name-link.tx-cell-ellipsis {
 
 /* Main add/edit grid (not advanced / interfaces): field + tri sizes */
 .tx-add-form-main .tx-field {
-  min-height: 43px;
-  height: 43px;
+  min-height: 38px;
+  height: 38px;
   width: 100%;
   max-width: 449px;
 }
@@ -1411,43 +1510,57 @@ button.tx-name-link.tx-cell-ellipsis {
   flex: 1;
 }
 
+.tx-add-form-main .tx-tri-field .tx-tri-inner {
+  justify-content: center;
+}
+
 .tx-add-form-main .tx-segmented {
+  flex: 0 0 auto;
   flex-wrap: nowrap;
+  gap: 0.55rem;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tx-add-form-main .tx-field-match .tx-segmented {
+  border: none;
 }
 
 .tx-add-form-main .tx-seg {
   flex: 0 0 auto;
   min-width: 0;
+  border: 2px solid #e6eeff;
+  border-radius: 4px;
+  font-size: 0.52rem;
+  line-height: 1;
+}
+
+.tx-add-form-main .tx-field-match .tx-seg + .tx-seg {
+  border-left: 2px solid #e6eeff;
 }
 
 .tx-add-form-main .tx-seg[data-v="true"],
 .tx-add-form-main .tx-seg[data-v="false"] {
-  width: 76px;
-  min-width: 76px;
-  max-width: 76px;
-  height: 31px;
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  height: 17px;
   padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-/* One continuous pill: only outer corners rounded (avoids clipped YES/DEFAULT edges) */
-.tx-add-form-main .tx-seg[data-v="true"] {
-  border-radius: 4px 0 0 4px;
-}
-
-.tx-add-form-main .tx-seg[data-v="false"] {
-  border-radius: 0;
-}
-
 .tx-add-form-main .tx-seg[data-v=""] {
-  width: 137px;
-  min-width: 137px;
-  max-width: 137px;
-  height: 31px;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  height: 17px;
   padding: 0;
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1463,13 +1576,29 @@ button.tx-name-link.tx-cell-ellipsis {
   opacity: 1;
 }
 
+.tx-add-form-main .tx-seg.is-active[data-v="true"] {
+  border-color: #67c67b;
+}
+
+.tx-add-form-main .tx-seg.is-active[data-v="false"] {
+  border-color: #f58b00;
+}
+
+.tx-add-form-main .tx-seg.is-active[data-v=""] {
+  border-color: #aeaeae;
+}
+
 .tx-select-placeholder,
 .tx-select-placeholder option:first-child {
-  color: #BFBFBF !important;
+  color: #bfbfbf !important;
 }
 
 select.tx-select-placeholder {
-  color: #BFBFBF !important;
+  color: #bfbfbf !important;
+  text-align: center;
+  text-align-last: center;
+  padding-left: 1.35rem;
+  padding-right: 1.35rem;
 }
 
 /* Help modal (inventory) */
@@ -1593,6 +1722,15 @@ select.tx-select-placeholder {
    ================================================================ */
 .tx-ospush-page .tx-fields {
   gap: 0.6rem 0.75rem;
+}
+
+/* No Dry: value side same background as label strip (#E6EEFF) */
+.tx-field-nodry {
+  background: #e6eeff;
+}
+
+.tx-field-nodry .tx-label {
+  background: #e6eeff;
 }
 
 /* ---------- Responsive ---------- */

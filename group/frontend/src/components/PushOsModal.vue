@@ -12,19 +12,19 @@
         <div class="tx-fields">
           <div class="tx-field tx-field-strong">
             <span class="tx-label">Node:</span>
-            <select v-model="selectedGroup" required>
+            <select v-model="selectedGroup" required :class="{ 'tx-select-placeholder': !selectedGroup }">
               <option value="">--- Select ---</option>
               <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
             </select>
           </div>
           <div class="tx-field tx-field-strong">
             <span class="tx-label">OS Image:</span>
-            <select v-model="selectedOsimage">
+            <select v-model="selectedOsimage" :class="{ 'tx-select-placeholder': !selectedOsimage }">
               <option value="">--- Select ---</option>
               <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
             </select>
           </div>
-          <div class="tx-field tx-field-match">
+          <div class="tx-field tx-field-match tx-field-nodry">
             <span class="tx-label">No Dry:</span>
             <input type="checkbox" v-model="noDry" />
           </div>
