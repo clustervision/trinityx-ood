@@ -47,13 +47,13 @@
       <div class="tx-field tx-field-iface-muted tx-field-options-combo">
         <span class="tx-label">Options:</span>
         <div class="tx-iface-options-input">
+          <input type="text" v-model="iface.options" placeholder="options" maxlength="100" />
           <button
             type="button"
-            class="tx-expand-text-trigger tx-expand-text-trigger--leading"
+            class="tx-expand-text-trigger tx-expand-text-trigger--iface-options"
             aria-label="Edit options in dialog"
             @click="$emit('open-options-editor')"
           ></button>
-          <input type="text" v-model="iface.options" placeholder="options" maxlength="100" />
         </div>
       </div>
       <div class="tx-field tx-field-iface-muted">

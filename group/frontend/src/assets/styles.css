@@ -1005,13 +1005,15 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-field-iface-muted {
-  border: 2px solid #ffe6c5 !important;
+  border: 2px solid#ffe6c5 !important;
   background: #fff;
 }
 
+/* MTU, DHCP, Bond mode, … — orange labels (#F58B00 on #FFE6C5 strip) */
 .tx-field-iface-muted .tx-label {
   background: #ffe6c5 !important;
-  color: #111 !important;
+  color: #f58b00 !important;
+  font-weight: 600;
 }
 
 .tx-field-iface-key input,
@@ -1027,13 +1029,15 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-field-dhcp-wrap .tx-label {
   background: #ffe6c5 !important;
-  color: #111 !important;
+  color: #f58b00 !important;
+  font-weight: 600;
 }
 
 .tx-field-options-combo .tx-iface-options-input {
+  position: relative;
   display: flex;
   flex: 1;
-  align-items: center;
+  align-items: stretch;
   min-width: 0;
   background: #fff;
 }
@@ -1041,12 +1045,9 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-field-options-combo .tx-iface-options-input input {
   flex: 1;
   min-width: 0;
-}
-
-.tx-expand-text-trigger--leading {
-  position: static;
-  flex-shrink: 0;
-  margin: 0 0.35rem 0 0.25rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 1.85rem;
 }
 
 .tx-interface-section select.tx-select-placeholder {
@@ -1141,6 +1142,28 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-expand-text-trigger:hover {
   background: #f0f4ff;
+}
+
+/* Options field: inset on the right inside the text input, orange (overrides base trigger) */
+.tx-expand-text-trigger.tx-expand-text-trigger--iface-options {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 2px;
+  background: #f58b00;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+.tx-expand-text-trigger.tx-expand-text-trigger--iface-options:hover {
+  background: #e67e00;
 }
 
 .tx-adv-heading {
