@@ -11,7 +11,7 @@
       <form @submit.prevent="onSubmit">
         <div class="tx-fields">
           <div class="tx-field tx-field-strong">
-            <span class="tx-label">Node:</span>
+            <span class="tx-label">GROUP:</span>
             <select v-model="selectedGroup" required :class="{ 'tx-select-placeholder': !selectedGroup }">
               <option value="">--- Select ---</option>
               <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
