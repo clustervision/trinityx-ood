@@ -44,34 +44,29 @@
                 </svg>
               </span>
             </th>
-            <th v-if="hasInterfaces" colspan="2" rowspan="2" class="tx-iface-header">
-              <div class="tx-iface-head-inner">
-                <div class="tx-iface-head-title">Interfaces</div>
-                <div class="tx-iface-head-subs">
-                  <span @click.stop="toggleSort('iface_name')">
-                    Name
-                    <span class="tx-sort-dt tx-sort-dt-orange" aria-hidden="true">
-                      <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
-                        <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
-                      </svg>
-                    </span>
-                  </span>
-                  <span @click.stop="toggleSort('iface_network')">
-                    Network
-                    <span class="tx-sort-dt tx-sort-dt-orange" aria-hidden="true">
-                      <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
-                        <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
-                      </svg>
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </th>
+            <th v-if="hasInterfaces" colspan="2" rowspan="1" class="tx-iface-header-main">Interfaces</th>
             <th rowspan="2" class="tx-th-regular tx-th-actions" :class="{ 'tx-th-sep-orange-right': hasInterfaces, 'tx-th-sep-blue': !hasInterfaces }">Actions</th>
           </tr>
-          <tr class="tx-iface-thead-spacer"></tr>
+          <tr v-if="hasInterfaces">
+            <th class="tx-iface-sub tx-iface-sub-name" @click.stop="toggleSort('iface_name')">
+              <span class="tx-th-label-clip">Name</span>
+              <span class="tx-sort-dt tx-sort-dt-orange" aria-hidden="true">
+                <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
+                  <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
+                </svg>
+              </span>
+            </th>
+            <th class="tx-iface-sub tx-iface-sub-network" @click.stop="toggleSort('iface_network')">
+              <span class="tx-th-label-clip">Network</span>
+              <span class="tx-sort-dt tx-sort-dt-orange" aria-hidden="true">
+                <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
+                  <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
+                </svg>
+              </span>
+            </th>
+          </tr>
         </thead>
         <tbody>
           <tr v-if="loading">

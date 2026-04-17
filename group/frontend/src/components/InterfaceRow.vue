@@ -19,14 +19,22 @@
           <span class="tx-label">MTU:</span>
           <input type="number" v-model.number="iface.mtu" min="68" max="65535" placeholder="68-65535" @blur="clampMtu" />
         </div>
-        <div class="tx-field tx-field-iface-muted tx-field-dhcp-wrap tx-iface-c3-dhcp">
+        <label
+          class="tx-field tx-field-iface-muted tx-field-dhcp-wrap tx-iface-c3-dhcp"
+          :for="dhcpInputId"
+        >
           <span class="tx-label">DHCP</span>
           <input
             :id="dhcpInputId"
-            v-model="dhcpModel"
+            class="tx-dhcp-checkbox"
             type="checkbox"
+            :checked="dhcpChecked"
+            :class="{ 'tx-dhcp-on': dhcpChecked }"
+            :aria-checked="dhcpChecked ? 'true' : 'false'"
+            @click.prevent="toggleDhcp"
+            @keydown.space.prevent="toggleDhcp"
           />
-        </div>
+        </label>
       </div>
 
       <!-- Row 2 -->
@@ -83,21 +91,21 @@ const props = defineProps({
   bondModes: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['remove', 'add-after', 'open-options-editor', 'update-dhcp'])
+const emit = defineEmits(['remove', 'add-after', 'open-options-editor'])
 
 const dhcpInputId = computed(() => `tx-dhcp-${props.rowKey}`)
 
-function dhcpToBool(d) {
-  return d === true || d === 'true' || d === 'True'
-}
-
-/* Same pattern as PushOs No Dry: v-model on writable state; parent owns form.interfaces[idx].dhcp */
-const dhcpModel = computed({
-  get: () => dhcpToBool(props.iface.dhcp),
-  set: (on) => {
-    emit('update-dhcp', on ? 'true' : 'false')
-  },
+const dhcpChecked = computed(() => {
+  const v = props.iface.dhcp
+  if (v === true || v === 1) return true
+  const s = String(v ?? '').trim().toLowerCase()
+  return s === 'true' || s === '1' || s === 'yes' || s === 'on'
 })
+
+/** Fully controlled: block native toggle (Vue 3 props / label can desync), parent owns state */
+function toggleDhcp() {
+  emit('update-dhcp', dhcpChecked.value ? 'false' : 'true')
+}
 
 function clampMtu(ev) {
   const v = parseInt(ev.target.value, 10)

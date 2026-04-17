@@ -121,19 +121,11 @@
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
-        @update-dhcp="setInterfaceDhcp(idx, $event)"
+        @update-dhcp="(v) => { form.interfaces[idx].dhcp = v }"
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
         <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
       </div>
-    </div>
-
-    <!-- Footer row: Advanced + Submit -->
-    <div class="tx-form-footer">
-      <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">
-        Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}
-      </button>
-      <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
     </div>
 
     <!-- Advanced Section -->
@@ -272,12 +264,14 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Second submit at bottom of advanced -->
-      <div class="tx-form-footer">
-        <span></span>
-        <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
-      </div>
+    <!-- Single footer: Advanced + submit always at bottom of form -->
+    <div class="tx-form-footer">
+      <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">
+        Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}
+      </button>
+      <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
     </div>
 
     <!-- Text Editor Modal -->
@@ -333,6 +327,15 @@ function triValue(v) {
   if (v === true || v === 'True' || v === 'true') return 'true'
   if (v === false || v === 'False' || v === 'false') return 'false'
   return ''
+}
+
+/** Normalized to checkbox true-value / false-value strings */
+function ifaceDhcpString(v) {
+  if (v === true || v === 1 || v === '1') return 'true'
+  if (v === false || v === 0 || v === '0') return 'false'
+  const s = String(v ?? '').trim().toLowerCase()
+  if (s === 'true' || s === 'yes' || s === 'on') return 'true'
+  return 'false'
 }
 
 function makeEmptyIface() {
@@ -399,7 +402,7 @@ function hydrateForm(d) {
       interface: row.interface || '',
       network: row.network || '',
       mtu: row.mtu || '',
-      dhcp: (row.dhcp === true || row.dhcp === 'True') ? 'true' : 'false',
+      dhcp: ifaceDhcpString(row.dhcp),
       bond_mode: row.bond_mode || '',
       bond_slaves: row.bond_slaves || '',
       vlanid: row.vlanid || '',
@@ -426,12 +429,6 @@ function addInterfaceAfter(idx) {
 
 function removeInterface(idx) {
   form.interfaces.splice(idx, 1)
-}
-
-function setInterfaceDhcp(idx, value) {
-  const row = form.interfaces[idx]
-  if (!row) return
-  row.dhcp = value
 }
 
 function noSpaces(e) {

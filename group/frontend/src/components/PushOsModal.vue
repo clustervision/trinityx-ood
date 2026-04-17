@@ -1,11 +1,11 @@
 <template>
-  <BaseModal size="medium" @close="$emit('close')">
+  <BaseModal size="wide" @close="$emit('close')">
     <div class="tx-form-page tx-ospush-page">
       <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
       <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
 
       <div class="tx-header">
-        <h2 class="tx-title">Push OS Image for Group <strong>{{ groupName }}</strong></h2>
+        <h2 class="tx-title">Push OS Image for Group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
       </div>
 
       <form @submit.prevent="onSubmit">
