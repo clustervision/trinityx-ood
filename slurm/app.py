@@ -58,6 +58,18 @@ from helpers import (
     managed_by_ood,
 )
 
+
+
+
+home_dir = os.path.expanduser("~")
+if os.path.exists(home_dir) and os.access(home_dir, os.R_OK | os.W_OK):
+    TOKEN_FILE = f"{home_dir}/.luna-token.dat"
+else:
+    TOKEN_FILE = {
+        "error": f"The home directory '{home_dir}' does not exist or lacks read/write permissions."
+    }
+
+INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 CONFIGS = get_configs()
 SLURM_FILES = get_slurm_files()
 SLURM_BACKUP_FILES = get_slurm_backup_files()
@@ -67,7 +79,22 @@ app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
 # app.config["TEMPLATES_AUTO_RELOAD"] = True
-
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table="Slurm", data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table="Slurm", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table="Slurm", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
+    return None
 
 # add a wrapper to all the routes to catch errors
 @app.errorhandler(Exception)

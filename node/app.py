@@ -37,7 +37,7 @@ from copy import deepcopy
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE, APP_STATE
+from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 from model import Model
@@ -129,13 +129,13 @@ def validate_home_directory():
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
-        if request.path == '/' and _wants_json():
-            return jsonify({
-                "fields": [],
-                "nodes": [],
-                "error": TOKEN_FILE["error"],
-            })
-        return jsonify({"error": TOKEN_FILE["error"]}), 500
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 

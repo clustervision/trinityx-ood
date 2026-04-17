@@ -32,7 +32,7 @@ __status__      = 'Development'
 
 import os
 from flask import Flask, render_template, request, jsonify
-from constant import LICENSE, APP_STATE, TOKEN_FILE
+from constant import LICENSE, INI_FILE, APP_STATE, TOKEN_FILE
 from log import Log
 from helper import Helper
 
@@ -54,7 +54,13 @@ def validate_home_directory():
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table='Change Password', data="", error=TOKEN_FILE["error"])
+        return render_template("error.html", table="Change Password", data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table="Change Password", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table="Change Password", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 

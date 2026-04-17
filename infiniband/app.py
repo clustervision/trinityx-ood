@@ -10,6 +10,7 @@ from flask import Flask, render_template, request, jsonify
 from base.config import get_configs
 from rest import Rest
 from helper import Helper
+from constant import INI_FILE, TOKEN_FILE
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 CONFIGS = get_configs()
 
@@ -21,6 +22,22 @@ app = Flask(
     __name__, template_folder="templates", static_folder="static", static_url_path="/"
 )
 
+@app.before_request
+def validate_home_directory():
+    """
+    Validate the $HOME directory of the user before proceeding further.
+    """
+    if request.path.startswith('/static/'):
+        return
+    if isinstance(TOKEN_FILE, dict):
+        return render_template("error.html", table="Infiniband", data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table="Infiniband", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table="Infiniband", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
+    return None
 
 def _parse_severity(metric_name):
     if metric_name.startswith("delta_1h"):

@@ -34,7 +34,7 @@ import os
 from textwrap import wrap
 from flask import Flask, json, request, render_template, flash, url_for, redirect
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE, APP_STATE
+from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 
@@ -43,7 +43,7 @@ TABLE = 'Control Nodes'
 app = Flask(__name__, static_folder="static")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-if APP_STATE is False: 
+if APP_STATE is False:
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
 
@@ -57,6 +57,12 @@ def validate_home_directory():
         return
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE, data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table=TABLE, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table=TABLE, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 

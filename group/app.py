@@ -33,10 +33,8 @@ __status__      = 'Development'
 import os
 import json
 from flask import Flask, request, jsonify, render_template
-import urllib3
-from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE, APP_STATE
+from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 from model import Model
@@ -77,13 +75,13 @@ def validate_home_directory():
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
-        if request.path.startswith('/api'):
-            return jsonify({
-                "fields": [],
-                "groups": [],
-                "error": TOKEN_FILE["error"],
-            })
-        return jsonify({"error": TOKEN_FILE["error"]}), 500
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 
