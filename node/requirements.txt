@@ -1,5 +1,6 @@
 dynaconf==3.2.1
 Flask==2.3.3
+flask-cors==4.0.0
 nested_lookup==0.2.25
 pip==23.2.1
 prettytable==3.8.0
