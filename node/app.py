@@ -52,7 +52,17 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 if APP_STATE is False:
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
-    CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+    CORS(
+        app,
+        resources={
+            r"/*": {
+                "origins": [
+                    "http://localhost:5174",
+                    "http://127.0.0.1:5174",
+                ],
+            },
+        },
+    )
 
 
 def _wants_json():
