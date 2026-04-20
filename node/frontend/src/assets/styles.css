@@ -1230,6 +1230,67 @@ button.tx-name-link.tx-cell-ellipsis {
   padding-right: 1.85rem;
 }
 
+.tx-field-ip-next-combo .tx-iface-ip-next-inner {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  min-width: 0;
+  background: #fff;
+}
+
+.tx-field-ip-next-combo .tx-iface-ip-next-inner input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tx-btn-next-ip {
+  flex: 0 0 auto;
+  padding: 0.28rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border-radius: 4px;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.tx-interface-block .tx-iface-c3-ip .tx-label {
+  flex: 0 0 5.75rem;
+  width: 5.75rem;
+  min-width: 5.75rem;
+  max-width: 5.75rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.tx-interface-block .tx-iface-c3-mac .tx-label {
+  flex: 0 0 6.85rem;
+  width: 6.85rem;
+  min-width: 6.85rem;
+  max-width: 6.85rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.tx-interface-block .tx-iface-options-span {
+  grid-column: 1 / span 2;
+  min-width: 0;
+}
+
+.tx-iface-row-actions {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
 /*
  * Interface placeholder: grey text; asymmetric horizontal padding so "--- Select ---" stays
  * visually centered while the chevron sits in the padded right inset (wins over select.tx-select-placeholder).

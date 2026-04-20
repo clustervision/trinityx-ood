@@ -114,8 +114,11 @@
         :key="idx"
         :iface="iface"
         :row-key="idx"
+        :all-ifaces="form.interfaces"
         :networks="networkOptions"
         :bond-modes="bondModeOptions"
+        :get-inventory-ipv4="getInventoryIpv4"
+        :inventory-exclude-node-name="inventoryExcludeNodeName"
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
@@ -286,6 +289,8 @@ const props = defineProps({
   bondModeOptions: { type: Array, default: () => [] },
   submitLabel: { type: String, default: 'Add Node' },
   hints: { type: Object, default: () => ({}) },
+  getInventoryIpv4: { type: Function, default: null },
+  inventoryExcludeNodeName: { type: String, default: '' },
 })
 
 defineEmits(['submit'])
@@ -313,6 +318,7 @@ function makeEmptyIface() {
   return {
     interface: '',
     network: '',
+    ipaddress: '',
     mtu: '',
     dhcp: 'false',
     bond_mode: '',
@@ -320,6 +326,7 @@ function makeEmptyIface() {
     vlanid: '',
     options: '',
     vlan_parent: '',
+    macaddress: '',
   }
 }
 
@@ -401,6 +408,7 @@ function hydrateForm(d) {
     form.interfaces = d.interfaces.map((row) => ({
       interface: row.interface || '',
       network: row.network || '',
+      ipaddress: row.ipaddress != null ? String(row.ipaddress) : '',
       mtu: row.mtu || '',
       dhcp: ifaceDhcpString(row.dhcp),
       bond_mode: row.bond_mode || '',
@@ -408,6 +416,7 @@ function hydrateForm(d) {
       vlanid: row.vlanid || '',
       options: row.options || '',
       vlan_parent: row.vlan_parent || '',
+      macaddress: row.macaddress != null ? String(row.macaddress) : '',
     }))
   } else {
     form.interfaces = []

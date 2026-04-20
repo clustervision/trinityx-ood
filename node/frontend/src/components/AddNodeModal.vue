@@ -18,6 +18,7 @@
           :network-options="networkOptions"
           :bond-mode-options="bondModeOptions"
           :hints="hints"
+          :get-inventory-ipv4="getInventoryIpv4"
           submit-label="Add Node"
           @submit="onSubmit"
         />
@@ -31,6 +32,10 @@ import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeAddData, submitNodeForm } from '../api.js'
+
+defineProps({
+  getInventoryIpv4: { type: Function, default: null },
+})
 
 const emit = defineEmits(['close', 'saved'])
 

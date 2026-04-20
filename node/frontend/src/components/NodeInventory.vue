@@ -284,6 +284,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchNodes, deleteNode } from '../api.js'
 import { actionIcons } from '../utils/assetImg.js'
+import { parseIpv4String } from '../utils/nextFreeIpv4.js'
 
 defineEmits(['open-add', 'open-edit', 'open-clone', 'open-ospush', 'open-osgrab'])
 
@@ -504,7 +505,25 @@ async function confirmDelete(displayName) {
   }
 }
 
-defineExpose({ loadData })
+/** Records for "next free IP": { nodeName, network, ipNum } */
+function collectInventoryIpv4Records() {
+  const out = []
+  for (const row of nodes.value) {
+    const name = canonicalName(row.name)
+    for (const iface of row.interfaces || []) {
+      const ipNum = parseIpv4String(iface.ipaddress)
+      if (ipNum == null) continue
+      out.push({
+        nodeName: name,
+        network: String(iface.network || ''),
+        ipNum,
+      })
+    }
+  }
+  return out
+}
+
+defineExpose({ loadData, collectInventoryIpv4Records })
 
 onMounted(loadData)
 </script>

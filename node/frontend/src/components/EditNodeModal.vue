@@ -20,6 +20,8 @@
           :network-options="networkOptions"
           :bond-mode-options="bondModeOptions"
           :hints="hints"
+          :get-inventory-ipv4="getInventoryIpv4"
+          :inventory-exclude-node-name="inventoryExcludeNodeName"
           submit-label="Save Changes"
           @submit="onSubmit"
         />
@@ -36,6 +38,8 @@ import { fetchNodeEditData, submitNodeForm } from '../api.js'
 
 const props = defineProps({
   nodeName: { type: String, required: true },
+  getInventoryIpv4: { type: Function, default: null },
+  inventoryExcludeNodeName: { type: String, default: '' },
 })
 const emit = defineEmits(['close', 'saved'])
 

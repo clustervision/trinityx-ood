@@ -16,12 +16,15 @@
 
   <AddNodeModal
     v-if="addOpen"
+    :get-inventory-ipv4="inventoryIpv4Records"
     @close="addOpen = false"
     @saved="onNodeSaved"
   />
   <EditNodeModal
     v-if="editOpen && editNodeName"
     :node-name="editNodeName"
+    :get-inventory-ipv4="inventoryIpv4Records"
+    :inventory-exclude-node-name="editNodeName"
     @close="closeEdit"
     @saved="onNodeSaved"
   />
@@ -37,6 +40,8 @@
     v-if="cloneOpen && cloneSourceName"
     :key="'clone:' + cloneSourceName"
     :source-node-name="cloneSourceName"
+    :get-inventory-ipv4="inventoryIpv4Records"
+    :inventory-exclude-node-name="cloneSourceName"
     @close="closeClone"
     @saved="onCloneSaved"
   />
@@ -107,5 +112,9 @@ function onNodeSaved() {
 
 function onPushFlowSaved() {
   inventoryRef.value?.loadData?.()
+}
+
+function inventoryIpv4Records() {
+  return inventoryRef.value?.collectInventoryIpv4Records?.() ?? []
 }
 </script>
