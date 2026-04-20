@@ -1327,7 +1327,7 @@ button.tx-name-link.tx-cell-ellipsis {
   border: none;
   border-radius: 4px;
   background-color: transparent;
-  background-image: url("/icons/icon-edit.png");
+  background-image: url("./img/icon-edit.png");
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
@@ -1337,7 +1337,7 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-expand-text-trigger:hover {
   background-color: rgba(83, 118, 234, 0.1);
-  background-image: url("/icons/icon-edit.png");
+  background-image: url("./img/icon-edit.png");
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
@@ -1357,7 +1357,7 @@ button.tx-name-link.tx-cell-ellipsis {
   border: none;
   border-radius: 4px;
   background-color: transparent;
-  background-image: url("/icons/icon-edit-orange.png");
+  background-image: url("./img/icon-edit-orange.png");
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
@@ -1367,7 +1367,7 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-expand-text-trigger.tx-expand-text-trigger--iface-options:hover {
   background-color: rgba(245, 139, 0, 0.12);
-  background-image: url("/icons/icon-edit-orange.png");
+  background-image: url("./img/icon-edit-orange.png");
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
