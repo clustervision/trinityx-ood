@@ -65,7 +65,8 @@ optgroup {
   margin-right: auto;
 }
 
-.tx-inventory-page .tx-header-actions > .tx-btn-blue {
+.tx-inventory-page .tx-header-actions > .tx-btn-blue,
+.tx-inventory-page .tx-action-icons > .tx-btn-blue {
   font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
 }
@@ -554,6 +555,10 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-icon-ospush {
+  color: #696cff;
+}
+
+.tx-icon-osgrab {
   color: #696cff;
 }
 
@@ -2018,6 +2023,46 @@ select.tx-select-placeholder {
   padding: 1rem;
   border-radius: 8px;
   text-align: left;
+}
+
+/* ---------- Add Node: 3×N grid + inherited tri-state (design alignment) ---------- */
+.tx-node-add-main.tx-add-grid {
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
+}
+
+.tx-node-add-main .tx-field {
+  max-width: none;
+  width: 100%;
+}
+
+.tx-node-add-main .tx-node-grid-span-3 {
+  grid-column: 1 / -1;
+}
+
+.tx-form-header-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.tx-form-header-with-icon .tx-form-header-icon {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.tx-form-header-with-icon .tx-title {
+  margin: 0;
+}
+
+.tx-node-iface-btn-wrap {
+  display: flex;
+  align-items: flex-end;
+  min-height: 38px;
+}
+
+.tx-node-iface-btn-wrap .tx-btn-block-col {
+  margin-top: 0;
 }
 
 /* ---------- Responsive ---------- */

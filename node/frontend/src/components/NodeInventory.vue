@@ -5,7 +5,7 @@
     <div class="tx-header">
       <h2 class="tx-title">Nodes</h2>
       <div class="tx-header-actions">
-        <a :href="resolvePath('/add')" class="tx-btn tx-btn-blue">Add Node</a>
+        <button type="button" class="tx-btn tx-btn-blue" @click="$emit('open-add')">Add Node</button>
         <button class="tx-btn tx-btn-help" title="Help" type="button" @click="helpOpen = true">?</button>
         <div class="tx-inline-search">
           <label class="tx-inline-search-label" for="txNodeSearch">Search:</label>
@@ -46,9 +46,28 @@
             </th>
             <th v-if="hasInterfaces" colspan="3" rowspan="1" class="tx-iface-header-main">Interfaces</th>
             <th
+              v-if="hasTpm"
+              rowspan="2"
+              class="tx-th-regular tx-th-tpm"
+              :class="{ 'tx-th-sep-blue': hasInterfaces || regularColumns.length > 0 }"
+              title="TPM PRESENT"
+              @click="toggleSort('tpm_present')"
+            >
+              <span class="tx-th-label-clip">{{ FIELD_LABELS.tpm_present || 'TPM PRESENT' }}</span>
+              <span class="tx-sort-dt" aria-hidden="true">
+                <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 0L9.33 5H0.67L5 0Z" fill="currentColor" opacity="0.35" />
+                  <path d="M5 14L0.67 9H9.33L5 14Z" fill="currentColor" opacity="0.35" />
+                </svg>
+              </span>
+            </th>
+            <th
               rowspan="2"
               class="tx-th-regular tx-th-actions"
-              :class="{ 'tx-th-sep-orange-right': hasInterfaces, 'tx-th-sep-blue': !hasInterfaces }"
+              :class="{
+                'tx-th-sep-orange-right': hasInterfaces || hasTpm,
+                'tx-th-sep-blue': !hasInterfaces && !hasTpm,
+              }"
             >Actions</th>
           </tr>
           <tr v-if="hasInterfaces">
@@ -98,11 +117,12 @@
               }"
             >
               <template v-if="col.field === 'name'">
-                <a
+                <button
+                  type="button"
                   class="tx-name-link tx-cell-ellipsis"
                   :title="String(row.name ?? '')"
-                  :href="resolvePath('/edit/' + encodeURIComponent(canonicalName(row.name)))"
-                >{{ row.name }}</a>
+                  @click="$emit('open-edit', canonicalName(row.name))"
+                >{{ row.name }}</button>
               </template>
               <template v-else-if="col.field === 'osimage'">
                 <span v-if="isInvalidOs(row)" class="tx-os-invalid">!!Invalid!!</span>
@@ -111,9 +131,6 @@
               </template>
               <template v-else-if="col.field === 'setupbmc'">
                 <span :class="setupbmcClass(row[col.field])">{{ setupbmcLabel(row[col.field]) }}</span>
-              </template>
-              <template v-else-if="col.field === 'tpm_present'">
-                <span :class="tpmClass(row[col.field])">{{ tpmLabel(row[col.field]) }}</span>
               </template>
               <template v-else-if="isEmpty(row[col.field])">
                 <span class="tx-na-box">NOT AVAILABLE</span>
@@ -147,39 +164,63 @@
               >{{ ifaceIp(iface) }}</div>
             </td>
             <td
+              v-if="hasTpm"
+              class="tx-td-tpm"
+              :class="{ 'tx-td-sep-blue': hasInterfaces || regularColumns.length > 0 }"
+            >
+              <span :class="tpmClass(row.tpm_present)">{{ tpmLabel(row.tpm_present) }}</span>
+            </td>
+            <td
               class="tx-col-actions"
-              :class="{ 'tx-td-sep-orange-right': hasInterfaces, 'tx-td-sep-blue': !hasInterfaces }"
+              :class="{
+                'tx-td-sep-orange-right': hasInterfaces || hasTpm,
+                'tx-td-sep-blue': !hasInterfaces && !hasTpm,
+              }"
             >
               <div class="tx-action-icons">
-                <a
-                  class="tx-icon-act tx-icon-clone"
-                  title="Clone"
-                  :href="resolvePath('/clone/' + encodeURIComponent(canonicalName(row.name)))"
-                >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                </a>
                 <button
                   type="button"
-                  class="tx-icon-act tx-icon-link"
-                  title="Node detail (JSON)"
-                  @click="openDetail(canonicalName(row.name))"
+                  class="tx-icon-act tx-icon-clone"
+                  title="Clone"
+                  @click="$emit('open-clone', canonicalName(row.name))"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+                  <img :src="actionIcons.clone" alt="Clone" width="28" height="28"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
                 </button>
-                <a
+                <button
+                  type="button"
+                  class="tx-icon-act tx-icon-osgrab"
+                  title="OS Grab"
+                  @click="$emit('open-osgrab', canonicalName(row.name))"
+                >
+                  <img :src="actionIcons.osgrab" alt="OS Grab" width="28" height="28"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                </button>
+                <button
+                  type="button"
                   class="tx-icon-act tx-icon-ospush"
                   title="OS Push"
-                  :href="resolvePath('/ospush/' + encodeURIComponent(canonicalName(row.name)))"
+                  @click="$emit('open-ospush', canonicalName(row.name))"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
-                </a>
+                  <img :src="actionIcons.ospush" alt="OS Push" width="28" height="28"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+                </button>
                 <button
                   type="button"
                   class="tx-icon-act tx-icon-danger"
                   title="Delete"
                   @click="confirmDelete(row.name)"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  <img :src="actionIcons.delete" alt="Delete" width="28" height="28"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
+                  />
+                  <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
                 </button>
               </div>
             </td>
@@ -220,9 +261,9 @@
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="help-title-node" class="tx-help-title">How to use this app</h2>
           <ul class="tx-help-list">
-            <li><strong>Add Node</strong> — Opens the classic form to create a node.</li>
-            <li><strong>Edit</strong> — Click a node name.</li>
-            <li><strong>Clone / Detail / OS Push / Delete</strong> — Use the icons in the Actions column (detail loads JSON from the API).</li>
+            <li><strong>Add Node</strong> — Opens the add-node form (interfaces and advanced match the group app).</li>
+            <li><strong>Edit</strong> — Click a node name (same modal style as the group app).</li>
+            <li><strong>Clone / OS Grab / OS Push / Delete</strong> — Clone opens the same form modal as Add Node (with clone icon in the title); OS Grab and OS Push use the group-style push dialog.</li>
             <li><strong>Search</strong> — Filter the table as you type.</li>
             <li><strong>Sort</strong> — Click a column header to sort; click again to reverse.</li>
           </ul>
@@ -230,23 +271,15 @@
       </div>
     </Teleport>
 
-    <Teleport to="body">
-      <div v-if="detailOpen" class="tx-modal-overlay" @mousedown.self="detailOpen = false">
-        <div class="tx-help-dialog" role="dialog" style="max-width:640px;">
-          <button type="button" class="tx-modal-x" aria-label="Close" @click="detailOpen = false">&times;</button>
-          <h2 class="tx-help-title">Node detail</h2>
-          <p v-if="detailLoading" style="margin:1rem 0;">Loading…</p>
-          <p v-else-if="detailError" class="alert alert-danger" role="alert">{{ detailError }}</p>
-          <pre v-else class="tx-detail-pre">{{ detailPretty }}</pre>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchNodes, fetchNodeDetail, deleteNode, backendBasePath } from '../api.js'
+import { fetchNodes, deleteNode } from '../api.js'
+import { actionIcons } from '../utils/assetImg.js'
+
+defineEmits(['open-add', 'open-edit', 'open-clone', 'open-ospush', 'open-osgrab'])
 
 const FIELD_LABELS = {
   name: 'NAME',
@@ -271,16 +304,12 @@ const pageSize = ref(10)
 const pageSizeOptions = [10, 25, 50, 100]
 const helpOpen = ref(false)
 
-const detailOpen = ref(false)
-const detailLoading = ref(false)
-const detailError = ref('')
-const detailJson = ref(null)
-
 const hasInterfaces = computed(() => fields.value.includes('interfaces'))
+const hasTpm = computed(() => fields.value.includes('tpm_present'))
 
 const regularColumns = computed(() => {
   return fields.value
-    .filter((f) => f !== 'interfaces')
+    .filter((f) => f !== 'interfaces' && f !== 'tpm_present')
     .map((f) => ({
       field: f,
       label: FIELD_LABELS[f] || f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -290,24 +319,11 @@ const regularColumns = computed(() => {
 const totalColspan = computed(() => {
   let count = regularColumns.value.length + 1
   if (hasInterfaces.value) count += 3
+  if (hasTpm.value) count += 1
   return count
 })
 
 const pageLabel = computed(() => String(currentPage.value).padStart(2, '0'))
-
-const detailPretty = computed(() => {
-  if (!detailJson.value) return ''
-  try {
-    return JSON.stringify(detailJson.value, null, 2)
-  } catch {
-    return String(detailJson.value)
-  }
-})
-
-function resolvePath(path) {
-  const b = backendBasePath()
-  return b ? `${b}${path}` : path
-}
 
 function canonicalName(displayName) {
   return String(displayName || '').replace(/\s+\*$/, '').trim()
@@ -463,22 +479,6 @@ async function loadData() {
     errorMsg.value = err.message || 'Network error while loading nodes.'
   } finally {
     loading.value = false
-  }
-}
-
-async function openDetail(name) {
-  detailOpen.value = true
-  detailLoading.value = true
-  detailError.value = ''
-  detailJson.value = null
-  try {
-    const data = await fetchNodeDetail(name)
-    if (data.error) detailError.value = data.error
-    else detailJson.value = data.node || {}
-  } catch (e) {
-    detailError.value = e.message || 'Request failed'
-  } finally {
-    detailLoading.value = false
   }
 }
 

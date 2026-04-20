@@ -18,7 +18,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { publicAssetUrl } from '../utils/publicAssets.js'
 
+/** Hostname of the TrinityX controller (from Vite env), not the dev machine. */
 function backendHostname() {
   const raw = import.meta.env.VITE_NODE_BACKEND || ''
   if (raw) {
@@ -46,10 +48,10 @@ const homeUrl = computed(() => {
   return h ? `https://${h}:8080` : '#'
 })
 
+/** Local build: `public/img/logo.png`. Deployed with APP_URL: controller serves `/logo.png`. */
 const logoSrc = computed(() => {
   const appUrl = window.APP_URL || ''
-  if (appUrl) return `${appUrl.replace(/\/$/, '')}/static/img/logo.png`
-  const base = import.meta.env.BASE_URL || '/'
-  return (base.endsWith('/') ? base : base + '/') + 'static/img/logo.png'
+  if (appUrl) return `${appUrl.replace(/\/$/, '')}/logo.png`
+  return publicAssetUrl('img/logo.png')
 })
 </script>
