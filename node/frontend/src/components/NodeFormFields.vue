@@ -409,7 +409,6 @@ function hydrateForm(d) {
       options: row.options || '',
       vlan_parent: row.vlan_parent || '',
     }))
-    if (props.mode === 'edit' || props.mode === 'clone') showInterfaces.value = true
   } else {
     form.interfaces = []
   }

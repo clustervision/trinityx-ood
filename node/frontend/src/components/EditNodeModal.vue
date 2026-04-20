@@ -6,7 +6,7 @@
 
       <template v-if="!loading && !fatalError">
         <div class="tx-header">
-          <h2 class="tx-title">Update node <strong class="tx-title-highlight-name">{{ nodeName }}</strong></h2>
+          <h2 class="tx-title">Edit Node</h2>
         </div>
 
         <NodeFormFields
@@ -61,16 +61,6 @@ function optionList(payload, ...keys) {
   return []
 }
 
-function buildHints(d) {
-  const h = {}
-  for (const name of ['osimagetag', 'provision_interface', 'provision_fallback', 'provision_method']) {
-    const s1 = d[name + '_source'] || ''
-    const s2 = d['_' + name + '_source'] || ''
-    if (s1 || s2) h[name] = '| ' + s1 + s2
-  }
-  hints.value = h
-}
-
 onMounted(async () => {
   try {
     const payload = await fetchNodeEditData(props.nodeName)
@@ -86,7 +76,7 @@ onMounted(async () => {
     osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
     networkOptions.value = optionList(payload, 'network_list', 'network')
     bondModeOptions.value = payload.bond_modes || payload.bond_mode_list?.options || []
-    buildHints(payload.data)
+    hints.value = payload.hints || payload.form_hints || {}
   } catch (err) {
     errorMsg.value = err.message || 'Failed to load edit data.'
     fatalError.value = true
