@@ -260,10 +260,11 @@ optgroup {
   background: #ffffff;
   border: none;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1;
   padding: 0.6rem 0.75rem;
   text-transform: uppercase;
+  text-align: center;
   vertical-align: middle;
   white-space: nowrap;
   cursor: pointer;
@@ -332,7 +333,7 @@ optgroup {
   border-bottom: 2px solid #f6e7cb !important;
   text-align: center;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1;
   text-transform: uppercase;
   color: #ee9e39;
@@ -344,7 +345,7 @@ optgroup {
   color: #ee9e39;
   background: #ffffff !important;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1;
   text-transform: uppercase;
   padding: 0.6rem 0.75rem;
@@ -370,6 +371,7 @@ optgroup {
   line-height: 1;
   padding: 0.55rem 0.75rem;
   min-width: 0;
+  text-align: center;
 }
 
 /* Sortable headers: keep label + icon stable; clip long titles */
@@ -394,31 +396,24 @@ optgroup {
 
 button.tx-name-link.tx-cell-ellipsis {
   width: 100%;
-  text-align: left;
+  text-align: center;
 }
 
-/* Alternating row backgrounds */
-.tx-inventory-table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network) {
+.tx-inventory-table .tx-cell-ellipsis {
+  text-align: center;
+}
+
+/* Alternating row backgrounds (Interfaces sub-cells excluded — they use per-line stripes below) */
+.tx-inventory-table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network):not(.tx-iface-cell) {
   background: rgba(230, 238, 255, 0.6);
 }
 
-.tx-inventory-table tbody tr:nth-child(even) td:not(.tx-iface-name):not(.tx-iface-network) {
+.tx-inventory-table tbody tr:nth-child(even) td:not(.tx-iface-name):not(.tx-iface-network):not(.tx-iface-cell) {
   background: #ffffff;
 }
 
-.tx-inventory-table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network) {
+.tx-inventory-table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network):not(.tx-iface-cell) {
   background: #eaf0ff;
-}
-
-/* Interface column backgrounds */
-.tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-name,
-.tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-network {
-  background: #FDF9F3;
-}
-
-.tx-inventory-table tbody tr:nth-child(even) td.tx-iface-name,
-.tx-inventory-table tbody tr:nth-child(even) td.tx-iface-network {
-  background: #FAF0E0;
 }
 
 .tx-inventory-table tbody tr:hover td.tx-iface-name,
@@ -426,11 +421,29 @@ button.tx-name-link.tx-cell-ellipsis {
   filter: brightness(0.97);
 }
 
+/*
+ * Interfaces: per sub-line stripes. Do NOT set display:flex on <td> — it breaks table column layout
+ * (MAC/IP cells collapse visually into the first iface column; TPM/Actions shift).
+ * Solid td background fills any extra row height below the last entry.
+ */
+.tx-inventory-table tbody td.tx-iface-cell {
+  vertical-align: top !important;
+  background: #FFD9A6;
+}
+
+.tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry:nth-child(odd) {
+  background: #FFD9A6;
+}
+
+.tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry:nth-child(even) {
+  background: #FAF0E0;
+}
+
 /* Interface cells */
 .tx-iface-cell {
   border: none !important;
   padding: 0 !important;
-  vertical-align: middle !important;
+  vertical-align: top !important;
 }
 
 /* Network column: restore divider after .tx-iface-cell { border: none } (needs higher specificity) */
@@ -439,15 +452,21 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-iface-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  box-sizing: border-box;
   padding: 0.45rem 0.75rem;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.2;
   color: #111111;
+  text-align: center;
 }
 
-.tx-iface-entry + .tx-iface-entry {
-  border-top: 2px solid #F6E7CB;
+.tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry + .tx-iface-entry {
+  border-top: none;
 }
 
 /* ---------- Name link ---------- */
@@ -458,7 +477,7 @@ button.tx-name-link.tx-cell-ellipsis {
   margin: 0;
   font-family: inherit;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 400;
   font-style: normal;
   line-height: 1;
   color: #111111;
@@ -468,7 +487,7 @@ button.tx-name-link.tx-cell-ellipsis {
   text-decoration-thickness: 1.5px;
   text-decoration-skip-ink: none;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -482,7 +501,7 @@ button.tx-name-link.tx-cell-ellipsis {
   min-width: 7rem;
   padding: 0.25rem 0.55rem;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #AEAEAE;
@@ -498,6 +517,10 @@ button.tx-name-link.tx-cell-ellipsis {
   width: 1%;
   min-width: 8.5rem;
   overflow: visible;
+}
+
+.tx-inventory-table td.tx-col-actions .tx-action-icons {
+  justify-content: center;
 }
 
 .tx-inventory-table td:not(.tx-col-actions):not(.tx-iface-cell) {
@@ -1969,11 +1992,6 @@ select.tx-select-placeholder {
   border-color: rgba(179, 90, 0, 0.2);
 }
 
-.tx-inventory-table tbody td.tx-iface-cell.tx-iface-mac,
-.tx-inventory-table tbody td.tx-iface-cell.tx-iface-ip {
-  background: #fffaf3;
-}
-
 .tx-inventory-table tbody td.tx-iface-cell.tx-td-iface-edge-ip {
   border-right: 1px solid rgba(179, 90, 0, 0.28);
 }
@@ -1986,7 +2004,7 @@ select.tx-select-placeholder {
   padding: 0.12rem 0.55rem;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
@@ -2010,7 +2028,7 @@ select.tx-select-placeholder {
   padding: 0.15rem 0.5rem;
   background: #fde8e8;
   color: #c62828;
-  font-weight: 700;
+  font-weight: 400;
   font-size: 0.78rem;
   border-radius: 4px;
 }
