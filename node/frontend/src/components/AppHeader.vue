@@ -48,10 +48,6 @@ const homeUrl = computed(() => {
   return h ? `https://${h}:8080` : '#'
 })
 
-/** Local build: `public/img/logo.png`. Deployed with APP_URL: controller serves `/logo.png`. */
-const logoSrc = computed(() => {
-  const appUrl = window.APP_URL || ''
-  if (appUrl) return `${appUrl.replace(/\/$/, '')}/logo.png`
-  return publicAssetUrl('img/logo.png')
-})
+/** Always `public/img/logo.png` (Vite copies `public/` to site root; respects BASE_URL in deploy). */
+const logoSrc = computed(() => publicAssetUrl('img/logo.png'))
 </script>

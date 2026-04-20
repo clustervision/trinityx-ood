@@ -6,10 +6,10 @@
 
       <div class="tx-header">
         <h2 v-if="flow === 'osgrab'" class="tx-title">
-          OS Grab for Node <strong class="tx-title-highlight-name">{{ nodeName }}</strong>
+          OS Grab for Node <span class="tx-title-node-name">{{ nodeName }}</span>
         </h2>
         <h2 v-else class="tx-title">
-          Push OS Image for Node <strong class="tx-title-highlight-name">{{ nodeName }}</strong>
+          Push OS Image for Node <span class="tx-title-node-name">{{ nodeName }}</span>
         </h2>
       </div>
 

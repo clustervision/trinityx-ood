@@ -885,19 +885,18 @@ button.tx-name-link.tx-cell-ellipsis {
   line-height: 1;
 }
 
-.tx-form-page .tx-title strong:not(.tx-title-highlight-name) {
+.tx-form-page .tx-title strong {
   color: #111;
   font-weight: 700;
 }
 
-.tx-title-highlight-name {
-  display: inline-block;
-  background: #fff;
-  color: #321dff !important;
-  font-weight: 700;
-  padding: 0.12em 0.45em;
-  border-radius: 4px;
-  line-height: 1.25;
+/* OS Push / OS Grab: node name matches form controls (select/input), same blue as title */
+.tx-ospush-page .tx-title-node-name {
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #321dff;
 }
 
 .tx-group-form-fixed {
@@ -1256,6 +1255,8 @@ button.tx-name-link.tx-cell-ellipsis {
   display: inline-flex;
   align-items: center;
   line-height: 1.1;
+  /* Inset from the inner right edge of the IP control (~3px) */
+  margin-right: 3px;
 }
 
 .tx-interface-block .tx-iface-c3-ip .tx-label {
@@ -1284,10 +1285,18 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-iface-row-actions {
   grid-column: 3;
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: stretch;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Fill column 3 edge-to-edge like IP / MTU / MAC controls above */
+.tx-interface-block .tx-iface-row-actions > .tx-btn {
+  flex: 1 1 0;
   min-width: 0;
 }
 
@@ -2031,6 +2040,12 @@ select.tx-select-placeholder {
 .tx-field-nodry {
   background: #e6eeff;
   color: #5376ea;
+  /* Uniform outer border (avoids thicker-looking right edge from subpixel/overflow) */
+  border-width: 2px;
+  border-style: solid;
+  border-color: #e6eeff;
+  padding-right: 0.45rem;
+  overflow: visible;
 }
 
 .tx-field-nodry .tx-label {
