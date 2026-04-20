@@ -60,7 +60,7 @@ optgroup {
 .tx-inventory-page.tx-shell {
   max-width: none;
   width: calc(100% - 2.5rem);
-  min-width: 1220px;
+  min-width: 1320px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -261,16 +261,25 @@ optgroup {
   border: none;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.15;
   padding: 0.6rem 0.75rem;
   text-transform: uppercase;
   text-align: center;
   vertical-align: middle;
-  white-space: nowrap;
+  white-space: normal;
   cursor: pointer;
   user-select: none;
-  min-width: 7.25rem;
-  overflow: hidden;
+  min-width: 8.5rem;
+  overflow: visible;
+}
+
+/* Longer labels (reference layout) */
+.tx-inventory-table thead th.tx-th-tpm {
+  min-width: 11rem;
+}
+
+.tx-inventory-table thead th.tx-th-actions {
+  min-width: 9rem;
 }
 
 .tx-th-actions {
@@ -346,7 +355,7 @@ optgroup {
   background: #ffffff !important;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.15;
   text-transform: uppercase;
   padding: 0.6rem 0.75rem;
   text-align: center;
@@ -354,7 +363,7 @@ optgroup {
   border: none !important;
   cursor: pointer;
   user-select: none;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .tx-iface-sub-network {
@@ -374,7 +383,7 @@ optgroup {
   text-align: center;
 }
 
-/* Sortable headers: keep label + icon stable; clip long titles */
+/* Sortable headers: label + sort icon (inventory shows full title — no ellipsis) */
 .tx-th-label-clip {
   display: inline-block;
   vertical-align: middle;
@@ -382,6 +391,16 @@ optgroup {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tx-inventory-table thead .tx-th-label-clip {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
 }
 
 /* Body text cells: stable column width when sorting */
@@ -412,27 +431,19 @@ button.tx-name-link.tx-cell-ellipsis {
   background: #ffffff;
 }
 
-.tx-inventory-table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network):not(.tx-iface-cell) {
-  background: #eaf0ff;
-}
-
-.tx-inventory-table tbody tr:hover td.tx-iface-name,
-.tx-inventory-table tbody tr:hover td.tx-iface-network {
-  filter: brightness(0.97);
-}
-
 /*
  * Interfaces: per sub-line stripes. Do NOT set display:flex on <td> — it breaks table column layout
  * (MAC/IP cells collapse visually into the first iface column; TPM/Actions shift).
  * Solid td background fills any extra row height below the last entry.
  */
+/* Interfaces sub-rows: alternate #FDF9F3 (deeper cream) / #FAF0E0 (lighter peach) */
 .tx-inventory-table tbody td.tx-iface-cell {
   vertical-align: top !important;
-  background: #FFD9A6;
+  background: #FDF9F3;
 }
 
 .tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry:nth-child(odd) {
-  background: #FFD9A6;
+  background: #FDF9F3;
 }
 
 .tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry:nth-child(even) {
@@ -449,6 +460,11 @@ button.tx-name-link.tx-cell-ellipsis {
 /* Network column: restore divider after .tx-iface-cell { border: none } (needs higher specificity) */
 .tx-inventory-table tbody td.tx-iface-cell.tx-td-iface-between {
   border-left: 2px solid #f6e7cb !important;
+}
+
+/* MAC | IP: orange divider (#f6e7cb, same as table) */
+.tx-inventory-table tbody td.tx-iface-cell.tx-iface-mac {
+  border-right: 2px solid #f6e7cb !important;
 }
 
 .tx-iface-entry {
@@ -515,7 +531,7 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-col-actions {
   white-space: nowrap;
   width: 1%;
-  min-width: 8.5rem;
+  min-width: 9rem;
   overflow: visible;
 }
 
@@ -524,20 +540,30 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-inventory-table td:not(.tx-col-actions):not(.tx-iface-cell) {
-  min-width: 7.25rem;
+  min-width: 8.5rem;
 }
 
+/* INTERFACES block: proportion so MAC / IP headers + data fit reference */
 .tx-inventory-table th.tx-iface-header-main {
-  min-width: 14rem;
+  min-width: 28rem;
 }
 
-.tx-inventory-table th.tx-iface-sub-name,
-.tx-inventory-table th.tx-iface-sub-network {
+.tx-inventory-table th.tx-iface-sub-name {
   min-width: 7rem;
 }
 
-.tx-inventory-table td.tx-iface-cell {
+.tx-inventory-table thead th.tx-iface-sub-mac,
+.tx-inventory-table thead th.tx-iface-sub-ip {
+  min-width: 10.5rem;
+}
+
+.tx-inventory-table td.tx-iface-cell.tx-iface-name {
   min-width: 7rem;
+}
+
+.tx-inventory-table td.tx-iface-cell.tx-iface-mac,
+.tx-inventory-table td.tx-iface-cell.tx-iface-ip {
+  min-width: 10.5rem;
 }
 
 .tx-action-icons {
@@ -1988,39 +2014,66 @@ select.tx-select-placeholder {
 .tx-inventory-table thead th.tx-iface-sub-mac,
 .tx-inventory-table thead th.tx-iface-sub-ip {
   background: #fff4e8;
-  color: #b35a00;
-  border-color: rgba(179, 90, 0, 0.2);
+  color: #EE9E39;
+  border-color: rgba(238, 158, 57, 0.25);
+  border-left: 2px solid #f6e7cb !important;
+}
+
+/* MAC | IP | … : orange dividers in header row */
+.tx-inventory-table thead th.tx-iface-sub-mac {
+  border-right: 2px solid #f6e7cb !important;
+}
+
+.tx-inventory-table thead th.tx-iface-sub-ip {
+  border-right: 2px solid #f6e7cb !important;
 }
 
 .tx-inventory-table tbody td.tx-iface-cell.tx-td-iface-edge-ip {
-  border-right: 1px solid rgba(179, 90, 0, 0.28);
+  border-right: 2px solid #f6e7cb !important;
 }
 
-/* Status pills (SETUP BMC, TPM PRESENT) */
+/* TPM: blue divider (same as tx-td-sep-blue) before Actions */
+.tx-inventory-table tbody td.tx-td-tpm {
+  border-right: 2px solid rgba(83, 118, 234, 0.2) !important;
+}
+
+.tx-inventory-table thead th.tx-th-tpm {
+  border-right: 2px solid rgba(83, 118, 234, 0.2) !important;
+}
+
+/*
+ * SETUP BMC / TPM PRESENT — same language as OS IM. TAG (.tx-na-box): rectangular, 2px border = text color, light fill.
+ */
 .tx-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.12rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.72rem;
+  display: inline-block;
+  min-width: 7rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 14px;
   font-weight: 400;
+  text-transform: uppercase;
   letter-spacing: 0.02em;
+  border: 2px solid;
+  border-radius: 4px;
+  text-align: center;
+  box-sizing: border-box;
   white-space: nowrap;
 }
 .tx-pill-yes,
 .tx-pill-true {
-  background: #d1f4e0;
-  color: #0d6e3a;
+  color: #67C67B;
+  border-color: #67C67B;
+  background: #ecf8ef;
 }
 .tx-pill-no,
 .tx-pill-false {
-  background: #ffe8cc;
-  color: #b35a00;
+  color: #F58B00;
+  border-color: #F58B00;
+  background: #fff5e8;
 }
 .tx-pill-inherited {
-  background: #dbe7ff;
   color: #2f5fb4;
+  border-color: #2f5fb4;
+  background: #e8f0ff;
 }
 
 .tx-os-invalid {

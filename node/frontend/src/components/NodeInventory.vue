@@ -49,7 +49,10 @@
               v-if="hasTpm"
               rowspan="2"
               class="tx-th-regular tx-th-tpm"
-              :class="{ 'tx-th-sep-blue': hasInterfaces || regularColumns.length > 0 }"
+              :class="{
+                'tx-th-sep-orange-left': hasInterfaces,
+                'tx-th-sep-blue': !hasInterfaces && regularColumns.length > 0,
+              }"
               title="TPM PRESENT"
               @click="toggleSort('tpm_present')"
             >
@@ -65,8 +68,8 @@
               rowspan="2"
               class="tx-th-regular tx-th-actions"
               :class="{
-                'tx-th-sep-orange-right': hasInterfaces || hasTpm,
-                'tx-th-sep-blue': !hasInterfaces && !hasTpm,
+                'tx-th-sep-orange-right': hasInterfaces && !hasTpm,
+                'tx-th-sep-blue': hasTpm || (!hasInterfaces && !hasTpm),
               }"
             >Actions</th>
           </tr>
@@ -166,15 +169,18 @@
             <td
               v-if="hasTpm"
               class="tx-td-tpm"
-              :class="{ 'tx-td-sep-blue': hasInterfaces || regularColumns.length > 0 }"
+              :class="{
+                'tx-td-sep-orange-left': hasInterfaces,
+                'tx-td-sep-blue': !hasInterfaces && regularColumns.length > 0,
+              }"
             >
               <span :class="tpmClass(row.tpm_present)">{{ tpmLabel(row.tpm_present) }}</span>
             </td>
             <td
               class="tx-col-actions"
               :class="{
-                'tx-td-sep-orange-right': hasInterfaces || hasTpm,
-                'tx-td-sep-blue': !hasInterfaces && !hasTpm,
+                'tx-td-sep-orange-right': hasInterfaces && !hasTpm,
+                'tx-td-sep-blue': !hasTpm && !hasInterfaces,
               }"
             >
               <div class="tx-action-icons">
