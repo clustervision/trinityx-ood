@@ -405,24 +405,28 @@ function ifaceSortKey(row, key) {
     .join('\u0001')
 }
 
+function rowMatchesSearch(row, q) {
+  let keys = fields.value.filter((f) => f !== 'interfaces')
+  if (keys.length === 0) {
+    keys = Object.keys(row).filter((k) => k !== 'interfaces')
+  }
+  return keys.some((key) => {
+    const val = row[key]
+    if (val == null) return false
+    if (typeof val === 'string') return val.toLowerCase().includes(q)
+    if (typeof val === 'boolean' || typeof val === 'number') {
+      return String(val).toLowerCase().includes(q)
+    }
+    if (Array.isArray(val)) return false
+    return String(val).toLowerCase().includes(q)
+  })
+}
+
 const filteredRows = computed(() => {
   let rows = nodes.value
   const q = searchQuery.value.toLowerCase().trim()
   if (q) {
-    rows = rows.filter((row) => {
-      return Object.values(row).some((val) => {
-        if (val == null) return false
-        if (typeof val === 'string') return val.toLowerCase().includes(q)
-        if (Array.isArray(val)) {
-          return val.some((item) =>
-            Object.values(item || {}).some((v) =>
-              String(v || '').toLowerCase().includes(q)
-            )
-          )
-        }
-        return String(val).toLowerCase().includes(q)
-      })
-    })
+    rows = rows.filter((row) => rowMatchesSearch(row, q))
   }
   if (sortField.value) {
     const sf = sortField.value

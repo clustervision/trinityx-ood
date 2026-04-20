@@ -416,6 +416,9 @@ optgroup {
 button.tx-name-link.tx-cell-ellipsis {
   width: 100%;
   text-align: center;
+  /* .tx-cell-ellipsis uses overflow:hidden which clips text-decoration underline */
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .tx-inventory-table .tx-cell-ellipsis {
