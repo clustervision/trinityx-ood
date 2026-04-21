@@ -350,6 +350,7 @@ optgroup {
   text-align: center;
   vertical-align: middle;
   border: none !important;
+  border-bottom: 2px solid #f6e7cb !important;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
@@ -408,10 +409,6 @@ button.tx-name-link {
   background: #ffffff;
 }
 
-.tx-inventory-table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network) {
-  background: #eaf0ff;
-}
-
 /* Interface column backgrounds */
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-name,
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-network {
@@ -421,11 +418,6 @@ button.tx-name-link {
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-name,
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-network {
   background: #FAF0E0;
-}
-
-.tx-inventory-table tbody tr:hover td.tx-iface-name,
-.tx-inventory-table tbody tr:hover td.tx-iface-network {
-  filter: brightness(0.97);
 }
 
 /* Interface cells */
@@ -446,10 +438,6 @@ button.tx-name-link {
   font-weight: 400;
   line-height: 1;
   color: #111111;
-}
-
-.tx-iface-entry + .tx-iface-entry {
-  border-top: 2px solid #F6E7CB;
 }
 
 /* ---------- Name link ---------- */
