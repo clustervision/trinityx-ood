@@ -54,37 +54,25 @@ if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 
-def _wants_json():
-    """
-    API clients: ?format=json or Accept prefers application/json.
-    Browsers: default HTML for GET form pages.
-    """
-    fmt = (request.args.get('format') or '').lower()
-    if fmt == 'json':
-        return True
-    if fmt == 'html':
-        return False
-    best = request.accept_mimetypes.best_match(['application/json', 'text/html'], 'text/html')
-    return best == 'application/json'
 
 
 @app.before_request
 def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
-    /api/* returns200 + JSON so the Vue client can show error in the UI (not a bare 500).
     """
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
-        if request.path.startswith('/api'):
-            return jsonify({
-                "fields": [],
-                "groups": [],
-                "error": TOKEN_FILE["error"],
-            })
-        return jsonify({"error": TOKEN_FILE["error"]}), 500
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
+    file_check = os.path.isfile(INI_FILE)
+    if file_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+    read_check = os.access(INI_FILE, os.R_OK)
+    if read_check is False:
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
+
 
 
 @app.errorhandler(404)
