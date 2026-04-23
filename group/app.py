@@ -52,19 +52,6 @@ if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 
-def _wants_json():
-    """
-    API clients: ?format=json or Accept prefers application/json.
-    Browsers: default HTML for GET form pages.
-    """
-    fmt = (request.args.get('format') or '').lower()
-    if fmt == 'json':
-        return True
-    if fmt == 'html':
-        return False
-    best = request.accept_mimetypes.best_match(['application/json', 'text/html'], 'text/html')
-    return best == 'application/json'
-
 
 @app.before_request
 def validate_home_directory():
