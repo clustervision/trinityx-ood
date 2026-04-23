@@ -51,6 +51,24 @@ class Helper():
         self.logger = Log.get_logger()
 
 
+    def group_app_base_url(self, request):
+        """
+        Group Flask API base (port 7755). Exposed as window.APP_URL for fetch() to /api/groups, etc.
+        """
+        host = request.host.split(':')[0]
+        scheme = request.scheme
+        return f"{scheme}://{host}:7755".rstrip('/')
+
+    def context_url(self, request):
+        """
+        OOD / gateway base (port 8080). Use for logo and home links only; API stays on 7755.
+        Exposed as window.CONTEXT_URL.
+        """
+        host = request.host.split(':')[0]
+        scheme = request.scheme
+        return f"{scheme}://{host}:8080".rstrip('/')
+
+
     def get_bond_mode_options(self, bond_mode=None):
         """
         This method will return the bond mode options in HTML format.

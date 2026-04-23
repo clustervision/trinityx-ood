@@ -33,25 +33,29 @@ __status__      = 'Development'
 import types
 import os
 import json
-from string import Template
-from html import unescape
-from flask import Flask, request, render_template, flash, url_for, redirect
+from flask import Flask, request, jsonify, render_template
+import urllib3
+from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
+from constant import INI_FILE, LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from presenter import Presenter
 from log import Log
 from model import Model
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 LOGGER = Log.init_log('INFO')
 TABLE = 'group'
 TABLE_CAP = 'Group'
-app = Flask(__name__, static_folder="static")
+# SPA: Jinja shell in app/index.html; built Vue assets in app/assets (vite outDir).
+app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-if APP_STATE is False: 
-    app.config["DEBUG"] = True
-    os.environ["FLASK_ENV"] = "development"
+if APP_STATE is False:
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
+
 
 
 @app.before_request
@@ -72,6 +76,7 @@ def validate_home_directory():
     return None
 
 
+
 @app.errorhandler(404)
 def page_not_found(e):
     """
@@ -83,20 +88,51 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application. It will list all Groups which is available with daemon.
+    Serve the Vue SPA shell. window.APP_URL is this app's base URL; window.CONTEXT_URL
+    comes from Helper.context_url (OOD / gateway).
     """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE]
+    app_url = Helper().group_app_base_url(request)
+    context_url = Helper().context_url(request)
+    return render_template(
+        "index.html",
+        APP_URL=app_url,
+        CONTEXT_URL=context_url,
+    )
+
+
+@app.route('/api/groups', methods=['GET'])
+def api_groups():
+    """
+    JSON list of all groups for the Vue frontend table.
+    Always returns HTTP 200 with { fields, groups, error } when the handler runs.
+    """
+    empty = {"fields": [], "groups": [], "error": ""}
+    try:
+        table_data = Rest().get_data(TABLE)
+        LOGGER.info(table_data)
+        if not table_data:
+            empty["error"] = f'No {TABLE_CAP} Available at this time.'
+            return jsonify(empty)
+        if not isinstance(table_data, dict) or 'config' not in table_data:
+            empty["error"] = 'Daemon returned an unexpected JSON shape (missing config).'
+            return jsonify(empty)
+        raw_data = table_data['config'].get(TABLE)
+        if raw_data is None:
+            empty["error"] = f'No {TABLE_CAP} key in daemon config.'
+            return jsonify(empty)
+        if not isinstance(raw_data, dict):
+            empty["error"] = 'Group data from daemon is not a mapping; check Luna daemon response.'
+            return jsonify(empty)
         raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data(TABLE, raw_data)
-        data = Presenter().show_table(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'No {TABLE_CAP} Available at this time.'
-    return render_template("inventory.html", table=TABLE_CAP, data=data, error=error)
+        fields, groups = Helper().filter_data_json(TABLE, raw_data)
+        return jsonify({"fields": fields, "groups": groups, "error": ""})
+    except Exception as exc:
+        LOGGER.exception("api_groups failed")
+        return jsonify({
+            "fields": [],
+            "groups": [],
+            "error": f'api_groups: {exc}',
+        })
 
 
 @app.route('/show/<string:record>', methods=['GET'])
@@ -164,7 +200,18 @@ def add():
             flash(error, "error")
             return redirect(url_for('add'), code=302)
     else:
-        return render_template("add.html", table=TABLE_CAP, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, network_list=network_list, page=page)
+        bmcsetup_list = Model().get_list_options_json('bmcsetup')
+        osimage_list = Model().get_list_options_json('osimage')
+        network_list = Model().get_list_options_json('network')
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
+            "table": TABLE_CAP,
+            "bmcsetup_list": bmcsetup_list,
+            "osimage_list": osimage_list,
+            "network_list": network_list,
+            "bond_modes": bond_modes,
+        }
+        return jsonify(body)
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
@@ -290,7 +337,28 @@ def edit(record=None):
             flash(error, "error")
         return redirect(url_for('edit', record=record), code=302)
     else:
-        return render_template("edit.html", table=TABLE_CAP, record=record,  data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html)
+        data = {}
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if table_data:
+            data = table_data['config'][TABLE][record]
+            data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+            data = Helper().prepare_json(data)
+
+        bmcsetup_list = Model().get_list_options_json('bmcsetup', data.get('bmcsetupname'))
+        osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+        network_list = Model().get_list_options_json('network')
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
+            "table": TABLE_CAP,
+            "record": record,
+            "data": data,
+            "bmcsetup_list": bmcsetup_list,
+            "osimage_list": osimage_list,
+            "network_list": network_list,
+            "bond_modes": bond_modes,
+        }
+        return jsonify(body)
 
 
 @app.route('/delete/<string:record>', methods=['GET'])
@@ -421,7 +489,28 @@ def clone(record=None):
             flash(error, "error")
         return redirect(url_for('clone', record=record), code=302)
     else:
-        return render_template("clone.html", table=TABLE_CAP, record=record, data=data, bmcsetup_list=bmcsetup_list, osimage_list=osimage_list, interface_html=interface_html)
+        data = {}
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if table_data:
+            data = table_data['config'][TABLE][record]
+            data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+            data = Helper().prepare_json(data)
+
+        bmcsetup_list = Model().get_list_options_json('bmcsetup', data.get('bmcsetupname'))
+        osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+        network_list = Model().get_list_options_json('network')
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
+            "table": TABLE_CAP,
+            "record": record,
+            "data": data,
+            "bmcsetup_list": bmcsetup_list,
+            "osimage_list": osimage_list,
+            "network_list": network_list,
+            "bond_modes": bond_modes,
+        }
+        return jsonify(body)
 
 
 @app.route('/member/<string:table>/<string:record>', methods=['GET'])
@@ -479,8 +568,15 @@ def ospush(record=None):
         if table_data:
             raw_data = table_data['config'][TABLE][record]
             data = Helper().prepare_json(raw_data)
-            osimage_list = Model().get_list_option_html('osimage', data['osimage'])
-    return render_template("osimage.html", table=TABLE_CAP, record=record, data=data, group_list=group_list, osimage_list=osimage_list)
+            osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+        body = {
+            "table": TABLE_CAP,
+            "record": record,
+            "data": data,
+            "group_list": group_list,
+            "osimage_list": osimage_list,
+        }
+        return jsonify(body)
 
 
 @app.route('/check_status/<string:status>/status/<string:request_id>', methods=['GET'])
@@ -514,6 +610,16 @@ def license_info():
 
 if __name__ == "__main__":
     if APP_STATE is False:
-        app.run(host='0.0.0.0', port=7755, debug=True)
+        _ssl_crt = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.crt'
+        _ssl_key = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.key'
+        if os.path.isfile(_ssl_crt) and os.path.isfile(_ssl_key):
+            dev_context = (_ssl_crt, _ssl_key)
+            app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
+        else:
+            app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
+
+# Run in Dev mode with TLS (read certs as the app user):
+# sudo setfacl -m u:admin:r /trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.*
+# sudo -u admin bash -c '. /trinity/local/python/bin/activate && python app.py'
