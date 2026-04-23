@@ -8,14 +8,24 @@
           <span class="tx-label">Clone Name:</span>
           <input type="text" :value="form.name" readonly />
         </div>
-        <div class="tx-field tx-field-strong">
+        <div class="tx-field tx-field-strong" :class="{ 'tx-field-name-row': mode === 'edit' }">
           <span class="tx-label">{{ mode === 'clone' ? 'New Group Name:' : 'Name:' }}</span>
-          <input
-            v-if="mode === 'edit'"
-            type="text"
-            :value="form.name"
-            readonly
-          />
+          <div v-if="mode === 'edit'" class="tx-name-controls">
+            <input
+              type="text"
+              v-model="form.name"
+              :readonly="!nameEditUnlocked"
+              @keypress="noSpaces"
+              maxlength="100"
+            />
+            <button
+              type="button"
+              class="tx-btn tx-btn-outline-blue tx-btn-rename"
+              @click="nameEditUnlocked = true"
+            >
+              Rename
+            </button>
+          </div>
           <input
             v-else-if="mode === 'clone'"
             type="text"
@@ -304,6 +314,7 @@ const props = defineProps({
 
 defineEmits(['submit'])
 
+const nameEditUnlocked = ref(false)
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
 const textEditorOpen = ref(false)
@@ -414,7 +425,54 @@ function hydrateForm(d) {
   }
 }
 
-watch(() => props.initialData, (d) => hydrateForm(d), { immediate: true, deep: true })
+function normalizeName(s) {
+  return String(s ?? '').trim()
+}
+
+/** Stable snapshot for dirty-check (edit modal). */
+function comparableSnapshot() {
+  const ifaceRow = (row) => ({
+    interface: String(row.interface ?? ''),
+    network: String(row.network ?? ''),
+    mtu: String(row.mtu ?? ''),
+    dhcp: String(row.dhcp ?? ''),
+    bond_mode: String(row.bond_mode ?? ''),
+    bond_slaves: String(row.bond_slaves ?? ''),
+    vlanid: String(row.vlanid ?? ''),
+    options: String(row.options ?? ''),
+    vlan_parent: String(row.vlan_parent ?? ''),
+  })
+  return {
+    name: normalizeName(form.name),
+    roles: String(form.roles ?? ''),
+    netboot: String(form.netboot ?? ''),
+    osimage: String(form.osimage ?? ''),
+    scripts: String(form.scripts ?? ''),
+    setupbmc: String(form.setupbmc ?? ''),
+    bmcsetupname: String(form.bmcsetupname ?? ''),
+    domain: String(form.domain ?? ''),
+    unmanaged_bmc_users: String(form.unmanaged_bmc_users ?? ''),
+    kerneloptions: String(form.kerneloptions ?? ''),
+    prescript: String(form.prescript ?? ''),
+    partscript: String(form.partscript ?? ''),
+    postscript: String(form.postscript ?? ''),
+    osimagetag: String(form.osimagetag ?? ''),
+    provision_interface: String(form.provision_interface ?? ''),
+    provision_fallback: String(form.provision_fallback ?? ''),
+    provision_method: String(form.provision_method ?? ''),
+    comment: String(form.comment ?? ''),
+    interfaces: form.interfaces.map(ifaceRow),
+  }
+}
+
+watch(
+  () => props.initialData,
+  (d) => {
+    nameEditUnlocked.value = false
+    hydrateForm(d)
+  },
+  { immediate: true, deep: true },
+)
 
 function toggleInterfaces() {
   showInterfaces.value = !showInterfaces.value
@@ -492,10 +550,12 @@ function onUploadFile(e, field) {
   fr.readAsArrayBuffer(file)
 }
 
-function buildFormData() {
+function buildFormData(opts = {}) {
+  const namePayload =
+    opts.nameForPayload !== undefined ? opts.nameForPayload : form.name
   const fd = new FormData()
   const fields = [
-    'name', 'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
+    'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
     'domain', 'unmanaged_bmc_users', 'kerneloptions', 'prescript', 'partscript',
     'postscript', 'osimagetag', 'provision_interface', 'provision_fallback',
     'provision_method', 'comment',
@@ -503,6 +563,7 @@ function buildFormData() {
   if (props.mode === 'clone') {
     fields.push('newgroupname')
   }
+  fd.append('name', namePayload != null ? String(namePayload) : '')
   for (const f of fields) {
     if (form[f] != null) fd.append(f, form[f])
   }
@@ -514,5 +575,5 @@ function buildFormData() {
   return fd
 }
 
-defineExpose({ form, buildFormData })
+defineExpose({ form, buildFormData, comparableSnapshot })
 </script>

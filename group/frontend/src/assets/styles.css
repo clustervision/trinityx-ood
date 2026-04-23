@@ -952,6 +952,28 @@ button.tx-name-link {
   border: 2px solid #5376EA;
 }
 
+.tx-field.tx-field-name-row .tx-name-controls {
+  display: inline-flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  background: #fff;
+}
+
+.tx-field.tx-field-name-row .tx-name-controls > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-field.tx-field-name-row .tx-btn-rename {
+  flex-shrink: 0;
+  margin: 0 0.4rem 0 0.5rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .tx-field.tx-field-strong .tx-label {
   background: #E6EEFF;
   color: #5376EA;
