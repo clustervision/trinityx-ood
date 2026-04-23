@@ -1,5 +1,5 @@
 /* ========================================================
-   TrinityX OOD – Group App (Vue SPA)
+   TrinityX OOD – Nodes App (Vue SPA)
    Full design-matched styles
    ======================================================== */
 
@@ -708,13 +708,22 @@ button.tx-name-link.tx-cell-ellipsis {
    NAVBAR (Header)
    ================================================================ */
 .tx-navbar {
-  background-color: #e7e7e7;
+  background: linear-gradient(
+    to right,
+    #4a54f1 0%,
+    #4a54f1 10%,
+    #7d4dbb 25%,
+    #c63d7b 45%,
+    #e95f4a 65%,
+    #f3a133 85%,
+    #f8c325 100%
+  ) !important;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
 }
 
 .tx-breadcrumb {
@@ -745,7 +754,7 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-breadcrumb-item::before {
   content: '/';
-  color: #999;
+  color: rgba(255, 255, 255, 0.65);
   padding: 0 0.4rem;
 }
 
@@ -754,7 +763,7 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-breadcrumb-link {
-  color: #007bff;
+  color: #ffffff;
   text-decoration: none;
   background-color: transparent;
   font-size: 18px;
@@ -762,8 +771,10 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-breadcrumb-link:hover {
-  color: #0056b3;
+  color: #ffffff;
   text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255, 255, 255, 0.85);
 }
 
 /* ================================================================
