@@ -1461,8 +1461,19 @@ button.tx-name-link {
   isolation: isolate;
 }
 
-.tx-iface-cell-spacer {
-  min-width: 0;
+/* Row 3: Options field spans the width of the former options + VLAN parent columns */
+.tx-interface-block .tx-iface-row3-options-span {
+  grid-column: 1 / 3;
+}
+
+/* Third column, row 3: match VLAN ID column label rhythm; slightly wider for “VLAN Parent:” */
+.tx-interface-block .tx-iface-c3-vlanparent .tx-label {
+  flex: 0 0 6.25rem;
+  width: 6.25rem;
+  min-width: 6.25rem;
+  max-width: 6.25rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 .tx-interface-block .tx-iface-main-grid > .tx-field,
