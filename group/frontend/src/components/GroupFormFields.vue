@@ -4,12 +4,20 @@
     <div class="tx-add-grid tx-add-form-main">
       <!-- Column 1 -->
       <div class="tx-add-col">
-        <div class="tx-field tx-field-strong" v-if="mode === 'clone'">
+        <!-- Clone: one editable "Clone Name" — prefilled from data.clonename (else name), POST as newgroupname -->
+        <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
-          <input type="text" :value="form.name" readonly />
+          <input
+            type="text"
+            v-model="form.newgroupname"
+            autocomplete="off"
+            @keypress="noSpaces"
+            maxlength="100"
+            required
+          />
         </div>
-        <div class="tx-field tx-field-strong" :class="{ 'tx-field-name-row': mode === 'edit' }">
-          <span class="tx-label">{{ mode === 'clone' ? 'New Group Name:' : 'Name:' }}</span>
+        <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-row': mode === 'edit' }">
+          <span class="tx-label">Name:</span>
           <div v-if="mode === 'edit'" class="tx-name-controls">
             <input
               type="text"
@@ -26,14 +34,6 @@
               Rename
             </button>
           </div>
-          <input
-            v-else-if="mode === 'clone'"
-            type="text"
-            v-model="form.newgroupname"
-            @keypress="noSpaces"
-            maxlength="100"
-            required
-          />
           <input
             v-else
             type="text"
@@ -389,7 +389,18 @@ const form = reactive({
 function hydrateForm(d) {
   if (!d) return
   form.name = d.name || ''
-  form.newgroupname = d.newgroupname || ''
+  if (props.mode === 'clone') {
+    // One editable field — POST as newgroupname; prefill: clonename from API, else newgroupname, else name
+    if (d.clonename != null && String(d.clonename).trim() !== '') {
+      form.newgroupname = String(d.clonename)
+    } else if (d.newgroupname != null && String(d.newgroupname).trim() !== '') {
+      form.newgroupname = String(d.newgroupname)
+    } else {
+      form.newgroupname = d.name != null ? String(d.name) : ''
+    }
+  } else {
+    form.newgroupname = d.newgroupname || ''
+  }
   form.roles = d.roles != null ? String(d.roles) : ''
   form.netboot = triValue(d.netboot)
   form.osimage = d.osimage || ''
