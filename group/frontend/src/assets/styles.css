@@ -350,6 +350,7 @@ optgroup {
   text-align: center;
   vertical-align: middle;
   border: none !important;
+  border-bottom: 2px solid #f6e7cb !important;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
@@ -391,9 +392,12 @@ optgroup {
   white-space: nowrap;
 }
 
-button.tx-name-link.tx-cell-ellipsis {
+button.tx-name-link {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   text-align: left;
+  overflow: visible;
 }
 
 /* Alternating row backgrounds */
@@ -405,10 +409,6 @@ button.tx-name-link.tx-cell-ellipsis {
   background: #ffffff;
 }
 
-.tx-inventory-table tbody tr:hover td:not(.tx-iface-name):not(.tx-iface-network) {
-  background: #eaf0ff;
-}
-
 /* Interface column backgrounds */
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-name,
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-network {
@@ -418,11 +418,6 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-name,
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-network {
   background: #FAF0E0;
-}
-
-.tx-inventory-table tbody tr:hover td.tx-iface-name,
-.tx-inventory-table tbody tr:hover td.tx-iface-network {
-  filter: brightness(0.97);
 }
 
 /* Interface cells */
@@ -445,10 +440,6 @@ button.tx-name-link.tx-cell-ellipsis {
   color: #111111;
 }
 
-.tx-iface-entry + .tx-iface-entry {
-  border-top: 2px solid #F6E7CB;
-}
-
 /* ---------- Name link ---------- */
 .tx-name-link {
   border: none;
@@ -461,14 +452,17 @@ button.tx-name-link.tx-cell-ellipsis {
   font-style: normal;
   line-height: 1;
   color: #111111;
-  text-decoration: underline;
-  text-decoration-style: solid;
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1.5px;
-  text-decoration-skip-ink: none;
   cursor: pointer;
   text-align: left;
-  white-space: nowrap;
+}
+
+/* inline-block: underline (border) only as wide as the text, not the full cell */
+.tx-name-link .tx-cell-ellipsis {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 1px;
 }
 
 .tx-name-link:hover {
@@ -647,13 +641,22 @@ button.tx-name-link.tx-cell-ellipsis {
    NAVBAR (Header)
    ================================================================ */
 .tx-navbar {
-  background-color: #e7e7e7;
+  background: linear-gradient(
+    to right,
+    #4a54f1 0%,
+    #4a54f1 10%,
+    #7d4dbb 25%,
+    #c63d7b 45%,
+    #e95f4a 65%,
+    #f3a133 85%,
+    #f8c325 100%
+  ) !important;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
 }
 
 .tx-breadcrumb {
@@ -684,7 +687,7 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-breadcrumb-item::before {
   content: '/';
-  color: #999;
+  color: rgba(255, 255, 255, 0.65);
   padding: 0 0.4rem;
 }
 
@@ -693,7 +696,7 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-breadcrumb-link {
-  color: #007bff;
+  color: #ffffff;
   text-decoration: none;
   background-color: transparent;
   font-size: 18px;
@@ -701,8 +704,10 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 .tx-breadcrumb-link:hover {
-  color: #0056b3;
+  color: #ffffff;
   text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255, 255, 255, 0.85);
 }
 
 /* ================================================================
@@ -945,6 +950,28 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-field.tx-field-strong {
   border: 2px solid #5376EA;
+}
+
+.tx-field.tx-field-name-row .tx-name-controls {
+  display: inline-flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  background: #fff;
+}
+
+.tx-field.tx-field-name-row .tx-name-controls > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-field.tx-field-name-row .tx-btn-rename {
+  flex-shrink: 0;
+  margin: 0 0.4rem 0 0.5rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .tx-field.tx-field-strong .tx-label {
@@ -1434,8 +1461,19 @@ button.tx-name-link.tx-cell-ellipsis {
   isolation: isolate;
 }
 
-.tx-iface-cell-spacer {
-  min-width: 0;
+/* Row 3: Options field spans the width of the former options + VLAN parent columns */
+.tx-interface-block .tx-iface-row3-options-span {
+  grid-column: 1 / 3;
+}
+
+/* Third column, row 3: match VLAN ID column label rhythm; slightly wider for “VLAN Parent:” */
+.tx-interface-block .tx-iface-c3-vlanparent .tx-label {
+  flex: 0 0 6.25rem;
+  width: 6.25rem;
+  min-width: 6.25rem;
+  max-width: 6.25rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 .tx-interface-block .tx-iface-main-grid > .tx-field,

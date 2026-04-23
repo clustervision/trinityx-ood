@@ -54,8 +54,8 @@
         <input type="number" v-model.number="iface.vlanid" min="0" max="4094" placeholder="VLAN ID" />
       </div>
 
-      <!-- Row 3 -->
-      <div class="tx-field tx-field-iface-muted tx-field-options-combo tx-iface-c1">
+      <!-- Row 3: Options spans col 1–2; VLAN Parent in col 3 (below MTU / VLAN ID) -->
+      <div class="tx-field tx-field-iface-muted tx-field-options-combo tx-iface-c1 tx-iface-row3-options-span">
         <span class="tx-label">Options:</span>
         <div class="tx-iface-options-input">
           <input type="text" v-model="iface.options" placeholder="options" maxlength="100" />
@@ -67,11 +67,10 @@
           ></button>
         </div>
       </div>
-      <div class="tx-field tx-field-iface-muted tx-iface-c2">
+      <div class="tx-field tx-field-iface-muted tx-iface-c3-vlanparent">
         <span class="tx-label">VLAN Parent:</span>
         <input type="text" v-model="iface.vlan_parent" placeholder="VLAN Parent" />
       </div>
-      <div class="tx-iface-cell-spacer" aria-hidden="true"></div>
     </div>
 
     <div class="tx-interface-actions">

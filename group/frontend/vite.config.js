@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [vue()],
     build: {
-      outDir: '../app/assets',
+      // outDir: '../app/assets',
       emptyOutDir: true,
       rollupOptions: {
         output: {

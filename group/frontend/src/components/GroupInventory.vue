@@ -87,10 +87,12 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis"
+                  class="tx-name-link"
                   :title="String(row.name ?? '')"
                   @click="$emit('open-edit', canonicalName(row.name))"
-                >{{ row.name }}</button>
+                >
+                  <span class="tx-cell-ellipsis">{{ row.name }}</span>
+                </button>
               </template>
               <template v-else-if="isEmpty(row[col.field])">
                 <span class="tx-na-box">NOT AVAILABLE</span>

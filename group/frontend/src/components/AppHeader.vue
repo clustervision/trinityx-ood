@@ -47,11 +47,17 @@ const homeUrl = computed(() => {
   return h ? `https://${h}:8080` : '#'
 })
 
-/** Place logo at frontend/public/static/img/logo.png → URL /static/img/logo.png */
+/** Always load from this SPA's public/static/img/logo.png (same origin as the page), not window.APP_URL. */
 const logoSrc = computed(() => {
-  const appUrl = window.APP_URL || ''
-  if (appUrl) return `${appUrl.replace(/\/$/, '')}/static/img/logo.png`
   const base = import.meta.env.BASE_URL || '/'
-  return (base.endsWith('/') ? base : base + '/') + 'static/img/logo.png'
+  const path = (base.endsWith('/') ? base : base + '/') + 'static/img/logo.png'
+  if (typeof window !== 'undefined') {
+    try {
+      return new URL(path, window.location.origin).href
+    } catch {
+      /* fall through */
+    }
+  }
+  return path
 })
 </script>

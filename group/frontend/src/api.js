@@ -97,3 +97,15 @@ export async function submitForm(action, formData) {
   try { data = JSON.parse(text) } catch { /* empty */ }
   return { ok: res.ok, status: res.status, data }
 }
+
+/**
+ * Rename: POST /rename/<record> (same form contract as Luna OOD node app).
+ * - `name` = current record name (must match the existing entity)
+ * - `newname` = desired new name (server maps this to newnodename / newgroupname internally)
+ */
+export async function submitRename(record, newName) {
+  const fd = new FormData()
+  fd.append('name', record)
+  fd.append('newname', newName)
+  return submitForm(`/rename/${encodeURIComponent(record)}`, fd)
+}
