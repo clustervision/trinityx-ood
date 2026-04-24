@@ -1318,22 +1318,25 @@ button.tx-name-link.tx-cell-ellipsis {
   margin-right: 3px;
 }
 
+/* Wide enough for "IP ADDRESS:" / "MAC ADDRESS:" (uppercase + padding) */
 .tx-interface-block .tx-iface-c3-ip .tx-label {
-  flex: 0 0 5.75rem;
-  width: 5.75rem;
-  min-width: 5.75rem;
-  max-width: 5.75rem;
+  flex: 0 0 8rem;
+  width: 8rem;
+  min-width: 8rem;
+  max-width: 8rem;
   justify-content: flex-start;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .tx-interface-block .tx-iface-c3-mac .tx-label {
-  flex: 0 0 6.85rem;
-  width: 6.85rem;
-  min-width: 6.85rem;
-  max-width: 6.85rem;
+  flex: 0 0 9rem;
+  width: 9rem;
+  min-width: 9rem;
+  max-width: 9rem;
   justify-content: flex-start;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .tx-interface-block .tx-iface-options-span {
