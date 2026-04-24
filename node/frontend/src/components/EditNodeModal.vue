@@ -17,6 +17,7 @@
           :switch-options="switchOptions"
           :bmcsetup-options="bmcsetupOptions"
           :osimage-options="osimageOptions"
+          :cloudname-options="cloudnameOptions"
           :network-options="networkOptions"
           :bond-mode-options="bondModeOptions"
           :hints="hints"
@@ -51,6 +52,7 @@ const groupOptions = ref([])
 const switchOptions = ref([])
 const bmcsetupOptions = ref([])
 const osimageOptions = ref([])
+const cloudnameOptions = ref([])
 const networkOptions = ref([])
 const bondModeOptions = ref([])
 const hints = ref({})
@@ -78,6 +80,12 @@ onMounted(async () => {
     switchOptions.value = optionList(payload, 'switch_list', 'switchname_list', 'switches')
     bmcsetupOptions.value = optionList(payload, 'bmcsetup_list', 'bmcsetupname_list')
     osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
+    cloudnameOptions.value = optionList(
+      payload,
+      'cloudname_list',
+      'cloud_name_list',
+      'cloud_list',
+    )
     networkOptions.value = optionList(payload, 'network_list', 'network')
     bondModeOptions.value = payload.bond_modes || payload.bond_mode_list?.options || []
     hints.value = payload.hints || payload.form_hints || {}

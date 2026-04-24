@@ -149,6 +149,22 @@
           </select>
         </div>
 
+        <div class="tx-field tx-field-adv-sys" style="width:100%">
+          <span class="tx-label">Asset Tag:</span>
+          <input type="text" v-model="form.asset_tag" maxlength="200" style="flex:1" />
+        </div>
+        <div class="tx-field tx-field-adv-sys" style="width:100%">
+          <span class="tx-label">Cloud Name:</span>
+          <select
+            v-model="form.cloud_name"
+            style="flex:1"
+            :class="{ 'tx-select-placeholder': !form.cloud_name }"
+          >
+            <option value="">--- Select ---</option>
+            <option v-for="c in cloudnameOptions" :key="c" :value="c">{{ c }}</option>
+          </select>
+        </div>
+
         <div class="tx-field-block">
           <div class="tx-label-row">
             <span class="tx-adv-heading">
@@ -243,6 +259,25 @@
           <span v-if="hints.provision_method" class="tx-hint">{{ hints.provision_method }}</span>
         </div>
 
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM UUID:</span>
+          <input type="text" v-model="form.tpm_uuid" maxlength="500" style="flex:1" />
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM Pubkey:</span>
+          <input type="text" v-model="form.tpm_pubkey" maxlength="2000" style="flex:1" />
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM SHA256:</span>
+          <input type="text" v-model="form.tpm_sha256" maxlength="200" style="flex:1" />
+        </div>
+        <div class="tx-field tx-field-adv-sys tx-field-adv-service" style="width:100%">
+          <span class="tx-label">Service:</span>
+          <div class="tx-adv-svc-cb">
+            <input type="checkbox" v-model="form.service" />
+          </div>
+        </div>
+
         <div class="tx-field-block tx-adv-full">
           <div class="tx-label-row">
             <span class="tx-label">Comment:</span>
@@ -287,6 +322,7 @@ const props = defineProps({
   osimageOptions: { type: Array, default: () => [] },
   networkOptions: { type: Array, default: () => [] },
   bondModeOptions: { type: Array, default: () => [] },
+  cloudnameOptions: { type: Array, default: () => [] },
   submitLabel: { type: String, default: 'Add Node' },
   hints: { type: Object, default: () => ({}) },
   getInventoryIpv4: { type: Function, default: null },
@@ -345,6 +381,8 @@ const form = reactive({
   roles: '',
   domain: '',
   unmanaged_bmc_users: '',
+  asset_tag: '',
+  cloud_name: '',
   kerneloptions: '',
   prescript: '',
   partscript: '',
@@ -353,6 +391,10 @@ const form = reactive({
   provision_interface: '',
   provision_fallback: '',
   provision_method: '',
+  tpm_uuid: '',
+  tpm_pubkey: '',
+  tpm_sha256: '',
+  service: false,
   comment: '',
   interfaces: [],
 })
@@ -394,6 +436,11 @@ function hydrateForm(d) {
   form.roles = d.roles != null ? String(d.roles) : ''
   form.domain = d.domain != null ? String(d.domain) : ''
   form.unmanaged_bmc_users = d.unmanaged_bmc_users != null ? String(d.unmanaged_bmc_users) : ''
+  form.asset_tag = d.asset_tag != null ? String(d.asset_tag) : ''
+  form.cloud_name =
+    d.cloud_name != null && d.cloud_name !== ''
+      ? String(d.cloud_name)
+      : (d.cloudname != null ? String(d.cloudname) : '')
   form.kerneloptions = d.kerneloptions != null ? String(d.kerneloptions) : ''
   form.prescript = d.prescript != null ? String(d.prescript) : ''
   form.partscript = d.partscript != null ? String(d.partscript) : ''
@@ -403,6 +450,13 @@ function hydrateForm(d) {
   form.provision_interface = d.provision_interface != null ? String(d.provision_interface) : ''
   form.provision_fallback = d.provision_fallback != null ? String(d.provision_fallback) : ''
   form.provision_method = d.provision_method != null ? String(d.provision_method) : ''
+  form.tpm_uuid = d.tpm_uuid != null ? String(d.tpm_uuid) : ''
+  form.tpm_pubkey = d.tpm_pubkey != null ? String(d.tpm_pubkey) : ''
+  form.tpm_sha256 = d.tpm_sha256 != null ? String(d.tpm_sha256) : ''
+  {
+    const s = d.service
+    form.service = s === true || s === 'true' || s === 1 || s === '1' || s === 'on'
+  }
   form.comment = d.comment != null ? String(d.comment) : ''
   if (Array.isArray(d.interfaces) && d.interfaces.length) {
     form.interfaces = d.interfaces.map((row) => ({
@@ -506,9 +560,9 @@ function buildFormData() {
   const scalarFields = [
     'name', 'groupname', 'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
     'switchname', 'switchport', 'vendor',
-    'domain', 'unmanaged_bmc_users', 'kerneloptions', 'prescript', 'partscript',
+    'domain', 'unmanaged_bmc_users', 'asset_tag', 'cloud_name', 'kerneloptions', 'prescript', 'partscript',
     'postscript', 'osimagetag', 'provision_interface', 'provision_fallback',
-    'provision_method', 'comment',
+    'provision_method', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',
   ]
   if (props.mode === 'clone') {
     scalarFields.push('newnodename')
@@ -516,6 +570,7 @@ function buildFormData() {
   for (const f of scalarFields) {
     if (form[f] != null) fd.append(f, form[f])
   }
+  if (form.service) fd.append('service', 'true')
   for (const iface of form.interfaces) {
     for (const k of Object.keys(iface)) {
       fd.append(k, iface[k] != null ? String(iface[k]) : '')
