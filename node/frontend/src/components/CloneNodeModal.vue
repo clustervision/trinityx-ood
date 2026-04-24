@@ -102,12 +102,13 @@ async function onSubmit() {
   const fd = formRef.value.buildFormData()
   errorMsg.value = ''
   try {
-    const { ok, data } = await submitNodeForm(`/clone/${encodeURIComponent(props.sourceNodeName)}`, fd)
+    const { ok, data, status } = await submitNodeForm(`/clone/${encodeURIComponent(props.sourceNodeName)}`, fd)
     if (ok || data.status === 'success') {
       emit('saved')
       emit('close')
     } else {
-      errorMsg.value = data.message || 'Clone failed.'
+      errorMsg.value =
+        data.message || data.error || (status ? `Clone failed (HTTP ${status}).` : 'Clone failed.')
     }
   } catch (err) {
     errorMsg.value = err.message || 'Network error.'

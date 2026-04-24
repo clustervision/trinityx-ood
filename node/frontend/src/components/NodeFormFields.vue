@@ -1,22 +1,17 @@
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
     <div class="tx-add-grid tx-add-form-main tx-node-add-main">
-      <template v-if="mode === 'clone'">
-        <div class="tx-field tx-field-strong tx-node-grid-span-3">
-          <span class="tx-label">Clone Name:</span>
-          <input type="text" :value="form.name" readonly />
-        </div>
-        <div class="tx-field tx-field-strong tx-node-grid-span-3">
-          <span class="tx-label">New Node Name:</span>
-          <input
-            type="text"
-            v-model="form.newnodename"
-            @keypress="noSpaces"
-            maxlength="100"
-            required
-          />
-        </div>
-      </template>
+      <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
+        <span class="tx-label">Clone Name:</span>
+        <input
+          v-model="form.newnodename"
+          type="text"
+          :placeholder="form.name || ''"
+          @keypress="noSpaces"
+          maxlength="100"
+          required
+        />
+      </div>
       <div v-else class="tx-field tx-field-strong tx-field-name-with-rename">
         <span class="tx-label">Name:</span>
         <div v-if="mode === 'edit'" class="tx-name-input-wrap">
@@ -582,22 +577,43 @@ function onUploadFile(e, field) {
   fr.readAsArrayBuffer(file)
 }
 
+/**
+ * UI state field names on `form` -> Luna node config column names (Flask + daemon; see sortby in constant.py).
+ * Mismatched names cause "400 - Columns are incorrect" from the daemon.
+ */
+const SCALAR_TO_POST_KEY = {
+  groupname: 'group',
+  bmcsetupname: 'bmcsetup',
+  switchname: 'switch',
+  asset_tag: 'assettag',
+  cloud_name: 'cloud',
+}
+
 function buildFormData() {
   const fd = new FormData()
-  const scalarFields = [
+  const baseScalars = [
     'name', 'groupname', 'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
     'switchname', 'switchport', 'vendor',
     'domain', 'unmanaged_bmc_users', 'asset_tag', 'cloud_name', 'kerneloptions', 'prescript', 'partscript',
     'postscript', 'osimagetag', 'provision_interface', 'provision_fallback',
     'provision_method', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',
   ]
-  if (props.mode === 'clone') {
-    scalarFields.push('newnodename')
-  }
+  const isClone = props.mode === 'clone'
+  const scalarFields = isClone ? [...baseScalars, 'newnodename'] : baseScalars
   for (const f of scalarFields) {
-    if (form[f] != null) fd.append(f, form[f])
+    const v = form[f]
+    if (v == null) continue
+    /*
+     * Flask clone uses: {k: v for k, v in request.form.items() if v not in [None]}
+     * so "" is sent; add/ uses "if v not in [None, '']" — empty fields become bogus columns
+     * in prepare_payload and the daemon may return "Columns are incorrect". Skip empty
+     * strings on clone (matches add/ intent; backend should also filter for robustness).
+     */
+    if (isClone && typeof v === 'string' && v.trim() === '') continue
+    const postKey = SCALAR_TO_POST_KEY[f] || f
+    fd.append(postKey, v)
   }
-  if (form.service) fd.append('service', 'true')
+  if (!isClone && form.service) fd.append('service', 'true')
   for (const iface of form.interfaces) {
     for (const k of Object.keys(iface)) {
       fd.append(k, iface[k] != null ? String(iface[k]) : '')
