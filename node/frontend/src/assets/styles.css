@@ -1041,6 +1041,30 @@ button.tx-name-link.tx-cell-ellipsis {
   font-size: 15px;
 }
 
+.tx-field-name-with-rename .tx-name-input-editing {
+  flex: 1;
+  min-width: 0;
+  margin: 0.2rem 0.15rem 0.2rem 0.45rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 15px;
+  border: 1px solid #a7c5ff;
+  border-radius: 4px;
+  outline: none;
+  background: #fff;
+}
+
+.tx-field-name-with-rename .tx-name-input-editing:focus {
+  border-color: #5376ea;
+  box-shadow: 0 0 0 2px rgba(83, 118, 234, 0.15);
+}
+
+.tx-field-name-with-rename .tx-btn-rename-cancel-char {
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #5376ea;
+}
+
 .tx-btn-rename {
   flex: none;
   display: inline-flex;

@@ -15,21 +15,43 @@
       <div v-else class="tx-field tx-field-strong tx-field-name-with-rename">
         <span class="tx-label">Name:</span>
         <div v-if="mode === 'edit'" class="tx-name-input-wrap">
-          <input
-            type="text"
-            class="tx-name-input-readonly"
-            :value="form.name"
-            readonly
-          />
-          <button
-            type="button"
-            class="tx-btn-rename"
-            title="Rename node"
-            aria-label="Rename node"
-            @click="renameModalOpen = true"
-          >
-            <img :src="renameIcon" alt="" width="20" height="20" />
-          </button>
+          <template v-if="!nameInlineEdit">
+            <input
+              type="text"
+              class="tx-name-input-readonly"
+              :value="form.name"
+              readonly
+            />
+            <button
+              type="button"
+              class="tx-btn-rename"
+              title="Edit name"
+              aria-label="Edit name"
+              @click="startInlineRename"
+            >
+              <img :src="renameIcon" alt="" width="20" height="20" />
+            </button>
+          </template>
+          <template v-else>
+            <input
+              v-model="nameDraft"
+              type="text"
+              class="tx-name-input-editing"
+              maxlength="100"
+              required
+              aria-label="Node name"
+              @keypress="noSpaces"
+            />
+            <button
+              type="button"
+              class="tx-btn-rename tx-btn-rename-cancel-char"
+              title="Stop editing name"
+              aria-label="Stop editing name"
+              @click="cancelInlineRename"
+            >
+              ×
+            </button>
+          </template>
         </div>
         <input
           v-else
@@ -312,12 +334,6 @@
       @close="closeTextEditor"
     />
 
-    <RenameNodeModal
-      v-if="renameModalOpen && mode === 'edit' && form.name"
-      :current-name="form.name"
-      @close="renameModalOpen = false"
-      @success="onRenameSuccess"
-    />
   </form>
 </template>
 
@@ -325,7 +341,6 @@
 import { ref, reactive, computed, watch } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
-import RenameNodeModal from './RenameNodeModal.vue'
 import renameIcon from '../assets/img/icon-rename.png'
 
 const props = defineProps({
@@ -344,11 +359,14 @@ const props = defineProps({
   inventoryExcludeNodeName: { type: String, default: '' },
 })
 
-const emit = defineEmits(['submit', 'renamed'])
+const emit = defineEmits(['submit'])
 
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
-const renameModalOpen = ref(false)
+/** Edit mode: inline rename; POST /rename/ only on Save if draft differs (see EditNodeModal). */
+const originalNodeName = ref('')
+const nameInlineEdit = ref(false)
+const nameDraft = ref('')
 const textEditorOpen = ref(false)
 const textEditorTitle = ref('')
 const textEditorField = ref('')
@@ -491,6 +509,12 @@ function hydrateForm(d) {
   } else {
     form.interfaces = []
   }
+  if (props.mode === 'edit') {
+    const n = form.name || ''
+    originalNodeName.value = n
+    nameDraft.value = n
+    nameInlineEdit.value = false
+  }
 }
 
 watch(() => props.initialData, (d) => hydrateForm(d), { immediate: true, deep: true })
@@ -514,10 +538,35 @@ function noSpaces(e) {
   if (e.charCode === 32) e.preventDefault()
 }
 
-function onRenameSuccess(newName) {
-  if (newName) form.name = newName
-  renameModalOpen.value = false
-  emit('renamed', newName)
+function startInlineRename() {
+  if (props.mode !== 'edit') return
+  nameInlineEdit.value = true
+  nameDraft.value = form.name || originalNodeName.value
+}
+
+function cancelInlineRename() {
+  nameInlineEdit.value = false
+  nameDraft.value = form.name || originalNodeName.value
+}
+
+/**
+ * @returns {{ oldName: string, newName: string } | null} — only when user opened inline name edit and changed it
+ */
+function getPendingRename() {
+  if (props.mode !== 'edit' || !nameInlineEdit.value) return null
+  const o = (originalNodeName.value || '').trim()
+  const n = (nameDraft.value || '').trim()
+  if (!n || n === o) return null
+  return { oldName: o, newName: n }
+}
+
+function applyRenamedInForm(newName) {
+  const s = (newName || '').trim()
+  if (!s) return
+  form.name = s
+  originalNodeName.value = s
+  nameDraft.value = s
+  nameInlineEdit.value = false
 }
 
 function openTextEditor(title, field) {
@@ -622,5 +671,5 @@ function buildFormData() {
   return fd
 }
 
-defineExpose({ form, buildFormData })
+defineExpose({ form, buildFormData, getPendingRename, applyRenamedInForm })
 </script>

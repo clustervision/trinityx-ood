@@ -25,7 +25,6 @@
           :inventory-exclude-node-name="inventoryExcludeNodeName"
           submit-label="Save Changes"
           @submit="onSubmit"
-          @renamed="(n) => $emit('renamed', n)"
         />
       </template>
     </div>
@@ -33,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeEditData, submitNodeForm } from '../api.js'
@@ -58,6 +57,8 @@ const networkOptions = ref([])
 const bondModeOptions = ref([])
 const hints = ref({})
 const formRef = ref(null)
+/** After a successful /rename, subsequent /edit/ must use the new name (URL + payload) even if parent prop is stale. */
+const editTargetName = ref('')
 
 function optionList(payload, ...keys) {
   for (const k of keys) {
@@ -98,13 +99,40 @@ onMounted(async () => {
   }
 })
 
+watch(
+  () => props.nodeName,
+  (n) => {
+    if (n) editTargetName.value = n
+  },
+  { immediate: true },
+)
+
 async function onSubmit() {
   if (!formRef.value) return
-  const fd = formRef.value.buildFormData()
   errorMsg.value = ''
+  const didRename = formRef.value.getPendingRename?.() ?? null
+  let recordName = editTargetName.value
   try {
-    const { ok, data } = await submitNodeForm(`/edit/${encodeURIComponent(props.nodeName)}`, fd)
+    if (didRename) {
+      const rfd = new FormData()
+      rfd.append('name', didRename.oldName)
+      rfd.append('newname', didRename.newName)
+      const re = await submitNodeForm(
+        `/rename/${encodeURIComponent(didRename.oldName)}`,
+        rfd,
+      )
+      if (!re.ok) {
+        errorMsg.value = re.data?.message || `Rename failed (${re.status})`
+        return
+      }
+      formRef.value.applyRenamedInForm(didRename.newName)
+      editTargetName.value = didRename.newName
+      recordName = didRename.newName
+    }
+    const fd = formRef.value.buildFormData()
+    const { ok, data } = await submitNodeForm(`/edit/${encodeURIComponent(recordName)}`, fd)
     if (ok || data.status === 'success') {
+      if (didRename) emit('renamed', recordName)
       emit('saved')
       emit('close')
     } else {
