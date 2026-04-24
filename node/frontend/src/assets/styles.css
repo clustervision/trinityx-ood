@@ -1713,7 +1713,7 @@ button.tx-name-link.tx-cell-ellipsis {
   width: auto;
 }
 
-/* ---------- Tri-state toggle (YES / NO / DEFAULT) ---------- */
+/* ---------- Tri-state toggle (YES / NO / INHERITED) ---------- */
 .tx-tri-field .tx-tri-inner {
   flex: 1;
   min-width: 0;
@@ -1774,7 +1774,7 @@ button.tx-name-link.tx-cell-ellipsis {
   border-color: #F58B00;
 }
 
-.tx-seg.is-active[data-v=""] {
+.tx-seg.is-active[data-v=""]:not(.tx-seg-tri-inherit) {
   background: #E8E8E8;
   color: #AEAEAE;
   border-color: #AEAEAE;
@@ -1842,20 +1842,31 @@ button.tx-name-link.tx-cell-ellipsis {
   justify-content: center;
 }
 
-.tx-add-form-main .tx-seg[data-v=""] {
-  width: 124px;
-  min-width: 124px;
-  max-width: 124px;
+.tx-add-form-main .tx-seg.tx-seg-tri-inherit[data-v=""] {
+  width: max-content;
+  min-width: 0;
+  max-width: 110px;
   height: 22px;
-  padding: 0;
+  padding: 0 3px;
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.4;
+  opacity: 1;
+  font-size: 11px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  background: #e6eeff;
+  color: #a7c5ff;
+  border: 2px solid #a7c5ff;
+  box-sizing: border-box;
 }
 
-.tx-add-form-main .tx-seg[data-v=""].is-active {
+.tx-add-form-main .tx-seg.tx-seg-tri-inherit.is-active[data-v=""] {
+  background: #e6eeff;
+  color: #0059ff;
+  border: 2px solid #0059ff;
   opacity: 1;
 }
 
@@ -1872,7 +1883,7 @@ button.tx-name-link.tx-cell-ellipsis {
   border-color: #f58b00;
 }
 
-.tx-add-form-main .tx-seg.is-active[data-v=""] {
+.tx-add-form-main .tx-seg.is-active[data-v=""]:not(.tx-seg-tri-inherit) {
   border-color: #aeaeae;
 }
 
