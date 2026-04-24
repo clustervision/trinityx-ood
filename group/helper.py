@@ -715,3 +715,32 @@ class Helper():
                 del response[key]
         return response, resp_overrides
 
+    def filter_data_json(self, table=None, data=None):
+        """
+        JSON list view: same column set as filter_data / filter_columns, no HTML.
+        If _override is True, append " *" to name (same as legacy table).
+        """
+        fields = filter_columns(table)
+        result = []
+        for _name, record in data.items():
+            item = {}
+            record_name = record.get('name')
+            if record.get('_override') and isinstance(record_name, str):
+                record_name = f"{record_name} *"
+            for field in fields:
+                if field == 'name':
+                    item[field] = record_name
+                else:
+                    item[field] = record.get(field)
+            result.append(item)
+        return fields, result
+
+    def get_bond_mode_list(self):
+        """
+        Bond mode options as a plain list (no HTML), for JSON add/edit/clone bodies.
+        """
+        return [
+            'balance-rr', 'active-backup', 'balance-xor',
+            'broadcast', '802.3ad', 'balance-tlb', 'balance-alb',
+        ]
+
