@@ -282,11 +282,11 @@
           <span class="tx-label">TPM SHA256:</span>
           <input type="text" v-model="form.tpm_sha256" maxlength="200" style="flex:1" />
         </div>
-        <div class="tx-field tx-field-adv-sys tx-field-adv-service" style="width:100%">
-          <span class="tx-label">Service:</span>
-          <div class="tx-adv-svc-cb">
-            <input type="checkbox" v-model="form.service" />
-          </div>
+        <div class="tx-adv-svc-merged" style="width:100%">
+          <label class="tx-adv-svc-merged-inner">
+            <span class="tx-adv-svc-text">Service:</span>
+            <input v-model="form.service" type="checkbox" class="tx-adv-svc-input" />
+          </label>
         </div>
 
         <div class="tx-field-block tx-adv-full">

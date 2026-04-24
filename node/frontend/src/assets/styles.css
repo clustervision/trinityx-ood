@@ -1383,12 +1383,76 @@ button.tx-name-link.tx-cell-ellipsis {
   border: 2px solid #E6EEFF;
 }
 
-.tx-field-adv-service .tx-adv-svc-cb {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding: 0.2rem 0.55rem;
+/* Advanced: Service — one light-blue bar, label + checkbox (no white “empty input” area) */
+.tx-adv-svc-merged {
   min-width: 0;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.tx-adv-svc-merged-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.4rem;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  background: #e6eeff;
+  border: 2px solid #e6eeff;
+  border-radius: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.tx-adv-svc-merged-inner:focus-within {
+  border-color: #a7c5ff;
+  outline: none;
+}
+
+.tx-adv-svc-text {
+  color: #5376ea;
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1.4;
+  user-select: none;
+}
+
+/* Thicker frame, same blue as label text (#5376ea) */
+.tx-adv-svc-input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  border: 2px solid #5376ea;
+  border-radius: 2px;
+  background-color: #fff;
+  background-image: none;
+  vertical-align: middle;
+}
+
+.tx-adv-svc-input[type="checkbox"]:checked {
+  background-color: #5376ea;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M2.5 6.2l2.3 2.2L9.5 3.5'/%3E%3C/svg%3E");
+  background-size: 12px 12px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tx-adv-svc-input[type="checkbox"]:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
 }
 
 .tx-field-adv-sys .tx-label {
