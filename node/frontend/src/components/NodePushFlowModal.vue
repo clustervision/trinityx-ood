@@ -29,6 +29,10 @@
               <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
             </select>
           </div>
+          <div v-if="flow === 'osgrab'" class="tx-field tx-field-match tx-field-nodry">
+            <span class="tx-label">Bare:</span>
+            <input type="checkbox" v-model="bare" />
+          </div>
           <div class="tx-field tx-field-match tx-field-nodry">
             <span class="tx-label">No Dry:</span>
             <input type="checkbox" v-model="noDry" />
@@ -61,6 +65,7 @@ const successMsg = ref('')
 const submitting = ref(false)
 const selectedGroup = ref('')
 const selectedOsimage = ref('')
+const bare = ref(false)
 const noDry = ref(false)
 const groupOptions = ref([])
 const osimageOptions = ref([])
@@ -89,6 +94,7 @@ async function onSubmit() {
   const fd = new FormData()
   fd.append('name', selectedGroup.value)
   fd.append('osimage', selectedOsimage.value)
+  if (props.flow === 'osgrab' && bare.value) fd.append('bare', 'true')
   if (noDry.value) fd.append('nodry', 'true')
   const path =
     props.flow === 'osgrab'
