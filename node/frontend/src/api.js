@@ -75,6 +75,22 @@ export async function fetchNodeCloneData(name) {
   return res.json()
 }
 
+export async function fetchNodeRenameData(record) {
+  const res = await fetch(`${baseUrl()}/rename/${encodeURIComponent(record)}?format=json`, {
+    headers: { Accept: 'application/json' },
+  })
+  if (!res.ok) {
+    let err = {}
+    try {
+      err = await res.json()
+    } catch {
+      /* ignore */
+    }
+    throw new Error(err.error || err.message || `Failed to load rename form: ${res.status}`)
+  }
+  return res.json()
+}
+
 export async function fetchNodeOspushData(name) {
   const res = await fetch(`${baseUrl()}/ospush/${encodeURIComponent(name)}?format=json`, {
     headers: { Accept: 'application/json' },

@@ -25,6 +25,7 @@
           :inventory-exclude-node-name="inventoryExcludeNodeName"
           submit-label="Save Changes"
           @submit="onSubmit"
+          @renamed="(n) => $emit('renamed', n)"
         />
       </template>
     </div>
@@ -42,7 +43,7 @@ const props = defineProps({
   getInventoryIpv4: { type: Function, default: null },
   inventoryExcludeNodeName: { type: String, default: '' },
 })
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits(['close', 'saved', 'renamed'])
 
 const loading = ref(true)
 const errorMsg = ref('')

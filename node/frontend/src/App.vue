@@ -22,11 +22,13 @@
   />
   <EditNodeModal
     v-if="editOpen && editNodeName"
+    :key="editNodeName"
     :node-name="editNodeName"
     :get-inventory-ipv4="inventoryIpv4Records"
     :inventory-exclude-node-name="editNodeName"
     @close="closeEdit"
     @saved="onNodeSaved"
+    @renamed="onNodeRenamed"
   />
   <NodePushFlowModal
     v-if="pushFlowOpen && pushFlowType && pushFlowNodeName"
@@ -107,6 +109,11 @@ function onCloneSaved() {
 function onNodeSaved() {
   addOpen.value = false
   closeEdit()
+  inventoryRef.value?.loadData?.()
+}
+
+function onNodeRenamed(newName) {
+  if (newName) editNodeName.value = newName
   inventoryRef.value?.loadData?.()
 }
 

@@ -17,14 +17,25 @@
           />
         </div>
       </template>
-      <div v-else class="tx-field tx-field-strong">
+      <div v-else class="tx-field tx-field-strong tx-field-name-with-rename">
         <span class="tx-label">Name:</span>
-        <input
-          v-if="mode === 'edit'"
-          type="text"
-          :value="form.name"
-          readonly
-        />
+        <div v-if="mode === 'edit'" class="tx-name-input-wrap">
+          <input
+            type="text"
+            class="tx-name-input-readonly"
+            :value="form.name"
+            readonly
+          />
+          <button
+            type="button"
+            class="tx-btn-rename"
+            title="Rename node"
+            aria-label="Rename node"
+            @click="renameModalOpen = true"
+          >
+            <img :src="renameIcon" alt="" width="20" height="20" />
+          </button>
+        </div>
         <input
           v-else
           type="text"
@@ -305,6 +316,13 @@
       @update:model-value="onTextEditorModalApply"
       @close="closeTextEditor"
     />
+
+    <RenameNodeModal
+      v-if="renameModalOpen && mode === 'edit' && form.name"
+      :current-name="form.name"
+      @close="renameModalOpen = false"
+      @success="onRenameSuccess"
+    />
   </form>
 </template>
 
@@ -312,6 +330,8 @@
 import { ref, reactive, computed, watch } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
+import RenameNodeModal from './RenameNodeModal.vue'
+import renameIcon from '../assets/img/icon-rename.png'
 
 const props = defineProps({
   mode: { type: String, default: 'add' },
@@ -329,10 +349,11 @@ const props = defineProps({
   inventoryExcludeNodeName: { type: String, default: '' },
 })
 
-defineEmits(['submit'])
+const emit = defineEmits(['submit', 'renamed'])
 
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
+const renameModalOpen = ref(false)
 const textEditorOpen = ref(false)
 const textEditorTitle = ref('')
 const textEditorField = ref('')
@@ -496,6 +517,12 @@ function removeInterface(idx) {
 
 function noSpaces(e) {
   if (e.charCode === 32) e.preventDefault()
+}
+
+function onRenameSuccess(newName) {
+  if (newName) form.name = newName
+  renameModalOpen.value = false
+  emit('renamed', newName)
 }
 
 function openTextEditor(title, field) {
