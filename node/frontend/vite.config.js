@@ -24,8 +24,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [vue()],
     build: {
-      // Flask app serves Vue from trinityx-ood/node/static/spa/ (see templates/index.html).
-      outDir: '../trinityx-ood/node/static/spa',
+      outDir: '../trinityx-ood/node/app/assets',
       emptyOutDir: true,
       rollupOptions: {
         output: {
