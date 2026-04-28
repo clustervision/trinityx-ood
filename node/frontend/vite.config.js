@@ -22,8 +22,12 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    // Dev: '/' so `public/` and /src assets work on :5174. Production: '/static/' so URLs match
+    // Flask static_folder (files served as /static/<name>).
+    base: mode === 'production' ? '/static/' : '/',
     plugins: [vue()],
     build: {
+      // Same layout as rack: Flask static_folder app/assets (see trinityx-ood/node/app/index.html).
       outDir: '../trinityx-ood/node/app/assets',
       emptyOutDir: true,
       rollupOptions: {
