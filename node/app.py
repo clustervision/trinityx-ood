@@ -19,7 +19,7 @@
 
 """
 This File is a Main File Luna 2 Node.
-Flask API + Vue SPA (templates/index.html, static/spa/ from frontend build).
+Flask API + Vue SPA (app/index.html Jinja shell; Vue build in app/assets/, same as rack).
 """
 
 __author__      = 'Sumit Sharma'
@@ -45,8 +45,8 @@ from model import Model
 LOGGER = Log.init_log('INFO')
 TABLE = 'node'
 TABLE_CAP = 'Node'
-# SPA: one Jinja shell in templates/index.html; Vue build output in static/spa/.
-app = Flask(__name__, static_folder="static", template_folder="templates")
+# SPA: Jinja shell in app/index.html; built Vue assets in app/assets (vite outDir), like rack.
+app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False:
