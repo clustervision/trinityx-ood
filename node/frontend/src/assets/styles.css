@@ -2005,9 +2005,9 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-add-form-main .tx-seg.tx-seg-tri-inherit[data-v=""] {
   width: max-content;
   min-width: 0;
-  max-width: 110px;
+  max-width: 160px;
   height: 22px;
-  padding: 0 8px;
+  padding: 0 12px;
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
@@ -2027,7 +2027,7 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-add-form-main .tx-seg.tx-seg-tri-inherit.is-active[data-v=""] {
   background: #e6eeff;
-  color: #444444;
+  color: #0059ff;
   border: 2px solid #0059ff;
   opacity: 1;
 }

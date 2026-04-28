@@ -86,7 +86,7 @@
           <div class="tx-segmented" role="group" aria-label="Net boot">
             <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
             <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
-            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''">INHERITED (YES)</button>
+            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''"> INHERITED (YES) </button>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@
           <div class="tx-segmented" role="group" aria-label="BMC setup">
             <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">YES</button>
             <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">NO</button>
-            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''">INHERITED (YES)</button>
+            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''"> INHERITED (YES) </button>
           </div>
         </div>
       </div>
