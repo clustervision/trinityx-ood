@@ -425,7 +425,7 @@ button.tx-name-link.tx-cell-ellipsis {
   text-align: center;
 }
 
-/* Alternating row backgrounds (Interfaces sub-cells excluded — they use per-line stripes below) */
+/* Alternating row backgrounds (Interface columns use row-level orange stripes below, not blue/white) */
 .tx-inventory-table tbody tr:nth-child(odd) td:not(.tx-iface-name):not(.tx-iface-network):not(.tx-iface-cell) {
   background: rgba(230, 238, 255, 0.6);
 }
@@ -435,21 +435,28 @@ button.tx-name-link.tx-cell-ellipsis {
 }
 
 /*
- * Interfaces: per sub-line stripes. Do NOT set display:flex on <td> — it breaks table column layout
- * (MAC/IP cells collapse visually into the first iface column; TPM/Actions shift).
+ * Interfaces: one background per node row (all iface lines share the same shade).
+ * Do NOT set display:flex on <td> — it breaks table column layout.
  * Solid td background fills any extra row height below the last entry.
+ * Odd/even table rows: #FDF9F3 (deeper cream) / #FAF0E0 (lighter peach).
  */
-/* Interfaces sub-rows: alternate #FDF9F3 (deeper cream) / #FAF0E0 (lighter peach) */
 .tx-inventory-table tbody td.tx-iface-cell {
   vertical-align: top !important;
+}
+
+.tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-cell {
   background: #FDF9F3;
 }
 
-.tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry:nth-child(odd) {
+.tx-inventory-table tbody tr:nth-child(even) td.tx-iface-cell {
+  background: #FAF0E0;
+}
+
+.tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-cell .tx-iface-entry {
   background: #FDF9F3;
 }
 
-.tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry:nth-child(even) {
+.tx-inventory-table tbody tr:nth-child(even) td.tx-iface-cell .tx-iface-entry {
   background: #FAF0E0;
 }
 
