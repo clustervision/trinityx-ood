@@ -322,8 +322,18 @@
     </div>
 
     <div class="tx-form-footer">
-      <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">
-        Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}
+      <button
+        type="button"
+        class="tx-btn tx-btn-outline-blue tx-btn-advanced-toggle"
+        :aria-expanded="showAdvanced"
+        @click="showAdvanced = !showAdvanced"
+      >
+        <span>Advanced</span>
+        <span
+          class="tx-advanced-chevron"
+          :class="{ 'is-open': showAdvanced }"
+          aria-hidden="true"
+        />
       </button>
       <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
     </div>
