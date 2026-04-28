@@ -198,10 +198,10 @@
                 <button
                   type="button"
                   class="tx-icon-act tx-icon-osgrab"
-                  title="OS Grab"
+                  title="Grab OS Image"
                   @click="$emit('open-osgrab', canonicalName(row.name))"
                 >
-                  <img :src="actionIcons.osgrab" alt="OS Grab" width="28" height="28"
+                  <img :src="actionIcons.osgrab" alt="Grab OS Image" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
                   <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>

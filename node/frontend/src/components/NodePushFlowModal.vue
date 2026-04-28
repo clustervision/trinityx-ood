@@ -6,7 +6,7 @@
 
       <div class="tx-header">
         <h2 v-if="flow === 'osgrab'" class="tx-title">
-          OS Grab for Node <span class="tx-title-node-name">{{ nodeName }}</span>
+          Grab OS Image for Node <span class="tx-title-node-name">{{ nodeName }}</span>
         </h2>
         <h2 v-else class="tx-title">
           Push OS Image for Node <span class="tx-title-node-name">{{ nodeName }}</span>
@@ -71,7 +71,7 @@ const groupOptions = ref([])
 const osimageOptions = ref([])
 
 const submitButtonLabel = computed(() =>
-  props.flow === 'osgrab' ? 'OS Grab' : 'Push OS Image',
+  props.flow === 'osgrab' ? 'Grab OS Image' : 'Push OS Image',
 )
 
 onMounted(async () => {
