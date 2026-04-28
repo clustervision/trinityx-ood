@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeEditData, submitNodeForm } from '../api.js'
@@ -57,8 +57,6 @@ const networkOptions = ref([])
 const bondModeOptions = ref([])
 const hints = ref({})
 const formRef = ref(null)
-/** After a successful /rename, subsequent /edit/ must use the new name (URL + payload) even if parent prop is stale. */
-const editTargetName = ref('')
 
 function optionList(payload, ...keys) {
   for (const k of keys) {
@@ -99,44 +97,27 @@ onMounted(async () => {
   }
 })
 
-watch(
-  () => props.nodeName,
-  (n) => {
-    if (n) editTargetName.value = n
-  },
-  { immediate: true },
-)
-
 async function onSubmit() {
   if (!formRef.value) return
   errorMsg.value = ''
-  const didRename = formRef.value.getPendingRename?.() ?? null
-  let recordName = editTargetName.value
+  const pending = formRef.value.getPendingRename?.() ?? null
   try {
-    if (didRename) {
-      const rfd = new FormData()
-      rfd.append('name', didRename.oldName)
-      rfd.append('newname', didRename.newName)
-      const re = await submitNodeForm(
-        `/rename/${encodeURIComponent(didRename.oldName)}`,
-        rfd,
-      )
-      if (!re.ok) {
-        errorMsg.value = re.data?.message || `Rename failed (${re.status})`
-        return
-      }
-      formRef.value.applyRenamedInForm(didRename.newName)
-      editTargetName.value = didRename.newName
-      recordName = didRename.newName
-    }
+    /*
+     * Rename without backend-only /rename merge: one POST /edit/{oldName} with full buildFormData +
+     * newnodename (Luna daemon). body["name"] in the form stays the original node name via form.name.
+     */
     const fd = formRef.value.buildFormData()
-    const { ok, data } = await submitNodeForm(`/edit/${encodeURIComponent(recordName)}`, fd)
+    if (pending) fd.append('newnodename', pending.newName)
+
+    const urlNode = pending ? pending.oldName : props.nodeName
+    const { ok, data } = await submitNodeForm(`/edit/${encodeURIComponent(urlNode)}`, fd)
     if (ok || data.status === 'success') {
-      if (didRename) emit('renamed', recordName)
+      if (pending) formRef.value.applyRenamedInForm(pending.newName)
+      if (pending) emit('renamed', pending.newName)
       emit('saved')
       emit('close')
     } else {
-      errorMsg.value = data.message || 'Update failed.'
+      errorMsg.value = data.message || 'Save failed.'
     }
   } catch (err) {
     errorMsg.value = err.message || 'Network error.'

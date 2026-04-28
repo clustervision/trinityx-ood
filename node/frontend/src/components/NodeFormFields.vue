@@ -8,6 +8,7 @@
           type="text"
           :placeholder="form.name || ''"
           @keypress="noSpaces"
+          @blur="onCloneNameBlur"
           maxlength="100"
           required
         />
@@ -41,6 +42,7 @@
               required
               aria-label="Node name"
               @keypress="noSpaces"
+              @blur="onNameDraftBlur"
             />
             <button
               type="button"
@@ -58,6 +60,7 @@
           type="text"
           v-model="form.name"
           @keypress="noSpaces"
+          @blur="onAddNameBlur"
           maxlength="100"
           required
         />
@@ -538,6 +541,26 @@ function noSpaces(e) {
   if (e.charCode === 32) e.preventDefault()
 }
 
+/** Daemon rejects names outside:a-z 0-9 - . (error mentions lowercase only). */
+function normalizeLunaNodeName(s) {
+  return String(s ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, '')
+}
+
+function onNameDraftBlur() {
+  nameDraft.value = normalizeLunaNodeName(nameDraft.value)
+}
+
+function onAddNameBlur() {
+  form.name = normalizeLunaNodeName(form.name)
+}
+
+function onCloneNameBlur() {
+  form.newnodename = normalizeLunaNodeName(form.newnodename)
+}
+
 function startInlineRename() {
   if (props.mode !== 'edit') return
   nameInlineEdit.value = true
@@ -554,10 +577,11 @@ function cancelInlineRename() {
  */
 function getPendingRename() {
   if (props.mode !== 'edit' || !nameInlineEdit.value) return null
-  const o = (originalNodeName.value || '').trim()
-  const n = (nameDraft.value || '').trim()
-  if (!n || n === o) return null
-  return { oldName: o, newName: n }
+  const oRaw = (originalNodeName.value || '').trim()
+  const n = normalizeLunaNodeName(nameDraft.value)
+  if (!n) return null
+  if (n === normalizeLunaNodeName(oRaw)) return null
+  return { oldName: oRaw, newName: n }
 }
 
 function applyRenamedInForm(newName) {
@@ -638,12 +662,54 @@ const SCALAR_TO_POST_KEY = {
   cloud_name: 'cloud',
 }
 
+/**
+ * Luna node columns (trinityx OOD sortby + rename). Omit keys not listed — e.g. `domain`
+ * is group-level in API docs and triggers 400 "Columns are incorrect" on node POST.
+ */
+const LUNA_NODE_SCALAR_KEYS = new Set([
+  'name',
+  'hostname',
+  'group',
+  'osimage',
+  'osimagetag',
+  'kerneloptions',
+  'vendor',
+  'assettag',
+  'position',
+  'switch',
+  'switchport',
+  'cloud',
+  'setupbmc',
+  'bmcsetup',
+  'unmanaged_bmc_users',
+  'netboot',
+  'bootmenu',
+  'service',
+  'roles',
+  'scripts',
+  'prescript_source',
+  'prescript',
+  'partscript_source',
+  'partscript',
+  'postscript_source',
+  'postscript',
+  'provision_interface',
+  'provision_method',
+  'provision_fallback',
+  'tpm_uuid',
+  'tpm_pubkey',
+  'tpm_sha256',
+  'comment',
+  'macaddress',
+  'newnodename',
+])
+
 function buildFormData() {
   const fd = new FormData()
   const baseScalars = [
     'name', 'groupname', 'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
     'switchname', 'switchport', 'vendor',
-    'domain', 'unmanaged_bmc_users', 'asset_tag', 'cloud_name', 'kerneloptions', 'prescript', 'partscript',
+    'unmanaged_bmc_users', 'asset_tag', 'cloud_name', 'kerneloptions', 'prescript', 'partscript',
     'postscript', 'osimagetag', 'provision_interface', 'provision_fallback',
     'provision_method', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',
   ]
@@ -652,15 +718,21 @@ function buildFormData() {
   for (const f of scalarFields) {
     const v = form[f]
     if (v == null) continue
-    /*
-     * Flask clone uses: {k: v for k, v in request.form.items() if v not in [None]}
-     * so "" is sent; add/ uses "if v not in [None, '']" — empty fields become bogus columns
-     * in prepare_payload and the daemon may return "Columns are incorrect". Skip empty
-     * strings on clone (matches add/ intent; backend should also filter for robustness).
-     */
-    if (isClone && typeof v === 'string' && v.trim() === '') continue
+    let out = v
+    if (typeof v === 'string') {
+      if (f === 'newnodename' && isClone) {
+        out = normalizeLunaNodeName(v)
+      } else if (f === 'name' && props.mode === 'add') {
+        out = normalizeLunaNodeName(v)
+      }
+      /*
+       * Flask clone: omit empty optional fields (see earlier comment in this file).
+       */
+      if (isClone && out.trim() === '') continue
+    }
     const postKey = SCALAR_TO_POST_KEY[f] || f
-    fd.append(postKey, v)
+    if (!LUNA_NODE_SCALAR_KEYS.has(postKey)) continue
+    fd.append(postKey, out)
   }
   if (!isClone && form.service) fd.append('service', 'true')
   for (const iface of form.interfaces) {
