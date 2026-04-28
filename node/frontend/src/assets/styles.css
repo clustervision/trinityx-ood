@@ -2000,25 +2000,27 @@ button.tx-name-link.tx-cell-ellipsis {
   min-width: 0;
   max-width: 110px;
   height: 22px;
-  padding: 0 3px;
+  padding: 0 8px;
   border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   opacity: 1;
-  font-size: 11px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  /* Same typography as YES / NO (.tx-add-form-main .tx-seg); weight from parent (400 in modal) */
+  font-size: 13px;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
   white-space: nowrap;
-  background: #e6eeff;
-  color: #a7c5ff;
-  border: 2px solid #a7c5ff;
+  /* Same unselected look as YES / NO (no separate inherit palette) */
+  background: #f5f7fb;
+  color: #444444;
+  border: 2px solid #e6eeff;
   box-sizing: border-box;
 }
 
 .tx-add-form-main .tx-seg.tx-seg-tri-inherit.is-active[data-v=""] {
   background: #e6eeff;
-  color: #0059ff;
+  color: #444444;
   border: 2px solid #0059ff;
   opacity: 1;
 }
