@@ -6,7 +6,10 @@
 
       <template v-if="!loading && !fatalError">
         <div class="tx-header">
-          <h2 class="tx-title">Clone Node</h2>
+          <h2 class="tx-title tx-clone-page-title">
+            <span class="tx-clone-title-label">Clone Node</span>
+            <span class="tx-clone-source-node-name">{{ cloneSourceDisplayName }}</span>
+          </h2>
         </div>
 
         <NodeFormFields
@@ -32,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeCloneData, submitNodeForm } from '../api.js'
@@ -57,6 +60,12 @@ const networkOptions = ref([])
 const bondModeOptions = ref([])
 const hints = ref({})
 const formRef = ref(null)
+
+const cloneSourceDisplayName = computed(() => {
+  const n = formData.value?.name
+  if (n != null && String(n).trim() !== '') return String(n)
+  return props.sourceNodeName || ''
+})
 
 function optionList(payload, ...keys) {
   for (const k of keys) {

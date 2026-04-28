@@ -908,6 +908,11 @@ button.tx-name-link.tx-cell-ellipsis {
   font-weight: 700;
 }
 
+.tx-form-page .tx-title.tx-clone-page-title .tx-clone-source-node-name {
+  margin-left: 0.35em;
+  color: #321DFF !important;
+}
+
 /* OS Push / OS Grab: node name matches form controls (select/input), same blue as title */
 .tx-ospush-page .tx-title-node-name {
   font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
@@ -990,6 +995,11 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-modal-container .tx-btn {
   font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
+}
+
+/* Add / Edit / Clone form: Advanced, Interfaces, submit (Add Node / Clone Node / …) — match Name field (15px); colors unchanged */
+.tx-modal-container .tx-group-form .tx-btn {
+  font-size: 15px;
 }
 
 .tx-modal-container .tx-upload-pill span {
@@ -2218,6 +2228,12 @@ select.tx-select-placeholder {
   min-width: min-content;
   position: relative;
   z-index: 2;
+}
+
+/* Grab / Push: submit matches NODE & OS Image selects (15px, Geist); colors unchanged */
+.tx-modal-container .tx-ospush-page .tx-btn {
+  font-size: 15px;
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* No Dry: value side same background as label strip (#E6EEFF) */
