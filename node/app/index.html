@@ -18,8 +18,7 @@
     <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
     <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}" />
     <script>
-      window.APP_URL = {{ APP_URL | tojson }};
-      window.CONTEXT_URL = {{ CONTEXT_URL | tojson }};
+      window.APP_URL = "{{ APP_URL }}";
     </script>
   </head>
   <body>

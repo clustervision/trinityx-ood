@@ -102,15 +102,12 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    Serve the Vue SPA shell. window.APP_URL is this app's base URL; window.CONTEXT_URL
-    comes from Helper.context_url (OOD / gateway).
+    Serve the Vue SPA shell. window.APP_URL is this app's base URL.
     """
-    app_url = Helper().group_app_base_url(request)
-    context_url = Helper().context_url(request)
+    url = Helper().app_url(request)
     return render_template(
         "index.html",
-        APP_URL=app_url,
-        CONTEXT_URL=context_url,
+        APP_URL=url["APP_URL"],
     )
 
 

@@ -163,12 +163,10 @@ def home():
     """
     if _wants_json():
         return _nodes_inventory_json()
-    app_url = Helper().node_app_base_url(request)
-    context_url = Helper().context_url(request)
+    url = Helper().app_url(request)
     return render_template(
         "index.html",
-        APP_URL=app_url,
-        CONTEXT_URL=context_url,
+        APP_URL=url["APP_URL"],
     )
 
 
