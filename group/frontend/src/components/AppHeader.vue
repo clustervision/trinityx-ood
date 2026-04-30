@@ -18,6 +18,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { baseUrl } from '../api.js'
 
 /** Hostname of the TrinityX controller (from Vite env), not the dev machine. */
 function backendHostname() {
@@ -29,10 +30,10 @@ function backendHostname() {
       /* fall through */
     }
   }
-  const ctx = typeof window !== 'undefined' ? (window.CONTEXT_URL || '') : ''
-  if (ctx) {
+  const base = baseUrl()
+  if (base) {
     try {
-      return new URL(ctx).hostname
+      return new URL(base).hostname
     } catch {
       /* fall through */
     }
@@ -40,9 +41,17 @@ function backendHostname() {
   return typeof window !== 'undefined' ? window.location.hostname : ''
 }
 
+/** Logo + Home → dashboard :8080 (match API scheme when VITE_GROUP_BACKEND is set: http avoids ERR_SSL_PROTOCOL_ERROR). */
 const homeUrl = computed(() => {
-  const ctx = window.CONTEXT_URL || ''
-  if (ctx) return ctx
+  const raw = import.meta.env.VITE_GROUP_BACKEND || ''
+  if (raw) {
+    try {
+      const u = new URL(raw)
+      return `${u.protocol}//${u.hostname}:8080`
+    } catch {
+      /* fall through */
+    }
+  }
   const h = backendHostname()
   return h ? `https://${h}:8080` : '#'
 })

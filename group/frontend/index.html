@@ -4,17 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Group :: Luna (dev)</title>
+    <link rel="icon" type="image/png" href="/static/img/logo.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/index.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/500.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/700.css" crossorigin="anonymous" />
 
+    <!-- Dev: leave empty — browser calls same-origin /groups; Vite proxies to VITE_GROUP_BACKEND (see vite.config.js). -->
+    <!-- Setting a full URL here makes the browser fetch cross-origin → CORS unless the API sends Access-Control-Allow-Origin. -->
     <script>
+      // window.APP_URL = '';
       window.APP_URL = "{{APP_URL}}";
-      window.CONTEXT_URL = "{{CONTEXT_URL}}";
-    </script>
-    <script>
-      window.APP_URL = "http://yixin3-dev-ctrl001:7755";
-      window.CONTEXT_URL = "https://yixin3-dev-ctrl001:8080";
     </script>
   </head>
   <body>
