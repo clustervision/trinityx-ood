@@ -111,7 +111,7 @@ def home():
     )
 
 
-@app.route('/', methods=['GET'])
+@app.route('/groups', methods=['GET'])
 def api_groups():
     """
     JSON list of all groups for the Vue frontend table.
