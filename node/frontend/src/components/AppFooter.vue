@@ -16,9 +16,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { baseUrl } from '../api.js'
 
-const licenseUrl = computed(() => {
-  const appUrl = window.APP_URL || ''
-  return `${appUrl.replace(/\/$/, '')}/license`
-})
+const licenseUrl = computed(() => `${baseUrl()}/license`)
 </script>
