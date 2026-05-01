@@ -18,45 +18,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { baseUrl } from '../api.js'
 import { publicAssetUrl } from '../utils/publicAssets.js'
 
-/** Hostname of the TrinityX controller (from Vite env), not the dev machine. */
-function backendHostname() {
-  const raw = import.meta.env.VITE_NODE_BACKEND || ''
-  if (raw) {
-    try {
-      return new URL(raw).hostname
-    } catch {
-      /* fall through */
-    }
-  }
-  const base = baseUrl()
-  if (base) {
-    try {
-      return new URL(base).hostname
-    } catch {
-      /* fall through */
-    }
-  }
-  return typeof window !== 'undefined' ? window.location.hostname : ''
-}
-
-/** Logo + Home → dashboard :8080 (match API scheme when VITE_NODE_BACKEND is set: http avoids ERR_SSL_PROTOCOL_ERROR). */
+/** Same scheme as the page (HTTPS in deploy) — avoids hard-coded http from VITE_NODE_BACKEND. */
 const homeUrl = computed(() => {
-  const raw = import.meta.env.VITE_NODE_BACKEND || ''
-  if (raw) {
-    try {
-      const u = new URL(raw)
-      return `${u.protocol}//${u.hostname}:8080`
-    } catch {
-      /* fall through */
-    }
-  }
-  const h = backendHostname()
-  return h ? `https://${h}:8080` : '#'
+  if (typeof window === 'undefined') return '#'
+  return `${location.protocol}//${location.hostname}:8080`
 })
 
-/** Always `public/img/logo.png` (Vite copies `public/` to site root; respects BASE_URL in deploy). */
+/** `public/img/logo.png`, prefixed with Vite `base` in production. */
 const logoSrc = computed(() => publicAssetUrl('img/logo.png'))
 </script>

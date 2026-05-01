@@ -11,7 +11,12 @@ export const baseUrl = () => {
     .trim()
     .replace(/\/$/, '')
   if (UNSUBSTITUTED_APP_URL.test(explicit)) explicit = ''
-  if (explicit) return explicit
+  if (explicit) {
+    if (typeof location !== 'undefined' && location.protocol === 'https:') {
+      explicit = explicit.replace(/^http:\/\//i, 'https://')
+    }
+    return explicit
+  }
   if (import.meta.env.DEV) return '/node-backend'
   return ''
 }
