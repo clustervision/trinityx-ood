@@ -95,20 +95,10 @@ include network/templates/layout/*
 
 include node
 include node/*
-include node/static
-include node/static/*
-include node/static/css
-include node/static/css/*
-include node/static/fonts
-include node/static/fonts/*
-include node/static/img
-include node/static/img/*
-include node/static/js
-include node/static/js/*
-include node/templates
-include node/templates/*
-include node/templates/layout
-include node/templates/layout/*
+include node/app
+include node/app/*
+include node/app/assets
+include node/app/assets/*
 
 include osimage
 include osimage/*
