@@ -4,15 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Group :: Luna (dev)</title>
-    <link rel="icon" type="image/png" href="/static/img/logo.png" />
+    <link rel="icon" type="image/png" href="%BASE_URL%static/img/logo.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/index.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/500.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/700.css" crossorigin="anonymous" />
-
-    <!-- Dev: leave empty — browser calls same-origin /groups; Vite proxies to VITE_GROUP_BACKEND (see vite.config.js). -->
-    <!-- Setting a full URL here makes the browser fetch cross-origin → CORS unless the API sends Access-Control-Allow-Origin. -->
     <script>
-      // window.APP_URL = '';
+      (function () {
+        var b = '%BASE_URL%'
+        if (typeof b !== 'string' || b.indexOf('BASE_URL') !== -1) b = '/'
+        document.documentElement.style.setProperty('--tx-icon-edit', 'url("' + b + 'icons/icon-edit.png")')
+        document.documentElement.style.setProperty('--tx-icon-edit-orange', 'url("' + b + 'icons/icon-edit-orange.png")')
+      })()
+    </script>
+    <script>
       window.APP_URL = "{{APP_URL}}";
     </script>
   </head>
