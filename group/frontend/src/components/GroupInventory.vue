@@ -125,7 +125,7 @@
                   title="Clone"
                   @click="$emit('clone', canonicalName(row.name))"
                 >
-                  <img src="/icons/icon-clone.png" alt="Clone" width="28" height="28"
+                  <img :src="`${iconBase}icons/icon-clone.png`" alt="Clone" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
                   <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
@@ -136,7 +136,7 @@
                   title="OS Push"
                   @click="$emit('ospush', canonicalName(row.name))"
                 >
-                  <img src="/icons/icon-ospush.png" alt="OS Push" width="28" height="28"
+                  <img :src="`${iconBase}icons/icon-ospush.png`" alt="OS Push" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
                   <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
@@ -147,7 +147,7 @@
                   title="Delete"
                   @click="$emit('delete', canonicalName(row.name))"
                 >
-                  <img src="/icons/icon-delete.png" alt="Delete" width="28" height="28"
+                  <img :src="`${iconBase}icons/icon-delete.png`" alt="Delete" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
                   />
                   <svg style="display:none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
@@ -220,6 +220,8 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 25, 50, 100]
 const helpOpen = ref(false)
+
+const iconBase = import.meta.env.BASE_URL
 
 const hasInterfaces = computed(() => fields.value.includes('interfaces'))
 

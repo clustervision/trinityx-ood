@@ -1293,7 +1293,7 @@ button.tx-name-link {
   border: none;
   border-radius: 4px;
   background-color: transparent;
-  background-image: url("/icons/icon-edit.png");
+  background-image: var(--tx-icon-edit);
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
@@ -1303,7 +1303,7 @@ button.tx-name-link {
 
 .tx-expand-text-trigger:hover {
   background-color: rgba(83, 118, 234, 0.1);
-  background-image: url("/icons/icon-edit.png");
+  background-image: var(--tx-icon-edit);
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
@@ -1323,7 +1323,7 @@ button.tx-name-link {
   border: none;
   border-radius: 4px;
   background-color: transparent;
-  background-image: url("/icons/icon-edit-orange.png");
+  background-image: var(--tx-icon-edit-orange);
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;
@@ -1333,7 +1333,7 @@ button.tx-name-link {
 
 .tx-expand-text-trigger.tx-expand-text-trigger--iface-options:hover {
   background-color: rgba(245, 139, 0, 0.12);
-  background-image: url("/icons/icon-edit-orange.png");
+  background-image: var(--tx-icon-edit-orange);
   background-position: center;
   background-size: 20px 20px;
   background-repeat: no-repeat;

@@ -1,7 +1,12 @@
-export const baseUrl = () =>
-  String(window.APP_URL || import.meta.env.VITE_APP_URL || '')
+export const baseUrl = () => {
+  let s = String(window.APP_URL || import.meta.env.VITE_APP_URL || '')
     .trim()
     .replace(/\/$/, '')
+  if (typeof location !== 'undefined' && location.protocol === 'https:') {
+    s = s.replace(/^http:\/\//i, 'https://')
+  }
+  return s
+}
 
 export async function fetchGroups() {
   const res = await fetch(`${baseUrl()}/groups`, {

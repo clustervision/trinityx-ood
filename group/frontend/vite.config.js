@@ -12,13 +12,24 @@ export default defineConfig(({ mode }) => {
   const backendTarget =
     env.VITE_GROUP_BACKEND || 'http://127.0.0.1:7755'
 
+  const rawBase =
+    mode === 'production' ? (env.VITE_PUBLIC_BASE || '/').trim() : '/'
+  const base =
+    !rawBase || rawBase === '/'
+      ? '/'
+      : rawBase.endsWith('/')
+        ? rawBase
+        : `${rawBase}/`
+
   // Vite treats proxy keys starting with ^ as RegExp (must be strings, not RegExp objects).
   const groupApi =
     '^/(groups|show|get_list|add|edit|delete|clone|remove|rename|member|ospush|check_status|license)(/|$|\\?)'
 
+  console.info('[vite] base:', base)
   console.info('[vite] Group API proxy target:', backendTarget)
 
   return {
+    base,
     plugins: [vue()],
     build: {
       // outDir: '../app/assets',
