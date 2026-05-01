@@ -1,37 +1,27 @@
-<!--
-# This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>
-
--->
-
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Group :: Luna</title>
-    <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
-    <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}" />
+    <title>Group :: Luna (dev)</title>
+    <link rel="icon" type="image/png" href="%BASE_URL%static/img/logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/index.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/500.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/700.css" crossorigin="anonymous" />
     <script>
-      window.APP_URL = "{{ APP_URL }}";
+      (function () {
+        var b = '%BASE_URL%'
+        if (typeof b !== 'string' || b.indexOf('BASE_URL') !== -1) b = '/'
+        document.documentElement.style.setProperty('--tx-icon-edit', 'url("' + b + 'icons/icon-edit.png")')
+        document.documentElement.style.setProperty('--tx-icon-edit-orange', 'url("' + b + 'icons/icon-edit-orange.png")')
+      })()
     </script>
-
+    <script>
+      window.APP_URL = "{{APP_URL}}";
+    </script>
   </head>
   <body>
     <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
