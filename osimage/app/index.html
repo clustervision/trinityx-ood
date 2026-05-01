@@ -1,0 +1,27 @@
+<!--
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+ Jinja shell (same layout as rack): built Vue assets live in app/assets/ (Vite outDir).
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nodes :: Luna</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/index.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/500.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.2.5/700.css" crossorigin="anonymous" />
+    <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
+    <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}" />
+    <script>
+      window.APP_URL = "{{ APP_URL }}";
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

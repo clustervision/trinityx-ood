@@ -75,13 +75,17 @@ def _osimage_inventory_json():
         raw_data = table_data['config'][TABLE]
         raw_data = Helper().prepare_json(raw_data, True)
         fields, images = Helper().filter_data_json(TABLE, raw_data)
-        for img in images:
-            path = img.get('path')
+        # List JSON rows omit `path` (filter_columns); chroot URL needs it from the same record.
+        for (_cfg_key, record), img in zip(raw_data.items(), images):
+            path = record.get('path')
             kv = img.get('kernelversion')
             name = img.get('name')
+            shell_image = record.get('name') or (
+                name[:-2] if isinstance(name, str) and name.endswith(' *') else name
+            )
             if path and kv and ">None<" not in str(kv):
                 img["chroot_session_url"] = (
-                    f"{chroot_url}/image={name},path={path},kernel_version={kv}"
+                    f"{chroot_url}/image={shell_image},path={path},kernel_version={kv}"
                 )
             else:
                 img["chroot_session_url"] = None
