@@ -1,15 +1,24 @@
-/** Same-origin base for Flask node app: explicit APP_URL, or dev proxy prefix, or '' (prod relative). */
-export function backendBasePath() {
-  const url = (typeof window !== 'undefined' && window.APP_URL) || ''
-  if (url) return url.replace(/\/$/, '')
+/**
+ * Flask embed: window.APP_URL / VITE_APP_URL. Dev without those: /node-backend (proxied) so SPA / stays separate from ?format=json.
+ * Literal Jinja placeholders (never substituted by Vite) must not become path segments → /%7B%7B%20APP_URL%20%7D%7D/...
+ */
+const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
+
+export const baseUrl = () => {
+  let explicit = String(
+    (typeof window !== 'undefined' && window.APP_URL) || import.meta.env.VITE_APP_URL || ''
+  )
+    .trim()
+    .replace(/\/$/, '')
+  if (UNSUBSTITUTED_APP_URL.test(explicit)) explicit = ''
+  if (explicit) return explicit
   if (import.meta.env.DEV) return '/node-backend'
   return ''
 }
 
-const baseUrl = () => backendBasePath()
-
 export async function fetchNodes() {
-  const root = baseUrl() ? `${baseUrl()}/` : '/'
+  const b = baseUrl()
+  const root = b ? `${b}/` : '/'
   const res = await fetch(`${root}?format=json`, {
     headers: { Accept: 'application/json' },
   })
