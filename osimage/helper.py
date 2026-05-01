@@ -553,38 +553,3 @@ class Helper():
                 else:
                     rows.append(key[1])
         return fields, rows
-
-
-    def filter_data_json(self, table=None, data=None):
-        """
-        JSON version of filter_data for list views (same columns as filter_columns).
-        """
-        fields = filter_columns(table)
-        result = []
-        for _ele, record in data.items():
-            item = {}
-            record_name = record.get('name')
-            if record.get('_override') and isinstance(record_name, str):
-                record_name = f"{record_name} *"
-            for field in fields:
-                if field == 'name':
-                    item[field] = record_name
-                else:
-                    item[field] = record.get(field)
-            result.append(item)
-        return fields, result
-
-
-    def filter_data_col_json(self, table=None, data=None):
-        """
-        Single-record detail as a sorted plain dict (no HTML badges).
-        """
-        defined_keys = sortby(table)
-        for new_key in list(data.keys()):
-            if new_key not in defined_keys:
-                defined_keys.append(new_key)
-        index_map = {v: i for i, v in enumerate(defined_keys)}
-        sorted_result = dict(
-            sorted(data.items(), key=lambda pair: index_map.get(pair[0], len(defined_keys)))
-        )
-        return sorted_result
