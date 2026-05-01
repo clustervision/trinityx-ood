@@ -15,11 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
- Frontend wiring:
-  - window.APP_URL     → Group API on port 7755 (same hostname as the request).
-  - window.CONTEXT_URL → OOD / gateway on port 8080 — for logo and home page links only.
-
-  Local `npm run dev`: set both in group/frontend/index.html (7755 + 8080 on your VM).
 -->
 
 <!doctype html>
@@ -33,7 +28,6 @@
     <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}" />
     <script>
       window.APP_URL = "{{ APP_URL }}";
-      window.CONTEXT_URL = "{{ CONTEXT_URL }}";
     </script>
 
   </head>
