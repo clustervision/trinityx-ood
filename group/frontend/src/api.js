@@ -1,10 +1,10 @@
-const baseUrl = () => {
-  const url = window.APP_URL || ''
-  return url.replace(/\/$/, '')
-}
+export const baseUrl = () =>
+  String(window.APP_URL || import.meta.env.VITE_APP_URL || '')
+    .trim()
+    .replace(/\/$/, '')
 
 export async function fetchGroups() {
-  const res = await fetch(`${baseUrl()}/api/groups`, {
+  const res = await fetch(`${baseUrl()}/groups`, {
     headers: { Accept: 'application/json' },
   })
   let data = {}

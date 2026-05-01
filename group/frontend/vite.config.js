@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 /**
  * Remote VM + local Vite:
- * - Keep window.APP_URL empty in index.html so the browser calls /api/... on :5173.
+ * - Keep window.APP_URL empty in index.html so the browser calls /groups, /add, ... on :5173.
  * - Vite forwards those paths to VITE_GROUP_BACKEND (see .env.development).
  * - Node accepts self-signed TLS (secure: false); the browser never talks to :7755 directly.
  */
@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
 
   // Vite treats proxy keys starting with ^ as RegExp (must be strings, not RegExp objects).
   const groupApi =
-    '^/(api|show|get_list|add|edit|delete|clone|remove|rename|member|ospush|check_status|license)(/|$|\\?)'
+    '^/(groups|show|get_list|add|edit|delete|clone|remove|rename|member|ospush|check_status|license)(/|$|\\?)'
 
   console.info('[vite] Group API proxy target:', backendTarget)
 
