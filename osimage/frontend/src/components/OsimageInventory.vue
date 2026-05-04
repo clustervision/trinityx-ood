@@ -91,13 +91,13 @@
             <td class="tx-col-actions tx-td-sep-blue">
               <div class="tx-action-icons">
                 <button
-                  v-if="row.chroot_session_url"
                   type="button"
                   class="tx-icon-act tx-icon-link"
-                  title="Lchroot Session"
-                  @click="openChroot(row.chroot_session_url)"
+                  :title="row.chroot_session_url ? 'Lchroot session' : 'Lchroot not available (need path + kernel version)'"
+                  :disabled="!row.chroot_session_url"
+                  @click="row.chroot_session_url && openChroot(row.chroot_session_url)"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M20 3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h3l-1 1v2h12v-2l-1-1h3c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 13H4V5h16v11z"/></svg>
+                  <img :src="actionIcons.shell" alt="Shell" width="28" height="28" class="tx-icon-img" />
                 </button>
                 <button
                   type="button"
@@ -105,7 +105,7 @@
                   title="Clone"
                   @click="$emit('open-clone', row.name)"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  <img :src="actionIcons.clone" alt="Clone" width="28" height="28" class="tx-icon-img" />
                 </button>
                 <button
                   type="button"
@@ -113,7 +113,7 @@
                   title="Pack"
                   @click="doPack(row.name)"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v3h20V4c0-1.1-.9-2-2-2zM2 22h20c0 1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2zM2 9v11h20V9H2zm8 1.5h4v2h-4v-2z"/></svg>
+                  <img :src="actionIcons.pack" alt="Pack" width="28" height="28" class="tx-icon-img" />
                 </button>
                 <button
                   type="button"
@@ -121,7 +121,7 @@
                   title="Delete"
                   @click="confirmDelete(row.name)"
                 >
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                  <img :src="actionIcons.delete" alt="Delete" width="28" height="28" class="tx-icon-img" />
                 </button>
               </div>
             </td>
@@ -190,9 +190,18 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimages, deleteOsimage, packOsimage } from '../api.js'
+import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage } from '../api.js'
+import { publicAssetUrl } from '../utils/publicAssets.js'
+import { resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils/oodShell.js'
 
 defineEmits(['open-add', 'open-edit', 'open-clone'])
+
+const actionIcons = {
+  shell: publicAssetUrl('icons/icon-shell.png'),
+  clone: publicAssetUrl('icons/icon-clone.png'),
+  pack: publicAssetUrl('icons/icon-pack.png'),
+  delete: publicAssetUrl('icons/icon-delete.png'),
+}
 
 const FIELD_LABELS = {
   name: 'NAME',
@@ -205,6 +214,9 @@ const FIELD_LABELS = {
 const DISPLAY_FIELDS = ['name', 'kernelversion', 'kerneldetails', 'distribution', 'osrelease']
 
 const images = ref([])
+/** API `chroot_base_url`, optionally rewritten for OOD port (see `VITE_OOD_SHELL_ORIGIN`). */
+const chrootBaseUrl = ref('')
+const enrichedNames = new Set()
 const loading = ref(true)
 const errorMsg = ref('')
 const searchQuery = ref('')
@@ -239,6 +251,33 @@ function isEmpty(val) {
   return false
 }
 
+function recordNameFromRow(row) {
+  const n = row?.name
+  if (typeof n !== 'string') return ''
+  return n.replace(/\s*\*\s*$/, '').trim()
+}
+
+function buildChrootSessionUrl(base, shellImage, path, kernelVersion) {
+  if (!base || !path || kernelVersion == null || kernelVersion === '') return null
+  if (String(kernelVersion).includes('>None<')) return null
+  const im = shellImage || ''
+  return `${base}/image=${im},path=${path},kernel_version=${kernelVersion}`
+}
+
+function patchAllChrootSessionUrls() {
+  const base = chrootBaseUrl.value
+  if (!base) return
+  images.value = images.value.map((r) => {
+    const u = buildChrootSessionUrl(
+      base,
+      r._shellImageName || recordNameFromRow(r),
+      r.path,
+      r.kernelversion
+    )
+    return u ? { ...r, chroot_session_url: u } : r
+  })
+}
+
 function hasKernelDetails(row) {
   return row.initrdfile || row.kernelfile || row.imagefile || row.path
 }
@@ -252,7 +291,8 @@ function kernelDetailsHtml(row) {
 }
 
 function openChroot(url) {
-  if (url) window.open(url, '_blank')
+  if (!url) return
+  window.open(rewriteIfShellOrigin(url), '_blank')
 }
 
 function rowMatchesSearch(row, q) {
@@ -296,6 +336,51 @@ watch([filteredRows, totalPages], () => {
   if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
 })
 
+watch(chrootBaseUrl, () => {
+  patchAllChrootSessionUrls()
+})
+
+watch(
+  pagedRows,
+  async (rows) => {
+    for (const row of rows) {
+      const key = recordNameFromRow(row)
+      if (!key || enrichedNames.has(key)) continue
+      enrichedNames.add(key)
+      try {
+        const res = await fetchOsimageDetail(key)
+        if (res?.error) {
+          enrichedNames.delete(key)
+          continue
+        }
+        const o = res.osimage || {}
+        const idx = images.value.findIndex((r) => recordNameFromRow(r) === key)
+        if (idx === -1) continue
+        const cur = images.value[idx]
+        const next = { ...cur }
+        for (const k of ['initrdfile', 'kernelfile', 'imagefile', 'path']) {
+          if (o[k] != null && o[k] !== '') next[k] = o[k]
+        }
+        if (o.kerneldetails != null && String(o.kerneldetails).trim() !== '') {
+          next.kerneldetails = o.kerneldetails
+        }
+        next._shellImageName = o.name != null && o.name !== '' ? o.name : key
+        const u = buildChrootSessionUrl(
+          chrootBaseUrl.value,
+          next._shellImageName,
+          next.path,
+          next.kernelversion
+        )
+        if (u) next.chroot_session_url = u
+        images.value[idx] = next
+      } catch {
+        enrichedNames.delete(key)
+      }
+    }
+  },
+  { flush: 'post' }
+)
+
 function toggleSort(field) {
   if (sortField.value === field) {
     sortAsc.value = !sortAsc.value
@@ -308,10 +393,13 @@ function toggleSort(field) {
 async function loadData() {
   loading.value = true
   errorMsg.value = ''
+  enrichedNames.clear()
   try {
     const data = await fetchOsimages()
     if (data.error) errorMsg.value = data.error
+    chrootBaseUrl.value = resolveChrootBaseUrl(data)
     images.value = data.images || []
+    patchAllChrootSessionUrls()
   } catch (err) {
     errorMsg.value = err.message || 'Network error while loading OS images.'
   } finally {

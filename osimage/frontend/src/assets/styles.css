@@ -448,8 +448,21 @@ button.tx-name-link.tx-cell-ellipsis {
   cursor: pointer;
 }
 
-.tx-icon-act:hover {
+.tx-icon-act:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tx-icon-act:not(:disabled):hover {
   opacity: 0.75;
+}
+
+.tx-icon-act .tx-icon-img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .tx-icon-clone {
