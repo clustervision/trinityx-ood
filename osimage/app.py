@@ -31,7 +31,7 @@ __status__      = 'Development'
 
 
 import os
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, abort, jsonify, render_template, request, send_from_directory
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from helper import Helper
@@ -42,8 +42,30 @@ from model import Model
 LOGGER = Log.init_log('INFO')
 TABLE = 'osimage'
 TABLE_CAP = 'OS Image'
-app = Flask(__name__, static_folder="static")
+
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+_LEGACY_STATIC = os.path.join(_ROOT, 'static')
+_APP_ASSETS = os.path.join(_ROOT, 'app', 'assets')
+
+
+def _serve_static(filename: str):
+    """Bootstrap UI in static/; SPA vendor + Vite outDir in app/assets/."""
+    for directory in (_LEGACY_STATIC, _APP_ASSETS):
+        base = os.path.abspath(directory)
+        candidate = os.path.abspath(os.path.join(directory, filename))
+        try:
+            if os.path.commonpath([base, candidate]) != base:
+                continue
+        except ValueError:
+            continue
+        if os.path.isfile(candidate):
+            return send_from_directory(directory, filename)
+    abort(404)
+
+
+app = Flask(__name__, static_folder=None, static_url_path='/static')
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.add_url_rule('/static/<path:filename>', endpoint='static', view_func=_serve_static)
 
 
 if APP_STATE is False: 
