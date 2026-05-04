@@ -70,20 +70,10 @@ include control/templates/layout/*
 
 include group
 include group/*
-include group/static
-include group/static/*
-include group/static/css
-include group/static/css/*
-include group/static/fonts
-include group/static/fonts/*
-include group/static/img
-include group/static/img/*
-include group/static/js
-include group/static/js/*
-include group/templates
-include group/templates/*
-include group/templates/layout
-include group/templates/layout/*
+include group/app
+include group/app/*
+include group/app/assets
+include group/app/assets/*
 
 include network
 include network/*
@@ -102,22 +92,13 @@ include network/templates/*
 include network/templates/layout
 include network/templates/layout/*
 
+
 include node
 include node/*
-include node/static
-include node/static/*
-include node/static/css
-include node/static/css/*
-include node/static/fonts
-include node/static/fonts/*
-include node/static/img
-include node/static/img/*
-include node/static/js
-include node/static/js/*
-include node/templates
-include node/templates/*
-include node/templates/layout
-include node/templates/layout/*
+include node/app
+include node/app/*
+include node/app/assets
+include node/app/assets/*
 
 include osimage
 include osimage/*
