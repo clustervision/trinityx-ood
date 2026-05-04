@@ -105,10 +105,58 @@ def home():
     Serve the Vue SPA shell. window.APP_URL is this app's base URL.
     """
     url = Helper().app_url(request)
+    print(url)
     return render_template(
         "index.html",
         APP_URL=url["APP_URL"],
     )
+
+
+@app.route('/api/v1/all_groups', methods=['GET'])
+def all_groups():
+    """
+    Get a JSON list of all groups for the Vue frontend table.
+    """
+    reponse = Rest().get_data(TABLE)
+    return reponse
+
+@app.route('/api/v1/get_resources', methods=['GET'])
+@app.route('/api/v1/get_resources/<string:record>', methods=['GET'])
+def get_resources(record: str = ""):
+    """
+    Get a JSON list of all get_resources for the Vue frontend table.
+    """
+    body = {"bmcsetup_list": [],"osimage_list": [],"network_list": [],"bond_modes": []}
+    if record:
+        data = {}
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if "status" in table_data:
+            if table_data["status"] is True:
+                table_data = table_data['content']
+            else:
+                return jsonify(table_data)
+        else:
+            return jsonify(table_data)
+
+        bmcsetup_list = Model().get_list_options_json('bmcsetup', record)
+        osimage_list = Model().get_list_options_json('osimage', record)
+        network_list = Model().get_list_options_json('network', record)
+        bond_modes = Helper().get_bond_mode_list()
+    else:
+        bmcsetup_list = Model().get_list_options_json('bmcsetup')
+        osimage_list = Model().get_list_options_json('osimage')
+        network_list = Model().get_list_options_json('network')
+        bond_modes = Helper().get_bond_mode_list()
+        body = {
+            "bmcsetup_list": bmcsetup_list,
+            "osimage_list": osimage_list,
+            "network_list": network_list,
+            "bond_modes": bond_modes,
+        }
+    return jsonify(body)
+
+
 
 
 @app.route('/groups', methods=['GET'])
@@ -182,11 +230,9 @@ def add():
     """
     This Method will add a requested record.
     """
-    page = types.SimpleNamespace()
-    page.name = f"Add New {TABLE_CAP}"
-    bmcsetup_list = Model().get_list_option_html('bmcsetup')
-    osimage_list = Model().get_list_option_html('osimage')
-    network_list = Model().get_list_option_html('network')
+    # bmcsetup_list = Model().get_list_option_html('bmcsetup')
+    # osimage_list = Model().get_list_option_html('osimage')
+    # network_list = Model().get_list_option_html('network')
     if request.method == 'POST':
         payload = {k: v for k, v in request.form.items() if v not in [None, '']}
         table_data = Rest().get_data(TABLE, payload['name'])
@@ -287,10 +333,15 @@ def edit(record=None):
     data = {}
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+    print(table_data)
     raw = _group_record_for_response(table_data, record)
     if raw is not None:
         data = {k: v for k, v in raw.items() if v not in [None, '', 'None']}
         data = Helper().prepare_json(data)
+        print(data)
 
     bmcsetup_list = Model().get_list_options_json('bmcsetup', data.get('bmcsetupname'))
     osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
@@ -314,6 +365,7 @@ def delete(record=None):
     """
     response = Rest().get_delete(TABLE, record)
     LOGGER.info(f'{response.status_code} {response.content}')
+    print(f'{response.status_code} {response.content}')
     if response.status_code == 204:
         flash(f'{TABLE_CAP}, {record} is deleted.', "success")
     else:
@@ -487,8 +539,8 @@ def license_info():
 
 if __name__ == "__main__":
     if APP_STATE is False:
-        _ssl_crt = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.crt'
-        _ssl_key = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.key'
+        _ssl_crt = '/trinity/local/etc/ssl/vmware-controller1.cluster.crt'
+        _ssl_key = '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
         if os.path.isfile(_ssl_crt) and os.path.isfile(_ssl_key):
             dev_context = (_ssl_crt, _ssl_key)
             app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
