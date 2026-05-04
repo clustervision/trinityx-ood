@@ -1,3 +1,415 @@
+<!-- <script setup lang="ts">
+
+import { ref, computed, onMounted, watch } from 'vue'
+import { fetchGroups } from '@/services/api'
+import { apiClient } from '@/services/axios'
+
+
+interface Group {
+  _override: boolean
+  bmcsetupname: string | null
+  bootmenu: boolean
+  comment: string | null
+  domain: string | null
+  interfaces: {
+    interface: string
+    network: string
+  }[]
+  kerneloptions: string | null
+  name: string
+  netboot: boolean
+  osimage: string | null
+  osimagetagid: string | null
+  partscript: string
+  postscript: string
+  prescript: string
+  provision_fallback: string | null
+  provision_interface: string | null
+  provision_method: string | null
+  roles: string | null
+  scripts: string | null
+  setupbmc: boolean
+  unmanaged_bmc_users: string | null
+}
+type GroupMap = Record<string, Group>
+interface ApiResponse {
+  status: boolean
+  status_code: number
+  content: {
+    config: {
+      group: GroupMap
+    }
+  }
+}
+
+const emit = defineEmits(['open-add', 'open-edit', 'clone', 'ospush', 'delete'])
+
+const groupList = ref<Group[]>([])
+const fields = ref([])
+const groups = ref([])
+const loading = ref(true)
+const errorMsg = ref('')
+const searchQuery = ref('')
+const sortField = ref('')
+const sortAsc = ref(true)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const pageSizeOptions = [10, 25, 50, 100]
+const helpOpen = ref(false)
+
+const base = apiClient.defaults.baseURL || ''
+const iconBase = base
+
+const hasInterfaces = computed(() => fields.value.includes('interfaces'))
+
+const regularColumns = computed(() => {
+  return fields.value
+    .filter((f) => f !== 'interfaces')
+    .map((f) => ({
+      field: f,
+      label: f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+    }))
+})
+
+const totalColspan = computed(() => {
+  let count = regularColumns.value.length + 1
+  if (hasInterfaces.value) count += 2
+  return count
+})
+
+function canonicalName(displayName) {
+  return String(displayName || '').replace(/\s+\*$/, '').trim()
+}
+
+function cellText(val) {
+  if (val == null) return ''
+  if (typeof val === 'object') {
+    try { return JSON.stringify(val) } catch { return String(val) }
+  }
+  return String(val)
+}
+
+function isEmpty(val) {
+  if (val == null) return true
+  if (typeof val === 'string' && val.trim() === '') return true
+  if (Array.isArray(val) && val.length === 0) return true
+  return false
+}
+
+function ifaceSortKey(row, key) {
+  const list = row.interfaces || []
+  return list
+    .map((item) => String((item && item[key]) || '').toLowerCase())
+    .join('\u0001')
+}
+
+const filteredRows = computed(() => {
+  let rows = groups.value
+  const q = searchQuery.value.toLowerCase().trim()
+  if (q) {
+    rows = rows.filter((row) => {
+      return Object.values(row).some((val) => {
+        if (val == null) return false
+        if (typeof val === 'string') return val.toLowerCase().includes(q)
+        if (Array.isArray(val)) {
+          return val.some((item) =>
+            Object.values(item || {}).some((v) =>
+              String(v || '').toLowerCase().includes(q)
+            )
+          )
+        }
+        return String(val).toLowerCase().includes(q)
+      })
+    })
+  }
+  if (sortField.value) {
+    const sf = sortField.value
+    const asc = sortAsc.value
+    rows = [...rows].sort((a, b) => {
+      let va
+      let vb
+      if (sf === 'iface_name') {
+        va = ifaceSortKey(a, 'interface')
+        vb = ifaceSortKey(b, 'interface')
+      } else if (sf === 'iface_network') {
+        va = ifaceSortKey(a, 'network')
+        vb = ifaceSortKey(b, 'network')
+      } else {
+        va = a[sf] != null ? String(a[sf]).toLowerCase() : ''
+        vb = b[sf] != null ? String(b[sf]).toLowerCase() : ''
+      }
+      if (va < vb) return asc ? -1 : 1
+      if (va > vb) return asc ? 1 : -1
+      return 0
+    })
+  }
+  return rows
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)))
+
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRows.value.slice(start, start + pageSize.value)
+})
+
+watch(searchQuery, () => { currentPage.value = 1 })
+watch(pageSize, () => { currentPage.value = 1 })
+watch([filteredRows, totalPages], () => {
+  if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
+})
+
+function toggleSort(field) {
+  if (sortField.value === field) {
+    sortAsc.value = !sortAsc.value
+  } else {
+    sortField.value = field
+    sortAsc.value = true
+  }
+}
+
+async function loadData() {
+  loading.value = true
+  errorMsg.value = ''
+  try {
+    const data = await fetchGroups()
+    if (data.status === true){
+      // console.log(data);
+       if (
+        typeof data.content === 'object' &&
+        data.content !== null &&
+        data.content.config?.group
+      ) {
+        const groups_data: GroupMap = data.content.config.group
+
+        groupList.value = Object.values(groups_data)
+
+        console.log(groupList.value)
+      }
+    }
+    else{
+      errorMsg.value = data.content.message
+      return
+    }
+    // if (data.error) errorMsg.value = data.error
+    // fields.value = data.fields || []
+    // groups.value = data.groups || []
+  } catch (err) {
+    errorMsg.value = err.message || 'Network error while loading groups.'
+  } finally {
+    loading.value = false
+  }
+}
+
+defineExpose({ loadData })
+
+onMounted(loadData)
+</script> -->
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { fetchGroups } from '@/services/api'
+import { apiClient } from '@/services/axios'
+
+/** -----------------------
+ * Types
+ * ---------------------- */
+interface InterfaceItem {
+  interface: string
+  network: string
+}
+
+interface Group {
+  _override: boolean
+  bmcsetupname: string | null
+  bootmenu: boolean
+  comment: string | null
+  domain: string | null
+  interfaces: InterfaceItem[]
+  kerneloptions: string | null
+  name: string
+  netboot: boolean
+  osimage: string | null
+  osimagetagid: string | null
+  partscript: string
+  postscript: string
+  prescript: string
+  provision_fallback: string | null
+  provision_interface: string | null
+  provision_method: string | null
+  roles: string | null
+  scripts: string | null
+  setupbmc: boolean
+  unmanaged_bmc_users: string | null
+}
+
+type GroupMap = Record<string, Group>
+
+/** -----------------------
+ * Emits
+ * ---------------------- */
+const emit = defineEmits([
+  'open-add',
+  'open-edit',
+  'clone',
+  'ospush',
+  'delete',
+])
+
+/** -----------------------
+ * State
+ * ---------------------- */
+const groups = ref<Group[]>([])   // ✅ single source of truth
+const loading = ref(true)
+const errorMsg = ref('')
+const searchQuery = ref('')
+const sortField = ref<string>('')
+const sortAsc = ref(true)
+const currentPage = ref(1)
+const pageSize = ref(10)
+const pageSizeOptions = [10, 25, 50, 100]
+const helpOpen = ref(false)
+
+const base = apiClient.defaults.baseURL || ''
+const iconBase = base
+
+/** -----------------------
+ * Columns (FIXED)
+ * ---------------------- */
+const regularColumns = [
+  { field: 'name', label: 'Name' },
+  { field: 'bootmenu', label: 'Boot Menu' },
+  { field: '_override', label: 'Override' },
+  { field: 'netboot', label: 'Netboot' },
+]
+
+/** -----------------------
+ * Computed
+ * ---------------------- */
+const hasInterfaces = computed(() =>
+  groups.value.some(g => g.interfaces?.length > 0)
+)
+
+const totalColspan = computed(() => {
+  let count = regularColumns.length + 1
+  if (hasInterfaces.value) count += 2
+  return count
+})
+
+function ifaceSortKey(row: Group, key: 'interface' | 'network') {
+  return (row.interfaces || [])
+    .map(i => (i[key] || '').toLowerCase())
+    .join('|')
+}
+
+const filteredRows = computed(() => {
+  let rows = groups.value
+
+  const q = searchQuery.value.toLowerCase().trim()
+  if (q) {
+    rows = rows.filter(row =>
+      JSON.stringify(row).toLowerCase().includes(q)
+    )
+  }
+
+  if (sortField.value) {
+    const sf = sortField.value
+    const asc = sortAsc.value
+
+    rows = [...rows].sort((a, b) => {
+      let va = ''
+      let vb = ''
+
+      if (sf === 'iface_name') {
+        va = ifaceSortKey(a, 'interface')
+        vb = ifaceSortKey(b, 'interface')
+      } else if (sf === 'iface_network') {
+        va = ifaceSortKey(a, 'network')
+        vb = ifaceSortKey(b, 'network')
+      } else {
+        va = String((a as any)[sf] ?? '').toLowerCase()
+        vb = String((b as any)[sf] ?? '').toLowerCase()
+      }
+
+      return asc ? va.localeCompare(vb) : vb.localeCompare(va)
+    })
+  }
+
+  return rows
+})
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value))
+)
+
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRows.value.slice(start, start + pageSize.value)
+})
+
+watch(searchQuery, () => (currentPage.value = 1))
+watch(pageSize, () => (currentPage.value = 1))
+
+watch([filteredRows, totalPages], () => {
+  if (currentPage.value > totalPages.value) {
+    currentPage.value = totalPages.value
+  }
+})
+
+/** -----------------------
+ * Helpers
+ * ---------------------- */
+function toggleSort(field: string) {
+  if (sortField.value === field) {
+    sortAsc.value = !sortAsc.value
+  } else {
+    sortField.value = field
+    sortAsc.value = true
+  }
+}
+
+function isEmpty(val: unknown) {
+  return val === null || val === undefined || val === ''
+}
+
+function cellText(val: unknown) {
+  if (typeof val === 'boolean') return val ? 'Yes' : 'No'
+  return String(val ?? '')
+}
+
+function canonicalName(name: string) {
+  return name
+}
+
+/** -----------------------
+ * Load Data (FIXED)
+ * ---------------------- */
+async function loadData() {
+  loading.value = true
+  errorMsg.value = ''
+
+  try {
+    const data = await fetchGroups()
+
+    if (data.status === true && data.content?.config?.group) {
+      const groups_data: GroupMap = data.content.config.group
+
+      // CORE FIX
+      groups.value = Object.values(groups_data)
+    } else {
+      errorMsg.value = data.content?.message || 'Failed to load'
+    }
+  } catch (err: any) {
+    errorMsg.value = err.message || 'Network error'
+  } finally {
+    loading.value = false
+  }
+}
+
+defineExpose({ loadData })
+
+onMounted(loadData)
+</script>
+
 <template>
   <div class="tx-shell tx-inventory-page">
     <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
@@ -19,6 +431,7 @@
         </div>
       </div>
     </div>
+
 
     <div class="tx-inventory-table-wrap">
       <table class="tx-inventory-table">
@@ -75,7 +488,8 @@
           <tr v-else-if="pagedRows.length === 0">
             <td :colspan="totalColspan" style="text-align:center;padding:2rem;color:#999;">No groups found.</td>
           </tr>
-          <tr v-for="(row, idx) in pagedRows" :key="row.name + '-' + idx">
+          <!-- <tr v-for="(row, idx) in pagedRows" :key="row.name + '-' + idx"> -->
+          <tr v-for="row in pagedRows" :key="row.name">
             <td
               v-for="(col, cIdx) in regularColumns"
               :key="col.field"
@@ -202,151 +616,3 @@
     </Teleport>
   </div>
 </template>
-
-<script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { fetchGroups } from '../api.js'
-
-const emit = defineEmits(['open-add', 'open-edit', 'clone', 'ospush', 'delete'])
-
-const fields = ref([])
-const groups = ref([])
-const loading = ref(true)
-const errorMsg = ref('')
-const searchQuery = ref('')
-const sortField = ref('')
-const sortAsc = ref(true)
-const currentPage = ref(1)
-const pageSize = ref(10)
-const pageSizeOptions = [10, 25, 50, 100]
-const helpOpen = ref(false)
-
-const iconBase = import.meta.env.BASE_URL
-
-const hasInterfaces = computed(() => fields.value.includes('interfaces'))
-
-const regularColumns = computed(() => {
-  return fields.value
-    .filter((f) => f !== 'interfaces')
-    .map((f) => ({
-      field: f,
-      label: f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-    }))
-})
-
-const totalColspan = computed(() => {
-  let count = regularColumns.value.length + 1
-  if (hasInterfaces.value) count += 2
-  return count
-})
-
-function canonicalName(displayName) {
-  return String(displayName || '').replace(/\s+\*$/, '').trim()
-}
-
-function cellText(val) {
-  if (val == null) return ''
-  if (typeof val === 'object') {
-    try { return JSON.stringify(val) } catch { return String(val) }
-  }
-  return String(val)
-}
-
-function isEmpty(val) {
-  if (val == null) return true
-  if (typeof val === 'string' && val.trim() === '') return true
-  if (Array.isArray(val) && val.length === 0) return true
-  return false
-}
-
-function ifaceSortKey(row, key) {
-  const list = row.interfaces || []
-  return list
-    .map((item) => String((item && item[key]) || '').toLowerCase())
-    .join('\u0001')
-}
-
-const filteredRows = computed(() => {
-  let rows = groups.value
-  const q = searchQuery.value.toLowerCase().trim()
-  if (q) {
-    rows = rows.filter((row) => {
-      return Object.values(row).some((val) => {
-        if (val == null) return false
-        if (typeof val === 'string') return val.toLowerCase().includes(q)
-        if (Array.isArray(val)) {
-          return val.some((item) =>
-            Object.values(item || {}).some((v) =>
-              String(v || '').toLowerCase().includes(q)
-            )
-          )
-        }
-        return String(val).toLowerCase().includes(q)
-      })
-    })
-  }
-  if (sortField.value) {
-    const sf = sortField.value
-    const asc = sortAsc.value
-    rows = [...rows].sort((a, b) => {
-      let va
-      let vb
-      if (sf === 'iface_name') {
-        va = ifaceSortKey(a, 'interface')
-        vb = ifaceSortKey(b, 'interface')
-      } else if (sf === 'iface_network') {
-        va = ifaceSortKey(a, 'network')
-        vb = ifaceSortKey(b, 'network')
-      } else {
-        va = a[sf] != null ? String(a[sf]).toLowerCase() : ''
-        vb = b[sf] != null ? String(b[sf]).toLowerCase() : ''
-      }
-      if (va < vb) return asc ? -1 : 1
-      if (va > vb) return asc ? 1 : -1
-      return 0
-    })
-  }
-  return rows
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)))
-
-const pagedRows = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  return filteredRows.value.slice(start, start + pageSize.value)
-})
-
-watch(searchQuery, () => { currentPage.value = 1 })
-watch(pageSize, () => { currentPage.value = 1 })
-watch([filteredRows, totalPages], () => {
-  if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
-})
-
-function toggleSort(field) {
-  if (sortField.value === field) {
-    sortAsc.value = !sortAsc.value
-  } else {
-    sortField.value = field
-    sortAsc.value = true
-  }
-}
-
-async function loadData() {
-  loading.value = true
-  errorMsg.value = ''
-  try {
-    const data = await fetchGroups()
-    if (data.error) errorMsg.value = data.error
-    fields.value = data.fields || []
-    groups.value = data.groups || []
-  } catch (err) {
-    errorMsg.value = err.message || 'Network error while loading groups.'
-  } finally {
-    loading.value = false
-  }
-}
-
-defineExpose({ loadData })
-
-onMounted(loadData)
-</script>

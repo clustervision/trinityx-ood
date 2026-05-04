@@ -1,47 +1,7 @@
-<template>
-  <BaseModal size="wide" @close="$emit('close')">
-    <div class="tx-form-page tx-ospush-page">
-      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-      <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
-
-      <div class="tx-header">
-        <h2 class="tx-title">Push OS Image for Group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
-      </div>
-
-      <form @submit.prevent="onSubmit">
-        <div class="tx-fields">
-          <div class="tx-field tx-field-strong">
-            <span class="tx-label">GROUP:</span>
-            <select v-model="selectedGroup" required :class="{ 'tx-select-placeholder': !selectedGroup }">
-              <option value="">--- Select ---</option>
-              <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
-            </select>
-          </div>
-          <div class="tx-field tx-field-strong">
-            <span class="tx-label">OS Image:</span>
-            <select v-model="selectedOsimage" :class="{ 'tx-select-placeholder': !selectedOsimage }">
-              <option value="">--- Select ---</option>
-              <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
-            </select>
-          </div>
-          <div class="tx-field tx-field-match tx-field-nodry">
-            <span class="tx-label">No Dry:</span>
-            <input type="checkbox" v-model="noDry" />
-          </div>
-        </div>
-        <div class="tx-form-footer">
-          <span></span>
-          <button type="submit" class="tx-btn tx-btn-blue" :disabled="submitting">Push OS Image</button>
-        </div>
-      </form>
-    </div>
-  </BaseModal>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { fetchOspushData, submitForm } from '../api.js'
+import { fetchOspushData, submitForm } from '@/services/api'
 
 const props = defineProps({
   groupName: { type: String, required: true },
@@ -91,3 +51,44 @@ async function onSubmit() {
   }
 }
 </script>
+
+
+<template>
+  <BaseModal size="wide" @close="$emit('close')">
+    <div class="tx-form-page tx-ospush-page">
+      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
+      <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
+
+      <div class="tx-header">
+        <h2 class="tx-title">Push OS Image for Group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
+      </div>
+
+      <form @submit.prevent="onSubmit">
+        <div class="tx-fields">
+          <div class="tx-field tx-field-strong">
+            <span class="tx-label">GROUP:</span>
+            <select v-model="selectedGroup" required :class="{ 'tx-select-placeholder': !selectedGroup }">
+              <option value="">--- Select ---</option>
+              <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
+            </select>
+          </div>
+          <div class="tx-field tx-field-strong">
+            <span class="tx-label">OS Image:</span>
+            <select v-model="selectedOsimage" :class="{ 'tx-select-placeholder': !selectedOsimage }">
+              <option value="">--- Select ---</option>
+              <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
+            </select>
+          </div>
+          <div class="tx-field tx-field-match tx-field-nodry">
+            <span class="tx-label">No Dry:</span>
+            <input type="checkbox" v-model="noDry" />
+          </div>
+        </div>
+        <div class="tx-form-footer">
+          <span></span>
+          <button type="submit" class="tx-btn tx-btn-blue" :disabled="submitting">Push OS Image</button>
+        </div>
+      </form>
+    </div>
+  </BaseModal>
+</template>

@@ -1,36 +1,8 @@
-<template>
-  <BaseModal size="large" @close="$emit('close')">
-    <div class="tx-form-page">
-      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-      <p v-if="loading" class="tx-loading">Loading...</p>
-
-      <template v-if="!loading && !fatalError">
-        <div class="tx-header">
-          <h2 class="tx-title">Clone group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
-        </div>
-
-        <GroupFormFields
-          ref="formRef"
-          mode="clone"
-          :initial-data="formData"
-          :bmcsetup-options="bmcsetupOptions"
-          :osimage-options="osimageOptions"
-          :network-options="networkOptions"
-          :bond-mode-options="bondModeOptions"
-          :hints="hints"
-          submit-label="Clone Group"
-          @submit="onSubmit"
-        />
-      </template>
-    </div>
-  </BaseModal>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import GroupFormFields from './GroupFormFields.vue'
-import { fetchCloneData, submitForm } from '../api.js'
+import { fetchCloneData, submitForm } from '@/services/api'
 
 const props = defineProps({
   groupName: { type: String, required: true },
@@ -97,3 +69,34 @@ async function onSubmit() {
   }
 }
 </script>
+
+
+
+<template>
+  <BaseModal size="large" @close="$emit('close')">
+    <div class="tx-form-page">
+      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
+      <p v-if="loading" class="tx-loading">Loading...</p>
+
+      <template v-if="!loading && !fatalError">
+        <div class="tx-header">
+          <h2 class="tx-title">Clone group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
+        </div>
+
+        <GroupFormFields
+          ref="formRef"
+          mode="clone"
+          :initial-data="formData"
+          :bmcsetup-options="bmcsetupOptions"
+          :osimage-options="osimageOptions"
+          :network-options="networkOptions"
+          :bond-mode-options="bondModeOptions"
+          :hints="hints"
+          submit-label="Clone Group"
+          @submit="onSubmit"
+        />
+      </template>
+    </div>
+  </BaseModal>
+</template>
+

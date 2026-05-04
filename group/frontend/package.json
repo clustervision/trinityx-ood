@@ -1,21 +1,55 @@
 {
-  "name": "trinityx-group-frontend",
+  "name": "group",
+  "version": "0.0.0",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "test:unit": "vitest",
+    "test:e2e": "playwright test",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build",
+    "lint": "run-s lint:*",
+    "lint:oxlint": "oxlint . --fix",
+    "lint:eslint": "eslint . --fix --cache",
+    "format": "oxfmt src/"
   },
   "dependencies": {
-    "vue": "^3.5.13"
+    "axios": "^1.16.0",
+    "pinia": "^3.0.4",
+    "vite-plugin-vue-devtools": "^8.1.1",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4"
   },
-   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.3",
-    "vite": "^6.3.2"
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@tsconfig/node24": "^24.0.4",
+    "@types/jsdom": "^28.0.1",
+    "@types/node": "^24.12.2",
+    "@vitejs/plugin-vue": "^6.0.6",
+    "@vitejs/plugin-vue-jsx": "^5.1.5",
+    "@vitest/eslint-plugin": "^1.6.16",
+    "@vue/eslint-config-typescript": "^14.7.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.9.1",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-oxlint": "~1.60.0",
+    "eslint-plugin-playwright": "^2.10.1",
+    "eslint-plugin-vue": "~10.8.0",
+    "jiti": "^2.6.1",
+    "jsdom": "^29.0.2",
+    "npm-run-all2": "^8.0.4",
+    "oxfmt": "^0.45.0",
+    "oxlint": "~1.60.0",
+    "typescript": "~6.0.0",
+    "vite": "^8.0.8",
+    "vitest": "^4.1.4",
+    "vue-tsc": "^3.2.6"
   },
-  "overrides": {
-    "rollup": "npm:@rollup/wasm-node@^4.34.9"
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

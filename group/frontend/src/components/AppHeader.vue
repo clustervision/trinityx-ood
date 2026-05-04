@@ -1,3 +1,17 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const homeUrl = computed(() => {
+  if (typeof window === 'undefined') return '#'
+  return `${location.protocol}//${location.hostname}:8080`
+})
+
+const logoSrc = computed(() => {
+  const base = import.meta.env.BASE_URL || '/'
+  return (base.endsWith('/') ? base : base + '/') + 'static/img/logo.png'
+})
+</script>
+
 <template>
   <nav class="tx-navbar">
     <ol class="tx-breadcrumb">
@@ -16,16 +30,4 @@
   </nav>
 </template>
 
-<script setup>
-import { computed } from 'vue'
 
-const homeUrl = computed(() => {
-  if (typeof window === 'undefined') return '#'
-  return `${location.protocol}//${location.hostname}:8080`
-})
-
-const logoSrc = computed(() => {
-  const base = import.meta.env.BASE_URL || '/'
-  return (base.endsWith('/') ? base : base + '/') + 'static/img/logo.png'
-})
-</script>

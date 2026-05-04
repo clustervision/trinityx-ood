@@ -1,15 +1,4 @@
-<template>
-  <Teleport to="body">
-    <div class="tx-modal-overlay" @mousedown.self="$emit('close')">
-      <div class="tx-modal-container" :class="sizeClass">
-        <button type="button" class="tx-modal-x" @click="$emit('close')">&times;</button>
-        <slot />
-      </div>
-    </div>
-  </Teleport>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
@@ -27,3 +16,15 @@ const sizeClass = computed(() => {
 onMounted(() => { document.body.style.overflow = 'hidden' })
 onUnmounted(() => { document.body.style.overflow = '' })
 </script>
+
+<template>
+  <Teleport to="body">
+    <div class="tx-modal-overlay" @mousedown.self="$emit('close')">
+      <div class="tx-modal-container" :class="sizeClass">
+        <button type="button" class="tx-modal-x" @click="$emit('close')">&times;</button>
+        <slot />
+      </div>
+    </div>
+  </Teleport>
+</template>
+

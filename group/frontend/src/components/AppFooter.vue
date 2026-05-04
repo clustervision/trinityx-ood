@@ -1,3 +1,14 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+
+import { apiClient } from '@/services/axios'
+
+const licenseUrl = computed(() => {
+  const base = apiClient.defaults.baseURL || ''
+  return `${base}/license`
+})
+</script>
+
 <template>
   <footer class="tx-footer">
     <div class="tx-footer-inner">
@@ -14,9 +25,4 @@
   </footer>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-import { baseUrl } from '../api.js'
 
-const licenseUrl = computed(() => `${baseUrl()}/license`)
-</script>

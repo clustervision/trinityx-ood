@@ -1,23 +1,7 @@
-<template>
-  <BaseModal size="small" @close="$emit('close')">
-    <div class="tx-delete-confirm">
-      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-      <h3 class="tx-delete-title">Delete group <strong>{{ groupName }}</strong>?</h3>
-      <p class="tx-delete-desc">This action cannot be undone.</p>
-      <div class="tx-delete-actions">
-        <button type="button" class="tx-btn tx-btn-outline-blue" @click="$emit('close')">Cancel</button>
-        <button type="button" class="tx-btn tx-btn-danger" :disabled="deleting" @click="onDelete">
-          {{ deleting ? 'Deleting...' : 'Delete' }}
-        </button>
-      </div>
-    </div>
-  </BaseModal>
-</template>
-
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { deleteGroup } from '../api.js'
+import { deleteGroup } from '@/services/api'
 
 const props = defineProps({
   groupName: { type: String, required: true },
@@ -41,3 +25,21 @@ async function onDelete() {
   }
 }
 </script>
+
+
+<template>
+  <BaseModal size="small" @close="$emit('close')">
+    <div class="tx-delete-confirm">
+      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
+      <h3 class="tx-delete-title">Delete group <strong>{{ groupName }}</strong>?</h3>
+      <p class="tx-delete-desc">This action cannot be undone.</p>
+      <div class="tx-delete-actions">
+        <button type="button" class="tx-btn tx-btn-outline-blue" @click="$emit('close')">Cancel</button>
+        <button type="button" class="tx-btn tx-btn-danger" :disabled="deleting" @click="onDelete">
+          {{ deleting ? 'Deleting...' : 'Delete' }}
+        </button>
+      </div>
+    </div>
+  </BaseModal>
+</template>
+
