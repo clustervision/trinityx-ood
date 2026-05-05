@@ -51,6 +51,7 @@ class Rest():
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
         from luna.ini from Luna 2 Daemon.
         """
+        self.timeout = 5
         self.logger = Log.get_logger()
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
@@ -165,27 +166,60 @@ class Rest():
         It will fetch the records from Luna 2 Daemon
         via REST API's.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
-            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
-            response_json = call.json()
-            if 'message' in response_json:
-                self.errors.append(response_json["message"])
+            response = requests.get(url=daemon_url, headers=headers, timeout=self.timeout, verify=self.security)
+            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            data = response.json()
+            if isinstance(data, dict) and 'message' in data:
+                self.errors.append(data["message"])
+                response = {"status": False, "status_code": response.status_code, "content": response.json()}
             else:
-                response = response_json
+                response = {"status": True, "status_code": response.status_code, "content": response.json()}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
-        except requests.exceptions.JSONDecodeError:
-            response = False
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
+
+
+    # def get_data(self, table=None, name=None, data=None):
+    #     """
+    #     This method is based on REST API's GET method.
+    #     It will fetch the records from Luna 2 Daemon
+    #     via REST API's.
+    #     """
+    #     response = False
+    #     headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+    #     daemon_url = f'{self.daemon}/config/{table}'
+    #     if name:
+    #         daemon_url = f'{daemon_url}/{name}'
+    #     self.logger.debug(f'GET URL => {daemon_url}')
+    #     try:
+    #         call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
+    #         self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
+    #         response_json = call.json()
+    #         if 'message' in response_json:
+    #             self.errors.append(response_json["message"])
+    #         else:
+    #             response = response_json
+    #     except requests.exceptions.SSLError as ssl_loop_error:
+    #         self.errors.append(f'ERROR :: {ssl_loop_error}')
+    #     except requests.exceptions.ConnectionError:
+    #         self.errors.append(f'Request Timeout while {daemon_url}')
+    #     except requests.exceptions.JSONDecodeError:
+    #         response = False
+    #     return response
 
 
     def post_data(self, table=None, name=None, data=None):

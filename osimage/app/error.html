@@ -1,14 +1,16 @@
-{% extends "layout/base.html" %}
-{% block content %}
-
-<div class="container-xxl flex-grow-1 container-p-y" style="max-width: none;">
-
-  {% if error %}
-    <div class="alert alert-danger" role="alert">{{ error | safe }}</div>
-  {% endif %}
-
-</div>
-
-<hr class="my-5" />
-{% endblock content %}
-
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ table }} :: Error</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 48rem; }
+      h1 { color: #b00020; }
+    </style>
+  </head>
+  <body>
+    <h1>{{ table }}</h1>
+    <p>{{ error | safe }}</p>
+  </body>
+</html>
