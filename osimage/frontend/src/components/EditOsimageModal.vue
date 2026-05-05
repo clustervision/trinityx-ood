@@ -176,7 +176,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { fetchOsimageEditData, submitOsimageForm } from '../api.js'
+import { fetchOsimageEditData, submitOsimageForm } from '../api'
 
 const props = defineProps({
   imageName: { type: String, required: true },

@@ -190,9 +190,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage } from '../api.js'
-import { publicAssetUrl } from '../utils/publicAssets.js'
-import { resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils/oodShell.js'
+import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage } from '../api'
+import { publicAssetUrl } from '../utils/publicAssets'
+import { resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils/oodShell'
 
 defineEmits(['open-add', 'open-edit', 'open-clone'])
 

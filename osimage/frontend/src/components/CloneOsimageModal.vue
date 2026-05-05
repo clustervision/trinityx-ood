@@ -143,7 +143,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { fetchOsimageCloneData, submitOsimageForm } from '../api.js'
+import { fetchOsimageCloneData, submitOsimageForm } from '../api'
 
 const props = defineProps({
   sourceName: { type: String, required: true },

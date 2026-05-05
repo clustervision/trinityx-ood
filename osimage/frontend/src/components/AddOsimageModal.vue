@@ -133,7 +133,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { submitOsimageForm } from '../api.js'
+import { submitOsimageForm } from '../api'
 
 const emit = defineEmits(['close', 'saved'])
 
