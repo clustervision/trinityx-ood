@@ -31,6 +31,7 @@ __status__      = "Development"
 
 from configparser import RawConfigParser
 import os
+import logging
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
@@ -53,6 +54,9 @@ class Rest():
         """
         self.timeout = 5
         self.logger = Log.get_logger()
+        if self.logger is None:
+            # Flask/WSGI code path may not call Log.init_log(); keep API alive with a fallback logger.
+            self.logger = logging.getLogger('luna2-web')
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
         urllib3.disable_warnings()
