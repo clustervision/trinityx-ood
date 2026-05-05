@@ -177,11 +177,18 @@
 
     <!-- Pack status dialog -->
     <Teleport to="body">
-      <div v-if="packStatus" class="tx-modal-overlay" @mousedown.self="packStatus = null">
+      <div v-if="packOpen" class="tx-modal-overlay" @mousedown.self="closePackDialog">
         <div class="tx-help-dialog" role="dialog">
-          <button type="button" class="tx-modal-x" aria-label="Close" @click="packStatus = null">&times;</button>
-          <h2 class="tx-help-title">Pack OS Image</h2>
-          <p style="font-size:15px;line-height:1.6;color:#111;">{{ packStatus }}</p>
+          <button type="button" class="tx-modal-x" aria-label="Close" @click="closePackDialog">&times;</button>
+          <h2 class="tx-help-title">{{ packTitle }}</h2>
+          <div style="max-height:360px;overflow:auto;background:#000;border-radius:8px;padding:12px;">
+            <p
+              v-for="(line, idx) in packLines"
+              :key="`${idx}-${line}`"
+              style="font-size:15px;line-height:1.5;color:#f1e600;margin:0 0 4px;"
+            >{{ line }}</p>
+            <p v-if="packRunning" style="font-size:15px;line-height:1.5;color:#9ec2ff;margin:8px 0 0;">Polling status...</p>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -190,7 +197,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage } from '../api'
+import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage, checkPackStatus } from '../api'
 import { publicAssetUrl } from '../utils/publicAssets'
 import { resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils/oodShell'
 
@@ -226,7 +233,13 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 25, 50, 100]
 const helpOpen = ref(false)
-const packStatus = ref(null)
+const packOpen = ref(false)
+const packTitle = ref('Pack OS Image')
+const packLines = ref([])
+const packRunning = ref(false)
+let packTimer = null
+let activeRequestId = ''
+const packSeen = new Set()
 
 const displayColumns = computed(() =>
   DISPLAY_FIELDS.map((f) => ({
@@ -420,19 +433,83 @@ async function confirmDelete(name) {
 
 async function doPack(name) {
   if (!name) return
-  packStatus.value = `Packing "${name}"...`
+  closePackDialog()
+  packOpen.value = true
+  packTitle.value = `Packing OS Image >> ${name}...`
+  packLines.value = []
+  packRunning.value = true
+  pushPackLine(`starting pack for ${name}`)
   try {
     const result = await packOsimage(name)
-    if (result.data && result.data.message) {
-      packStatus.value = result.data.message
-    } else if (result.data && result.data.request_id) {
-      packStatus.value = `Pack initiated. Request ID: ${result.data.request_id}`
-    } else {
-      packStatus.value = result.ok ? `Pack request sent for "${name}".` : `Pack failed for "${name}".`
+    const data = result.data || {}
+    if (data.message) pushPackLine(String(data.message))
+    const rid = String(data.request_id || '').trim()
+    if (!rid) {
+      packRunning.value = false
+      if (!result.ok) pushPackLine(`pack failed for ${name}`)
+      return
     }
+    activeRequestId = rid
+    pushPackLine(`queued pack osimage ${name} with id ${rid}`)
+    await pollPackStatus(name, rid)
   } catch (e) {
-    packStatus.value = e.message || 'Pack failed.'
+    pushPackLine(e.message || 'pack failed.')
+    packRunning.value = false
   }
+}
+
+function normalizePackLines(data) {
+  const out = []
+  if (typeof data === 'string') {
+    out.push(...data.split('\n'))
+    return out
+  }
+  if (!data || typeof data !== 'object') return out
+  const d = data
+  if (typeof d.message === 'string') out.push(...d.message.split('\n'))
+  if (typeof d.content === 'string') out.push(...d.content.split('\n'))
+  if (typeof d.log === 'string') out.push(...d.log.split('\n'))
+  return out
+}
+
+function pushPackLine(line) {
+  const s = String(line || '').trim()
+  if (!s || packSeen.has(s)) return
+  packSeen.add(s)
+  packLines.value.push(s)
+}
+
+function closePackDialog() {
+  packOpen.value = false
+  packRunning.value = false
+  activeRequestId = ''
+  if (packTimer) {
+    clearTimeout(packTimer)
+    packTimer = null
+  }
+  packSeen.clear()
+}
+
+async function pollPackStatus(name, rid) {
+  const doneRe = /\b(finished|done|success|failed|error|complete|completed)\b/i
+  const tick = async () => {
+    if (!packRunning.value || activeRequestId !== rid) return
+    try {
+      const status = await checkPackStatus(rid)
+      const lines = normalizePackLines(status.data)
+      lines.forEach(pushPackLine)
+      if (!status.ok) pushPackLine(`status check http ${status.status}`)
+      const merged = lines.join(' ')
+      if (doneRe.test(merged)) {
+        packRunning.value = false
+        return
+      }
+    } catch (e) {
+      pushPackLine(e.message || 'status check failed')
+    }
+    packTimer = setTimeout(tick, 2000)
+  }
+  await tick()
 }
 
 defineExpose({ loadData })

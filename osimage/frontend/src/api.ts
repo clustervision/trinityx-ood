@@ -92,6 +92,22 @@ function apiPath(suffix: string) {
   return `${b}${path}`
 }
 
+function oodOsimageBaseUrl() {
+  const explicit = String(import.meta.env.VITE_OOD_OSIMAGE_URL || '').trim().replace(/\/$/, '')
+  if (explicit) return explicit
+
+  const appUrl = String(import.meta.env.VITE_APP_URL || '').trim()
+  if (appUrl) {
+    try {
+      const u = new URL(appUrl)
+      return `https://${u.hostname}:8080/pun/sys/trinity_osimage/`
+    } catch {
+      /* ignore */
+    }
+  }
+  return ''
+}
+
 async function readJsonResponse<T = Record<string, unknown>>(res: Response): Promise<T | { _raw: string }> {
   const text = await res.text()
   if (!text) return {} as T
@@ -383,10 +399,19 @@ export async function packOsimage(name: string) {
 }
 
 export async function checkPackStatus(requestId: string) {
-  const res = await fetch(
-    apiPath(`/api/v1/check_status/config/status/${encodeURIComponent(requestId)}`),
-    { headers: { Accept: 'application/json' } }
-  )
+  const rid = encodeURIComponent(requestId)
+  const oodBase = oodOsimageBaseUrl()
+  if (!oodBase) {
+    return {
+      ok: false,
+      status: 0,
+      data: { message: 'Missing OOD base URL. Set VITE_OOD_OSIMAGE_URL or VITE_APP_URL.' },
+    }
+  }
+  const url = `${oodBase}/check_status/config/status/${rid}`
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+  })
   const data = await readJsonResponse(res)
   return { ok: res.ok, status: res.status, data }
 }

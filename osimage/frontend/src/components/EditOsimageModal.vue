@@ -11,7 +11,7 @@
 
       <template v-if="!loadingData && !loadError">
         <!-- Row 1: NAME (rename), KERNEL VERSION, BARE -->
-        <div class="tx-osimage-grid-row3">
+        <div class="tx-osimage-grid-bare">
           <div class="tx-field tx-field-name-with-rename" style="flex:1;">
             <span class="tx-label">Name:</span>
             <div class="tx-name-input-wrap">
@@ -43,29 +43,31 @@
               </template>
             </div>
           </div>
-          <div class="tx-field" style="flex:1;">
+          <div class="tx-field tx-field-emphasis" style="flex:1;">
             <span class="tx-label">Kernel Version:</span>
             <input v-model="form.kernelversion" type="text" />
           </div>
-          <div class="tx-field" style="flex:0 0 auto;">
+          <div class="tx-field tx-field-bare" style="flex:0 0 auto;">
             <span class="tx-label">Bare:</span>
             <input v-model="form.bare" type="checkbox" />
           </div>
         </div>
 
-        <!-- Row 2: DISTRIBUTION, OS RELEASE, PATH -->
-        <div class="tx-osimage-grid-row3">
-          <div class="tx-field" style="flex:1;">
+        <!-- Row 2: DISTRIBUTION | (OS RELEASE + PATH) -->
+        <div class="tx-osimage-grid-bare">
+          <div class="tx-field tx-field-emphasis tx-osimage-main-col" style="flex:1;">
             <span class="tx-label">Distribution:</span>
             <input v-model="form.distribution" type="text" />
           </div>
-          <div class="tx-field" style="flex:0 0 auto;">
-            <span class="tx-label">OS Release:</span>
-            <input v-model="form.osrelease" type="text" style="max-width:100px;" />
-          </div>
-          <div class="tx-field" style="flex:1;">
-            <span class="tx-label">Path:</span>
-            <input v-model="form.path" type="text" />
+          <div class="tx-osimage-right-pair tx-osimage-span-2">
+            <div class="tx-field tx-field-emphasis">
+              <span class="tx-label">OS Release:</span>
+              <input v-model="form.osrelease" type="text" />
+            </div>
+            <div class="tx-field">
+              <span class="tx-label">Path:</span>
+              <input v-model="form.path" type="text" />
+            </div>
           </div>
         </div>
 
@@ -102,14 +104,14 @@
 
         <!-- Expanded: Advanced toggle, fields, then submit -->
         <template v-else>
-          <div style="margin-top:1rem;">
+          <div class="tx-form-footer tx-form-footer-no-submit">
             <button
               type="button"
-              class="tx-btn tx-btn-blue tx-btn-advanced-toggle"
+              class="tx-btn tx-btn-outline-blue tx-btn-advanced-toggle"
               @click="advancedOpen = false"
             >
               Advanced
-              <span class="tx-advanced-chevron is-open"></span>
+              <span class="tx-advanced-chevron tx-advanced-chevron-blue is-open"></span>
             </button>
           </div>
 

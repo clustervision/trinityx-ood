@@ -793,6 +793,53 @@ button.tx-name-link.tx-cell-ellipsis {
   margin-bottom: 0.65rem;
 }
 
+.tx-field-emphasis {
+  border-color: #5376EA;
+}
+
+.tx-osimage-main-row {
+  display: flex;
+  gap: 0.65rem 0.85rem;
+  align-items: stretch;
+  margin-bottom: 0.65rem;
+}
+
+.tx-osimage-grid-bare {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.65rem 0.85rem;
+  align-items: stretch;
+  margin-bottom: 0.65rem;
+}
+
+.tx-osimage-grid-bare > .tx-field,
+.tx-osimage-grid-bare > .tx-osimage-right-pair {
+  min-width: 0;
+}
+
+.tx-osimage-span-2 {
+  grid-column: 2 / 4;
+}
+
+.tx-osimage-main-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-osimage-right-pair {
+  display: flex;
+  gap: 0.65rem 0.85rem;
+  align-items: stretch;
+}
+
+.tx-osimage-right-pair > .tx-field:first-child {
+  flex: 0 0 10rem;
+}
+
+.tx-osimage-right-pair > .tx-field:last-child {
+  flex: 1;
+}
+
 /* ---------- Blue field (input-group style) ---------- */
 .tx-field {
   display: inline-flex;
@@ -857,6 +904,14 @@ button.tx-name-link.tx-cell-ellipsis {
   height: 1rem;
   margin: 0 0.3rem;
   cursor: pointer;
+}
+
+.tx-field-bare {
+  background: #E6EEFF;
+}
+
+.tx-field-bare input[type="checkbox"] {
+  margin: 0 0.45rem;
 }
 
 /* Modal form field adjustments */
@@ -957,7 +1012,7 @@ button.tx-name-link.tx-cell-ellipsis {
   background: transparent;
   color: #5376EA;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
   text-transform: uppercase;
   white-space: nowrap;
   padding: 0;
@@ -988,6 +1043,8 @@ button.tx-name-link.tx-cell-ellipsis {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  min-width: 110px;
+  justify-content: center;
 }
 
 .tx-btn-advanced-toggle .tx-advanced-chevron {
@@ -1016,6 +1073,10 @@ button.tx-name-link.tx-cell-ellipsis {
   justify-content: flex-end;
   margin-top: 1.5rem;
   gap: 0.75rem;
+}
+
+.tx-form-footer-no-submit {
+  justify-content: flex-start;
 }
 
 /* ---------- Advanced section ---------- */
@@ -1083,5 +1144,23 @@ button.tx-name-link.tx-cell-ellipsis {
   .tx-osimage-grid-top,
   .tx-osimage-grid-row3 {
     flex-direction: column;
+  }
+
+  .tx-osimage-main-row,
+  .tx-osimage-grid-bare,
+  .tx-osimage-right-pair {
+    flex-direction: column;
+  }
+
+  .tx-osimage-grid-bare {
+    display: flex;
+  }
+
+  .tx-osimage-span-2 {
+    grid-column: auto;
+  }
+
+  .tx-osimage-right-pair > .tx-field:first-child {
+    flex: 1;
   }
 }

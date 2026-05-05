@@ -5,35 +5,34 @@
 
       <div v-if="alertMsg" :class="alertOk ? 'alert-success' : 'alert-danger'">{{ alertMsg }}</div>
 
-      <!-- Row 1: NAME, KERNEL VERSION -->
-      <div class="tx-osimage-grid-top">
-        <div class="tx-field" style="flex:1;">
+      <div class="tx-osimage-main-row">
+        <div class="tx-field tx-field-emphasis tx-osimage-main-col">
           <span class="tx-label">Name:</span>
           <input v-model="form.name" type="text" />
         </div>
-        <div class="tx-field" style="flex:1;">
+        <div class="tx-field tx-field-emphasis tx-osimage-main-col">
           <span class="tx-label">Kernel Version:</span>
           <input v-model="form.kernelversion" type="text" />
         </div>
       </div>
 
-      <!-- Row 2: DISTRIBUTION, OS RELEASE, PATH -->
-      <div class="tx-osimage-grid-row3">
-        <div class="tx-field" style="flex:1;">
+      <div class="tx-osimage-main-row">
+        <div class="tx-field tx-field-emphasis tx-osimage-main-col">
           <span class="tx-label">Distribution:</span>
           <input v-model="form.distribution" type="text" />
         </div>
-        <div class="tx-field" style="flex:0 0 auto;">
-          <span class="tx-label">OS Release:</span>
-          <input v-model="form.osrelease" type="text" style="max-width:100px;" />
-        </div>
-        <div class="tx-field" style="flex:1;">
-          <span class="tx-label">Path:</span>
-          <input v-model="form.path" type="text" />
+        <div class="tx-osimage-right-pair tx-osimage-main-col">
+          <div class="tx-field tx-field-emphasis">
+            <span class="tx-label">OS Release:</span>
+            <input v-model="form.osrelease" type="text" />
+          </div>
+          <div class="tx-field">
+            <span class="tx-label">Path:</span>
+            <input v-model="form.path" type="text" />
+          </div>
         </div>
       </div>
 
-      <!-- Full-width: GRAB FILE SYSTEMS -->
       <div class="tx-osimage-grid-full">
         <div class="tx-field" style="width:100%;">
           <span class="tx-label">Grab File Systems:</span>
@@ -41,7 +40,6 @@
         </div>
       </div>
 
-      <!-- Full-width: GRAB EXCLUDE -->
       <div class="tx-osimage-grid-full">
         <div class="tx-field" style="width:100%;">
           <span class="tx-label">Grab Exclude:</span>
@@ -57,7 +55,7 @@
           @click="advancedOpen = true"
         >
           Advanced
-          <span class="tx-advanced-chevron"></span>
+          <span class="tx-advanced-chevron tx-advanced-chevron-blue"></span>
         </button>
         <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
           {{ saving ? 'Saving...' : 'Add OS Image' }}
@@ -66,14 +64,14 @@
 
       <!-- Expanded: Advanced toggle, fields, then submit -->
       <template v-else>
-        <div style="margin-top:1rem;">
+        <div class="tx-form-footer tx-form-footer-no-submit">
           <button
             type="button"
-            class="tx-btn tx-btn-blue tx-btn-advanced-toggle"
+            class="tx-btn tx-btn-outline-blue tx-btn-advanced-toggle"
             @click="advancedOpen = false"
           >
             Advanced
-            <span class="tx-advanced-chevron is-open"></span>
+            <span class="tx-advanced-chevron tx-advanced-chevron-blue is-open"></span>
           </button>
         </div>
 
