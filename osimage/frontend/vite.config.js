@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   const rawBasePath = (env.VITE_BASE_PATH || '').trim()
   const normalizedBasePath = rawBasePath
     ? `/${rawBasePath.replace(/^\/+|\/+$/g, '')}/`
-    : '/static/'
+    : './'
 
   if (mode === 'development') {
     console.info(

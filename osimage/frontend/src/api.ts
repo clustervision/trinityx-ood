@@ -38,7 +38,19 @@ export const baseUrl = () => {
     .trim()
     .replace(/\/$/, '')
   if (UNSUBSTITUTED_APP_URL.test(explicit)) explicit = ''
-  if (explicit) return explicit
+  if (explicit) {
+    try {
+      const parsed = new URL(explicit)
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        // OOD/Proxy environments may inject http APP_URL even when browser uses https.
+        // Keep the injected path, but always align origin with the active page.
+        return `${window.location.origin}${parsed.pathname}`.replace(/\/$/, '')
+      }
+    } catch {
+      /* ignore and fall through */
+    }
+    return explicit
+  }
   return ''
 }
 

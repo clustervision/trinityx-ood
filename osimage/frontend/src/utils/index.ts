@@ -1,7 +1,14 @@
 export function publicAssetUrl(relativePath: string) {
-  const base = import.meta.env.BASE_URL || '/'
   const r = String(relativePath || '').replace(/^\//, '')
-  return `${base}${r}`
+  if (!r) return ''
+  try {
+    // Resolve against the built JS file location (e.g. .../assets/index.js),
+    // so icons/fonts always stay under the active OOD app prefix.
+    return new URL(r, import.meta.url).toString()
+  } catch {
+    const base = String(import.meta.env.BASE_URL || '/')
+    return `${base}${r}`
+  }
 }
 
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
