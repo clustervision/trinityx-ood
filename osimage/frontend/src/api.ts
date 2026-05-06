@@ -4,59 +4,17 @@
  *
  * Backend: trinityx-ood/osimage Flask JSON API (thin daemon proxy).
  */
+import type {
+  DaemonEnvelope,
+  OsimageConfigContent,
+  OsimageInventoryRow,
+  OsimageListResult,
+  OsimageRecord,
+} from './types'
+
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
 
 const TABLE = 'osimage'
-
-interface DaemonErrorContent {
-  message?: string
-}
-
-interface DaemonEnvelope<T = unknown> {
-  status?: boolean | string
-  status_code?: number
-  content?: T | string | DaemonErrorContent
-  message?: string
-  error?: string
-}
-
-interface OsimageRecord {
-  name?: string
-  _override?: boolean
-  kernelversion?: string
-  kerneldetails?: string
-  distribution?: string
-  osrelease?: string
-  path?: string
-  initrdfile?: string
-  kernelfile?: string
-  imagefile?: string
-  [key: string]: unknown
-}
-
-interface OsimageConfigContent {
-  config?: {
-    osimage?: Record<string, OsimageRecord>
-  }
-}
-
-export interface OsimageInventoryRow {
-  name?: string
-  kernelversion?: string
-  kerneldetails?: string
-  distribution?: string
-  osrelease?: string
-  path?: string
-  initrdfile?: string
-  kernelfile?: string
-  imagefile?: string
-}
-
-interface OsimageListResult {
-  images: OsimageInventoryRow[]
-  error: string
-  chroot_base_url: string
-}
 
 /** Matches legacy Python Helper.prepare_payload / prepare_json EDITOR_KEYS. */
 const EDITOR_KEYS = [

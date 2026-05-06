@@ -19,7 +19,7 @@
 <script setup>
 import { computed } from 'vue'
 import { baseUrl } from '../api'
-import { publicAssetUrl } from '../utils/publicAssets'
+import { publicAssetUrl } from '../utils'
 
 function backendHostname() {
   const raw = import.meta.env.VITE_APP_URL || ''

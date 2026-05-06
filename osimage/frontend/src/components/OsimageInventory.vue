@@ -198,9 +198,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage, checkPackStatus } from '../api'
-import { publicAssetUrl } from '../utils/publicAssets'
-import { messageForDisplay } from '../utils/sanitizeUserMessage'
-import { resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils/oodShell'
+import { publicAssetUrl, messageForDisplay, resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils'
 
 defineEmits(['open-add', 'open-edit', 'open-clone'])
 
