@@ -692,6 +692,10 @@ button.tx-name-link.tx-cell-ellipsis {
   overflow-y: auto;
 }
 
+.tx-modal-overlay-nested {
+  z-index: 9100;
+}
+
 .tx-modal-container {
   position: relative;
   background: #ffffff;
@@ -763,6 +767,13 @@ button.tx-name-link.tx-cell-ellipsis {
   font-weight: 700;
 }
 
+.tx-comment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
 .tx-loading {
   color: #999;
   font-size: 0.9rem;
@@ -793,15 +804,21 @@ button.tx-name-link.tx-cell-ellipsis {
   margin-bottom: 0.65rem;
 }
 
-.tx-field-emphasis {
-  border-color: #5376EA;
-}
-
 .tx-osimage-main-row {
   display: flex;
   gap: 0.65rem 0.85rem;
   align-items: stretch;
   margin-bottom: 0.65rem;
+}
+
+.tx-osimage-main-row > .tx-field,
+.tx-osimage-main-row > .tx-osimage-right-pair {
+  min-width: 0;
+}
+
+.tx-osimage-main-row > .tx-field input[type="text"] {
+  flex: 1;
+  min-width: 0;
 }
 
 .tx-osimage-grid-bare {
@@ -835,14 +852,39 @@ button.tx-name-link.tx-cell-ellipsis {
   display: flex;
   gap: 0.65rem 0.85rem;
   align-items: stretch;
+  min-width: 0;
+}
+
+.tx-osimage-right-pair > .tx-field {
+  min-width: 0;
+}
+
+.tx-osimage-right-pair > .tx-field input[type="text"] {
+  flex: 1;
+  min-width: 0;
 }
 
 .tx-osimage-right-pair > .tx-field:first-child {
   flex: 0 0 10rem;
 }
 
+.tx-osimage-path-field {
+  flex: 1;
+}
+
 .tx-osimage-right-pair > .tx-field:last-child {
   flex: 1;
+}
+
+/* Top-row grid: long single-line fields (Kernel Version, etc.) must shrink with grid tracks */
+.tx-osimage-grid-bare > .tx-field:not(.tx-field-bare):not(.tx-field-name-with-rename)
+  input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.tx-osimage-grid-bare > .tx-field-name-with-rename {
+  min-width: 0;
 }
 
 /* ---------- Blue field (input-group style) ---------- */
@@ -853,6 +895,10 @@ button.tx-name-link.tx-cell-ellipsis {
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
+}
+
+.tx-field.tx-field-emphasis {
+  border: 2px solid #5376ea;
 }
 
 .tx-field .tx-label {
@@ -1064,6 +1110,54 @@ button.tx-name-link.tx-cell-ellipsis {
   border: none;
 }
 
+.tx-btn-comment-popup-edit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  margin-left: 0.35rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.tx-btn-comment-popup-edit:hover {
+  background: rgba(83, 118, 234, 0.12);
+}
+
+.tx-btn-comment-popup-edit:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 1px;
+}
+
+.tx-btn-comment-popup-edit img {
+  display: block;
+  pointer-events: none;
+}
+
+.tx-comment-preview-wrap {
+  position: relative;
+}
+
+.tx-btn-comment-popup-floating {
+  position: absolute;
+  bottom: 0.35rem;
+  right: 0.45rem;
+  z-index: 2;
+  margin-left: 0;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.tx-btn-comment-popup-floating:hover {
+  background: #fff;
+}
+
 .tx-field-block textarea,
 .tx-field-block input[type="text"] {
   border: none;
@@ -1073,6 +1167,33 @@ button.tx-name-link.tx-cell-ellipsis {
   font-size: 15px;
   resize: vertical;
   min-height: 5rem;
+}
+
+.tx-field-block textarea.tx-comment-preview.tx-comment-inline-editable {
+  resize: none;
+  cursor: text;
+  background: #fff;
+  padding-right: 3rem;
+}
+
+.tx-comment-edit-dialog textarea {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  resize: none;
+  padding: 0.5rem 0.65rem;
+  font-size: 15px;
+  line-height: 1.45;
+  border: 1px solid #a7c5ff;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.tx-comment-edit-dialog textarea:focus {
+  border-color: #5376ea;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(83, 118, 234, 0.15);
 }
 
 /* ---------- Footer actions row ---------- */

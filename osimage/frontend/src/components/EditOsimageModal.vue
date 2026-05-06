@@ -12,7 +12,7 @@
       <template v-if="!loadingData && !loadError">
         <!-- Rows 1–2: one grid so column 2 (Kernel / OS Release) shares tracks -->
         <div class="tx-osimage-grid-bare">
-          <div class="tx-field tx-field-name-with-rename" style="flex:1;">
+          <div class="tx-field tx-field-emphasis tx-field-name-with-rename" style="flex:1;">
             <span class="tx-label">Name:</span>
             <div class="tx-name-input-wrap">
               <template v-if="!renaming">
@@ -69,7 +69,7 @@
               <span class="tx-label">OS Release:</span>
               <input v-model="form.osrelease" type="text" />
             </div>
-            <div class="tx-field">
+            <div class="tx-field tx-osimage-path-field">
               <span class="tx-label">Path:</span>
               <input v-model="form.path" type="text" />
             </div>
@@ -159,12 +159,7 @@
                 </div>
               </div>
               <div class="tx-adv-full">
-                <div class="tx-field-block" style="width:100%;">
-                  <div class="tx-label-row">
-                    <span class="tx-label">Comment:</span>
-                  </div>
-                  <textarea v-model="form.comment" rows="4"></textarea>
-                </div>
+                <OsimageCommentField v-model="form.comment" />
               </div>
             </div>
           </div>
@@ -183,6 +178,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
+import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimageEditData, submitOsimageForm } from '../api'
 import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
