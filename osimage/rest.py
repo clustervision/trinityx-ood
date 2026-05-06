@@ -33,6 +33,7 @@ from configparser import RawConfigParser
 import os
 import logging
 import requests
+from flask import jsonify, url_for
 from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
@@ -68,6 +69,35 @@ class Rest():
             allowed_methods={'GET', 'POST'},
         )
         self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
+
+
+    @staticmethod
+    def forward_daemon_response(resp):
+        """Map a requests.Response (or falsy) to a Flask response."""
+        if resp is False or resp is None:
+            return jsonify({"error": "No response from daemon"}), 502
+        if not resp.content:
+            return '', resp.status_code
+        try:
+            body = resp.json()
+        except ValueError:
+            return jsonify({
+                "message": "Daemon returned non-JSON body",
+                "status_code": resp.status_code,
+                "body": (resp.text or "").strip(),
+            }), resp.status_code if not resp.ok else 200
+        return jsonify(body), resp.status_code
+
+
+    @staticmethod
+    def app_url(request):
+        """Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context."""
+        response = {"APP_URL": ""}
+        full_url = f"{request.scheme}://{request.host}{request.path}"
+        full_url = full_url[:-1]
+        full_url_app = f"{full_url}{url_for('home')}"
+        response["APP_URL"] = full_url_app[:-1]
+        return response
 
 
     def get_ini_info(self):

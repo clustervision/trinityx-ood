@@ -55,23 +55,6 @@ def _chroot_base_url(req):
     return f"{scheme}://{req.host}/pun/sys/shell/ssh/{req.host.split(':')[0]}"
 
 
-def _forward_daemon_response(resp):
-    """Map a requests.Response (or falsy) to a Flask response."""
-    if resp is False or resp is None:
-        return jsonify({"error": "No response from daemon"}), 502
-    if not resp.content:
-        return '', resp.status_code
-    try:
-        body = resp.json()
-    except ValueError:
-        return jsonify({
-            "message": "Daemon returned non-JSON body",
-            "status_code": resp.status_code,
-            "body": (resp.text or "").strip(),
-        }), resp.status_code if not resp.ok else 200
-    return jsonify(body), resp.status_code
-
-
 def _require_json():
     data = request.get_json(silent=True)
     if data is None:
@@ -109,12 +92,9 @@ def page_not_found(e):
 
 @app.route('/', methods=['GET'])
 def home():
-    """Service root: JSON only — browsers should load the UI from the separate frontend app."""
-    return jsonify({
-        "service": "luna2-osimage",
-        "api_root": "/api/v1",
-        "osimage_collection": "/api/v1/osimage",
-    })
+    """Serve the Vue SPA shell. window.APP_URL is this app's base URL."""
+    url = Rest.app_url(request)
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
 @app.route('/api/v1/meta/chroot_base', methods=['GET'])
@@ -141,7 +121,7 @@ def api_v1_add():
     request_data = body.get('request_data')
     if not rec_name or request_data is None:
         return jsonify({"error": "JSON must include 'name' and 'request_data'"}), 400
-    return _forward_daemon_response(Rest().post_data(TABLE, rec_name, request_data))
+    return Rest.forward_daemon_response(Rest().post_data(TABLE, rec_name, request_data))
 
 
 @app.route('/api/v1/edit', methods=['POST'])
@@ -153,7 +133,7 @@ def api_v1_edit():
     request_data = body.get('request_data')
     if not rec_name or request_data is None:
         return jsonify({"error": "JSON must include 'name' and 'request_data'"}), 400
-    return _forward_daemon_response(Rest().post_data(TABLE, rec_name, request_data))
+    return Rest.forward_daemon_response(Rest().post_data(TABLE, rec_name, request_data))
 
 
 @app.route('/api/v1/rename', methods=['POST'])
@@ -166,12 +146,12 @@ def api_v1_rename():
     request_data = body.get('request_data')
     if not rec_name or request_data is None:
         return jsonify({"error": "JSON must include 'name' and 'request_data'"}), 400
-    return _forward_daemon_response(Rest().post_data(TABLE, rec_name, request_data))
+    return Rest.forward_daemon_response(Rest().post_data(TABLE, rec_name, request_data))
 
 
 @app.route('/api/v1/delete/<string:name>', methods=['DELETE'])
 def api_v1_delete(name):
-    return _forward_daemon_response(Rest().get_delete(TABLE, name))
+    return Rest.forward_daemon_response(Rest().get_delete(TABLE, name))
 
 
 @app.route('/api/v1/clone', methods=['POST'])
@@ -183,7 +163,7 @@ def api_v1_clone():
     request_data = body.get('request_data')
     if not source or request_data is None:
         return jsonify({"error": "JSON must include 'source_name' and 'request_data'"}), 400
-    return _forward_daemon_response(Rest().post_clone(TABLE, source, request_data))
+    return Rest.forward_daemon_response(Rest().post_clone(TABLE, source, request_data))
 
 
 @app.route('/api/v1/member/<string:table>/<string:record>', methods=['GET'])
@@ -201,7 +181,7 @@ def api_v1_kernel_post(name):
     body = _require_json()
     if body is None:
         return jsonify({"error": "Expected application/json body"}), 400
-    return _forward_daemon_response(Rest().post_data(TABLE, f'{name}/kernel', body))
+    return Rest.forward_daemon_response(Rest().post_data(TABLE, f'{name}/kernel', body))
 
 
 @app.route('/api/v1/request/<string:status>/<string:service_name>/<string:action>', methods=['GET'])
@@ -209,14 +189,14 @@ def api_v1_request(status, service_name, action):
     uri = f'{status}/{service_name}/{action}'
     if action == '_pack':
         uri = f'config/{uri}'
-    return _forward_daemon_response(Rest().get_raw(uri))
+    return Rest.forward_daemon_response(Rest().get_raw(uri))
 
 
 @app.route('/api/v1/check_status/<string:status>/status/<string:request_id>', methods=['GET'])
 def api_v1_check_status(status, request_id):
     uri = f'{status}/status/{request_id}'
     resp = Rest().get_raw(uri)
-    return _forward_daemon_response(resp)
+    return Rest.forward_daemon_response(resp)
 
 
 @app.route('/api/v1/license', methods=['GET'])
