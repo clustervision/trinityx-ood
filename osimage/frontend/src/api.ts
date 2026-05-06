@@ -2,8 +2,9 @@
  * Dev: same-origin `/osimage-backend` -> Vite proxies to `VITE_APP_URL` (no CORS).
  * Prod: `window.APP_URL` from host shell, or `VITE_APP_URL`.
  *
- * Backend: trinityx-ood/osimage Flask - `/api/v1/*` (thin daemon proxy).
+ * Backend: trinityx-ood/osimage Flask JSON API (thin daemon proxy).
  */
+import { messageForDisplay, sanitizeUserMessage } from './utils/sanitizeUserMessage'
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
 
 const TABLE = 'osimage'
@@ -92,22 +93,6 @@ function apiPath(suffix: string) {
   return `${b}${path}`
 }
 
-function oodOsimageBaseUrl() {
-  const explicit = String(import.meta.env.VITE_OOD_OSIMAGE_URL || '').trim().replace(/\/$/, '')
-  if (explicit) return explicit
-
-  const appUrl = String(import.meta.env.VITE_APP_URL || '').trim()
-  if (appUrl) {
-    try {
-      const u = new URL(appUrl)
-      return `https://${u.hostname}:8080/pun/sys/trinity_osimage/`
-    } catch {
-      /* ignore */
-    }
-  }
-  return ''
-}
-
 async function readJsonResponse<T = Record<string, unknown>>(res: Response): Promise<T | { _raw: string }> {
   const text = await res.text()
   if (!text) return {} as T
@@ -134,7 +119,7 @@ function unwrapGetData<T>(data: unknown, context = 'request'): T {
         : c && typeof c === 'object' && c.message != null
           ? String(c.message)
           : 'Daemon request failed'
-    throw new Error(msg)
+    throw new Error(messageForDisplay(msg))
   }
   if (envelope.status === true) return (envelope.content as T) ?? ({} as T)
   return data as T
@@ -227,20 +212,20 @@ export async function fetchOsimages(): Promise<OsimageListResult> {
       const msg =
         (data && (data.error || data.message)) ||
         `Failed to load OS images: HTTP ${res.status} ${res.statusText || ''}`.trim()
-      throw new Error(msg)
+      throw new Error(messageForDisplay(msg))
     }
     const content = unwrapGetData<OsimageConfigContent>(data, 'list osimage')
     const osMap = content?.config?.[TABLE]
     const images = inventoryRowsFromConfig(osMap || {})
     return { images, error: '', chroot_base_url: '' }
   } catch (e: any) {
-    const msg = e.message || 'Network error'
+    const msg = messageForDisplay(e.message || 'Network error')
     if (import.meta.env.DEV) {
       throw new Error(
         `${msg} - Is the Flask backend running and VITE_APP_URL set in .env.development?`
       )
     }
-    throw e
+    throw new Error(msg)
   }
 }
 
@@ -250,7 +235,8 @@ export async function fetchOsimageDetail(name: string) {
   })
   const data = await readJsonResponse<DaemonEnvelope<OsimageConfigContent>>(res)
   if (!res.ok) {
-    return { osimage: {}, error: data.message || data.error || `HTTP ${res.status}` }
+    const errRaw = data.message || data.error || `HTTP ${res.status}`
+    return { osimage: {}, error: sanitizeUserMessage(String(errRaw)) || `HTTP ${res.status}` }
   }
   try {
     const content = unwrapGetData<OsimageConfigContent>(data, 'detail')
@@ -259,7 +245,10 @@ export async function fetchOsimageDetail(name: string) {
     const osimage = prepareJsonForDisplay({ ...rec })
     return { osimage, error: '' }
   } catch (e: any) {
-    return { osimage: {}, error: e.message || 'Failed to parse record' }
+    return {
+      osimage: {},
+      error: messageForDisplay(e.message || 'Failed to parse record'),
+    }
   }
 }
 
@@ -267,7 +256,7 @@ export async function fetchOsimageEditData(name: string) {
   const res = await fetch(apiPath(`/api/v1/osimage/${encodeURIComponent(name)}`), {
     headers: { Accept: 'application/json' },
   })
-  if (!res.ok) throw new Error(`Failed to load edit data: ${res.status}`)
+  if (!res.ok) throw new Error(messageForDisplay(`Failed to load edit data: ${res.status}`))
   const data = await readJsonResponse<DaemonEnvelope<OsimageConfigContent>>(res)
   try {
     const content = unwrapGetData<OsimageConfigContent>(data, 'edit')
@@ -276,7 +265,7 @@ export async function fetchOsimageEditData(name: string) {
     const d = prepareJsonForDisplay({ ...rec })
     return { data: d, error: '' }
   } catch (e: any) {
-    return { data: {}, error: e.message || 'Failed to load record' }
+    return { data: {}, error: messageForDisplay(e.message || 'Failed to load record') }
   }
 }
 
@@ -298,9 +287,16 @@ export async function deleteOsimage(name: string) {
     }
   }
   if (!res.ok) {
-    throw new Error(data.message || data.error || `Delete failed (${res.status})`)
+    throw new Error(
+      messageForDisplay(data.message || data.error || `Delete failed (${res.status})`)
+    )
   }
-  return { status: 'success', message: data.message || `${name} deleted.` }
+  const rawSuccessMsg = typeof data.message === 'string' ? data.message : ''
+  const successMsg = sanitizeUserMessage(rawSuccessMsg).trim()
+  return {
+    status: 'success',
+    message: successMsg || `${name} deleted.`,
+  }
 }
 
 async function postJson(url: string, body: Record<string, any>) {
@@ -322,6 +318,13 @@ async function postJson(url: string, body: Record<string, any>) {
       (res.status === 204 || res.status === 201 || (res.ok && res.status === 200)
         ? 'success'
         : undefined),
+  }
+  for (const key of ['message', 'error'] as const) {
+    if (typeof merged[key] !== 'string') continue
+    const raw = merged[key].trim()
+    if (!raw) continue
+    const cleaned = sanitizeUserMessage(raw)
+    merged[key] = cleaned || messageForDisplay(raw)
   }
   return { ok, status: res.status, data: merged }
 }
@@ -400,15 +403,8 @@ export async function packOsimage(name: string) {
 
 export async function checkPackStatus(requestId: string) {
   const rid = encodeURIComponent(requestId)
-  const oodBase = oodOsimageBaseUrl()
-  if (!oodBase) {
-    return {
-      ok: false,
-      status: 0,
-      data: { message: 'Missing OOD base URL. Set VITE_OOD_OSIMAGE_URL or VITE_APP_URL.' },
-    }
-  }
-  const url = `${oodBase}/check_status/config/status/${rid}`
+  /** Same origin as other calls: `/api/v1/check_status/...` on the osimage Flask app (daemon proxy). */
+  const url = apiPath(`/api/v1/check_status/config/status/${rid}`)
   const res = await fetch(url, {
     headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
   })

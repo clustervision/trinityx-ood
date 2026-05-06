@@ -10,7 +10,7 @@
       <div v-if="loadingData" class="tx-loading">Loading...</div>
 
       <template v-if="!loadingData && !loadError">
-        <!-- Row 1: CLONE NAME, KERNEL VERSION, BARE -->
+        <!-- Rows 1–2: one grid so column 2 (Kernel / OS Release) shares tracks -->
         <div class="tx-osimage-grid-bare">
           <div class="tx-field" style="flex:1;">
             <span class="tx-label">Clone Name:</span>
@@ -24,15 +24,11 @@
             <span class="tx-label">Bare:</span>
             <input v-model="form.bare" type="checkbox" />
           </div>
-        </div>
-
-        <!-- Row 2: DISTRIBUTION | (OS RELEASE + PATH) -->
-        <div class="tx-osimage-grid-bare">
-          <div class="tx-field tx-field-emphasis tx-osimage-main-col" style="flex:1;">
+          <div class="tx-field tx-field-emphasis tx-osimage-main-col tx-osimage-bare-r2" style="flex:1;">
             <span class="tx-label">Distribution:</span>
             <input v-model="form.distribution" type="text" />
           </div>
-          <div class="tx-osimage-right-pair tx-osimage-span-2">
+          <div class="tx-osimage-right-pair tx-osimage-span-2 tx-osimage-bare-r2">
             <div class="tx-field tx-field-emphasis">
               <span class="tx-label">OS Release:</span>
               <input v-model="form.osrelease" type="text" />
@@ -146,6 +142,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { fetchOsimageCloneData, submitOsimageForm } from '../api'
+import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
 const props = defineProps({
   sourceName: { type: String, required: true },
@@ -204,7 +201,7 @@ async function doClone() {
       alertOk.value = false
     }
   } catch (e) {
-    alertMsg.value = e.message || 'Network error.'
+    alertMsg.value = messageForDisplay(e.message || 'Network error.')
     alertOk.value = false
   } finally {
     saving.value = false
@@ -215,7 +212,7 @@ onMounted(async () => {
   try {
     const resp = await fetchOsimageCloneData(props.sourceName)
     if (resp.error) {
-      loadError.value = resp.error
+      loadError.value = messageForDisplay(resp.error)
       return
     }
     const d = resp.data || {}
@@ -232,7 +229,7 @@ onMounted(async () => {
     form.imagefile = d.imagefile || ''
     form.comment = d.comment || ''
   } catch (e) {
-    loadError.value = e.message || 'Failed to load clone data.'
+    loadError.value = messageForDisplay(e.message || 'Failed to load clone data.')
   } finally {
     loadingData.value = false
   }

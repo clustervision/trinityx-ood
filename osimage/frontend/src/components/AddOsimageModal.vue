@@ -132,6 +132,7 @@
 import { ref, reactive } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { submitOsimageForm } from '../api'
+import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
 const emit = defineEmits(['close', 'saved'])
 
@@ -179,7 +180,7 @@ async function doAdd() {
       alertOk.value = false
     }
   } catch (e) {
-    alertMsg.value = e.message || 'Network error.'
+    alertMsg.value = messageForDisplay(e.message || 'Network error.')
     alertOk.value = false
   } finally {
     saving.value = false

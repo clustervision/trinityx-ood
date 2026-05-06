@@ -199,6 +199,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage, checkPackStatus } from '../api'
 import { publicAssetUrl } from '../utils/publicAssets'
+import { messageForDisplay } from '../utils/sanitizeUserMessage'
 import { resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils/oodShell'
 
 defineEmits(['open-add', 'open-edit', 'open-clone'])
@@ -409,12 +410,12 @@ async function loadData() {
   enrichedNames.clear()
   try {
     const data = await fetchOsimages()
-    if (data.error) errorMsg.value = data.error
+    if (data.error) errorMsg.value = messageForDisplay(data.error)
     chrootBaseUrl.value = resolveChrootBaseUrl(data)
     images.value = data.images || []
     patchAllChrootSessionUrls()
   } catch (err) {
-    errorMsg.value = err.message || 'Network error while loading OS images.'
+    errorMsg.value = messageForDisplay(err.message || 'Network error while loading OS images.')
   } finally {
     loading.value = false
   }
@@ -427,7 +428,7 @@ async function confirmDelete(name) {
     await deleteOsimage(name)
     await loadData()
   } catch (e) {
-    errorMsg.value = e.message || 'Delete failed.'
+    errorMsg.value = messageForDisplay(e.message || 'Delete failed.')
   }
 }
 
@@ -473,7 +474,7 @@ function normalizePackLines(data) {
 }
 
 function pushPackLine(line) {
-  const s = String(line || '').trim()
+  const s = messageForDisplay(String(line || '')).trim()
   if (!s || packSeen.has(s)) return
   packSeen.add(s)
   packLines.value.push(s)

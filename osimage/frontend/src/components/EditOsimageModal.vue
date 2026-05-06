@@ -10,35 +10,44 @@
       <div v-if="loadingData" class="tx-loading">Loading...</div>
 
       <template v-if="!loadingData && !loadError">
-        <!-- Row 1: NAME (rename), KERNEL VERSION, BARE -->
+        <!-- Rows 1–2: one grid so column 2 (Kernel / OS Release) shares tracks -->
         <div class="tx-osimage-grid-bare">
           <div class="tx-field tx-field-name-with-rename" style="flex:1;">
             <span class="tx-label">Name:</span>
             <div class="tx-name-input-wrap">
-              <input
-                v-if="renaming"
-                v-model="newName"
-                type="text"
-                class="tx-name-input-editing"
-                @keyup.enter="doRename"
-                @keyup.escape="cancelRename"
-              />
-              <input v-else :value="currentName" type="text" readonly class="tx-name-input-readonly" />
-              <button
-                v-if="!renaming"
-                type="button"
-                class="tx-btn-rename"
-                title="Rename"
-                @click="startRename"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#5376EA"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 000-1.42l-2.34-2.34a1.003 1.003 0 00-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"/></svg>
-              </button>
-              <template v-if="renaming">
-                <button type="button" class="tx-btn-rename" title="Confirm" @click="doRename">
-                  <span class="tx-btn-rename-cancel-char" style="color:#67C67B;">&#10003;</span>
+              <template v-if="!renaming">
+                <input
+                  type="text"
+                  class="tx-name-input-readonly"
+                  :value="currentName"
+                  readonly
+                />
+                <button
+                  type="button"
+                  class="tx-btn-rename"
+                  title="Edit name"
+                  aria-label="Edit name"
+                  @click="startRename"
+                >
+                  <img :src="renameIconUrl" alt="" width="20" height="20" />
                 </button>
-                <button type="button" class="tx-btn-rename" title="Cancel" @click="cancelRename">
-                  <span class="tx-btn-rename-cancel-char">&times;</span>
+              </template>
+              <template v-else>
+                <input
+                  v-model="newName"
+                  type="text"
+                  class="tx-name-input-editing"
+                  aria-label="OS image name"
+                  @keyup.escape="cancelRename"
+                />
+                <button
+                  type="button"
+                  class="tx-btn-rename tx-btn-rename-cancel-char"
+                  title="Stop editing name"
+                  aria-label="Stop editing name"
+                  @click="cancelRename"
+                >
+                  ×
                 </button>
               </template>
             </div>
@@ -51,15 +60,11 @@
             <span class="tx-label">Bare:</span>
             <input v-model="form.bare" type="checkbox" />
           </div>
-        </div>
-
-        <!-- Row 2: DISTRIBUTION | (OS RELEASE + PATH) -->
-        <div class="tx-osimage-grid-bare">
-          <div class="tx-field tx-field-emphasis tx-osimage-main-col" style="flex:1;">
+          <div class="tx-field tx-field-emphasis tx-osimage-main-col tx-osimage-bare-r2" style="flex:1;">
             <span class="tx-label">Distribution:</span>
             <input v-model="form.distribution" type="text" />
           </div>
-          <div class="tx-osimage-right-pair tx-osimage-span-2">
+          <div class="tx-osimage-right-pair tx-osimage-span-2 tx-osimage-bare-r2">
             <div class="tx-field tx-field-emphasis">
               <span class="tx-label">OS Release:</span>
               <input v-model="form.osrelease" type="text" />
@@ -179,6 +184,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { fetchOsimageEditData, submitOsimageForm } from '../api'
+import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
 const props = defineProps({
   imageName: { type: String, required: true },
@@ -194,6 +200,7 @@ const alertOk = ref(false)
 const currentName = ref('')
 const renaming = ref(false)
 const newName = ref('')
+const renameIconUrl = `${import.meta.env.BASE_URL}icons/icon-rename.png`
 
 const form = reactive({
   kernelversion: '',
@@ -222,41 +229,37 @@ function cancelRename() {
   newName.value = ''
 }
 
-async function doRename() {
+/** Inline rename is committed together with Save (same pattern as ../node Edit Node). */
+async function commitPendingRename() {
+  if (!renaming.value) return true
   const trimmed = newName.value.trim()
   if (!trimmed || trimmed === currentName.value) {
     cancelRename()
-    return
+    return true
   }
-  saving.value = true
-  alertMsg.value = ''
-  try {
-    const fd = new FormData()
-    fd.append('name', currentName.value)
-    fd.append('newname', trimmed)
-    const result = await submitOsimageForm(`/rename/${encodeURIComponent(currentName.value)}`, fd)
-    if (result.ok || result.status === 204 || result.data?.status === 'success') {
-      currentName.value = trimmed
-      renaming.value = false
-      alertMsg.value = result.data?.message || 'Renamed successfully.'
-      alertOk.value = true
-      emit('renamed', trimmed)
-    } else {
-      alertMsg.value = result.data?.message || `Rename failed (${result.status})`
-      alertOk.value = false
-    }
-  } catch (e) {
-    alertMsg.value = e.message || 'Network error.'
-    alertOk.value = false
-  } finally {
-    saving.value = false
+  const fd = new FormData()
+  fd.append('name', currentName.value)
+  fd.append('newname', trimmed)
+  const result = await submitOsimageForm(`/rename/${encodeURIComponent(currentName.value)}`, fd)
+  if (result.ok || result.status === 204 || result.data?.status === 'success') {
+    currentName.value = trimmed
+    renaming.value = false
+    newName.value = ''
+    emit('renamed', trimmed)
+    return true
   }
+  alertMsg.value = result.data?.message || `Rename failed (${result.status})`
+  alertOk.value = false
+  return false
 }
 
 async function doSave() {
   saving.value = true
   alertMsg.value = ''
   try {
+    const renameOk = await commitPendingRename()
+    if (!renameOk) return
+
     const fd = new FormData()
     fd.append('name', currentName.value)
     for (const [k, v] of Object.entries(form)) {
@@ -276,7 +279,7 @@ async function doSave() {
       alertOk.value = false
     }
   } catch (e) {
-    alertMsg.value = e.message || 'Network error.'
+    alertMsg.value = messageForDisplay(e.message || 'Network error.')
     alertOk.value = false
   } finally {
     saving.value = false
@@ -287,7 +290,7 @@ onMounted(async () => {
   try {
     const resp = await fetchOsimageEditData(props.imageName)
     if (resp.error) {
-      loadError.value = resp.error
+      loadError.value = messageForDisplay(resp.error)
       return
     }
     const d = resp.data || {}
@@ -306,7 +309,7 @@ onMounted(async () => {
     form.comment = d.comment || ''
     form.tag = d.tag || ''
   } catch (e) {
-    loadError.value = e.message || 'Failed to load OS image data.'
+    loadError.value = messageForDisplay(e.message || 'Failed to load OS image data.')
   } finally {
     loadingData.value = false
   }

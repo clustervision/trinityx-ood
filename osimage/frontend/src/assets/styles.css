@@ -821,6 +821,11 @@ button.tx-name-link.tx-cell-ellipsis {
   grid-column: 2 / 4;
 }
 
+/* Second row inside a two-row .tx-osimage-grid-bare (shared column tracks) */
+.tx-osimage-grid-bare > .tx-osimage-bare-r2 {
+  grid-row: 2;
+}
+
 .tx-osimage-main-col {
   flex: 1;
   min-width: 0;
@@ -912,6 +917,36 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-field-bare input[type="checkbox"] {
   margin: 0 0.45rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+  align-self: center;
+  aspect-ratio: 1;
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid #5376ea;
+  border-radius: 3px;
+  background: #fff;
+  vertical-align: middle;
+  box-sizing: border-box;
+}
+
+.tx-field-bare input[type="checkbox"]:checked {
+  background-color: #5376ea;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M1 5l3.5 3.5L11 1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 11px 9px;
+}
+
+.tx-field-bare input[type="checkbox"]:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
 }
 
 /* Modal form field adjustments */
@@ -963,6 +998,13 @@ button.tx-name-link.tx-cell-ellipsis {
   box-shadow: 0 0 0 2px rgba(83, 118, 234, 0.15);
 }
 
+.tx-field-name-with-rename .tx-btn-rename-cancel-char {
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #5376ea;
+}
+
 .tx-btn-rename {
   flex: none;
   display: inline-flex;
@@ -983,11 +1025,14 @@ button.tx-name-link.tx-cell-ellipsis {
   background: rgba(83, 118, 234, 0.1);
 }
 
-.tx-btn-rename-cancel-char {
-  font-size: 1.25rem;
-  line-height: 1;
-  font-weight: 600;
-  color: #5376ea;
+.tx-btn-rename:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 1px;
+}
+
+.tx-btn-rename img {
+  display: block;
+  pointer-events: none;
 }
 
 /* ---------- Block-style field (label on top, textarea below) ---------- */
@@ -1154,6 +1199,10 @@ button.tx-name-link.tx-cell-ellipsis {
 
   .tx-osimage-grid-bare {
     display: flex;
+  }
+
+  .tx-osimage-bare-r2 {
+    grid-row: auto;
   }
 
   .tx-osimage-span-2 {
