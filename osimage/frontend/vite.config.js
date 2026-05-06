@@ -5,6 +5,10 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   /** One variable: same as VITE_APP_URL (legacy alias still works). */
   const backendTarget = (env.VITE_APP_URL || env.VITE_OSIMAGE_BACKEND || '').trim()
+  const rawBasePath = (env.VITE_BASE_PATH || '').trim()
+  const normalizedBasePath = rawBasePath
+    ? `/${rawBasePath.replace(/^\/+|\/+$/g, '')}/`
+    : '/static/'
 
   if (mode === 'development') {
     console.info(
@@ -24,7 +28,8 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    base: mode === 'production' ? '/static/' : '/',
+    /** Production static path must match backend public URL prefix. */
+    base: mode === 'production' ? normalizedBasePath : '/',
     plugins: [vue()],
     build: {
       assetsInlineLimit: 0,
