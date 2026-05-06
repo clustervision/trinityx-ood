@@ -4,6 +4,23 @@ export function publicAssetUrl(relativePath: string) {
   return `${base}${r}`
 }
 
+const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
+
+/**
+ * Runtime app URL source of truth:
+ * 1) index.html injected window.APP_URL (preferred)
+ * 2) VITE_APP_URL from .env
+ */
+export function appUrlFromRuntime() {
+  const fromWindow =
+    typeof window !== 'undefined' && (window as any).APP_URL != null
+      ? String((window as any).APP_URL).trim()
+      : ''
+  if (fromWindow && !UNSUBSTITUTED_APP_URL.test(fromWindow)) return fromWindow
+  const fromEnv = String(import.meta.env.VITE_APP_URL || '').trim()
+  return fromEnv && !UNSUBSTITUTED_APP_URL.test(fromEnv) ? fromEnv : ''
+}
+
 /**
  * Remove internal REST path segments from strings shown in the UI (errors, pack log, alerts).
  */
@@ -32,7 +49,7 @@ export function oodShellOrigin() {
 }
 
 function inferredOodShellOrigin() {
-  const appUrl = String(import.meta.env.VITE_APP_URL || '').trim()
+  const appUrl = appUrlFromRuntime()
   if (!appUrl) return ''
   try {
     const u = new URL(appUrl)
@@ -47,7 +64,7 @@ function preferredShellOrigin() {
 }
 
 function inferredShellHost() {
-  const appUrl = String(import.meta.env.VITE_APP_URL || '').trim()
+  const appUrl = appUrlFromRuntime()
   if (appUrl) {
     try {
       return new URL(appUrl).hostname

@@ -19,10 +19,10 @@
 <script setup>
 import { computed } from 'vue'
 import { baseUrl } from '../api'
-import { publicAssetUrl } from '../utils'
+import { appUrlFromRuntime, publicAssetUrl } from '../utils'
 
 function backendHostname() {
-  const raw = import.meta.env.VITE_APP_URL || ''
+  const raw = appUrlFromRuntime()
   if (raw) {
     try { return new URL(raw).hostname } catch { /* fall through */ }
   }
@@ -34,7 +34,7 @@ function backendHostname() {
 }
 
 const homeUrl = computed(() => {
-  const raw = import.meta.env.VITE_APP_URL || ''
+  const raw = appUrlFromRuntime()
   if (raw) {
     try {
       const u = new URL(raw)
