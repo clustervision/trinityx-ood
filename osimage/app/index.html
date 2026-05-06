@@ -4,10 +4,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OS Images :: Luna (dev)</title>
+    <title>OS Images :: Luna</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='icon.png') }}">
     <script>
       window.APP_URL = "{{ APP_URL }}";
     </script>
+    <!-- Production assets served by Flask static route -->
     <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
     <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}">
   </head>
