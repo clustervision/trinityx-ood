@@ -1,0 +1,41 @@
+<!--
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
+-->
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-assets-path="../assets/">
+  <head>
+    {% include "layout/header.html" %}
+  </head>
+
+  <body>
+    <header>
+      {% include "layout/navbar.html" %}
+    </header>
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+          <div class="content-wrapper">
+            {% block content %}
+            {% endblock content %}
+            {% include "layout/footer.html" %}
+            <div class="content-backdrop fade"></div>
+          </div>
+      </div>
+      <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+    {% include "layout/footer_js.html" %}
+  </body>
+</html>

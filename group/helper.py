@@ -51,19 +51,6 @@ class Helper():
         self.logger = Log.get_logger()
 
 
-    def app_url(self, request=None):
-        """
-        URL for the frontend application (window.APP_URL).
-        """
-        response = {"APP_URL": ""}
-        full_url = f"{request.scheme}://{request.host}{request.path}"
-        full_url = full_url[:-1]
-        full_url_app = f"{full_url}{url_for('home')}"
-        APP_URL = full_url_app[:-1]
-        response["APP_URL"] = APP_URL
-        return response
-
-
     def get_bond_mode_options(self, bond_mode=None):
         """
         This method will return the bond mode options in HTML format.
@@ -710,14 +697,18 @@ class Helper():
                 del response[key]
         return response, resp_overrides
 
+
     def filter_data_json(self, table=None, data=None):
         """
-        JSON list view: same column set as filter_data / filter_columns, no HTML.
-        If _override is True, append " *" to name (same as legacy table).
+        JSON version of filter_data for the list view.
+        Returns a list of dicts with only the columns from filter_columns.
+        Keeps legacy override behavior:
+        - if _override is True, append " *" to name
+        - do not expose _override key in output rows
         """
         fields = filter_columns(table)
         result = []
-        for _name, record in data.items():
+        for name, record in data.items():
             item = {}
             record_name = record.get('name')
             if record.get('_override') and isinstance(record_name, str):
@@ -730,12 +721,39 @@ class Helper():
             result.append(item)
         return fields, result
 
+
+    def filter_data_col_json(self, table=None, data=None):
+        """
+        JSON version of filter_data_col for single record detail view.
+        Keeps legacy _source behavior by using merge_source().
+        Keeps legacy override behavior:
+        - if _override is True, inject
+          info = "Config differs from parent - local overrides"
+        - remove _override from response
+        """
+        defined_keys = sortby(table)
+        merge_exception = None
+        result, _ = self.merge_source(table, data, merge_exception)
+        if result.get('_override'):
+            result['info'] = "Config differs from parent - local overrides"
+        result.pop('_override', None)
+
+        for new_key in list(result.keys()):
+            if new_key not in defined_keys:
+                defined_keys.append(new_key)
+        index_map = {v: i for i, v in enumerate(defined_keys)}
+        sorted_result = dict(
+            sorted(result.items(), key=lambda pair: index_map.get(pair[0], len(defined_keys)))
+        )
+        return sorted_result
+
+
     def get_bond_mode_list(self):
         """
-        Bond mode options as a plain list (no HTML), for JSON add/edit/clone bodies.
+        Returns bond mode options as a plain list (no HTML).
         """
         return [
             'balance-rr', 'active-backup', 'balance-xor',
-            'broadcast', '802.3ad', 'balance-tlb', 'balance-alb',
+            'broadcast', '802.3ad', 'balance-tlb', 'balance-alb'
         ]
 

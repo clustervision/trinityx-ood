@@ -91,48 +91,6 @@ class Model():
         return response
 
 
-    def get_list_options_json(self, table=None, selected=None):
-        """
-        Returns a plain list of names for the given table, plus which one
-        is currently selected. No HTML.
-        """
-        names = []
-        get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            names = list(raw_data.keys())
-        return {"options": names, "selected": selected}
-
-
-    def get_node_source_choices(self, table=None, record=None, source=None):
-        """
-        Option list for node bmcsetup/osimage: supports (group)/(node) value suffixes
-        like get_list_option_html() for the Vue forms.
-        """
-        choices = []
-        get_list = Rest().get_data(table)
-        if not get_list:
-            return choices
-        raw_data = get_list['config'][table]
-        for name, _ in raw_data.items():
-            if record:
-                if record == name:
-                    if source:
-                        if source == 'node':
-                            choices.append({"value": f"{name}(group)", "label": f"{name} (group)"})
-                            choices.append({"value": f"{name}(node)", "label": f"{name} (node)"})
-                        else:
-                            choices.append({"value": f"{name}(group)", "label": f"{name} (group)"})
-                            choices.append({"value": f"{name}(node)", "label": f"{name} (node)"})
-                    else:
-                        choices.append({"value": name, "label": name})
-                else:
-                    choices.append({"value": name, "label": name})
-            else:
-                choices.append({"value": name, "label": name})
-        return choices
-
-
     def get_name_list(self, table=None):
         """
         This method will open the Login Page(First Page)

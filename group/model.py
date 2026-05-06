@@ -82,9 +82,11 @@ class Model():
             response = [["", f" No {table.capitalize()} Available  "]]
         return response
 
+
     def get_list_options_json(self, table=None, selected=None):
         """
-        Plain option names for Vue selects: { "options": [...], "selected": ... }.
+        Returns a plain list of names for the given table, plus which one
+        is currently selected. No HTML.
         """
         names = []
         get_list = Rest().get_data(table)
@@ -92,6 +94,7 @@ class Model():
             raw_data = get_list['config'][table]
             names = list(raw_data.keys())
         return {"options": names, "selected": selected}
+
 
     def get_name_list(self, table=None):
         """
