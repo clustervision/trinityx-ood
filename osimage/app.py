@@ -34,8 +34,14 @@ from flask import Flask, jsonify, render_template, request
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 
-# SPA: templates and error shell in app/; static assets in app/assets (same as group).
-app = Flask(__name__, static_folder="app/assets", template_folder="app")
+# SPA: templates and error shell in app/; static assets in app/assets.
+# Expose assets explicitly under /app/assets to avoid ambiguity with legacy /static paths.
+app = Flask(
+    __name__,
+    static_folder="app/assets",
+    static_url_path="/app/assets",
+    template_folder="app",
+)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 TABLE = 'osimage'
@@ -64,7 +70,7 @@ def _require_json():
 
 @app.before_request
 def validate_home_directory():
-    if request.path.startswith('/static/'):
+    if request.path.startswith('/app/assets/'):
         return
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
