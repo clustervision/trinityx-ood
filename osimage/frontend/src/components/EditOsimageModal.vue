@@ -259,6 +259,9 @@ async function doSave() {
     const fd = new FormData()
     fd.append('name', currentName.value)
     for (const [k, v] of Object.entries(form)) {
+      // Backend keeps reserved/default tag immutable on update.
+      // If tag is "default", skip posting it so other fields (e.g. comment) can still be saved.
+      if (k === 'tag' && String(v ?? '').trim().toLowerCase() === 'default') continue
       if (k === 'bare') {
         if (v) fd.append(k, 'on')
       } else if (v !== '' && v != null) {
