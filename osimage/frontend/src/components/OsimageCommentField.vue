@@ -60,13 +60,14 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
+import { publicAssetUrl } from '../utils'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
 })
 const emit = defineEmits(['update:modelValue'])
 
-const editIconUrl = `${import.meta.env.BASE_URL}icons/icon-edit.png`
+const editIconUrl = publicAssetUrl('icons/icon-edit.png')
 
 const commentEditDialogOpen = ref(false)
 const commentEditDraft = ref('')

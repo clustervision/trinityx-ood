@@ -180,6 +180,7 @@ import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimageEditData, submitOsimageForm } from '../api'
+import { publicAssetUrl } from '../utils'
 
 const props = defineProps({
   imageName: { type: String, required: true },
@@ -195,7 +196,7 @@ const alertOk = ref(false)
 const currentName = ref('')
 const renaming = ref(false)
 const newName = ref('')
-const renameIconUrl = `${import.meta.env.BASE_URL}icons/icon-rename.png`
+const renameIconUrl = publicAssetUrl('icons/icon-rename.png')
 
 const form = reactive({
   kernelversion: '',
