@@ -4,7 +4,6 @@
  *
  * Backend: trinityx-ood/osimage Flask JSON API (thin daemon proxy).
  */
-import { messageForDisplay, sanitizeUserMessage } from './utils/sanitizeUserMessage'
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
 
 const TABLE = 'osimage'
@@ -119,7 +118,7 @@ function unwrapGetData<T>(data: unknown, context = 'request'): T {
         : c && typeof c === 'object' && c.message != null
           ? String(c.message)
           : 'Daemon request failed'
-    throw new Error(messageForDisplay(msg))
+    throw new Error(String(msg || 'Daemon request failed'))
   }
   if (envelope.status === true) return (envelope.content as T) ?? ({} as T)
   return data as T
@@ -212,14 +211,14 @@ export async function fetchOsimages(): Promise<OsimageListResult> {
       const msg =
         (data && (data.error || data.message)) ||
         `Failed to load OS images: HTTP ${res.status} ${res.statusText || ''}`.trim()
-      throw new Error(messageForDisplay(msg))
+      throw new Error(String(msg || `Failed to load OS images: HTTP ${res.status}`))
     }
     const content = unwrapGetData<OsimageConfigContent>(data, 'list osimage')
     const osMap = content?.config?.[TABLE]
     const images = inventoryRowsFromConfig(osMap || {})
     return { images, error: '', chroot_base_url: '' }
   } catch (e: any) {
-    const msg = messageForDisplay(e.message || 'Network error')
+    const msg = String(e?.message || 'Network error')
     if (import.meta.env.DEV) {
       throw new Error(
         `${msg} - Is the Flask backend running and VITE_APP_URL set in .env.development?`
@@ -236,7 +235,7 @@ export async function fetchOsimageDetail(name: string) {
   const data = await readJsonResponse<DaemonEnvelope<OsimageConfigContent>>(res)
   if (!res.ok) {
     const errRaw = data.message || data.error || `HTTP ${res.status}`
-    return { osimage: {}, error: sanitizeUserMessage(String(errRaw)) || `HTTP ${res.status}` }
+    return { osimage: {}, error: String(errRaw || `HTTP ${res.status}`) }
   }
   try {
     const content = unwrapGetData<OsimageConfigContent>(data, 'detail')
@@ -247,7 +246,7 @@ export async function fetchOsimageDetail(name: string) {
   } catch (e: any) {
     return {
       osimage: {},
-      error: messageForDisplay(e.message || 'Failed to parse record'),
+      error: String(e?.message || 'Failed to parse record'),
     }
   }
 }
@@ -256,7 +255,7 @@ export async function fetchOsimageEditData(name: string) {
   const res = await fetch(apiPath(`/api/v1/osimage/${encodeURIComponent(name)}`), {
     headers: { Accept: 'application/json' },
   })
-  if (!res.ok) throw new Error(messageForDisplay(`Failed to load edit data: ${res.status}`))
+  if (!res.ok) throw new Error(`Failed to load edit data: ${res.status}`)
   const data = await readJsonResponse<DaemonEnvelope<OsimageConfigContent>>(res)
   try {
     const content = unwrapGetData<OsimageConfigContent>(data, 'edit')
@@ -265,7 +264,7 @@ export async function fetchOsimageEditData(name: string) {
     const d = prepareJsonForDisplay({ ...rec })
     return { data: d, error: '' }
   } catch (e: any) {
-    return { data: {}, error: messageForDisplay(e.message || 'Failed to load record') }
+    return { data: {}, error: String(e?.message || 'Failed to load record') }
   }
 }
 
@@ -287,15 +286,12 @@ export async function deleteOsimage(name: string) {
     }
   }
   if (!res.ok) {
-    throw new Error(
-      messageForDisplay(data.message || data.error || `Delete failed (${res.status})`)
-    )
+    throw new Error(String(data.message || data.error || `Delete failed (${res.status})`))
   }
-  const rawSuccessMsg = typeof data.message === 'string' ? data.message : ''
-  const successMsg = sanitizeUserMessage(rawSuccessMsg).trim()
+  const rawSuccessMsg = typeof data.message === 'string' ? data.message.trim() : ''
   return {
     status: 'success',
-    message: successMsg || `${name} deleted.`,
+    message: rawSuccessMsg || `${name} deleted.`,
   }
 }
 
@@ -320,11 +316,7 @@ async function postJson(url: string, body: Record<string, any>) {
         : undefined),
   }
   for (const key of ['message', 'error'] as const) {
-    if (typeof merged[key] !== 'string') continue
-    const raw = merged[key].trim()
-    if (!raw) continue
-    const cleaned = sanitizeUserMessage(raw)
-    merged[key] = cleaned || messageForDisplay(raw)
+    if (typeof merged[key] === 'string') merged[key] = merged[key].trim()
   }
   return { ok, status: res.status, data: merged }
 }

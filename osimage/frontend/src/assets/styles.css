@@ -791,6 +791,12 @@ button.tx-name-link.tx-cell-ellipsis {
   font-weight: 700;
 }
 
+.tx-form-page .tx-title .tx-title-name-suffix {
+  color: #321dff;
+  font: inherit;
+  font-weight: inherit;
+}
+
 .tx-comment-edit-actions {
   display: flex;
   justify-content: flex-end;

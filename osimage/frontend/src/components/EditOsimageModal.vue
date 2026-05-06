@@ -2,7 +2,7 @@
   <BaseModal size="large" @close="$emit('close')">
     <div class="tx-form-page">
       <h2 class="tx-title" style="margin-bottom:1.25rem;">
-        Update OS Image <strong>{{ props.imageName }}</strong>
+        Update OS Image <strong class="tx-title-name-suffix">{{ props.imageName }}</strong>
       </h2>
 
       <div v-if="loadError" class="alert-danger">{{ loadError }}</div>
@@ -180,7 +180,6 @@ import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimageEditData, submitOsimageForm } from '../api'
-import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
 const props = defineProps({
   imageName: { type: String, required: true },
@@ -275,7 +274,8 @@ async function doSave() {
       alertOk.value = false
     }
   } catch (e) {
-    alertMsg.value = messageForDisplay(e.message || 'Network error.')
+    const raw = String(e?.message || '').trim()
+    alertMsg.value = raw || 'Network error.'
     alertOk.value = false
   } finally {
     saving.value = false
@@ -286,7 +286,7 @@ onMounted(async () => {
   try {
     const resp = await fetchOsimageEditData(props.imageName)
     if (resp.error) {
-      loadError.value = messageForDisplay(resp.error)
+      loadError.value = String(resp.error || '').trim() || 'Failed to load OS image data.'
       return
     }
     const d = resp.data || {}
@@ -305,7 +305,7 @@ onMounted(async () => {
     form.comment = d.comment || ''
     form.tag = d.tag || ''
   } catch (e) {
-    loadError.value = messageForDisplay(e.message || 'Failed to load OS image data.')
+    loadError.value = String(e?.message || '').trim() || 'Failed to load OS image data.'
   } finally {
     loadingData.value = false
   }

@@ -2,7 +2,7 @@
   <BaseModal size="large" @close="$emit('close')">
     <div class="tx-form-page">
       <h2 class="tx-title" style="margin-bottom:1.25rem;">
-        Clone OS Image <strong>{{ props.sourceName }}</strong>
+        Clone OS Image <strong class="tx-title-name-suffix">{{ props.sourceName }}</strong>
       </h2>
 
       <div v-if="loadError" class="alert-danger">{{ loadError }}</div>
@@ -138,7 +138,6 @@ import { ref, reactive, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimageCloneData, submitOsimageForm } from '../api'
-import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
 const props = defineProps({
   sourceName: { type: String, required: true },
@@ -151,6 +150,7 @@ const advancedOpen = ref(false)
 const saving = ref(false)
 const alertMsg = ref('')
 const alertOk = ref(false)
+const initialSourcePath = ref('')
 
 const form = reactive({
   newosimage: '',
@@ -169,6 +169,19 @@ const form = reactive({
   bare: false,
 })
 
+function buildAutoClonePath(sourcePath, sourceName, cloneName) {
+  const p = String(sourcePath || '').trim()
+  const src = String(sourceName || '')
+    .replace(/\s*\*\s*$/, '')
+    .trim()
+  const dst = String(cloneName || '').trim()
+  if (!p || !dst) return p
+  if (src && p.endsWith(`/${src}`)) return `${p.slice(0, -src.length)}${dst}`
+  const slash = p.lastIndexOf('/')
+  if (slash > 0 && slash < p.length - 1) return `${p.slice(0, slash + 1)}${dst}`
+  return p
+}
+
 async function doClone() {
   if (!form.newosimage.trim()) {
     alertMsg.value = 'Clone name is required.'
@@ -178,6 +191,10 @@ async function doClone() {
   saving.value = true
   alertMsg.value = ''
   try {
+    // If user keeps backend-provided default path, auto-derive clone path from clone name.
+    if (form.path === initialSourcePath.value) {
+      form.path = buildAutoClonePath(form.path, props.sourceName, form.newosimage)
+    }
     const fd = new FormData()
     fd.append('name', props.sourceName)
     for (const [k, v] of Object.entries(form)) {
@@ -197,7 +214,8 @@ async function doClone() {
       alertOk.value = false
     }
   } catch (e) {
-    alertMsg.value = messageForDisplay(e.message || 'Network error.')
+    const raw = String(e?.message || '').trim()
+    alertMsg.value = raw || 'Network error.'
     alertOk.value = false
   } finally {
     saving.value = false
@@ -208,7 +226,7 @@ onMounted(async () => {
   try {
     const resp = await fetchOsimageCloneData(props.sourceName)
     if (resp.error) {
-      loadError.value = messageForDisplay(resp.error)
+      loadError.value = String(resp.error || '').trim() || 'Failed to load clone data.'
       return
     }
     const d = resp.data || {}
@@ -216,6 +234,7 @@ onMounted(async () => {
     form.distribution = d.distribution || ''
     form.osrelease = d.osrelease || ''
     form.path = d.path || ''
+    initialSourcePath.value = form.path
     form.grab_filesystems = d.grab_filesystems || ''
     form.grab_exclude = d.grab_exclude || ''
     form.kerneloptions = d.kerneloptions || ''
@@ -225,7 +244,7 @@ onMounted(async () => {
     form.imagefile = d.imagefile || ''
     form.comment = d.comment || ''
   } catch (e) {
-    loadError.value = messageForDisplay(e.message || 'Failed to load clone data.')
+    loadError.value = String(e?.message || '').trim() || 'Failed to load clone data.'
   } finally {
     loadingData.value = false
   }

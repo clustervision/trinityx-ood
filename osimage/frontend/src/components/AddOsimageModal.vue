@@ -128,7 +128,6 @@ import { ref, reactive } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { submitOsimageForm } from '../api'
-import { messageForDisplay } from '../utils/sanitizeUserMessage'
 
 const emit = defineEmits(['close', 'saved'])
 
@@ -176,7 +175,8 @@ async function doAdd() {
       alertOk.value = false
     }
   } catch (e) {
-    alertMsg.value = messageForDisplay(e.message || 'Network error.')
+    const raw = String(e?.message || '').trim()
+    alertMsg.value = raw || 'Network error.'
     alertOk.value = false
   } finally {
     saving.value = false

@@ -38,7 +38,7 @@ const homeUrl = computed(() => {
   if (raw) {
     try {
       const u = new URL(raw)
-      return `${u.protocol}//${u.hostname}:8080`
+      return `https://${u.hostname}:8080`
     } catch { /* fall through */ }
   }
   const h = backendHostname()

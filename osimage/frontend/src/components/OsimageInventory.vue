@@ -410,12 +410,12 @@ async function loadData() {
   enrichedNames.clear()
   try {
     const data = await fetchOsimages()
-    if (data.error) errorMsg.value = messageForDisplay(data.error)
+    if (data.error) errorMsg.value = String(data.error || '').trim() || 'Failed to load OS images.'
     chrootBaseUrl.value = resolveChrootBaseUrl(data)
     images.value = data.images || []
     patchAllChrootSessionUrls()
   } catch (err) {
-    errorMsg.value = messageForDisplay(err.message || 'Network error while loading OS images.')
+    errorMsg.value = String(err?.message || '').trim() || 'Network error while loading OS images.'
   } finally {
     loading.value = false
   }
@@ -428,7 +428,7 @@ async function confirmDelete(name) {
     await deleteOsimage(name)
     await loadData()
   } catch (e) {
-    errorMsg.value = messageForDisplay(e.message || 'Delete failed.')
+    errorMsg.value = String(e?.message || '').trim() || 'Delete failed.'
   }
 }
 
@@ -461,23 +461,77 @@ async function doPack(name) {
 
 function normalizePackLines(data) {
   const out = []
-  if (typeof data === 'string') {
-    out.push(...data.split('\n'))
-    return out
+  const seen = new Set()
+
+  const pushText = (v) => {
+    if (typeof v !== 'string') return
+    const s = v.trim()
+    if (!s || seen.has(s)) return
+    seen.add(s)
+    out.push(...s.split('\n'))
   }
-  if (!data || typeof data !== 'object') return out
-  const d = data
-  if (typeof d.message === 'string') out.push(...d.message.split('\n'))
-  if (typeof d.content === 'string') out.push(...d.content.split('\n'))
-  if (typeof d.log === 'string') out.push(...d.log.split('\n'))
+
+  const walk = (node, depth = 0) => {
+    if (node == null || depth > 5) return
+    if (typeof node === 'string') {
+      pushText(node)
+      return
+    }
+    if (Array.isArray(node)) {
+      node.forEach((it) => walk(it, depth + 1))
+      return
+    }
+    if (typeof node !== 'object') return
+
+    const obj = node
+    // Common backend keys for live/progress output.
+    for (const k of [
+      'message',
+      'content',
+      'log',
+      'logs',
+      'stdout',
+      'stderr',
+      'detail',
+      'details',
+      'output',
+      'status',
+      'state',
+      'phase',
+      'result',
+      'error',
+    ]) {
+      if (obj[k] != null) walk(obj[k], depth + 1)
+    }
+  }
+
+  walk(data)
   return out
 }
 
+function isPackDonePayload(payload) {
+  if (!payload || typeof payload !== 'object') return false
+  const p = payload
+  if (p.done === true || p.finished === true || p.complete === true || p.completed === true) {
+    return true
+  }
+  const statusText = String(p.status ?? p.state ?? p.phase ?? '').toLowerCase()
+  return /(finished|done|success|failed|error|complete|completed)/i.test(statusText)
+}
+
 function pushPackLine(line) {
-  const s = messageForDisplay(String(line || '')).trim()
-  if (!s || packSeen.has(s)) return
-  packSeen.add(s)
-  packLines.value.push(s)
+  const raw = messageForDisplay(String(line || '')).trim()
+  if (!raw) return
+  const parts = raw
+    .split(';;')
+    .flatMap((seg) => seg.split('\n'))
+    .map((s) => s.trim())
+    .filter(Boolean)
+  for (const s of parts) {
+    if (packSeen.has(s)) continue
+    packSeen.add(s)
+    packLines.value.push(s)
+  }
 }
 
 function closePackDialog() {
@@ -501,7 +555,7 @@ async function pollPackStatus(name, rid) {
       lines.forEach(pushPackLine)
       if (!status.ok) pushPackLine(`status check http ${status.status}`)
       const merged = lines.join(' ')
-      if (doneRe.test(merged)) {
+      if (doneRe.test(merged) || isPackDonePayload(status.data)) {
         packRunning.value = false
         return
       }
