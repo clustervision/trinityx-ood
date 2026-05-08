@@ -2,7 +2,7 @@
  * Bundled images under src/assets/img/ (same pattern as rack-app deviceImageUrls).
  */
 
-export function assetImgUrl(file) {
+export function assetImgUrl(file: string): string {
   return new URL(`../assets/img/${file}`, import.meta.url).href
 }
 
@@ -12,4 +12,4 @@ export const actionIcons = {
   osgrab: assetImgUrl('icon-osgrab.png'),
   ospush: assetImgUrl('icon-ospush.png'),
   delete: assetImgUrl('icon-delete.png'),
-}
+} as const

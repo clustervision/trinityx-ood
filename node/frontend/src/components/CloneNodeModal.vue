@@ -34,44 +34,53 @@
   </BaseModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
-import { fetchNodeCloneData, submitNodeForm } from '../api.js'
+import { fetchNodeCloneData, submitNodeClone } from '../api'
+import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
 
-const props = defineProps({
-  sourceNodeName: { type: String, required: true },
-  getInventoryIpv4: { type: Function, default: null },
-  inventoryExcludeNodeName: { type: String, default: '' },
+const props = withDefaults(defineProps<{
+  sourceNodeName: string
+  getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
+  inventoryExcludeNodeName?: string
+}>(), {
+  getInventoryIpv4: null,
+  inventoryExcludeNodeName: '',
 })
-const emit = defineEmits(['close', 'saved'])
+
+const emit = defineEmits<{
+  close: []
+  saved: []
+}>()
 
 const loading = ref(true)
 const errorMsg = ref('')
 const fatalError = ref(false)
-const formData = ref({})
-const groupOptions = ref([])
-const switchOptions = ref([])
-const bmcsetupOptions = ref([])
-const osimageOptions = ref([])
-const cloudnameOptions = ref([])
-const networkOptions = ref([])
-const bondModeOptions = ref([])
-const hints = ref({})
-const formRef = ref(null)
+const formData = ref<Record<string, unknown>>({})
+const groupOptions = ref<string[]>([])
+const switchOptions = ref<string[]>([])
+const bmcsetupOptions = ref<string[]>([])
+const osimageOptions = ref<string[]>([])
+const cloudnameOptions = ref<string[]>([])
+const networkOptions = ref<string[]>([])
+const bondModeOptions = ref<string[]>([])
+const hints = ref<Record<string, string>>({})
+const formRef = ref<InstanceType<typeof NodeFormFields> | null>(null)
 
-const cloneSourceDisplayName = computed(() => {
+const cloneSourceDisplayName = computed((): string => {
   const n = formData.value?.name
   if (n != null && String(n).trim() !== '') return String(n)
   return props.sourceNodeName || ''
 })
 
-function optionList(payload, ...keys) {
+function optionList(payload: NodeFormPayload, ...keys: string[]): string[] {
   for (const k of keys) {
-    const v = payload[k]
-    if (Array.isArray(v)) return v
-    if (v && typeof v === 'object' && Array.isArray(v.options)) return v.options
+    const v = (payload as Record<string, unknown>)[k]
+    if (Array.isArray(v)) return v as string[]
+    if (v && typeof v === 'object' && Array.isArray((v as Record<string, unknown>).options))
+      return (v as Record<string, unknown>).options as string[]
   }
   return []
 }
@@ -96,10 +105,10 @@ onMounted(async () => {
       'cloud_list',
     )
     networkOptions.value = optionList(payload, 'network_list', 'network')
-    bondModeOptions.value = payload.bond_modes || payload.bond_mode_list?.options || []
-    hints.value = payload.hints || payload.form_hints || {}
+    bondModeOptions.value = (payload.bond_modes || payload.bond_mode_list?.options || []) as string[]
+    hints.value = (payload.hints || payload.form_hints || {}) as Record<string, string>
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to load clone data.'
+    errorMsg.value = (err as Error).message || 'Failed to load clone data.'
     fatalError.value = true
   } finally {
     loading.value = false
@@ -108,10 +117,15 @@ onMounted(async () => {
 
 async function onSubmit() {
   if (!formRef.value) return
-  const fd = formRef.value.buildFormData()
   errorMsg.value = ''
   try {
-    const { ok, data, status } = await submitNodeForm(`/clone/${encodeURIComponent(props.sourceNodeName)}`, fd)
+    const record = formRef.value.buildLunaNodeRecord()
+    const newName = String(record.newnodename ?? '').trim()
+    if (!newName) {
+      errorMsg.value = 'Please enter a clone name.'
+      return
+    }
+    const { ok, data, status } = await submitNodeClone(newName, record)
     if (ok || data.status === 'success') {
       emit('saved')
       emit('close')
@@ -120,7 +134,7 @@ async function onSubmit() {
         data.message || data.error || (status ? `Clone failed (HTTP ${status}).` : 'Clone failed.')
     }
   } catch (err) {
-    errorMsg.value = err.message || 'Network error.'
+    errorMsg.value = (err as Error).message || 'Network error.'
   }
 }
 </script>

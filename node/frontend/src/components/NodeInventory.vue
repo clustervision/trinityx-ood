@@ -280,15 +280,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchNodes, deleteNode } from '../api.js'
-import { actionIcons } from '../utils/assetImg.js'
-import { parseIpv4String } from '../utils/nextFreeIpv4.js'
+import { fetchNodes, deleteNode } from '../api'
+import { actionIcons } from '../utils/assetImg'
+import { parseIpv4String } from '../utils/nextFreeIpv4'
+import type { NodeRow, NodeInventoryInterface, ColumnDef, InventoryIpv4Record } from '@/types'
 
-defineEmits(['open-add', 'open-edit', 'open-clone', 'open-ospush', 'open-osgrab'])
+defineEmits<{
+  'open-add': []
+  'open-edit': [name: string]
+  'open-clone': [name: string]
+  'open-ospush': [name: string]
+  'open-osgrab': [name: string]
+}>()
 
-const FIELD_LABELS = {
+const FIELD_LABELS: Record<string, string> = {
   name: 'NAME',
   group: 'GROUP',
   osimage: 'OS IMAGE',
@@ -299,8 +306,8 @@ const FIELD_LABELS = {
   tpm_present: 'TPM PRESENT',
 }
 
-const fields = ref([])
-const nodes = ref([])
+const fields = ref<string[]>([])
+const nodes = ref<NodeRow[]>([])
 const loading = ref(true)
 const errorMsg = ref('')
 const searchQuery = ref('')
@@ -314,7 +321,7 @@ const helpOpen = ref(false)
 const hasInterfaces = computed(() => fields.value.includes('interfaces'))
 const hasTpm = computed(() => fields.value.includes('tpm_present'))
 
-const regularColumns = computed(() => {
+const regularColumns = computed((): ColumnDef[] => {
   return fields.value
     .filter((f) => f !== 'interfaces' && f !== 'tpm_present')
     .map((f) => ({
@@ -323,7 +330,7 @@ const regularColumns = computed(() => {
     }))
 })
 
-const totalColspan = computed(() => {
+const totalColspan = computed((): number => {
   let count = regularColumns.value.length + 1
   if (hasInterfaces.value) count += 3
   if (hasTpm.value) count += 1
@@ -332,11 +339,11 @@ const totalColspan = computed(() => {
 
 const pageLabel = computed(() => String(currentPage.value).padStart(2, '0'))
 
-function canonicalName(displayName) {
+function canonicalName(displayName: unknown): string {
   return String(displayName || '').replace(/\s+\*$/, '').trim()
 }
 
-function cellText(val) {
+function cellText(val: unknown): string {
   if (val == null) return ''
   if (typeof val === 'object') {
     try { return JSON.stringify(val) } catch { return String(val) }
@@ -344,29 +351,29 @@ function cellText(val) {
   return String(val)
 }
 
-function isEmpty(val) {
+function isEmpty(val: unknown): boolean {
   if (val == null) return true
   if (typeof val === 'string' && val.trim() === '') return true
   if (Array.isArray(val) && val.length === 0) return true
   return false
 }
 
-function ifaceIp(iface) {
+function ifaceIp(iface: NodeInventoryInterface | null): string {
   if (!iface || typeof iface !== 'object') return ''
-  const parts = []
+  const parts: string[] = []
   if (iface.ipaddress) parts.push(String(iface.ipaddress))
   if (iface.ipaddress_ipv6) parts.push(String(iface.ipaddress_ipv6))
   if (iface.dhcp === true) parts.push('[DHCP]')
   return parts.join(' ') || ''
 }
 
-function isInvalidOs(row) {
+function isInvalidOs(row: NodeRow): boolean {
   const v = row.osimage
   if (v != null && typeof v === 'string' && /invalid/i.test(v)) return true
   return false
 }
 
-function setupbmcLabel(val) {
+function setupbmcLabel(val: unknown): string {
   if (val === true || val === 'true' || val === 'True') return 'YES'
   if (val === false || val === 'false' || val === 'False') return 'NO'
   const s = val != null ? String(val).toLowerCase() : ''
@@ -374,7 +381,7 @@ function setupbmcLabel(val) {
   return cellText(val) || '—'
 }
 
-function setupbmcClass(val) {
+function setupbmcClass(val: unknown): string {
   const s = val != null ? String(val).toLowerCase() : ''
   if (s.includes('inherit')) return 'tx-pill tx-pill-inherited'
   if (val === true || val === 'true' || val === 'True') return 'tx-pill tx-pill-yes'
@@ -382,19 +389,19 @@ function setupbmcClass(val) {
   return 'tx-pill tx-pill-no'
 }
 
-function tpmLabel(val) {
+function tpmLabel(val: unknown): string {
   if (val === true || val === 'true' || val === 'True') return 'TRUE'
   if (val === false || val === 'false' || val === 'False') return 'FALSE'
   return cellText(val) || '—'
 }
 
-function tpmClass(val) {
+function tpmClass(val: unknown): string {
   if (val === true || val === 'true' || val === 'True') return 'tx-pill tx-pill-true'
   if (val === false || val === 'false' || val === 'False') return 'tx-pill tx-pill-false'
   return 'tx-pill tx-pill-false'
 }
 
-function ifaceSortKey(row, key) {
+function ifaceSortKey(row: NodeRow, key: string): string {
   const list = row.interfaces || []
   if (key === 'ip') {
     return list
@@ -402,11 +409,11 @@ function ifaceSortKey(row, key) {
       .join('\u0001')
   }
   return list
-    .map((item) => String((item && item[key]) || '').toLowerCase())
+    .map((item) => String((item && (item as Record<string, unknown>)[key]) || '').toLowerCase())
     .join('\u0001')
 }
 
-function rowMatchesSearch(row, q) {
+function rowMatchesSearch(row: NodeRow, q: string): boolean {
   let keys = fields.value.filter((f) => f !== 'interfaces')
   if (keys.length === 0) {
     keys = Object.keys(row).filter((k) => k !== 'interfaces')
@@ -423,7 +430,7 @@ function rowMatchesSearch(row, q) {
   })
 }
 
-const filteredRows = computed(() => {
+const filteredRows = computed((): NodeRow[] => {
   let rows = nodes.value
   const q = searchQuery.value.toLowerCase().trim()
   if (q) {
@@ -433,8 +440,8 @@ const filteredRows = computed(() => {
     const sf = sortField.value
     const asc = sortAsc.value
     rows = [...rows].sort((a, b) => {
-      let va
-      let vb
+      let va: string
+      let vb: string
       if (sf === 'iface_name') {
         va = ifaceSortKey(a, 'interface')
         vb = ifaceSortKey(b, 'interface')
@@ -469,7 +476,7 @@ watch([filteredRows, totalPages], () => {
   if (currentPage.value > totalPages.value) currentPage.value = Math.max(1, totalPages.value)
 })
 
-function toggleSort(field) {
+function toggleSort(field: string) {
   if (sortField.value === field) {
     sortAsc.value = !sortAsc.value
   } else {
@@ -487,13 +494,13 @@ async function loadData() {
     fields.value = data.fields || []
     nodes.value = data.nodes || []
   } catch (err) {
-    errorMsg.value = err.message || 'Network error while loading nodes.'
+    errorMsg.value = (err as Error).message || 'Network error while loading nodes.'
   } finally {
     loading.value = false
   }
 }
 
-async function confirmDelete(displayName) {
+async function confirmDelete(displayName: unknown) {
   const c = canonicalName(displayName)
   if (!c) return
   if (!window.confirm(`Delete node ${c}?`)) return
@@ -501,13 +508,12 @@ async function confirmDelete(displayName) {
     await deleteNode(c)
     await loadData()
   } catch (e) {
-    errorMsg.value = e.message || 'Delete failed.'
+    errorMsg.value = (e as Error).message || 'Delete failed.'
   }
 }
 
-/** Records for "next free IP": { nodeName, network, ipNum } */
-function collectInventoryIpv4Records() {
-  const out = []
+function collectInventoryIpv4Records(): InventoryIpv4Record[] {
+  const out: InventoryIpv4Record[] = []
   for (const row of nodes.value) {
     const name = canonicalName(row.name)
     for (const iface of row.interfaces || []) {

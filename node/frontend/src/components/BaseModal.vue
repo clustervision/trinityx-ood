@@ -9,15 +9,18 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps({
-  size: { type: String, default: 'large' },
-})
-defineEmits(['close'])
+const props = defineProps<{
+  size?: 'small' | 'medium' | 'large' | 'wide'
+}>()
 
-const sizeClass = computed(() => {
+defineEmits<{
+  close: []
+}>()
+
+const sizeClass = computed((): string => {
   if (props.size === 'small') return 'tx-modal-sm'
   if (props.size === 'medium') return 'tx-modal-md'
   if (props.size === 'wide') return 'tx-modal-wide'

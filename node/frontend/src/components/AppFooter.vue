@@ -14,9 +14,9 @@
   </footer>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { baseUrl } from '../api.js'
+import { baseUrl } from '../api'
 
-const licenseUrl = computed(() => `${baseUrl()}/license`)
+const licenseUrl = computed((): string => `${baseUrl()}/api/v1/license`)
 </script>

@@ -16,16 +16,14 @@
   </nav>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { publicAssetUrl } from '../utils/publicAssets.js'
+import { publicAssetUrl } from '../utils/publicAssets'
 
-/** Same scheme as the page (HTTPS in deploy) — avoids hard-coded http from VITE_NODE_BACKEND. */
-const homeUrl = computed(() => {
+const homeUrl = computed((): string => {
   if (typeof window === 'undefined') return '#'
   return `${location.protocol}//${location.hostname}:8080`
 })
 
-/** `public/img/logo.png`, prefixed with Vite `base` in production. */
-const logoSrc = computed(() => publicAssetUrl('img/logo.png'))
+const logoSrc = computed((): string => publicAssetUrl('img/logo.png'))
 </script>

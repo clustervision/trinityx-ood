@@ -89,27 +89,40 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
-import { suggestNextFreeIpv424 } from '../utils/nextFreeIpv4.js'
+import { suggestNextFreeIpv424 } from '../utils/nextFreeIpv4'
+import type { NodeFormInterface, InventoryIpv4Record } from '@/types'
 
-const props = defineProps({
-  iface: { type: Object, required: true },
-  rowKey: { type: [String, Number], default: 0 },
-  allIfaces: { type: Array, default: () => [] },
-  networks: { type: Array, default: () => [] },
-  bondModes: { type: Array, default: () => [] },
-  getInventoryIpv4: { type: Function, default: null },
-  inventoryExcludeNodeName: { type: String, default: '' },
+const props = withDefaults(defineProps<{
+  iface: NodeFormInterface
+  rowKey?: string | number
+  allIfaces?: NodeFormInterface[]
+  networks?: string[]
+  bondModes?: string[]
+  getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
+  inventoryExcludeNodeName?: string
+}>(), {
+  rowKey: 0,
+  allIfaces: () => [],
+  networks: () => [],
+  bondModes: () => [],
+  getInventoryIpv4: null,
+  inventoryExcludeNodeName: '',
 })
 
-const emit = defineEmits(['remove', 'add-after', 'open-options-editor', 'update-dhcp'])
+const emit = defineEmits<{
+  remove: []
+  'add-after': []
+  'open-options-editor': []
+  'update-dhcp': [value: string]
+}>()
 
 const dhcpInputId = computed(() => `tx-dhcp-${props.rowKey}`)
 
-const dhcpChecked = computed(() => {
+const dhcpChecked = computed((): boolean => {
   const v = props.iface.dhcp
-  if (v === true || v === 1) return true
+  if ((v as unknown) === true || (v as unknown) === 1) return true
   const s = String(v ?? '').trim().toLowerCase()
   return s === 'true' || s === '1' || s === 'yes' || s === 'on'
 })
@@ -118,8 +131,8 @@ function toggleDhcp() {
   emit('update-dhcp', dhcpChecked.value ? 'false' : 'true')
 }
 
-function clampMtu(ev) {
-  const v = parseInt(ev.target.value, 10)
+function clampMtu(ev: Event) {
+  const v = parseInt((ev.target as HTMLInputElement).value, 10)
   if (!isNaN(v)) {
     if (v < 68) props.iface.mtu = 68
     if (v > 65535) props.iface.mtu = 65535
