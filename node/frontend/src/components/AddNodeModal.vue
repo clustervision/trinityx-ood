@@ -32,7 +32,7 @@
 import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
-import { fetchNodeAddData, submitNodeAdd } from '../api'
+import { fetchNodeAddData, fetchNodes, submitNodeAdd } from '../api'
 import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
 
 withDefaults(defineProps<{
@@ -58,6 +58,13 @@ const networkOptions = ref<string[]>([])
 const bondModeOptions = ref<string[]>([])
 const hints = ref<Record<string, string>>({})
 const formRef = ref<InstanceType<typeof NodeFormFields> | null>(null)
+
+function normalizeNodeName(name: unknown): string {
+  return String(name ?? '')
+    .replace(/\s+\*$/, '')
+    .trim()
+    .toLowerCase()
+}
 
 function optionList(payload: NodeFormPayload, ...keys: string[]): string[] {
   for (const k of keys) {
@@ -98,12 +105,22 @@ async function onSubmit() {
   errorMsg.value = ''
   try {
     const record = formRef.value.buildLunaNodeRecord()
-    const nodeName = String(record.name ?? '').trim().toLowerCase()
-    if (!nodeName) {
+    const nodeNameRaw = String(record.name ?? '').trim()
+    const nodeName = normalizeNodeName(nodeNameRaw)
+    if (!nodeNameRaw) {
       errorMsg.value = 'Please enter a node name.'
       return
     }
-    const { ok, data } = await submitNodeAdd(nodeName, record)
+    const existing = await fetchNodes()
+    const existingNames = new Set(
+      (existing.nodes || []).map((row) => normalizeNodeName(row.name)),
+    )
+    if (existingNames.has(nodeName)) {
+      errorMsg.value = `Node '${nodeNameRaw}' already exists. Please choose a different name.`
+      return
+    }
+
+    const { ok, data } = await submitNodeAdd(nodeNameRaw, record)
     if (ok || data.status === 'success') {
       emit('saved')
       emit('close')

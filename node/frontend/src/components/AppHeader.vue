@@ -22,11 +22,8 @@ import { punAppAssetUrl } from '../utils/publicAssets'
 
 const homeUrl = computed((): string => {
   if (typeof window === 'undefined') return '#'
-  const appUrl = String(
-    (window as Window & { APP_URL?: string }).APP_URL || ''
-  ).trim()
-  if (appUrl) return appUrl.replace(/\/+$/, '') + '/'
-  return `${location.protocol}//${location.host}/`
+  // Home/Logo should navigate to OOD root, not app subpath.
+  return `${window.location.origin}/`
 })
 
 const logoSrc = computed((): string => punAppAssetUrl('img/logo.png'))
