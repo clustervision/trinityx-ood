@@ -222,44 +222,19 @@ def get_list(table=None):
     return response
 
 
-@app.route('/add', methods=['POST'])
+@app.route('/api/v1/add', methods=['POST'])
 def add():
     """
     This Method will add a requested record.
     """
-    response = {"status": False, "status_code": 500, "content": ""}
-    payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-    table_data = Rest().get_data(TABLE, payload['name'])
-    # if "status" in table_data:
-    #     if table_data["status"] is True:
-    #         if payload['name'] in table_data['content']['config'][TABLE]:
-    #             error = {"message": f'{payload["name"]} is already present in the database.'}
-    #             response = {"status": False, "status_code": 400, "content": error}
-    #             return jsonify(response)
-            
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "message": "No JSON payload received"}), 400
 
-
-    if table_data:
-        if payload['name'] in table_data['config'][TABLE]:
-            error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
-            flash(error, "error")
-            return redirect(url_for('add'), code=302)
-    payload = Helper().prepare_payload(payload)
-
-    if 'interface' in payload:
-        payload = Helper().filter_interfaces(request, TABLE, payload)
-    request_data = {'config': {TABLE: {payload['name']: payload}}}
-    response = Rest().post_data(TABLE, payload['name'], request_data)
-    LOGGER.info(f'{response.status_code} {response.content}')
-    if response.status_code == 201:
-        flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
-        return redirect(url_for('home'), code=302)
-    else:
-        response_json = response.json()
-        error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-        flash(error, "error")
-        return redirect(url_for('add'), code=302)
-
+    name = next(iter(request_data["config"][TABLE]))
+    response = Rest().post_data(TABLE, name, request_data)
+    print(response)
+    return jsonify(response), 200
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])

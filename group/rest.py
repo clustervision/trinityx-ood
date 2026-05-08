@@ -223,13 +223,13 @@ class Rest():
         return response
 
 
-    def post_data(self, table=None, name=None, data=None):
+    def post_data(self, table: str="", name: str="", data: dict={}):
         """
         This method is based on REST API's POST method.
         It will post data to Luna 2 Daemon via REST API's.
         And use for creating and updating records.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
@@ -237,12 +237,25 @@ class Rest():
         self.logger.debug(f'POST URL => {daemon_url}')
         self.logger.debug(f'POST DATA => {data}')
         try:
-            response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = requests.post(url=daemon_url, json=data, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            if response.status_code == 201:
+                data = response.json()
+                response = {"status": True, "status_code": response.status_code, "content": data}
+            elif response.status_code == 204:
+                response = {"status": True, "status_code": response.status_code, "content": {"message": f"{table.capitalize()} {name} is created/updated successfully."}}
+            else:
+                data = response.json()
+                response = {"status": False, "status_code": response.status_code, "content": data}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
 
 
