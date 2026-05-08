@@ -351,8 +351,8 @@ function buildPayload() {
   const cleanedInterfaces = form.interfaces.map((iface) => ({
     interface: iface.interface,
     network: iface.network,
-
-    ...(iface.mtu ? { mtu: iface.mtu } : {}),
+    ...(iface.mtu ? { mtu: String(iface.mtu) } : {}),
+    // ...(iface.mtu ? { mtu: iface.mtu } : {}),
     ...(iface.vlanid ? { vlanid: iface.vlanid } : {}),
     ...(iface.vlan_parent
       ? { vlan_parent: iface.vlan_parent }
