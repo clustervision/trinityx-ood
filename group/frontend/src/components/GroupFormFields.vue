@@ -2,60 +2,64 @@
 import { ref, reactive, watch, computed } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
+import type { NetworkInterface } from '@/types/network'
+import type { Group } from '@/types/group'
 
 
+// export interface NetworkInterface {
+//   interface: string
+//   network: string
+//   mtu?: string
+//   vlanid?: string
+//   vlan_parent?: string
+//   bond_mode?: string
+//   bond_slaves?: string
+//   options?: string
+//   dhcp?: string
+// }
 
-export interface NetworkInterface {
-  interface: string
-  network: string
-  mtu?: string
-  vlanid?: string
-  vlan_parent?: string
-  bond_mode?: string
-  bond_slaves?: string
-  options?: string
-}
+// export interface Group {
+//   name: string
+//   newgroupname?: string
 
-export interface Group {
-  name: string
-  newgroupname?: string
+//   roles?: string | null
+//   netboot?: string
+//   osimage?: string
+//   scripts?: string | null
 
-  roles?: string | null
-  netboot?: string
-  osimage?: string
-  scripts?: string | null
+//   setupbmc?: string
+//   bmcsetupname?: string
 
-  setupbmc?: string
-  bmcsetupname?: string
+//   domain?: string
+//   unmanaged_bmc_users?: string | null
 
-  domain?: string
-  unmanaged_bmc_users?: string | null
+//   kerneloptions?: string
+//   prescript?: string
+//   partscript?: string
+//   postscript?: string
 
-  kerneloptions?: string
-  prescript?: string
-  partscript?: string
-  postscript?: string
+//   osimagetag?: string
 
-  osimagetag?: string
+//   provision_interface?: string
+//   provision_fallback?: string
+//   provision_method?: string
 
-  provision_interface?: string
-  provision_fallback?: string
-  provision_method?: string
+//   bootmenu?: string
 
-  bootmenu?: string
+//   comment?: string | null
 
-  comment?: string | null
-
-  interfaces?: NetworkInterface[]
-}
+//   interfaces?: NetworkInterface[]
+// }
 
 const props = defineProps({
+  groupList: { type: Array as () => string[], required: true },
   mode: { type: String, default: 'add' },
   initialData: { type: Object, default: () => ({}) },
-  bmcsetupOptions: { type: Array, default: () => [] },
-  osimageOptions: { type: Array, default: () => [] },
-  networkOptions: { type: Array, default: () => [] },
-  bondModeOptions: { type: Array, default: () => [] },
+  bmcsetupOptions: { type: Array as () => string[], default: () => [], },
+  osimageOptions: { type: Array as () => string[], default: () => [], },
+  //  osimageOptions: { type: Array as () => string[], default: () => [], },
+  networkOptions: { type: Array as () => string[], default: () => [], },
+  bondModeOptions: { type: Array as () => string[], default: () => [], },
   submitLabel: { type: String, default: 'Submit' },
   hints: { type: Object, default: () => ({}) },
 })
@@ -140,7 +144,7 @@ function hydrateForm(d: Partial<Group>) {
   form.partscript = d.partscript || ''
   form.postscript = d.postscript || ''
 
-  form.osimagetag = d.osimagetag || 'default'
+  form.osimagetag = d.osimagetag || ''
 
   form.provision_interface = d.provision_interface || 'BOOTIF'
   form.provision_fallback = d.provision_fallback || 'http'
@@ -178,7 +182,7 @@ watch(
   },
 )
 
-function normalizeTriState(v: any) {
+function normalizeTriState(v: boolean | string | null | undefined,): string {
   if (
     v === true ||
     v === 'true' ||
@@ -262,14 +266,80 @@ const textEditorModalValue = computed(() => {
 })
 
 function onTextEditorModalApply(v: string) {
+  // ---- Interface editor ----
   if (ifaceOptionsIdx.value >= 0) {
-    form.interfaces[ifaceOptionsIdx.value].options = v
+    const idx = ifaceOptionsIdx.value
+    const iface = form.interfaces?.[idx]
+
+    if (iface) {
+      iface.options = v
+    }
+
     return
   }
 
-  if (textEditorField.value) {
-    ;(form as any)[textEditorField.value] = v
+  // ---- Form field editor ----
+  if (!textEditorField.value) return
+
+  const key = textEditorField.value as keyof typeof form
+
+  if (key in form) {
+    form[key] = v as never
   }
+}
+
+type UploadField =
+  | 'kerneloptions'
+  | 'prescript'
+  | 'partscript'
+  | 'postscript'
+  | 'comment'
+
+function looksLikeBinary(buf: ArrayBuffer | null | undefined): boolean {
+  if (!buf || !buf.byteLength) return false
+
+  const view = new Uint8Array(buf)
+  const n = Math.min(view.length, 65536)
+
+  for (let i = 0; i < n; i++) {
+    if (view[i] === 0) return true
+  }
+
+  return false
+}
+
+function onUploadFile(e: Event, field: UploadField) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  const fr = new FileReader()
+
+  fr.onload = () => {
+    const result = fr.result
+
+    if (looksLikeBinary(result as ArrayBuffer | null)) {
+      alert('Please choose a text file only.')
+      input.value = ''
+      return
+    }
+
+    if (!result) return
+
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(
+      new Uint8Array(result as ArrayBuffer)
+    )
+
+    form[field] = text
+    input.value = ''
+  }
+
+  fr.onerror = () => {
+    alert('Could not read the file.')
+    input.value = ''
+  }
+
+  fr.readAsArrayBuffer(file)
 }
 
 function buildPayload() {
@@ -298,7 +368,8 @@ function buildPayload() {
       : {}),
   }))
 
-  const groupPayload: any = {
+
+  const groupPayload: Record<string, unknown> = {
     name: groupName,
   }
 
@@ -420,14 +491,31 @@ defineExpose({
   buildPayload,
   comparableSnapshot,
 })
+
+const nameError = ref('')
+const isSubmitDisabled = ref(false)
+function validateName(value: string) {
+  const exists = props.groupList.includes(value)
+
+  if (exists) {
+    nameError.value = 'Group name already exists'
+    isSubmitDisabled.value = true
+  } else {
+    nameError.value = ''
+    isSubmitDisabled.value = false
+  }
+}
+
 </script>
 
 
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
     <!-- 3-column top grid -->
+    <div v-if="nameError" class="alert alert-danger" role="alert">{{ nameError }}</div>
     <div class="tx-add-grid tx-add-form-main">
       <!-- Column 1 -->
+
       <div class="tx-add-col">
         <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
@@ -439,7 +527,7 @@ defineExpose({
             <input type="text" v-model="form.name" :readonly="!nameEditUnlocked" @keypress="noSpaces" maxlength="100" />
             <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-rename" @click="nameEditUnlocked = true">Rename</button>
           </div>
-          <input v-else type="text" v-model="form.name" @keypress="noSpaces" maxlength="100" required />
+          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" maxlength="100" required />
         </div>
         <template v-if="mode === 'clone'">
           <div class="tx-add-form-clone-roles-netboot tx-add-form-main">
@@ -506,21 +594,12 @@ defineExpose({
         </div>
         <div class="tx-field tx-field-match">
           <span class="tx-label">BMC Setup:</span>
-          <select
-            v-model="form.bmcsetupname"
-            :class="{ 'tx-select-placeholder': !form.bmcsetupname }"
-          >
+          <select v-model="form.bmcsetupname" :class="{ 'tx-select-placeholder': !form.bmcsetupname }">
             <option value="">--- Select ---</option>
             <option v-for="b in bmcsetupOptions" :key="b" :value="b">{{ b }}</option>
           </select>
         </div>
-        <button
-          type="button"
-          class="tx-btn tx-btn-orange tx-btn-block-col"
-          @click="toggleInterfaces"
-        >
-          {{ showInterfaces ? '- Interfaces' : '+ Interfaces' }}
-        </button>
+        <button type="button" class="tx-btn tx-btn-orange tx-btn-block-col" @click="toggleInterfaces">{{ showInterfaces ? '- Interfaces' : '+ Interfaces' }}</button>
       </div>
     </div>
 
@@ -537,15 +616,15 @@ defineExpose({
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
         @update-dhcp="
-          (v) => {
-            form.interfaces[idx].dhcp = v
+          (v: string) => {
+            const iface = form.interfaces[idx]
+            if (!iface) return
+            iface.dhcp = v
           }
         "
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
-        <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">
-          + Add Interface
-        </button>
+        <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
       </div>
     </div>
 
@@ -560,11 +639,7 @@ defineExpose({
         <!-- Unmanaged BMC Users -->
         <div class="tx-field tx-field-adv-sys" style="width: 100%">
           <span class="tx-label">Unmanaged BMC Users:</span>
-          <select
-            v-model="form.unmanaged_bmc_users"
-            style="flex: 1"
-            :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }"
-          >
+          <select v-model="form.unmanaged_bmc_users" style="flex: 1" :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }">
             <option value="">--- Select ---</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -581,21 +656,13 @@ defineExpose({
               <span class="tx-label-title-black">OS IMAGE</span>
             </span>
             <label class="tx-upload-pill">
-              <input
-                type="file"
-                accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain"
-                @change="onUploadFile($event, 'kerneloptions')"
-              />
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'kerneloptions')" />
               <span>Upload</span>
             </label>
           </div>
           <div class="tx-field-block-body">
             <textarea v-model="form.kerneloptions" rows="3"></textarea>
-            <button
-              type="button"
-              class="tx-expand-text-trigger"
-              @click="openTextEditor('Kernel Options | OS Image', 'kerneloptions')"
-            ></button>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Kernel Options | OS Image', 'kerneloptions')"></button>
           </div>
         </div>
 
@@ -608,21 +675,13 @@ defineExpose({
               <span class="tx-label-title-black">DEFAULT</span>
             </span>
             <label class="tx-upload-pill">
-              <input
-                type="file"
-                accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain"
-                @change="onUploadFile($event, 'prescript')"
-              />
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'prescript')" />
               <span>Upload</span>
             </label>
           </div>
           <div class="tx-field-block-body">
             <textarea v-model="form.prescript" rows="3"></textarea>
-            <button
-              type="button"
-              class="tx-expand-text-trigger"
-              @click="openTextEditor('Pre Script | Default', 'prescript')"
-            ></button>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Pre Script | Default', 'prescript')"></button>
           </div>
         </div>
 
@@ -635,21 +694,13 @@ defineExpose({
               <span class="tx-label-title-black">GROUP</span>
             </span>
             <label class="tx-upload-pill">
-              <input
-                type="file"
-                accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain"
-                @change="onUploadFile($event, 'partscript')"
-              />
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'partscript')" />
               <span>Upload</span>
             </label>
           </div>
           <div class="tx-field-block-body">
             <textarea v-model="form.partscript" rows="3"></textarea>
-            <button
-              type="button"
-              class="tx-expand-text-trigger"
-              @click="openTextEditor('Part Script | Group', 'partscript')"
-            ></button>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Part Script | Group', 'partscript')"></button>
           </div>
         </div>
 
@@ -662,21 +713,13 @@ defineExpose({
               <span class="tx-label-title-black">GROUP</span>
             </span>
             <label class="tx-upload-pill">
-              <input
-                type="file"
-                accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain"
-                @change="onUploadFile($event, 'postscript')"
-              />
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'postscript')" />
               <span>Upload</span>
             </label>
           </div>
           <div class="tx-field-block-body">
             <textarea v-model="form.postscript" rows="3"></textarea>
-            <button
-              type="button"
-              class="tx-expand-text-trigger"
-              @click="openTextEditor('Post Script | Group', 'postscript')"
-            ></button>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Post Script | Group', 'postscript')"></button>
           </div>
         </div>
 
@@ -690,18 +733,14 @@ defineExpose({
         <div class="tx-field" style="width: 100%">
           <span class="tx-label">Provision Interface:</span>
           <input type="text" v-model="form.provision_interface" maxlength="100" style="flex: 1" />
-          <span v-if="hints.provision_interface" class="tx-hint">{{
-            hints.provision_interface
-          }}</span>
+          <span v-if="hints.provision_interface" class="tx-hint">{{ hints.provision_interface }}</span>
         </div>
 
         <!-- Provision Fallback -->
         <div class="tx-field" style="width: 100%">
           <span class="tx-label">Provision Fallback:</span>
           <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex: 1" />
-          <span v-if="hints.provision_fallback" class="tx-hint">{{
-            hints.provision_fallback
-          }}</span>
+          <span v-if="hints.provision_fallback" class="tx-hint">{{  hints.provision_fallback }}</span>
         </div>
         <!-- Provision Method -->
         <div class="tx-field" style="width: 100%">
@@ -714,14 +753,14 @@ defineExpose({
         <div class="tx-field-block tx-adv-full">
           <div class="tx-label-row">
             <span class="tx-label">Comment:</span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'comment')" />
+              <span>Upload</span>
+            </label>
           </div>
           <div class="tx-field-block-body">
             <textarea v-model="form.comment" rows="3"></textarea>
-            <button
-              type="button"
-              class="tx-expand-text-trigger"
-              @click="openTextEditor('Comment', 'comment')"
-            ></button>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Comment', 'comment')"></button>
           </div>
         </div>
       </div>
@@ -729,14 +768,8 @@ defineExpose({
 
     <!-- Single footer: Advanced + submit always at bottom of form -->
     <div class="tx-form-footer">
-      <button
-        type="button"
-        class="tx-btn tx-btn-outline-blue"
-        @click="showAdvanced = !showAdvanced"
-      >
-        Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}
-      </button>
-      <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
+      <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}</button>
+      <button type="submit" :disabled="isSubmitDisabled" class="tx-btn tx-btn-blue" :class="{ 'tx-btn-disabled': isSubmitDisabled }">{{ submitLabel }}</button>
     </div>
 
     <!-- Text Editor Modal -->

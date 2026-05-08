@@ -63,17 +63,15 @@ const regularColumns = [
   { field: 'osimage', label: 'OS IMage' },
   { field: 'scripts', label: 'Scripts' },
   { field: 'roles', label: 'Roles' },
-  // { field: 'bootmenu', label: 'Boot Menu' },
-  // { field: '_override', label: 'Override' },
-  // { field: 'netboot', label: 'Netboot' },
 ]
-const loading = ref(true)
-const groups = ref<Group[]>([])
-const activeModal = ref<ModalType>(null)
-const selectedGroup = ref<string>('')
+const loading = ref(true);
+const groups = ref<Group[]>([]);
+const groupList = ref<string[]>([]);
+const activeModal = ref<ModalType>(null);
+const selectedGroup = ref<string>('');
 // const sortField = ref<string>('')
-const sortAsc = ref(true)
-const inventoryRef = ref<InventoryRefType | null>(null)
+const sortAsc = ref(true);
+const inventoryRef = ref<InventoryRefType | null>(null);
 
 const hasInterfaces = computed(() => groups.value.some((g) => g.interfaces?.length > 0))
 
@@ -87,40 +85,7 @@ function ifaceSortKey(row: Group, key: 'interface' | 'network') {
   return (row.interfaces || []).map((i) => (i[key] || '').toLowerCase()).join('|')
 }
 
-// const filteredRows = computed(() => {
-//   let rows = groups.value
 
-//   const q = searchQuery.value.toLowerCase().trim()
-//   if (q) {
-//     rows = rows.filter((row) => JSON.stringify(row).toLowerCase().includes(q))
-//   }
-
-//   if (sortField.value) {
-//     const sf = sortField.value
-//     const asc = sortAsc.value
-
-//     rows = [...rows].sort((a, b) => {
-//       let va = ''
-//       let vb = ''
-
-//       if (sf === 'iface_name') {
-//         va = ifaceSortKey(a, 'interface')
-//         vb = ifaceSortKey(b, 'interface')
-//       } else if (sf === 'iface_network') {
-//         va = ifaceSortKey(a, 'network')
-//         vb = ifaceSortKey(b, 'network')
-//       } else {
-//         va = String((a as any)[sf] ?? '').toLowerCase()
-//         vb = String((b as any)[sf] ?? '').toLowerCase()
-// console.log({ va, vb ,a, b})
-//       }
-
-//       return asc ? va.localeCompare(vb) : vb.localeCompare(va)
-//     })
-//   }
-
-//   return rows
-// })
 type SortField = keyof Group | 'iface_name' | 'iface_network'
 const sortField = ref<SortField | ''>('')
 const filteredRows = computed<Group[]>(() => {
@@ -159,6 +124,8 @@ const filteredRows = computed<Group[]>(() => {
 
   return rows
 })
+
+
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)),
@@ -215,6 +182,7 @@ function closeModal() {
 
 function onSaved() {
   closeModal()
+  loadData()
   inventoryRef.value?.loadData?.()
 }
 
@@ -227,6 +195,8 @@ async function loadData() {
     if (data.status === true && data.content?.config?.group) {
       const groups_data: GroupMap = data.content.config.group
       groups.value = Object.values(groups_data)
+      for (const key in groups_data) { groupList.value.push(key) }
+
     } else {
       if (data.status_code === 404) {
         httpError.value = data.content?.message
@@ -247,7 +217,7 @@ async function loadData() {
 defineExpose({ loadData })
 
 onMounted(loadData)
-
+// console.log(filteredRows.value);
 </script>
 
 <template>
@@ -408,7 +378,7 @@ onMounted(loadData)
   <!-- Modals -->
   <EditGroupModal v-if="activeModal === 'edit'" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
 
-  <AddGroupModal v-if="activeModal === 'add'" @close="closeModal" @saved="onSaved" />
+  <AddGroupModal v-if="activeModal === 'add'" :groupList="groupList" @close="closeModal" @saved="onSaved" />
 
   <CloneGroupModal v-if="activeModal === 'clone'" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
 

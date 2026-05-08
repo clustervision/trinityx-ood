@@ -2,6 +2,7 @@ import { apiClient } from './axios'
 
 export async function fetchGroups() {
   const { data } = await apiClient.get('/api/v1/all_groups')
+  console.log(data)
   return data
 }
 
@@ -13,7 +14,7 @@ export async function fetchResources() {
 export async function deleteGroup(name: string) {
   // const data = {content: {message: `Group ${name} is removed.`}, status: true, status_code: 204}
   const { data } = await apiClient.delete(`/api/v1/delete/${encodeURIComponent(name)}`)
-   if (data.status === false) { throw new Error(data.content.message) }
+  if (data.status === false) { throw new Error(data.content.message) }
   return data
 }
 
@@ -55,12 +56,13 @@ export async function checkStatus(requestId: string) {
   return data
 }
 
-export async function submitForm(
-  action: string,
-  formData: FormData
-) {
-  const { data, status } = await apiClient.post(action, formData)
-  return { ok: status >= 200 && status < 300, status, data }
+export async function submitForm(action: string, formData: FormData) {
+  const { data } = await apiClient.post(action, formData)
+  console.log(data)
+  if (data.status === false) { throw new Error(data.content.message) }
+  return data
+
+  // return { ok: status >= 200 && status < 300, status, data }
 }
 
 export async function submitRename(

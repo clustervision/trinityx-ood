@@ -1,3 +1,73 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import type { NetworkInterface } from '@/types/network'
+
+// const props = defineProps({
+//   iface: { type: Object, required: true },
+//   rowKey: { type: [String, Number], default: 0 },
+//   networks: { type: Array, default: () => [] },
+//   bondModes: { type: Array, default: () => [] },
+// })
+
+const props = defineProps<{
+  iface: NetworkInterface
+  rowKey: string | number
+  networks: string[]
+  bondModes: string[]
+}>()
+
+// const emit = defineEmits(['remove', 'add-after', 'open-options-editor'])
+const emit = defineEmits<{
+  (e: 'update:iface', payload: NetworkInterface): void
+  (e: 'remove'): void
+  (e: 'add-after'): void
+  (e: 'open-options-editor'): void
+  (e: 'update-dhcp', v: string): void
+}>()
+
+const dhcpInputId = computed(() => `tx-dhcp-${props.rowKey}`)
+
+const dhcpChecked = computed(() => {
+  const v = props.iface.dhcp
+
+  if (v === true || v === 'true' || v === 1 || v === '1') {
+    return true
+  }
+
+  const s = String(v ?? '').toLowerCase()
+  return ['yes', 'on'].includes(s)
+})
+
+/** Fully controlled: block native toggle (Vue 3 props / label can desync), parent owns state */
+function toggleDhcp() {
+  emit('update-dhcp', dhcpChecked.value ? 'false' : 'true')
+}
+
+function clampMtu(ev: Event) {
+  const target = ev.target as HTMLInputElement
+  const v = parseInt(target.value, 10)
+
+  if (isNaN(v)) return
+
+  const clamped = v < 68 ? 68 : v > 65535 ? 65535 : v
+
+  emit('update:iface', {
+    ...props.iface,
+    mtu: String(clamped),
+  })
+}
+
+function emitUpdate<K extends keyof NetworkInterface>(key: K, value: NetworkInterface[K]) {
+  emit('update:iface', {
+    ...props.iface,
+    [key]: value,
+  })
+}
+
+
+</script>
+
+
 <template>
   <div class="tx-interface-block">
     <!-- 3 columns: align with Add Group grid (Name | OS Image | Setup BMC) -->
@@ -5,7 +75,7 @@
       <!-- Row 1 -->
       <div class="tx-field tx-field-iface-key tx-iface-c1">
         <span class="tx-label">Interface:</span>
-        <input type="text" v-model="iface.interface" required placeholder="interface" />
+        <input type="text" v-model="iface.interface" @input="emitUpdate('interface', $event.target.value)" required placeholder="interface" />
       </div>
       <div class="tx-field tx-field-iface-key tx-iface-c2">
         <span class="tx-label">Network:</span>
@@ -17,23 +87,14 @@
       <div class="tx-iface-cell-mtu-dhcp">
         <div class="tx-field tx-field-iface-muted tx-iface-c3-mtu">
           <span class="tx-label">MTU:</span>
-          <input type="number" v-model.number="iface.mtu" min="68" max="65535" placeholder="68-65535" @blur="clampMtu" />
+          <input type="number" v-model="iface.mtu" min="68" max="65535" placeholder="68-65535" @input="emitUpdate('mtu', String(($event.target as HTMLInputElement).value))" @blur="clampMtu" />
         </div>
         <label
           class="tx-field tx-field-iface-muted tx-field-dhcp-wrap tx-iface-c3-dhcp"
           :for="dhcpInputId"
         >
           <span class="tx-label">DHCP</span>
-          <input
-            :id="dhcpInputId"
-            class="tx-dhcp-checkbox"
-            type="checkbox"
-            :checked="dhcpChecked"
-            :class="{ 'tx-dhcp-on': dhcpChecked }"
-            :aria-checked="dhcpChecked ? 'true' : 'false'"
-            @click.prevent="toggleDhcp"
-            @keydown.space.prevent="toggleDhcp"
-          />
+          <input :id="dhcpInputId" class="tx-dhcp-checkbox" type="checkbox" :checked="dhcpChecked" :class="{ 'tx-dhcp-on': dhcpChecked }" :aria-checked="dhcpChecked ? 'true' : 'false'" @click.prevent="toggleDhcp" @keydown.space.prevent="toggleDhcp" />
         </label>
       </div>
 
@@ -51,7 +112,7 @@
       </div>
       <div class="tx-field tx-field-iface-muted tx-iface-c3-vlan">
         <span class="tx-label">VLAN ID:</span>
-        <input type="number" v-model.number="iface.vlanid" min="0" max="4094" placeholder="VLAN ID" />
+        <input type="number" v-model="iface.vlanid" min="0" max="4094" placeholder="VLAN ID" />
       </div>
 
       <!-- Row 3: Options spans col 1–2; VLAN Parent in col 3 (below MTU / VLAN ID) -->
@@ -59,12 +120,7 @@
         <span class="tx-label">Options:</span>
         <div class="tx-iface-options-input">
           <input type="text" v-model="iface.options" placeholder="options" maxlength="100" />
-          <button
-            type="button"
-            class="tx-expand-text-trigger tx-expand-text-trigger--iface-options"
-            aria-label="Edit options in dialog"
-            @click="$emit('open-options-editor')"
-          ></button>
+          <button type="button" class="tx-expand-text-trigger tx-expand-text-trigger--iface-options" aria-label="Edit options in dialog" @click="$emit('open-options-editor')"></button>
         </div>
       </div>
       <div class="tx-field tx-field-iface-muted tx-iface-c3-vlanparent">
@@ -80,37 +136,4 @@
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue'
 
-const props = defineProps({
-  iface: { type: Object, required: true },
-  rowKey: { type: [String, Number], default: 0 },
-  networks: { type: Array, default: () => [] },
-  bondModes: { type: Array, default: () => [] },
-})
-
-const emit = defineEmits(['remove', 'add-after', 'open-options-editor'])
-
-const dhcpInputId = computed(() => `tx-dhcp-${props.rowKey}`)
-
-const dhcpChecked = computed(() => {
-  const v = props.iface.dhcp
-  if (v === true || v === 1) return true
-  const s = String(v ?? '').trim().toLowerCase()
-  return s === 'true' || s === '1' || s === 'yes' || s === 'on'
-})
-
-/** Fully controlled: block native toggle (Vue 3 props / label can desync), parent owns state */
-function toggleDhcp() {
-  emit('update-dhcp', dhcpChecked.value ? 'false' : 'true')
-}
-
-function clampMtu(ev) {
-  const v = parseInt(ev.target.value, 10)
-  if (!isNaN(v)) {
-    if (v < 68) props.iface.mtu = 68
-    if (v > 65535) props.iface.mtu = 65535
-  }
-}
-</script>
