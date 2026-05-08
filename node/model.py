@@ -98,9 +98,14 @@ class Model():
         """
         names = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            names = list(raw_data.keys())
+        if "status" in get_list:
+            if get_list["status"] is True:
+                raw_data = get_list['content']['config'][table]
+                names = list(raw_data.keys())
+            else:
+                names = [get_list['content']['message']]
+        else:
+            names = ["Nothing Available"]
         return {"options": names, "selected": selected}
 
 
@@ -111,9 +116,9 @@ class Model():
         """
         choices = []
         get_list = Rest().get_data(table)
-        if not get_list:
+        if "status" not in get_list or get_list["status"] is not True:
             return choices
-        raw_data = get_list['config'][table]
+        raw_data = get_list['content']['config'][table]
         for name, _ in raw_data.items():
             if record:
                 if record == name:

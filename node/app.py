@@ -65,27 +65,13 @@ if APP_STATE is False:
     )
 
 
-def _wants_json():
-    """
-    API clients: ?format=json or Accept prefers application/json.
-    Browser navigation: default HTML — return SPA shell from GET handlers.
-    """
-    fmt = (request.args.get('format') or '').lower()
-    if fmt == 'json':
-        return True
-    if fmt == 'html':
-        return False
-    best = request.accept_mimetypes.best_match(['application/json', 'text/html'], 'text/html')
-    return best == 'application/json'
-
-
 def _next_free_ip(network):
     if not network:
         return None
     uri = f'{network}/_nextfreeip'
     nextip = Rest().get_data('network', uri)
-    if nextip:
-        return nextip['config']['network'][network].get('nextip')
+    if "status" in nextip and nextip["status"] is True:
+        return nextip['content']['config']['network'][network].get('nextip')
     return None
 
 
@@ -105,9 +91,10 @@ def _nodes_inventory_json():
     try:
         table_data = Rest().get_data(TABLE)
         LOGGER.info(table_data)
-        if not table_data:
+        if "status" not in table_data or table_data["status"] is not True:
             empty["error"] = f'No {TABLE_CAP} Available at this time.'
             return jsonify(empty)
+        table_data = table_data['content']
         if not isinstance(table_data, dict) or 'config' not in table_data:
             empty["error"] = 'Daemon returned an unexpected JSON shape (missing config).'
             return jsonify(empty)
@@ -157,29 +144,87 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    Legacy URL: GET / was the node inventory page.
-    - Browser (HTML): Vue SPA shell.
-    - ?format=json or Accept: application/json: same inventory as JSON for the SPA table.
+    Serve the Vue SPA shell. window.APP_URL is this app's base URL.
     """
-    if _wants_json():
-        return _nodes_inventory_json()
-    url = Helper().app_url(request)
-    return render_template(
-        "index.html",
-        APP_URL=url["APP_URL"],
-    )
+    url = {"APP_URL": f"{request.scheme}://{request.host}{request.path}"}
+    return render_template("index.html", APP_URL=url["APP_URL"])
+
+
+@app.route('/nodes', methods=['GET'])
+def api_nodes():
+    """
+    JSON list of all nodes for the Vue frontend table.
+    Always returns HTTP 200 with { fields, nodes, error } when the handler runs.
+    """
+    return _nodes_inventory_json()
+
+
+@app.route('/api/v1/all_nodes', methods=['GET'])
+def all_nodes():
+    """
+    Get a JSON list of all nodes for the Vue frontend table.
+    """
+    response = Rest().get_data(TABLE)
+    return response
+
+
+@app.route('/api/v1/get_resources', methods=['GET'])
+@app.route('/api/v1/get_resources/<string:record>', methods=['GET'])
+def get_resources(record: str = ""):
+    """
+    Get a JSON list of all get_resources for the Vue frontend table.
+    """
+    body = {"group_list": [], "bmcsetup_list": [], "osimage_list": [], "network_list": [], "switch_list": [], "bond_modes": []}
+    if record:
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if "status" in table_data:
+            if table_data["status"] is True:
+                table_data = table_data['content']
+            else:
+                return jsonify(table_data)
+        else:
+            return jsonify(table_data)
+
+        group_list = Model().get_list_options_json('group', record)
+        bmcsetup_list = Model().get_list_options_json('bmcsetup', record)
+        osimage_list = Model().get_list_options_json('osimage', record)
+        switch_list = Model().get_list_options_json('switch', record)
+        network_list = Model().get_list_options_json('network', record)
+        bond_modes = Helper().get_bond_mode_list()
+    else:
+        group_list = Model().get_list_options_json('group')
+        bmcsetup_list = Model().get_list_options_json('bmcsetup')
+        osimage_list = Model().get_list_options_json('osimage')
+        switch_list = Model().get_list_options_json('switch')
+        network_list = Model().get_list_options_json('network')
+        bond_modes = Helper().get_bond_mode_list()
+    body = {
+        "group_list": group_list,
+        "bmcsetup_list": bmcsetup_list,
+        "osimage_list": osimage_list,
+        "switch_list": switch_list,
+        "network_list": network_list,
+        "bond_modes": bond_modes,
+    }
+    return jsonify(body)
 
 
 @app.route('/show/<string:record>', methods=['GET'])
 def show(record=None):
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE][record]
-        raw_data = Helper().prepare_json(raw_data)
-        node = Helper().filter_data_col_json(TABLE, raw_data)
-        return jsonify({"node": node, "error": ""})
-    return jsonify({"node": {}, "error": f'{record} From {TABLE_CAP} is Not available at this time'})
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+        else:
+            return jsonify({"node": {}, "error": f'{record} From {TABLE_CAP} is Not available at this time'})
+    else:
+        return jsonify({"node": {}, "error": f'{record} From {TABLE_CAP} is Not available at this time'})
+    raw_data = table_data['config'][TABLE][record]
+    raw_data = Helper().prepare_json(raw_data)
+    node = Helper().filter_data_col_json(TABLE, raw_data)
+    return jsonify({"node": node, "error": ""})
 
 
 @app.route('/get_list/<string:table>', methods=['GET', 'POST'])
@@ -196,42 +241,34 @@ def nextip_network(network=None):
     return jsonify({"nextip": nip})
 
 
-@app.route('/add', methods=['GET', 'POST'])
+@app.route('/add', methods=['POST'])
 def add():
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload["service"] = True if 'service' in payload else False
-        payload["setupbmc"] = True if 'setupbmc' in payload else False
-        payload["netboot"] = True if 'netboot' in payload else False
-        payload["bootmenu"] = True if 'bootmenu' in payload else False
-        table_data = Rest().get_data(TABLE, payload['name'])
-        if table_data:
-            if payload['name'] in table_data['config'][TABLE]:
+    """
+    This Method will add a requested record.
+    """
+    payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+    payload["service"] = True if 'service' in payload else False
+    payload["setupbmc"] = True if 'setupbmc' in payload else False
+    payload["netboot"] = True if 'netboot' in payload else False
+    payload["bootmenu"] = True if 'bootmenu' in payload else False
+    table_data = Rest().get_data(TABLE, payload['name'])
+    if "status" in table_data:
+        if table_data["status"] is True:
+            if payload['name'] in table_data['content']['config'][TABLE]:
                 return jsonify({"message": f'{payload["name"]} is already present in the database.', "status": "error"}), 409
-        payload = Helper().prepare_payload(None, payload)
-        for k, v in list(payload.items()):
-            if v == 'on':
-                payload[k] = True
-        if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, TABLE, payload)
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{response.status_code} {response.content}')
-        if response.status_code == 201:
-            return jsonify({"message": f'{TABLE_CAP}, {payload["name"]} Created.', "status": "success"}), 201
-        response_json = response.json()
-        return jsonify({"message": f'{response.status_code} - {response_json["message"]}', "status": "error"}), response.status_code
-    if not _wants_json():
-        return home()
-    return jsonify({
-        "table": TABLE_CAP,
-        "group_list": Model().get_list_options_json('group'),
-        "bmcsetup_list": Model().get_list_options_json('bmcsetup'),
-        "switch_list": Model().get_list_options_json('switch'),
-        "osimage_list": Model().get_list_options_json('osimage'),
-        "network_list": Model().get_list_options_json('network'),
-        "bond_modes": Helper().get_bond_mode_list(),
-    })
+    payload = Helper().prepare_payload(None, payload)
+    for k, v in list(payload.items()):
+        if v == 'on':
+            payload[k] = True
+    if 'interface' in payload:
+        payload = Helper().filter_interfaces(request, TABLE, payload)
+    request_data = {'config': {TABLE: {payload['name']: payload}}}
+    response = Rest().post_data(TABLE, payload['name'], request_data)
+    LOGGER.info(f'{response.status_code} {response.content}')
+    if response.status_code == 201:
+        return jsonify({"message": f'{TABLE_CAP}, {payload["name"]} Created.', "status": "success"}), 201
+    response_json = response.json()
+    return jsonify({"message": f'{response.status_code} - {response_json["message"]}', "status": "error"}), response.status_code
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
@@ -247,15 +284,18 @@ def rename(record=None):
             return jsonify({"message": f'{TABLE_CAP} renamed to {payload["newnodename"]}.', "status": "success"}), 204
         response_json = response.json()
         return jsonify({"message": f'{response.status_code} - {response_json["message"]}', "status": "error"}), response.status_code
-    if not _wants_json():
-        return home()
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE][record]
-        data = {'name': raw_data['name'], 'newname': ''}
-        return jsonify({"data": data, "error": ""})
-    return jsonify({"data": {}, "error": f'{record} not found.'}), 404
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+        else:
+            return jsonify({"data": {}, "error": f'{record} not found.'}), 404
+    else:
+        return jsonify({"data": {}, "error": f'{record} not found.'}), 404
+    raw_data = table_data['config'][TABLE][record]
+    data = {'name': raw_data['name'], 'newname': ''}
+    return jsonify({"data": data, "error": ""})
 
 
 @app.route('/edit/<string:record>', methods=['GET', 'POST'])
@@ -290,11 +330,15 @@ def edit(record=None):
         response_json = response.json()
         return jsonify({"message": f'{response.status_code} - {response_json["message"]}', "status": "error"}), response.status_code
 
-    if not _wants_json():
-        return home()
+    data = {}
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
-    if not table_data:
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+        else:
+            return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
+    else:
         return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
     data = table_data['config'][TABLE][record]
     data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
@@ -313,23 +357,25 @@ def edit(record=None):
     })
 
 
-@app.route('/delete/<string:record>', methods=['GET'])
+@app.route('/api/v1/delete/<string:record>', methods=['DELETE'])
 def delete(record=None):
+    """
+    This Method will delete a requested record.
+    """
     response = Rest().get_delete(TABLE, record)
-    LOGGER.info(f'{response.status_code} {response.content}')
-    if response.status_code == 204:
-        return jsonify({"message": f'{TABLE_CAP}, {record} is deleted.', "status": "success"}), 204
-    return jsonify({"message": "Something went wrong!", "status": "error"}), response.status_code
+    LOGGER.info(response)
+    return response
 
 
 @app.route('/remove/<string:record>/<string:interface>', methods=['GET'])
 def remove(record=None, interface=None):
+    """
+    This Method will delete a requested interface from a record.
+    """
     uri = record+'/interfaces/'+interface
     response = Rest().get_delete(TABLE, uri)
-    LOGGER.info(f'{response.status_code} {response.content}')
-    if response.status_code == 204:
-        return jsonify({"message": f'{interface} Deleted from {TABLE_CAP} {record}.', "status": "success"}), 204
-    return jsonify({"message": "Something went wrong!", "status": "error"}), response.status_code
+    LOGGER.info(response)
+    return response
 
 
 @app.route('/clone/<string:record>', methods=['GET', 'POST'])
@@ -366,11 +412,15 @@ def clone(record=None):
             error = f'{response.status_code} - {response.content}'
         return jsonify({"message": error, "status": "error"}), response.status_code
 
-    if not _wants_json():
-        return home()
+    data = {}
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
-    if not table_data:
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+        else:
+            return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
+    else:
         return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
     data = table_data['config'][TABLE][record]
     data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
@@ -414,17 +464,17 @@ def osgrab(record=None):
             return jsonify(result), 200
         return jsonify({"message": f'{response.status_code} - {response_json["message"]}', "status": "error"}), response.status_code
 
-    if not _wants_json():
-        return home()
     data = {}
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     node_list = Model().get_list_options_json('node', record)
     osimage_list = Model().get_list_options_json('osimage')
-    if table_data:
-        raw_data = table_data['config'][TABLE][record]
-        data = Helper().prepare_json(raw_data)
-        osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+            raw_data = table_data['config'][TABLE][record]
+            data = Helper().prepare_json(raw_data)
+            osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
     return jsonify({
         "table": TABLE_CAP,
         "record": record,
@@ -450,17 +500,17 @@ def ospush(record=None):
             return jsonify(result), 200
         return jsonify({"message": f'{response.status_code} - {response_json["message"]}', "status": "error"}), response.status_code
 
-    if not _wants_json():
-        return home()
     data = {}
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
     node_list = Model().get_list_options_json('node', record)
     osimage_list = Model().get_list_options_json('osimage')
-    if table_data:
-        raw_data = table_data['config'][TABLE][record]
-        data = Helper().prepare_json(raw_data)
-        osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+    if "status" in table_data:
+        if table_data["status"] is True:
+            table_data = table_data['content']
+            raw_data = table_data['config'][TABLE][record]
+            data = Helper().prepare_json(raw_data)
+            osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
     return jsonify({
         "table": TABLE_CAP,
         "record": record,
