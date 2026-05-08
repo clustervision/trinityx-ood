@@ -30,7 +30,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
-import types
+# import types
 import os
 import json
 from html import unescape
@@ -104,12 +104,9 @@ def home():
     """
     Serve the Vue SPA shell. window.APP_URL is this app's base URL.
     """
-    url = Helper().app_url(request)
+    url = {"APP_URL": f"{request.scheme}://{request.host}{request.path}"}
     print(url)
-    return render_template(
-        "index.html",
-        APP_URL=url["APP_URL"],
-    )
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
 @app.route('/api/v1/all_groups', methods=['GET'])
@@ -117,8 +114,8 @@ def all_groups():
     """
     Get a JSON list of all groups for the Vue frontend table.
     """
-    reponse = Rest().get_data(TABLE)
-    return reponse
+    response = Rest().get_data(TABLE)
+    return response
 
 @app.route('/api/v1/get_resources', methods=['GET'])
 @app.route('/api/v1/get_resources/<string:record>', methods=['GET'])
@@ -225,50 +222,44 @@ def get_list(table=None):
     return response
 
 
-@app.route('/add', methods=['GET', 'POST'])
+@app.route('/add', methods=['POST'])
 def add():
     """
     This Method will add a requested record.
     """
-    # bmcsetup_list = Model().get_list_option_html('bmcsetup')
-    # osimage_list = Model().get_list_option_html('osimage')
-    # network_list = Model().get_list_option_html('network')
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        table_data = Rest().get_data(TABLE, payload['name'])
-        if table_data:
-            if payload['name'] in table_data['config'][TABLE]:
-                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
-                flash(error, "error")
-                return redirect(url_for('add'), code=302)
-        payload = Helper().prepare_payload(payload)
+    response = {"status": False, "status_code": 500, "content": ""}
+    payload = {k: v for k, v in request.form.items() if v not in [None, '']}
+    table_data = Rest().get_data(TABLE, payload['name'])
+    # if "status" in table_data:
+    #     if table_data["status"] is True:
+    #         if payload['name'] in table_data['content']['config'][TABLE]:
+    #             error = {"message": f'{payload["name"]} is already present in the database.'}
+    #             response = {"status": False, "status_code": 400, "content": error}
+    #             return jsonify(response)
+            
 
-        if 'interface' in payload:
-            payload = Helper().filter_interfaces(request, TABLE, payload)
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{response.status_code} {response.content}')
-        if response.status_code == 201:
-            flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
-            return redirect(url_for('home'), code=302)
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+
+    if table_data:
+        if payload['name'] in table_data['config'][TABLE]:
+            error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
             flash(error, "error")
             return redirect(url_for('add'), code=302)
+    payload = Helper().prepare_payload(payload)
+
+    if 'interface' in payload:
+        payload = Helper().filter_interfaces(request, TABLE, payload)
+    request_data = {'config': {TABLE: {payload['name']: payload}}}
+    response = Rest().post_data(TABLE, payload['name'], request_data)
+    LOGGER.info(f'{response.status_code} {response.content}')
+    if response.status_code == 201:
+        flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
+        return redirect(url_for('home'), code=302)
     else:
-        bmcsetup_list = Model().get_list_options_json('bmcsetup')
-        osimage_list = Model().get_list_options_json('osimage')
-        network_list = Model().get_list_options_json('network')
-        bond_modes = Helper().get_bond_mode_list()
-        body = {
-            "table": TABLE_CAP,
-            "bmcsetup_list": bmcsetup_list,
-            "osimage_list": osimage_list,
-            "network_list": network_list,
-            "bond_modes": bond_modes,
-        }
-        return jsonify(body)
+        response_json = response.json()
+        error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
+        flash(error, "error")
+        return redirect(url_for('add'), code=302)
+
 
 
 @app.route('/rename/<string:record>', methods=['GET', 'POST'])
@@ -358,19 +349,14 @@ def edit(record=None):
     })
 
 
-@app.route('/delete/<string:record>', methods=['GET'])
+@app.route('/api/v1/delete/<string:record>', methods=['DELETE'])
 def delete(record=None):
     """
     This Method will delete a requested record.
     """
     response = Rest().get_delete(TABLE, record)
-    LOGGER.info(f'{response.status_code} {response.content}')
-    print(f'{response.status_code} {response.content}')
-    if response.status_code == 204:
-        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
-    else:
-        flash('ERROR :: Something went wrong!', "error")
-    return redirect(url_for('home'), code=302)
+    LOGGER.info(response)
+    return response
 
 
 @app.route('/remove/<string:record>/<string:interface>', methods=['GET'])
