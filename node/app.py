@@ -50,19 +50,7 @@ app = Flask(__name__, static_folder="app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False:
-    app.config["DEBUG"] = True
-    os.environ["FLASK_ENV"] = "development"
-    CORS(
-        app,
-        resources={
-            r"/*": {
-                "origins": [
-                    "http://localhost:5174",
-                    "http://127.0.0.1:5174",
-                ],
-            },
-        },
-    )
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
 
 
 def _next_free_ip(network):
@@ -73,6 +61,19 @@ def _next_free_ip(network):
     if "status" in nextip and nextip["status"] is True:
         return nextip['content']['config']['network'][network].get('nextip')
     return None
+
+
+def _node_record_for_response(table_data, record):
+    """
+    Daemon body (after status/content unwrap) -> node dict for *record*, or None.
+    Same idea as group's _group_record_for_response (avoids KeyError).
+    """
+    if not table_data or not isinstance(table_data, dict):
+        return None
+    cmap = table_data.get('config', {}).get(TABLE)
+    if not isinstance(cmap, dict) or record not in cmap:
+        return None
+    return cmap[record]
 
 
 def _node_os_bmc_sources(data):
@@ -138,7 +139,10 @@ def validate_home_directory():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return jsonify({"error": f"ERROR :: {e}"}), 404
+    """
+    Same as group: error page template, HTTP 200 (not 404).
+    """
+    return render_template("error.html", table=TABLE_CAP, data="", error=f"ERROR :: {e}"), 200
 
 
 @app.route('/', methods=['GET'])
@@ -174,7 +178,6 @@ def get_resources(record: str = ""):
     """
     Get a JSON list of all get_resources for the Vue frontend table.
     """
-    body = {"group_list": [], "bmcsetup_list": [], "osimage_list": [], "network_list": [], "switch_list": [], "bond_modes": []}
     if record:
         table_data = Rest().get_data(TABLE, record)
         LOGGER.info(table_data)
@@ -214,14 +217,16 @@ def get_resources(record: str = ""):
 def show(record=None):
     table_data = Rest().get_data(TABLE, record)
     LOGGER.info(table_data)
+    if not table_data:
+        return jsonify({"node": {}, "error": f'{record} From {TABLE_CAP} is Not available at this time'})
     if "status" in table_data:
         if table_data["status"] is True:
             table_data = table_data['content']
         else:
             return jsonify({"node": {}, "error": f'{record} From {TABLE_CAP} is Not available at this time'})
-    else:
+    raw_data = _node_record_for_response(table_data, record)
+    if raw_data is None:
         return jsonify({"node": {}, "error": f'{record} From {TABLE_CAP} is Not available at this time'})
-    raw_data = table_data['config'][TABLE][record]
     raw_data = Helper().prepare_json(raw_data)
     node = Helper().filter_data_col_json(TABLE, raw_data)
     return jsonify({"node": node, "error": ""})
@@ -293,7 +298,9 @@ def rename(record=None):
             return jsonify({"data": {}, "error": f'{record} not found.'}), 404
     else:
         return jsonify({"data": {}, "error": f'{record} not found.'}), 404
-    raw_data = table_data['config'][TABLE][record]
+    raw_data = _node_record_for_response(table_data, record)
+    if raw_data is None:
+        return jsonify({"data": {}, "error": f'{record} not found.'}), 404
     data = {'name': raw_data['name'], 'newname': ''}
     return jsonify({"data": data, "error": ""})
 
@@ -340,8 +347,10 @@ def edit(record=None):
             return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
     else:
         return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
-    data = table_data['config'][TABLE][record]
-    data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+    raw = _node_record_for_response(table_data, record)
+    if raw is None:
+        return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
+    data = {k: v for k, v in raw.items() if v not in [None, '', 'None']}
     data = Helper().prepare_json(data)
     bmc_src, os_src = _node_os_bmc_sources(data)
     return jsonify({
@@ -422,8 +431,10 @@ def clone(record=None):
             return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
     else:
         return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
-    data = table_data['config'][TABLE][record]
-    data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
+    raw = _node_record_for_response(table_data, record)
+    if raw is None:
+        return jsonify({"data": {}, "record": record, "error": f'{record} not found.'}), 404
+    data = {k: v for k, v in raw.items() if v not in [None, '', 'None']}
     data = Helper().prepare_json(data)
     bmc_src, os_src = _node_os_bmc_sources(data)
     data = deepcopy(data)
@@ -472,9 +483,10 @@ def osgrab(record=None):
     if "status" in table_data:
         if table_data["status"] is True:
             table_data = table_data['content']
-            raw_data = table_data['config'][TABLE][record]
-            data = Helper().prepare_json(raw_data)
-            osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+            raw_data = _node_record_for_response(table_data, record)
+            if raw_data is not None:
+                data = Helper().prepare_json(raw_data)
+                osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
     return jsonify({
         "table": TABLE_CAP,
         "record": record,
@@ -508,9 +520,10 @@ def ospush(record=None):
     if "status" in table_data:
         if table_data["status"] is True:
             table_data = table_data['content']
-            raw_data = table_data['config'][TABLE][record]
-            data = Helper().prepare_json(raw_data)
-            osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
+            raw_data = _node_record_for_response(table_data, record)
+            if raw_data is not None:
+                data = Helper().prepare_json(raw_data)
+                osimage_list = Model().get_list_options_json('osimage', data.get('osimage'))
     return jsonify({
         "table": TABLE_CAP,
         "record": record,

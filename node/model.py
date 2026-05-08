@@ -43,6 +43,23 @@ class Model():
         """
         self.logger = Log.get_logger()
 
+    @staticmethod
+    def _daemon_config(get_list):
+        """
+        Unwrap Rest().get_data envelope (test_group_node group style) to legacy daemon dict.
+        """
+        if not get_list or not isinstance(get_list, dict):
+            return None
+        if 'status' in get_list:
+            if get_list.get('status') is not True:
+                return None
+            body = get_list.get('content')
+            if not isinstance(body, dict):
+                return None
+            return body.get('config')
+        cfg = get_list.get('config')
+        return cfg if isinstance(cfg, dict) else None
+
 
     def get_list_option_html(self, table=None, record=None, source=None):
         """
@@ -50,8 +67,9 @@ class Model():
         """
         response = ""
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            raw_data = cfg[table]
             response += f"<option value=''> Select {table.capitalize()}  </option>"
             for name, _ in raw_data.items():
                 if record:
@@ -80,8 +98,9 @@ class Model():
         """
         response = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            raw_data = cfg[table]
             response = [["", f" Select {table.capitalize()}  "]]
             for name, _ in raw_data.items():
                 name_list = [name, name]
@@ -98,12 +117,12 @@ class Model():
         """
         names = []
         get_list = Rest().get_data(table)
-        if "status" in get_list:
-            if get_list["status"] is True:
-                raw_data = get_list['content']['config'][table]
-                names = list(raw_data.keys())
-            else:
-                names = [get_list['content']['message']]
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            names = list(cfg[table].keys())
+        elif isinstance(get_list, dict) and get_list.get('status') is False:
+            cnt = get_list.get('content') or {}
+            names = [cnt.get('message', 'Nothing Available')]
         else:
             names = ["Nothing Available"]
         return {"options": names, "selected": selected}
@@ -116,9 +135,10 @@ class Model():
         """
         choices = []
         get_list = Rest().get_data(table)
-        if "status" not in get_list or get_list["status"] is not True:
+        cfg = self._daemon_config(get_list)
+        if not cfg or not isinstance(cfg.get(table), dict):
             return choices
-        raw_data = get_list['content']['config'][table]
+        raw_data = cfg[table]
         for name, _ in raw_data.items():
             if record:
                 if record == name:
@@ -144,9 +164,9 @@ class Model():
         """
         response = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            response = list(raw_data.keys())
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            response = list(cfg[table].keys())
         return response
 
 
@@ -156,9 +176,9 @@ class Model():
         """
         response = []
         get_list = Rest().get_data(table, record)
-        if get_list:
-            raw_data = get_list['config'][table][record]
-            response = raw_data
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict) and record in cfg[table]:
+            response = cfg[table][record]
         return response
 
 
@@ -168,6 +188,7 @@ class Model():
         """
         response = 0
         get_list = Rest().get_data(table)
-        if get_list:
-            response = len(get_list['config'][table])
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            response = len(cfg[table])
         return response
