@@ -51,17 +51,16 @@ class Helper():
         self.logger = Log.get_logger()
 
 
-    def app_url(self, request):
+    def app_url(self, request=None):
         """
         URL for the frontend application (window.APP_URL).
         """
         response = {"APP_URL": ""}
         full_url = f"{request.scheme}://{request.host}{request.path}"
-        # full_url = full_url[:-1]
-        # full_url_app = f"{full_url}{url_for('home')}"
-        # APP_URL = full_url_app[:-1]
-        # response["APP_URL"] = APP_URL
-        response["APP_URL"] = full_url
+        full_url = full_url[:-1]
+        full_url_app = f"{full_url}{url_for('home')}"
+        APP_URL = full_url_app[:-1]
+        response["APP_URL"] = APP_URL
         return response
 
 
