@@ -60,38 +60,6 @@ class Model():
         cfg = get_list.get('config')
         return cfg if isinstance(cfg, dict) else None
 
-
-    def get_list_option_html(self, table=None, record=None, source=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = ""
-        get_list = Rest().get_data(table)
-        cfg = self._daemon_config(get_list)
-        if cfg and isinstance(cfg.get(table), dict):
-            raw_data = cfg[table]
-            response += f"<option value=''> Select {table.capitalize()}  </option>"
-            for name, _ in raw_data.items():
-                if record:
-                    if record == name:
-                        if source:
-                            if source == 'node':
-                                response += f"<option value='{name}(group)'>{name} (group)</option>"
-                                response += f"<option value='{name}(node)' selected>{name} (node)</option>"
-                            else:
-                                response += f"<option value='{name}(group)' selected>{name} (group)</option>"
-                                response += f"<option value='{name}(node)'>{name} (node)</option>"
-                        else:
-                            response += f"<option value='{name}' selected>{name}</option>"
-                    else:
-                        response += f"<option value='{name}'>{name}</option>"
-                else:
-                    response += f"<option value='{name}'>{name}</option>"
-        else:
-            response += f"<option value=''>No {table.capitalize()} Available </option>"
-        return response
-
-
     def get_list_options(self, table=None):
         """
         This method will open the Login Page(First Page)
@@ -130,8 +98,7 @@ class Model():
 
     def get_node_source_choices(self, table=None, record=None, source=None):
         """
-        Option list for node bmcsetup/osimage: supports (group)/(node) value suffixes
-        like get_list_option_html() for the Vue forms.
+        Option list for node bmcsetup/osimage: supports (group)/(node) value suffixes for Vue forms.
         """
         choices = []
         get_list = Rest().get_data(table)
@@ -156,39 +123,3 @@ class Model():
             else:
                 choices.append({"value": name, "label": name})
         return choices
-
-
-    def get_name_list(self, table=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = []
-        get_list = Rest().get_data(table)
-        cfg = self._daemon_config(get_list)
-        if cfg and isinstance(cfg.get(table), dict):
-            response = list(cfg[table].keys())
-        return response
-
-
-    def get_record(self, table=None, record=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = []
-        get_list = Rest().get_data(table, record)
-        cfg = self._daemon_config(get_list)
-        if cfg and isinstance(cfg.get(table), dict) and record in cfg[table]:
-            response = cfg[table][record]
-        return response
-
-
-    def get_count(self, table=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = 0
-        get_list = Rest().get_data(table)
-        cfg = self._daemon_config(get_list)
-        if cfg and isinstance(cfg.get(table), dict):
-            response = len(cfg[table])
-        return response
