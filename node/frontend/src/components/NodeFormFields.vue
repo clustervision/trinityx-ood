@@ -153,7 +153,7 @@
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
-        @update-dhcp="(v) => { form.interfaces[idx].dhcp = v }"
+        @update-dhcp="(v) => setIfaceDhcp(idx, v)"
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
         <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
@@ -354,7 +354,9 @@
 import { ref, reactive, computed, watch } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
-import renameIcon from '../assets/img/icon-rename.png'
+import { punAppAssetUrl } from '../utils/publicAssets'
+
+const renameIcon = punAppAssetUrl('icon-rename.png')
 import type { NodeFormInterface, NodeFormData, InventoryIpv4Record } from '@/types'
 
 const props = withDefaults(defineProps<{
@@ -564,6 +566,11 @@ function removeInterface(idx: number) {
   form.interfaces.splice(idx, 1)
 }
 
+function setIfaceDhcp(idx: number, v: string) {
+  const row = form.interfaces[idx]
+  if (row) row.dhcp = v
+}
+
 function noSpaces(e: KeyboardEvent) {
   if (e.charCode === 32) e.preventDefault()
 }
@@ -636,8 +643,10 @@ function closeTextEditor() {
 }
 
 function onTextEditorModalApply(v: string | null) {
-  if (ifaceOptionsIdx.value >= 0 && form.interfaces[ifaceOptionsIdx.value]) {
-    form.interfaces[ifaceOptionsIdx.value].options = v != null ? String(v) : ''
+  const ifaceIdx = ifaceOptionsIdx.value
+  if (ifaceIdx >= 0) {
+    const ifaceRow = form.interfaces[ifaceIdx]
+    if (ifaceRow) ifaceRow.options = v != null ? String(v) : ''
   } else if (textEditorField.value) {
     ;(form as Record<string, unknown>)[textEditorField.value] = v
   }
@@ -759,8 +768,7 @@ function buildLunaNodeRecord(): Record<string, unknown> {
   if (!isClone && form.service) record.service = true
   record.interfaces = form.interfaces.map((iface) => {
     const row: Record<string, unknown> = {}
-    for (const k of Object.keys(iface)) {
-      const val = (iface as Record<string, unknown>)[k]
+    for (const [k, val] of Object.entries(iface)) {
       row[k] = val != null ? String(val) : ''
     }
     return row
@@ -797,8 +805,7 @@ function buildFormData(): FormData {
   }
   if (!isClone && form.service) fd.append('service', 'true')
   for (const iface of form.interfaces) {
-    for (const k of Object.keys(iface)) {
-      const val = (iface as Record<string, unknown>)[k]
+    for (const [k, val] of Object.entries(iface)) {
       fd.append(k, val != null ? String(val) : '')
     }
   }

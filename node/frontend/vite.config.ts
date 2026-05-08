@@ -5,20 +5,25 @@ import type { AssetInfo } from 'rollup'
 
 /**
  * Dev: base `/` so `/node-backend` proxy paths stay at the dev root.
- * Prod: set VITE_PUBLIC_BASE (e.g. /pun/sys/trinity_node/assets/) where dist/ is deployed.
+ * Prod: set VITE_PUBLIC_BASE to the Flask static URL under Pun, e.g.
+ *       /pun/sys/trinity_node/app/assets/  (must include `app` — matches Flask static_url_path).
+ * If unset, defaults to `./` so CSS url() paths stay relative to index.css and work under any mount
+ * without baking in wrong paths like /static/ or /pun/.../assets/ (missing app/).
  */
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendTarget = env.VITE_NODE_BACKEND
 
   const rawBase =
-    mode === 'production' ? (env.VITE_PUBLIC_BASE || '/').trim() : '/'
+    mode === 'production' ? (env.VITE_PUBLIC_BASE || './').trim() : '/'
   const base =
     !rawBase || rawBase === '/'
       ? '/'
-      : rawBase.endsWith('/')
-        ? rawBase
-        : `${rawBase}/`
+      : rawBase === './'
+        ? './'
+        : rawBase.endsWith('/')
+          ? rawBase
+          : `${rawBase}/`
 
   console.info('[vite] base:', base)
   console.info(

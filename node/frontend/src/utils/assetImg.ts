@@ -1,15 +1,13 @@
 /**
- * Bundled images under src/assets/img/ (same pattern as rack-app deviceImageUrls).
+ * Toolbar icons: resolved at runtime via APP_URL so paths are correct under OOD/Pun.
  */
 
-export function assetImgUrl(file: string): string {
-  return new URL(`../assets/img/${file}`, import.meta.url).href
-}
+import { punAppAssetUrl } from './publicAssets'
 
-/** Inventory toolbar icons */
+/** Inventory toolbar icons (lazy-init so window.APP_URL is available) */
 export const actionIcons = {
-  clone: assetImgUrl('icon-clone.png'),
-  osgrab: assetImgUrl('icon-osgrab.png'),
-  ospush: assetImgUrl('icon-ospush.png'),
-  delete: assetImgUrl('icon-delete.png'),
-} as const
+  get clone() { return punAppAssetUrl('icon-clone.png') },
+  get osgrab() { return punAppAssetUrl('icon-osgrab.png') },
+  get ospush() { return punAppAssetUrl('icon-ospush.png') },
+  get delete() { return punAppAssetUrl('icon-delete.png') },
+}

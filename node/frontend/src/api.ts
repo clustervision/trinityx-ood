@@ -5,9 +5,7 @@ import type {
   SubmitResult,
 } from '@/types'
 
-/**
- * Flask shell + /api/v1/* JSON (no ?format=json on “/”).
- */
+
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
 
 const API_V1 = '/api/v1'

@@ -18,12 +18,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { publicAssetUrl } from '../utils/publicAssets'
+import { punAppAssetUrl } from '../utils/publicAssets'
 
 const homeUrl = computed((): string => {
   if (typeof window === 'undefined') return '#'
-  return `${location.protocol}//${location.hostname}:8080`
+  const appUrl = String(
+    (window as Window & { APP_URL?: string }).APP_URL || ''
+  ).trim()
+  if (appUrl) return appUrl.replace(/\/+$/, '') + '/'
+  return `${location.protocol}//${location.host}/`
 })
 
-const logoSrc = computed((): string => publicAssetUrl('img/logo.png'))
+const logoSrc = computed((): string => punAppAssetUrl('img/logo.png'))
 </script>
