@@ -127,7 +127,7 @@
 import { ref, reactive } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
-import { submitOsimageForm } from '../api'
+import { fetchOsimages, submitOsimageForm } from '../api'
 
 const emit = defineEmits(['close', 'saved'])
 
@@ -153,7 +153,8 @@ const form = reactive({
 })
 
 async function doAdd() {
-  if (!form.name.trim()) {
+  const enteredName = String(form.name || '').trim()
+  if (!enteredName) {
     alertMsg.value = 'Name is required.'
     alertOk.value = false
     return
@@ -161,6 +162,20 @@ async function doAdd() {
   saving.value = true
   alertMsg.value = ''
   try {
+    // Frontend guard: prevent creating duplicates based on current list data.
+    const list = await fetchOsimages()
+    const wanted = enteredName.toLowerCase()
+    const exists = (list.images || []).some((row) => {
+      const raw = String(row?.name || '')
+      const normalized = raw.replace(/\s*\*\s*$/, '').trim().toLowerCase()
+      return normalized === wanted
+    })
+    if (exists) {
+      alertMsg.value = `OS Image "${enteredName}" already exists.`
+      alertOk.value = false
+      return
+    }
+
     const fd = new FormData()
     for (const [k, v] of Object.entries(form)) {
       if (v !== '' && v != null) fd.append(k, v)
