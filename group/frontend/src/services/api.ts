@@ -2,7 +2,6 @@ import { apiClient } from './axios'
 
 export async function fetchGroups() {
   const { data } = await apiClient.get('/api/v1/all_groups')
-  // console.log(data);
   return data
 }
 
@@ -12,21 +11,14 @@ export async function fetchResources() {
 }
 
 export async function deleteGroup(name: string) {
-  const { data } = await apiClient.get(
-    `/delete/${encodeURIComponent(name)}`
-  )
-
-  if (data.status !== 'success') {
-    throw new Error(data.message || 'Delete failed')
-  }
-
+  // const data = {content: {message: `Group ${name} is removed.`}, status: true, status_code: 204}
+  const { data } = await apiClient.delete(`/api/v1/delete/${encodeURIComponent(name)}`)
+   if (data.status === false) { throw new Error(data.content.message) }
   return data
 }
 
 export async function fetchEditData(name: string) {
-  const { data } = await apiClient.get(
-    `/edit/${encodeURIComponent(name)}?format=json`
-  )
+  const { data } = await apiClient.get(`/edit/${encodeURIComponent(name)}?format=json`)
   return data
 }
 
@@ -36,16 +28,12 @@ export async function fetchAddData() {
 }
 
 export async function fetchCloneData(name: string) {
-  const { data } = await apiClient.get(
-    `/clone/${encodeURIComponent(name)}?format=json`
-  )
+  const { data } = await apiClient.get(`/clone/${encodeURIComponent(name)}?format=json`)
   return data
 }
 
 export async function fetchOspushData(name: string) {
-  const { data } = await apiClient.get(
-    `/ospush/${encodeURIComponent(name)}?format=json`
-  )
+  const { data } = await apiClient.get(`/ospush/${encodeURIComponent(name)}?format=json`)
   return data
 }
 
@@ -53,9 +41,7 @@ export async function removeInterface(
   record: string,
   iface: string
 ) {
-  const { data } = await apiClient.get(
-    `/remove/${encodeURIComponent(record)}/${encodeURIComponent(iface)}`
-  )
+  const { data } = await apiClient.get(`/remove/${encodeURIComponent(record)}/${encodeURIComponent(iface)}`)
 
   if (data.status !== 'success') {
     throw new Error(data.message || 'Remove interface failed')
@@ -65,9 +51,7 @@ export async function removeInterface(
 }
 
 export async function checkStatus(requestId: string) {
-  const { data } = await apiClient.get(
-    `/check_status/config/status/${encodeURIComponent(requestId)}`
-  )
+  const { data } = await apiClient.get(`/check_status/config/status/${encodeURIComponent(requestId)}`)
   return data
 }
 

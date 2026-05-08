@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 
-import { apiClient } from '@/services/axios'
-
-const licenseUrl = computed(() => {
-  const base = apiClient.defaults.baseURL || ''
-  return `${base}/license`
+defineProps({
+  app_url: {
+    type: String,
+    required: true
+  },
 })
 </script>
 
@@ -13,11 +12,11 @@ const licenseUrl = computed(() => {
   <footer class="tx-footer">
     <div class="tx-footer-inner">
       <div class="tx-footer-left">
-        &copy; 2023, made with &#10084;&#65039; by
+        &copy; 2026, made with &#10084;&#65039; by
         <a href="https://clustervision.com/" target="_blank" class="tx-footer-link">ClusterVision</a>
       </div>
       <div class="tx-footer-right">
-        <a :href="licenseUrl" class="tx-footer-link" target="_blank">License</a>
+        <a :href="`${$props.app_url}/license`" class="tx-footer-link" target="_blank">License</a>
         <a href="https://github.com/clustervision/trinityX" target="_blank" class="tx-footer-link">Documentation</a>
         <a href="https://support.clustervision.com/" target="_blank" class="tx-footer-link">Support</a>
       </div>

@@ -1,10 +1,8 @@
 import axios from 'axios'
-
-const baseURL =
-  (window as any).APP_URL || import.meta.env.VITE_APP_URL || ''
+const app_url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 export const apiClient = axios.create({
-  baseURL: String(baseURL).replace(/\/$/, ''),
+  baseURL: String(app_url).replace(/\/$/, ''),
   headers: {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
