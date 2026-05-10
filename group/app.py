@@ -30,7 +30,7 @@ __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
-# import types
+import types
 import os
 import json
 from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
@@ -264,8 +264,12 @@ def delete(record: str=''):
     This Method will delete a requested record.
     """
     response = Rest().get_delete(TABLE, record)
-    LOGGER.info(response)
-    return response
+    LOGGER.info(f'{response.status_code} {response.content}')
+    if response.status_code == 204:
+        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
+    else:
+        flash('ERROR :: Something went wrong!', "error")
+    return redirect(url_for('home'), code=302)
 
 
 @app.route('/api/v1/ospush/<string:record>', methods=['POST'])
@@ -325,8 +329,8 @@ def license_info():
 
 if __name__ == "__main__":
     if APP_STATE is False:
-        _ssl_crt = '/trinity/local/etc/ssl/vmware-controller1.cluster.crt'
-        _ssl_key = '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        _ssl_crt = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.crt'
+        _ssl_key = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.key'
         if os.path.isfile(_ssl_crt) and os.path.isfile(_ssl_key):
             dev_context = (_ssl_crt, _ssl_key)
             app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
