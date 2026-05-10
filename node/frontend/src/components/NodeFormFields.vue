@@ -153,7 +153,7 @@
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
-        @update-dhcp="(v) => { form.interfaces[idx].dhcp = v }"
+        @update-dhcp="(v) => setIfaceDhcp(idx, v)"
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
         <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
@@ -350,33 +350,51 @@
   </form>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
-import renameIcon from '../assets/img/icon-rename.png'
+import { punAppAssetUrl } from '../utils/publicAssets'
 
-const props = defineProps({
-  mode: { type: String, default: 'add' },
-  initialData: { type: Object, default: () => ({}) },
-  groupOptions: { type: Array, default: () => [] },
-  switchOptions: { type: Array, default: () => [] },
-  bmcsetupOptions: { type: Array, default: () => [] },
-  osimageOptions: { type: Array, default: () => [] },
-  networkOptions: { type: Array, default: () => [] },
-  bondModeOptions: { type: Array, default: () => [] },
-  cloudnameOptions: { type: Array, default: () => [] },
-  submitLabel: { type: String, default: 'Add Node' },
-  hints: { type: Object, default: () => ({}) },
-  getInventoryIpv4: { type: Function, default: null },
-  inventoryExcludeNodeName: { type: String, default: '' },
+const renameIcon = punAppAssetUrl('icon-rename.png')
+import type { NodeFormInterface, NodeFormData, InventoryIpv4Record } from '@/types'
+
+const props = withDefaults(defineProps<{
+  mode?: 'add' | 'edit' | 'clone'
+  initialData?: Record<string, unknown>
+  groupOptions?: string[]
+  switchOptions?: string[]
+  bmcsetupOptions?: string[]
+  osimageOptions?: string[]
+  networkOptions?: string[]
+  bondModeOptions?: string[]
+  cloudnameOptions?: string[]
+  submitLabel?: string
+  hints?: Record<string, string>
+  getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
+  inventoryExcludeNodeName?: string
+}>(), {
+  mode: 'add',
+  initialData: () => ({}),
+  groupOptions: () => [],
+  switchOptions: () => [],
+  bmcsetupOptions: () => [],
+  osimageOptions: () => [],
+  networkOptions: () => [],
+  bondModeOptions: () => [],
+  cloudnameOptions: () => [],
+  submitLabel: 'Add Node',
+  hints: () => ({}),
+  getInventoryIpv4: null,
+  inventoryExcludeNodeName: '',
 })
 
-const emit = defineEmits(['submit'])
+const emit = defineEmits<{
+  submit: []
+}>()
 
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
-/** Edit mode: inline rename; POST /rename/ only on Save if draft differs (see EditNodeModal). */
 const originalNodeName = ref('')
 const nameInlineEdit = ref(false)
 const nameDraft = ref('')
@@ -389,15 +407,15 @@ const textEditorModalKey = computed(
   () => `${ifaceOptionsIdx.value}:${textEditorField.value}`,
 )
 
-const textEditorModalValue = computed(() => {
+const textEditorModalValue = computed((): string => {
   if (ifaceOptionsIdx.value >= 0) {
     return form.interfaces[ifaceOptionsIdx.value]?.options ?? ''
   }
   const f = textEditorField.value
-  return f && form[f] != null ? String(form[f]) : ''
+  return f && (form as Record<string, unknown>)[f] != null ? String((form as Record<string, unknown>)[f]) : ''
 })
 
-function makeEmptyIface() {
+function makeEmptyIface(): NodeFormInterface {
   return {
     interface: '',
     network: '',
@@ -413,7 +431,7 @@ function makeEmptyIface() {
   }
 }
 
-const form = reactive({
+const form: NodeFormData = reactive({
   name: '',
   newnodename: '',
   groupname: '',
@@ -446,13 +464,13 @@ const form = reactive({
   interfaces: [],
 })
 
-function triValue(v) {
+function triValue(v: unknown): string {
   if (v === true || v === 'True' || v === 'true') return 'true'
   if (v === false || v === 'False' || v === 'false') return 'false'
   return ''
 }
 
-function ifaceDhcpString(v) {
+function ifaceDhcpString(v: unknown): string {
   if (v === true || v === 1 || v === '1') return 'true'
   if (v === false || v === 0 || v === '0') return 'false'
   const s = String(v ?? '').trim().toLowerCase()
@@ -460,15 +478,15 @@ function ifaceDhcpString(v) {
   return 'false'
 }
 
-function hydrateForm(d) {
+function hydrateForm(d: Record<string, unknown> | null) {
   if (!d) return
-  form.name = d.name || ''
+  form.name = String(d.name || '')
   form.newnodename =
     d.newnodename != null && d.newnodename !== ''
       ? String(d.newnodename)
       : (d.newname != null ? String(d.newname) : '')
   form.groupname = d.groupname != null && d.groupname !== '' ? String(d.groupname) : (d.group != null ? String(d.group) : '')
-  form.osimage = d.osimage || ''
+  form.osimage = String(d.osimage || '')
   form.netboot = triValue(d.netboot)
   form.setupbmc = triValue(d.setupbmc)
   form.bmcsetupname = d.bmcsetupname != null && d.bmcsetupname !== ''
@@ -505,18 +523,19 @@ function hydrateForm(d) {
     form.service = s === true || s === 'true' || s === 1 || s === '1' || s === 'on'
   }
   form.comment = d.comment != null ? String(d.comment) : ''
-  if (Array.isArray(d.interfaces) && d.interfaces.length) {
-    form.interfaces = d.interfaces.map((row) => ({
-      interface: row.interface || '',
-      network: row.network || '',
+  const rawIfaces = d.interfaces as Record<string, unknown>[] | undefined
+  if (Array.isArray(rawIfaces) && rawIfaces.length) {
+    form.interfaces = rawIfaces.map((row): NodeFormInterface => ({
+      interface: (row.interface as string) || '',
+      network: (row.network as string) || '',
       ipaddress: row.ipaddress != null ? String(row.ipaddress) : '',
-      mtu: row.mtu || '',
+      mtu: (row.mtu as string | number) || '',
       dhcp: ifaceDhcpString(row.dhcp),
-      bond_mode: row.bond_mode || '',
-      bond_slaves: row.bond_slaves || '',
-      vlanid: row.vlanid || '',
-      options: row.options || '',
-      vlan_parent: row.vlan_parent || '',
+      bond_mode: (row.bond_mode as string) || '',
+      bond_slaves: (row.bond_slaves as string) || '',
+      vlanid: (row.vlanid as string | number) || '',
+      options: (row.options as string) || '',
+      vlan_parent: (row.vlan_parent as string) || '',
       macaddress: row.macaddress != null ? String(row.macaddress) : '',
     }))
   } else {
@@ -530,7 +549,7 @@ function hydrateForm(d) {
   }
 }
 
-watch(() => props.initialData, (d) => hydrateForm(d), { immediate: true, deep: true })
+watch(() => props.initialData, (d: Record<string, unknown>) => hydrateForm(d), { immediate: true, deep: true })
 
 function toggleInterfaces() {
   showInterfaces.value = !showInterfaces.value
@@ -539,20 +558,24 @@ function toggleInterfaces() {
   }
 }
 
-function addInterfaceAfter(idx) {
+function addInterfaceAfter(idx: number) {
   form.interfaces.splice(idx + 1, 0, makeEmptyIface())
 }
 
-function removeInterface(idx) {
+function removeInterface(idx: number) {
   form.interfaces.splice(idx, 1)
 }
 
-function noSpaces(e) {
+function setIfaceDhcp(idx: number, v: string) {
+  const row = form.interfaces[idx]
+  if (row) row.dhcp = v
+}
+
+function noSpaces(e: KeyboardEvent) {
   if (e.charCode === 32) e.preventDefault()
 }
 
-/** Daemon rejects names outside:a-z 0-9 - . (error mentions lowercase only). */
-function normalizeLunaNodeName(s) {
+function normalizeLunaNodeName(s: unknown): string {
   return String(s ?? '')
     .trim()
     .toLowerCase()
@@ -582,10 +605,7 @@ function cancelInlineRename() {
   nameDraft.value = form.name || originalNodeName.value
 }
 
-/**
- * @returns {{ oldName: string, newName: string } | null} — only when user opened inline name edit and changed it
- */
-function getPendingRename() {
+function getPendingRename(): { oldName: string; newName: string } | null {
   if (props.mode !== 'edit' || !nameInlineEdit.value) return null
   const oRaw = (originalNodeName.value || '').trim()
   const n = normalizeLunaNodeName(nameDraft.value)
@@ -594,7 +614,7 @@ function getPendingRename() {
   return { oldName: oRaw, newName: n }
 }
 
-function applyRenamedInForm(newName) {
+function applyRenamedInForm(newName: string) {
   const s = (newName || '').trim()
   if (!s) return
   form.name = s
@@ -603,14 +623,14 @@ function applyRenamedInForm(newName) {
   nameInlineEdit.value = false
 }
 
-function openTextEditor(title, field) {
+function openTextEditor(title: string, field: string) {
   ifaceOptionsIdx.value = -1
   textEditorTitle.value = title
   textEditorField.value = field
   textEditorOpen.value = true
 }
 
-function openIfaceOptionsEditor(idx) {
+function openIfaceOptionsEditor(idx: number) {
   textEditorField.value = ''
   textEditorTitle.value = 'Options'
   ifaceOptionsIdx.value = idx
@@ -622,15 +642,17 @@ function closeTextEditor() {
   ifaceOptionsIdx.value = -1
 }
 
-function onTextEditorModalApply(v) {
-  if (ifaceOptionsIdx.value >= 0 && form.interfaces[ifaceOptionsIdx.value]) {
-    form.interfaces[ifaceOptionsIdx.value].options = v != null ? String(v) : ''
+function onTextEditorModalApply(v: string | null) {
+  const ifaceIdx = ifaceOptionsIdx.value
+  if (ifaceIdx >= 0) {
+    const ifaceRow = form.interfaces[ifaceIdx]
+    if (ifaceRow) ifaceRow.options = v != null ? String(v) : ''
   } else if (textEditorField.value) {
-    form[textEditorField.value] = v
+    ;(form as Record<string, unknown>)[textEditorField.value] = v
   }
 }
 
-function looksLikeBinary(buf) {
+function looksLikeBinary(buf: ArrayBuffer | null): boolean {
   if (!buf || !buf.byteLength) return false
   const view = new Uint8Array(buf)
   const n = Math.min(view.length, 65536)
@@ -640,22 +662,23 @@ function looksLikeBinary(buf) {
   return false
 }
 
-function onUploadFile(e, field) {
-  const file = e.target.files?.[0]
+function onUploadFile(e: Event, field: string) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
   const fr = new FileReader()
   fr.onload = () => {
-    if (looksLikeBinary(fr.result)) {
+    if (looksLikeBinary(fr.result as ArrayBuffer)) {
       alert('Please choose a text file only.')
-      e.target.value = ''
+      input.value = ''
       return
     }
-    form[field] = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(fr.result))
-    e.target.value = ''
+    ;(form as Record<string, unknown>)[field] = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(fr.result as ArrayBuffer))
+    input.value = ''
   }
   fr.onerror = () => {
     alert('Could not read the file.')
-    e.target.value = ''
+    input.value = ''
   }
   fr.readAsArrayBuffer(file)
 }
@@ -664,7 +687,7 @@ function onUploadFile(e, field) {
  * UI state field names on `form` -> Luna node config column names (Flask + daemon; see sortby in constant.py).
  * Mismatched names cause "400 - Columns are incorrect" from the daemon.
  */
-const SCALAR_TO_POST_KEY = {
+const SCALAR_TO_POST_KEY: Record<string, string> = {
   groupname: 'group',
   bmcsetupname: 'bmcsetup',
   switchname: 'switch',
@@ -714,9 +737,10 @@ const LUNA_NODE_SCALAR_KEYS = new Set([
   'newnodename',
 ])
 
-function buildFormData() {
-  const fd = new FormData()
-  const baseScalars = [
+/** JSON body for /api/v1/* (interfaces as array — not flattened like FormData). */
+function buildLunaNodeRecord(): Record<string, unknown> {
+  const record: Record<string, unknown> = {}
+  const baseScalars: string[] = [
     'name', 'groupname', 'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
     'switchname', 'switchport', 'vendor',
     'unmanaged_bmc_users', 'asset_tag', 'cloud_name', 'kerneloptions', 'prescript', 'partscript',
@@ -726,32 +750,67 @@ function buildFormData() {
   const isClone = props.mode === 'clone'
   const scalarFields = isClone ? [...baseScalars, 'newnodename'] : baseScalars
   for (const f of scalarFields) {
-    const v = form[f]
+    const v = (form as Record<string, unknown>)[f]
     if (v == null) continue
-    let out = v
+    let out: string | boolean = String(v)
     if (typeof v === 'string') {
       if (f === 'newnodename' && isClone) {
         out = normalizeLunaNodeName(v)
       } else if (f === 'name' && props.mode === 'add') {
         out = normalizeLunaNodeName(v)
       }
-      /*
-       * Flask clone: omit empty optional fields (see earlier comment in this file).
-       */
+      if (isClone && typeof out === 'string' && out.trim() === '') continue
+    }
+    const postKey = SCALAR_TO_POST_KEY[f as keyof typeof SCALAR_TO_POST_KEY] || f
+    if (!LUNA_NODE_SCALAR_KEYS.has(postKey)) continue
+    record[postKey] = out
+  }
+  if (!isClone && form.service) record.service = true
+  record.interfaces = form.interfaces.map((iface) => {
+    const row: Record<string, unknown> = {}
+    for (const [k, val] of Object.entries(iface)) {
+      row[k] = val != null ? String(val) : ''
+    }
+    return row
+  })
+  return record
+}
+
+function buildFormData(): FormData {
+  const fd = new FormData()
+  const baseScalars: string[] = [
+    'name', 'groupname', 'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
+    'switchname', 'switchport', 'vendor',
+    'unmanaged_bmc_users', 'asset_tag', 'cloud_name', 'kerneloptions', 'prescript', 'partscript',
+    'postscript', 'osimagetag', 'provision_interface', 'provision_fallback',
+    'provision_method', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256', 'comment',
+  ]
+  const isClone = props.mode === 'clone'
+  const scalarFields = isClone ? [...baseScalars, 'newnodename'] : baseScalars
+  for (const f of scalarFields) {
+    const v = (form as Record<string, unknown>)[f]
+    if (v == null) continue
+    let out = String(v)
+    if (typeof v === 'string') {
+      if (f === 'newnodename' && isClone) {
+        out = normalizeLunaNodeName(v)
+      } else if (f === 'name' && props.mode === 'add') {
+        out = normalizeLunaNodeName(v)
+      }
       if (isClone && out.trim() === '') continue
     }
-    const postKey = SCALAR_TO_POST_KEY[f] || f
+    const postKey = SCALAR_TO_POST_KEY[f as keyof typeof SCALAR_TO_POST_KEY] || f
     if (!LUNA_NODE_SCALAR_KEYS.has(postKey)) continue
     fd.append(postKey, out)
   }
   if (!isClone && form.service) fd.append('service', 'true')
   for (const iface of form.interfaces) {
-    for (const k of Object.keys(iface)) {
-      fd.append(k, iface[k] != null ? String(iface[k]) : '')
+    for (const [k, val] of Object.entries(iface)) {
+      fd.append(k, val != null ? String(val) : '')
     }
   }
   return fd
 }
 
-defineExpose({ form, buildFormData, getPendingRename, applyRenamedInForm })
+defineExpose({ form, buildFormData, buildLunaNodeRecord, getPendingRename, applyRenamedInForm })
 </script>

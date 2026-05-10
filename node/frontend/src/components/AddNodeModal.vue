@@ -28,36 +28,50 @@
   </BaseModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
-import { fetchNodeAddData, submitNodeForm } from '../api.js'
+import { fetchNodeAddData, fetchNodes, submitNodeAdd } from '../api'
+import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
 
-defineProps({
-  getInventoryIpv4: { type: Function, default: null },
+withDefaults(defineProps<{
+  getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
+}>(), {
+  getInventoryIpv4: null,
 })
 
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits<{
+  close: []
+  saved: []
+}>()
 
 const loading = ref(true)
 const errorMsg = ref('')
 const fatalError = ref(false)
-const groupOptions = ref([])
-const switchOptions = ref([])
-const bmcsetupOptions = ref([])
-const osimageOptions = ref([])
-const cloudnameOptions = ref([])
-const networkOptions = ref([])
-const bondModeOptions = ref([])
-const hints = ref({})
-const formRef = ref(null)
+const groupOptions = ref<string[]>([])
+const switchOptions = ref<string[]>([])
+const bmcsetupOptions = ref<string[]>([])
+const osimageOptions = ref<string[]>([])
+const cloudnameOptions = ref<string[]>([])
+const networkOptions = ref<string[]>([])
+const bondModeOptions = ref<string[]>([])
+const hints = ref<Record<string, string>>({})
+const formRef = ref<InstanceType<typeof NodeFormFields> | null>(null)
 
-function optionList(payload, ...keys) {
+function normalizeNodeName(name: unknown): string {
+  return String(name ?? '')
+    .replace(/\s+\*$/, '')
+    .trim()
+    .toLowerCase()
+}
+
+function optionList(payload: NodeFormPayload, ...keys: string[]): string[] {
   for (const k of keys) {
-    const v = payload[k]
-    if (Array.isArray(v)) return v
-    if (v && typeof v === 'object' && Array.isArray(v.options)) return v.options
+    const v = (payload as Record<string, unknown>)[k]
+    if (Array.isArray(v)) return v as string[]
+    if (v && typeof v === 'object' && Array.isArray((v as Record<string, unknown>).options))
+      return (v as Record<string, unknown>).options as string[]
   }
   return []
 }
@@ -76,10 +90,10 @@ onMounted(async () => {
       'cloud_list',
     )
     networkOptions.value = optionList(payload, 'network_list', 'network')
-    bondModeOptions.value = payload.bond_modes || payload.bond_mode_list?.options || []
-    hints.value = payload.hints || payload.form_hints || {}
+    bondModeOptions.value = (payload.bond_modes || payload.bond_mode_list?.options || []) as string[]
+    hints.value = (payload.hints || payload.form_hints || {}) as Record<string, string>
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to load form data.'
+    errorMsg.value = (err as Error).message || 'Failed to load form data.'
     fatalError.value = true
   } finally {
     loading.value = false
@@ -88,10 +102,25 @@ onMounted(async () => {
 
 async function onSubmit() {
   if (!formRef.value) return
-  const fd = formRef.value.buildFormData()
   errorMsg.value = ''
   try {
-    const { ok, data } = await submitNodeForm('/add', fd)
+    const record = formRef.value.buildLunaNodeRecord()
+    const nodeNameRaw = String(record.name ?? '').trim()
+    const nodeName = normalizeNodeName(nodeNameRaw)
+    if (!nodeNameRaw) {
+      errorMsg.value = 'Please enter a node name.'
+      return
+    }
+    const existing = await fetchNodes()
+    const existingNames = new Set(
+      (existing.nodes || []).map((row) => normalizeNodeName(row.name)),
+    )
+    if (existingNames.has(nodeName)) {
+      errorMsg.value = `Node '${nodeNameRaw}' already exists. Please choose a different name.`
+      return
+    }
+
+    const { ok, data } = await submitNodeAdd(nodeNameRaw, record)
     if (ok || data.status === 'success') {
       emit('saved')
       emit('close')
@@ -99,7 +128,7 @@ async function onSubmit() {
       errorMsg.value = data.message || 'Add failed.'
     }
   } catch (err) {
-    errorMsg.value = err.message || 'Network error.'
+    errorMsg.value = (err as Error).message || 'Network error.'
   }
 }
 </script>

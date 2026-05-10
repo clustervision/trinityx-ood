@@ -53,18 +53,27 @@
   </BaseModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
-import { fetchNodes, fetchNodeOspushData, fetchNodeOsgrabData, submitNodeForm } from '../api.js'
+import {
+  fetchNodes,
+  fetchNodeOspushData,
+  fetchNodeOsgrabData,
+  submitOspush,
+  submitOsgrab,
+} from '../api'
+import type { NodeRow, OsPushGrabPayload } from '@/types'
 
-const props = defineProps({
-  /** 'ospush' | 'osgrab' — push/grab for a chosen node (inventory row opens modal with that node pre-selected). */
-  flow: { type: String, required: true },
-  nodeName: { type: String, required: true },
-})
+const props = defineProps<{
+  flow: 'ospush' | 'osgrab'
+  nodeName: string
+}>()
 
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits<{
+  close: []
+  saved: []
+}>()
 
 const errorMsg = ref('')
 const successMsg = ref('')
@@ -74,28 +83,28 @@ const selectedNode = ref('')
 const selectedOsimage = ref('')
 const bare = ref(false)
 const noDry = ref(false)
-const nodeOptions = ref([])
-const osimageOptions = ref([])
+const nodeOptions = ref<string[]>([])
+const osimageOptions = ref<string[]>([])
 
-function canonicalName(displayName) {
+function canonicalName(displayName: unknown): string {
   return String(displayName || '').replace(/\s+\*$/, '').trim()
 }
 
-const submitButtonLabel = computed(() =>
+const submitButtonLabel = computed((): string =>
   props.flow === 'osgrab' ? 'Grab OS Image' : 'Push OS Image',
 )
 
-/** Payload may use `key: [...]` or `key: { options: [...] }`. */
-function optionList(payload, ...keys) {
+function optionList(payload: OsPushGrabPayload, ...keys: string[]): string[] {
   for (const k of keys) {
-    const v = payload[k]
-    if (Array.isArray(v)) return v
-    if (v && typeof v === 'object' && Array.isArray(v.options)) return v.options
+    const v = (payload as Record<string, unknown>)[k]
+    if (Array.isArray(v)) return v as string[]
+    if (v && typeof v === 'object' && Array.isArray((v as Record<string, unknown>).options))
+      return (v as Record<string, unknown>).options as string[]
   }
   return []
 }
 
-function coalesceStr(...vals) {
+function coalesceStr(...vals: unknown[]): string {
   for (const v of vals) {
     if (v == null) continue
     const s = String(v).trim()
@@ -104,15 +113,15 @@ function coalesceStr(...vals) {
   return ''
 }
 
-async function loadOsFormForNode(name) {
+async function loadOsFormForNode(name: string) {
   const fetchFn = props.flow === 'osgrab' ? fetchNodeOsgrabData : fetchNodeOspushData
   const payload = await fetchFn(name)
   osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
   selectedOsimage.value = coalesceStr(payload.osimage_list?.selected, payload.data?.osimage)
 }
 
-function buildNodeOptionsFromInventory(rows, preferredCanon) {
-  const names = new Set()
+function buildNodeOptionsFromInventory(rows: NodeRow[], preferredCanon: string): string[] {
+  const names = new Set<string>()
   for (const row of rows) {
     const c = canonicalName(row?.name)
     if (c) names.add(c)
@@ -127,7 +136,7 @@ onMounted(async () => {
   const preferred = canonicalName(props.nodeName)
   const fetchFn = props.flow === 'osgrab' ? fetchNodeOsgrabData : fetchNodeOspushData
 
-  let rows = []
+  let rows: NodeRow[] = []
   try {
     const inventory = await fetchNodes()
     rows = inventory.nodes || []
@@ -146,7 +155,7 @@ onMounted(async () => {
     osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
     selectedOsimage.value = coalesceStr(payload.osimage_list?.selected, payload.data?.osimage)
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to load form data.'
+    errorMsg.value = (err as Error).message || 'Failed to load form data.'
     nodeOptions.value = buildNodeOptionsFromInventory(rows, preferred)
     if (!nodeOptions.value.length && preferred) nodeOptions.value = [preferred]
     selectedNode.value = preferred || nodeOptions.value[0] || ''
@@ -161,7 +170,7 @@ async function onNodeChange() {
   try {
     await loadOsFormForNode(selectedNode.value)
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to load OS images for this node.'
+    errorMsg.value = (err as Error).message || 'Failed to load OS images for this node.'
   }
 }
 
@@ -170,17 +179,14 @@ async function onSubmit() {
   successMsg.value = ''
   submitting.value = true
   const target = selectedNode.value
-  const fd = new FormData()
-  fd.append('name', target)
-  fd.append('osimage', selectedOsimage.value)
-  if (props.flow === 'osgrab' && bare.value) fd.append('bare', 'true')
-  if (noDry.value) fd.append('nodry', 'true')
-  const path =
-    props.flow === 'osgrab'
-      ? `/osgrab/${encodeURIComponent(target)}`
-      : `/ospush/${encodeURIComponent(target)}`
+  const body: Record<string, unknown> = { osimage: selectedOsimage.value }
+  if (props.flow === 'osgrab' && bare.value) body.bare = true
+  if (noDry.value) body.nodry = true
   try {
-    const { ok, data } = await submitNodeForm(path, fd)
+    const { ok, data } =
+      props.flow === 'osgrab'
+        ? await submitOsgrab(target, body)
+        : await submitOspush(target, body)
     if (ok || data.status === 'success') {
       successMsg.value = data.message || (props.flow === 'osgrab' ? 'OS grab initiated.' : 'OS push initiated.')
       emit('saved')
@@ -188,7 +194,7 @@ async function onSubmit() {
       errorMsg.value = data.message || 'Request failed.'
     }
   } catch (err) {
-    errorMsg.value = err.message || 'Network error.'
+    errorMsg.value = (err as Error).message || 'Network error.'
   } finally {
     submitting.value = false
   }

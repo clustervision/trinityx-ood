@@ -28,18 +28,25 @@
   </BaseModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 
-const props = defineProps({
-  title: { type: String, default: 'Edit text' },
-  modelValue: { type: String, default: '' },
+const props = withDefaults(defineProps<{
+  title?: string
+  modelValue?: string
+}>(), {
+  title: 'Edit text',
+  modelValue: '',
 })
-const emit = defineEmits(['close', 'update:modelValue'])
+
+const emit = defineEmits<{
+  close: []
+  'update:modelValue': [value: string]
+}>()
 
 const content = ref(props.modelValue)
-const textareaRef = ref(null)
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 
 watch(
   () => props.modelValue,
@@ -57,7 +64,7 @@ function apply() {
   emit('close')
 }
 
-function looksLikeBinary(buf) {
+function looksLikeBinary(buf: ArrayBuffer | null): boolean {
   if (!buf || !buf.byteLength) return false
   const view = new Uint8Array(buf)
   const n = Math.min(view.length, 65536)
@@ -67,22 +74,23 @@ function looksLikeBinary(buf) {
   return false
 }
 
-function onFileUpload(e) {
-  const file = e.target.files?.[0]
+function onFileUpload(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   if (!file) return
   const fr = new FileReader()
   fr.onload = () => {
-    if (looksLikeBinary(fr.result)) {
+    if (looksLikeBinary(fr.result as ArrayBuffer)) {
       alert('Please choose a text file only. Binary files are not supported.')
-      e.target.value = ''
+      input.value = ''
       return
     }
-    content.value = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(fr.result))
-    e.target.value = ''
+    content.value = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(fr.result as ArrayBuffer))
+    input.value = ''
   }
   fr.onerror = () => {
     alert('Could not read the file.')
-    e.target.value = ''
+    input.value = ''
   }
   fr.readAsArrayBuffer(file)
 }

@@ -49,8 +49,9 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import type { InventoryIpv4Record } from '@/types'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import NodeInventory from './components/NodeInventory.vue'
@@ -59,7 +60,7 @@ import EditNodeModal from './components/EditNodeModal.vue'
 import NodePushFlowModal from './components/NodePushFlowModal.vue'
 import CloneNodeModal from './components/CloneNodeModal.vue'
 
-const inventoryRef = ref(null)
+const inventoryRef = ref<InstanceType<typeof NodeInventory> | null>(null)
 const addOpen = ref(false)
 const editOpen = ref(false)
 const editNodeName = ref('')
@@ -69,7 +70,7 @@ const pushFlowNodeName = ref('')
 const cloneOpen = ref(false)
 const cloneSourceName = ref('')
 
-function openEdit(name) {
+function openEdit(name: string) {
   editNodeName.value = name || ''
   editOpen.value = true
 }
@@ -79,7 +80,7 @@ function closeEdit() {
   editNodeName.value = ''
 }
 
-function openPushFlow(flow, name) {
+function openPushFlow(flow: string, name: string) {
   pushFlowType.value = flow
   pushFlowNodeName.value = name || ''
   pushFlowOpen.value = true
@@ -91,7 +92,7 @@ function closePushFlow() {
   pushFlowNodeName.value = ''
 }
 
-function openClone(name) {
+function openClone(name: string) {
   cloneSourceName.value = name || ''
   cloneOpen.value = true
 }
@@ -112,7 +113,7 @@ function onNodeSaved() {
   inventoryRef.value?.loadData?.()
 }
 
-function onNodeRenamed(newName) {
+function onNodeRenamed(newName: string) {
   if (newName) editNodeName.value = newName
   inventoryRef.value?.loadData?.()
 }
@@ -121,7 +122,7 @@ function onPushFlowSaved() {
   inventoryRef.value?.loadData?.()
 }
 
-function inventoryIpv4Records() {
+function inventoryIpv4Records(): InventoryIpv4Record[] {
   return inventoryRef.value?.collectInventoryIpv4Records?.() ?? []
 }
 </script>
