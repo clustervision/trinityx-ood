@@ -75,7 +75,7 @@ function emitUpdate<K extends keyof NetworkInterface>(key: K, value: NetworkInte
       <!-- Row 1 -->
       <div class="tx-field tx-field-iface-key tx-iface-c1">
         <span class="tx-label">Interface:</span>
-        <input type="text" v-model="iface.interface" @input="emitUpdate('interface', $event.target.value)" required placeholder="interface" />
+        <input type="text" v-model="iface.interface" @input="emitUpdate('interface', ($event.target as HTMLSelectElement).value)" required placeholder="interface" />
       </div>
       <div class="tx-field tx-field-iface-key tx-iface-c2">
         <span class="tx-label">Network:</span>

@@ -39,7 +39,7 @@ export async function checkStatus(requestId: string) {
   return data
 }
 
-export async function submitForm(action: string, formData: FormData) {
+export async function submitForm(action: string, formData: FormData | Record<string, any>) {
   const { data } = await apiClient.post(action, formData)
   // console.log(data)
   if (data.status === false) { throw new Error(data.content.message) }
