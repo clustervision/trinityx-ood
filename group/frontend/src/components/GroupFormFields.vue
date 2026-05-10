@@ -5,59 +5,12 @@ import TextEditorModal from './TextEditorModal.vue'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
 
-
-// export interface NetworkInterface {
-//   interface: string
-//   network: string
-//   mtu?: string
-//   vlanid?: string
-//   vlan_parent?: string
-//   bond_mode?: string
-//   bond_slaves?: string
-//   options?: string
-//   dhcp?: string
-// }
-
-// export interface Group {
-//   name: string
-//   newgroupname?: string
-
-//   roles?: string | null
-//   netboot?: string
-//   osimage?: string
-//   scripts?: string | null
-
-//   setupbmc?: string
-//   bmcsetupname?: string
-
-//   domain?: string
-//   unmanaged_bmc_users?: string | null
-
-//   kerneloptions?: string
-//   prescript?: string
-//   partscript?: string
-//   postscript?: string
-
-//   osimagetag?: string
-
-//   provision_interface?: string
-//   provision_fallback?: string
-//   provision_method?: string
-
-//   bootmenu?: string
-
-//   comment?: string | null
-
-//   interfaces?: NetworkInterface[]
-// }
-
 const props = defineProps({
   groupList: { type: Array as () => string[], required: true },
   mode: { type: String, default: 'add' },
   initialData: { type: Object, default: () => ({}) },
   bmcsetupOptions: { type: Array as () => string[], default: () => [], },
   osimageOptions: { type: Array as () => string[], default: () => [], },
-  //  osimageOptions: { type: Array as () => string[], default: () => [], },
   networkOptions: { type: Array as () => string[], default: () => [], },
   bondModeOptions: { type: Array as () => string[], default: () => [], },
   submitLabel: { type: String, default: 'Submit' },
@@ -155,6 +108,7 @@ function hydrateForm(d: Partial<Group>) {
   form.comment = d.comment || ''
 
   if (Array.isArray(d.interfaces) && d.interfaces.length) {
+    showInterfaces.value = true
     form.interfaces = d.interfaces.map((row: NetworkInterface) => ({
       interface: row.interface || '',
       network: row.network || '',
@@ -369,117 +323,29 @@ function buildPayload() {
   }))
 
 
-  const groupPayload: Record<string, unknown> = {
-    name: groupName,
-  }
+  const groupPayload: Record<string, unknown> = { name: groupName, }
 
-  if (form.setupbmc !== '') {
-    groupPayload.setupbmc =
-      form.setupbmc === 'true'
-        ? 'True'
-        : 'False'
-  }
+  if (form.setupbmc !== '') { groupPayload.setupbmc = form.setupbmc === 'true' ? 'True' : 'False' }
+  if (form.domain) {  groupPayload.domain = form.domain }
+  if (form.kerneloptions) { groupPayload.kerneloptions = form.kerneloptions }
+  if (form.prescript) { groupPayload.prescript = form.prescript }
+  if (form.partscript) { groupPayload.partscript = form.partscript }
+  if (form.postscript) { groupPayload.postscript = form.postscript }
+  if (form.netboot !== '') { groupPayload.netboot = form.netboot === 'true' ? 'True' : 'False' }
+  if (form.bootmenu !== '') {  groupPayload.bootmenu = form.bootmenu === 'true' ? 'True' : 'False' }
+  if (form.comment) { groupPayload.comment = form.comment }
+  if (form.roles) { groupPayload.roles = form.roles }
+  if (form.scripts) { groupPayload.scripts = form.scripts }
+  if (form.provision_interface) { groupPayload.provision_interface = form.provision_interface }
+  if (form.provision_method) { groupPayload.provision_method = form.provision_method }
+  if (form.provision_fallback) { groupPayload.provision_fallback = form.provision_fallback }
+  if (form.unmanaged_bmc_users) { groupPayload.unmanaged_bmc_users = form.unmanaged_bmc_users }
+  if (form.osimage) { groupPayload.osimage = form.osimage }
+  if (cleanedInterfaces.length) { groupPayload.interfaces = cleanedInterfaces }
+  if (form.bmcsetupname) { groupPayload.bmcsetupname = form.bmcsetupname }
+  if (form.osimagetag) { groupPayload.osimagetag = form.osimagetag }
 
-  if (form.domain) {
-    groupPayload.domain = form.domain
-  }
-
-  if (form.kerneloptions) {
-    groupPayload.kerneloptions =
-      form.kerneloptions
-  }
-
-  if (form.prescript) {
-    groupPayload.prescript =
-      form.prescript
-  }
-
-  if (form.partscript) {
-    groupPayload.partscript =
-      form.partscript
-  }
-
-  if (form.postscript) {
-    groupPayload.postscript =
-      form.postscript
-  }
-
-  if (form.netboot !== '') {
-    groupPayload.netboot =
-      form.netboot === 'true'
-        ? 'True'
-        : 'False'
-  }
-
-  if (form.bootmenu !== '') {
-    groupPayload.bootmenu =
-      form.bootmenu === 'true'
-        ? 'True'
-        : 'False'
-  }
-
-  if (form.comment) {
-    groupPayload.comment =
-      form.comment
-  }
-
-  if (form.roles) {
-    groupPayload.roles =
-      form.roles
-  }
-
-  if (form.scripts) {
-    groupPayload.scripts =
-      form.scripts
-  }
-
-  if (form.provision_interface) {
-    groupPayload.provision_interface =
-      form.provision_interface
-  }
-
-  if (form.provision_method) {
-    groupPayload.provision_method =
-      form.provision_method
-  }
-
-  if (form.provision_fallback) {
-    groupPayload.provision_fallback =
-      form.provision_fallback
-  }
-
-  if (form.unmanaged_bmc_users) {
-    groupPayload.unmanaged_bmc_users =
-      form.unmanaged_bmc_users
-  }
-
-  if (form.osimage) {
-    groupPayload.osimage =
-      form.osimage
-  }
-
-  if (cleanedInterfaces.length) {
-    groupPayload.interfaces =
-      cleanedInterfaces
-  }
-
-  if (form.bmcsetupname) {
-    groupPayload.bmcsetupname =
-      form.bmcsetupname
-  }
-
-  if (form.osimagetag) {
-    groupPayload.osimagetag =
-      form.osimagetag
-  }
-
-  return {
-    config: {
-      group: {
-        [groupName]: groupPayload,
-      },
-    },
-  }
+  return { config: { group: { [groupName]: groupPayload, }, }, }
 }
 
 function comparableSnapshot() {

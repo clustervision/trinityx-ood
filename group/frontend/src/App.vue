@@ -170,9 +170,11 @@ function canonicalName(name: string) {
 /** -----------------------
  * UI Actions
  * ---------------------- */
-function openModal(type: ModalType, groupName?: string) {
+const selectedGroupData = ref<Group | null>(null)
+function openModal(type: ModalType, groupName?: string, group?: Group) {
   selectedGroup.value = groupName ?? ''
   activeModal.value = type
+  selectedGroupData.value = group || null
 }
 
 function closeModal() {
@@ -290,7 +292,7 @@ onMounted(loadData)
                 <!-- {{ regularColumns }} -->
                 <td v-for="(col, cIdx) in regularColumns" :key="col.field" :class="{'tx-td-sep-blue': cIdx > 0, 'tx-td-sep-before-iface': hasInterfaces && cIdx === regularColumns.length - 1,}">
                   <template v-if="col.field === 'name'">
-                    <button type="button" class="tx-name-link" :title="String(row.name ?? '')" @click="openModal('edit', canonicalName(row.name))">
+                    <button type="button" class="tx-name-link" :title="String(row.name ?? '')" @click="openModal('edit', canonicalName(row.name), row)">
                       <span class="tx-cell-ellipsis">{{ row.name }}</span>
                     </button>
                   </template>
@@ -313,7 +315,7 @@ onMounted(loadData)
                 </td>
                 <td class="tx-col-actions" :class="{ 'tx-td-sep-orange-right': hasInterfaces, 'tx-td-sep-blue': !hasInterfaces }">
                   <div class="tx-action-icons">
-                    <button type="button" class="tx-icon-act tx-icon-clone" title="Clone" @click="openModal('clone', canonicalName(row.name))">
+                    <button type="button" class="tx-icon-act tx-icon-clone" title="Clone" @click="openModal('clone', canonicalName(row.name), row)">
                       <img :src="`${app_url}/assets/icons/icon-clone.png`" alt="Clone" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'" />
                       <svg style="display: none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
                         <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
@@ -376,13 +378,13 @@ onMounted(loadData)
   </div>
 
   <!-- Modals -->
-  <EditGroupModal v-if="activeModal === 'edit'" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
+  <EditGroupModal v-if="activeModal === 'edit'" :groupList="groupList" :group="selectedGroupData" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
 
   <AddGroupModal v-if="activeModal === 'add'" :groupList="groupList" @close="closeModal" @saved="onSaved" />
 
-  <CloneGroupModal v-if="activeModal === 'clone'" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
+  <CloneGroupModal v-if="activeModal === 'clone'" :groupList="groupList" :group="selectedGroupData" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
 
-  <PushOsModal v-if="activeModal === 'ospush'" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
+  <PushOsModal v-if="activeModal === 'ospush'" :group-name="selectedGroup" :group="selectedGroupData" @close="closeModal" @saved="onSaved" />
 
   <DeleteConfirmModal v-if="activeModal === 'delete'" :group-name="selectedGroup" @close="closeModal" @deleted="onSaved" />
 </template>

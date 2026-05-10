@@ -2,7 +2,6 @@ import { apiClient } from './axios'
 
 export async function fetchGroups() {
   const { data } = await apiClient.get('/api/v1/all_groups')
-  console.log(data)
   return data
 }
 
@@ -11,30 +10,14 @@ export async function fetchResources() {
   return data
 }
 
+export async function fetchGroupResources(name: string) {
+  const { data } = await apiClient.get(`/api/v1/get_resources/${encodeURIComponent(name)}`)
+  return data
+}
+
 export async function deleteGroup(name: string) {
-  // const data = {content: {message: `Group ${name} is removed.`}, status: true, status_code: 204}
   const { data } = await apiClient.delete(`/api/v1/delete/${encodeURIComponent(name)}`)
   if (data.status === false) { throw new Error(data.content.message) }
-  return data
-}
-
-export async function fetchEditData(name: string) {
-  const { data } = await apiClient.get(`/edit/${encodeURIComponent(name)}?format=json`)
-  return data
-}
-
-export async function fetchAddData() {
-  const { data } = await apiClient.get('/add?format=json')
-  return data
-}
-
-export async function fetchCloneData(name: string) {
-  const { data } = await apiClient.get(`/clone/${encodeURIComponent(name)}?format=json`)
-  return data
-}
-
-export async function fetchOspushData(name: string) {
-  const { data } = await apiClient.get(`/ospush/${encodeURIComponent(name)}?format=json`)
   return data
 }
 
@@ -52,17 +35,15 @@ export async function removeInterface(
 }
 
 export async function checkStatus(requestId: string) {
-  const { data } = await apiClient.get(`/check_status/config/status/${encodeURIComponent(requestId)}`)
+  const { data } = await apiClient.get(`/api/v1/status/${encodeURIComponent(requestId)}`)
   return data
 }
 
 export async function submitForm(action: string, formData: FormData) {
   const { data } = await apiClient.post(action, formData)
-  console.log(data)
+  // console.log(data)
   if (data.status === false) { throw new Error(data.content.message) }
   return data
-
-  // return { ok: status >= 200 && status < 300, status, data }
 }
 
 export async function submitRename(

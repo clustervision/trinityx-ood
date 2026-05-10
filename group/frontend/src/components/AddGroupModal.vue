@@ -50,7 +50,7 @@ async function onSubmit() {
 
   try {
     const payload = formRef.value.buildPayload()
-    console.log('Submitting payload:', payload)
+    // console.log('Submitting payload:', payload)
     const result = await submitForm('/api/v1/add', payload)
 
     if (result.status === true && result.content?.message) {

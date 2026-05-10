@@ -22,7 +22,7 @@ async function onDelete() {
   try {
     const result = await deleteGroup(props.groupName)
     successMsg.value = result.content.message
-    console.log(result);
+    // console.log(result);
 
   setTimeout(() => {
       emit('deleted')
