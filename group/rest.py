@@ -237,7 +237,7 @@ class Rest():
         self.logger.debug(f'POST URL => {daemon_url}')
         self.logger.debug(f'POST DATA => {data}')
         try:
-            response = requests.post(url=daemon_url, json=data, headers=headers, timeout=5, verify=self.security)
+            response = requests.post(url=daemon_url, json=data, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
             if response.status_code == 201:
                 data = response.json()
@@ -293,23 +293,34 @@ class Rest():
         return response
 
 
-    def post_clone(self, table=None, name=None, data=None):
+    def post_clone(self, table: str="", name: str="", data: dict={}):
         """
         This method is based on REST API's POST method.
         It will post data to Luna 2 Daemon via REST API's.
         And use for cloning the records.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_clone'
         self.logger.debug(f'Clone URL => {daemon_url}')
         try:
-            response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = requests.post(url=daemon_url, json=data, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            if response.status_code == 201:
+                data = response.json()
+                response = {"status": True, "status_code": response.status_code, "content": data}
+            else:
+                data = response.json()
+                response = {"status": False, "status_code": response.status_code, "content": data}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
 
 
@@ -342,7 +353,7 @@ class Rest():
         It will fetch the records from Luna 2 Daemon
         via REST API's.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/{route}'
         if uri:
@@ -351,30 +362,50 @@ class Rest():
         try:
             response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            data = response.json()
+            if response.status_code == 200:
+                response = {"status": True, "status_code": response.status_code, "content": data}
+            else:
+                response = {"status": False, "status_code": response.status_code, "content": data}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
 
 
-    def post_raw(self, route=None, payload=None):
+    def post_raw(self, route: str="", payload: dict={}):
         """
         This method is based on REST API's GET method.
         It will fetch the records from Luna 2 Daemon
         via REST API's.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/{route}'
         self.logger.debug(f'Clone URL => {daemon_url}')
         try:
-            response = self.session.post(url=daemon_url, json=payload, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = requests.post(url=daemon_url, json=payload, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            data = response.json()
+            if response.status_code == 200:
+                response = {"status": True, "status_code": response.status_code, "content": data}
+            else:
+                response = {"status": False, "status_code": response.status_code, "content": data}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
 
 
