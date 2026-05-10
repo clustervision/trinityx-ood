@@ -42,35 +42,4 @@ INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript', 'grab_filesystems', 'grab_exclude', 'kerneloptions']
-APP_STATE = True  # False for Development, True for Production
-
-
-def filter_columns(table=None):
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'osimage': ['name', 'kernelversion', 'kerneldetails', 'distribution', 'osrelease']
-    }
-    response = list(static[table])
-    return response
-
-
-def sortby(table=None):
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'osimage': [
-            'name', 'grab_filesystems', 'grab_exclude', 'initrdfile',
-            'kernelversion', 'kernelfile', 'kernelmodules', 'kerneloptions', 'path', 'imagefile',
-            'distribution', 'osrelease', 'comment'
-        ],
-    }
-    response = list(static[table])
-    return response
+APP_STATE = False # False for Development, True for Production
