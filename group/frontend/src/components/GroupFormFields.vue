@@ -1,47 +1,399 @@
+<script setup lang="ts">
+import { ref, reactive, watch, computed } from 'vue'
+import InterfaceRow from './InterfaceRow.vue'
+import TextEditorModal from './TextEditorModal.vue'
+import type { NetworkInterface } from '@/types/network'
+import type { Group } from '@/types/group'
+
+const props = defineProps({
+  groupList: { type: Array as () => string[], required: true },
+  mode: { type: String, default: 'add' },
+  initialData: { type: Object, default: () => ({}) },
+  bmcsetupOptions: { type: Array as () => string[], default: () => [], },
+  osimageOptions: { type: Array as () => string[], default: () => [], },
+  networkOptions: { type: Array as () => string[], default: () => [], },
+  bondModeOptions: { type: Array as () => string[], default: () => [], },
+  submitLabel: { type: String, default: 'Submit' },
+  hints: { type: Object, default: () => ({}) },
+})
+
+defineEmits(['submit'])
+
+const nameEditUnlocked = ref(false)
+const showInterfaces = ref(false)
+const showAdvanced = ref(false)
+
+const textEditorOpen = ref(false)
+const textEditorTitle = ref('')
+const textEditorField = ref('')
+const ifaceOptionsIdx = ref(-1)
+
+function makeEmptyIface() {
+  return {
+    interface: '',
+    network: '',
+    mtu: '',
+    dhcp: 'false',
+    bond_mode: '',
+    bond_slaves: '',
+    vlanid: '',
+    options: '',
+    vlan_parent: '',
+  }
+}
+
+const form = reactive({
+  name: '',
+  newgroupname: '',
+
+  roles: '',
+  netboot: '',
+  osimage: '',
+  scripts: '',
+
+  setupbmc: '',
+  bmcsetupname: '',
+
+  domain: '',
+  unmanaged_bmc_users: '',
+
+  kerneloptions: '',
+  prescript: '',
+  partscript: '',
+  postscript: '',
+
+  osimagetag: 'default',
+
+  provision_interface: 'BOOTIF',
+  provision_fallback: 'http',
+  provision_method: 'torrent',
+
+  bootmenu: '',
+
+  comment: '',
+
+  interfaces: [] as NetworkInterface[],
+})
+
+function hydrateForm(d: Partial<Group>) {
+  if (!d) return
+
+  form.name = d.name || ''
+  form.newgroupname = d.newgroupname || ''
+
+  form.roles = d.roles || ''
+  form.netboot = normalizeTriState(d.netboot)
+  form.osimage = d.osimage || ''
+  form.scripts = d.scripts || ''
+
+  form.setupbmc = normalizeTriState(d.setupbmc)
+  form.bmcsetupname = d.bmcsetupname || ''
+
+  form.domain = d.domain || ''
+  form.unmanaged_bmc_users = d.unmanaged_bmc_users || ''
+
+  form.kerneloptions = d.kerneloptions || ''
+  form.prescript = d.prescript || ''
+  form.partscript = d.partscript || ''
+  form.postscript = d.postscript || ''
+
+  form.osimagetag = d.osimagetag || ''
+
+  form.provision_interface = d.provision_interface || 'BOOTIF'
+  form.provision_fallback = d.provision_fallback || 'http'
+  form.provision_method = d.provision_method || 'torrent'
+
+  form.bootmenu = normalizeTriState(d.bootmenu)
+
+  form.comment = d.comment || ''
+
+  if (Array.isArray(d.interfaces) && d.interfaces.length) {
+    showInterfaces.value = true
+    form.interfaces = d.interfaces.map((row: NetworkInterface) => ({
+      interface: row.interface || '',
+      network: row.network || '',
+      mtu: row.mtu || '',
+      dhcp: 'false',
+      bond_mode: row.bond_mode || '',
+      bond_slaves: row.bond_slaves || '',
+      vlanid: row.vlanid || '',
+      options: row.options || '',
+      vlan_parent: row.vlan_parent || '',
+    }))
+  } else {
+    form.interfaces = []
+  }
+}
+
+watch(
+  () => props.initialData,
+  (d) => {
+    hydrateForm(d)
+  },
+  {
+    immediate: true,
+    deep: true,
+  },
+)
+
+function normalizeTriState(v: boolean | string | null | undefined,): string {
+  if (
+    v === true ||
+    v === 'true' ||
+    v === 'True'
+  ) {
+    return 'true'
+  }
+
+  if (
+    v === false ||
+    v === 'false' ||
+    v === 'False'
+  ) {
+    return 'false'
+  }
+
+  return ''
+}
+
+function toggleInterfaces() {
+  showInterfaces.value = !showInterfaces.value
+
+  if (
+    showInterfaces.value &&
+    form.interfaces.length === 0
+  ) {
+    form.interfaces.push(makeEmptyIface())
+  }
+}
+
+function addInterfaceAfter(idx: number) {
+  form.interfaces.splice(
+    idx + 1,
+    0,
+    makeEmptyIface(),
+  )
+}
+
+function removeInterface(idx: number) {
+  form.interfaces.splice(idx, 1)
+}
+
+function noSpaces(e: KeyboardEvent) {
+  if (e.code === 'Space') {
+    e.preventDefault()
+  }
+}
+
+function openTextEditor(title: string, field: string) {
+  ifaceOptionsIdx.value = -1
+
+  textEditorTitle.value = title
+  textEditorField.value = field
+
+  textEditorOpen.value = true
+}
+
+function openIfaceOptionsEditor(idx: number) {
+  ifaceOptionsIdx.value = idx
+
+  textEditorTitle.value = 'Options'
+  textEditorField.value = ''
+
+  textEditorOpen.value = true
+}
+
+function closeTextEditor() {
+  textEditorOpen.value = false
+}
+
+const textEditorModalKey = computed(() => {
+  return `${ifaceOptionsIdx.value}:${textEditorField.value}`
+})
+
+const textEditorModalValue = computed(() => {
+  if (ifaceOptionsIdx.value >= 0) {
+    return form.interfaces[ifaceOptionsIdx.value]?.options || ''
+  }
+
+  return form[textEditorField.value as keyof typeof form] || ''
+})
+
+function onTextEditorModalApply(v: string) {
+  // ---- Interface editor ----
+  if (ifaceOptionsIdx.value >= 0) {
+    const idx = ifaceOptionsIdx.value
+    const iface = form.interfaces?.[idx]
+
+    if (iface) {
+      iface.options = v
+    }
+
+    return
+  }
+
+  // ---- Form field editor ----
+  if (!textEditorField.value) return
+
+  const key = textEditorField.value as keyof typeof form
+
+  if (key in form) {
+    form[key] = v as never
+  }
+}
+
+type UploadField =
+  | 'kerneloptions'
+  | 'prescript'
+  | 'partscript'
+  | 'postscript'
+  | 'comment'
+
+function looksLikeBinary(buf: ArrayBuffer | null | undefined): boolean {
+  if (!buf || !buf.byteLength) return false
+
+  const view = new Uint8Array(buf)
+  const n = Math.min(view.length, 65536)
+
+  for (let i = 0; i < n; i++) {
+    if (view[i] === 0) return true
+  }
+
+  return false
+}
+
+function onUploadFile(e: Event, field: UploadField) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  const fr = new FileReader()
+
+  fr.onload = () => {
+    const result = fr.result
+
+    if (looksLikeBinary(result as ArrayBuffer | null)) {
+      alert('Please choose a text file only.')
+      input.value = ''
+      return
+    }
+
+    if (!result) return
+
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(
+      new Uint8Array(result as ArrayBuffer)
+    )
+
+    form[field] = text
+    input.value = ''
+  }
+
+  fr.onerror = () => {
+    alert('Could not read the file.')
+    input.value = ''
+  }
+
+  fr.readAsArrayBuffer(file)
+}
+
+function buildPayload() {
+  const groupName =
+    props.mode === 'clone'
+      ? form.newgroupname
+      : form.name
+
+  const cleanedInterfaces = form.interfaces.map((iface) => ({
+    interface: iface.interface,
+    network: iface.network,
+    ...(iface.mtu ? { mtu: String(iface.mtu) } : {}),
+    // ...(iface.mtu ? { mtu: iface.mtu } : {}),
+    ...(iface.vlanid ? { vlanid: iface.vlanid } : {}),
+    ...(iface.vlan_parent
+      ? { vlan_parent: iface.vlan_parent }
+      : {}),
+    ...(iface.bond_mode
+      ? { bond_mode: iface.bond_mode }
+      : {}),
+    ...(iface.bond_slaves
+      ? { bond_slaves: iface.bond_slaves }
+      : {}),
+    ...(iface.options
+      ? { options: iface.options }
+      : {}),
+  }))
+
+
+  const groupPayload: Record<string, unknown> = { name: groupName, }
+
+  if (form.setupbmc !== '') { groupPayload.setupbmc = form.setupbmc === 'true' ? 'True' : 'False' }
+  if (form.domain) {  groupPayload.domain = form.domain }
+  if (form.kerneloptions) { groupPayload.kerneloptions = form.kerneloptions }
+  if (form.prescript) { groupPayload.prescript = form.prescript }
+  if (form.partscript) { groupPayload.partscript = form.partscript }
+  if (form.postscript) { groupPayload.postscript = form.postscript }
+  if (form.netboot !== '') { groupPayload.netboot = form.netboot === 'true' ? 'True' : 'False' }
+  if (form.bootmenu !== '') {  groupPayload.bootmenu = form.bootmenu === 'true' ? 'True' : 'False' }
+  if (form.comment) { groupPayload.comment = form.comment }
+  if (form.roles) { groupPayload.roles = form.roles }
+  if (form.scripts) { groupPayload.scripts = form.scripts }
+  if (form.provision_interface) { groupPayload.provision_interface = form.provision_interface }
+  if (form.provision_method) { groupPayload.provision_method = form.provision_method }
+  if (form.provision_fallback) { groupPayload.provision_fallback = form.provision_fallback }
+  if (form.unmanaged_bmc_users) { groupPayload.unmanaged_bmc_users = form.unmanaged_bmc_users }
+  if (form.osimage) { groupPayload.osimage = form.osimage }
+  if (cleanedInterfaces.length) { groupPayload.interfaces = cleanedInterfaces }
+  if (form.bmcsetupname) { groupPayload.bmcsetupname = form.bmcsetupname }
+  if (form.osimagetag) { groupPayload.osimagetag = form.osimagetag }
+
+  return { config: { group: { [groupName]: groupPayload, }, }, }
+}
+
+function comparableSnapshot() {
+  return JSON.stringify(form)
+}
+
+defineExpose({
+  form,
+  buildPayload,
+  comparableSnapshot,
+})
+
+const nameError = ref('')
+const isSubmitDisabled = ref(false)
+function validateName(value: string) {
+  const exists = props.groupList.includes(value)
+
+  if (exists) {
+    nameError.value = 'Group name already exists'
+    isSubmitDisabled.value = true
+  } else {
+    nameError.value = ''
+    isSubmitDisabled.value = false
+  }
+}
+
+</script>
+
+
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
     <!-- 3-column top grid -->
+    <div v-if="nameError" class="alert alert-danger" role="alert">{{ nameError }}</div>
     <div class="tx-add-grid tx-add-form-main">
       <!-- Column 1 -->
+
       <div class="tx-add-col">
-        <!-- Clone: one editable "Clone Name" — prefilled from data.clonename (else name), POST as newgroupname -->
         <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
-          <input
-            type="text"
-            v-model="form.newgroupname"
-            autocomplete="off"
-            @keypress="noSpaces"
-            maxlength="100"
-            required
-          />
+          <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" maxlength="100" required />
         </div>
         <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-row': mode === 'edit' }">
           <span class="tx-label">Name:</span>
           <div v-if="mode === 'edit'" class="tx-name-controls">
-            <input
-              type="text"
-              v-model="form.name"
-              :readonly="!nameEditUnlocked"
-              @keypress="noSpaces"
-              maxlength="100"
-            />
-            <button
-              type="button"
-              class="tx-btn tx-btn-outline-blue tx-btn-rename"
-              @click="nameEditUnlocked = true"
-            >
-              Rename
-            </button>
+            <input type="text" v-model="form.name" :readonly="!nameEditUnlocked" @keypress="noSpaces" maxlength="100" />
+            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-rename" @click="nameEditUnlocked = true">Rename</button>
           </div>
-          <input
-            v-else
-            type="text"
-            v-model="form.name"
-            @keypress="noSpaces"
-            maxlength="100"
-            required
-          />
+          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" maxlength="100" required />
         </div>
         <template v-if="mode === 'clone'">
           <div class="tx-add-form-clone-roles-netboot tx-add-form-main">
@@ -71,7 +423,7 @@
             <div class="tx-tri-inner">
               <div class="tx-segmented" role="group" aria-label="Net boot">
                 <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
-                <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
+                <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'" >NO</button>
                 <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''">DEFAULT (YES)</button>
               </div>
             </div>
@@ -113,9 +465,7 @@
             <option v-for="b in bmcsetupOptions" :key="b" :value="b">{{ b }}</option>
           </select>
         </div>
-        <button type="button" class="tx-btn tx-btn-orange tx-btn-block-col" @click="toggleInterfaces">
-          {{ showInterfaces ? '- Interfaces' : '+ Interfaces' }}
-        </button>
+        <button type="button" class="tx-btn tx-btn-orange tx-btn-block-col" @click="toggleInterfaces">{{ showInterfaces ? '- Interfaces' : '+ Interfaces' }}</button>
       </div>
     </div>
 
@@ -131,7 +481,13 @@
         @remove="removeInterface(idx)"
         @add-after="addInterfaceAfter(idx)"
         @open-options-editor="openIfaceOptionsEditor(idx)"
-        @update-dhcp="(v) => { form.interfaces[idx].dhcp = v }"
+        @update-dhcp="
+          (v: string) => {
+            const iface = form.interfaces[idx]
+            if (!iface) return
+            iface.dhcp = v
+          }
+        "
       />
       <div v-if="!form.interfaces.length" class="tx-interface-empty">
         <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
@@ -142,18 +498,14 @@
     <div v-if="showAdvanced" class="tx-advanced-body">
       <div class="tx-adv-grid">
         <!-- Domain -->
-        <div class="tx-field tx-field-adv-sys" style="width:100%">
+        <div class="tx-field tx-field-adv-sys" style="width: 100%">
           <span class="tx-label">Domain:</span>
-          <input type="text" v-model="form.domain" maxlength="100" style="flex:1" />
+          <input type="text" v-model="form.domain" maxlength="100" style="flex: 1" />
         </div>
         <!-- Unmanaged BMC Users -->
-        <div class="tx-field tx-field-adv-sys" style="width:100%">
+        <div class="tx-field tx-field-adv-sys" style="width: 100%">
           <span class="tx-label">Unmanaged BMC Users:</span>
-          <select
-            v-model="form.unmanaged_bmc_users"
-            style="flex:1"
-            :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }"
-          >
+          <select v-model="form.unmanaged_bmc_users" style="flex: 1" :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }">
             <option value="">--- Select ---</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -238,28 +590,28 @@
         </div>
 
         <!-- OS Image Tag -->
-        <div class="tx-field" style="width:100%">
+        <div class="tx-field" style="width: 100%">
           <span class="tx-label">OS Image Tag:</span>
-          <input type="text" v-model="form.osimagetag" maxlength="100" style="flex:1" />
+          <input type="text" v-model="form.osimagetag" maxlength="100" style="flex: 1" />
           <span v-if="hints.osimagetag" class="tx-hint">{{ hints.osimagetag }}</span>
         </div>
         <!-- Provision Interface -->
-        <div class="tx-field" style="width:100%">
+        <div class="tx-field" style="width: 100%">
           <span class="tx-label">Provision Interface:</span>
-          <input type="text" v-model="form.provision_interface" maxlength="100" style="flex:1" />
+          <input type="text" v-model="form.provision_interface" maxlength="100" style="flex: 1" />
           <span v-if="hints.provision_interface" class="tx-hint">{{ hints.provision_interface }}</span>
         </div>
 
         <!-- Provision Fallback -->
-        <div class="tx-field" style="width:100%">
+        <div class="tx-field" style="width: 100%">
           <span class="tx-label">Provision Fallback:</span>
-          <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex:1" />
-          <span v-if="hints.provision_fallback" class="tx-hint">{{ hints.provision_fallback }}</span>
+          <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex: 1" />
+          <span v-if="hints.provision_fallback" class="tx-hint">{{  hints.provision_fallback }}</span>
         </div>
         <!-- Provision Method -->
-        <div class="tx-field" style="width:100%">
+        <div class="tx-field" style="width: 100%">
           <span class="tx-label">Provision Method:</span>
-          <input type="text" v-model="form.provision_method" maxlength="100" style="flex:1" />
+          <input type="text" v-model="form.provision_method" maxlength="100" style="flex: 1" />
           <span v-if="hints.provision_method" class="tx-hint">{{ hints.provision_method }}</span>
         </div>
 
@@ -267,6 +619,10 @@
         <div class="tx-field-block tx-adv-full">
           <div class="tx-label-row">
             <span class="tx-label">Comment:</span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'comment')" />
+              <span>Upload</span>
+            </label>
           </div>
           <div class="tx-field-block-body">
             <textarea v-model="form.comment" rows="3"></textarea>
@@ -278,10 +634,8 @@
 
     <!-- Single footer: Advanced + submit always at bottom of form -->
     <div class="tx-form-footer">
-      <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">
-        Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}
-      </button>
-      <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
+      <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}</button>
+      <button type="submit" :disabled="isSubmitDisabled" class="tx-btn tx-btn-blue" :class="{ 'tx-btn-disabled': isSubmitDisabled }">{{ submitLabel }}</button>
     </div>
 
     <!-- Text Editor Modal -->
@@ -295,296 +649,3 @@
     />
   </form>
 </template>
-
-<script setup>
-import { ref, reactive, watch, computed } from 'vue'
-import InterfaceRow from './InterfaceRow.vue'
-import TextEditorModal from './TextEditorModal.vue'
-
-const props = defineProps({
-  mode: { type: String, default: 'add' },
-  initialData: { type: Object, default: () => ({}) },
-  bmcsetupOptions: { type: Array, default: () => [] },
-  osimageOptions: { type: Array, default: () => [] },
-  networkOptions: { type: Array, default: () => [] },
-  bondModeOptions: { type: Array, default: () => [] },
-  submitLabel: { type: String, default: 'Submit' },
-  hints: { type: Object, default: () => ({}) },
-})
-
-defineEmits(['submit'])
-
-const nameEditUnlocked = ref(false)
-const showInterfaces = ref(false)
-const showAdvanced = ref(false)
-const textEditorOpen = ref(false)
-const textEditorTitle = ref('')
-const textEditorField = ref('')
-const ifaceOptionsIdx = ref(-1)
-
-const textEditorModalKey = computed(
-  () => `${ifaceOptionsIdx.value}:${textEditorField.value}`,
-)
-
-const textEditorModalValue = computed(() => {
-  if (ifaceOptionsIdx.value >= 0) {
-    return form.interfaces[ifaceOptionsIdx.value]?.options ?? ''
-  }
-  const f = textEditorField.value
-  return f && form[f] != null ? String(form[f]) : ''
-})
-
-function triValue(v) {
-  if (v === true || v === 'True' || v === 'true') return 'true'
-  if (v === false || v === 'False' || v === 'false') return 'false'
-  return ''
-}
-
-/** Normalized to checkbox true-value / false-value strings */
-function ifaceDhcpString(v) {
-  if (v === true || v === 1 || v === '1') return 'true'
-  if (v === false || v === 0 || v === '0') return 'false'
-  const s = String(v ?? '').trim().toLowerCase()
-  if (s === 'true' || s === 'yes' || s === 'on') return 'true'
-  return 'false'
-}
-
-function makeEmptyIface() {
-  return {
-    interface: '',
-    network: '',
-    mtu: '',
-    dhcp: 'false',
-    bond_mode: '',
-    bond_slaves: '',
-    vlanid: '',
-    options: '',
-    vlan_parent: '',
-  }
-}
-
-const form = reactive({
-  name: '',
-  newgroupname: '',
-  roles: '',
-  netboot: '',
-  osimage: '',
-  scripts: '',
-  setupbmc: '',
-  bmcsetupname: '',
-  domain: '',
-  unmanaged_bmc_users: '',
-  kerneloptions: '',
-  prescript: '',
-  partscript: '',
-  postscript: '',
-  osimagetag: '',
-  provision_interface: '',
-  provision_fallback: '',
-  provision_method: '',
-  comment: '',
-  interfaces: [],
-})
-
-function hydrateForm(d) {
-  if (!d) return
-  form.name = d.name || ''
-  if (props.mode === 'clone') {
-    // One editable field — POST as newgroupname; prefill: clonename from API, else newgroupname, else name
-    if (d.clonename != null && String(d.clonename).trim() !== '') {
-      form.newgroupname = String(d.clonename)
-    } else if (d.newgroupname != null && String(d.newgroupname).trim() !== '') {
-      form.newgroupname = String(d.newgroupname)
-    } else {
-      form.newgroupname = d.name != null ? String(d.name) : ''
-    }
-  } else {
-    form.newgroupname = d.newgroupname || ''
-  }
-  form.roles = d.roles != null ? String(d.roles) : ''
-  form.netboot = triValue(d.netboot)
-  form.osimage = d.osimage || ''
-  form.scripts = d.scripts != null ? String(d.scripts) : ''
-  form.setupbmc = triValue(d.setupbmc)
-  form.bmcsetupname = d.bmcsetupname || ''
-  form.domain = d.domain != null ? String(d.domain) : ''
-  form.unmanaged_bmc_users = d.unmanaged_bmc_users != null ? String(d.unmanaged_bmc_users) : ''
-  form.kerneloptions = d.kerneloptions != null ? String(d.kerneloptions) : ''
-  form.prescript = d.prescript != null ? String(d.prescript) : ''
-  form.partscript = d.partscript != null ? String(d.partscript) : ''
-  form.postscript = d.postscript != null ? String(d.postscript) : ''
-  const otag = d.osimagetag != null && d.osimagetag !== 'default' ? d.osimagetag : ''
-  form.osimagetag = otag
-  form.provision_interface = d.provision_interface != null ? String(d.provision_interface) : ''
-  form.provision_fallback = d.provision_fallback != null ? String(d.provision_fallback) : ''
-  form.provision_method = d.provision_method != null ? String(d.provision_method) : ''
-  form.comment = d.comment != null ? String(d.comment) : ''
-  if (Array.isArray(d.interfaces) && d.interfaces.length) {
-    form.interfaces = d.interfaces.map((row) => ({
-      interface: row.interface || '',
-      network: row.network || '',
-      mtu: row.mtu || '',
-      dhcp: ifaceDhcpString(row.dhcp),
-      bond_mode: row.bond_mode || '',
-      bond_slaves: row.bond_slaves || '',
-      vlanid: row.vlanid || '',
-      options: row.options || '',
-      vlan_parent: row.vlan_parent || '',
-    }))
-  } else {
-    form.interfaces = []
-  }
-}
-
-function normalizeName(s) {
-  return String(s ?? '').trim()
-}
-
-/** Stable snapshot for dirty-check (edit modal). */
-function comparableSnapshot() {
-  const ifaceRow = (row) => ({
-    interface: String(row.interface ?? ''),
-    network: String(row.network ?? ''),
-    mtu: String(row.mtu ?? ''),
-    dhcp: String(row.dhcp ?? ''),
-    bond_mode: String(row.bond_mode ?? ''),
-    bond_slaves: String(row.bond_slaves ?? ''),
-    vlanid: String(row.vlanid ?? ''),
-    options: String(row.options ?? ''),
-    vlan_parent: String(row.vlan_parent ?? ''),
-  })
-  return {
-    name: normalizeName(form.name),
-    roles: String(form.roles ?? ''),
-    netboot: String(form.netboot ?? ''),
-    osimage: String(form.osimage ?? ''),
-    scripts: String(form.scripts ?? ''),
-    setupbmc: String(form.setupbmc ?? ''),
-    bmcsetupname: String(form.bmcsetupname ?? ''),
-    domain: String(form.domain ?? ''),
-    unmanaged_bmc_users: String(form.unmanaged_bmc_users ?? ''),
-    kerneloptions: String(form.kerneloptions ?? ''),
-    prescript: String(form.prescript ?? ''),
-    partscript: String(form.partscript ?? ''),
-    postscript: String(form.postscript ?? ''),
-    osimagetag: String(form.osimagetag ?? ''),
-    provision_interface: String(form.provision_interface ?? ''),
-    provision_fallback: String(form.provision_fallback ?? ''),
-    provision_method: String(form.provision_method ?? ''),
-    comment: String(form.comment ?? ''),
-    interfaces: form.interfaces.map(ifaceRow),
-  }
-}
-
-watch(
-  () => props.initialData,
-  (d) => {
-    nameEditUnlocked.value = false
-    hydrateForm(d)
-  },
-  { immediate: true, deep: true },
-)
-
-function toggleInterfaces() {
-  showInterfaces.value = !showInterfaces.value
-  if (showInterfaces.value && form.interfaces.length === 0) {
-    form.interfaces.push(makeEmptyIface())
-  }
-}
-
-function addInterfaceAfter(idx) {
-  form.interfaces.splice(idx + 1, 0, makeEmptyIface())
-}
-
-function removeInterface(idx) {
-  form.interfaces.splice(idx, 1)
-}
-
-function noSpaces(e) {
-  if (e.charCode === 32) e.preventDefault()
-}
-
-function openTextEditor(title, field) {
-  ifaceOptionsIdx.value = -1
-  textEditorTitle.value = title
-  textEditorField.value = field
-  textEditorOpen.value = true
-}
-
-function openIfaceOptionsEditor(idx) {
-  textEditorField.value = ''
-  textEditorTitle.value = 'Options'
-  ifaceOptionsIdx.value = idx
-  textEditorOpen.value = true
-}
-
-function closeTextEditor() {
-  textEditorOpen.value = false
-  ifaceOptionsIdx.value = -1
-}
-
-function onTextEditorModalApply(v) {
-  if (ifaceOptionsIdx.value >= 0 && form.interfaces[ifaceOptionsIdx.value]) {
-    form.interfaces[ifaceOptionsIdx.value].options = v != null ? String(v) : ''
-  } else if (textEditorField.value) {
-    form[textEditorField.value] = v
-  }
-}
-
-function looksLikeBinary(buf) {
-  if (!buf || !buf.byteLength) return false
-  const view = new Uint8Array(buf)
-  const n = Math.min(view.length, 65536)
-  for (let i = 0; i < n; i++) {
-    if (view[i] === 0) return true
-  }
-  return false
-}
-
-function onUploadFile(e, field) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  const fr = new FileReader()
-  fr.onload = () => {
-    if (looksLikeBinary(fr.result)) {
-      alert('Please choose a text file only.')
-      e.target.value = ''
-      return
-    }
-    form[field] = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(fr.result))
-    e.target.value = ''
-  }
-  fr.onerror = () => {
-    alert('Could not read the file.')
-    e.target.value = ''
-  }
-  fr.readAsArrayBuffer(file)
-}
-
-function buildFormData(opts = {}) {
-  const namePayload =
-    opts.nameForPayload !== undefined ? opts.nameForPayload : form.name
-  const fd = new FormData()
-  const fields = [
-    'roles', 'netboot', 'osimage', 'scripts', 'setupbmc', 'bmcsetupname',
-    'domain', 'unmanaged_bmc_users', 'kerneloptions', 'prescript', 'partscript',
-    'postscript', 'osimagetag', 'provision_interface', 'provision_fallback',
-    'provision_method', 'comment',
-  ]
-  if (props.mode === 'clone') {
-    fields.push('newgroupname')
-  }
-  fd.append('name', namePayload != null ? String(namePayload) : '')
-  for (const f of fields) {
-    if (form[f] != null) fd.append(f, form[f])
-  }
-  for (const iface of form.interfaces) {
-    for (const k of Object.keys(iface)) {
-      fd.append(k, iface[k] != null ? String(iface[k]) : '')
-    }
-  }
-  return fd
-}
-
-defineExpose({ form, buildFormData, comparableSnapshot })
-</script>

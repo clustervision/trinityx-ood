@@ -134,6 +134,11 @@ optgroup {
   color: #fff;
 }
 
+.tx-btn-disabled {
+  background: #adaeb0;
+  color: #fff;
+}
+
 .tx-btn-orange {
   background: #f0a848;
   color: #fff;
