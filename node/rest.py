@@ -32,6 +32,7 @@ __status__      = "Development"
 from configparser import RawConfigParser
 import os
 import requests
+from flask import url_for
 from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
@@ -46,11 +47,22 @@ class Rest():
     All kind of REST Call methods.
     """
 
+    @staticmethod
+    def app_url(request):
+        """Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context."""
+        response = {"APP_URL": ""}
+        full_url = f"{request.scheme}://{request.host}{request.path}"
+        full_url = full_url[:-1]
+        full_url_app = f"{full_url}{url_for('home')}"
+        response["APP_URL"] = full_url_app[:-1]
+        return response
+
     def __init__(self):
         """
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
         from luna.ini from Luna 2 Daemon.
         """
+        self.timeout = 5
         self.logger = Log.get_logger()
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
@@ -165,55 +177,30 @@ class Rest():
         It will fetch the records from Luna 2 Daemon
         via REST API's.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
-            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
-            response_json = call.json()
-            if 'message' in response_json:
-                self.errors.append(response_json["message"])
+            response = requests.get(url=daemon_url, headers=headers, timeout=self.timeout, verify=self.security)
+            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            data = response.json()
+            if isinstance(data, dict) and 'message' in data:
+                self.errors.append(data["message"])
+                response = {"status": False, "status_code": response.status_code, "content": response.json()}
             else:
-                response = response_json
+                response = {"status": True, "status_code": response.status_code, "content": response.json()}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
-        except requests.exceptions.JSONDecodeError:
-            response = False
-        return response
-
-
-    def get_raw_data(self, table=None, name=None, data=None):
-        """
-        This method is based on REST API's GET method.
-        It will fetch the records from Luna 2 Daemon
-        via REST API's.
-        """
-        response = False
-        headers = {'x-access-tokens': self.get_token()}
-        daemon_url = f'{self.daemon}/config/{table}'
-        if name:
-            daemon_url = f'{daemon_url}/{name}'
-        self.logger.debug(f'GET URL => {daemon_url}')
-        try:
-            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
-            response_json = call.json()
-            if 'message' in response_json:
-                self.errors.append(response_json["message"])
-            else:
-                response = response_json
-        except requests.exceptions.SSLError as ssl_loop_error:
-            self.errors.append(f'ERROR :: {ssl_loop_error}')
-        except requests.exceptions.ConnectionError:
-            self.errors.append(f'Request Timeout while {daemon_url}')
-        except requests.exceptions.JSONDecodeError:
-            response = False
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
 
 
@@ -240,23 +227,37 @@ class Rest():
         return response
 
 
-    def get_delete(self, table=None, name=None):
+    def get_delete(self, table: str="", name: str=""):
         """
         This method is based on REST API's GET method.
         It will delete the records from Luna 2 Daemon
         via REST API's.
         """
-        response = False
+        response = {"status": False, "status_code": 500, "content": ""}
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_delete'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
-            response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = requests.get(url=daemon_url, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            if response.status_code == 204:
+                response = {"status": True, "status_code": response.status_code, "content": {"message": f"{table.capitalize()} {name} is deleted successfully."}}
+            else:
+                data = response.json()
+                if isinstance(data, dict) and 'message' in data:
+                    self.errors.append(data["message"])
+                    response = {"status": False, "status_code": response.status_code, "content": response.json()}
+                else:
+                    response = {"status": False, "status_code": response.status_code, "content": response.json()}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
+        except requests.exceptions.JSONDecodeError as json_decode_error:
+            self.errors.append(f'ERROR :: {json_decode_error}')
+            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
         return response
 
 
@@ -273,29 +274,6 @@ class Rest():
         try:
             response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
-        except requests.exceptions.SSLError as ssl_loop_error:
-            self.errors.append(f'ERROR :: {ssl_loop_error}')
-        except requests.exceptions.ConnectionError:
-            self.errors.append(f'Request Timeout while {daemon_url}')
-        return response
-
-
-    def get_status(self, table=None, name=None, data=None):
-        """
-        This method is based on REST API's GET method.
-        It will fetch the records from Luna 2 Daemon
-        via REST API's.
-        """
-        response = False
-        headers = {'x-access-tokens': self.get_token()}
-        daemon_url = f'{self.daemon}/config/{table}'
-        if name:
-            daemon_url = f'{daemon_url}/{name}'
-        self.logger.debug(f'Status URL => {daemon_url}')
-        try:
-            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
-            response = call.status_code
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
@@ -342,21 +320,4 @@ class Rest():
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
-        return response
-
-
-    def get_url_data(self, route=None, payload=None):
-        """
-        This method is based on REST API's GET method.
-        It will fetch the records from Luna 2 Daemon
-        via REST API's.
-        """
-        response = False
-        try:
-            response = self.session.get(url=route, stream=True, data=payload, timeout=5, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
-        except requests.exceptions.SSLError as ssl_loop_error:
-            self.errors.append(f'ERROR :: {ssl_loop_error}')
-        except requests.exceptions.ConnectionError:
-            self.errors.append(f'Request Timeout while {route}')
         return response

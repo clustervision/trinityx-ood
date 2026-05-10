@@ -43,36 +43,22 @@ class Model():
         """
         self.logger = Log.get_logger()
 
-
-    def get_list_option_html(self, table=None, record=None, source=None):
+    @staticmethod
+    def _daemon_config(get_list):
         """
-        This method will open the Login Page(First Page)
+        Unwrap Rest().get_data envelope (test_group_node group style) to legacy daemon dict.
         """
-        response = ""
-        get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            response += f"<option value=''> Select {table.capitalize()}  </option>"
-            for name, _ in raw_data.items():
-                if record:
-                    if record == name:
-                        if source:
-                            if source == 'node':
-                                response += f"<option value='{name}(group)'>{name} (group)</option>"
-                                response += f"<option value='{name}(node)' selected>{name} (node)</option>"
-                            else:
-                                response += f"<option value='{name}(group)' selected>{name} (group)</option>"
-                                response += f"<option value='{name}(node)'>{name} (node)</option>"
-                        else:
-                            response += f"<option value='{name}' selected>{name}</option>"
-                    else:
-                        response += f"<option value='{name}'>{name}</option>"
-                else:
-                    response += f"<option value='{name}'>{name}</option>"
-        else:
-            response += f"<option value=''>No {table.capitalize()} Available </option>"
-        return response
-
+        if not get_list or not isinstance(get_list, dict):
+            return None
+        if 'status' in get_list:
+            if get_list.get('status') is not True:
+                return None
+            body = get_list.get('content')
+            if not isinstance(body, dict):
+                return None
+            return body.get('config')
+        cfg = get_list.get('config')
+        return cfg if isinstance(cfg, dict) else None
 
     def get_list_options(self, table=None):
         """
@@ -80,8 +66,9 @@ class Model():
         """
         response = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            raw_data = cfg[table]
             response = [["", f" Select {table.capitalize()}  "]]
             for name, _ in raw_data.items():
                 name_list = [name, name]
@@ -98,22 +85,27 @@ class Model():
         """
         names = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            names = list(raw_data.keys())
+        cfg = self._daemon_config(get_list)
+        if cfg and isinstance(cfg.get(table), dict):
+            names = list(cfg[table].keys())
+        elif isinstance(get_list, dict) and get_list.get('status') is False:
+            cnt = get_list.get('content') or {}
+            names = [cnt.get('message', 'Nothing Available')]
+        else:
+            names = ["Nothing Available"]
         return {"options": names, "selected": selected}
 
 
     def get_node_source_choices(self, table=None, record=None, source=None):
         """
-        Option list for node bmcsetup/osimage: supports (group)/(node) value suffixes
-        like get_list_option_html() for the Vue forms.
+        Option list for node bmcsetup/osimage: supports (group)/(node) value suffixes for Vue forms.
         """
         choices = []
         get_list = Rest().get_data(table)
-        if not get_list:
+        cfg = self._daemon_config(get_list)
+        if not cfg or not isinstance(cfg.get(table), dict):
             return choices
-        raw_data = get_list['config'][table]
+        raw_data = cfg[table]
         for name, _ in raw_data.items():
             if record:
                 if record == name:
@@ -131,38 +123,3 @@ class Model():
             else:
                 choices.append({"value": name, "label": name})
         return choices
-
-
-    def get_name_list(self, table=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = []
-        get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            response = list(raw_data.keys())
-        return response
-
-
-    def get_record(self, table=None, record=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = []
-        get_list = Rest().get_data(table, record)
-        if get_list:
-            raw_data = get_list['config'][table][record]
-            response = raw_data
-        return response
-
-
-    def get_count(self, table=None):
-        """
-        This method will open the Login Page(First Page)
-        """
-        response = 0
-        get_list = Rest().get_data(table)
-        if get_list:
-            response = len(get_list['config'][table])
-        return response
