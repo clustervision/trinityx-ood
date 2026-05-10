@@ -36,6 +36,7 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
 import urllib3
+from flask import url_for
 from urllib3.util import Retry
 from log import Log
 from constant import INI_FILE, TOKEN_FILE
@@ -45,6 +46,16 @@ class Rest():
     """
     All kind of REST Call methods.
     """
+
+    @staticmethod
+    def app_url(request):
+        """Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context."""
+        response = {"APP_URL": ""}
+        full_url = f"{request.scheme}://{request.host}{request.path}"
+        full_url = full_url[:-1]
+        full_url_app = f"{full_url}{url_for('home')}"
+        response["APP_URL"] = full_url_app[:-1]
+        return response
 
     def __init__(self):
         """
