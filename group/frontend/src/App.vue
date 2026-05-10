@@ -378,13 +378,13 @@ onMounted(loadData)
   </div>
 
   <!-- Modals -->
-  <EditGroupModal v-if="activeModal === 'edit'" :groupList="groupList" :group="selectedGroupData" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
+  <EditGroupModal v-if="activeModal === 'edit'" :groupList="groupList" :group="selectedGroupData || {}" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
 
   <AddGroupModal v-if="activeModal === 'add'" :groupList="groupList" @close="closeModal" @saved="onSaved" />
 
-  <CloneGroupModal v-if="activeModal === 'clone'" :groupList="groupList" :group="selectedGroupData" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
+  <CloneGroupModal v-if="activeModal === 'clone'" :groupList="groupList" :group="selectedGroupData || {}" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" />
 
-  <PushOsModal v-if="activeModal === 'ospush'" :group-name="selectedGroup" :group="selectedGroupData" @close="closeModal" @saved="onSaved" />
+  <PushOsModal v-if="activeModal === 'ospush'" :group-name="selectedGroup" :group="selectedGroupData || {}" @close="closeModal" @saved="onSaved" />
 
   <DeleteConfirmModal v-if="activeModal === 'delete'" :group-name="selectedGroup" @close="closeModal" @deleted="onSaved" />
 </template>

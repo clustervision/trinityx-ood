@@ -64,7 +64,7 @@ async function pollRequestStatus(requestId: string) {
       const msg = result.content?.message || ''
       if (msg.trim()) {
         // runtimeLogs.value.push(msg)
-        msg.split(';;').map(m => m.trim()).filter(Boolean).forEach(m => { runtimeLogs.value.push(m) })
+        msg.split(';;').map((m: string) => m.trim()).filter((m: string) => Boolean(m)).forEach((m: string) => { runtimeLogs.value.push(m) })
       }
       // console.log(msg);
       await sleep(3000)
