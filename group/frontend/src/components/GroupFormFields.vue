@@ -2,8 +2,11 @@
 import { ref, reactive, watch, computed } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
+import { punAppAssetUrl } from '@/utils/publicAssets'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
+
+const renameIcon = punAppAssetUrl('icons/icon-rename.png')
 
 const props = defineProps({
   groupList: { type: Array as () => string[], required: true },
@@ -19,7 +22,9 @@ const props = defineProps({
 
 defineEmits(['submit'])
 
-const nameEditUnlocked = ref(false)
+const originalGroupName = ref('')
+const nameInlineEdit = ref(false)
+const nameDraft = ref('')
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
 
@@ -123,6 +128,13 @@ function hydrateForm(d: Partial<Group>) {
   } else {
     form.interfaces = []
   }
+
+  if (props.mode === 'edit') {
+    const n = form.name || ''
+    originalGroupName.value = n
+    nameDraft.value = n
+    nameInlineEdit.value = false
+  }
 }
 
 watch(
@@ -180,8 +192,48 @@ function removeInterface(idx: number) {
 }
 
 function noSpaces(e: KeyboardEvent) {
-  if (e.code === 'Space') {
+  if (e.code === 'Space' || e.charCode === 32) {
     e.preventDefault()
+  }
+}
+
+/** Match Document/node Luna name rules for rename / edit. */
+function normalizeGroupName(s: unknown): string {
+  return String(s ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, '')
+}
+
+function onNameDraftBlur() {
+  nameDraft.value = normalizeGroupName(nameDraft.value)
+  validateRenameTarget(nameDraft.value)
+}
+
+function startInlineRename() {
+  if (props.mode !== 'edit') return
+  nameInlineEdit.value = true
+  nameDraft.value = form.name || originalGroupName.value
+  validateRenameTarget(nameDraft.value)
+}
+
+function cancelInlineRename() {
+  nameInlineEdit.value = false
+  nameDraft.value = form.name || originalGroupName.value
+  nameError.value = ''
+  isSubmitDisabled.value = false
+}
+
+function validateRenameTarget(value: string) {
+  if (props.mode !== 'edit' || !nameInlineEdit.value) return
+  const n = normalizeGroupName(value)
+  const orig = normalizeGroupName(originalGroupName.value)
+  if (n && n !== orig && props.groupList.includes(n)) {
+    nameError.value = 'Group name already exists'
+    isSubmitDisabled.value = true
+  } else {
+    nameError.value = ''
+    isSubmitDisabled.value = false
   }
 }
 
@@ -303,10 +355,23 @@ function nonEmptyTrimmed(value: unknown): string | null {
 }
 
 function buildPayload() {
-  const groupName =
-    props.mode === 'clone'
-      ? form.newgroupname
-      : form.name
+  let urlRecordKey: string
+  let groupDisplayName: string
+
+  if (props.mode === 'clone') {
+    groupDisplayName = String(form.newgroupname || '').trim()
+    urlRecordKey = groupDisplayName
+  } else if (props.mode === 'edit') {
+    groupDisplayName =
+      nameInlineEdit.value
+        ? normalizeGroupName(nameDraft.value)
+        : (form.name || '').trim()
+    urlRecordKey =
+      (originalGroupName.value || '').trim() || groupDisplayName
+  } else {
+    groupDisplayName = (form.name || '').trim()
+    urlRecordKey = groupDisplayName
+  }
 
   const cleanedInterfaces = form.interfaces
     .map((iface) => {
@@ -331,7 +396,7 @@ function buildPayload() {
     })
     .filter((row) => Object.keys(row).length > 0)
 
-  const groupPayload: Record<string, unknown> = { name: groupName, }
+  const groupPayload: Record<string, unknown> = { name: groupDisplayName, }
 
   if (form.setupbmc !== '') { groupPayload.setupbmc = form.setupbmc === 'true' ? 'True' : 'False' }
   const domain = nonEmptyTrimmed(form.domain)
@@ -368,11 +433,15 @@ function buildPayload() {
   const osimagetag = nonEmptyTrimmed(form.osimagetag)
   if (osimagetag) groupPayload.osimagetag = osimagetag
 
-  return { config: { group: { [groupName]: groupPayload, }, }, }
+  return { config: { group: { [urlRecordKey]: groupPayload, }, }, }
 }
 
 function comparableSnapshot() {
-  return JSON.stringify(form)
+  const payload = { ...form }
+  if (props.mode === 'edit' && nameInlineEdit.value) {
+    payload.name = normalizeGroupName(nameDraft.value)
+  }
+  return JSON.stringify(payload)
 }
 
 defineExpose({
@@ -410,11 +479,48 @@ function validateName(value: string) {
           <span class="tx-label">Clone Name:</span>
           <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" maxlength="100" required />
         </div>
-        <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-row': mode === 'edit' }">
+        <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-with-rename': mode === 'edit' }">
           <span class="tx-label">Name:</span>
-          <div v-if="mode === 'edit'" class="tx-name-controls">
-            <input type="text" v-model="form.name" :readonly="!nameEditUnlocked" @keypress="noSpaces" maxlength="100" />
-            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-rename" @click="nameEditUnlocked = true">Rename</button>
+          <div v-if="mode === 'edit'" class="tx-name-input-wrap">
+            <template v-if="!nameInlineEdit">
+              <input
+                type="text"
+                class="tx-name-input-readonly"
+                :value="form.name"
+                readonly
+              />
+              <button
+                type="button"
+                class="tx-btn-rename"
+                title="Edit name"
+                aria-label="Edit name"
+                @click="startInlineRename"
+              >
+                <img :src="renameIcon" alt="" width="20" height="20" />
+              </button>
+            </template>
+            <template v-else>
+              <input
+                v-model="nameDraft"
+                type="text"
+                class="tx-name-input-editing"
+                maxlength="100"
+                required
+                aria-label="Group name"
+                @keypress="noSpaces"
+                @blur="onNameDraftBlur"
+                @input="validateRenameTarget(nameDraft)"
+              />
+              <button
+                type="button"
+                class="tx-btn-rename tx-btn-rename-cancel-char"
+                title="Stop editing name"
+                aria-label="Stop editing name"
+                @click="cancelInlineRename"
+              >
+                ×
+              </button>
+            </template>
           </div>
           <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" maxlength="100" required />
         </div>

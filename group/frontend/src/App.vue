@@ -10,6 +10,7 @@ import CloneGroupModal from '@/components/CloneGroupModal.vue'
 import PushOsModal from '@/components/PushOsModal.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import { fetchGroups } from '@/services/api'
+import { punAppAssetUrl } from '@/utils/publicAssets'
 
 type ModalType = 'add' | 'edit' | 'clone' | 'ospush' | 'delete' | null
 type GroupMap = Record<string, Group>
@@ -49,7 +50,10 @@ interface Group {
 
 
 
-const app_url = window.APP_URL || import.meta.env.VITE_APP_URL;
+const app_url = window.APP_URL || import.meta.env.VITE_APP_URL
+const iconClone = punAppAssetUrl('icons/icon-clone.png')
+const iconOspush = punAppAssetUrl('icons/icon-ospush.png')
+const iconDelete = punAppAssetUrl('icons/icon-delete.png')
 const errorMsg = ref('')
 const httpError = ref('')
 const helpOpen = ref(false)
@@ -316,19 +320,19 @@ onMounted(loadData)
                 <td class="tx-col-actions" :class="{ 'tx-td-sep-orange-right': hasInterfaces, 'tx-td-sep-blue': !hasInterfaces }">
                   <div class="tx-action-icons">
                     <button type="button" class="tx-icon-act tx-icon-clone" title="Clone" @click="openModal('clone', canonicalName(row.name), row)">
-                      <img :src="`${app_url}/assets/icons/icon-clone.png`" alt="Clone" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'" />
+                      <img :src="iconClone" alt="Clone" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'" />
                       <svg style="display: none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
                         <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                       </svg>
                     </button>
                     <button type="button" class="tx-icon-act tx-icon-ospush" title="OS Push" @click="openModal('ospush', canonicalName(row.name))">
-                      <img :src="`${app_url}/assets/icons/icon-ospush.png`" alt="OS Push" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'"/>
+                      <img :src="iconOspush" alt="OS Push" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'"/>
                       <svg style="display: none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
                         <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" />
                       </svg>
                     </button>
                     <button type="button" class="tx-icon-act tx-icon-danger" title="Delete" @click="openModal('delete', canonicalName(row.name))">
-                      <img :src="`${app_url}/assets/icons/icon-delete.png`" alt="Delete" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'" />
+                      <img :src="iconDelete" alt="Delete" width="28" height="28" onerror="this.style.display = 'none' this.nextElementSibling.style.display = 'inline'" />
                       <svg style="display: none" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                       </svg>
