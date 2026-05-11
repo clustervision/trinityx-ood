@@ -1,3 +1,4 @@
+import './setupExpandIcons'
 import './assets/styles.css'
 
 import { createApp } from 'vue'
