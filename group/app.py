@@ -41,7 +41,6 @@ from constant import INI_FILE, LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 from model import Model
-from ood_wsgi_fix import apply_ood_path_fix
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -57,7 +56,6 @@ app = Flask(
     template_folder="app",
 )
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-apply_ood_path_fix(app)
 
 if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
