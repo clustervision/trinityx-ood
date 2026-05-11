@@ -95,11 +95,21 @@ function unwrapGetData<T>(data: unknown, context = 'request'): T {
 }
 
 function tryB64Decode(str: string) {
+  const trimmed = String(str || '').trim()
+  if (!trimmed) return str
   try {
-    const bin = atob(str)
+    const bin = atob(trimmed)
     const bytes = new Uint8Array(bin.length)
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
-    return new TextDecoder().decode(bytes)
+    const decoded = new TextDecoder().decode(bytes)
+    const reBytes = new TextEncoder().encode(decoded)
+    let reBin = ''
+    reBytes.forEach((b) => {
+      reBin += String.fromCharCode(b)
+    })
+    const reEncoded = btoa(reBin).replace(/=+$/, '')
+    if (reEncoded === trimmed.replace(/=+$/, '')) return decoded
+    return str
   } catch {
     return str
   }
