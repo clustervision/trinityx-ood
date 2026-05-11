@@ -72,14 +72,15 @@ class Model():
         """
         response = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            response = [["", f" Select {table.capitalize()}  "]]
-            for name, _ in raw_data.items():
-                name_list = [name, name]
-                response = response + [name_list]
-        else:
-            response = [["", f" No {table.capitalize()} Available  "]]
+        print(get_list)
+        # if get_list:
+        #     raw_data = get_list['config'][table]
+        #     response = [["", f" Select {table.capitalize()}  "]]
+        #     for name, _ in raw_data.items():
+        #         name_list = [name, name]
+        #         response = response + [name_list]
+        # else:
+        #     response = [["", f" No {table.capitalize()} Available  "]]
         return response
 
     def get_list_options_json(self, table=None, selected=None):
@@ -88,9 +89,14 @@ class Model():
         """
         names = []
         get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            names = list(raw_data.keys())
+        if "status" in get_list:
+            if get_list["status"] is True:
+                raw_data = get_list['content']['config'][table]
+                names = list(raw_data.keys())
+            else:
+                names = [get_list['content']['message']]
+        else:
+            names = ["Nothing Available"]
         return {"options": names, "selected": selected}
 
     def get_name_list(self, table=None):

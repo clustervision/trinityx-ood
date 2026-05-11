@@ -115,6 +115,11 @@ include osimage/static/img
 include osimage/static/img/*
 include osimage/static/js
 include osimage/static/js/*
+include osimage/app
+include osimage/app/*
+include osimage/app/assets
+include osimage/app/assets/*
+recursive-include osimage/app/assets *
 include osimage/templates
 include osimage/templates/*
 include osimage/templates/layout

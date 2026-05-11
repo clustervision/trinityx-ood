@@ -1,27 +1,36 @@
+
+<!--
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
+-->
+
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Group :: Luna (dev)</title>
-    <link rel="icon" type="image/png" href="%BASE_URL%static/img/logo.png" />
-    <link rel="stylesheet" href="/static/vendor/fontsource-geist-sans/index.css" />
-    <link rel="stylesheet" href="/static/vendor/fontsource-geist-sans/500.css" />
-    <link rel="stylesheet" href="/static/vendor/fontsource-geist-sans/700.css" />
+    <title>Group :: Luna | OOD</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
     <script>
-      (function () {
-        var b = '%BASE_URL%'
-        if (typeof b !== 'string' || b.indexOf('BASE_URL') !== -1) b = '/'
-        document.documentElement.style.setProperty('--tx-icon-edit', 'url("' + b + 'icons/icon-edit.png")')
-        document.documentElement.style.setProperty('--tx-icon-edit-orange', 'url("' + b + 'icons/icon-edit-orange.png")')
-      })()
+      window.APP_URL = "{{ APP_URL }}";
     </script>
-    <script>
-      window.APP_URL = "{{APP_URL}}";
-    </script>
+    <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
+    <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}">
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
   </body>
 </html>
