@@ -761,18 +761,22 @@ function buildLunaNodeRecord(): Record<string, unknown> {
       }
       if (isClone && typeof out === 'string' && out.trim() === '') continue
     }
+    if (typeof out === 'string' && out.trim() === '') continue
     const postKey = SCALAR_TO_POST_KEY[f as keyof typeof SCALAR_TO_POST_KEY] || f
     if (!LUNA_NODE_SCALAR_KEYS.has(postKey)) continue
     record[postKey] = out
   }
   if (!isClone && form.service) record.service = true
-  record.interfaces = form.interfaces.map((iface) => {
-    const row: Record<string, unknown> = {}
-    for (const [k, val] of Object.entries(iface)) {
-      row[k] = val != null ? String(val) : ''
-    }
-    return row
-  })
+  record.interfaces = form.interfaces
+    .map((iface) => {
+      const row: Record<string, unknown> = {}
+      for (const [k, val] of Object.entries(iface)) {
+        const s = val != null ? String(val) : ''
+        if (s.trim() !== '') row[k] = s
+      }
+      return row
+    })
+    .filter((row) => Object.keys(row).length > 0)
   return record
 }
 
@@ -799,6 +803,7 @@ function buildFormData(): FormData {
       }
       if (isClone && out.trim() === '') continue
     }
+    if (out.trim() === '') continue
     const postKey = SCALAR_TO_POST_KEY[f as keyof typeof SCALAR_TO_POST_KEY] || f
     if (!LUNA_NODE_SCALAR_KEYS.has(postKey)) continue
     fd.append(postKey, out)
@@ -806,7 +811,8 @@ function buildFormData(): FormData {
   if (!isClone && form.service) fd.append('service', 'true')
   for (const iface of form.interfaces) {
     for (const [k, val] of Object.entries(iface)) {
-      fd.append(k, val != null ? String(val) : '')
+      const s = val != null ? String(val) : ''
+      if (s.trim() !== '') fd.append(k, s)
     }
   }
   return fd
