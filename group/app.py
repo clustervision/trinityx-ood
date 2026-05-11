@@ -41,6 +41,7 @@ from constant import INI_FILE, LICENSE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 from model import Model
+from ood_wsgi_fix import apply_ood_path_fix
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -48,8 +49,15 @@ LOGGER = Log.init_log('INFO')
 TABLE = 'group'
 TABLE_CAP = 'Group'
 
-app = Flask(__name__, static_folder="app/assets", template_folder="app")
+# Match node/osimage: expose bundle under /app/assets so punAppAssetUrl() paths resolve.
+app = Flask(
+    __name__,
+    static_folder="app/assets",
+    static_url_path="/app/assets",
+    template_folder="app",
+)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+apply_ood_path_fix(app)
 
 if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
@@ -60,7 +68,7 @@ def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
     """
-    if request.path.startswith('/static/'):
+    if request.path.startswith('/app/assets/'):
         return
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table='Group', data="", error=TOKEN_FILE["error"])
@@ -77,7 +85,14 @@ def validate_home_directory():
 def page_not_found(e):
     """
     This method will redirect to error Template Page with Error Message on 404.
+    Static assets must not return text/html (with a 200) or browsers show broken images.
     """
+    try:
+        p = request.path or ""
+    except RuntimeError:
+        p = ""
+    if p.startswith("/app/assets/"):
+        return "Not Found", 404, {"Content-Type": "text/plain; charset=utf-8"}
     return render_template("error.html", table='Group', data="", error=f"ERROR :: {e}"), 200
 
 
