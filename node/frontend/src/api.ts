@@ -32,6 +32,71 @@ const BOND_MODE_OPTIONS = [
   'balance-alb',
 ]
 
+const EDITOR_FIELDS = [
+  'options',
+  'content',
+  'comment',
+  'prescript',
+  'partscript',
+  'postscript',
+  'grab_filesystems',
+  'grab_exclude',
+  'kerneloptions',
+] as const
+
+const EDITOR_FIELD_SET = new Set<string>(EDITOR_FIELDS)
+
+function b64EncodeUtf8(value: string): string {
+  const bytes = new TextEncoder().encode(value)
+  let bin = ''
+  bytes.forEach((b) => {
+    bin += String.fromCharCode(b)
+  })
+  return btoa(bin)
+}
+
+function b64DecodeUtf8(value: string): string {
+  const bin = atob(value)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return new TextDecoder().decode(bytes)
+}
+
+function safeDecodeIfPossible(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return value
+  try {
+    const decoded = b64DecodeUtf8(trimmed)
+    const reEncoded = b64EncodeUtf8(decoded).replace(/=+$/, '')
+    if (reEncoded === trimmed.replace(/=+$/, '')) return decoded
+  } catch {
+    // not base64, keep value as-is
+  }
+  return value
+}
+
+function transformEditorFieldsDeep(payload: unknown, mode: 'encode' | 'decode'): unknown {
+  if (Array.isArray(payload)) return payload.map((item) => transformEditorFieldsDeep(item, mode))
+  if (!payload || typeof payload !== 'object') return payload
+
+  const input = payload as Record<string, unknown>
+  const out: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(input)) {
+    if (EDITOR_FIELD_SET.has(key) && typeof value === 'string') {
+      if (mode === 'encode') {
+        out[key] = value.length ? b64EncodeUtf8(value) : value
+      } else {
+        out[key] = safeDecodeIfPossible(value)
+      }
+    } else {
+      out[key] = transformEditorFieldsDeep(value, mode)
+    }
+  }
+
+  return out
+}
+
 function alignApiBaseToPage(abs: string): string {
   const s = String(abs).trim()
   if (!s || typeof window === 'undefined') return s
@@ -195,15 +260,15 @@ async function fetchNodeDaemonRecord(canonicalName: string): Promise<Record<stri
   const cfg = daemonConfig(inner)
   if (cfg?.node && typeof cfg.node === 'object') {
     const nm = (cfg.node as Record<string, unknown>)[canonicalName]
-    if (nm && typeof nm === 'object') return nm as Record<string, unknown>
+    if (nm && typeof nm === 'object') return transformEditorFieldsDeep(nm, 'decode') as Record<string, unknown>
     const keys = Object.keys(cfg.node as Record<string, unknown>)
     if (keys.length === 1) {
       const one = (cfg.node as Record<string, unknown>)[keys[0]!]
-      if (one && typeof one === 'object') return one as Record<string, unknown>
+      if (one && typeof one === 'object') return transformEditorFieldsDeep(one, 'decode') as Record<string, unknown>
     }
   }
   if (inner && typeof inner === 'object') {
-    return inner as Record<string, unknown>
+    return transformEditorFieldsDeep(inner, 'decode') as Record<string, unknown>
   }
   return {}
 }
@@ -307,10 +372,11 @@ export async function fetchNodeOsgrabData(name: string): Promise<OsPushGrabPaylo
 }
 
 async function postSubmitResult(url: string, body: unknown): Promise<SubmitResult> {
+  const encodedBody = transformEditorFieldsDeep(body, 'encode')
   const { res, text } = await fetchText(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
+    body: JSON.stringify(encodedBody ?? {}),
   })
   let data = parseJsonMaybe(text)
 
