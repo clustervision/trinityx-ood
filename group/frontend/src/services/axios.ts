@@ -52,7 +52,8 @@ function transformEditorFieldsDeep(payload: unknown, mode: 'encode' | 'decode'):
   for (const [key, value] of Object.entries(input)) {
     if (EDITOR_FIELD_SET.has(key) && typeof value === 'string') {
       if (mode === 'encode') {
-        out[key] = value.length ? b64EncodeUtf8(value) : value
+        if (value.trim() === '') continue
+        out[key] = b64EncodeUtf8(value.replace(/\r\n/g, '\n'))
       } else {
         out[key] = safeDecodeIfPossible(value)
       }
@@ -63,10 +64,26 @@ function transformEditorFieldsDeep(payload: unknown, mode: 'encode' | 'decode'):
   return out
 }
 
+function omitEmptyStringsDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => omitEmptyStringsDeep(item))
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (typeof v === 'string' && v.trim() === '') continue
+      out[k] = omitEmptyStringsDeep(v)
+    }
+    return out
+  }
+  return value
+}
+
 function encodeFormDataEditorFields(fd: FormData): FormData {
   const next = new FormData()
   for (const [key, value] of fd.entries()) {
-    if (EDITOR_FIELD_SET.has(key) && typeof value === 'string' && value.length > 0) {
+    if (typeof value === 'string' && value.trim() === '') continue
+    if (EDITOR_FIELD_SET.has(key) && typeof value === 'string' && value.trim().length > 0) {
       next.append(key, b64EncodeUtf8(value))
     } else {
       next.append(key, value)
@@ -93,7 +110,7 @@ apiClient.interceptors.request.use((config) => {
   }
 
   if (typeof data === 'object') {
-    config.data = transformEditorFieldsDeep(data, 'encode')
+    config.data = omitEmptyStringsDeep(transformEditorFieldsDeep(data, 'encode'))
   }
 
   return config
