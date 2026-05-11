@@ -200,7 +200,8 @@ async function doClone() {
     for (const [k, v] of Object.entries(form)) {
       if (k === 'bare') {
         if (v) fd.append(k, 'on')
-      } else if (v !== '' && v != null) {
+      } else if (v != null) {
+        if (typeof v === 'string' && v.trim() === '') continue
         fd.append(k, v)
       }
     }

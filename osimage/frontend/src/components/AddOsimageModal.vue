@@ -178,7 +178,9 @@ async function doAdd() {
 
     const fd = new FormData()
     for (const [k, v] of Object.entries(form)) {
-      if (v !== '' && v != null) fd.append(k, v)
+      if (v == null) continue
+      if (typeof v === 'string' && v.trim() === '') continue
+      fd.append(k, v)
     }
     const result = await submitOsimageForm('/add', fd)
     if (result.ok || result.data?.status === 'success') {
