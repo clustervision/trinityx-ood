@@ -133,7 +133,7 @@ function preparePayload(raw: Record<string, any>) {
   const payload: Record<string, any> = {}
   for (const [k, v] of Object.entries(raw)) {
     if (v === undefined || v === null) continue
-    if (v === '') continue
+    if (typeof v === 'string' && v.trim() === '') continue
     payload[k] = v
   }
   for (const key of EDITOR_KEYS) {
