@@ -25,7 +25,6 @@ from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from log import Log
-from ood_wsgi_fix import apply_ood_path_fix
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'node'
@@ -39,7 +38,6 @@ app = Flask(
     template_folder="app",
 )
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-apply_ood_path_fix(app)
 
 if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
@@ -108,12 +106,6 @@ def validate_home_directory():
 
 @app.errorhandler(404)
 def page_not_found(e):
-    try:
-        p = request.path or ""
-    except RuntimeError:
-        p = ""
-    if p.startswith("/app/assets/"):
-        return "Not Found", 404, {"Content-Type": "text/plain; charset=utf-8"}
     return render_template("error.html", table=TABLE_CAP, data="", error=f"ERROR :: {e}"), 200
 
 

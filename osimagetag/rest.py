@@ -31,9 +31,8 @@ __status__      = "Development"
 
 from configparser import RawConfigParser
 import os
-import logging
 import requests
-from flask import jsonify, url_for
+from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
 import urllib3
@@ -52,60 +51,18 @@ class Rest():
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
         from luna.ini from Luna 2 Daemon.
         """
-        self.timeout = 5
         self.logger = Log.get_logger()
-        if self.logger is None:
-            self.logger = logging.getLogger('luna2-web')
         self.get_ini_info()
         self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
         urllib3.disable_warnings()
-
-
-    def _request(self, method, url, **kwargs):
-        """
-        Single exit for daemon HTTP calls. Uses a short-lived Session with the same
-        retry policy as the former self.session (502/503/504 on HTTPS).
-        """
-        kwargs.setdefault('timeout', self.timeout)
-        kwargs.setdefault('verify', self.security)
-        retries = Retry(
-            total=60,
+        self.session = Session()
+        self.retries = Retry(
+            total= 60,
             backoff_factor=0.1,
             status_forcelist=[502, 503, 504],
             allowed_methods={'GET', 'POST'},
         )
-        with requests.Session() as session:
-            session.mount('https://', HTTPAdapter(max_retries=retries))
-            return session.request(method.upper(), url, **kwargs)
-
-
-    @staticmethod
-    def forward_daemon_response(resp):
-        """Map a requests.Response (or falsy) to a Flask response."""
-        if resp is False or resp is None:
-            return jsonify({"error": "No response from daemon"}), 502
-        if not resp.content:
-            return '', resp.status_code
-        try:
-            body = resp.json()
-        except ValueError:
-            return jsonify({
-                "message": "Daemon returned non-JSON body",
-                "status_code": resp.status_code,
-                "body": (resp.text or "").strip(),
-            }), resp.status_code if not resp.ok else 200
-        return jsonify(body), resp.status_code
-
-
-    @staticmethod
-    def app_url(request):
-        """Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context."""
-        response = {"APP_URL": ""}
-        full_url = f"{request.scheme}://{request.host}{request.path}"
-        full_url = full_url[:-1]
-        full_url_app = f"{full_url}{url_for('home')}"
-        response["APP_URL"] = full_url_app[:-1]
-        return response
+        self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
 
 
     def get_ini_info(self):
@@ -157,7 +114,7 @@ class Rest():
         daemon_url = f'{self.daemon}/token'
         self.logger.debug(f'Token URL => {daemon_url}')
         try:
-            call = self._request('POST', daemon_url, json=data, stream=True, timeout=5, verify=self.security)
+            call = self.session.post(url=daemon_url, json=data, stream=True, timeout=5, verify=self.security)
             self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
             if call.content:
                 data = call.json()
@@ -208,30 +165,26 @@ class Rest():
         It will fetch the records from Luna 2 Daemon
         via REST API's.
         """
-        response = {"status": False, "status_code": 500, "content": ""}
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        response = False
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
-            response = self._request('GET', daemon_url, headers=headers, timeout=self.timeout, verify=self.security)
-            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
-            data = response.json()
-            if isinstance(data, dict) and 'message' in data:
-                self.errors.append(data["message"])
-                response = {"status": False, "status_code": response.status_code, "content": response.json()}
+            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
+            response_json = call.json()
+            if 'message' in response_json:
+                self.errors.append(response_json["message"])
             else:
-                response = {"status": True, "status_code": response.status_code, "content": response.json()}
+                response = response_json
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
-            response = {"status": False, "status_code": 400, "content": f'ERROR :: {ssl_loop_error}'}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
-            response = {"status": False, "status_code": 400, "content": f'Request Timeout while {daemon_url}'}
-        except requests.exceptions.JSONDecodeError as json_decode_error:
-            self.errors.append(f'ERROR :: {json_decode_error}')
-            response = {"status": False, "status_code": 400, "content": f'ERROR :: {json_decode_error}'}
+        except requests.exceptions.JSONDecodeError:
+            response = False
         return response
 
 
@@ -242,14 +195,14 @@ class Rest():
         And use for creating and updating records.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json', 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'POST URL => {daemon_url}')
         self.logger.debug(f'POST DATA => {data}')
         try:
-            response = self._request('POST', daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -265,11 +218,11 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_delete'
         self.logger.debug(f'GET URL => {daemon_url}')
         try:
-            response = self._request('GET', daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -285,11 +238,11 @@ class Rest():
         And use for cloning the records.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json', 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}/{name}/_clone'
         self.logger.debug(f'Clone URL => {daemon_url}')
         try:
-            response = self._request('POST', daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -305,13 +258,13 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'Status URL => {daemon_url}')
         try:
-            call = self._request('GET', daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
+            call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
             response = call.status_code
         except requests.exceptions.SSLError as ssl_loop_error:
@@ -328,13 +281,13 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/{route}'
         if uri:
             daemon_url = f'{daemon_url}/{uri}'
         self.logger.debug(f'RAW URL => {daemon_url}')
         try:
-            response = self._request('GET', daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
@@ -345,17 +298,36 @@ class Rest():
 
     def post_raw(self, route=None, payload=None):
         """
-        This method is based on REST API's POST method.
+        This method is based on REST API's GET method.
+        It will fetch the records from Luna 2 Daemon
+        via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json', 'User-Agent': 'Luna2-web'}
+        headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/{route}'
-        self.logger.debug(f'POST RAW URL => {daemon_url}')
+        self.logger.debug(f'Clone URL => {daemon_url}')
         try:
-            response = self._request('POST', daemon_url, json=payload, stream=True, headers=headers, timeout=5, verify=self.security)
+            response = self.session.post(url=daemon_url, json=payload, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+        return response
+
+
+    def get_url_data(self, route=None, payload=None):
+        """
+        This method is based on REST API's GET method.
+        It will fetch the records from Luna 2 Daemon
+        via REST API's.
+        """
+        response = False
+        try:
+            response = self.session.get(url=route, stream=True, data=payload, timeout=5, verify=self.security)
+            self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+        except requests.exceptions.SSLError as ssl_loop_error:
+            self.errors.append(f'ERROR :: {ssl_loop_error}')
+        except requests.exceptions.ConnectionError:
+            self.errors.append(f'Request Timeout while {route}')
         return response
