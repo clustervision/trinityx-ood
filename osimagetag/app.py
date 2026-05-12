@@ -78,6 +78,12 @@ def home():
     return render_template("index.html", APP_URL=url["APP_URL"])
 
 
+@app.route('/api/v1/osimage', methods=['GET'])
+def api_v1_osimage_list():
+    """List OS images from daemon (same contract as trinityx-ood/osimage) for SPA pickers."""
+    return jsonify(Rest().get_data('osimage'))
+
+
 @app.route('/api/v1/osimagetag', methods=['GET'])
 def api_v1_osimagetag_list():
     return jsonify(Rest().get_data(TABLE))

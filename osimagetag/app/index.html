@@ -1,12 +1,12 @@
 
 <!doctype html>
 <!-- UI bundle: build from Documents/osimage-tag (npm run build with VITE_BASE_PATH for your OOD URL),
-     then copy dist/* into this app's app/assets/ on the controller before scp/rsync. -->
+     then merge dist/* into this app's app/assets/ (include dist/icons/ -> app/assets/icons/, e.g. icon-delete.png). -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OS Images :: Luna</title>
+    <title>OS Images tag:: Luna</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
     <script>
       window.APP_URL = "{{ APP_URL }}";
