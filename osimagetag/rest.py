@@ -32,6 +32,7 @@ __status__      = "Development"
 from configparser import RawConfigParser
 import os
 import requests
+from flask import jsonify
 from requests import Session
 from requests.adapters import HTTPAdapter
 import jwt
@@ -46,6 +47,36 @@ class Rest():
     All kind of REST Call methods.
     """
 
+    @staticmethod
+    def forward_daemon_response(resp):
+        """Map a requests.Response (or falsy) to a Flask response (same contract as osimage app)."""
+        if resp is False or resp is None:
+            return jsonify({
+                "status": False,
+                "content": {"message": "No response from daemon"},
+            }), 200
+        if not resp.content:
+            return '', resp.status_code
+        try:
+            body = resp.json()
+        except ValueError:
+            return jsonify({
+                "message": "Daemon returned non-JSON body",
+                "status_code": resp.status_code,
+                "body": (resp.text or "").strip(),
+            }), resp.status_code if not resp.ok else 200
+        return jsonify(body), resp.status_code
+
+    @staticmethod
+    def app_url(request):
+        """Base URL for the SPA (window.APP_URL). Uses script_root so OOD sub-URIs like /pun/sys/... work."""
+        root = (getattr(request, "host_url", None) or "").rstrip("/")
+        if not root:
+            root = f"{request.scheme}://{request.host}".rstrip("/")
+        sr = (getattr(request, "script_root", None) or request.environ.get("SCRIPT_NAME") or "").rstrip("/")
+        response = {"APP_URL": (root + sr) if sr else root}
+        return response
+
     def __init__(self):
         """
         Constructor - Before calling any REST API it will fetch the credentials and endpoint url
@@ -53,7 +84,15 @@ class Rest():
         """
         self.logger = Log.get_logger()
         self.get_ini_info()
-        self.security = True if self.security.lower() in ['y', 'yes', 'true']  else False
+        # VERIFY_CERTIFICATE may be missing in INI; get_option can return bool False — never call .lower() on that.
+        sec = self.security
+        if isinstance(sec, bool):
+            sec = 'true' if sec else ''
+        elif sec is None:
+            sec = ''
+        else:
+            sec = str(sec).strip()
+        self.security = True if sec.lower() in ['y', 'yes', 'true'] else False
         urllib3.disable_warnings()
         self.session = Session()
         self.retries = Retry(
@@ -63,7 +102,6 @@ class Rest():
             allowed_methods={'GET', 'POST'},
         )
         self.session.mount('https://', HTTPAdapter(max_retries=self.retries))
-
 
     def get_ini_info(self):
         """
@@ -110,6 +148,7 @@ class Rest():
         """
         This method will fetch a valid token for further use.
         """
+        response = False
         data = {'username': self.username, 'password': self.password}
         daemon_url = f'{self.daemon}/token'
         self.logger.debug(f'Token URL => {daemon_url}')
@@ -166,25 +205,57 @@ class Rest():
         via REST API's.
         """
         response = False
-        headers = {'x-access-tokens': self.get_token()}
+        if not getattr(self, 'daemon', None) or not str(self.daemon).strip().startswith(('http://', 'https://')):
+            hint = '; '.join((self.errors or [])[-8:]) or 'check [API] PROTOCOL, ENDPOINT in luna.ini'
+            return {
+                "status": False,
+                "content": {"message": f'Daemon base URL not configured ({INI_FILE}). {hint}'},
+            }
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
         self.logger.debug(f'GET URL => {daemon_url}')
+        call = None
         try:
+            tok = self.get_token()
+            if not tok:
+                return {
+                    "status": False,
+                    "content": {"message": "Luna token unavailable (check luna.ini API credentials and daemon /token)."},
+                }
+            headers = {'x-access-tokens': tok}
             call = self.session.get(url=daemon_url, params=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {call.content} & HTTP Code {call.status_code}')
             response_json = call.json()
-            if 'message' in response_json:
+            if isinstance(response_json, dict) and 'message' in response_json:
                 self.errors.append(response_json["message"])
-            else:
-                response = response_json
+            response = response_json
+            if (
+                isinstance(response, dict)
+                and 'message' in response
+                and 'status' not in response
+            ):
+                response = {"status": False, "content": {"message": str(response.get("message", ""))}}
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
+            response = {"status": False, "content": {"message": f'ERROR :: {ssl_loop_error}'}}
         except requests.exceptions.ConnectionError:
             self.errors.append(f'Request Timeout while {daemon_url}')
+            response = {"status": False, "content": {"message": f'Request Timeout while {daemon_url}'}}
         except requests.exceptions.JSONDecodeError:
-            response = False
+            preview = ""
+            code = "?"
+            if call is not None:
+                preview = (call.text or "")[:800]
+                code = call.status_code
+            self.errors.append(f'Non-JSON from daemon {daemon_url}: {preview[:200]}')
+            response = {
+                "status": False,
+                "content": {"message": f'Daemon returned non-JSON (HTTP {code}). {preview[:500]}'},
+            }
+        except Exception as ex:
+            self.errors.append(str(ex))
+            response = {"status": False, "content": {"message": f'GET {daemon_url} failed: {ex}'}}
         return response
 
 
