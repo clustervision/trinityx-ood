@@ -18,8 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-This File is a Main File Luna 2 OS Image.
-This file will create flask object and serve the all routes for on demand.
+Luna 2 OS Image Tag — Flask shell + thin /api/v1 proxy to Luna daemon (same layout as node/group/osimage).
 """
 
 __author__      = 'Sumit Sharma'
@@ -31,143 +30,111 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-from html import unescape
-from flask import Flask, json, request, render_template, flash, url_for, redirect
+from flask import Flask, jsonify, render_template, request
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
-from helper import Helper
-from presenter import Presenter
 from log import Log
 from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'osimagetag'
 TABLE_CAP = 'OS Image Tag'
-app = Flask(__name__, static_folder="static")
+
+app = Flask(
+    __name__,
+    static_folder="app/assets",
+    static_url_path="/app/assets",
+    template_folder="app",
+)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 
-if APP_STATE is False: 
+if APP_STATE is False:
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
 
 
 @app.before_request
 def validate_home_directory():
-    """
-    Validate the $HOME directory of the user before proceeding further.
-    """
-    if request.path.startswith('/static/'):
-        return
+    if request.path.startswith('/app/assets/'):
+        return None
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
-    file_check = os.path.isfile(INI_FILE)
-    if file_check is False:
+    if not os.path.isfile(INI_FILE):
         return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
-    read_check = os.access(INI_FILE, os.R_OK)
-    if read_check is False:
+    if not os.access(INI_FILE, os.R_OK):
         return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    """
-    This method will redirect to error Template Page with Error Message on 404.
-    """
     return render_template("error.html", table=TABLE_CAP, data="", error=f"ERROR :: {e}"), 200
 
 
 @app.route('/', methods=['GET'])
 def home():
-    """
-    This is the main method of application.
-    It will list all OS Images which is available with daemon.
-    """
-    data, error = "", ""
-    table_data = Rest().get_data("osimagetag")
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config']["osimagetag"]
-        raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data("osimagetag", raw_data)
-        data = Presenter().show_table(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'No {TABLE_CAP} Available at this time.'
-    return render_template("inventory.html", table=TABLE_CAP, data=data, error=error)
+    url = Rest.app_url(request)
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-@app.route('/show/<string:osimage>', methods=['GET', 'POST'])
-def show(osimage=None):
-    """
-    This Method will show a specific record.
-    """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE, osimage)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE]
-        raw_data = Helper().prepare_json(raw_data)
-        fields, name,  rows  = Helper().filter_data_col(TABLE, raw_data)
-        data = Presenter().show_table_col_more_fields(fields, name, rows)
-        data = unescape(data)
-    else:
-        error = f'{osimage} From {TABLE_CAP} is Not available at this time'
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        request_data = {'config': {"osimage": {payload['osimage']: {"tag": payload['tag']}}}}
-        response = Rest().post_data("osimage", f"{payload['osimage']}/tag", request_data)
-        LOGGER.info(f'{response.status_code} {response.content}')
-        if response.status_code == 204:
-            flash(f'OS Image Tag {payload["tag"]}, added successfully on {payload["osimage"]}.', "success")
-            return redirect(url_for('show', osimage=payload['osimage']), code=302)
-    return render_template("info.html", table=TABLE_CAP, data=data, error=error, osimage=osimage, record=osimage)
+@app.route('/api/v1/osimage', methods=['GET'])
+def api_v1_osimage_list():
+    """List OS images from daemon (same contract as trinityx-ood/osimage) for SPA pickers."""
+    return jsonify(Rest().get_data('osimage'))
 
 
-@app.route('/delete/<string:osimage>/<string:tag>', methods=['GET'])
-def delete(osimage=None, tag=None):
-    """
-    This Method will delete a requested record.
-    """
+@app.route('/api/v1/osimagetag', methods=['GET'])
+def api_v1_osimagetag_list():
+    return jsonify(Rest().get_data(TABLE))
+
+
+@app.route('/api/v1/osimagetag/<string:name>', methods=['GET'])
+def api_v1_osimagetag_one(name):
+    return jsonify(Rest().get_data(TABLE, name))
+
+
+@app.route('/api/v1/osimage/<string:osimage>/tag', methods=['POST'])
+def api_v1_osimage_tag_post(osimage):
+    body = request.get_json(silent=True)
+    if body is None:
+        return jsonify({"error": "Expected application/json body"}), 400
+    request_data = body.get('request_data')
+    if request_data is None:
+        return jsonify({"error": "JSON must include 'request_data'"}), 400
+    response = Rest().post_data("osimage", f"{osimage}/tag", request_data)
+    LOGGER.info('%s %s', getattr(response, 'status_code', response), getattr(response, 'content', ''))
+    return Rest.forward_daemon_response(response)
+
+
+@app.route(
+    '/api/v1/delete/osimage/<string:osimage>/osimagetag/<string:tag>',
+    methods=['DELETE'],
+)
+def api_v1_delete_osimagetag(osimage, tag):
     response = Rest().get_delete("osimage", f'{osimage}/osimagetag/{tag}')
-    LOGGER.info(f'{response.status_code} {response.content}')
-    if response.status_code == 204:
-        flash(f'OS Image Tag {tag}, deleted successfully from {osimage}.', "success")
-    else:
-        flash('ERROR :: Something went wrong!', "error")
-    return redirect(url_for('home'), code=302)
+    LOGGER.info('%s %s', response.status_code, response.content)
+    return Rest.forward_daemon_response(response)
 
 
-@app.route('/get_record/<string:record>', methods=['GET', 'POST'])
-def get_record(record=None):
-    """
-    This method will return the list of element in table for as option for select tag.
-    """
-    response = None
-    if request:
-        response = Model().get_record(TABLE, record)
-        response = json.dumps(response)
-    return response
+@app.route('/api/v1/get_record/<string:record>', methods=['GET'])
+def api_v1_get_record(record):
+    return jsonify(Model().get_record(TABLE, record))
 
 
-@app.route('/license', methods=['GET'])
-def license_info():
-    """
-    This Method will provide license in details.
-    """
-    response= 'LICENSE Information is not available at this moment.'
-    file_check = os.path.isfile(LICENSE)
-    read_check = os.access(LICENSE, os.R_OK)
-    if file_check and read_check:
-        with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.readlines()
-            response = '<br />'.join(response)
-    return response
+@app.route('/api/v1/license', methods=['GET'])
+def api_v1_license():
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding="utf-8") as f:
+            return jsonify({"license": f.read()})
+    return jsonify({
+        "license": None,
+        "error": "LICENSE Information is not available at this moment.",
+    })
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
+    if APP_STATE is False:
         app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
