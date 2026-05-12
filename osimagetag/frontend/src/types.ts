@@ -28,6 +28,13 @@ export interface OsimageTagConfigContent {
   }
 }
 
+/** Daemon list payload for `GET /api/v1/osimage` (read-only picker). */
+export interface OsimageNamesConfigContent {
+  config?: {
+    osimage?: Record<string, unknown>
+  }
+}
+
 export interface OsimageTagInventoryRow {
   osimage?: string
   name?: string

@@ -67,7 +67,10 @@ optgroup {
 
 .tx-inventory-page .tx-header-actions > .tx-btn-blue {
   font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
   font-weight: 400;
+  line-height: 1.35;
+  padding: 0.3rem 0.85rem;
 }
 
 .tx-inventory-page .tx-inline-search-label {
@@ -391,7 +394,7 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-col-actions {
   white-space: nowrap;
   width: 1%;
-  min-width: 6rem;
+  min-width: 3.5rem;
   overflow: visible;
 }
 
@@ -431,6 +434,11 @@ button.tx-name-link.tx-cell-ellipsis {
 
 .tx-icon-act:not(:disabled):hover {
   opacity: 0.75;
+}
+
+.tx-icon-delete .tx-delete-icon-img {
+  display: block;
+  vertical-align: middle;
 }
 
 .tx-icon-link {

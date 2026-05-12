@@ -5,8 +5,8 @@
     <div class="tx-header">
       <h2 class="tx-title">OS Image Tags</h2>
       <div class="tx-header-actions">
-        <button class="tx-btn tx-btn-help" title="Help" type="button" @click="helpOpen = true">?</button>
         <button type="button" class="tx-btn tx-btn-blue" @click="$emit('open-add')">Add Tag</button>
+        <button class="tx-btn tx-btn-help" title="Help" type="button" @click="helpOpen = true">?</button>
         <div class="tx-inline-search">
           <label class="tx-inline-search-label" for="txOsimageTagSearch">Search:</label>
           <input
@@ -75,19 +75,11 @@
               <div class="tx-action-icons">
                 <button
                   type="button"
-                  class="tx-icon-act tx-icon-link"
-                  title="Detail"
-                  @click="$emit('open-detail', row.name)"
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5376EA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                </button>
-                <button
-                  type="button"
-                  class="tx-icon-act tx-icon-danger"
-                  title="Delete"
+                  class="tx-icon-act tx-icon-delete"
+                  title="Delete tag"
                   @click="confirmDelete(row)"
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E74C3C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                  <img :src="deleteIconUrl" alt="" width="22" height="22" class="tx-delete-icon-img" />
                 </button>
               </div>
             </td>
@@ -128,9 +120,9 @@
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="help-title-osimagetag" class="tx-help-title">How to use this app</h2>
           <ul class="tx-help-list">
-            <li><strong>Add Tag</strong> — Opens the form to add a new tag to an OS image.</li>
+            <li><strong>Add Tag</strong> — Pick an OS image from the list (from Luna), enter a tag name, and save.</li>
             <li><strong>Detail</strong> — Click a tag name to see its details.</li>
-            <li><strong>Delete</strong> — Remove a tag from an OS image.</li>
+            <li><strong>Delete</strong> — Trash icon in Actions removes the tag from that OS image.</li>
             <li><strong>Search</strong> — Filter the table as you type.</li>
             <li><strong>Sort</strong> — Click a column header to sort; click again to reverse.</li>
           </ul>
@@ -142,7 +134,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimageTags, deleteOsimageTag } from '../api'
+import { fetchOsimageTags, deleteOsimageTag, appStaticAssetUrl } from '../api'
 
 defineEmits(['open-add', 'open-detail'])
 
@@ -169,6 +161,8 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const pageSizeOptions = [10, 25, 50, 100]
 const helpOpen = ref(false)
+
+const deleteIconUrl = computed(() => appStaticAssetUrl('icons/icon-delete.png'))
 
 const displayColumns = computed(() =>
   DISPLAY_FIELDS.map((f) => ({

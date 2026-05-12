@@ -6,6 +6,7 @@
  */
 import type {
   DaemonEnvelope,
+  OsimageNamesConfigContent,
   OsimageTagConfigContent,
   OsimageTagInventoryRow,
   OsimageTagListResult,
@@ -36,6 +37,29 @@ export const baseUrl = () => {
     return explicit
   }
   return ''
+}
+
+/**
+ * Absolute URL for files under Flask `static_folder` (`/app/assets/...`).
+ * Do not use Vite `public/` + `import.meta.env.BASE_URL` alone: with an OOD app URL
+ * like `/pun/sys/trinity_osimagetag` (no trailing slash), `./icons/...` resolves to
+ * `/pun/sys/icons/...` and 404s. This matches `url_for('static', filename=...)`.
+ */
+export function appStaticAssetUrl(pathUnderAssets: string): string {
+  const rel = String(pathUnderAssets || '').replace(/^\/+/, '')
+  const tail = rel ? `/app/assets/${rel}` : '/app/assets'
+  if (import.meta.env.DEV) {
+    return `/osimagetag-backend${tail}`
+  }
+  const b = String(baseUrl() || '').replace(/\/+$/, '')
+  if (b) return `${b}${tail}`
+  if (typeof window !== 'undefined' && window.location) {
+    const path = window.location.pathname.endsWith('/')
+      ? window.location.pathname
+      : `${window.location.pathname}/`
+    return `${window.location.origin}${path}app/assets/${rel}`
+  }
+  return `/app/assets/${rel}`
 }
 
 function apiPath(suffix: string) {
@@ -92,6 +116,38 @@ function inventoryRowsFromConfig(tagMap?: Record<string, OsimageTagInventoryRow>
     })
   }
   return tags
+}
+
+export async function fetchOsimageNames(): Promise<{ names: string[]; error: string }> {
+  let res: Response
+  try {
+    res = await fetch(apiPath('/api/v1/osimage'), { headers: { Accept: 'application/json' } })
+    let data: DaemonEnvelope<OsimageNamesConfigContent> | Record<string, unknown> = {}
+    try {
+      data = (await res.json()) as DaemonEnvelope<OsimageNamesConfigContent>
+    } catch {
+      /* ignore */
+    }
+    if (!res.ok) {
+      const msg =
+        (data && ((data as any).error || (data as any).message)) ||
+        `Failed to load OS images: HTTP ${res.status} ${res.statusText || ''}`.trim()
+      return { names: [], error: String(msg || `Failed to load OS images: HTTP ${res.status}`) }
+    }
+    const content = unwrapGetData<OsimageNamesConfigContent>(data, 'list osimage')
+    const map = content?.config?.osimage
+    const names: string[] = []
+    if (map && typeof map === 'object') {
+      for (const key of Object.keys(map)) {
+        if (key) names.push(key)
+      }
+    }
+    names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    return { names, error: '' }
+  } catch (e: any) {
+    const msg = String(e?.message || 'Network error')
+    return { names: [], error: msg }
+  }
 }
 
 export async function fetchOsimageTags(): Promise<OsimageTagListResult> {
