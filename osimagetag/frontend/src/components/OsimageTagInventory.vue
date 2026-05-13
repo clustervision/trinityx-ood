@@ -61,7 +61,7 @@
                   type="button"
                   class="tx-name-link tx-cell-ellipsis"
                   :title="String(row.name ?? '')"
-                  @click="$emit('open-detail', row.name)"
+                  @click="$emit('open-detail', row)"
                 >{{ row.name }}</button>
               </template>
               <template v-else-if="isEmpty(row[col.field])">
