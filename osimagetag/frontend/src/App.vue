@@ -17,9 +17,9 @@
     @saved="onSaved"
   />
   <TagDetailModal
-    v-if="detailOpen && detailName"
-    :key="detailName"
-    :tag-name="detailName"
+    v-if="detailOpen && detailRow"
+    :key="`${detailRow.osimage || ''}-${detailRow.name || ''}`"
+    :row="detailRow"
     @close="closeDetail"
   />
 </template>
@@ -35,16 +35,16 @@ import TagDetailModal from './components/TagDetailModal.vue'
 const inventoryRef = ref(null)
 const addOpen = ref(false)
 const detailOpen = ref(false)
-const detailName = ref('')
+const detailRow = ref(null)
 
-function openDetail(name) {
-  detailName.value = name || ''
-  detailOpen.value = true
+function openDetail(row) {
+  detailRow.value = row && typeof row === 'object' ? row : null
+  detailOpen.value = !!detailRow.value
 }
 
 function closeDetail() {
   detailOpen.value = false
-  detailName.value = ''
+  detailRow.value = null
 }
 
 function onSaved() {

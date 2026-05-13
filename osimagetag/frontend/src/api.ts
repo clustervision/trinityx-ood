@@ -10,6 +10,7 @@ import type {
   OsimageTagConfigContent,
   OsimageTagInventoryRow,
   OsimageTagListResult,
+  OsimageTagRecord,
 } from './types'
 
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
@@ -181,8 +182,20 @@ export async function fetchOsimageTags(): Promise<OsimageTagListResult> {
   }
 }
 
-export async function fetchOsimageTagDetail(name: string) {
-  const res = await fetch(apiPath(`/api/v1/osimagetag/${encodeURIComponent(name)}`), {
+/**
+ * Luna `GET /config/osimagetag/<name>` filters by **os image** name (`osimage.name`), not tag name.
+ * Pass the row's `osimage` and look up the record by tag `name` in the returned map.
+ */
+export async function fetchOsimageTagDetail(osimage: string, tagName: string) {
+  const img = String(osimage || '').trim()
+  const tag = String(tagName || '').trim()
+  if (!img) {
+    return { tag: {} as Record<string, unknown>, error: 'Missing OS image for tag lookup.' }
+  }
+  if (!tag) {
+    return { tag: {} as Record<string, unknown>, error: 'Missing tag name.' }
+  }
+  const res = await fetch(apiPath(`/api/v1/osimagetag/${encodeURIComponent(img)}`), {
     headers: { Accept: 'application/json' },
   })
   const data = await readJsonResponse<DaemonEnvelope<OsimageTagConfigContent>>(res)
@@ -192,8 +205,17 @@ export async function fetchOsimageTagDetail(name: string) {
   }
   try {
     const content = unwrapGetData<OsimageTagConfigContent>(data, 'detail')
-    const rec = content?.config?.[TABLE]?.[name]
-    if (!rec) return { tag: {} as Record<string, unknown>, error: `${name} not found` }
+    const tagMap = content?.config?.[TABLE]
+    if (!tagMap || typeof tagMap !== 'object') {
+      return { tag: {} as Record<string, unknown>, error: `No tag data returned for OS image "${img}".` }
+    }
+    let rec = tagMap[tag] as OsimageTagRecord | undefined
+    if (!rec) {
+      rec = Object.values(tagMap).find((r) => r && typeof r === 'object' && String(r.name) === tag) as
+        | OsimageTagRecord
+        | undefined
+    }
+    if (!rec) return { tag: {} as Record<string, unknown>, error: `Tag "${tag}" not found under "${img}".` }
     return { tag: { ...rec }, error: '' }
   } catch (e: any) {
     return {
