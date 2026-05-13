@@ -9,6 +9,7 @@
         @open-clone="openClone"
         @open-ospush="(n) => openPushFlow('ospush', n)"
         @open-osgrab="(n) => openPushFlow('osgrab', n)"
+        @open-delete="openDelete"
       />
     </main>
     <AppFooter />
@@ -47,6 +48,13 @@
     @close="closeClone"
     @saved="onCloneSaved"
   />
+  <DeleteNodeModal
+    v-if="deleteOpen && deleteNodeName"
+    :key="'delete:' + deleteNodeName"
+    :node-name="deleteNodeName"
+    @close="closeDelete"
+    @deleted="onDeleteSaved"
+  />
 </template>
 
 <script setup lang="ts">
@@ -59,6 +67,7 @@ import AddNodeModal from './components/AddNodeModal.vue'
 import EditNodeModal from './components/EditNodeModal.vue'
 import NodePushFlowModal from './components/NodePushFlowModal.vue'
 import CloneNodeModal from './components/CloneNodeModal.vue'
+import DeleteNodeModal from './components/DeleteNodeModal.vue'
 
 const inventoryRef = ref<InstanceType<typeof NodeInventory> | null>(null)
 const addOpen = ref(false)
@@ -69,6 +78,8 @@ const pushFlowType = ref('')
 const pushFlowNodeName = ref('')
 const cloneOpen = ref(false)
 const cloneSourceName = ref('')
+const deleteOpen = ref(false)
+const deleteNodeName = ref('')
 
 function openEdit(name: string) {
   editNodeName.value = name || ''
@@ -100,6 +111,21 @@ function openClone(name: string) {
 function closeClone() {
   cloneOpen.value = false
   cloneSourceName.value = ''
+}
+
+function openDelete(name: string) {
+  deleteNodeName.value = name || ''
+  deleteOpen.value = !!deleteNodeName.value
+}
+
+function closeDelete() {
+  deleteOpen.value = false
+  deleteNodeName.value = ''
+}
+
+function onDeleteSaved() {
+  closeDelete()
+  inventoryRef.value?.loadData?.()
 }
 
 function onCloneSaved() {

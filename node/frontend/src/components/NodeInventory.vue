@@ -221,7 +221,7 @@
                   type="button"
                   class="tx-icon-act tx-icon-danger"
                   title="Delete"
-                  @click="confirmDelete(row.name)"
+                  @click="$emit('open-delete', canonicalName(row.name))"
                 >
                   <img :src="actionIcons.delete" alt="Delete" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
@@ -282,7 +282,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchNodes, deleteNode } from '../api'
+import { fetchNodes } from '../api'
 import { actionIcons } from '../utils/assetImg'
 import { parseIpv4String } from '../utils/nextFreeIpv4'
 import type { NodeRow, NodeInventoryInterface, ColumnDef, InventoryIpv4Record } from '@/types'
@@ -293,6 +293,7 @@ defineEmits<{
   'open-clone': [name: string]
   'open-ospush': [name: string]
   'open-osgrab': [name: string]
+  'open-delete': [name: string]
 }>()
 
 const FIELD_LABELS: Record<string, string> = {
@@ -497,18 +498,6 @@ async function loadData() {
     errorMsg.value = (err as Error).message || 'Network error while loading nodes.'
   } finally {
     loading.value = false
-  }
-}
-
-async function confirmDelete(displayName: unknown) {
-  const c = canonicalName(displayName)
-  if (!c) return
-  if (!window.confirm(`Delete node ${c}?`)) return
-  try {
-    await deleteNode(c)
-    await loadData()
-  } catch (e) {
-    errorMsg.value = (e as Error).message || 'Delete failed.'
   }
 }
 
