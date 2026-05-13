@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,34 +23,54 @@ This file will create flask object and serve the all routes for on demand.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2026, Luna2 Project[OOD]'
 __license__     = 'GPL'
-__version__     = '2.0'
+__version__     = '3.0'
 __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
+__status__      = 'Production'
 
-import types
+
 import os
-from html import unescape
-from flask import Flask, json, request, render_template, flash, url_for, redirect
+from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
-from helper import Helper
-from presenter import Presenter
 from log import Log
-from model import Model
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'network'
 TABLE_CAP = 'Network'
-app = Flask(__name__, static_folder="static")
+API_VERSION = 'v1'
+
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 
-if APP_STATE is False: 
+if APP_STATE is False:
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
+
+
+@app.route(f"/api/{API_VERSION}/routes", methods=['GET'])
+def routes():
+    """
+    This method provide all the available routes in the application with method and function name.
+    """
+    response = []
+    for rule in app.url_map.iter_rules():
+        method = str(rule.methods).replace("'", "")
+        method = method.replace("}", "")
+        method = method.replace("{", "")
+        method = method.replace("HEAD", "")
+        method = method.replace("OPTIONS", "")
+        method = method.replace(", ", "")
+        route = f"https://{request.environ['HTTP_HOST']}{rule}"
+        if "static" != str(rule.endpoint):
+            response.append({"route": route, "function": str(rule.endpoint), "method": method})
+    LOGGER.debug(response)
+    return jsonify(response), 200
 
 
 @app.before_request
@@ -84,241 +104,119 @@ def home():
     """
     This is the main method of application. It will list all Network which is available with daemon.
     """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE]
-        raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data(TABLE, raw_data)
-        data = Presenter().show_table(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'No {TABLE_CAP} Available at this time.'
-    return render_template("inventory.html", table=TABLE_CAP, data=data, error=error)
+    url = Rest().app_url(request)
+    LOGGER.debug(url)
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-@app.route('/show/<string:record>', methods=['GET'])
-def show(record=None):
+@app.route(f"/api/{API_VERSION}/networks", methods=['GET'])
+def networks():
     """
-    This Method will show a specific record.
+    This API will return all the Networks which is available with daemon.
     """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE, record)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE][record]
-        raw_data = Helper().prepare_json(raw_data, False)
-        fields, rows  = Helper().filter_data_col(TABLE, raw_data)
-        data = Presenter().show_table_col(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'{record} From {TABLE_CAP} is Not available at this time'
-    return render_template("info.html", table=TABLE_CAP, data=data, error=error, record=record)
+    response = Rest().get_data(TABLE)
+    LOGGER.debug(response)
+    return jsonify(response), 200
 
 
-@app.route('/add', methods=['GET', 'POST'])
-def add():
+@app.route(f"/api/{API_VERSION}/add", methods=['POST'])
+def add_record():
     """
     This Method will add a requested record.
     """
-    page = types.SimpleNamespace()
-    page.name = f"Add New {TABLE_CAP}"
-    network_list = Model().get_list_options('network')
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload["non_authoritative"] = "yes" if 'non_authoritative' in payload else "no"
-        payload["dhcp"] = "yes" if 'dhcp' in payload else "no"
-        payload["dhcp_nodes_in_pool"] = "yes" if 'dhcp_nodes_in_pool' in payload else "no"
-        table_data = Rest().get_data(TABLE, payload['name'])
-        if table_data:
-            if payload['name'] in table_data['config'][TABLE]:
-                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
-                flash(error, "error")
-                return redirect(url_for('add'), code=302)
-        payload = Helper().prepare_payload(payload)
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info("%s %s", response.status_code, response.content)
-        if response.status_code == 201:
-            flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
-            return redirect(url_for('home'), code=302)
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-            return redirect(url_for('add'), code=302)
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "status_code": 400, "message": "No JSON payload received"}), 400
+
+    name = next(iter(request_data["config"][TABLE]))
+    response = Rest().post_data(TABLE, name, request_data, action="add")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/update", methods=['PUT'])
+def update_record():
+    """
+    This Method will update a requested record.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "status_code": 400, "message": "No JSON payload received"}), 400
+
+    name = next(iter(request_data["config"][TABLE]))
+    response = Rest().post_data(TABLE, name, request_data, action="update")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/rename", methods=['PATCH'])
+def rename_record():
+    """
+    This method will rename the requested record.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "message": "No JSON payload received"}), 400
+
+    record = next(iter(request_data["config"][TABLE]))
+    newname = request_data["config"][TABLE][record].get("newnetname", "")
+    if record and newname:
+        response = Rest().post_data(TABLE, record, request_data, action="rename")
+        LOGGER.debug(response)
+        return jsonify(response), 200
     else:
-        return render_template("add.html", table=TABLE_CAP, network_list=network_list, page=page)
+        return jsonify({"status": False, "status_code": 400, "content": "ERROR :: Record name and new name must be provided."}), 400
 
 
-@app.route('/rename/<string:record>', methods=['GET', 'POST'])
-def rename(record=None):
-    """
-    This method will Rename the Network.
-    """
-    data = {}
-    if request.method == "POST":
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload['name'] = payload['name']
-        payload['newnetname'] = payload['newname']
-        del payload['newname']
-        response = Helper().update_record(TABLE, payload)
-        LOGGER.info("%s %s", response.status_code, response.content)
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('rename', record=payload['newnetname']), code=302)
-    elif request.method == 'GET':
-        table_data = Rest().get_data(TABLE, record)
-        LOGGER.info(table_data)
-        if table_data:
-            raw_data = table_data['config'][TABLE][record]
-            data = {'name': raw_data['name'], 'newname': ''}
-    return render_template("rename.html", table=TABLE_CAP, data=data)
-
-
-@app.route('/edit/<string:record>', methods=['GET', 'POST'])
-def edit(record=None):
-    """
-    This Method will add a requested record.
-    """
-    data = {}
-    table_data = Rest().get_data(TABLE, record)
-    LOGGER.info(table_data)
-    if table_data:
-        data = table_data['config'][TABLE][record]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data, False)
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None]}
-        payload["non_authoritative"] = "yes" if 'non_authoritative' in payload else "no"
-        payload["dhcp"] = "yes" if 'dhcp' in payload else "no"
-        payload["dhcp_nodes_in_pool"] = "yes" if 'dhcp_nodes_in_pool' in payload else "no"
-        if payload["gateway"]  == "":
-            del payload["gateway"]
-        if payload["gateway_metric"]  == "":
-            del payload["gateway_metric"]
-        if payload["ntp_server"]  == "":
-            del payload["ntp_server"]
-        if payload["nameserver_ip"]  == "":
-            del payload["nameserver_ip"]
-        if payload["dhcp_range_begin"]  == "":
-            del payload["dhcp_range_begin"]
-        if payload["dhcp_range_end"]  == "":
-            del payload["dhcp_range_end"]
-        if payload["shared"]  == "":
-            del payload["shared"]
-        payload = Helper().prepare_payload(payload)
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info("%s %s", response.status_code, response.content)
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('edit', record=record), code=302)
-    else:
-        return render_template("edit.html", table=TABLE_CAP, record=record,  data=data)
-
-
-@app.route('/delete/<string:record>', methods=['GET'])
-def delete(record=None):
+@app.route(f"/api/{API_VERSION}/delete/<string:record>", methods=['DELETE'])
+def delete_record(record: str):
     """
     This Method will delete a requested record.
     """
     response = Rest().get_delete(TABLE, record)
-    if response.status_code == 204:
-        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
-    else:
-        flash('ERROR :: Something went wrong!', "error")
-    return redirect(url_for('home'), code=302)
+    LOGGER.info(response)
+    return jsonify(response), 200
 
 
-@app.route('/ipinfo/<string:record>', methods=['GET', 'POST'])
-def ipinfo(record=None):
+@app.route(f"/api/{API_VERSION}/ipinfo/<string:network>/<string:ipaddress>", methods=['GET'])
+def ipinfo(network: str, ipaddress: str):
+    """
+    This method will return the status of the provided IP address in the provided Network.
+    """
+    if not network or not ipaddress:
+        return jsonify({"status": False, "content": "network and ipaddress are required"}), 400
+
+    response = Rest().get_raw(uri = f"config/{TABLE}/{network}/{ipaddress}")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/nextip/<string:network>", methods=['GET'])
+def nextip(network: str):
     """
     This method will open the Login Page(First Page)
     """
-    if request.method == "POST":
-        uri = f'config/{TABLE}/{request.form["network"]}/{request.form["ipaddress"]}'
-        result = Rest().get_raw(uri)
-        LOGGER.info("%s %s", result.status_code, result.content)
-        result = result.json()
-        if 'message' in result:
-            flash(result['message'], "error")
-        else:
-            status = result['config']['network'][request.form["ipaddress"]]['status']
-            status = f'{request.form["ipaddress"]} is {status.capitalize()}.'
-            if 'Free' in status:
-                flash(status, "success")
-            else:
-                flash(status, "warning")
-    data = {}
-    table_data = Rest().get_data(TABLE, record)
-    LOGGER.info(table_data)
-    if table_data:
-        data = table_data['config'][TABLE][record]
-    network_list = Model().get_list_options('network', record)
-    if not network_list:
-        flash(f'No {TABLE_CAP} Available at this time.', "error")
-    return render_template("ip.html", table=TABLE_CAP, record = record, data=data, network_list=network_list)
+    response = Rest().get_raw(uri = f"config/{TABLE}/{network}/_nextfreeip")
+    LOGGER.info(response)
+    return jsonify(response), 200
 
 
-@app.route('/nextip/<string:record>', methods=['GET'])
-def nextip(record=None):
-    """
-    This method will open the Login Page(First Page)
-    """
-    uri = f'config/{TABLE}/{record}/_nextfreeip'
-    result = Rest().get_raw(uri)
-    LOGGER.info("%s %s", result.status_code, result.content)
-    result = result.json()
-    if 'message' in result:
-        flash(result['message'], "error")
-    else:
-        ipaddress = result['config'][TABLE][record]['nextip']
-        status = f'Network {record}, Next Available IP Address {ipaddress}.'
-        flash(status, "success")
-    return redirect(url_for('home'), code=302)
-
-
-@app.route('/taken/<string:record>', methods=['GET'])
-def taken(record=None):
+@app.route(f"/api/{API_VERSION}/reserve/<string:network>", methods=['GET'])
+def reserve(network: str):
     """
     This method will retrieve all reserved IP address for the provided Network.
     """
-    response = ""
-    data = []
-    reserved_ip = Rest().get_data(TABLE, f'{record}/_member')
-    if reserved_ip:
-        data = reserved_ip['config'][TABLE][record]['taken']
-        data = Helper().prepare_json(data, False)
-        num = 1
-        fields = ['S.No.', 'IP Address', 'Device Name']
-        rows = []
-        for detail in data:
-            new_row = [num, detail['ipaddress'], detail['device']]
-            rows.append(new_row)
-            num = num + 1
-        response = Presenter().show_table(fields, rows, True)
-    else:
-        response = f'{TABLE_CAP} {record} have no IP reserved at this time.'
-    response = json.dumps(response)
-    return response
+    response = Rest().get_raw(uri = f"config/{TABLE}/{network}/_member")
+    LOGGER.info(response)
+    return jsonify(response), 200
 
 
-@app.route('/license', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/license", methods=['GET'])
 def license_info():
     """
     This Method will provide license in details.
     """
-    response= 'LICENSE Information is not available at this moment.'
+    response = 'LICENSE Information is not available at this moment.'
     file_check = os.path.isfile(LICENSE)
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
@@ -330,6 +228,12 @@ def license_info():
 
 if __name__ == "__main__":
     if APP_STATE is False:
-        app.run(host='0.0.0.0', port=7755, debug=True)
+        CRT = '/trinity/local/etc/ssl/vmware-controller1.cluster.crt'
+        KEY = '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        if os.path.isfile(CRT) and os.path.isfile(KEY):
+            dev_context = (CRT, KEY)
+            app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
+        else:
+            app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()

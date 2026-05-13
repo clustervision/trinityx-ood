@@ -77,21 +77,10 @@ include group/app/assets/*
 
 include network
 include network/*
-include network/static
-include network/static/*
-include network/static/css
-include network/static/css/*
-include network/static/fonts
-include network/static/fonts/*
-include network/static/img
-include network/static/img/*
-include network/static/js
-include network/static/js/*
-include network/templates
-include network/templates/*
-include network/templates/layout
-include network/templates/layout/*
-
+include network/app
+include network/app/*
+include network/app/assets
+include network/app/assets/*
 
 include node
 include node/*
@@ -105,42 +94,17 @@ include osimage/*
 include osimage/addons
 include osimage/addons/*
 include osimage/addons/chroot_wrapper.sh
-include osimage/static
-include osimage/static/*
-include osimage/static/css
-include osimage/static/css/*
-include osimage/static/fonts
-include osimage/static/fonts/*
-include osimage/static/img
-include osimage/static/img/*
-include osimage/static/js
-include osimage/static/js/*
 include osimage/app
 include osimage/app/*
 include osimage/app/assets
 include osimage/app/assets/*
-recursive-include osimage/app/assets *
-include osimage/templates
-include osimage/templates/*
-include osimage/templates/layout
-include osimage/templates/layout/*
 
 include osimagetag
 include osimagetag/*
-include osimagetag/static
-include osimagetag/static/*
-include osimagetag/static/css
-include osimagetag/static/css/*
-include osimagetag/static/fonts
-include osimagetag/static/fonts/*
-include osimagetag/static/img
-include osimagetag/static/img/*
-include osimagetag/static/js
-include osimagetag/static/js/*
-include osimagetag/templates
-include osimagetag/templates/*
-include osimagetag/templates/layout
-include osimagetag/templates/layout/*
+include osimagetag/app
+include osimagetag/app/*
+include osimagetag/app/assets
+include osimagetag/app/assets/*
 
 include otherdev
 include otherdev/*
