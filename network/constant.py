@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 Constant File for the Luna Web.
 """
 __author__      = "Sumit Sharma"
-__copyright__   = "Copyright 2022, Luna2 Project [OOD]"
+__copyright__   = "Copyright 2026, Luna2 Project [OOD]"
 __license__     = "GPL"
-__version__     = "2.0"
+__version__     = "3.0"
 __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
@@ -40,38 +40,5 @@ else:
 
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
-LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript']
 APP_STATE = True # False for Development, True for Production
-
-
-def filter_columns(table:str) -> list[str]:
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'network': ['name', 'network', 'type', 'dhcp', 'dhcp_range_begin', 'dhcp_range_end']
-    }
-    response = list(static[table])
-    return response
-
-
-def sortby(table:str) -> list[str]:
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'network': [
-            'name', 'type', 'zone', 'non_authoritative', 'dhcp', 'network', 'gateway',
-            'nameserver_ip', 'dhcp_range_begin', 'dhcp_range_end', 'network_ipv6', 'gateway_ipv6',
-            'nameserver_ip_ipv6', 'dhcp_range_begin_ipv6', 'dhcp_range_end_ipv6', 'ntp_server',
-            'gateway_metric', 'dhcp_nodes_in_pool', 'shared', 'comment'
-        ]
-    }
-    response = list(static[table])
-    return response
