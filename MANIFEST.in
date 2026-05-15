@@ -19,23 +19,6 @@ include _base/static/jquery-3.2.1/*
 include _base/static/ood-bootstrap3-override-0.0.1/*
 include _base/templates/*
 
-include bmcsetup
-include bmcsetup/*
-include bmcsetup/static
-include bmcsetup/static/*
-include bmcsetup/static/css
-include bmcsetup/static/css/*
-include bmcsetup/static/fonts
-include bmcsetup/static/fonts/*
-include bmcsetup/static/img
-include bmcsetup/static/img/*
-include bmcsetup/static/js
-include bmcsetup/static/js/*
-include bmcsetup/templates
-include bmcsetup/templates/*
-include bmcsetup/templates/layout
-include bmcsetup/templates/layout/*
-
 include cluster
 include cluster/*
 include cluster/static
@@ -67,6 +50,13 @@ include control/templates
 include control/templates/*
 include control/templates/layout
 include control/templates/layout/*
+
+include bmcsetup
+include bmcsetup/*
+include bmcsetup/app
+include bmcsetup/app/*
+include bmcsetup/app/assets
+include bmcsetup/app/assets/*
 
 include group
 include group/*
@@ -108,20 +98,17 @@ include osimagetag/app/assets/*
 
 include otherdev
 include otherdev/*
-include otherdev/static
-include otherdev/static/*
-include otherdev/static/css
-include otherdev/static/css/*
-include otherdev/static/fonts
-include otherdev/static/fonts/*
-include otherdev/static/img
-include otherdev/static/img/*
-include otherdev/static/js
-include otherdev/static/js/*
-include otherdev/templates
-include otherdev/templates/*
-include otherdev/templates/layout
-include otherdev/templates/layout/*
+include otherdev/app
+include otherdev/app/*
+include otherdev/app/assets
+include otherdev/app/assets/*
+
+include switch
+include switch/*
+include switch/app
+include switch/app/*
+include switch/app/assets
+include switch/app/assets/*
 
 include secrets
 include secrets/*
@@ -157,22 +144,6 @@ include service/templates/*
 include service/templates/layout
 include service/templates/layout/*
 
-include switch
-include switch/*
-include switch/static
-include switch/static/*
-include switch/static/css
-include switch/static/css/*
-include switch/static/fonts
-include switch/static/fonts/*
-include switch/static/img
-include switch/static/img/*
-include switch/static/js
-include switch/static/js/*
-include switch/templates
-include switch/templates/*
-include switch/templates/layout
-include switch/templates/layout/*
 
 include monitor
 include monitor/*

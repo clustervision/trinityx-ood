@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,32 +23,54 @@ This file will create flask object and serve the all routes for on demand.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2026, Luna2 Project[OOD]'
 __license__     = 'GPL'
-__version__     = '2.0'
+__version__     = '3.0'
 __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
+__status__      = 'Production'
 
-import types
+
 import os
-from html import unescape
-from flask import Flask, json, request, render_template, flash, url_for, redirect
+from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
-from helper import Helper
-from presenter import Presenter
 from log import Log
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'bmcsetup'
 TABLE_CAP = 'BMC Setup'
-app = Flask(__name__, static_folder="static")
+API_VERSION = 'v1'
+
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-if APP_STATE is False: 
+
+if APP_STATE is False:
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
+
+
+@app.route(f"/api/{API_VERSION}/routes", methods=['GET'])
+def routes():
+    """
+    This method provide all the available routes in the application with method and function name.
+    """
+    response = []
+    for rule in app.url_map.iter_rules():
+        method = str(rule.methods).replace("'", "")
+        method = method.replace("}", "")
+        method = method.replace("{", "")
+        method = method.replace("HEAD", "")
+        method = method.replace("OPTIONS", "")
+        method = method.replace(", ", "")
+        route = f"https://{request.environ['HTTP_HOST']}{rule}"
+        if "static" != str(rule.endpoint):
+            response.append({"route": route, "function": str(rule.endpoint), "method": method})
+    LOGGER.debug(response)
+    return jsonify(response), 200
 
 
 @app.before_request
@@ -80,202 +102,113 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application.
-    It will list all BMC setups which is available with daemon.
+    This is the main method of application. It will list all BMC Setup which is available with daemon.
     """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE]
-        raw_data = Helper().prepare_json(raw_data, True)
-        fields, rows  = Helper().filter_data(TABLE, raw_data)
-        data = Presenter().show_table(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'No {TABLE_CAP} Available at this time.'
-    return render_template("inventory.html", table=TABLE_CAP, data=data, error=error)
+    url = Rest().app_url(request)
+    LOGGER.debug(url)
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-@app.route('/show/<string:record>', methods=['GET'])
-def show(record=None):
+@app.route(f"/api/{API_VERSION}/bmcsetups", methods=['GET'])
+def bmcsetups():
     """
-    This Method will show a specific record.
+    This API will return all the BMC Setups which is available with daemon.
     """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE, record)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE][record]
-        raw_data = Helper().prepare_json(raw_data)
-        fields, rows  = Helper().filter_data_col(TABLE, raw_data)
-        data = Presenter().show_table_col(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'{record} From {TABLE_CAP} is Not available at this time'
-    return render_template("info.html", table=TABLE_CAP, data = data, error = error, record=record)
+    response = Rest().get_data(TABLE)
+    LOGGER.debug(response)
+    return jsonify(response), 200
 
 
-@app.route('/add', methods=['GET', 'POST'])
-def add():
+@app.route(f"/api/{API_VERSION}/add", methods=['POST'])
+def add_record():
     """
     This Method will add a requested record.
     """
-    page = types.SimpleNamespace()
-    page.name = f"Add New {TABLE_CAP}"
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        table_data = Rest().get_data(TABLE, payload['name'])
-        if table_data:
-            if payload['name'] in table_data['config'][TABLE]:
-                error = f'HTTP ERROR :: {payload["name"]} is already present in the database.'
-                flash(error, "error")
-                return redirect(url_for('add'), code=302)
-        payload = Helper().prepare_payload(None, payload)
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{response.status_code} -> {response.content}')
-        if response.status_code == 201:
-            flash(f'{TABLE_CAP}, {payload["name"]} Created.', "success")
-            return redirect(url_for('home'), code=302)
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-            return redirect(url_for('add'), code=302)
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "status_code": 400, "message": "No JSON payload received"}), 400
+
+    name = next(iter(request_data["config"][TABLE]))
+    response = Rest().post_data(TABLE, name, request_data, action="add")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/update", methods=['PUT'])
+def update_record():
+    """
+    This Method will update a requested record.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "status_code": 400, "message": "No JSON payload received"}), 400
+
+    name = next(iter(request_data["config"][TABLE]))
+    response = Rest().post_data(TABLE, name, request_data, action="update")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/clone", methods=['POST'])
+def clone_record():
+    """
+    This Method will clone a requested record.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "status_code": 400, "message": "No JSON payload received"}), 400
+
+    name = next(iter(request_data["config"][TABLE]))
+    response = Rest().post_data(TABLE, name, request_data, action="clone")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/rename", methods=['PATCH'])
+def rename_record():
+    """
+    This method will rename the requested record.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "message": "No JSON payload received"}), 400
+
+    record = next(iter(request_data["config"][TABLE]))
+    newname = request_data["config"][TABLE][record].get("newbmcname", "")
+    if record and newname:
+        response = Rest().post_data(TABLE, record, request_data, action="rename")
+        LOGGER.debug(response)
+        return jsonify(response), 200
     else:
-        return render_template("add.html", table=TABLE_CAP, page=page)
+        return jsonify({"status": False, "status_code": 400, "content": "ERROR :: Record name and new name must be provided."}), 400
 
 
-@app.route('/rename/<string:record>', methods=['GET', 'POST'])
-def rename(record=None):
-    """
-    This method will Rename the BMC Setup.
-    """
-    data = {}
-    if request.method == "POST":
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload['name'] = payload['name']
-        payload['newbmcname'] = payload['newname']
-        del payload['newname']
-        response = Helper().update_record(TABLE, payload)
-        LOGGER.info(f'{response.status_code} {response.content}')
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('rename', record=payload['newbmcname']), code=302)
-    elif request.method == 'GET':
-        table_data = Rest().get_data(TABLE, record)
-        LOGGER.info(table_data)
-        if table_data:
-            raw_data = table_data['config'][TABLE][record]
-            data = {'name': raw_data['name'], 'newname': ''}
-    return render_template("rename.html", table=TABLE_CAP, data=data)
-
-
-@app.route('/edit/<string:record>', methods=['GET', 'POST'])
-def edit(record=None):
-    """
-    This Method will edit a requested record.
-    """
-    data = {}
-    table_data = Rest().get_data(TABLE, record)
-    LOGGER.info(table_data)
-    if table_data:
-        data = table_data['config'][TABLE][record]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None]}
-        payload = Helper().prepare_payload(None, payload)
-        request_data = {'config': {TABLE: {payload['name']: payload}}}
-        response = Rest().post_data(TABLE, payload['name'], request_data)
-        LOGGER.info(f'{response.status_code} -> {response.content}')
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP}, {payload["name"]} Updated.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('edit', record=record), code=302)
-    else:
-        return render_template("edit.html", table=TABLE_CAP, record=record, data=data)
-
-
-@app.route('/delete/<string:record>', methods=['GET'])
-def delete(record=None):
+@app.route(f"/api/{API_VERSION}/delete/<string:record>", methods=['DELETE'])
+def delete_record(record: str):
     """
     This Method will delete a requested record.
     """
     response = Rest().get_delete(TABLE, record)
-    LOGGER.info(f'{response.status_code} -> {response.content}')
-    if response.status_code == 204:
-        flash(f'{TABLE_CAP}, {record} is deleted.', "success")
-    else:
-        flash('ERROR :: Something went wrong!', "error")
-    return redirect(url_for('home'), code=302)
+    LOGGER.info(response)
+    return jsonify(response), 200
 
 
-@app.route('/clone/<string:record>', methods=['GET', 'POST'])
-def clone(record=None):
+@app.route(f"/api/{API_VERSION}/member/<string:bmcsetup>", methods=['GET'])
+def member(bmcsetup: str):
     """
-    This Method will clone a requested record.
+    This method will retrieve all reserved IP address for the provided BMC Setup.
     """
-    data = {}
-    table_data = Rest().get_data(TABLE, record)
-    LOGGER.info(table_data)
-    if table_data:
-        data = table_data['config'][TABLE][record]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None]}
-        response = Helper().clone_record(TABLE, payload)
-        LOGGER.info(f'{response.status_code} -> {response.content}')
-        if response.status_code == 201:
-            flash(f'{TABLE_CAP}, {data["name"]} Cloned as {payload["name"]}.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('clone', record=record), code=302)
-    else:
-        return render_template("clone.html", table=TABLE_CAP, record=record, data=data)
+    response = Rest().get_raw(uri = f"config/{TABLE}/{bmcsetup}/_member")
+    LOGGER.info(response)
+    return jsonify(response), 200
 
 
-@app.route('/member/<string:table>/<string:record>', methods=['GET'])
-def member(table=None, record=None):
-    """
-    This Method will provide all the member nodes for the requested record.
-    """
-    get_member = Rest().get_data(table, record+'/_member')
-    LOGGER.info(get_member)
-    if get_member:
-        data = get_member['config'][table][record]['members']
-        data = Helper().prepare_json(data)
-        num = 1
-        fields = ['S.No.', 'Nodes']
-        rows = []
-        for node in data:
-            new_row = [num, node]
-            rows.append(new_row)
-            num = num + 1
-        response = Presenter().show_table(fields, rows, True)
-    else:
-        response = f'{record} From {table.capitalize()} Not have any members at this time.'
-    response = json.dumps(response)
-    return response
-
-
-@app.route('/license', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/license", methods=['GET'])
 def license_info():
     """
     This Method will provide license in details.
     """
-    response= 'LICENSE Information is not available at this moment.'
+    response = 'LICENSE Information is not available at this moment.'
     file_check = os.path.isfile(LICENSE)
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
@@ -286,8 +219,13 @@ def license_info():
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
-        app.run(host='0.0.0.0', port=7755, debug=True)
+    if APP_STATE is False:
+        CRT = '/trinity/local/etc/ssl/vmware-controller1.cluster.crt'
+        KEY = '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        if os.path.isfile(CRT) and os.path.isfile(KEY):
+            dev_context = (CRT, KEY)
+            app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
+        else:
+            app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
-
