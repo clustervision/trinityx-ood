@@ -850,3 +850,32 @@ button.tx-name-link.tx-cell-ellipsis {
     justify-content: flex-end;
   }
 }
+
+/* Delete confirm modal (matches group app) */
+.tx-delete-confirm {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.tx-delete-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #111;
+  margin-bottom: 0.5rem;
+}
+
+.tx-delete-title strong {
+  font-weight: 700;
+}
+
+.tx-delete-desc {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.tx-delete-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}

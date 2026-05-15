@@ -77,7 +77,7 @@
                   type="button"
                   class="tx-icon-act tx-icon-delete"
                   title="Delete tag"
-                  @click="confirmDelete(row)"
+                  @click="$emit('open-delete', row)"
                 >
                   <img :src="deleteIconUrl" alt="" width="22" height="22" class="tx-delete-icon-img" />
                 </button>
@@ -134,9 +134,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimageTags, deleteOsimageTag, appStaticAssetUrl } from '../api'
+import { fetchOsimageTags, appStaticAssetUrl } from '../api'
 
-defineEmits(['open-add', 'open-detail'])
+defineEmits(['open-add', 'open-detail', 'open-delete'])
 
 const FIELD_LABELS = {
   osimage: 'OS IMAGE',
@@ -248,17 +248,6 @@ async function loadData() {
     errorMsg.value = String(err?.message || '').trim() || 'Network error while loading OS image tags.'
   } finally {
     loading.value = false
-  }
-}
-
-async function confirmDelete(row) {
-  if (!row?.osimage || !row?.name) return
-  if (!window.confirm(`Delete tag "${row.name}" from "${row.osimage}"?`)) return
-  try {
-    await deleteOsimageTag(row.osimage, row.name)
-    await loadData()
-  } catch (e) {
-    errorMsg.value = String(e?.message || '').trim() || 'Delete failed.'
   }
 }
 
