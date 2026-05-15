@@ -7,6 +7,7 @@
         @open-add="addOpen = true"
         @open-edit="openEdit"
         @open-clone="openClone"
+        @open-delete="openDelete"
       />
     </main>
     <AppFooter />
@@ -32,6 +33,13 @@
     @close="closeClone"
     @saved="onCloneSaved"
   />
+  <DeleteOsimageModal
+    v-if="deleteOpen && deleteImageName"
+    :key="'delete:' + deleteImageName"
+    :image-name="deleteImageName"
+    @close="closeDelete"
+    @deleted="onDeleteSaved"
+  />
 </template>
 
 <script setup>
@@ -42,6 +50,7 @@ import OsimageInventory from './components/OsimageInventory.vue'
 import AddOsimageModal from './components/AddOsimageModal.vue'
 import EditOsimageModal from './components/EditOsimageModal.vue'
 import CloneOsimageModal from './components/CloneOsimageModal.vue'
+import DeleteOsimageModal from './components/DeleteOsimageModal.vue'
 
 const inventoryRef = ref(null)
 const addOpen = ref(false)
@@ -49,6 +58,8 @@ const editOpen = ref(false)
 const editName = ref('')
 const cloneOpen = ref(false)
 const cloneSourceName = ref('')
+const deleteOpen = ref(false)
+const deleteImageName = ref('')
 
 function openEdit(name) {
   editName.value = name || ''
@@ -68,6 +79,21 @@ function openClone(name) {
 function closeClone() {
   cloneOpen.value = false
   cloneSourceName.value = ''
+}
+
+function openDelete(name) {
+  deleteImageName.value = name || ''
+  deleteOpen.value = !!deleteImageName.value
+}
+
+function closeDelete() {
+  deleteOpen.value = false
+  deleteImageName.value = ''
+}
+
+function onDeleteSaved() {
+  closeDelete()
+  inventoryRef.value?.loadData?.()
 }
 
 function onSaved() {
