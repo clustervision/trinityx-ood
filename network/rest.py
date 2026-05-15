@@ -197,26 +197,38 @@ class Rest():
         return self.response
 
 
-    def post_data(self, table: str="", name: str="", data: dict={}, action: str=""):
+    def post_data(self, table: str="", name: str="", data: dict | None = None, action: str=""):
         """
         This method call Luna 2 Daemon via REST API's POST method to create/update the records.
         """
+        if data is None:
+            data = {}
         headers = {'x-access-tokens': self.get_token(), 'Content-Type':'application/json'}
         daemon_url = f'{self.daemon}/config/{table}'
         if name:
             daemon_url = f'{daemon_url}/{name}'
+        if action == "clone":
+            daemon_url = f'{daemon_url}/_clone'
         self.logger.debug('POST URL => %s', daemon_url)
         self.logger.debug('POST DATA => %s', data)
         try:
             response = requests.post(url=daemon_url, json=data, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug('Response %s & HTTP Code %s', response.content, response.status_code)
-            if response.status_code == 201 and action == "add":
-                data = response.json()
-                self.response = {"status": True, "status_code": response.status_code, "content": data}
-            elif response.status_code == 204 and action == "update":
-                self.response = {"status": True, "status_code": response.status_code, "content": {"message": f"{table.capitalize()} {name} is updated successfully."}}
-            elif response.status_code == 204 and action == "rename":
-                self.response = {"status": True, "status_code": 200, "content": {"message": f"{table.capitalize()} {name} is renamed successfully."}}
+            if action == "add":
+                if response.status_code == 201:
+                    data = response.json()
+                    self.response = {"status": True, "status_code": response.status_code, "content": data}
+                elif response.status_code == 204:
+                    self.response = {"status": False, "status_code": 400, "content": {"message": f"{table.capitalize()} already have {name}."}}
+                else:
+                    data = response.json()
+                    self.response = {"status": False, "status_code": response.status_code, "content": data}
+            elif action in ["update", "rename"]:
+                if response.status_code == 204:
+                    self.response = {"status": True, "status_code": response.status_code, "content": {"message": f"{table.capitalize()} {name} is {action}d successfully."}}
+                else:
+                    data = response.json()
+                    self.response = {"status": False, "status_code": response.status_code, "content": data}
             else:
                 data = response.json()
                 self.response = {"status": False, "status_code": response.status_code, "content": data}
