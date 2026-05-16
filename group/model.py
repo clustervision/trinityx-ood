@@ -83,19 +83,6 @@ class Model():
         return response
 
 
-    def get_list_options_json(self, table=None, selected=None):
-        """
-        Returns a plain list of names for the given table, plus which one
-        is currently selected. No HTML.
-        """
-        names = []
-        get_list = Rest().get_data(table)
-        if get_list:
-            raw_data = get_list['config'][table]
-            names = list(raw_data.keys())
-        return {"options": names, "selected": selected}
-
-
     def get_name_list(self, table=None):
         """
         This method will open the Login Page(First Page)
