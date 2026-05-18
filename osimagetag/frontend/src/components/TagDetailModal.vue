@@ -19,6 +19,9 @@
                 <template v-if="value == null || value === ''">
                   <span class="tx-na-box">NONE</span>
                 </template>
+                <template v-else-if="key === 'osimage'">
+                  <span class="tx-cell-ellipsis" :title="osimageNameTitle(value)">{{ formatOsimageNameDisplay(value) }}</span>
+                </template>
                 <template v-else>{{ value }}</template>
               </td>
             </tr>
@@ -37,6 +40,7 @@
 import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { fetchOsimageTagDetail } from '../api'
+import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
 
 const props = defineProps({
   /** Inventory row: needs `osimage` and `name` (Luna detail API scopes by OS image, not tag name). */

@@ -60,9 +60,15 @@
                 <button
                   type="button"
                   class="tx-name-link tx-cell-ellipsis"
-                  :title="String(row.name ?? '')"
+                  :title="osimageNameTitle(row.name)"
                   @click="$emit('open-detail', row)"
-                >{{ row.name }}</button>
+                >{{ formatOsimageNameDisplay(row.name) }}</button>
+              </template>
+              <template v-else-if="col.field === 'osimage'">
+                <span
+                  class="tx-cell-ellipsis"
+                  :title="osimageNameTitle(row.osimage)"
+                >{{ formatOsimageNameDisplay(row.osimage) }}</span>
               </template>
               <template v-else-if="isEmpty(row[col.field])">
                 <span class="tx-na-box">NONE</span>
@@ -135,6 +141,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchOsimageTags, appStaticAssetUrl } from '../api'
+import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
 
 defineEmits(['open-add', 'open-detail', 'open-delete'])
 

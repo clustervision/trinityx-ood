@@ -26,7 +26,9 @@
               <option value="" disabled>
                 {{ osimageLoading ? 'Loading…' : 'Select an OS image…' }}
               </option>
-              <option v-for="n in osimageOptions" :key="n" :value="n">{{ n }}</option>
+              <option v-for="n in osimageOptions" :key="n" :value="n" :title="osimageNameTitle(n)">
+                {{ formatOsimageNameDisplay(n) }}
+              </option>
             </select>
           </div>
           <p
@@ -65,6 +67,7 @@
 import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { addTagToOsimage, fetchOsimageNames } from '../api'
+import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
 
 const emit = defineEmits(['close', 'saved'])
 
