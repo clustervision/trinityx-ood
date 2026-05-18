@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,32 +22,55 @@ This File is a Main File Luna 2 Cluster.
 This file will create flask object and serve the all routes for on demand.
 """
 
-__author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
-__license__     = 'GPL'
-__version__     = '2.0'
-__maintainer__  = 'Sumit Sharma'
-__email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
+__author__      = "Sumit Sharma"
+__copyright__   = "Copyright 2026, Luna2 Project [OOD]"
+__license__     = "GPL"
+__version__     = "3.0"
+__maintainer__  = "Sumit Sharma"
+__email__       = "sumit.sharma@clustervision.com"
+__status__      = "Production"
+
 
 import os
-from html import unescape
-from flask import Flask, request, render_template, flash, url_for, redirect
+from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
-from helper import Helper
-from presenter import Presenter
 from log import Log
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'cluster'
 TABLE_CAP = 'Cluster'
-app = Flask(__name__, static_folder="static")
+API_VERSION = 'v1'
+
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-if APP_STATE is False: 
+
+if APP_STATE is False:
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
+
+
+@app.route(f"/api/{API_VERSION}/routes", methods=['GET'])
+def routes():
+    """
+    This method provide all the available routes in the application with method and function name.
+    """
+    response = []
+    for rule in app.url_map.iter_rules():
+        method = str(rule.methods).replace("'", "")
+        method = method.replace("}", "")
+        method = method.replace("{", "")
+        method = method.replace("HEAD", "")
+        method = method.replace("OPTIONS", "")
+        method = method.replace(", ", "")
+        route = f"https://{request.environ['HTTP_HOST']}{rule}"
+        if "static" != str(rule.endpoint):
+            response.append({"route": route, "function": str(rule.endpoint), "method": method})
+    LOGGER.debug(response)
+    return jsonify(response), 200
 
 
 @app.before_request
@@ -79,90 +102,61 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application. It will Show Cluster.
+    This is the main method of application. It will list all Cluster which is available with daemon.
     """
-    data, error = "", ""
-    table_data = Rest().get_data(TABLE)
-    LOGGER.info(table_data)
-    if table_data:
-        raw_data = table_data['config'][TABLE]
-        fields, rows  = Helper().filter_data_col(TABLE, raw_data)
-        data = Presenter().show_table_col(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'No {TABLE_CAP} Available at this time.'
-    return render_template("info.html", table=TABLE_CAP, data=data, error=error)
+    url = Rest().app_url(request)
+    LOGGER.debug(url)
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-@app.route('/rename', methods=['GET', 'POST'])
-def rename():
+@app.route(f"/api/{API_VERSION}/cluster", methods=['GET'])
+def cluster():
     """
-    This method will Rename the Cluster.
+    This API will return the Cluster information.
     """
-    data = {}
-    if request.method == "POST":
-        payload = {k: v for k, v in request.form.items() if v not in [None, '']}
-        payload['name'] = payload['newname']
-        del payload['newname']
-        response = Helper().update_record(TABLE, payload)
-        LOGGER.info(f'{response.status_code} {response.content}')
-        if response.status_code == 204:
-            flash(f'{TABLE_CAP} renamed to {payload["name"]}.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('rename'), code=302)
-    elif request.method == 'GET':
-        table_data = Rest().get_data(TABLE)
-        LOGGER.info(table_data)
-        if table_data:
-            raw_data = table_data['config'][TABLE]
-            data = {'name': raw_data['name'], 'newname': ''}
-    return render_template("rename.html", table=TABLE_CAP, data=data)
+    response = Rest().get_data(TABLE)
+    LOGGER.debug(response)
+    return jsonify(response), 200
 
 
-@app.route('/edit', methods=['GET', 'POST'])
-def edit():
+@app.route(f"/api/{API_VERSION}/update", methods=['PUT'])
+def update_record():
     """
     This Method will update a requested record.
     """
-    data = {}
-    table_data = Rest().get_data(TABLE)
-    LOGGER.info(table_data)
-    if table_data:
-        data = table_data['config'][TABLE]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-    network_list = Helper().get_list_option_html('network')
-    if request.method == 'POST':
-        payload = {k: v for k, v in request.form.items() if v not in [None, '', 'None']}
-        payload["createnode_ondemand"] = True if 'createnode_ondemand' in payload else False
-        payload["createnode_macashost"] = True if 'createnode_macashost' in payload else False
-        payload["nextnode_discover"] = True if 'nextnode_discover' in payload else False
-        payload["security"] = True if 'security' in payload else False
-        payload["packing_bootpause"] = True if 'packing_bootpause' in payload else False
-        payload["debug"] = True if 'debug' in payload else False
-        cluster_name = payload['name']
-        del payload['name']
-        response = Helper().update_record(TABLE, payload)
-        LOGGER.info(f'{response.status_code} {response.content}')
-        if response.status_code == 204:
-            flash(f'{cluster_name} Updated.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "danger")
-        return redirect(url_for('edit'), code=302)
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "status_code": 400, "message": "No JSON payload received"}), 400
+
+    response = Rest().post_data(TABLE, "", request_data, action="update")
+    LOGGER.debug(response)
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/rename", methods=['PATCH'])
+def rename_record():
+    """
+    This method will rename the requested record.
+    """
+    request_data = request.get_json()
+    if not request_data:
+        return jsonify({"status": False, "message": "No JSON payload received"}), 400
+
+    newname = request_data["config"][TABLE].get("name", "")
+    if newname:
+        response = Rest().post_data(TABLE, "", request_data, action="rename")
+        LOGGER.debug(response)
+        return jsonify(response), 200
     else:
-        return render_template("edit.html", table=TABLE_CAP, record=TABLE,  data=data, network_list=network_list)
+        return jsonify({"status": False, "status_code": 400, "content": "ERROR :: Cluster new name must be provided."}), 400
 
 
-@app.route('/license', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/license", methods=['GET'])
 def license_info():
     """
     This Method will provide license in details.
     """
-    response= 'LICENSE Information is not available at this moment.'
+    response = 'LICENSE Information is not available at this moment.'
     file_check = os.path.isfile(LICENSE)
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
@@ -173,7 +167,13 @@ def license_info():
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
-        app.run(host='0.0.0.0', port=7755, debug=True)
+    if APP_STATE is False:
+        CRT = '/trinity/local/etc/ssl/vmware-controller1.cluster.crt'
+        KEY = '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
+        if os.path.isfile(CRT) and os.path.isfile(KEY):
+            dev_context = (CRT, KEY)
+            app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
+        else:
+            app.run(host='0.0.0.0', port=7755, debug=True)
     else:
         app.run()
