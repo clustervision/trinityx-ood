@@ -69,6 +69,15 @@ def validate_home_directory():
 
 @app.errorhandler(404)
 def page_not_found(e):
+    """
+    Static assets must not return text/html with 200 or browsers show broken images.
+    """
+    try:
+        p = request.path or ""
+    except RuntimeError:
+        p = ""
+    if p.startswith("/app/assets/"):
+        return "Not Found", 404, {"Content-Type": "text/plain; charset=utf-8"}
     return render_template("error.html", table=TABLE_CAP, data="", error=f"ERROR :: {e}"), 200
 
 
