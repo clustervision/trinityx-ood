@@ -504,9 +504,10 @@ button.tx-name-link {
 /* ---------- Actions column ---------- */
 .tx-col-actions {
   white-space: nowrap;
-  width: 1%;
+  width: 10%;
   min-width: 8.5rem;
   overflow: visible;
+  text-align: center;
 }
 
 .tx-inventory-table td:not(.tx-col-actions):not(.tx-iface-cell) {
@@ -527,12 +528,12 @@ button.tx-name-link {
 }
 
 .tx-action-icons {
-  display: inline-flex;
+  display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.75rem;
+  justify-content: space-evenly;
+  width: 100%;
   white-space: nowrap;
 }
 
