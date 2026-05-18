@@ -78,7 +78,7 @@ def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
     """
-    if request.path.startswith('/static/'):
+    if request.path.startswith('/app/assets/'):
         return
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
@@ -115,6 +115,7 @@ def cluster():
     This API will return the Cluster information.
     """
     response = Rest().get_data(TABLE)
+    # response = {"status": True, "status_code": 200, "content": {"config": {"cluster": {"name": "mycluster", "user": None, "domain_search": "cluster,ib,ipmi", "nameserver_ip": "10.141.255.252", "forwardserver_ip": "192.168.160.20", "ntp_server": "10.141.255.252", "technical_contacts": "root@localhost", "provision_method": "torrent", "provision_fallback": "http", "debug": False, "security": False, "packing_bootpause": True, "createnode_ondemand": True, "createnode_macashost": False, "nextnode_discover": False, "controller": {"hostname": "controller", "status": None, "vendor": None, "serverport": 7050, "ipaddress": "10.141.255.252", "luna_config": "/trinity/local/luna/daemon/config/luna.ini"}, "availability-one": {"hostname": "availability-one", "status": None, "vendor": None, "serverport": 7050, "ipaddress": "10.141.255.254", "luna_config": "/trinity/local/luna/daemon/config/luna.ini"}, "availability-two": {"hostname": "availability-two", "status": None, "vendor": None, "serverport": 7050, "ipaddress": "10.141.255.253", "luna_config": "/trinity/local/luna/daemon/config/luna.ini"}}}}}
     LOGGER.debug(response)
     return jsonify(response), 200
 
