@@ -10,6 +10,7 @@ import CloneGroupModal from '@/components/CloneGroupModal.vue'
 import PushOsModal from '@/components/PushOsModal.vue'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal.vue'
 import { fetchGroups } from '@/services/api'
+import { formatGroupNameDisplay, groupNameTitle } from '@/constants/groupName'
 import { punAppAssetUrl } from '@/utils/publicAssets'
 
 type ModalType = 'add' | 'edit' | 'clone' | 'ospush' | 'delete' | null
@@ -294,10 +295,10 @@ onMounted(loadData)
               <tr v-for="row in pagedRows" :key="row.name">
                 <!-- {{ row }} -->
                 <!-- {{ regularColumns }} -->
-                <td v-for="(col, cIdx) in regularColumns" :key="col.field" :class="{'tx-td-sep-blue': cIdx > 0, 'tx-td-sep-before-iface': hasInterfaces && cIdx === regularColumns.length - 1,}">
+                <td v-for="(col, cIdx) in regularColumns" :key="col.field" :class="{'tx-td-sep-blue': cIdx > 0, 'tx-td-sep-before-iface': hasInterfaces && cIdx === regularColumns.length - 1, 'tx-td-name': col.field === 'name',}">
                   <template v-if="col.field === 'name'">
-                    <button type="button" class="tx-name-link" :title="String(row.name ?? '')" @click="openModal('edit', canonicalName(row.name), row)">
-                      <span class="tx-cell-ellipsis">{{ row.name }}</span>
+                    <button type="button" class="tx-name-link" :title="groupNameTitle(row.name)" @click="openModal('edit', canonicalName(row.name), row)">
+                      <span class="tx-cell-ellipsis">{{ formatGroupNameDisplay(row.name) }}</span>
                     </button>
                   </template>
                   <template v-else-if="isEmpty((row as any)[col.field])">

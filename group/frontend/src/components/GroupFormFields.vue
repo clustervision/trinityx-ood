@@ -5,6 +5,7 @@ import TextEditorModal from './TextEditorModal.vue'
 import { punAppAssetUrl } from '@/utils/publicAssets'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
+import { GROUP_NAME_MAX_LENGTH } from '@/constants/groupName'
 
 const renameIcon = punAppAssetUrl('icons/icon-rename.png')
 
@@ -477,7 +478,7 @@ function validateName(value: string) {
       <div class="tx-add-col">
         <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
-          <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" maxlength="100" required />
+          <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
         </div>
         <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-with-rename': mode === 'edit' }">
           <span class="tx-label">Name:</span>
@@ -504,7 +505,7 @@ function validateName(value: string) {
                 v-model="nameDraft"
                 type="text"
                 class="tx-name-input-editing"
-                maxlength="100"
+                :maxlength="GROUP_NAME_MAX_LENGTH"
                 required
                 aria-label="Group name"
                 @keypress="noSpaces"
@@ -522,7 +523,7 @@ function validateName(value: string) {
               </button>
             </template>
           </div>
-          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" maxlength="100" required />
+          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
         </div>
         <template v-if="mode === 'clone'">
           <div class="tx-add-form-clone-roles-netboot tx-add-form-main">

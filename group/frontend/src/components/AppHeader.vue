@@ -13,7 +13,7 @@ defineProps({
     <ol class="tx-breadcrumb">
       <li class="tx-breadcrumb-logo">
         <a href="/">
-          <img :src="`${$props.app_url}/assets/static/img/logo.png`" alt="Logo" class="tx-navbar-logo" />
+          <img :src="`${$props.app_url}/app/assets/static/img/logo.png`" alt="Logo" class="tx-navbar-logo" />
         </a>
       </li>
       <li class="tx-breadcrumb-item">

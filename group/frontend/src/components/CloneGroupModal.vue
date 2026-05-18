@@ -8,6 +8,7 @@ import {
   fetchGroupResources,
   submitForm
 } from '@/services/api'
+import { formatGroupNameDisplay, groupNameTitle } from '@/constants/groupName'
 
 const props = defineProps({
   groupName: {
@@ -144,7 +145,7 @@ async function onSubmit() {
 
       <template v-if="!loading && !fatalError">
         <div class="tx-header">
-          <h2 class="tx-title">Clone group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
+          <h2 class="tx-title">Clone group <strong class="tx-title-highlight-name" :title="groupNameTitle(groupName)">{{ formatGroupNameDisplay(groupName) }}</strong></h2>
         </div>
 
         <GroupFormFields

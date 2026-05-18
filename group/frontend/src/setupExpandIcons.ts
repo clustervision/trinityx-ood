@@ -14,3 +14,7 @@ document.documentElement.style.setProperty(
   '--tx-icon-edit-orange',
   asCssUrl(punAppAssetUrl('icons/icon-edit-orange.png')),
 )
+document.documentElement.style.setProperty(
+  '--tx-icon-rename',
+  asCssUrl(punAppAssetUrl('icons/icon-rename.png')),
+)

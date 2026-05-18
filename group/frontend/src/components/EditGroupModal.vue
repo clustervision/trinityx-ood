@@ -4,6 +4,7 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 import BaseModal from './BaseModal.vue'
 import GroupFormFields from './GroupFormFields.vue'
 import { fetchGroupResources, submitForm } from '@/services/api'
+import { formatGroupNameDisplay, groupNameTitle } from '@/constants/groupName'
 
 const props = defineProps({
   groupName: { type: String, required: true },
@@ -166,7 +167,7 @@ async function onSubmit() {
       <p v-if="loading" class="tx-loading">Loading...</p>
       <template v-if="!loading && !fatalError">
         <div class="tx-header">
-          <h2 class="tx-title"> Update group <strong class="tx-title-highlight-name">{{ headerName }}</strong></h2>
+          <h2 class="tx-title"> Update group <strong class="tx-title-highlight-name" :title="groupNameTitle(headerName)">{{ formatGroupNameDisplay(headerName) }}</strong></h2>
         </div>
         <GroupFormFields
           ref="formRef"
