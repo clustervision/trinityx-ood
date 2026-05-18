@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { fetchGroupResources, submitForm, checkStatus } from '@/services/api'
 import type { OSPush } from '@/types/ospush'
+import { formatGroupNameDisplay, groupNameTitle } from '@/constants/groupName'
 const props = defineProps({
   groupName: { type: String, required: true },
   group: {
@@ -144,7 +145,7 @@ async function onSubmit() {
       <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
 
       <div class="tx-header">
-        <h2 class="tx-title">Push OS Image for Group <strong class="tx-title-highlight-name">{{ groupName }}</strong></h2>
+        <h2 class="tx-title">Push OS Image for Group <strong class="tx-title-highlight-name" :title="groupNameTitle(groupName)">{{ formatGroupNameDisplay(groupName) }}</strong></h2>
       </div>
 
       <form @submit.prevent="onSubmit">

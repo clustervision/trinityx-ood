@@ -249,9 +249,9 @@ optgroup {
 
 /* ---------- Table ---------- */
 .tx-inventory-table {
-  width: max-content;
+  width: 100%;
   min-width: 100%;
-  table-layout: auto;
+  table-layout: fixed;
   border-collapse: collapse;
   border-spacing: 0;
   font-size: 0.85rem;
@@ -372,9 +372,10 @@ optgroup {
   border: none;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.35;
   padding: 0.55rem 0.75rem;
   min-width: 0;
+  overflow: hidden;
 }
 
 /* Sortable headers: keep label + icon stable; clip long titles */
@@ -395,14 +396,21 @@ optgroup {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.35;
+}
+
+.tx-inventory-table td.tx-td-name {
+  width: 14%;
+  max-width: 14rem;
 }
 
 button.tx-name-link {
+  display: block;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   text-align: left;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* Alternating row backgrounds */
@@ -441,7 +449,7 @@ button.tx-name-link {
   padding: 0.45rem 0.75rem;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.35;
   color: #111111;
 }
 
@@ -455,19 +463,20 @@ button.tx-name-link {
   font-size: 18px;
   font-weight: 700;
   font-style: normal;
-  line-height: 1;
+  line-height: 1.35;
   color: #111111;
   cursor: pointer;
   text-align: left;
 }
 
-/* inline-block: underline (border) only as wide as the text, not the full cell */
+/* Underline only as wide as visible text; ellipsis when cell is narrow */
 .tx-name-link .tx-cell-ellipsis {
   display: inline-block;
   max-width: 100%;
   vertical-align: bottom;
   border-bottom: 1.5px solid currentColor;
-  padding-bottom: 1px;
+  padding-bottom: 2px;
+  line-height: 1.35;
 }
 
 .tx-name-link:hover {
@@ -478,9 +487,10 @@ button.tx-name-link {
 .tx-na-box {
   display: inline-block;
   min-width: 7rem;
-  padding: 0.25rem 0.55rem;
+  padding: 0.3rem 0.55rem 0.35rem;
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.35;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #AEAEAE;
@@ -488,6 +498,7 @@ button.tx-name-link {
   border: 2px solid #AEAEAE;
   border-radius: 4px;
   text-align: center;
+  vertical-align: middle;
 }
 
 /* ---------- Actions column ---------- */
@@ -841,12 +852,17 @@ button.tx-name-link {
 
 .tx-title-highlight-name {
   display: inline-block;
+  max-width: min(100%, 28rem);
   background: #fff;
   color: #321dff !important;
   font-weight: 700;
   padding: 0.12em 0.45em;
   border-radius: 4px;
   line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 .tx-group-form-fixed {
@@ -971,12 +987,29 @@ button.tx-name-link {
   min-width: 0;
 }
 
-.tx-field.tx-field-name-row .tx-btn-rename {
+.tx-btn-rename-icon {
   flex-shrink: 0;
+  width: 28px;
+  height: 28px;
   margin: 0 0.4rem 0 0.5rem;
-  padding: 0.25rem 0.55rem;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  background-image: var(--tx-icon-rename);
+  background-position: center;
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.tx-btn-rename-icon:hover {
+  background-color: rgba(83, 118, 234, 0.1);
+  background-image: var(--tx-icon-rename);
+  background-position: center;
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
 }
 
 .tx-field.tx-field-strong .tx-label {

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { deleteGroup } from '@/services/api'
+import { formatGroupNameDisplay, groupNameTitle } from '@/constants/groupName'
 
 const props = defineProps({
   groupName: { type: String, required: true },
@@ -39,7 +40,7 @@ async function onDelete() {
   <BaseModal size="small" @close="$emit('close')">
     <div class="tx-delete-confirm">
       <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-      <h3 class="tx-delete-title">Delete group <strong>{{ groupName }}</strong>?</h3>
+      <h3 class="tx-delete-title">Delete group <strong class="tx-title-highlight-name" :title="groupNameTitle(groupName)">{{ formatGroupNameDisplay(groupName) }}</strong>?</h3>
       <p class="tx-delete-desc">This action cannot be undone.</p>
       <div class="tx-delete-actions">
         <button type="button" class="tx-btn tx-btn-outline-blue" @click="$emit('close')">Cancel</button>

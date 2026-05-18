@@ -4,6 +4,7 @@ import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
+import { GROUP_NAME_MAX_LENGTH } from '@/constants/groupName'
 
 const props = defineProps({
   groupList: { type: Array as () => string[], required: true },
@@ -408,15 +409,15 @@ function validateName(value: string) {
       <div class="tx-add-col">
         <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
-          <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" maxlength="100" required />
+          <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
         </div>
         <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-row': mode === 'edit' }">
           <span class="tx-label">Name:</span>
           <div v-if="mode === 'edit'" class="tx-name-controls">
-            <input type="text" v-model="form.name" :readonly="!nameEditUnlocked" @keypress="noSpaces" maxlength="100" />
-            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-rename" @click="nameEditUnlocked = true">Rename</button>
+            <input type="text" v-model="form.name" :readonly="!nameEditUnlocked" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" />
+            <button type="button" class="tx-btn-rename-icon" aria-label="Rename" title="Rename" @click="nameEditUnlocked = true"></button>
           </div>
-          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" maxlength="100" required />
+          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
         </div>
         <template v-if="mode === 'clone'">
           <div class="tx-add-form-clone-roles-netboot tx-add-form-main">
