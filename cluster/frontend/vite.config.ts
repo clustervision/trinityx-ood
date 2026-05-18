@@ -1,0 +1,40 @@
+import { fileURLToPath, URL } from 'node:url'
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
+import vueDevTools from 'vite-plugin-vue-devtools'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    vueJsx(),
+    vueDevTools(),
+  ],
+  base: './',
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    },
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'index.js',  // Fixed name for JS file
+        chunkFileNames: 'index.js',  // Fixed name for chunk files
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name) {
+            // if (/\.(png|jpe?g|gif|svg)$/.test(assetInfo.name)) {
+            //   return 'logo.png';  // Fixed name for image files
+            // }
+            // if (/\.css$/.test(assetInfo.name)) {
+            //   return 'index.css';  // Fixed name for CSS files
+            // }
+          }
+          return '[name].[ext]';  // Default for other assets
+        },
+      },
+    },
+  },
+})

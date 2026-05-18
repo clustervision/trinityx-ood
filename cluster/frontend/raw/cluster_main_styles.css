@@ -1,0 +1,362 @@
+/* CSS Variables - Brand Colors */
+:root {
+    --cluster-blue: #5376EA;
+    --cluster-blue-light: #E6EEFF;
+    --cluster-bg-soft: #F5F8FF;
+    --cluster-dark: #303030;
+    --cluster-orange: #FF9A15;
+    --cluster-green: #67C67B;
+    --cluster-green-light: #D2FFD7;
+    --cluster-gray: #AEAEAE;
+    --cluster-gray-light: #E8E8E8;
+}
+
+/* Reset and Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Geist', -apple-system, 'Roboto', 'Helvetica', sans-serif;
+    background-color: var(--cluster-dark);
+    color: #303030;
+    line-height: 1.5;
+}
+
+/* Container */
+.container {
+    min-height: 100vh;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--cluster-blue-light);
+    width: 100%;
+    max-height: 100vh;
+    overflow-y: auto;
+}
+
+/* Header */
+.header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 39px 24px 30px 24px;
+    border-bottom: 1px solid var(--cluster-blue-light);
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--cluster-blue);
+    margin: 0;
+}
+
+.buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 2px solid;
+    font-size: 18px;
+    font-weight: 500;
+    font-family: 'Geist', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.btn-primary {
+    background-color: var(--cluster-blue);
+    border-color: var(--cluster-blue);
+    color: white;
+}
+
+.btn-orange {
+    background-color: var(--cluster-orange);
+    border-color: var(--cluster-orange);
+    color: white;
+    min-width: 51px;
+    padding: 10px 15px;
+}
+
+/* Form Content */
+.form-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Form Row */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-row-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.form-row-two-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (min-width: 1280px) {
+    .form-row-two-col {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+/* Fields */
+.field {
+    display: flex;
+    align-items: stretch;
+    height: 43px;
+    min-width: 0;
+}
+
+.field.flex-1 {
+    flex: 1;
+    min-width: 280px;
+}
+
+.field-name {
+    width: 100%;
+    flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+    .field-name {
+        width: 450px;
+    }
+}
+
+.field-label {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px 10px 20px;
+    border-radius: 10px 0 0 10px;
+    border: 2px solid var(--cluster-blue-light);
+    background-color: var(--cluster-blue-light);
+    color: var(--cluster-blue);
+    font-size: 18px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.field-input {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 0 10px 10px 0;
+    border: 2px solid var(--cluster-blue-light);
+    border-left: none;
+    background-color: white;
+    color: #303030;
+    font-size: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Checkbox Field */
+.field-checkbox {
+    display: flex;
+    align-items: stretch;
+    height: 43px;
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    gap: 0;
+}
+
+.checkbox-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    border-radius: 0 10px 10px 0;
+    border: 2px solid var(--cluster-blue-light);
+    border-left: none;
+    background-color: white;
+    flex-shrink: 0;
+}
+
+.checkbox-inner {
+    width: 19px;
+    height: 19px;
+    border-radius: 4px;
+    background-color: var(--cluster-blue);
+    display: block;
+}
+
+/* Bool Field */
+.field-bool {
+    display: flex;
+    align-items: stretch;
+    height: 43px;
+    flex-shrink: 0;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    gap: 0;
+}
+
+.field-bool .field-label {
+    border-radius: 10px 0 0 10px;
+}
+
+.field-bool .badge {
+    border-radius: 0 10px 10px 0;
+    border-left: none;
+    width: 84px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 2px solid;
+    font-size: 18px;
+    font-weight: 500;
+    font-family: 'Geist', sans-serif;
+    width: 69px;
+    height: 31px;
+    min-width: 69px;
+}
+
+.badge-true {
+    border-color: var(--cluster-green);
+    background-color: var(--cluster-green-light);
+    color: var(--cluster-green);
+}
+
+.badge-none {
+    border-color: var(--cluster-gray);
+    background-color: var(--cluster-gray-light);
+    color: var(--cluster-gray);
+}
+
+/* Inline Row */
+.inline-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Controller Box */
+.controller-box {
+    width: 100%;
+    border-radius: 10px;
+    border: 2px solid var(--cluster-blue-light);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+@media (min-width: 1280px) {
+    .controller-box {
+        width: 450px;
+    }
+}
+
+.controller-header {
+    background-color: var(--cluster-blue-light);
+    padding: 10px 22px;
+    color: var(--cluster-blue);
+    font-size: 18px;
+    font-weight: 500;
+    font-family: 'Geist', sans-serif;
+}
+
+.controller-content {
+    background-color: white;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 351px;
+}
+
+.controller-content p {
+    color: #303030;
+    font-size: 18px;
+    font-family: 'Geist', sans-serif;
+    word-break: break-all;
+}
+
+/* Right Fields */
+.right-fields {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .header {
+        padding: 24px 16px 20px 16px;
+    }
+
+    .form-content {
+        padding: 16px;
+    }
+
+    .field.flex-1 {
+        min-width: 200px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+
+    .btn {
+        font-size: 16px;
+        padding: 8px 16px;
+    }
+}
