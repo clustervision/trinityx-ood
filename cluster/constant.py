@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@
 Constant File for the Luna Web.
 """
 __author__      = "Sumit Sharma"
-__copyright__   = "Copyright 2022, Luna2 Project [OOD]"
+__copyright__   = "Copyright 2026, Luna2 Project [OOD]"
 __license__     = "GPL"
-__version__     = "2.0"
+__version__     = "3.0"
 __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
-__status__      = "Development"
-
+__status__      = "Production"
 
 import os
 
@@ -39,21 +38,7 @@ else:
         "error": f"The home directory '{home_dir}' does not exist or lacks read/write permissions."
     }
 
-INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
-LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
-LOG_DIR = '/var/log/luna'
-LOG_FILE = '/var/log/luna/luna2-web.log'
-APP_STATE = True  # False for Development, True for Production
-
-
-def sortby() -> list[str]:
-    """
-    This method remove the unnecessary fields from the dataset.
-    """
-    response = [
-        'name', 'controller', 'technical_contacts', 'provision_method', 'provision_fallback',
-        'nameserver_ip', 'forwardserver_ip', 'domain_search', 'ntp_server', 'security',
-        'nextnode_discover', 'createnode_ondemand', 'createnode_macashost', 'packing_bootpause',
-        'user', 'debug'
-    ]
-    return response
+INI_FILE = "/trinity/local/ondemand/3.0/config/luna.ini"
+LICENSE = "/trinity/local/ondemand/3.0/LICENSE.txt"
+LOG_FILE = "/var/log/luna/luna2-web.log"
+APP_STATE = True # False for Development, True for Production
