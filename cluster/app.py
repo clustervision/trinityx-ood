@@ -18,7 +18,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-This File is a Main File Luna 2 BMC Setup.
+This File is a Main File Luna 2 Cluster.
 This file will create flask object and serve the all routes for on demand.
 """
 
@@ -102,7 +102,7 @@ def page_not_found(e):
 @app.route('/', methods=['GET'])
 def home():
     """
-    This is the main method of application. It will list all BMC Setup which is available with daemon.
+    This is the main method of application. It will list all Cluster which is available with daemon.
     """
     url = Rest().app_url(request)
     LOGGER.debug(url)
@@ -112,7 +112,7 @@ def home():
 @app.route(f"/api/{API_VERSION}/cluster", methods=['GET'])
 def cluster():
     """
-    This API will return all the BMC Setups which is available with daemon.
+    This API will return the Cluster information.
     """
     response = Rest().get_data(TABLE)
     LOGGER.debug(response)
