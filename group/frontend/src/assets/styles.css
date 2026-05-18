@@ -974,16 +974,16 @@ button.tx-name-link {
   border: 2px solid #5376EA;
 }
 
-.tx-field.tx-field-name-row .tx-name-controls {
-  display: inline-flex;
+/* Edit group: name field + rename icon (match Document/node) */
+.tx-field-name-with-rename .tx-name-input-wrap {
+  display: flex;
   align-items: center;
   flex: 1;
   min-width: 0;
-  align-self: stretch;
   background: #fff;
 }
 
-.tx-field.tx-field-name-row .tx-name-controls > input {
+.tx-field-name-with-rename .tx-name-input-readonly {
   flex: 1;
   min-width: 0;
 }
