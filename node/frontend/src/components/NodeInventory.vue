@@ -122,15 +122,19 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis"
-                  :title="String(row.name ?? '')"
+                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="displayNameTitle(row.name)"
                   @click="$emit('open-edit', canonicalName(row.name))"
-                >{{ row.name }}</button>
+                >{{ formatDisplayName(row.name) }}</button>
               </template>
               <template v-else-if="col.field === 'osimage'">
                 <span v-if="isInvalidOs(row)" class="tx-os-invalid">!!Invalid!!</span>
                 <span v-else-if="isEmpty(row[col.field])" class="tx-na-box">NOT AVAILABLE</span>
-                <span v-else class="tx-cell-ellipsis" :title="cellText(row[col.field])">{{ cellText(row[col.field]) }}</span>
+                <span
+                  v-else
+                  class="tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="displayNameTitle(row[col.field])"
+                >{{ formatDisplayName(row[col.field]) }}</span>
               </template>
               <template v-else-if="col.field === 'setupbmc'">
                 <span :class="setupbmcClass(row[col.field])">{{ setupbmcLabel(row[col.field]) }}</span>
@@ -283,6 +287,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchNodes } from '../api'
+import { displayNameTitle, formatDisplayName } from '../constants/displayName'
 import { actionIcons } from '../utils/assetImg'
 import { parseIpv4String } from '../utils/nextFreeIpv4'
 import type { NodeRow, NodeInventoryInterface, ColumnDef, InventoryIpv4Record } from '@/types'

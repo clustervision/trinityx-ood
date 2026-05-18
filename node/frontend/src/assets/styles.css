@@ -377,8 +377,8 @@ optgroup {
   border: none;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
-  padding: 0.55rem 0.75rem;
+  line-height: 1.25;
+  padding: 0.6rem 0.75rem;
   min-width: 0;
   text-align: center;
 }
@@ -413,16 +413,24 @@ optgroup {
   white-space: nowrap;
 }
 
-button.tx-name-link.tx-cell-ellipsis {
+button.tx-name-link.tx-cell-ellipsis,
+button.tx-name-link.tx-cell-truncate-js {
   width: 100%;
   text-align: center;
-  /* .tx-cell-ellipsis uses overflow:hidden which clips text-decoration underline */
   overflow: visible;
   text-overflow: clip;
+  line-height: 1.25;
 }
 
 .tx-inventory-table .tx-cell-ellipsis {
   text-align: center;
+}
+
+/* JS-truncated labels: do not clip descenders (g, p, y) with overflow:hidden */
+.tx-inventory-table .tx-cell-truncate-js {
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
 }
 
 /* Alternating row backgrounds (Interface columns use row-level orange stripes below, not blue/white) */
@@ -505,7 +513,7 @@ button.tx-name-link.tx-cell-ellipsis {
   font-size: 18px;
   font-weight: 400;
   font-style: normal;
-  line-height: 1;
+  line-height: 1.25;
   color: #111111;
   text-decoration: underline;
   text-decoration-style: solid;
