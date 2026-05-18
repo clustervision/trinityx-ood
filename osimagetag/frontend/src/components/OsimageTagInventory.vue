@@ -59,14 +59,14 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis"
-                  :title="osimageNameTitle(row.name)"
+                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="tagNameTitle(row.name)"
                   @click="$emit('open-detail', row)"
-                >{{ formatOsimageNameDisplay(row.name) }}</button>
+                >{{ formatTagNameDisplay(row.name) }}</button>
               </template>
               <template v-else-if="col.field === 'osimage'">
                 <span
-                  class="tx-cell-ellipsis"
+                  class="tx-cell-ellipsis tx-cell-truncate-js"
                   :title="osimageNameTitle(row.osimage)"
                 >{{ formatOsimageNameDisplay(row.osimage) }}</span>
               </template>
@@ -142,6 +142,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { fetchOsimageTags, appStaticAssetUrl } from '../api'
 import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
+import { formatTagNameDisplay, tagNameTitle } from '../constants/tagName'
 
 defineEmits(['open-add', 'open-detail', 'open-delete'])
 

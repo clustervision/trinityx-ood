@@ -335,13 +335,19 @@ optgroup {
   text-align: center;
 }
 
-button.tx-name-link.tx-cell-ellipsis {
+.tx-inventory-table .tx-cell-truncate-js {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+button.tx-name-link.tx-cell-ellipsis,
+button.tx-name-link.tx-cell-truncate-js {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* Alternating row backgrounds */

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { deleteOsimageTag } from '../api'
 import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
+import { formatTagNameDisplay, tagNameTitle } from '../constants/tagName'
 
 const props = defineProps({
   osimage: { type: String, required: true },
@@ -35,7 +36,9 @@ async function onDelete() {
     <div class="tx-delete-confirm">
       <div v-if="errorMsg" class="alert-danger" role="alert">{{ errorMsg }}</div>
       <h3 class="tx-delete-title">
-        Delete tag <strong>{{ tagName }}</strong> from OS image
+        Delete tag
+        <strong :title="tagNameTitle(tagName)">{{ formatTagNameDisplay(tagName) }}</strong>
+        from OS image
         <strong :title="osimageNameTitle(osimage)">{{ formatOsimageNameDisplay(osimage) }}</strong>?
       </h3>
       <p class="tx-delete-desc">This action cannot be undone.</p>

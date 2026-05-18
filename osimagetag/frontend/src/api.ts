@@ -4,6 +4,8 @@
  *
  * Backend: trinityx-ood/osimagetag Flask JSON API (thin daemon proxy).
  */
+import { validateOsimageNameInput } from './constants/osimageName'
+import { validateTagNameInput } from './constants/tagName'
 import type {
   DaemonEnvelope,
   OsimageNamesConfigContent,
@@ -252,13 +254,14 @@ async function postJson(url: string, body: Record<string, any>) {
 }
 
 export async function deleteOsimageTag(osimage: string, tag: string) {
-  const res = await fetch(
-    apiPath(`/api/v1/delete/osimage/${encodeURIComponent(osimage)}/osimagetag/${encodeURIComponent(tag)}`),
-    {
-      method: 'DELETE',
-      headers: { Accept: 'application/json' },
-    }
-  )
+  const res = await fetch(apiPath('/api/v1/osimagetag/delete'), {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      osimage: String(osimage ?? '').trim(),
+      tag: String(tag ?? '').trim(),
+    }),
+  })
   let data: any = {}
   if (res.status !== 204) {
     try {
@@ -278,6 +281,16 @@ export async function deleteOsimageTag(osimage: string, tag: string) {
 }
 
 export async function addTagToOsimage(osimage: string, tag: string) {
-  const request_data = { config: { osimage: { [osimage]: { tag } } } }
-  return postJson(apiPath(`/api/v1/osimage/${encodeURIComponent(osimage)}/tag`), { request_data })
+  const imgCheck = validateOsimageNameInput(osimage)
+  if (!imgCheck.ok) {
+    return { ok: false, status: 400, data: { message: imgCheck.message, error: imgCheck.message } }
+  }
+  const tagCheck = validateTagNameInput(tag)
+  if (!tagCheck.ok) {
+    return { ok: false, status: 400, data: { message: tagCheck.message, error: tagCheck.message } }
+  }
+  const request_data = {
+    config: { osimage: { [imgCheck.name]: { tag: tagCheck.name } } },
+  }
+  return postJson(apiPath(`/api/v1/osimage/${encodeURIComponent(imgCheck.name)}/tag`), { request_data })
 }

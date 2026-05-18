@@ -67,7 +67,8 @@
 import { ref, onMounted } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { addTagToOsimage, fetchOsimageNames } from '../api'
-import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
+import { formatOsimageNameDisplay, osimageNameTitle, validateOsimageNameInput } from '../constants/osimageName'
+import { validateTagNameInput } from '../constants/tagName'
 
 const emit = defineEmits(['close', 'saved'])
 
@@ -99,17 +100,23 @@ onMounted(() => {
 async function handleSubmit() {
   errorMsg.value = ''
   successMsg.value = ''
-  const osimage = String(form.value.osimage || '').trim()
-  const tag = form.value.tag.trim()
-  if (!osimage || !tag) {
-    errorMsg.value = 'Choose an OS image and enter a tag name.'
+  const imgCheck = validateOsimageNameInput(form.value.osimage)
+  if (!imgCheck.ok) {
+    errorMsg.value = imgCheck.message
     return
   }
+  const tagCheck = validateTagNameInput(form.value.tag)
+  if (!tagCheck.ok) {
+    errorMsg.value = tagCheck.message
+    return
+  }
+  form.value.osimage = imgCheck.name
+  form.value.tag = tagCheck.name
   submitting.value = true
   try {
-    const result = await addTagToOsimage(osimage, tag)
+    const result = await addTagToOsimage(imgCheck.name, tagCheck.name)
     if (result.ok) {
-      successMsg.value = result.data?.message || `Tag ${tag} added to ${osimage}.`
+      successMsg.value = result.data?.message || `Tag ${tagCheck.name} added to ${imgCheck.name}.`
       setTimeout(() => emit('saved'), 600)
     } else {
       errorMsg.value = result.data?.message || result.data?.error || 'Failed to add tag.'
