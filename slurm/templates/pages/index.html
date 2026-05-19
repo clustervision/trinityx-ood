@@ -26,6 +26,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link " href="" data-toggle="tab" data-target="#gres-tab">
+                        <!-- GPU / generic resource fontawesome -->
+                        <i class="fas fa-cubes"></i>
+                        <span>GRES</span>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link " href="" data-toggle="tab" data-target="#nodes-tab">
                         <!-- Computer fontawesome -->
                         <i class="fas fa-desktop"></i>
@@ -55,6 +62,17 @@
                         Delete Selected Hardware Presets
                     </button>
                     <table class="table table-bordered" id="hw-presets-table"></table>
+                </div>
+                <div id="gres-tab" class="tab-pane fade">
+                    <button id="add-gres-preset-button" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i>
+                        Add GRES Preset
+                    </button>
+                    <button id="delete-gres-presets-button" class="btn btn-danger">
+                        <i class="fa-solid fa-trash"></i>
+                        Delete Selected GRES Presets
+                    </button>
+                    <table class="table table-bordered" id="gres-presets-table"></table>
                 </div>
                 <div id="nodes-tab" class="tab-pane fade">
                     <button id="add-node-button" class="btn btn-primary">

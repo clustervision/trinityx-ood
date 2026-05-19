@@ -48,6 +48,19 @@
 .table {
   margin-top: 10px
 }
+/* GRES preset badge — shown in GRES Preset(s) cells on Nodes and Partitions tables */
+.badge-gres {
+  display: inline-block;
+  padding: 0.2em 0.55em;
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  background-color: #5a67d8;
+  border-radius: 0.35rem;
+  margin-right: 2px;
+  white-space: nowrap;
+}
 a.nav-link {
   color: black;
 }

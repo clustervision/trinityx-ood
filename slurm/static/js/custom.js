@@ -109,6 +109,47 @@ function GresValidator(cell, value, parameters) {
     return isValid;
 }
 
+// ── GRES Preset helpers ────────────────────────────────────────────────────
+const GresPresetEditorParams = {
+    valuesLookup: function() {
+        return tables.gres_presets.getData().map(function(row) {
+            return row.name;
+        });
+    },
+    clearable: true,
+    multiselect: true,
+};
+function GresPresetColumnValidator(cell, value, parameters) {
+    // value is null/undefined (no GRES) or an array of preset names
+    if (!value || value.length === 0) {
+        return true;
+    }
+    var presetNames = tables.gres_presets.getData().map(function(row) {
+        return row.name;
+    });
+    var isValid = true;
+    value.forEach(function(pname) {
+        if (!presetNames.includes(pname)) {
+            isValid = false;
+        }
+    });
+    return isValid;
+}
+function GresPresetCellEdited(cell) {
+    if (cell.getValue() === "") {
+        cell.setValue(undefined);
+    }
+}
+// Formatter: render multi-select gres preset list as comma-separated badges
+function GresPresetFormatter(cell, formatterParams, onRendered) {
+    var val = cell.getValue();
+    if (!val || val.length === 0) return "";
+    if (!Array.isArray(val)) val = [val];
+    return val.map(function(v) {
+        return '<span class="badge badge-gres">' + v + '</span>';
+    }).join(" ");
+}
+
 function GetManager() {
     var manager
     $.ajax({
@@ -281,6 +322,58 @@ window.onload = function() {
 
     })
 
+    // Initialize the GRES presets table
+    tables.gres_presets = new Tabulator("#gres-presets-table", {
+        layout: "fitDataFill",
+        placeholder: "No GRES Presets defined",
+        columns: [
+            {formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center",
+             headerSort: false, width: 15,
+             cellClick: function(e, cell){ cell.getRow().toggleSelect(); }},
+            {title: "Preset Name", frozen: true, field: "name", sorter: "string",
+             editor: "input", validator: ["unique", "required", nameRegexValidator]},
+            {title: "GRES Properties", columns: [
+                {title: "Name", field: "properties.Name", sorter: "string",
+                 editor: "input", validator: ["required", nameRegexValidator],
+                 tooltip: "GRES type name, e.g. gpu, fpga, nic"},
+                {title: "Type", field: "properties.Type", sorter: "string",
+                 editor: "input",
+                 tooltip: "Optional subtype, e.g. A100, H100, MIG-3g.20gb"},
+                {title: "Count", field: "properties.Count", sorter: "number",
+                 editor: "input", validator: ["integer", "min:1", "required"],
+                 tooltip: "Number of resources on each node"},
+                {title: "File", field: "properties.File", sorter: "string",
+                 editor: "input",
+                 tooltip: "Device file path, e.g. /dev/nvidia[0-3]"},
+                {title: "no_consume", field: "properties.no_consume", sorter: "boolean",
+                 formatter: "tickCross", editor: "tickCross",
+                 tooltip: "Mark as non-consumable (shared) resource"},
+            ]},
+        ],
+        reactiveData: true,
+        ajaxURL: `${baseUrl}/json/configuration/gres_presets`
+    });
+    document.getElementById("add-gres-preset-button").addEventListener("click", function(){
+        tables.gres_presets.addRow({
+            "name": null,
+            "properties": {
+                "Name": "",
+                "Type": "",
+                "Count": 1,
+                "File": "",
+                "no_consume": false,
+            }
+        });
+        tables.gres_presets.validate();
+        displayAlert("success", "Added new empty GRES preset");
+    });
+    document.getElementById("delete-gres-presets-button").addEventListener("click", function(){
+        selectedRows = tables.gres_presets.getSelectedRows();
+        selectedRows.forEach(function(row) { row.delete(); });
+        displayAlert("success", "Deleted selected GRES presets");
+        _validateTables();
+    });
+
     // Initialize the nodes table
     tables.nodes = new Tabulator("#nodes-table", {
         // responsiveLayout:"collapse",
@@ -294,6 +387,10 @@ window.onload = function() {
             {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator], editable: NodesRowIsEditable},
             {title:"Luna Group", field:"group_name", sorter:"string"},
             {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
+            {title:"GRES Preset(s)", field:"gres_preset_names", sorter:"string", editor:"list",
+             editorParams:GresPresetEditorParams, formatter:GresPresetFormatter,
+             validator:[GresPresetColumnValidator], cellEdited:GresPresetCellEdited,
+             tooltip:"Select one or more GRES presets to assign to this node"},
             {title:"Properties", columns:[
                 {title: "State", minWidth:200, field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["DRAIN", "IDLE"], clearable: true}},
             ]},
@@ -333,6 +430,10 @@ window.onload = function() {
             {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
             {title:"Nodes", field:"node_names", sorter:"string", editor:"list", width:300, editorParams:NodesEditorParams, validator:[NodesColumnValidator]},
             {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
+            {title:"GRES Preset(s)", field:"gres_preset_names", sorter:"string", editor:"list",
+             editorParams:GresPresetEditorParams, formatter:GresPresetFormatter,
+             validator:[GresPresetColumnValidator], cellEdited:GresPresetCellEdited,
+             tooltip:"Select GRES presets that apply to nodes in this partition"},
             {title:"Properties", columns:[
                 {title: "State", field:"properties.State", sorter:"string",  editor:"list", editorParams:{values:["UP", "DOWN", "DRAIN", "INACTIVE"], clearable: true}},
                 {title: "Default", field:"properties.Default", sorter:"string",  editor:"list", editorParams:{values:["YES","NO"], clearable: true}},
@@ -394,26 +495,32 @@ window.onload = function() {
 
 function ToggleButtons(manager) {
         if (manager == 'OOD') {
-	    document.getElementById("add-node-button").disabled = false;
+            document.getElementById("add-node-button").disabled = false;
             document.getElementById("delete-nodes-button").disabled = false;
             document.getElementById("add-partition-button").disabled = false;
             document.getElementById("delete-partitions-button").disabled = false;
+            document.getElementById("add-gres-preset-button").disabled = false;
+            document.getElementById("delete-gres-presets-button").disabled = false;
             document.getElementById("functionality-manager-toggle").checked = true;
         } else {
-	    document.getElementById("add-node-button").disabled = true;
+            document.getElementById("add-node-button").disabled = true;
             document.getElementById("delete-nodes-button").disabled = true;
             document.getElementById("add-partition-button").disabled = true;
             document.getElementById("delete-partitions-button").disabled = true;
+            document.getElementById("add-gres-preset-button").disabled = true;
+            document.getElementById("delete-gres-presets-button").disabled = true;
             document.getElementById("functionality-manager-toggle").checked = false;
         }
 }
 
 function _getConfiguration() {
     var hw_presets = tables.hw_presets.getData();
+    var gres_presets = tables.gres_presets.getData();
     var nodes = tables.nodes.getData();
     var partitions = tables.partitions.getData();
     var configuration = {
         hw_presets: hw_presets,
+        gres_presets: gres_presets,
         nodes: nodes,
         partitions: partitions,
     };
@@ -519,16 +626,15 @@ function saveConfiguration(){
 }
 
 function _loadConfigurationBackupAction() {
-    // var targetUrl = "/?load_from_backup=true&message=Configuration%20backup%20loaded%20successfully";
-    var nodesBackupUrl = `${baseUrl}/json/configuration/nodes?load_from_backup=true`;
+    var nodesBackupUrl      = `${baseUrl}/json/configuration/nodes?load_from_backup=true`;
     var partitionsBackupUrl = `${baseUrl}/json/configuration/partitions?load_from_backup=true`;
-    var hwPresetsBackupUrl = `${baseUrl}/json/configuration/hw_presets?load_from_backup=true`;
+    var hwPresetsBackupUrl  = `${baseUrl}/json/configuration/hw_presets?load_from_backup=true`;
+    var gresPresetsBackupUrl = `${baseUrl}/json/configuration/gres_presets?load_from_backup=true`;
 
     tables.nodes.setData(nodesBackupUrl);
     tables.partitions.setData(partitionsBackupUrl);
     tables.hw_presets.setData(hwPresetsBackupUrl);
-    
-
+    tables.gres_presets.setData(gresPresetsBackupUrl);
 }
 function loadConfigurationBackup(){
     $.ajax({
