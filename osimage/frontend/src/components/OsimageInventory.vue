@@ -63,9 +63,9 @@
                 <button
                   type="button"
                   class="tx-name-link tx-cell-ellipsis"
-                  :title="String(row.name ?? '')"
+                  :title="osimageNameTitle(row.name)"
                   @click="$emit('open-edit', row.name)"
-                >{{ row.name }}</button>
+                >{{ formatOsimageNameDisplay(row.name) }}</button>
               </template>
               <template v-else-if="col.field === 'kerneldetails'">
                 <div
@@ -119,7 +119,7 @@
                   type="button"
                   class="tx-icon-act tx-icon-danger"
                   title="Delete"
-                  @click="confirmDelete(row.name)"
+                  @click="$emit('open-delete', row.name)"
                 >
                   <img :src="actionIcons.delete" alt="Delete" width="28" height="28" class="tx-icon-img" />
                 </button>
@@ -197,10 +197,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimages, fetchOsimageDetail, deleteOsimage, packOsimage, checkPackStatus } from '../api'
+import { fetchOsimages, fetchOsimageDetail, packOsimage, checkPackStatus } from '../api'
+import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
 import { publicAssetUrl, messageForDisplay, resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils'
 
-defineEmits(['open-add', 'open-edit', 'open-clone'])
+defineEmits(['open-add', 'open-edit', 'open-clone', 'open-delete'])
 
 const actionIcons = {
   shell: publicAssetUrl('icons/icon-shell.png'),
@@ -416,17 +417,6 @@ async function loadData() {
     errorMsg.value = String(err?.message || '').trim() || 'Network error while loading OS images.'
   } finally {
     loading.value = false
-  }
-}
-
-async function confirmDelete(name) {
-  if (!name) return
-  if (!window.confirm(`Delete OS Image "${name}"?`)) return
-  try {
-    await deleteOsimage(name)
-    await loadData()
-  } catch (e) {
-    errorMsg.value = String(e?.message || '').trim() || 'Delete failed.'
   }
 }
 
