@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrinityX OOD — Slurm Configurator (GRES prototype)</title>
+  <link rel="stylesheet" href="base/css/bootstrap.min.css">
+  <link rel="stylesheet" href="base/css/tabulator_bootstrap4.min.css">
+  <link rel="stylesheet" href="base/css/font-awesome.min.css">
+  <link rel="stylesheet" href="css/custom.css">
+  <style>
+    .scenario-bar { background:#2d3748;color:#e2e8f0;padding:8px 20px;font-size:.82rem;letter-spacing:.03em; }
+    .scenario-bar span { color:#90cdf4;font-weight:600; }
+    .gres-dropdown-demo { display:inline-block;border:1px solid #ced4da;border-radius:4px;background:#fff;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.15);font-size:.875rem; }
+    .gres-dropdown-demo .dd-input { padding:4px 8px;border-bottom:1px solid #ced4da;color:#495057;background:#f8f9fa;font-size:.82rem; }
+    .gres-dropdown-demo .dd-item { padding:5px 10px;cursor:pointer; }
+    .gres-dropdown-demo .dd-item:hover { background:#e9ecef; }
+    .gres-dropdown-demo .dd-item.active { background:#4299e1;color:#fff;font-weight:600; }
+    .dd-item.active::before { content:"✓  "; }
+    .preview-pre { background:#1a202c;color:#e2e8f0;font-size:.78rem;padding:14px 16px;border-radius:6px;white-space:pre;font-family:'SFMono-Regular',Consolas,monospace;line-height:1.55;max-height:380px;overflow-y:auto; }
+    .preview-pre .c  { color:#68d391; }
+    .preview-pre .k  { color:#90cdf4; }
+    .preview-pre .v  { color:#fbd38d; }
+    .preview-pre .hd { color:#fc8181; }
+    .preview-pre .gr { color:#b794f4; }
+    .section-label { font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#718096;margin:18px 0 6px; }
+    .badge-hwpreset { display:inline-block;padding:.2em .55em;font-size:.78em;font-weight:600;color:#fff;background-color:#38a169;border-radius:.35rem;margin-right:2px; }
+    .callout { border-left:4px solid #5a67d8;background:#ebf4ff;padding:10px 14px;border-radius:0 6px 6px 0;font-size:.85rem;margin-bottom:12px; }
+    .callout.green  { border-color:#38a169;background:#f0fff4; }
+    .callout.orange { border-color:#dd6b20;background:#fffaf0; }
+    .tab-pane-demo { display:none; }
+    .tab-pane-demo.active { display:block; }
+  </style>
+</head>
+<body>
+
+<div class="scenario-bar">
+  <b>Prototype scenario:</b> &nbsp;
+  <span>gpu[01-02]</span> → group <span>gpu</span> / partition <span>gpu</span> → 4× A100 each &nbsp;|&nbsp;
+  <span>gpu03</span> → group <span>gpu</span> / partition <span>gpu</span> → 16× H100 + 1× fpga &nbsp;|&nbsp;
+  <span>cpu[01-02]</span> → group <span>compute</span> / partition <span>normal</span> → no GRES
+  &nbsp;— <em>self-contained, open directly in browser</em>
+</div>
+
+<div class="container">
+<div id="alerts"></div>
+
+<!-- Menu card -->
+<div class="card menu-card">
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item"><span class="font-weight-bold">Configuration Menu</span></li>
+    <li class="list-group-item">
+      <button class="btn btn-outline-primary" onclick="demoAlert('info','Preview modal would open here')"><i class="fa-solid fa-eye"></i> View Configuration</button>
+      <button class="btn btn-outline-primary" onclick="demoAlert('success','Configuration is valid')"><i class="fa-solid fa-check"></i> Test Configuration</button>
+      <button class="btn btn-primary" onclick="demoAlert('success','Configuration saved — restart slurmctld to apply.')"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
+      <button class="btn btn-warning" onclick="demoAlert('warning','Backup configuration loaded')"><i class="fa-solid fa-upload"></i> Load Configuration Backup</button>
+      &nbsp;&nbsp;
+      <label class="toggle"><input type="checkbox" class="chkbx" id="ood-toggle" onchange="toggleOOD(this.checked)"/><span class="slider"></span></label>
+      <span class="togglespan">OOD Slurm Configurator manages Nodes and Partitions</span>
+    </li>
+  </ul>
+</div>
+
+<!-- Main tab card -->
+<div class="card">
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item tabs-header">
+      <ul class="nav nav-tabs" id="mainTabs">
+        <li class="nav-item"><a class="nav-link" href="#" onclick="return showTab('hw-presets-tab',this)"><i class="fas fa-microchip"></i> Hardware</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#" onclick="return showTab('gres-tab',this)"><i class="fas fa-cubes"></i> <strong>GRES</strong></a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="return showTab('nodes-tab',this)"><i class="fas fa-desktop"></i> Nodes</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="return showTab('partitions-tab',this)"><i class="fas fa-hand-pointer"></i> Partition</a></li>
+      </ul>
+    </li>
+    <li class="list-group-item tabs-content">
+
+      <!-- HW PRESETS TAB -->
+      <div id="hw-presets-tab" class="tab-pane-demo">
+        <button class="btn btn-primary" onclick="demoAlert('success','Added new hardware preset')"><i class="fa-solid fa-plus"></i> Add Hardware Preset</button>
+        <button class="btn btn-danger" onclick="demoAlert('success','Deleted selected')"><i class="fa-solid fa-trash"></i> Delete Selected Hardware Presets</button>
+        <table class="table table-bordered" id="hw-presets-table"></table>
+      </div>
+
+      <!-- GRES TAB -->
+      <div id="gres-tab" class="tab-pane-demo active">
+        <div class="callout"><i class="fas fa-info-circle"></i> Define named GRES resources here. Assign them to nodes via the <strong>GRES Preset(s)</strong> column in the <em>Nodes</em> tab. Each row maps to one <code>NodeName=</code> stanza in <code>/etc/slurm/gres.conf</code>.</div>
+        <button class="btn btn-primary" id="add-gres-preset-button" disabled onclick="demoAlert('success','Added new GRES preset')"><i class="fa-solid fa-plus"></i> Add GRES Preset</button>
+        <button class="btn btn-danger" id="delete-gres-presets-button" disabled onclick="demoAlert('success','Deleted selected GRES presets')"><i class="fa-solid fa-trash"></i> Delete Selected GRES Presets</button>
+        <table class="table table-bordered" id="gres-presets-table"></table>
+
+        <div class="section-label">Multi-select dropdown — live demo of editing a GRES Preset(s) cell</div>
+        <div class="callout orange"><i class="fas fa-mouse-pointer"></i> Click items below to toggle selection. The input bar updates in real time — this is exactly what the Tabulator popup looks like.</div>
+        <div class="row">
+          <div class="col-md-3">
+            <div class="section-label">gpu03 — two presets (H100 + fpga)</div>
+            <div class="gres-dropdown-demo">
+              <div class="dd-input">gpu_H100,fpga_v1</div>
+              <div class="dd-item" onclick="toggleDD(this)">gpu_A100</div>
+              <div class="dd-item active" onclick="toggleDD(this)">gpu_H100</div>
+              <div class="dd-item active" onclick="toggleDD(this)">fpga_v1</div>
+            </div>
+            <small class="text-muted">Click to toggle</small>
+          </div>
+          <div class="col-md-3">
+            <div class="section-label">gpu[01-02] — single preset (A100)</div>
+            <div class="gres-dropdown-demo">
+              <div class="dd-input">gpu_A100</div>
+              <div class="dd-item active" onclick="toggleDD(this)">gpu_A100</div>
+              <div class="dd-item" onclick="toggleDD(this)">gpu_H100</div>
+              <div class="dd-item" onclick="toggleDD(this)">fpga_v1</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="section-label">cpu[01-02] — no GRES</div>
+            <div class="gres-dropdown-demo">
+              <div class="dd-input" style="color:#aaa">— none —</div>
+              <div class="dd-item" onclick="toggleDD(this)">gpu_A100</div>
+              <div class="dd-item" onclick="toggleDD(this)">gpu_H100</div>
+              <div class="dd-item" onclick="toggleDD(this)">fpga_v1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NODES TAB -->
+      <div id="nodes-tab" class="tab-pane-demo">
+        <button class="btn btn-primary" id="add-node-button" disabled onclick="demoAlert('success','Added node')"><i class="fa-solid fa-plus"></i> Add Node</button>
+        <button class="btn btn-primary" onclick="demoAlert('warning','Imported from Luna')"><i class="fa-solid fa-rotate"></i> Import From Luna</button>
+        <button class="btn btn-danger" id="delete-nodes-button" disabled onclick="demoAlert('success','Deleted')"><i class="fa-solid fa-trash"></i> Delete Selected Nodes</button>
+        <table class="table table-bordered" id="nodes-table"></table>
+        <div class="callout green mt-3"><i class="fas fa-magic"></i> <strong>Auto-sync:</strong> On Save, <code>Gres=gpu:A100:4</code> / <code>Gres=gpu:H100:16,fpga:1</code> are written into <code>slurm-nodes.conf</code> automatically from the GRES Preset(s) selection — no manual typing.</div>
+      </div>
+
+      <!-- PARTITIONS TAB -->
+      <div id="partitions-tab" class="tab-pane-demo">
+        <button class="btn btn-primary" id="add-partition-button" disabled onclick="demoAlert('success','Added partition')"><i class="fa-solid fa-plus"></i> Add Partition</button>
+        <button class="btn btn-danger" id="delete-partitions-button" disabled onclick="demoAlert('success','Deleted')"><i class="fa-solid fa-trash"></i> Delete Selected Partitions</button>
+        <table class="table table-bordered" id="partitions-table"></table>
+        <div class="callout mt-3"><i class="fas fa-info-circle"></i> <strong>GRES Preset(s) on partitions</strong> is annotation only — stored in <code>gres.conf</code> Defaults block for reference. No changes to <code>slurm-partitions.conf</code>; gres.conf remains node-centric.</div>
+      </div>
+
+    </li>
+  </ul>
+</div>
+
+<!-- Generated files preview card -->
+<div class="card">
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item"><span class="font-weight-bold">Generated Configuration Files — Preview</span></li>
+    <li class="list-group-item">
+      <ul class="nav nav-tabs mb-3" id="previewTabs">
+        <li class="nav-item"><a class="nav-link active" href="#" onclick="return showPreview('prev-nodes',this)">/etc/slurm/slurm-nodes.conf</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="return showPreview('prev-partitions',this)">/etc/slurm/slurm-partitions.conf</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="return showPreview('prev-gres',this)">/etc/slurm/gres.conf</a></li>
+      </ul>
+
+      <div id="prev-nodes" class="tab-pane-demo active">
+<pre class="preview-pre"><span class="hd">#### Defaults Managed block start ####</span>
+<span class="c"># HWPresetName=gpu_hw Boards=1 SocketsPerBoard=2 CoresPerSocket=16 ThreadsPerCore=2 RealMemory=512000 # Nodes=gpu[01-03]</span>
+<span class="c"># HWPresetName=std_hw Boards=1 SocketsPerBoard=2 CoresPerSocket=8  ThreadsPerCore=2 RealMemory=128000  # Nodes=cpu[01-02]</span>
+<span class="c"># NodeName=gpu01 Boards=1 SocketsPerBoard=2 CoresPerSocket=16 ThreadsPerCore=2 RealMemory=512000 <span class="gr">Gres=gpu:A100:4</span>       # HWPreset=gpu_hw GresPreset=gpu_A100</span>
+<span class="c"># NodeName=gpu02 Boards=1 SocketsPerBoard=2 CoresPerSocket=16 ThreadsPerCore=2 RealMemory=512000 <span class="gr">Gres=gpu:A100:4</span>       # HWPreset=gpu_hw GresPreset=gpu_A100</span>
+<span class="c"># NodeName=gpu03 Boards=1 SocketsPerBoard=2 CoresPerSocket=16 ThreadsPerCore=2 RealMemory=512000 <span class="gr">Gres=gpu:H100:16,fpga:1</span> # HWPreset=gpu_hw GresPreset=gpu_H100,fpga_v1</span>
+<span class="c"># NodeName=cpu01 Boards=1 SocketsPerBoard=2 CoresPerSocket=8  ThreadsPerCore=2 RealMemory=128000  # HWPreset=std_hw</span>
+<span class="c"># NodeName=cpu02 Boards=1 SocketsPerBoard=2 CoresPerSocket=8  ThreadsPerCore=2 RealMemory=128000  # HWPreset=std_hw</span>
+<span class="hd">#### Defaults Managed block end   ####</span>
+
+<span class="hd">#### TrinityX Managed block start ####</span>
+<span class="k">NodeSet</span>=<span class="v">gpu</span>     <span class="k">Nodes</span>=<span class="v">gpu[01-03]</span>
+<span class="k">NodeSet</span>=<span class="v">compute</span> <span class="k">Nodes</span>=<span class="v">cpu[01-02]</span>
+<span class="k">NodeName</span>=<span class="v">gpu01</span> <span class="k">Boards</span>=<span class="v">1</span> <span class="k">SocketsPerBoard</span>=<span class="v">2</span> <span class="k">CoresPerSocket</span>=<span class="v">16</span> <span class="k">ThreadsPerCore</span>=<span class="v">2</span> <span class="k">RealMemory</span>=<span class="v">512000</span> <span class="k">Gres</span>=<span class="gr">gpu:A100:4</span>       <span class="k">State</span>=<span class="v">UNKNOWN</span>  <span class="c"># GroupName=gpu</span>
+<span class="k">NodeName</span>=<span class="v">gpu02</span> <span class="k">Boards</span>=<span class="v">1</span> <span class="k">SocketsPerBoard</span>=<span class="v">2</span> <span class="k">CoresPerSocket</span>=<span class="v">16</span> <span class="k">ThreadsPerCore</span>=<span class="v">2</span> <span class="k">RealMemory</span>=<span class="v">512000</span> <span class="k">Gres</span>=<span class="gr">gpu:A100:4</span>       <span class="k">State</span>=<span class="v">UNKNOWN</span>  <span class="c"># GroupName=gpu</span>
+<span class="k">NodeName</span>=<span class="v">gpu03</span> <span class="k">Boards</span>=<span class="v">1</span> <span class="k">SocketsPerBoard</span>=<span class="v">2</span> <span class="k">CoresPerSocket</span>=<span class="v">16</span> <span class="k">ThreadsPerCore</span>=<span class="v">2</span> <span class="k">RealMemory</span>=<span class="v">512000</span> <span class="k">Gres</span>=<span class="gr">gpu:H100:16,fpga:1</span> <span class="k">State</span>=<span class="v">UNKNOWN</span>  <span class="c"># GroupName=gpu</span>
+<span class="k">NodeName</span>=<span class="v">cpu01</span> <span class="k">Boards</span>=<span class="v">1</span> <span class="k">SocketsPerBoard</span>=<span class="v">2</span> <span class="k">CoresPerSocket</span>=<span class="v">8</span>  <span class="k">ThreadsPerCore</span>=<span class="v">2</span> <span class="k">RealMemory</span>=<span class="v">128000</span>                        <span class="k">State</span>=<span class="v">UNKNOWN</span>  <span class="c"># GroupName=compute</span>
+<span class="k">NodeName</span>=<span class="v">cpu02</span> <span class="k">Boards</span>=<span class="v">1</span> <span class="k">SocketsPerBoard</span>=<span class="v">2</span> <span class="k">CoresPerSocket</span>=<span class="v">8</span>  <span class="k">ThreadsPerCore</span>=<span class="v">2</span> <span class="k">RealMemory</span>=<span class="v">128000</span>                        <span class="k">State</span>=<span class="v">UNKNOWN</span>  <span class="c"># GroupName=compute</span>
+<span class="hd">#### TrinityX Managed block end   ####</span></pre>
+      </div>
+
+      <div id="prev-partitions" class="tab-pane-demo">
+<pre class="preview-pre"><span class="hd">#### Defaults Managed block start ####</span>
+<span class="c"># PartitionName=gpu    State=UP Default=NO</span>
+<span class="c"># PartitionName=normal State=UP Default=YES</span>
+<span class="hd">#### Defaults Managed block end   ####</span>
+
+<span class="hd">#### TrinityX Managed block start ####</span>
+<span class="k">PartitionName</span>=<span class="v">gpu</span>    <span class="k">Nodes</span>=<span class="v">gpu</span>     <span class="k">State</span>=<span class="v">UP</span> <span class="k">Default</span>=<span class="v">NO</span>  <span class="k">MaxTime</span>=<span class="v">INFINITE</span>
+<span class="k">PartitionName</span>=<span class="v">normal</span> <span class="k">Nodes</span>=<span class="v">compute</span> <span class="k">State</span>=<span class="v">UP</span> <span class="k">Default</span>=<span class="v">YES</span> <span class="k">MaxTime</span>=<span class="v">INFINITE</span>
+<span class="hd">#### TrinityX Managed block end   ####</span></pre>
+      </div>
+
+      <div id="prev-gres" class="tab-pane-demo">
+<pre class="preview-pre"><span class="hd">#### Defaults Managed block start ####</span>
+<span class="c"># GRESPresetName=fpga_v1  Name=fpga             Count=1  File=/dev/accel/accel0  # Nodes=gpu03      Partitions=gpu</span>
+<span class="c"># GRESPresetName=gpu_A100 Name=gpu  Type=A100   Count=4  File=/dev/nvidia[0-3]   # Nodes=gpu[01-02] Partitions=gpu</span>
+<span class="c"># GRESPresetName=gpu_H100 Name=gpu  Type=H100   Count=16 File=/dev/nvidia[0-15]  # Nodes=gpu03      Partitions=gpu</span>
+<span class="hd">#### Defaults Managed block end   ####</span>
+
+<span class="hd">#### TrinityX Managed block start ####</span>
+<span class="k">NodeName</span>=<span class="v">gpu[01-02]</span> <span class="k">Name</span>=<span class="gr">gpu</span>  <span class="k">Type</span>=<span class="gr">A100</span> <span class="k">File</span>=<span class="v">/dev/nvidia[0-3]</span>   <span class="k">Count</span>=<span class="gr">4</span>
+<span class="k">NodeName</span>=<span class="v">gpu03</span>      <span class="k">Name</span>=<span class="gr">gpu</span>  <span class="k">Type</span>=<span class="gr">H100</span> <span class="k">File</span>=<span class="v">/dev/nvidia[0-15]</span>  <span class="k">Count</span>=<span class="gr">16</span>
+<span class="k">NodeName</span>=<span class="v">gpu03</span>      <span class="k">Name</span>=<span class="gr">fpga</span>        <span class="k">File</span>=<span class="v">/dev/accel/accel0</span>   <span class="k">Count</span>=<span class="gr">1</span>
+<span class="hd">#### TrinityX Managed block end   ####</span></pre>
+      </div>
+
+    </li>
+  </ul>
+</div>
+
+</div><!-- /container -->
+
+<script src="base/js/jquery.min.js"></script>
+<script src="base/js/bootstrap.bundle.min.js"></script>
+<script src="base/js/tabulator.min.js"></script>
+<script src="base/js/custom.js"></script>
+<script>
+const nameRegex = "regex:^[a-zA-Z0-9_\\-]+$";
+
+function showTab(id, el) {
+  ['hw-presets-tab','gres-tab','nodes-tab','partitions-tab'].forEach(function(pid){
+    document.getElementById(pid).classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('#mainTabs .nav-link').forEach(function(a){ a.classList.remove('active'); });
+  el.classList.add('active');
+  return false;
+}
+function showPreview(id, el) {
+  ['prev-nodes','prev-partitions','prev-gres'].forEach(function(pid){
+    document.getElementById(pid).classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('#previewTabs .nav-link').forEach(function(a){ a.classList.remove('active'); });
+  el.classList.add('active');
+  return false;
+}
+function toggleOOD(on) {
+  ['add-node-button','delete-nodes-button','add-partition-button','delete-partitions-button',
+   'add-gres-preset-button','delete-gres-presets-button'].forEach(function(id){
+    document.getElementById(id).disabled = !on;
+  });
+  demoAlert(on ? 'warning' : 'info',
+    on ? 'OOD now manages nodes and partitions — Luna automation paused.'
+       : 'Reverted to Luna automation.');
+}
+function demoAlert(type, msg) {
+  document.getElementById('alerts').innerHTML =
+    '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+    msg + '<button type="button" class="close" data-dismiss="alert"><span>&times;</span></button></div>';
+}
+function toggleDD(el) {
+  el.classList.toggle('active');
+  var container = el.closest('.gres-dropdown-demo');
+  var selected = Array.from(container.querySelectorAll('.dd-item.active'))
+                      .map(function(i){ return i.textContent.replace('✓  ','').trim(); });
+  var inp = container.querySelector('.dd-input');
+  inp.textContent = selected.length ? selected.join(',') : '— none —';
+  inp.style.color = selected.length ? '' : '#aaa';
+}
+function gresPresetFormatter(cell) {
+  var val = cell.getValue();
+  if (!val || val.length === 0) return '';
+  if (!Array.isArray(val)) val = [val];
+  return val.map(function(v){ return '<span class="badge-gres">' + v + '</span>'; }).join(' ');
+}
+function hwPresetFormatter(cell) {
+  var val = cell.getValue();
+  if (!val) return '';
+  return '<span class="badge-hwpreset">' + val + '</span>';
+}
+
+/* ── GRES Presets table ── */
+var gresTable = new Tabulator("#gres-presets-table", {
+  layout:"fitDataFill", placeholder:"No GRES Presets defined",
+  data:[
+    {name:'gpu_A100', properties:{Name:'gpu',  Type:'A100', Count:'4',  File:'/dev/nvidia[0-3]',    no_consume:false}},
+    {name:'gpu_H100', properties:{Name:'gpu',  Type:'H100', Count:'16', File:'/dev/nvidia[0-15]',   no_consume:false}},
+    {name:'fpga_v1',  properties:{Name:'fpga', Type:'',     Count:'1',  File:'/dev/accel/accel0',   no_consume:false}},
+  ],
+  columns:[
+    {formatter:"rowSelection",titleFormatter:"rowSelection",hozAlign:"center",headerSort:false,width:15,
+     cellClick:function(e,cell){cell.getRow().toggleSelect();}},
+    {title:"Preset Name",frozen:true,field:"name",sorter:"string",editor:"input",validator:["unique","required",nameRegex]},
+    {title:"GRES Properties",columns:[
+      {title:"Name",      field:"properties.Name",       sorter:"string", editor:"input",validator:["required",nameRegex],tooltip:"GRES type: gpu, fpga, nic …"},
+      {title:"Type",      field:"properties.Type",       sorter:"string", editor:"input",tooltip:"Subtype: A100, H100, MIG-3g …"},
+      {title:"Count",     field:"properties.Count",      sorter:"number", editor:"input",validator:["integer","min:1","required"],tooltip:"Resources per node"},
+      {title:"File",      field:"properties.File",       sorter:"string", editor:"input",tooltip:"Device path: /dev/nvidia[0-3]"},
+      {title:"no_consume",field:"properties.no_consume", sorter:"boolean",formatter:"tickCross",editor:"tickCross",tooltip:"Shared resource"},
+    ]},
+  ],
+  reactiveData:true,
+});
+
+/* ── HW Presets table ── */
+var hwTable = new Tabulator("#hw-presets-table", {
+  layout:"fitDataFill", placeholder:"No Hardware Presets defined",
+  data:[
+    {name:'gpu_hw', properties:{Boards:'1',SocketsPerBoard:'2',CoresPerSocket:'16',ThreadsPerCore:'2',RealMemory:'512000',TmpDisk:'0'}},
+    {name:'std_hw', properties:{Boards:'1',SocketsPerBoard:'2',CoresPerSocket:'8', ThreadsPerCore:'2',RealMemory:'128000',TmpDisk:'0'}},
+  ],
+  columns:[
+    {formatter:"rowSelection",titleFormatter:"rowSelection",hozAlign:"center",headerSort:false,width:15,
+     cellClick:function(e,cell){cell.getRow().toggleSelect();}},
+    {title:"Name",frozen:true,field:"name",sorter:"string",editor:"input",validator:["unique","required",nameRegex]},
+    {title:"Properties",columns:[
+      {title:"# Boards",         field:"properties.Boards",         sorter:"number",editor:"input",validator:["integer","min:0","required"]},
+      {title:"# SocketsPerBoard",field:"properties.SocketsPerBoard",sorter:"number",editor:"input",validator:["integer","min:0","required"]},
+      {title:"# CoresPerSocket", field:"properties.CoresPerSocket", sorter:"number",editor:"input",validator:["integer","min:0","required"]},
+      {title:"# ThreadsPerCore", field:"properties.ThreadsPerCore", sorter:"number",editor:"input",validator:["integer","min:0","required"]},
+      {title:"RealMemory (MB)",  field:"properties.RealMemory",     sorter:"number",editor:"input",validator:["integer","min:0","required"]},
+      {title:"TmpDisk (MB)",     field:"properties.TmpDisk",        sorter:"number",editor:"input",validator:["integer","min:0","required"]},
+    ]},
+  ],
+  reactiveData:true,
+});
+
+/* ── Nodes table ── */
+const hwPresetEditorParams  = {valuesLookup:function(){return hwTable.getData().map(function(r){return r.name;});},clearable:true};
+const gresPresetEditorParams = {valuesLookup:function(){return gresTable.getData().map(function(r){return r.name;});},clearable:true,multiselect:true};
+function gresPresetValidator(cell,value){
+  if(!value||value.length===0) return true;
+  var names=gresTable.getData().map(function(r){return r.name;});
+  return (Array.isArray(value)?value:[value]).every(function(v){return names.includes(v);});
+}
+
+var nodesTable = new Tabulator("#nodes-table", {
+  layout:"fitDataFill", placeholder:"No nodes defined",
+  data:[
+    {name:'gpu01',group_name:'gpu',    hw_preset_name:'gpu_hw',gres_preset_names:['gpu_A100'],          properties:{State:''}},
+    {name:'gpu02',group_name:'gpu',    hw_preset_name:'gpu_hw',gres_preset_names:['gpu_A100'],          properties:{State:''}},
+    {name:'gpu03',group_name:'gpu',    hw_preset_name:'gpu_hw',gres_preset_names:['gpu_H100','fpga_v1'],properties:{State:''}},
+    {name:'cpu01',group_name:'compute',hw_preset_name:'std_hw',gres_preset_names:[],                   properties:{State:''}},
+    {name:'cpu02',group_name:'compute',hw_preset_name:'std_hw',gres_preset_names:[],                   properties:{State:''}},
+  ],
+  columns:[
+    {formatter:"rowSelection",titleFormatter:"rowSelection",hozAlign:"center",headerSort:false,width:15,
+     cellClick:function(e,cell){cell.getRow().toggleSelect();}},
+    {title:"Name",       frozen:true,field:"name",       sorter:"string",editor:"input",validator:["unique","required",nameRegex]},
+    {title:"Luna Group", field:"group_name",              sorter:"string"},
+    {title:"HWPreset",   field:"hw_preset_name",          sorter:"string",editor:"list",editorParams:hwPresetEditorParams,formatter:hwPresetFormatter},
+    {title:"GRES Preset(s)",field:"gres_preset_names",   sorter:"string",editor:"list",editorParams:gresPresetEditorParams,
+     formatter:gresPresetFormatter,validator:[gresPresetValidator],tooltip:"Click to assign GRES presets"},
+    {title:"Properties",columns:[
+      {title:"State",field:"properties.State",sorter:"string",editor:"list",editorParams:{values:["DRAIN","IDLE"],clearable:true}},
+    ]},
+  ],
+  reactiveData:true,
+});
+
+/* ── Partitions table ── */
+var partitionsTable = new Tabulator("#partitions-table", {
+  layout:"fitDataFill", placeholder:"No partitions defined",
+  data:[
+    {name:'gpu',   node_names:['gpu01','gpu02','gpu03'],hw_preset_name:null,gres_preset_names:['gpu_A100','gpu_H100','fpga_v1'],properties:{State:'UP',Default:'NO', MaxTime:'INFINITE'}},
+    {name:'normal',node_names:['cpu01','cpu02'],        hw_preset_name:null,gres_preset_names:[],                              properties:{State:'UP',Default:'YES',MaxTime:'INFINITE'}},
+  ],
+  columns:[
+    {formatter:"rowSelection",titleFormatter:"rowSelection",hozAlign:"center",headerSort:false,width:15,
+     cellClick:function(e,cell){cell.getRow().toggleSelect();}},
+    {title:"Name",  frozen:true,field:"name",      sorter:"string",editor:"input",validator:["unique","required",nameRegex]},
+    {title:"Nodes", field:"node_names",             sorter:"string",editor:"list",width:220,
+     editorParams:{valuesLookup:function(){return nodesTable.getData().map(function(r){return r.name;});},clearable:true,multiselect:true}},
+    {title:"HWPreset",field:"hw_preset_name",       sorter:"string",editor:"list",editorParams:hwPresetEditorParams,formatter:hwPresetFormatter},
+    {title:"GRES Preset(s)",field:"gres_preset_names",sorter:"string",editor:"list",editorParams:gresPresetEditorParams,
+     formatter:gresPresetFormatter,validator:[gresPresetValidator],tooltip:"Annotation — GRES types relevant to this partition"},
+    {title:"Properties",columns:[
+      {title:"State",  field:"properties.State",  sorter:"string",editor:"list",editorParams:{values:["UP","DOWN","DRAIN","INACTIVE"],clearable:true}},
+      {title:"Default",field:"properties.Default",sorter:"string",editor:"list",editorParams:{values:["YES","NO"],clearable:true}},
+      {title:"MaxTime",field:"properties.MaxTime",sorter:"string",editor:"input"},
+    ]},
+  ],
+  reactiveData:true,
+});
+</script>
+</body>
+</html>
