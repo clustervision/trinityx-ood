@@ -59,10 +59,16 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis"
-                  :title="String(row.name ?? '')"
+                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="tagNameTitle(row.name)"
                   @click="$emit('open-detail', row)"
-                >{{ row.name }}</button>
+                >{{ formatTagNameDisplay(row.name) }}</button>
+              </template>
+              <template v-else-if="col.field === 'osimage'">
+                <span
+                  class="tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="osimageNameTitle(row.osimage)"
+                >{{ formatOsimageNameDisplay(row.osimage) }}</span>
               </template>
               <template v-else-if="isEmpty(row[col.field])">
                 <span class="tx-na-box">NONE</span>
@@ -77,7 +83,7 @@
                   type="button"
                   class="tx-icon-act tx-icon-delete"
                   title="Delete tag"
-                  @click="confirmDelete(row)"
+                  @click="$emit('open-delete', row)"
                 >
                   <img :src="deleteIconUrl" alt="" width="22" height="22" class="tx-delete-icon-img" />
                 </button>
@@ -134,9 +140,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchOsimageTags, deleteOsimageTag, appStaticAssetUrl } from '../api'
+import { fetchOsimageTags, appStaticAssetUrl } from '../api'
+import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
+import { formatTagNameDisplay, tagNameTitle } from '../constants/tagName'
 
-defineEmits(['open-add', 'open-detail'])
+defineEmits(['open-add', 'open-detail', 'open-delete'])
 
 const FIELD_LABELS = {
   osimage: 'OS IMAGE',
@@ -248,17 +256,6 @@ async function loadData() {
     errorMsg.value = String(err?.message || '').trim() || 'Network error while loading OS image tags.'
   } finally {
     loading.value = false
-  }
-}
-
-async function confirmDelete(row) {
-  if (!row?.osimage || !row?.name) return
-  if (!window.confirm(`Delete tag "${row.name}" from "${row.osimage}"?`)) return
-  try {
-    await deleteOsimageTag(row.osimage, row.name)
-    await loadData()
-  } catch (e) {
-    errorMsg.value = String(e?.message || '').trim() || 'Delete failed.'
   }
 }
 

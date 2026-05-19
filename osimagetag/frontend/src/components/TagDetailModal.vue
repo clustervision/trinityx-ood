@@ -19,6 +19,12 @@
                 <template v-if="value == null || value === ''">
                   <span class="tx-na-box">NONE</span>
                 </template>
+                <template v-else-if="key === 'osimage'">
+                  <span class="tx-cell-ellipsis" :title="osimageNameTitle(value)">{{ formatOsimageNameDisplay(value) }}</span>
+                </template>
+                <template v-else-if="key === 'name'">
+                  <span class="tx-cell-ellipsis" :title="tagNameTitle(value)">{{ formatTagNameDisplay(value) }}</span>
+                </template>
                 <template v-else>{{ value }}</template>
               </td>
             </tr>
@@ -37,6 +43,8 @@
 import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { fetchOsimageTagDetail } from '../api'
+import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
+import { formatTagNameDisplay, tagNameTitle } from '../constants/tagName'
 
 const props = defineProps({
   /** Inventory row: needs `osimage` and `name` (Luna detail API scopes by OS image, not tag name). */
@@ -48,7 +56,7 @@ const loading = ref(true)
 const errorMsg = ref('')
 const detail = ref({})
 
-const displayName = computed(() => String(props.row?.name ?? ''))
+const displayName = computed(() => formatTagNameDisplay(props.row?.name))
 
 function rowAsDetail(r) {
   if (!r || typeof r !== 'object') return {}

@@ -301,11 +301,11 @@ optgroup {
   border: none;
   font-size: 18px;
   font-weight: 400;
-  /* >= ~1.3 so descenders (g, p, y) are not clipped with .tx-cell-ellipsis overflow:hidden */
-  line-height: 1.35;
-  padding: 0.65rem 0.75rem;
+  line-height: 1.45;
+  padding: 0.6rem 0.75rem 0.72rem;
   min-width: 0;
   text-align: center;
+  overflow: visible;
 }
 
 .tx-th-label-clip {
@@ -327,16 +327,24 @@ optgroup {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 2;
-  padding-block: 0.05em;
+  line-height: 1.45;
+  padding: 0.06em 0 0.14em;
 }
 
 .tx-inventory-table .tx-cell-ellipsis {
   text-align: center;
 }
 
-button.tx-name-link.tx-cell-ellipsis {
+.tx-inventory-table .tx-cell-truncate-js {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+button.tx-name-link.tx-cell-ellipsis,
+button.tx-name-link.tx-cell-truncate-js {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   text-align: center;
   overflow: visible;
   text-overflow: clip;
@@ -355,17 +363,17 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-name-link {
   border: none;
   background: none;
-  padding: 0;
+  padding: 0 0 0.1em;
   margin: 0;
   font-family: inherit;
   font-size: 18px;
   font-weight: 400;
   font-style: normal;
-  line-height: 1.35;
+  line-height: 1.45;
   color: #111111;
   text-decoration: underline;
   text-decoration-style: solid;
-  text-underline-offset: 0.28em;
+  text-underline-offset: 0.2em;
   text-decoration-thickness: 1px;
   text-decoration-skip-ink: auto;
   cursor: pointer;
@@ -381,9 +389,10 @@ button.tx-name-link.tx-cell-ellipsis {
 .tx-na-box {
   display: inline-block;
   min-width: 5rem;
-  padding: 0.25rem 0.55rem;
+  padding: 0.28rem 0.55rem 0.32rem;
   font-size: 14px;
   font-weight: 400;
+  line-height: 1.35;
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: #AEAEAE;
@@ -391,6 +400,7 @@ button.tx-name-link.tx-cell-ellipsis {
   border: 2px solid #AEAEAE;
   border-radius: 4px;
   text-align: center;
+  vertical-align: middle;
 }
 
 /* ---------- Actions column ---------- */
@@ -849,4 +859,33 @@ button.tx-name-link.tx-cell-ellipsis {
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* Delete confirm modal (matches group app) */
+.tx-delete-confirm {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.tx-delete-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #111;
+  margin-bottom: 0.5rem;
+}
+
+.tx-delete-title strong {
+  font-weight: 700;
+}
+
+.tx-delete-desc {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.tx-delete-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
 }
