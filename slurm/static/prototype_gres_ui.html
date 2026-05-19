@@ -28,6 +28,16 @@
     .callout { border-left:4px solid #5a67d8;background:#ebf4ff;padding:10px 14px;border-radius:0 6px 6px 0;font-size:.85rem;margin-bottom:12px; }
     .callout.green  { border-color:#38a169;background:#f0fff4; }
     .callout.orange { border-color:#dd6b20;background:#fffaf0; }
+    /* TRIX-1691 — clearly visible disabled state */
+    .btn:disabled,
+    .btn.disabled {
+      opacity: 1;
+      color: #868e96 !important;
+      background-color: #dee2e6 !important;
+      border-color: #ced4da !important;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
     .tab-pane-demo { display:none; }
     .tab-pane-demo.active { display:block; }
   </style>

@@ -5,6 +5,20 @@
           user-select: none;
 }
 
+/* TRIX-1691 — make OOD-gated disabled buttons clearly unclickable.
+   Bootstrap 4 default is opacity:0.65 which is too subtle.
+   We override to a flat grey appearance + not-allowed cursor so the
+   locked state is immediately obvious without the toggle being on. */
+.btn:disabled,
+.btn.disabled {
+  opacity: 1;
+  color: #868e96 !important;
+  background-color: #dee2e6 !important;
+  border-color: #ced4da !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .dropzone {
   border: 2px dashed #007bff;
   border-radius: 5px;
