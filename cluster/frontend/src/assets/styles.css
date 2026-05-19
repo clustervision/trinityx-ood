@@ -788,6 +788,13 @@ button.tx-name-link {
   max-width: min(1280px, calc(100vw - 2rem));
 }
 
+.tx-modal-extra-lg {
+  width: min(1600px, calc(100vw - 2rem));
+  max-width: min(1600px, calc(100vw - 2rem));
+  max-height: calc(100vh - 1rem);
+  min-height: min(850px, calc(100vh - 1rem));
+}
+
 .tx-modal-md {
   max-width: 640px;
 }
@@ -2418,7 +2425,7 @@ select.tx-select-placeholder {
       min-width: 240px;
     }
 
-    .text-field label-part {
+    .text-field .label-part {
       display: flex;
       align-items: center;
       padding: 0 1rem;
@@ -2500,7 +2507,7 @@ select.tx-select-placeholder {
       overflow: hidden;
     }
 
-    .text-field.mandatory label-part {
+    .text-field.mandatory .label-part {
       background-color: #E6EEFF;
       border: none;
       border-radius: 0;
@@ -2530,7 +2537,7 @@ select.tx-select-placeholder {
       min-width: 160px;
     }
 
-    .boolean-field label-part {
+    .boolean-field .label-part {
       display: flex;
       align-items: center;
       padding: 0 1rem;
@@ -2624,7 +2631,7 @@ select.tx-select-placeholder {
       height: 43px;
     }
 
-    .checkbox-field label-part {
+    .checkbox-field .label-part {
       display: flex;
       align-items: center;
       padding: 0 1rem;
@@ -2851,4 +2858,56 @@ select.tx-select-placeholder {
   height: 18px;
   accent-color: #5376EA;
   cursor: pointer;
+}
+
+.text-field input:disabled,
+.text-field input.is-disabled-field {
+  background-color: #F5F8FF;
+  color: #6B7280;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.text-field input:disabled {
+  border-color: #E6EEFF;
+}
+
+.edit-icon {
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.edit-icon:hover {
+  opacity: 0.8;
+  transform: scale(1.03);
+}
+
+.edit-icon.is-active {
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+
+
+
+.tx-help-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.tx-help-intro {
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.tx-help-list code {
+  background: #f5f8ff;
+  color: #5376ea;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.85em;
 }

@@ -10,7 +10,7 @@ const sizeClass = computed(() => {
   if (props.size === 'small') return 'tx-modal-sm'
   if (props.size === 'medium') return 'tx-modal-md'
   if (props.size === 'wide') return 'tx-modal-wide'
-  return 'tx-modal-lg'
+  return 'tx-modal-extra-lg'
 })
 
 onMounted(() => { document.body.style.overflow = 'hidden' })

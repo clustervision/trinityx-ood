@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref, onMounted, watch, reactive } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, reactive } from 'vue'
 import type { AxiosInstance } from 'axios'
 import BaseModal from './BaseModal.vue'
 
@@ -42,7 +42,11 @@ const props = defineProps<{
 
 const emit = defineEmits(['close', 'saved'])
 
-
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    emit('close')
+  }
+}
 
 const loading = ref(false)
 const errorMsg = ref('')
@@ -76,7 +80,9 @@ const form = reactive({
   createnode_macashost: false,
   nextnode_discover: false,
   controller: emptyController(),
-  availability_controllers: {} as Record<string, Controller>
+  availability_controllers: {} as Record<string, Controller>,
+  controller_ip: '',
+  controller_network: '',
 })
 
 function isController(value: unknown): value is Controller {
@@ -111,7 +117,8 @@ watch(
     form.nextnode_discover = cluster?.nextnode_discover ?? false
 
     Object.assign(form.controller, cluster?.controller ?? emptyController())
-
+    form.controller_ip = cluster?.controller?.ipaddress ?? ''
+    form.controller_network = ''
     form.availability_controllers = {}
 
     if (cluster) {
@@ -126,10 +133,14 @@ watch(
 )
 
 
-onMounted(async () => {
-
-
+onMounted(() => {
+  window.addEventListener('keydown', handleEscKey)
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
+
 function emptyToNull(value: string): string | null {
   return value === '' ? null : value
 }
@@ -151,7 +162,9 @@ function buildPayload() {
     createnode_ondemand: form.createnode_ondemand,
     createnode_macashost: form.createnode_macashost,
     nextnode_discover: form.nextnode_discover,
-    controller: { ...form.controller }
+    controller: form.controller_ip,
+    controller_network: form.controller_network,
+    // controller: { ...form.controller }
   }
 
   for (const [key, controller] of Object.entries(form.availability_controllers)) {
@@ -171,27 +184,22 @@ async function onSubmit() {
 
   try {
     const payload = buildPayload()
-
     const { data } = await props.apiClient.put('/api/v1/update', payload)
-
     if (data.status === true) {
       successMsg.value = data.content?.message || 'Cluster updated successfully.'
-
       setTimeout(() => {
         emit('saved')
         emit('close')
       }, 1500)
-
       return
     }
-
     errorMsg.value = data.content?.message || 'Update failed.'
   } catch (err: unknown) {
     errorMsg.value = err instanceof Error ? err.message : 'Unknown error occurred.'
   }
 }
+const nameEditable = ref(false)
 </script>
-
 
 <template>
   <BaseModal size="large" @close="$emit('close')">
@@ -208,11 +216,12 @@ async function onSubmit() {
           <div class="left-column">
             <!-- NAME field with mandatory indicator -->
             <div class="text-field mandatory">
-              <label-part>
+              <div class="label-part">
                 <label>NAME:</label>
-              </label-part>
-              <input type="text" id="name" v-model="form.name">
-              <svg class="edit-icon" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+              </div>
+              <input type="text" id="name" v-model="form.name" :disabled="!nameEditable" :class="{ 'is-disabled-field': !nameEditable }">
+              <!-- <svg class="edit-icon" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"> -->
+              <svg class="edit-icon" :class="{ 'is-active': nameEditable }" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" @click="nameEditable = true" @keydown.enter="nameEditable = true">
                 <g clip-path="url(#clip0)">
                   <path d="M6.22774 17.4148C5.80661 17.4148 5.39292 17.2488 5.0907 16.9466C4.72903 16.5849 4.5581 16.0697 4.63489 15.5643L5.10556 12.4777L12.1235 5.45978L16.5627 9.89894L9.54472 16.9169L6.47546 17.3999C6.39371 17.4123 6.30949 17.4197 6.22774 17.4197V17.4148ZM6.96595 13.4166L6.67116 15.3587L8.60091 15.0565L13.7609 9.89646L12.1235 8.25902L6.96595 13.4166Z" fill="#5376EA"/>
                   <path d="M15.1284 11.3308L10.6892 6.8916L12.3192 5.2616C13.216 4.36485 14.675 4.36485 15.5718 5.2616L16.7609 6.45066C17.6576 7.34741 17.6576 8.80648 16.7609 9.70323L15.1308 11.3332L15.1284 11.3308ZM13.4909 6.8916L15.1284 8.52904L15.3587 8.29866C15.4826 8.1748 15.4826 7.97414 15.3587 7.85028L14.1697 6.66122C14.0458 6.53736 13.8452 6.53736 13.7213 6.66122L13.4909 6.8916Z" fill="#5376EA"/>
@@ -265,116 +274,124 @@ async function onSubmit() {
             <!-- Row 1: TECHNICAL CONTACTS | USER | DEBUG -->
             <div class="row">
               <div class="text-field wide">
-                <label-part>
+                <div class="label-part">
                   <label>TECHNICAL CONTACTS:</label>
-                </label-part>
+                </div>
                 <input type="text" id="technicalContacts" v-model="form.technical_contacts">
               </div>
               <div class="text-field wide">
-                <label-part>
+                <div class="label-part">
                   <label>USER:</label>
-                </label-part>
+                </div>
                 <input type="text" id="user" v-model="form.user">
               </div>
               <div class="checkbox-field">
-                <label-part>
+                <div class="label-part">
                   <label for="debugCheckbox">DEBUG:</label>
-                </label-part>
+                </div>
                 <div class="checkbox-container">
                   <input id="debugCheckbox" class="cluster-checkbox" type="checkbox" v-model="form.debug" />
                 </div>
               </div>
-              <!-- <div class="checkbox-field">
-                <label-part>
-                  <label>DEBUG:</label>
-                </label-part>
-                <div class="checkbox-container">
-                  <button type="button" id="debugCheckbox" class="checked" onclick="toggleCheckbox('debugCheckbox')"></button>
+            </div>
+
+            <!-- Row 2: CONTROLLER IP | CONTROLLER NETWORK -->
+            <div class="row">
+              <div class="text-field wide">
+                <div class="label-part">
+                  <label>CONTROLLER IP:</label>
                 </div>
-              </div> -->
+                <input type="text" id="controller" v-model="form.controller_ip" />
+              </div>
+              <div class="text-field wide">
+                <div class="label-part">
+                  <label>CONTROLLER NETWORK:</label>
+                </div>
+                <input type="text" id="controller_network" v-model="form.controller_network" />
+              </div>
             </div>
 
             <!-- Row 2: PROVISIONING METHOD | PROVISION FALLBACK -->
             <div class="row">
               <div class="text-field wide">
-                <label-part>
+                <div class="label-part">
                   <label>PROVISIONING METHOD:</label>
-                </label-part>
+                </div>
                 <input type="text" id="provisioningMethod" v-model="form.provision_method">
               </div>
               <div class="text-field wide">
-                <label-part>
+                <div class="label-part">
                   <label>PROVISION FALLBACK:</label>
-                </label-part>
+                </div>
                 <input type="text" id="provisionFallback" v-model="form.provision_fallback">
               </div>
             </div>
 
             <!-- Row 3: DOMAIN SEARCH -->
             <div class="text-field">
-              <label-part>
+              <div class="label-part">
                 <label>DOMAIN SEARCH:</label>
-              </label-part>
+              </div>
               <input type="text" id="domainSearch" v-model="form.domain_search">
             </div>
 
             <!-- Row 4: NAMESERVER IP -->
             <div class="text-field">
-              <label-part>
+              <div class="label-part">
                 <label>NAMESERVER IP:</label>
-              </label-part>
+              </div>
               <input type="text" id="nameserverIp" v-model="form.nameserver_ip">
             </div>
 
             <!-- Row 5: FORWARDSERVER IP -->
             <div class="text-field">
-              <label-part>
+              <div class="label-part">
                 <label>FORWARDSERVER IP:</label>
-              </label-part>
+              </div>
               <input type="text" id="forwardserverIp" v-model="form.forwardserver_ip">
             </div>
 
             <!-- Row 6: NTP SERVER -->
             <div class="text-field">
-              <label-part>
+              <div class="label-part">
                 <label>NTP SERVER:</label>
-              </label-part>
+              </div>
               <input type="text" id="ntpServer" v-model="form.ntp_server">
             </div>
 
             <!-- Row 7: CREATE NODE ON DEMAND | CREATE NODE ON MACASHOST -->
             <!-- <div class="row">
               <div class="boolean-field">
-                <label-part>
+                <div class="label-part">
                   <label>CREATE NODE ON DEMAND:</label>
-                </label-part>
+                </div>
                 <div class="button-group">
                   <button type="button" class="true" :class="{ active: form.createnode_ondemand === true }" @click="form.createnode_ondemand = true">TRUE</button>
                   <button type="button" class="false" :class="{ active: form.createnode_ondemand === false }" @click="form.createnode_ondemand = false">FALSE</button>
                 </div>
               </div>
               <div class="text-field wide" style="flex: 1;">
-                <label-part>
+                <div class="label-part">
                   <label>CREATE NODE ON MACASHOST:</label>
-                </label-part>
+                </div>
                 <input type="text" id="createNodeOnMacasHost" value="text field">
               </div>
             </div> -->
             <!-- Row 7: CREATE NODE ON DEMAND | CREATE NODE ON MACASHOST -->
             <div class="row">
               <div class="checkbox-field">
-                <label-part>
+                <div class="label-part">
                   <label for="createNodeOnDemand">CREATE NODE ON DEMAND:</label>
-                </label-part>
+                </div>
                 <div class="checkbox-container">
                   <input id="createNodeOnDemand" class="cluster-checkbox" type="checkbox" v-model="form.createnode_ondemand" />
                 </div>
               </div>
 
               <div class="checkbox-field">
-                <label-part>
+                <div class="label-part">
                   <label for="createNodeOnMacasHost">CREATE NODE ON MACASHOST:</label>
-                </label-part>
+                </div>
                 <div class="checkbox-container">
                   <input id="createNodeOnMacasHost" class="cluster-checkbox" type="checkbox" v-model="form.createnode_macashost" />
                 </div>
@@ -385,27 +402,27 @@ async function onSubmit() {
             <div class="row row-wide">
               <div class="field-group">
                 <div class="checkbox-field">
-                  <label-part>
+                  <div class="label-part">
                     <label for="nextNodeDiscover">NEXT NODE DISCOVER:</label>
-                  </label-part>
+                  </div>
                   <div class="checkbox-container">
                     <input id="nextNodeDiscover" class="cluster-checkbox" type="checkbox" v-model="form.nextnode_discover" />
                   </div>
                 </div>
 
                 <div class="checkbox-field">
-                  <label-part>
+                  <div class="label-part">
                     <label for="securityCheckbox">SECURITY:</label>
-                  </label-part>
+                  </div>
                   <div class="checkbox-container">
                     <input id="securityCheckbox" class="cluster-checkbox" type="checkbox" v-model="form.security"  />
                   </div>
                 </div>
 
                 <div class="checkbox-field">
-                  <label-part>
+                  <div class="label-part">
                     <label for="packingBootpause">PACKING BOOTPAUSE:</label>
-                  </label-part>
+                  </div>
                   <div class="checkbox-container">
                     <input id="packingBootpause" class="cluster-checkbox" type="checkbox" v-model="form.packing_bootpause" />
                   </div>
@@ -413,24 +430,24 @@ async function onSubmit() {
               </div>
               <!-- <div class="field-group">
                 <div class="text-field" style="width: auto;">
-                  <label-part>
+                  <div class="label-part">
                     <label>NEXT NODE DISCOVER:</label>
-                  </label-part>
+                  </div>
                   <input type="text" id="nextNodeDiscover" value="1" style="width: 80px;">
                 </div>
                 <div class="boolean-field">
-                  <label-part>
+                  <div class="label-part">
                     <label>SECURITY:</label>
-                  </label-part>
+                  </div>
                   <div class="button-group">
                     <button type="button" class="true active" onclick="toggleBoolean('security', true)">TRUE</button>
                     <button type="button" class="false" onclick="toggleBoolean('security', false)">FALSE</button>
                   </div>
                 </div>
                 <div class="boolean-field">
-                  <label-part>
+                  <div class="label-part">
                     <label>PACKING BOOTPAUSE:</label>
-                  </label-part>
+                  </div>
                   <div class="button-group">
                     <button type="button" class="true active" onclick="toggleBoolean('packingBootpause', true)">TRUE</button>
                     <button type="button" class="false" onclick="toggleBoolean('packingBootpause', false)">FALSE</button>

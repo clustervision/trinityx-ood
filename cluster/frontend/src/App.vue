@@ -88,15 +88,11 @@ async function loadData() {
   errorMsg.value = ''
 
   try {
-    // const data = await fetchCluster()
     const { data } = await apiClient.get('/api/v1/cluster')
-    // console.log(data);
     if (data.status === true && data.content?.config?.cluster) {
       const raw: Cluster = data.content.config.cluster
-    // console.log(raw);
     cluster.value = raw
     ha_controllers.value = Object.entries(raw).filter(([key]) => !CLUSTER_STATIC_KEYS.has(key)).map(([, value]) => value as Controller)
-      console.log(ha_controllers.value)
     } else {
       if (data.status_code === 404) {
         httpError.value = data.content?.message
@@ -117,8 +113,6 @@ async function loadData() {
 defineExpose({ loadData })
 
 onMounted(loadData)
-// console.log(filteredRows.value);
-
 
 function boolLabel(value: boolean | string | null | undefined): string {
   if (value === true || value === 'true') return 'TRUE'
@@ -304,19 +298,42 @@ function boolBadge(value: boolean | string | null | undefined): string {
             </div>
         </div>
 
-
-
         <Teleport to="body">
           <div v-if="helpOpen" class="tx-modal-overlay" @mousedown.self="helpOpen = false">
             <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title">
               <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">
                 &times;
               </button>
-              <h2 id="help-title" class="tx-help-title">How to use this app</h2>
-              <ul class="tx-help-list">
-                <li><strong>Cluster</strong> — A detailed view of Luna Cluster.</li>
-                <li><strong>Update</strong> — Update the Luna Cluster information on Luna2 Daemon</li>
-              </ul>
+
+              <h2 id="help-title" class="tx-help-title">How to use this Cluster app</h2>
+
+              <div class="tx-help-content">
+                <p class="tx-help-intro">
+                  Use this app to view and update the Luna cluster configuration stored in the Luna2 daemon.
+                  These fields map to <code>luna cluster change</code>.
+                </p>
+
+                <ul class="tx-help-list">
+                  <li><strong>Cluster Name</strong> — The logical name of the Luna cluster.</li>
+                  <li><strong>Controller IP</strong> — The IP address of the cluster controller. Maps to <code>--controller</code>.</li>
+                  <li><strong>Controller Network</strong> — Network name used when changing the controller IP outside the current network scope. Maps to <code>--controller_network</code>.</li>
+                  <li><strong>User</strong> — The cluster user value stored in Luna.</li>
+                  <li><strong>NTP Server</strong> — Time synchronisation server used by the cluster. Important for logs, certificates, authentication, and troubleshooting.</li>
+                  <li><strong>Name Server IP</strong> — DNS server used by cluster nodes. Often the controller IP.</li>
+                  <li><strong>Forward Server IP</strong> — Upstream DNS resolver used to forward external DNS requests.</li>
+                  <li><strong>Technical Contacts</strong> — Contact details for the people responsible for the cluster.</li>
+                  <li><strong>Provision Method</strong> — Main node provisioning method, for example <code>torrent</code> or <code>http</code>.</li>
+                  <li><strong>Provision Fallback</strong> — Backup provisioning method if the primary method is unavailable.</li>
+                  <li><strong>Domain Search</strong> — Comma-separated DNS search domains, for example <code>cluster,ib,ipmi</code>.</li>
+                  <li><strong>Packing Bootpause</strong> — Pauses node booting until OS image packing has finished.</li>
+                  <li><strong>Create Node On Demand</strong> — Allows Luna to create node entries automatically when nodes are discovered.</li>
+                  <li><strong>Create Node On MAC as Host</strong> — Uses the MAC address as hostname for newly created on-demand nodes.</li>
+                  <li><strong>Next Node Discover</strong> — Enables discovery of the next node when adding or detecting new nodes.</li>
+                  <li><strong>Security</strong> — Enables or disables Luna security mode. Change carefully.</li>
+                  <li><strong>Debug</strong> — Enables verbose troubleshooting mode. Disable after investigation.</li>
+                  <li><strong>Update</strong> — Saves the changed values to the Luna2 daemon.</li>
+                </ul>
+              </div>
             </div>
           </div>
         </Teleport>
