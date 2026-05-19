@@ -21,18 +21,10 @@ include _base/templates/*
 
 include cluster
 include cluster/*
-include cluster/static
-include cluster/static/*
-include cluster/static/css
-include cluster/static/css/*
-include cluster/static/img
-include cluster/static/img/*
-include cluster/static/js
-include cluster/static/js/*
-include cluster/templates
-include cluster/templates/*
-include cluster/templates/layout
-include cluster/templates/layout/*
+include cluster/app
+include cluster/app/*
+include cluster/app/assets
+include cluster/app/assets/*
 
 include control
 include control/*

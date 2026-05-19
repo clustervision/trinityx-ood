@@ -78,7 +78,7 @@ def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
     """
-    if request.path.startswith('/static/'):
+    if request.path.startswith('/app/assets/'):
         return
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
