@@ -1,10 +1,20 @@
 """
-conftest.py — pytest fixtures and stubs for the TrinityX OOD Slurm app.
+conftest.py — pytest fixtures for the TrinityX OOD Slurm app.
 
-All unavailable private packages (trinityx_config_blocks,
-trinityx_config_slurm, slurmlint) are replaced with minimal stubs so
-the test suite runs standalone — no Slurm, no Flask prod config,
-no GitLab package registry needed.
+Package strategy
+----------------
+trinityx_config_blocks    — real package (installed from GitLab repo)
+trinityx_config_slurm     — real package (installed from GitLab repo)
+slurmlint                 — stubbed (not available; lint always passes)
+base.config               — stubbed (avoids /trinity/local/… ini file)
+helpers                   — stubbed (avoids live Luna daemon call)
+
+If either trinityx package is missing the suite will still run using
+lightweight fallback stubs so CI without the GitLab packages stays green.
+
+Install the real packages once with:
+  pip install -e /path/to/trinityx-config-blocks
+  pip install -e /path/to/trinityx-config-slurm
 """
 
 import sys
@@ -13,245 +23,213 @@ import types
 import tempfile
 import pytest
 
-# ── Make the slurm/ directory importable ────────────────────────────────
+# ── Make the slurm/ directory importable ─────────────────────────────────
 SLURM_DIR = os.path.join(os.path.dirname(__file__), '..')
 sys.path.insert(0, os.path.abspath(SLURM_DIR))
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  STUB: trinityx_config_blocks                                        ║
+# ║  trinityx_config_blocks — real if available, fallback stub otherwise  ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
-class _ConfigFileMock:
-    """
-    Minimal stand-in for trinityx_config_blocks.ConfigFile.
-    Reads a real file on disk so we can test with temp-file fixtures,
-    but stubs out every method the app calls.
-    """
-    def __init__(self, path):
-        self._path = path
-        self._blocks = {}   # block_name -> content str
-        self._raw = ""
-        if path and os.path.exists(path):
-            with open(path) as fh:
-                self._raw = fh.read()
-            self._parse_blocks()
+try:
+    import trinityx_config_blocks  # noqa — just verify importable
+    _CONFIG_BLOCKS_REAL = True
+except ImportError:
+    _CONFIG_BLOCKS_REAL = False
 
-    def _parse_blocks(self):
-        import re
-        for m in re.finditer(
-            r'####\s+(\S+)\s+Managed block start\s+####(.*?)####\s+\1\s+Managed block end\s+####',
-            self._raw, re.DOTALL
-        ):
-            self._blocks[m.group(1)] = m.group(2)
+if not _CONFIG_BLOCKS_REAL:
+    import re as _re
 
-    # ── API surface used by app.py ──────────────────────────────────────
-    @classmethod
-    def read(cls, path):
-        return cls(path)
+    class _ConfigFileFallback:
+        """Fallback ConfigFile stub when real package unavailable."""
+        BLOCK_RE = _re.compile(
+            r'(####\s+(?P<name>\S+)\s+Managed block start\s+####)'
+            r'(?P<content>.*?)'
+            r'(####\s+(?P=name)\s+Managed block end\s+####)',
+            _re.DOTALL
+        )
 
-    def ismanaged(self, block_name):
-        return block_name in self._blocks
+        def __init__(self, path):
+            self._path = path
+            self._raw = ""
+            self._blocks = {}
+            if path and os.path.exists(path):
+                with open(path) as fh:
+                    self._raw = fh.read()
+                for m in self.BLOCK_RE.finditer(self._raw):
+                    self._blocks[m.group('name')] = m.group('content')
 
-    def get_managed_block(self, block_name):
-        return self._blocks.get(block_name, "")
+        @classmethod
+        def read(cls, path):
+            return cls(path)
 
-    def set_managed_block(self, block_name, content):
-        self._blocks[block_name] = content
+        def ismanaged(self, name):
+            return name in self._blocks
 
-    def write(self, path):
-        # Re-assemble the file with updated blocks
-        import re
-        result = self._raw
-        for name, content in self._blocks.items():
-            pattern = (
-                rf'(####\s+{re.escape(name)}\s+Managed block start\s+####)'
-                rf'(.*?)'
-                rf'(####\s+{re.escape(name)}\s+Managed block end\s+####)'
-            )
-            replacement = rf'\g<1>{content}\g<3>'
-            result = re.sub(pattern, replacement, result, flags=re.DOTALL)
-        with open(path, 'w') as fh:
-            fh.write(result)
-        self._path = path
-        self._raw = result
+        def get_managed_block(self, name):
+            return self._blocks.get(name, "")
 
-    def dump(self):
-        return self._raw
+        def set_managed_block(self, name, content):
+            self._blocks[name] = content
 
+        def write(self, path):
+            result = self._raw
+            for name, content in self._blocks.items():
+                pattern = (
+                    rf'(####\s+{_re.escape(name)}\s+Managed block start\s+####)'
+                    rf'(.*?)'
+                    rf'(####\s+{_re.escape(name)}\s+Managed block end\s+####)'
+                )
+                result = _re.sub(pattern, rf'\g<1>{content}\g<3>', result, flags=_re.DOTALL)
+            with open(path, 'w') as fh:
+                fh.write(result)
+            self._raw = result
 
-def _install_config_blocks_stub():
-    mod = types.ModuleType('trinityx_config_blocks')
-    mod.ConfigFile = _ConfigFileMock
-    sys.modules['trinityx_config_blocks'] = mod
+        def dump(self):
+            return self._raw
 
-_install_config_blocks_stub()
+    _mod = types.ModuleType('trinityx_config_blocks')
+    _mod.ConfigFile = _ConfigFileFallback
+    sys.modules['trinityx_config_blocks'] = _mod
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  STUB: trinityx_config_slurm                                         ║
+# ║  trinityx_config_slurm — real if available, fallback stub otherwise   ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
-class _SlurmConfigMock:
-    """
-    Minimal SlurmConfig — just enough to let app.py parse the key=value
-    lines it cares about (NodeName=, PartitionName=, HWPresetName=,
-    GRESPresetName=, NodeSet=).
-    """
-    def __init__(self, entries):
-        # entries: list of dicts, each dict is one parsed stanza
-        self._entries = entries
+try:
+    import trinityx_config_slurm  # noqa
+    _CONFIG_SLURM_REAL = True
+except ImportError:
+    _CONFIG_SLURM_REAL = False
 
-    @classmethod
-    def parse(cls, text):
-        import re
-        entries = []
-        for line in text.splitlines():
-            line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            pairs = {}
-            for m in re.finditer(r'(\w+)=(\S+)', line):
-                pairs[m.group(1)] = m.group(2)
-            if pairs:
-                entries.append(pairs)
-        return cls(entries)
+if not _CONFIG_SLURM_REAL:
+    import re as _re2
 
-    def object_aslist(self, entry):
-        return [e for e in self._entries if entry in e]
+    class _SlurmConfigFallback:
+        def __init__(self, entries):
+            self._entries = entries  # list of dicts
 
-    def object(self, multiple=True):
-        """Return dict keyed by first key=value as 'KEY=VAL' -> rest-of-line"""
-        result = {}
-        for e in self._entries:
-            if e:
-                key = list(e.keys())[0]
-                val = list(e.values())[0]
-                result[f"{key}={val}"] = ' '.join(f"{k}={v}" for k, v in e.items())
-        return result
+        @classmethod
+        def parse(cls, text):
+            entries = []
+            for line in text.splitlines():
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                pairs = {}
+                for m in _re2.finditer(r'(\w+)=(\S+)', line):
+                    pairs[m.group(1)] = m.group(2)
+                if pairs:
+                    entries.append(pairs)
+            return cls(entries)
 
-    def comment(self, name=None):
-        """
-        Returns comment metadata dict.  We return an empty dict here —
-        tests that need specific comment data set it up via file fixtures.
-        """
-        return {}
+        def object_aslist(self, entry=None):
+            return [e for e in self._entries if not entry or entry in e]
 
+        def object(self, multiple=False):
+            result = {}
+            for e in self._entries:
+                if e:
+                    k, v = next(iter(e.items()))
+                    result[f"{k}={v}"] = ' '.join(f"{ki}={vi}" for ki, vi in e.items())
+            return result
 
-class _GenerateMock:
-    def all_configs(self, nodes, configs, manager):
-        return True   # always succeed in tests
+        def comment(self, name=None, multiple=False):
+            return {}
 
+    class _GenerateFallback:
+        def all_configs(self, nodes, configs, manager):
+            return True
 
-def _install_config_slurm_stub():
-    pkg = types.ModuleType('trinityx_config_slurm')
-    pkg.SlurmConfig  = _SlurmConfigMock
-    pkg.SlurmEntry   = object
-    pkg.SlurmProperty = object
-    pkg.Generate     = _GenerateMock
-
-    utils = types.ModuleType('trinityx_config_slurm.utils')
-    hostlist = types.ModuleType('trinityx_config_slurm.utils.hostlist')
-
-    # Real hostlist logic using the system python-hostlist package
+    _pkg = types.ModuleType('trinityx_config_slurm')
+    _pkg.SlurmConfig   = _SlurmConfigFallback
+    _pkg.SlurmEntry    = object
+    _pkg.SlurmProperty = object
+    _pkg.Generate      = _GenerateFallback
+    _utils = types.ModuleType('trinityx_config_slurm.utils')
+    _hl    = types.ModuleType('trinityx_config_slurm.utils.hostlist')
     try:
-        import hostlist as _hl
-        hostlist.compress = lambda s: _hl.collect_hostlist(s.split(',')) if s else s
-        hostlist.expand   = lambda s: ','.join(_hl.expand_hostlist(s))
+        import hostlist as _sys_hl
+        _hl.compress = lambda s: _sys_hl.collect_hostlist(s.split(',')) if s else s
+        _hl.expand   = lambda s: ','.join(_sys_hl.expand_hostlist(s))
     except ImportError:
-        # Fallback: identity functions (no compression/expansion)
-        hostlist.compress = lambda s: s
-        hostlist.expand   = lambda s: s
-
-    pkg.utils = utils
-    utils.hostlist = hostlist
-    sys.modules['trinityx_config_slurm'] = pkg
-    sys.modules['trinityx_config_slurm.utils'] = utils
-    sys.modules['trinityx_config_slurm.utils.hostlist'] = hostlist
-
-_install_config_slurm_stub()
+        _hl.compress = lambda s: s
+        _hl.expand   = lambda s: s
+    _pkg.utils = _utils
+    _utils.hostlist = _hl
+    sys.modules['trinityx_config_slurm']               = _pkg
+    sys.modules['trinityx_config_slurm.utils']         = _utils
+    sys.modules['trinityx_config_slurm.utils.hostlist'] = _hl
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  STUB: slurmlint                                                      ║
+# ║  slurmlint — always stubbed (not available anywhere)                  ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
-def _install_slurmlint_stub():
-    slurmlint     = types.ModuleType('slurmlint')
-    linter        = types.ModuleType('slurmlint.linter')
-    linter.lint   = lambda text: {"errors": []}   # always valid
-    slurmlint.linter = linter
-    sys.modules['slurmlint']        = slurmlint
-    sys.modules['slurmlint.linter'] = linter
-
-_install_slurmlint_stub()
+_sl     = types.ModuleType('slurmlint')
+_sl_l   = types.ModuleType('slurmlint.linter')
+_sl_l.lint = lambda text: {"errors": []}
+_sl.linter = _sl_l
+sys.modules['slurmlint']        = _sl
+sys.modules['slurmlint.linter'] = _sl_l
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  STUB: base.config  (avoids reading /trinity/local/… ini file)       ║
+# ║  helpers — stubbed (no live Luna daemon needed)                       ║
 # ╚══════════════════════════════════════════════════════════════════════╝
+
+_helpers = types.ModuleType('helpers')
+_helpers.get_luna_nodes = lambda: {}
+_helpers.managed_by_ood = lambda: False
+sys.modules['helpers'] = _helpers
+
+
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  base.config — stubbed to point at temp files                         ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+
+_MANAGED_BLOCK_TEMPLATE = (
+    "#### Defaults Managed block start ####\n"
+    "#### Defaults Managed block end   ####\n\n"
+    "#### TrinityX Managed block start ####\n"
+    "#### TrinityX Managed block end   ####\n"
+)
+
 
 def _install_base_config_stub(tmp_dir):
-    nodes_file = os.path.join(tmp_dir, 'slurm-nodes.conf')
-    parts_file = os.path.join(tmp_dir, 'slurm-partitions.conf')
-    gres_file  = os.path.join(tmp_dir, 'gres.conf')
-    nodes_bkp  = nodes_file + '.bkp'
-    parts_bkp  = parts_file + '.bkp'
-    gres_bkp   = gres_file  + '.bkp'
-
-    _managed_block_template = (
-        "#### Defaults Managed block start ####\n"
-        "#### Defaults Managed block end   ####\n\n"
-        "#### TrinityX Managed block start ####\n"
-        "#### TrinityX Managed block end   ####\n"
-    )
-    for path in [nodes_file, parts_file, gres_file,
-                 nodes_bkp,  parts_bkp,  gres_bkp]:
+    files = {k: os.path.join(tmp_dir, v) for k, v in {
+        'nodes':         'slurm-nodes.conf',
+        'partitions':    'slurm-partitions.conf',
+        'gres':          'gres.conf',
+        'nodes_bkp':     'slurm-nodes.conf.bkp',
+        'partitions_bkp':'slurm-partitions.conf.bkp',
+        'gres_bkp':      'gres.conf.bkp',
+    }.items()}
+    for path in files.values():
         with open(path, 'w') as fh:
-            fh.write(_managed_block_template)
+            fh.write(_MANAGED_BLOCK_TEMPLATE)
 
-    base_pkg    = types.ModuleType('base')
-    base_config = types.ModuleType('base.config')
-    base_ini    = types.ModuleType('base.ini')
-    base_token  = types.ModuleType('base.token')
+    _base     = types.ModuleType('base')
+    _bcfg     = types.ModuleType('base.config')
+    _bini     = types.ModuleType('base.ini')
+    _btok     = types.ModuleType('base.token')
 
-    base_config.MANAGER_NAME      = 'TrinityX'
-    base_config.MANAGER_NAME_OOD  = 'TrinityX-OOD'
-    base_config.MANAGED_PROPERTIES = [
+    _bcfg.MANAGER_NAME       = 'TrinityX'
+    _bcfg.MANAGER_NAME_OOD   = 'TrinityX-OOD'
+    _bcfg.MANAGED_PROPERTIES = [
         'Boards','SocketsPerBoard','CoresPerSocket','ThreadsPerCore',
         'RealMemory','TmpDisk','CpuBind','Gres','State'
     ]
-    base_config.get_configs        = lambda: {'LUNA': {}, 'APP': {}, 'ENV': {}}
-    base_config.get_slurm_files    = lambda: {
-        'nodes': nodes_file, 'partitions': parts_file, 'gres': gres_file
-    }
-    base_config.get_slurm_backup_files = lambda: {
-        'nodes': nodes_bkp, 'partitions': parts_bkp, 'gres': gres_bkp
-    }
+    _bcfg.get_configs            = lambda: {'LUNA': {}, 'APP': {}, 'ENV': {}}
+    _bcfg.get_slurm_files        = lambda: {k: files[k] for k in ('nodes','partitions','gres')}
+    _bcfg.get_slurm_backup_files = lambda: {k: files[k+'_bkp'] for k in ('nodes','partitions','gres')}
 
-    base_pkg.config = base_config
-    sys.modules['base']        = base_pkg
-    sys.modules['base.config'] = base_config
-    sys.modules['base.ini']    = base_ini
-    sys.modules['base.token']  = base_token
-
-    return {
-        'nodes': nodes_file, 'partitions': parts_file, 'gres': gres_file,
-        'nodes_bkp': nodes_bkp, 'partitions_bkp': parts_bkp, 'gres_bkp': gres_bkp,
-    }
-
-
-# ╔══════════════════════════════════════════════════════════════════════╗
-# ║  STUB: helpers                                                        ║
-# ╚══════════════════════════════════════════════════════════════════════╝
-
-def _install_helpers_stub():
-    helpers = types.ModuleType('helpers')
-    helpers.get_luna_nodes  = lambda: {}
-    helpers.managed_by_ood  = lambda: False
-    sys.modules['helpers'] = helpers
-
-_install_helpers_stub()
+    _base.config = _bcfg
+    sys.modules.update({'base': _base, 'base.config': _bcfg,
+                        'base.ini': _bini, 'base.token': _btok})
+    return files
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
@@ -266,11 +244,6 @@ def tmp_slurm_dir():
 
 @pytest.fixture(scope='session')
 def slurm_files(tmp_slurm_dir):
-    """
-    Install the base.config stub pointing at temp files and return
-    the file-path dict.  session-scoped so the app module is only
-    imported once.
-    """
     return _install_base_config_stub(tmp_slurm_dir)
 
 
