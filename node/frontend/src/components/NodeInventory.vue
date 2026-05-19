@@ -122,15 +122,19 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis"
-                  :title="String(row.name ?? '')"
+                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="displayNameTitle(row.name)"
                   @click="$emit('open-edit', canonicalName(row.name))"
-                >{{ row.name }}</button>
+                >{{ formatDisplayName(row.name) }}</button>
               </template>
               <template v-else-if="col.field === 'osimage'">
                 <span v-if="isInvalidOs(row)" class="tx-os-invalid">!!Invalid!!</span>
                 <span v-else-if="isEmpty(row[col.field])" class="tx-na-box">NOT AVAILABLE</span>
-                <span v-else class="tx-cell-ellipsis" :title="cellText(row[col.field])">{{ cellText(row[col.field]) }}</span>
+                <span
+                  v-else
+                  class="tx-cell-ellipsis tx-cell-truncate-js"
+                  :title="displayNameTitle(row[col.field])"
+                >{{ formatDisplayName(row[col.field]) }}</span>
               </template>
               <template v-else-if="col.field === 'setupbmc'">
                 <span :class="setupbmcClass(row[col.field])">{{ setupbmcLabel(row[col.field]) }}</span>
@@ -221,7 +225,7 @@
                   type="button"
                   class="tx-icon-act tx-icon-danger"
                   title="Delete"
-                  @click="confirmDelete(row.name)"
+                  @click="$emit('open-delete', canonicalName(row.name))"
                 >
                   <img :src="actionIcons.delete" alt="Delete" width="28" height="28"
                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"
@@ -282,7 +286,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { fetchNodes, deleteNode } from '../api'
+import { fetchNodes } from '../api'
+import { displayNameTitle, formatDisplayName } from '../constants/displayName'
 import { actionIcons } from '../utils/assetImg'
 import { parseIpv4String } from '../utils/nextFreeIpv4'
 import type { NodeRow, NodeInventoryInterface, ColumnDef, InventoryIpv4Record } from '@/types'
@@ -293,6 +298,7 @@ defineEmits<{
   'open-clone': [name: string]
   'open-ospush': [name: string]
   'open-osgrab': [name: string]
+  'open-delete': [name: string]
 }>()
 
 const FIELD_LABELS: Record<string, string> = {
@@ -497,18 +503,6 @@ async function loadData() {
     errorMsg.value = (err as Error).message || 'Network error while loading nodes.'
   } finally {
     loading.value = false
-  }
-}
-
-async function confirmDelete(displayName: unknown) {
-  const c = canonicalName(displayName)
-  if (!c) return
-  if (!window.confirm(`Delete node ${c}?`)) return
-  try {
-    await deleteNode(c)
-    await loadData()
-  } catch (e) {
-    errorMsg.value = (e as Error).message || 'Delete failed.'
   }
 }
 
