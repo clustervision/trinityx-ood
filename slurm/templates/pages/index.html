@@ -72,6 +72,12 @@
                         <i class="fa-solid fa-trash"></i>
                         Delete Selected GRES Presets
                     </button>
+                    <div class="alert alert-info mt-2 mb-1 py-2 px-3" role="alert" style="font-size:.85rem">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>How GRES works:</strong>
+                        Assign presets to <strong>Nodes</strong> to generate <code>NodeName=</code> lines in <code>gres.conf</code> and auto-populate <code>Gres=</code> in <code>slurm-nodes.conf</code>.
+                        Assigning a preset to a <strong>Partition</strong> is informational only — it annotates which GRES resources that partition exposes, but does not write any config lines by itself.
+                    </div>
                     <table class="table table-bordered" id="gres-presets-table"></table>
                 </div>
                 <div id="nodes-tab" class="tab-pane fade">
