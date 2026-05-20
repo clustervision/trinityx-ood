@@ -84,17 +84,14 @@ function getSourceBmcData(): BmcData {
 
   if (!isRecord(data)) return {}
 
-  // Supports bmcData passed as: { "source-name": { ...sourceData } }
   const directByName = data[sourceName]
   if (isRecord(directByName)) return directByName as BmcData
 
-  // Supports bmcData passed as: { bmcsetup: { "source-name": { ...sourceData } } }
   const bmcsetup = data.bmcsetup
   if (isRecord(bmcsetup) && isRecord(bmcsetup[sourceName])) {
     return bmcsetup[sourceName] as BmcData
   }
 
-  // Supports bmcData passed as: { config: { bmcsetup: { "source-name": { ...sourceData } } } }
   const config = data.config
   if (isRecord(config)) {
     const configBmcSetup = config.bmcsetup
@@ -103,7 +100,6 @@ function getSourceBmcData(): BmcData {
     }
   }
 
-  // Supports bmcData passed directly as the selected source row
   return data as BmcData
 }
 
@@ -190,6 +186,81 @@ function asString(value: unknown): string {
   return value === null || value === undefined ? '' : String(value)
 }
 
+function stripBase64Padding(value: string): string {
+  return value.replace(/=+$/, '')
+}
+
+function encodeBase64Utf8(value: string): string {
+  const bytes = new TextEncoder().encode(value)
+  let binary = ''
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return window.btoa(binary)
+}
+
+function tryDecodeBase64Utf8(value: string): string | null {
+  const raw = value.trim()
+
+  if (!raw) return null
+
+  let normalized = raw
+    .replace(/\s+/g, '')
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+
+  const remainder = normalized.length % 4
+
+  if (remainder === 1) return null
+
+  if (remainder > 0) {
+    normalized = normalized.padEnd(normalized.length + (4 - remainder), '=')
+  }
+
+  const base64Pattern =
+    /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+
+  if (!base64Pattern.test(normalized)) {
+    return null
+  }
+
+  try {
+    const binary = window.atob(normalized)
+    const bytes = new Uint8Array(binary.length)
+
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i)
+    }
+
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    const reEncoded = encodeBase64Utf8(decoded)
+
+    if (stripBase64Padding(reEncoded) !== stripBase64Padding(normalized)) {
+      return null
+    }
+
+    return decoded
+  } catch {
+    return null
+  }
+}
+
+function decodeCommentValue(value: unknown): string {
+  const raw = asString(value)
+
+  if (!raw) return ''
+
+  return tryDecodeBase64Utf8(raw) ?? raw
+}
+
+function encodeCommentValue(value: string): string | null {
+  if (value === '') return null
+
+  return encodeBase64Utf8(value)
+}
+
 function asNumberOrNull(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null
   const numberValue = Number(value)
@@ -231,7 +302,7 @@ watch(
     form.netchannel = asNumberOrNull(bmcData.netchannel)
     form.mgmtchannel = asNumberOrNull(bmcData.mgmtchannel)
     form.unmanaged_bmc_users = asString(bmcData.unmanaged_bmc_users)
-    form.comment = asString(bmcData.comment)
+    form.comment = decodeCommentValue(bmcData.comment)
   },
   { immediate: true, deep: true }
 )
@@ -257,7 +328,7 @@ function buildPayload(targetName?: string) {
     netchannel: form.netchannel,
     mgmtchannel: form.mgmtchannel,
     unmanaged_bmc_users: emptyToNull(form.unmanaged_bmc_users),
-    comment: emptyToNull(form.comment)
+    comment: encodeCommentValue(form.comment)
   }
 
   if (props.mode === 'clone') {
@@ -307,10 +378,6 @@ async function onSubmit() {
     return
   }
 
-  // if (props.mode === 'add' && props.bmcList.includes(sourceName)) {
-  //   errorMsg.value = `BMC Setup "${sourceName}" already exists.`
-  //   return
-  // }
 
   if (props.mode === 'update') {
     if (!updateName) {
@@ -399,7 +466,6 @@ async function onSubmit() {
 <template>
   <BaseModal size="large" @close="emit('close')">
     <div class="tx-form-page bmc-modal-page">
-      <!-- <div v-if="errorMsg" class="alert-danger" role="alert">{{ errorMsg }}</div> -->
        <div v-if="liveNameValidationMsg || errorMsg" class="alert-danger" role="alert">
           {{ liveNameValidationMsg || errorMsg }}
         </div>
@@ -420,30 +486,9 @@ async function onSubmit() {
                 <label class="bmc-field-label" for="bmc-name">NAME:</label>
 
                 <div class="bmc-name-wrapper">
-                  <input
-                    id="bmc-name"
-                    v-model.trim="form.name"
-                    type="text"
-                    class="bmc-input"
-                    autocomplete="off"
-                    :disabled="isUpdate && !nameEditable"
-                    :class="{
-                      'bmc-input-disabled': isUpdate && !nameEditable,
-                      'bmc-input-with-edit-icon': isUpdate,
-                      'bmc-input-error': liveNameValidationMsg && !isClone
-                    }"
-                    required
-                  >
+                  <input id="bmc-name" v-model.trim="form.name" type="text" autocomplete="off" :disabled="isUpdate && !nameEditable" required class="bmc-input" :class="{'bmc-input-disabled': isUpdate && !nameEditable,'bmc-input-with-edit-icon': isUpdate,'bmc-input-error': liveNameValidationMsg && !isClone}">
 
-                  <button
-                    v-if="isUpdate"
-                    type="button"
-                    class="bmc-edit-icon-btn"
-                    :class="{ 'is-active': nameEditable }"
-                    aria-label="Enable BMC name editing"
-                    title="Rename BMC setup"
-                    @click="nameEditable = true"
-                  >
+                  <button v-if="isUpdate" type="button" class="bmc-edit-icon-btn" :class="{ 'is-active': nameEditable }" aria-label="Enable BMC name editing" title="Rename BMC setup" @click="nameEditable = true">
                     <svg viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                       <g clip-path="url(#bmc-edit-name-clip)">
                         <path d="M6.22774 17.4148C5.80661 17.4148 5.39292 17.2488 5.0907 16.9466C4.72903 16.5849 4.5581 16.0697 4.63489 15.5643L5.10556 12.4777L12.1235 5.45978L16.5627 9.89894L9.54472 16.9169L6.47546 17.3999C6.39371 17.4123 6.30949 17.4197 6.22774 17.4197V17.4148ZM6.96595 13.4166L6.67116 15.3587L8.60091 15.0565L13.7609 9.89646L12.1235 8.25902L6.96595 13.4166Z" fill="#5376EA"/>
@@ -463,26 +508,12 @@ async function onSubmit() {
 
               <div v-if="isClone" class="bmc-form-field mandatory">
                 <label class="bmc-field-label" for="bmc-new-name">CLONE NAME:</label>
-                <input
-                  id="bmc-new-name"
-                  v-model.trim="form.newbmcname"
-                  type="text"
-                  class="bmc-input"
-                  autocomplete="off"
-                  :class="{ 'bmc-input-error': liveNameValidationMsg }"
-                  required
-                >
+                <input id="bmc-new-name" v-model.trim="form.newbmcname" type="text" class="bmc-input" autocomplete="off" :class="{ 'bmc-input-error': liveNameValidationMsg }" required>
               </div>
 
               <div class="bmc-form-field mandatory">
                 <label class="bmc-field-label" for="bmc-userid">USER ID:</label>
-                <input
-                  id="bmc-userid"
-                  v-model.number="form.userid"
-                  type="number"
-                  class="bmc-input"
-                  min="0"
-                >
+                <input id="bmc-userid" v-model.number="form.userid" type="number" class="bmc-input" min="0">
               </div>
             </div>
 
@@ -490,32 +521,15 @@ async function onSubmit() {
             <div class="bmc-form-row">
               <div class="bmc-form-field mandatory">
                 <label class="bmc-field-label" for="bmc-username">USER NAME:</label>
-                <input
-                  id="bmc-username"
-                  v-model.trim="form.username"
-                  type="text"
-                  class="bmc-input"
-                  autocomplete="username"
-                >
+                <input id="bmc-username" v-model.trim="form.username" type="text" class="bmc-input" autocomplete="username">
               </div>
 
               <div class="bmc-form-field mandatory">
                 <label class="bmc-field-label" for="bmc-password">PASSWORD:</label>
                 <div class="bmc-password-wrapper">
-                  <input
-                    id="bmc-password"
-                    v-model="form.password"
-                    :type="showPassword ? 'text' : 'password'"
-                    class="bmc-input bmc-password-input"
-                    autocomplete="new-password"
-                  >
+                  <input id="bmc-password" v-model="form.password" :type="showPassword ? 'text' : 'password'" class="bmc-input bmc-password-input" autocomplete="new-password">
 
-                  <button
-                    type="button"
-                    class="bmc-toggle-password"
-                    :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                    @click="showPassword = !showPassword"
-                  >
+                  <button type="button" class="bmc-toggle-password" :aria-label="showPassword ? 'Hide password' : 'Show password'" @click="showPassword = !showPassword">
                     <svg width="16" height="16" viewBox="0 0 14 5" fill="none" aria-hidden="true">
                       <path d="M0.5 0C3 2.5 10 3.5 13 0" stroke="#5376EA" stroke-width="2"/>
                       <path d="M1.5 1L0 3" stroke="#5376EA" stroke-width="2"/>
@@ -531,37 +545,19 @@ async function onSubmit() {
             <div class="bmc-form-row">
               <div class="bmc-form-field">
                 <label class="bmc-field-label" for="bmc-netchannel">NETWORK CHANNEL:</label>
-                <input
-                  id="bmc-netchannel"
-                  v-model.number="form.netchannel"
-                  type="number"
-                  class="bmc-input"
-                  placeholder=""
-                >
+                <input id="bmc-netchannel" v-model.number="form.netchannel" type="number" class="bmc-input" placeholder="">
               </div>
 
               <div class="bmc-form-field">
                 <label class="bmc-field-label" for="bmc-mgmtchannel">MANAGEMENT CHANNEL:</label>
-                <input
-                  id="bmc-mgmtchannel"
-                  v-model.number="form.mgmtchannel"
-                  type="number"
-                  class="bmc-input"
-                  placeholder=""
-                >
+                <input id="bmc-mgmtchannel" v-model.number="form.mgmtchannel" type="number" class="bmc-input" placeholder="">
               </div>
             </div>
 
             <div class="bmc-form-row full-width">
               <div class="bmc-form-field">
                 <label class="bmc-field-label" for="bmc-unmanaged-users">UNMANAGED BMC USERS:</label>
-                <input
-                  id="bmc-unmanaged-users"
-                  v-model.trim="form.unmanaged_bmc_users"
-                  type="text"
-                  class="bmc-input"
-                  autocomplete="off"
-                >
+                <input id="bmc-unmanaged-users" v-model.trim="form.unmanaged_bmc_users" type="text" class="bmc-input"  autocomplete="off">
               </div>
             </div>
 
@@ -571,53 +567,28 @@ async function onSubmit() {
               </div>
 
               <div class="bmc-comment-body">
-                <textarea
-                  id="bmc-comment"
-                  v-model="form.comment"
-                  class="bmc-textarea bmc-textarea-with-edit-icon"
-                  rows="3"
-                />
-
-                <button
-                  type="button"
-                  class="bmc-edit-icon-btn bmc-comment-edit-btn"
-                  aria-label="Open comment editor"
-                  title="Edit comment"
-                  @click="showCommentEditor = true"
-                >
-                  <svg viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <g clip-path="url(#bmc-edit-comment-clip)">
-                      <path d="M6.22774 17.4148C5.80661 17.4148 5.39292 17.2488 5.0907 16.9466C4.72903 16.5849 4.5581 16.0697 4.63489 15.5643L5.10556 12.4777L12.1235 5.45978L16.5627 9.89894L9.54472 16.9169L6.47546 17.3999C6.39371 17.4123 6.30949 17.4197 6.22774 17.4197V17.4148ZM6.96595 13.4166L6.67116 15.3587L8.60091 15.0565L13.7609 9.89646L12.1235 8.25902L6.96595 13.4166Z" fill="#5376EA"/>
-                      <path d="M15.1284 11.3308L10.6892 6.8916L12.3192 5.2616C13.216 4.36485 14.675 4.36485 15.5718 5.2616L16.7609 6.45066C17.6576 7.34741 17.6576 8.80648 16.7609 9.70323L15.1308 11.3332L15.1284 11.3308ZM13.4909 6.8916L15.1284 8.52904L15.3587 8.29866C15.4826 8.1748 15.4826 7.97414 15.3587 7.85028L14.1697 6.66122C14.0458 6.53736 13.8452 6.53736 13.7213 6.66122L13.4909 6.8916Z" fill="#5376EA"/>
-                      <path d="M19.8053 18.4329H5.1947V20.4147H19.8053V18.4329Z" fill="#5376EA"/>
-                      <path d="M21.5319 25H3.46809C1.55569 25 0 23.4443 0 21.5319V3.46809C0 1.55569 1.55569 0 3.46809 0H21.5319C23.4443 0 25 1.55569 25 3.46809V21.5319C25 23.4443 23.4443 25 21.5319 25ZM3.46809 1.98177C2.64814 1.98177 1.98177 2.64814 1.98177 3.46809V21.5319C1.98177 22.3519 2.64814 23.0182 3.46809 23.0182H21.5319C22.3519 23.0182 23.0182 22.3519 23.0182 21.5319V3.46809C23.0182 2.64814 22.3519 1.98177 21.5319 1.98177H3.46809Z" fill="#5376EA"/>
-                    </g>
-                    <defs>
-                      <clipPath id="bmc-edit-comment-clip">
-                        <rect width="25" height="25" fill="white"/>
-                      </clipPath>
-                    </defs>
-                  </svg>
+                <textarea id="bmc-comment" v-model="form.comment" class="bmc-textarea bmc-textarea-with-edit-icon" rows="3" />
+                <button type="button" class="bmc-edit-icon-btn bmc-comment-edit-btn" aria-label="Open comment editor" title="Open comment editor" @click="showCommentEditor = true">
+                <svg viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <g clip-path="url(#bmc-open-comment-clip)">
+                    <path d="M21.5319 25H3.46809C1.55569 25 0 23.4443 0 21.5319V3.46809C0 1.55569 1.55569 0 3.46809 0H21.5319C23.4443 0 25 1.55569 25 3.46809V21.5319C25 23.4443 23.4443 25 21.5319 25ZM3.46809 1.98177C2.64814 1.98177 1.98177 2.64814 1.98177 3.46809V21.5319C1.98177 22.3519 2.64814 23.0182 3.46809 23.0182H21.5319C22.3519 23.0182 23.0182 22.3519 23.0182 21.5319V3.46809C23.0182 2.64814 22.3519 1.98177 21.5319 1.98177H3.46809Z" fill="#5376EA" />
+                    <path d="M6.2 7.1C6.2 6.55 6.65 6.1 7.2 6.1H12.65V8.1H8.2V16.8H16.9V12.35H18.9V17.8C18.9 18.35 18.45 18.8 17.9 18.8H7.2C6.65 18.8 6.2 18.35 6.2 17.8V7.1Z" fill="#5376EA" />
+                    <path d="M14.05 5.1H19.9V10.95H17.9V8.52L12.25 14.17L10.83 12.75L16.48 7.1H14.05V5.1Z" fill="#5376EA" />
+                  </g>
+                  <defs>
+                    <clipPath id="bmc-open-comment-clip">
+                      <rect width="25" height="25" fill="white"/>
+                    </clipPath>
+                  </defs>
+                </svg>
                 </button>
               </div>
             </div>
 
-            <TextEditorModal
-              v-if="showCommentEditor"
-              v-model="form.comment"
-              title="Edit BMC Comment"
-              @close="showCommentEditor = false"
-            />
+            <TextEditorModal v-if="showCommentEditor" v-model="form.comment" title="Edit BMC Comment" @close="showCommentEditor = false" />
 
             <div class="bmc-button-container">
-              <button
-                type="submit"
-                class="bmc-submit-btn"
-                :disabled="isSubmitDisabled"
-                :class="{ 'bmc-submit-btn-disabled': isSubmitDisabled }"
-              >
-                {{ loading ? savingText : submitText }}
-              </button>
+              <button type="submit" class="bmc-submit-btn" :disabled="isSubmitDisabled" :class="{ 'bmc-submit-btn-disabled': isSubmitDisabled }">{{ loading ? savingText : submitText }}</button>
             </div>
           </div>
         </form>

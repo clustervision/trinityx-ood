@@ -2,7 +2,7 @@
    TrinityX OOD – Group App (Vue SPA)
    Full design-matched styles
    ======================================================== */
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"); */
 /* ---------- Reset / base ---------- */
 *,
 *::before,
@@ -2464,4 +2464,69 @@ select.tx-select-placeholder {
 .bmc-submit-btn-disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+
+
+/* ================================================================
+   BMC Member modal
+   Append after existing modal/table CSS.
+   ================================================================ */
+
+.tx-member-modal-page {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.tx-member-modal-header {
+  margin-bottom: 1rem;
+}
+
+.tx-member-empty {
+  background: #f5f8ff;
+  border: 2px solid #e6eeff;
+  color: #5376EA;
+  border-radius: 10px;
+  padding: 1rem;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.tx-member-table-wrap {
+  margin-top: 0.75rem;
+}
+
+.tx-member-table {
+  width: 100%;
+  min-width: 100%;
+}
+
+.tx-member-table thead {
+  height: auto;
+}
+
+.tx-member-table thead th {
+  text-align: left;
+}
+
+.tx-member-table tbody td {
+  text-align: left;
+}
+
+.tx-member-sno-col,
+.tx-member-sno-cell {
+  width: 110px;
+  min-width: 110px !important;
+  text-align: center !important;
+}
+
+.tx-member-footer {
+  margin-top: 1rem;
+}
+
+.tx-member-count {
+  color: #5376EA;
+  font-size: 15px;
+  font-weight: 500;
 }

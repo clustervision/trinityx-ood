@@ -10,7 +10,7 @@ import BmcSetupModal from '@/components/BmcSetupModal.vue'
 import MemberModal from './components/MemberModal.vue'
 import DeleteModal from '@/components/DeleteModal.vue'
 
-// import UpdateCluster from '@/components/UpdateCluster.vue'
+
 const app_url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
 const apiClient = axios.create({
@@ -26,8 +26,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-
-
 interface BMCSetup {
   comment: string | null
   mgmtchannel: number
@@ -37,12 +35,10 @@ interface BMCSetup {
   unmanaged_bmc_users: string | null
   userid: number
   username: string | null
-
 }
 
 const bmc_setups = ref<BMCSetup[]>([]);
 const bmcList = ref<string[]>([]);
-
 const errorMsg = ref('')
 const httpError = ref('')
 const helpOpen = ref(false)
@@ -63,46 +59,32 @@ type BmcFormMode = 'add' | 'update' | 'clone'
 type ModalType = BmcFormMode | 'member' | 'delete' | null
 
 const activeModal = ref<ModalType>(null);
-
 const bmcFormMode = computed<BmcFormMode>(() => {
-  if (
-    activeModal.value === 'add' ||
-    activeModal.value === 'update' ||
-    activeModal.value === 'clone'
-  ) {
+  if (activeModal.value === 'add' || activeModal.value === 'update' || activeModal.value === 'clone') {
     return activeModal.value
   }
-
   return 'add'
 })
 
 const sortAsc = ref(true);
 const totalColspan = computed(() => {
   const count = regularColumns.length + 1
-  // if (hasInterfaces.value) count += 2
   return count
 })
 
-
-
 type SortField = keyof BMCSetup
 const sortField = ref<SortField | ''>('')
-
-
 const filteredRows = computed<BMCSetup[]>(() => {
   let rows = bmc_setups.value
-
   const q = searchQuery.value.toLowerCase().trim()
   if (q) {
     rows = rows.filter((row) =>
       JSON.stringify(row).toLowerCase().includes(q)
     )
   }
-
   if (sortField.value) {
     const sf = sortField.value
     const asc = sortAsc.value
-
     rows = [...rows].sort((a, b) => {
       let va = ''
       let vb = ''
@@ -111,7 +93,6 @@ const filteredRows = computed<BMCSetup[]>(() => {
       return asc ? va.localeCompare(vb) : vb.localeCompare(va)
     })
   }
-
   return rows
 })
 
@@ -123,7 +104,6 @@ function toggleSort(field: string) {
     sortAsc.value = true
   }
 }
-
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)),
@@ -149,14 +129,13 @@ function openModal(type: ModalType, bmcName?: string, bmc?: BMCSetup) {
 function closeModal() {
   activeModal.value = null
   selectedBMC.value = ''
+  selectedBMCData.value = null
 }
-
 
 function onSaved() {
   closeModal()
   loadData()
 }
-
 
 async function loadData() {
   loading.value = true
@@ -164,12 +143,13 @@ async function loadData() {
 
   try {
     const { data } = await apiClient.get('/api/v1/bmcsetups')
-    console.log(data);
     if (data.status === true && data.content?.config?.bmcsetup) {
       const raw = data.content.config.bmcsetup as Record<string, BMCSetup>
-      bmc_setups.value = Object.values(raw)
+      bmc_setups.value = Object.entries(raw).map(([name, value]) => ({
+        ...value,
+        name: value.name || name
+      }))
       bmcList.value = Object.keys(raw)
-      console.log(bmc_setups.value);
     } else {
       if (data.status_code === 404) {
         httpError.value = data.content?.message
@@ -192,18 +172,6 @@ defineExpose({ loadData })
 
 onMounted(loadData)
 
-// function boolLabel(value: boolean | string | null | undefined): string {
-//   if (value === true || value === 'true') return 'TRUE'
-//   if (value === false || value === 'false') return 'FALSE'
-//   return 'NONE'
-// }
-
-// function boolBadge(value: boolean | string | null | undefined): string {
-//   if (value === true || value === 'true') return 'badge-true'
-//   if (value === false || value === 'false') return 'badge-false'
-//   return 'badge-none'
-// }
-
 function isEmpty(val: unknown) {
   return val === null || val === undefined || val === ''
 }
@@ -222,12 +190,9 @@ function canonicalName(name: string) {
 <template>
   <div class="tx-app-layout">
     <AppHeader :app_url="app_url"/>
-
     <main class="tx-app-main">
-
       <div class="tx-shell tx-inventory-page">
         <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-
         <div class="tx-header">
           <h2 class="tx-title">BMC Setup</h2>
           <div class="tx-header-actions">
@@ -294,7 +259,7 @@ function canonicalName(name: string) {
                             </g>
                         </svg>
                     </button>
-                    <button class="tx-icon-act flex items-center justify-center hover:opacity-70 transition-opacity" title="Copy" @click="openModal('clone', canonicalName(row.name))">
+                    <button class="tx-icon-act flex items-center justify-center hover:opacity-70 transition-opacity" title="Copy" @click="openModal('clone', canonicalName(row.name), row)">
                         <svg width="26" height="26" viewBox="0 0 17 17" fill="none">
                             <g clip-path="url(#copy-clip)">
                                 <path d="M7.78588 6.65973H6.43409V9.10212H4.00757V10.4853H6.43409V12.9374H7.78588V10.4853H10.2124V9.10212H7.78588V6.65973Z" fill="#4EBAE8" />
@@ -328,37 +293,89 @@ function canonicalName(name: string) {
         <Teleport to="body">
           <div v-if="helpOpen" class="tx-modal-overlay" @mousedown.self="helpOpen = false">
             <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title">
-              <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">
-                &times;
-              </button>
-
-              <h2 id="help-title" class="tx-help-title">How to use this Cluster app</h2>
+              <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
+              <h2 id="help-title" class="tx-help-title">How to use this BMC Setup app</h2>
 
               <div class="tx-help-content">
                 <p class="tx-help-intro">
-                  Use this app to view and update the Luna cluster configuration stored in the Luna2 daemon.
-                  These fields map to <code>luna cluster change</code>.
+                  Use this app to view, add, update, clone, rename, and delete BMC Setup profiles stored in the Luna2 daemon.
+                  A BMC Setup defines how Luna should access a node's Baseboard Management Controller for out-of-band management.
                 </p>
 
                 <ul class="tx-help-list">
-                  <li><strong>Cluster Name</strong> — The logical name of the Luna cluster.</li>
-                  <li><strong>Controller IP</strong> — The IP address of the cluster controller. Maps to <code>--controller</code>.</li>
-                  <li><strong>Controller Network</strong> — Network name used when changing the controller IP outside the current network scope. Maps to <code>--controller_network</code>.</li>
-                  <li><strong>User</strong> — The cluster user value stored in Luna.</li>
-                  <li><strong>NTP Server</strong> — Time synchronisation server used by the cluster. Important for logs, certificates, authentication, and troubleshooting.</li>
-                  <li><strong>Name Server IP</strong> — DNS server used by cluster nodes. Often the controller IP.</li>
-                  <li><strong>Forward Server IP</strong> — Upstream DNS resolver used to forward external DNS requests.</li>
-                  <li><strong>Technical Contacts</strong> — Contact details for the people responsible for the cluster.</li>
-                  <li><strong>Provision Method</strong> — Main node provisioning method, for example <code>torrent</code> or <code>http</code>.</li>
-                  <li><strong>Provision Fallback</strong> — Backup provisioning method if the primary method is unavailable.</li>
-                  <li><strong>Domain Search</strong> — Comma-separated DNS search domains, for example <code>cluster,ib,ipmi</code>.</li>
-                  <li><strong>Packing Bootpause</strong> — Pauses node booting until OS image packing has finished.</li>
-                  <li><strong>Create Node On Demand</strong> — Allows Luna to create node entries automatically when nodes are discovered.</li>
-                  <li><strong>Create Node On MAC as Host</strong> — Uses the MAC address as hostname for newly created on-demand nodes.</li>
-                  <li><strong>Next Node Discover</strong> — Enables discovery of the next node when adding or detecting new nodes.</li>
-                  <li><strong>Security</strong> — Enables or disables Luna security mode. Change carefully.</li>
-                  <li><strong>Debug</strong> — Enables verbose troubleshooting mode. Disable after investigation.</li>
-                  <li><strong>Update</strong> — Saves the changed values to the Luna2 daemon.</li>
+                  <li>
+                    <strong>BMC Setup Name</strong> - The logical profile name for this BMC configuration.
+                    Nodes can be linked to this setup so Luna knows which BMC credentials and channel settings to use.
+                  </li>
+
+                  <li>
+                    <strong>User ID</strong> - The numeric BMC/IPMI user slot ID.
+                    Many BMCs store users in numbered slots, for example <code>2</code> for an administrator user.
+                    This is not the username itself; it is the BMC's internal user index.
+                  </li>
+
+                  <li>
+                    <strong>User Name</strong> - The login name used to access the BMC.
+                    This is usually an IPMI or Redfish-capable BMC account, such as <code>admin</code>.
+                  </li>
+
+                  <li>
+                    <strong>Password</strong> - The password for the BMC user.
+                    Handle this carefully: this account may allow power control, remote console access, and hardware-level management.
+                  </li>
+
+                  <li>
+                    <strong>Network Channel</strong> - The BMC/IPMI network channel number used for LAN communication.
+                    In IPMI, a “channel” is a logical interface inside the BMC. The network channel usually points to the LAN-capable BMC interface.
+                    Typical values are vendor-dependent, but <code>1</code> is common on many systems.
+                  </li>
+
+                  <li>
+                    <strong>Management Channel</strong> - The channel used for BMC management operations such as user access, privilege settings, or management commands.
+                    On many platforms this may be the same as the network channel, but some vendors expose multiple channels for different management paths.
+                  </li>
+
+                  <li>
+                    <strong>Uplink / BMC Network Port</strong> - The physical or logical network path used to reach the BMC from the management network.
+                    This is usually the dedicated BMC/iDRAC/iLO/IPMI port, or a shared motherboard NIC if the server is configured for shared BMC networking.
+                    The app stores channel values, not the physical switch port itself.
+                  </li>
+
+                  <li>
+                    <strong>Unmanaged BMC Users</strong> - BMC users that should not be managed or overwritten by this setup.
+                    Use this when certain accounts are maintained manually, by the hardware vendor, or by another operational process.
+                  </li>
+
+                  <li>
+                    <strong>Comment</strong> - Free-form notes for this BMC Setup.
+                    Use it for operational context, exceptions, vendor-specific notes, shared-NIC behaviour, channel assumptions, or migration remarks.
+                    The comment editor can also load text from a file.
+                  </li>
+
+                  <li>
+                    <strong>Members</strong> - Shows the nodes currently linked to this BMC Setup.
+                    This helps confirm which nodes will be affected when a profile is updated.
+                  </li>
+
+                  <li>
+                    <strong>Add</strong> - Creates a new BMC Setup.
+                    The name must be unique.
+                  </li>
+
+                  <li>
+                    <strong>Update</strong> - Updates an existing BMC Setup.
+                    If you rename the setup, the app first performs a rename action and then saves the updated configuration.
+                  </li>
+
+                  <li>
+                    <strong>Clone</strong> - Creates a new BMC Setup using an existing setup as the source.
+                    The cloned setup is pre-filled with the source values, but the clone name must be unique.
+                  </li>
+
+                  <li>
+                    <strong>Delete</strong> - Removes a BMC Setup.
+                    Before deleting, check its members so you do not remove a profile still used by active nodes.
+                  </li>
                 </ul>
               </div>
             </div>
@@ -371,25 +388,8 @@ function canonicalName(name: string) {
   </div>
 
   <!-- Modals -->
-  <BmcSetupModal
-    v-if="activeModal === 'add' || activeModal === 'update' || activeModal === 'clone'"
-    :mode="bmcFormMode"
-    :api-client="apiClient"
-    :bmc-list="bmcList"
-    :bmc-data="selectedBMCData || {}"
-    :bmc-name="selectedBMC"
-    @close="closeModal"
-    @saved="onSaved"
-  />
-   <!-- <EditGroupModal v-if="activeModal === 'edit'" :groupList="groupList" :group="selectedGroupData || {}" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" /> -->
-
-  <!-- <AddModal v-if="activeModal === 'add'" :groupList="groupList" @close="closeModal" @saved="onSaved" /> -->
-
-  <!-- <CloneModal v-if="activeModal === 'clone'" :groupList="groupList" :group="selectedGroupData || {}" :group-name="selectedGroup" @close="closeModal" @saved="onSaved" /> -->
-
-  <!-- <MemberModal v-if="activeModal === 'ospush'" :group-name="selectedGroup" :group="selectedGroupData || {}" @close="closeModal" @saved="onSaved" /> -->
-
+  <BmcSetupModal v-if="activeModal === 'add' || activeModal === 'update' || activeModal === 'clone'" :mode="bmcFormMode" :api-client="apiClient" :bmc-list="bmcList" :bmc-data="selectedBMCData || {}" :bmc-name="selectedBMC" @close="closeModal" @saved="onSaved" />
+  <MemberModal v-if="activeModal === 'member'" :api-client="apiClient" :bmc-name="selectedBMC" @close="closeModal" />
   <DeleteModal v-if="activeModal === 'delete'" :apiClient="apiClient" :bmc-name="selectedBMC" @close="closeModal" @deleted="onSaved" />
-
 
 </template>

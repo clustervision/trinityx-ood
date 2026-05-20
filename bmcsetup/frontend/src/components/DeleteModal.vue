@@ -2,7 +2,6 @@
 
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import type { AxiosInstance } from 'axios'
-
 import BaseModal from './BaseModal.vue'
 import { formatBMCNameDisplay, bmcNameTitle } from '@/constants/bmcName'
 
