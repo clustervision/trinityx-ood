@@ -449,7 +449,7 @@ window.onload = function() {
         ajaxURL: `${baseUrl}/json/configuration/partitions`
     });
     document.getElementById("add-partition-button").addEventListener("click", function(){
-        tables.partitions.addRow({name: null, node_names: [], properties:{}});
+        tables.partitions.addRow({name: null, node_names: [], gres_preset_names: [], properties:{}});
         tables.partitions.validate();
         displayAlert("success", "Added new empty partition");
     });

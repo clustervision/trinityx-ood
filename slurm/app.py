@@ -345,7 +345,7 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
     preset_map = {p['name']: p.get('properties', {})
                   for p in configuration.get('gres_presets', [])}
     for node in configuration.get('nodes', []):
-        gres_names = node.get('gres_preset_names', [])
+        gres_names = node.get('gres_preset_names') or []
         if gres_names:
             parts = []
             for pname in gres_names:
@@ -417,6 +417,12 @@ def parse_raw_configuration(raw_configuration):
     for node in raw_configuration["nodes"]:
         node.pop("group_name", None)
         node["properties"] = {k: v for k, v in node.get("properties", {}).items()}
+        # normalise null/missing gres_preset_names from Tabulator to []
+        if not node.get("gres_preset_names"):
+            node["gres_preset_names"] = []
+    for partition in raw_configuration["partitions"]:
+        if not partition.get("gres_preset_names"):
+            partition["gres_preset_names"] = []
 
     # the gui sometimes adds nodes, assigned to a partition, but not send as such.
     # here we make sure we leave no one behind.
@@ -620,12 +626,12 @@ def render_raw_gres_defaults(configuration):
     gres_preset_partitions = {} # preset_name -> [partition_name, ...]
 
     for node in configuration.get('nodes', []):
-        for pname in node.get('gres_preset_names', []):
+        for pname in (node.get('gres_preset_names') or []):
             gres_preset_nodes.setdefault(pname, [])
             gres_preset_nodes[pname].append(node['name'])
 
     for part in configuration.get('partitions', []):
-        for pname in part.get('gres_preset_names', []):
+        for pname in (part.get('gres_preset_names') or []):
             gres_preset_partitions.setdefault(pname, [])
             gres_preset_partitions[pname].append(part['name'])
 
@@ -685,7 +691,7 @@ def save_gres_configuration(configuration, slurm_files=SLURM_FILES, defaults_onl
     # key: (preset_name, Name, Type, Count, File, no_consume) -> [node_names]
     line_groups = {}
     for node in configuration.get('nodes', []):
-        for pname in node.get('gres_preset_names', []):
+        for pname in (node.get('gres_preset_names') or []):
             if pname not in preset_map:
                 continue
             props = preset_map[pname]
