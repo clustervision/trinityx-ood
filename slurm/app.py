@@ -384,9 +384,18 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
         partitions_file.set_managed_block("Defaults", raw_partitions_block)
         partitions_file.write(slurm_files['partitions'])
     #
-    save_gres_configuration(configuration, slurm_files)
+    # Write the gres.conf Defaults block first (preset definitions + node/partition annotations)
+    # then call Generate().all_configs() which writes nodes/partitions TrinityX blocks via
+    # Jinja templates — it also calls SlurmGres() but that template only reads from
+    # the Defaults block, so we must re-write our gres TrinityX block afterwards.
+    save_gres_configuration(configuration, slurm_files, defaults_only=True)
     #
     status = Generate().all_configs(nodes=fullset, configs=slurm_files, manager=manager)
+    #
+    # Re-write the gres TrinityX block after Generate() — SlurmGres() overwrites it
+    # because the slurm-gres.j2 template does not know about GRESPresetName= keys.
+    save_gres_configuration(configuration, slurm_files, defaults_only=False)
+    #
     if status:
         return True
     else:
@@ -501,7 +510,26 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         if node in nodes_states:
                             properties_addons += "State="+nodes_states[node]
                             del nodes_states[node]
-                        node_preset_line="NodeName="+node+" "+hw_preset_properties+properties_addons+" # HWPreset="+hw_preset["name"]
+                        # Append Gres= derived from GRES presets so the Jinja
+                        # template writes it into the TrinityX running block
+                        gres_str = ""
+                        node_obj = next((n for n in configuration.get('nodes',[]) if n['name'] == node), None)
+                        if node_obj and node_obj.get('gres_preset_names'):
+                            preset_map = {p['name']: p.get('properties',{}) for p in configuration.get('gres_presets',[])}
+                            parts = []
+                            for pname in node_obj['gres_preset_names']:
+                                if pname in preset_map:
+                                    props = preset_map[pname]
+                                    g = props.get('Name','')
+                                    if props.get('Type'): g += ':' + props['Type']
+                                    if props.get('Count'): g += ':' + str(props['Count'])
+                                    if g: parts.append(g)
+                            if parts:
+                                gres_str = "Gres=" + ','.join(parts) + " "
+                        gres_preset_annotation = ""
+                        if node_obj and node_obj.get('gres_preset_names'):
+                            gres_preset_annotation = " GresPreset=" + ','.join(node_obj['gres_preset_names'])
+                        node_preset_line="NodeName="+node+" "+hw_preset_properties+gres_str+properties_addons+" # HWPreset="+hw_preset["name"]+gres_preset_annotation
                         hw_presets["NodeName="+node]=node_preset_line
                 if hw_preset['name'] in hw_preset_partitions:
                     hw_preset_line+="Partitions="+compress(','.join(hw_preset_partitions[hw_preset['name']]))
@@ -625,21 +653,27 @@ def render_raw_gres_defaults(configuration):
     return raw_block
 
 
-def save_gres_configuration(configuration, slurm_files=SLURM_FILES):
+def save_gres_configuration(configuration, slurm_files=SLURM_FILES, defaults_only=False):
     """
     Write the gres.conf Defaults block (preset definitions + assignments)
-    and the TrinityX managed block (running NodeName= lines).
+    and optionally the TrinityX managed block (running NodeName= lines).
+
+    defaults_only=True  — write Defaults block only (called before Generate())
+    defaults_only=False — write TrinityX block only (called after Generate()
+                          to overwrite the empty output from slurm-gres.j2)
     """
     gres_file = slurm_files.get('gres')
     if not gres_file:
         return
 
-    # --- Defaults block ---
-    raw_defaults = render_raw_gres_defaults(configuration)
-    gres_config_file = ConfigFile.read(gres_file)
-    if gres_config_file.ismanaged('Defaults'):
-        gres_config_file.set_managed_block('Defaults', raw_defaults)
-        gres_config_file.write(gres_file)
+    if defaults_only:
+        # --- Defaults block only ---
+        raw_defaults = render_raw_gres_defaults(configuration)
+        gres_config_file = ConfigFile.read(gres_file)
+        if gres_config_file.ismanaged('Defaults'):
+            gres_config_file.set_managed_block('Defaults', raw_defaults)
+            gres_config_file.write(gres_file)
+        return
 
     # --- TrinityX managed block: running NodeName= lines ---
     # Build a lookup: preset_name -> preset properties
