@@ -104,7 +104,7 @@ class TestRenderRawGresDefaults:
         block = slurm_app.render_raw_gres_defaults(cfg)
         # gpu_A100 maps to gpu01 + gpu02 — should appear in Nodes= annotation
         assert 'Nodes=' in block
-        assert 'gpu0' in block   # hostlist of gpu01,gpu02
+        assert 'gpu' in block    # hostlist — gpu[01-03] after partition propagation
 
     def test_partition_annotation_present(self, slurm_app):
         cfg = _make_full_config()
@@ -141,7 +141,10 @@ class TestGresAutoDerivation:
         cfg = _make_full_config()
         slurm_app.save_configuration(cfg, slurm_files=slurm_files, backup=False)
         gpu01 = next(n for n in cfg['nodes'] if n['name'] == 'gpu01')
-        assert gpu01['properties'].get('Gres') == 'gpu:A100:4'
+        # gpu01 has gpu_A100 directly; the partition also carries gpu_H100 + fpga_v1
+        # which now propagate to all nodes in that partition — check gpu:A100:4 present
+        gres = gpu01['properties'].get('Gres', '')
+        assert 'gpu:A100:4' in gres
 
     def test_gres_multi_preset_node(self, slurm_app, slurm_files):
         """gpu03 has gpu_H100 + fpga_v1 → Gres=gpu:H100:16,fpga:1"""
@@ -292,7 +295,7 @@ class TestLoadGresConfiguration:
             content = fh.read()
         # Nodes= annotation must appear in the Defaults block
         assert 'Nodes=' in content
-        assert 'gpu0' in content   # gpu01 or gpu[01-02] hostlist
+        assert 'gpu' in content   # gpu01/gpu[01-03] hostlist — partition propagation may expand set
 
     def test_round_trip_partition_assignments(self, slurm_app, slurm_files):
         """

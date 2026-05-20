@@ -341,14 +341,24 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
                 if slurm_files[name] != backup_file:
                     shutil.copyfile(slurm_files[name], backup_file)
 
-    # Auto-derive Gres= on each node from its assigned GRES presets
+    # Auto-derive Gres= on each node from its assigned GRES presets,
+    # merging in any presets inherited from partitions that contain the node.
     preset_map = {p['name']: p.get('properties', {})
                   for p in configuration.get('gres_presets', [])}
+    # Build effective preset set per node: own presets + partition-inherited presets
+    node_effective_gres = {}
     for node in configuration.get('nodes', []):
-        gres_names = node.get('gres_preset_names') or []
+        node_effective_gres[node['name']] = set(node.get('gres_preset_names') or [])
+    for part in configuration.get('partitions', []):
+        for pname in (part.get('gres_preset_names') or []):
+            for node_name in (part.get('node_names') or []):
+                node_effective_gres.setdefault(node_name, set())
+                node_effective_gres[node_name].add(pname)
+    for node in configuration.get('nodes', []):
+        gres_names = node_effective_gres.get(node['name'], set())
         if gres_names:
             parts = []
-            for pname in gres_names:
+            for pname in sorted(gres_names):  # sorted for deterministic output
                 if pname in preset_map:
                     props = preset_map[pname]
                     g = props.get('Name', '')
@@ -628,12 +638,19 @@ def render_raw_gres_defaults(configuration):
     for node in configuration.get('nodes', []):
         for pname in (node.get('gres_preset_names') or []):
             gres_preset_nodes.setdefault(pname, [])
-            gres_preset_nodes[pname].append(node['name'])
+            if node['name'] not in gres_preset_nodes[pname]:
+                gres_preset_nodes[pname].append(node['name'])
 
     for part in configuration.get('partitions', []):
         for pname in (part.get('gres_preset_names') or []):
             gres_preset_partitions.setdefault(pname, [])
-            gres_preset_partitions[pname].append(part['name'])
+            if part['name'] not in gres_preset_partitions[pname]:
+                gres_preset_partitions[pname].append(part['name'])
+            # propagate to all nodes in this partition for the Nodes= annotation
+            for node_name in (part.get('node_names') or []):
+                gres_preset_nodes.setdefault(pname, [])
+                if node_name not in gres_preset_nodes[pname]:
+                    gres_preset_nodes[pname].append(node_name)
 
     for preset in configuration.get('gres_presets', []):
         pname = preset['name']
@@ -686,12 +703,28 @@ def save_gres_configuration(configuration, slurm_files=SLURM_FILES, defaults_onl
     preset_map = {p['name']: p.get('properties', {})
                   for p in configuration.get('gres_presets', [])}
 
-    # Collect lines: (preset_name, node_name) -> line
+    # Build a lookup: partition_name -> [node_names]
+    partition_nodes = {}
+    for part in configuration.get('partitions', []):
+        partition_nodes[part['name']] = part.get('node_names') or []
+
+    # Collect effective gres_preset_names per node:
+    # start from the node's own assignments, then add any presets inherited
+    # from partitions that contain this node.
+    node_effective_presets = {}   # node_name -> set of preset_names
+    for node in configuration.get('nodes', []):
+        node_effective_presets[node['name']] = set(node.get('gres_preset_names') or [])
+    for part in configuration.get('partitions', []):
+        for pname in (part.get('gres_preset_names') or []):
+            for node_name in (part.get('node_names') or []):
+                node_effective_presets.setdefault(node_name, set())
+                node_effective_presets[node_name].add(pname)
+
     # Group nodes that share identical preset properties for hostlist compression
     # key: (preset_name, Name, Type, Count, File, no_consume) -> [node_names]
     line_groups = {}
-    for node in configuration.get('nodes', []):
-        for pname in (node.get('gres_preset_names') or []):
+    for node_name, presets in node_effective_presets.items():
+        for pname in presets:
             if pname not in preset_map:
                 continue
             props = preset_map[pname]
@@ -702,7 +735,8 @@ def save_gres_configuration(configuration, slurm_files=SLURM_FILES, defaults_onl
                    props.get('File', ''),
                    bool(props.get('no_consume', False)))
             line_groups.setdefault(key, [])
-            line_groups[key].append(node['name'])
+            if node_name not in line_groups[key]:
+                line_groups[key].append(node_name)
 
     running_block = ''
     for (pname, name, gtype, count, gfile, no_cons), node_names in sorted(line_groups.items()):
