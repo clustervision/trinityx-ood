@@ -94,8 +94,8 @@
       <!-- GRES TAB -->
       <div id="gres-tab" class="tab-pane-demo active">
         <div class="callout"><i class="fas fa-info-circle"></i> Define named GRES resources here. Assign them to nodes via the <strong>GRES Preset(s)</strong> column in the <em>Nodes</em> tab. Each row maps to one <code>NodeName=</code> stanza in <code>/etc/slurm/gres.conf</code>.</div>
-        <button class="btn btn-primary" id="add-gres-preset-button" disabled onclick="demoAlert('success','Added new GRES preset')"><i class="fa-solid fa-plus"></i> Add GRES Preset</button>
-        <button class="btn btn-danger" id="delete-gres-presets-button" disabled onclick="demoAlert('success','Deleted selected GRES presets')"><i class="fa-solid fa-trash"></i> Delete Selected GRES Presets</button>
+        <button class="btn btn-primary" id="add-gres-preset-button" onclick="demoAlert('success','Added new GRES preset')"><i class="fa-solid fa-plus"></i> Add GRES Preset</button>
+        <button class="btn btn-danger" id="delete-gres-presets-button" onclick="demoAlert('success','Deleted selected GRES presets')"><i class="fa-solid fa-trash"></i> Delete Selected GRES Presets</button>
         <table class="table table-bordered" id="gres-presets-table"></table>
 
         <div class="section-label">Multi-select dropdown — live demo of editing a GRES Preset(s) cell</div>
@@ -244,10 +244,12 @@ function showPreview(id, el) {
   return false;
 }
 function toggleOOD(on) {
-  ['add-node-button','delete-nodes-button','add-partition-button','delete-partitions-button',
-   'add-gres-preset-button','delete-gres-presets-button'].forEach(function(id){
+  ['add-node-button','delete-nodes-button','add-partition-button','delete-partitions-button'].forEach(function(id){
     document.getElementById(id).disabled = !on;
   });
+  // GRES preset buttons always enabled — same as HW presets
+  document.getElementById('add-gres-preset-button').disabled = false;
+  document.getElementById('delete-gres-presets-button').disabled = false;
   demoAlert(on ? 'warning' : 'info',
     on ? 'OOD now manages nodes and partitions — Luna automation paused.'
        : 'Reverted to Luna automation.');

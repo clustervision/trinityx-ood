@@ -499,18 +499,18 @@ function ToggleButtons(manager) {
             document.getElementById("delete-nodes-button").disabled = false;
             document.getElementById("add-partition-button").disabled = false;
             document.getElementById("delete-partitions-button").disabled = false;
-            document.getElementById("add-gres-preset-button").disabled = false;
-            document.getElementById("delete-gres-presets-button").disabled = false;
             document.getElementById("functionality-manager-toggle").checked = true;
         } else {
             document.getElementById("add-node-button").disabled = true;
             document.getElementById("delete-nodes-button").disabled = true;
             document.getElementById("add-partition-button").disabled = true;
             document.getElementById("delete-partitions-button").disabled = true;
-            document.getElementById("add-gres-preset-button").disabled = true;
-            document.getElementById("delete-gres-presets-button").disabled = true;
             document.getElementById("functionality-manager-toggle").checked = false;
         }
+        // GRES preset buttons are always enabled — same behaviour as HW preset buttons,
+        // GRES presets are independent of whether OOD manages nodes/partitions.
+        document.getElementById("add-gres-preset-button").disabled = false;
+        document.getElementById("delete-gres-presets-button").disabled = false;
 }
 
 function _getConfiguration() {
