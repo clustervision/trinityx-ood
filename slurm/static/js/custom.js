@@ -353,8 +353,12 @@ window.onload = function() {
                  editor: "input",
                  tooltip: "Device file path, e.g. /dev/nvidia[0-3]"},
                 {title: "no_consume", field: "properties.no_consume", sorter: "boolean",
-                 formatter: "tickCross", editor: "tickCross",
-                 tooltip: "Mark as non-consumable (shared) resource"},
+                 formatter: "tickCross", formatterParams: {allowEmpty: false, allowTruthy: true},
+                 hozAlign: "center", headerHozAlign: "center", width: 110,
+                 tooltip: "Click to toggle \342\200\224 shared/non-consumable resource",
+                 cellClick: function(e, cell) {
+                     cell.setValue(!cell.getValue());
+                 }},
             ]},
         ],
         reactiveData: true,
