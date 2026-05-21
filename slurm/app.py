@@ -131,10 +131,54 @@ def slurm_config(file,block_name=MANAGER_NAME):
         return slurm_config
 
 
+def load_gres_configuration(slurm_files=SLURM_FILES):
+    """Load GRES presets and per-node/partition GRES assignments from gres.conf."""
+    gres_presets = []
+    gres_nodes   = {}   # node_name  -> [preset_name, ...]
+    gres_parts   = {}   # part_name  -> [preset_name, ...]
+
+    gres_file = slurm_files.get('gres')
+    if not gres_file or not os.path.exists(gres_file):
+        return gres_presets, gres_nodes, gres_parts
+
+    # Read the Defaults block — preset definitions live here as comments
+    defaults_cfg = slurm_config(gres_file, 'Defaults')
+    if defaults_cfg:
+        preset_list = defaults_cfg.object_aslist(entry='GRESPresetName')
+        for p in preset_list:
+            props = {k: v for k, v in p.items() if k != 'GRESPresetName'}
+            # no_consume is stored as string "true"/"false"
+            if 'no_consume' in props:
+                props['no_consume'] = props['no_consume'].lower() == 'true'
+            gres_presets.append({"name": p['GRESPresetName'], "properties": props})
+
+        # Read comment annotations for node/partition assignments
+        node_comments = defaults_cfg.comment(name='Nodes')
+        part_comments = defaults_cfg.comment(name='Partitions')
+        if node_comments:
+            for key, val in node_comments.items():
+                if key.startswith('GRESPresetName'):
+                    _, preset_name = key.split('=', 1)
+                    for node in expand(val).split(','):
+                        gres_nodes.setdefault(node, [])
+                        if preset_name not in gres_nodes[node]:
+                            gres_nodes[node].append(preset_name)
+        if part_comments:
+            for key, val in part_comments.items():
+                if key.startswith('GRESPresetName'):
+                    _, preset_name = key.split('=', 1)
+                    for part in expand(val).split(','):
+                        gres_parts.setdefault(part, [])
+                        if preset_name not in gres_parts[part]:
+                            gres_parts[part].append(preset_name)
+
+    return gres_presets, gres_nodes, gres_parts
+
+
 def load_configuration(slurm_files=SLURM_FILES):
     """Load the configuration files from the default path."""
 
-    configuration = {"nodes": [], "partitions": [], "groups": [], "hw_presets": []}
+    configuration = {"nodes": [], "partitions": [], "groups": [], "hw_presets": [], "gres_presets": []}
 
     hw_presets = {'nodes': {}, 'partitions': {}}
     defaults_configs = slurm_config(slurm_files['nodes'],'Defaults')
@@ -162,6 +206,10 @@ def load_configuration(slurm_files=SLURM_FILES):
                     for partition in expand(partitions).split(","):
                         hw_presets['partitions'][partition] = hw_preset
 
+    # Load GRES presets and assignments
+    gres_presets, gres_nodes, gres_parts = load_gres_configuration(slurm_files)
+    configuration['gres_presets'] = gres_presets
+
     nodes_configs = slurm_config(slurm_files['nodes'])
     if not nodes_configs:
         nodes_configs = slurm_config(slurm_files['nodes'],MANAGER_NAME_OOD)
@@ -185,8 +233,10 @@ def load_configuration(slurm_files=SLURM_FILES):
             hw_preset = None
             if node['NodeName'] in hw_presets['nodes']:
                 hw_preset = hw_presets['nodes'][node['NodeName']]
+            gres_preset_names = gres_nodes.get(node['NodeName'], [])
             properties = { k:v for k,v in node.items() if k not in ['NodeName'] }
-            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties, "hw_preset_name": hw_preset}
+            node_dict = {"name": node['NodeName'], "group_name": group_name, "properties": properties,
+                         "hw_preset_name": hw_preset, "gres_preset_names": gres_preset_names}
             nodes.append(node_dict)
         configuration['nodes'] = nodes
 
@@ -204,8 +254,11 @@ def load_configuration(slurm_files=SLURM_FILES):
                 hw_preset = None
                 if partition['PartitionName'] in hw_presets['partitions']:
                     hw_preset = hw_presets['partitions'][partition['PartitionName']]
+                gres_preset_names = gres_parts.get(partition['PartitionName'], [])
                 properties = { k:v for k,v in partition.items() if k not in ['PartitionName','Nodes'] }
-                partition_dict={"name": partition['PartitionName'], "properties": properties, "hw_preset_name": hw_preset, "node_names": node_names}
+                partition_dict={"name": partition['PartitionName'], "properties": properties,
+                                "hw_preset_name": hw_preset, "node_names": node_names,
+                                "gres_preset_names": gres_preset_names}
                 partitions.append(partition_dict)
             configuration['partitions'] = partitions
 
@@ -227,11 +280,6 @@ def init_tmp_files(slurm_files):
 def save_tmp_files(configuration):
     my_home = os.path.expanduser("~/")
     tmp_configs = {
-        # tempfile doesn't work as slurm-config-mgr expects a real file
-        # left here for future reference:
-        #'nodes': tempfile.TemporaryFile(mode='w'),
-        #'partitions': tempfile.TemporaryFile(mode='w'),
-        #'gres': tempfile.TemporaryFile(mode='w')}
         'nodes': my_home+'/slurm-nodes.conf',
         'partitions': my_home+'/slurm-partitions.conf',
         'gres': my_home+'/gres.conf'}
@@ -245,11 +293,14 @@ def save_tmp_files(configuration):
         nodes_preview_lines = config_block.dump()
         config_block = ConfigFile.read(tmp_configs['partitions'])
         partitions_preview_lines = config_block.dump()
+        config_block = ConfigFile.read(tmp_configs['gres'])
+        gres_preview_lines = config_block.dump()
     except Exception as exp:
         nodes_preview_lines = f"Problem generating preview: {exp}\n\n"
         partitions_preview_lines = f"Problem generating preview: {exp}\n\n"
+        gres_preview_lines = f"Problem generating preview: {exp}\n\n"
     remove_tmp_files(tmp_configs)
-    return nodes_preview_lines, partitions_preview_lines
+    return nodes_preview_lines, partitions_preview_lines, gres_preview_lines
 
 def remove_tmp_files(slurm_files):
     for slurm_file in ['nodes', 'partitions', 'gres']:
@@ -290,13 +341,44 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
                 if slurm_files[name] != backup_file:
                     shutil.copyfile(slurm_files[name], backup_file)
 
-    #sys.stdout.write(f"FILES: {slurm_files}\n")
+    # Auto-derive Gres= on each node from its assigned GRES presets,
+    # merging in any presets inherited from partitions that contain the node.
+    preset_map = {p['name']: p.get('properties', {})
+                  for p in configuration.get('gres_presets', [])}
+    # Build effective preset set per node: own presets + partition-inherited presets
+    node_effective_gres = {}
+    for node in configuration.get('nodes', []):
+        node_effective_gres[node['name']] = set(node.get('gres_preset_names') or [])
+    for part in configuration.get('partitions', []):
+        for pname in (part.get('gres_preset_names') or []):
+            for node_name in (part.get('node_names') or []):
+                node_effective_gres.setdefault(node_name, set())
+                node_effective_gres[node_name].add(pname)
+    for node in configuration.get('nodes', []):
+        gres_names = node_effective_gres.get(node['name'], set())
+        if gres_names:
+            parts = []
+            for pname in sorted(gres_names):  # sorted for deterministic output
+                if pname in preset_map:
+                    props = preset_map[pname]
+                    g = props.get('Name', '')
+                    if props.get('Type'):
+                        g += ':' + props['Type']
+                    if props.get('Count'):
+                        g += ':' + str(props['Count'])
+                    if g:
+                        parts.append(g)
+            if parts:
+                node.setdefault('properties', {})['Gres'] = ','.join(parts)
+        else:
+            # Clear Gres= if no presets assigned
+            node.get('properties', {}).pop('Gres', None)
+
     fullset = []
     if 'groups' in configuration:
         for group in configuration['groups']:
             for node in group['node_names']:
                 fullset.append({'name': node, 'group': group['name']})
-    #sys.stdout.write(f"FULLSET: {fullset}\n")
     #
     raw_nodes_block = render_raw_nodes_defaults(configuration,slurm_files)
     nodes_file = ConfigFile.read(slurm_files['nodes'])
@@ -312,7 +394,18 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
         partitions_file.set_managed_block("Defaults", raw_partitions_block)
         partitions_file.write(slurm_files['partitions'])
     #
+    # Write the gres.conf Defaults block first (preset definitions + node/partition annotations)
+    # then call Generate().all_configs() which writes nodes/partitions TrinityX blocks via
+    # Jinja templates — it also calls SlurmGres() but that template only reads from
+    # the Defaults block, so we must re-write our gres TrinityX block afterwards.
+    save_gres_configuration(configuration, slurm_files, defaults_only=True)
+    #
     status = Generate().all_configs(nodes=fullset, configs=slurm_files, manager=manager)
+    #
+    # Re-write the gres TrinityX block after Generate() — SlurmGres() overwrites it
+    # because the slurm-gres.j2 template does not know about GRESPresetName= keys.
+    save_gres_configuration(configuration, slurm_files, defaults_only=False)
+    #
     if status:
         return True
     else:
@@ -334,6 +427,12 @@ def parse_raw_configuration(raw_configuration):
     for node in raw_configuration["nodes"]:
         node.pop("group_name", None)
         node["properties"] = {k: v for k, v in node.get("properties", {}).items()}
+        # normalise null/missing gres_preset_names from Tabulator to []
+        if not node.get("gres_preset_names"):
+            node["gres_preset_names"] = []
+    for partition in raw_configuration["partitions"]:
+        if not partition.get("gres_preset_names"):
+            partition["gres_preset_names"] = []
 
     # the gui sometimes adds nodes, assigned to a partition, but not send as such.
     # here we make sure we leave no one behind.
@@ -350,8 +449,10 @@ def parse_raw_configuration(raw_configuration):
     groups = raw_groups or []
     partitions = raw_configuration["partitions"] or []
     hw_presets = raw_configuration["hw_presets"] or []
+    gres_presets = raw_configuration.get("gres_presets") or []
 
-    configuration = {"nodes": nodes, "partitions": partitions, "groups": groups, "hw_presets": hw_presets}
+    configuration = {"nodes": nodes, "partitions": partitions, "groups": groups,
+                     "hw_presets": hw_presets, "gres_presets": gres_presets}
     #sys.stdout.write(f"RAW PARSED: {configuration}\n")
     return configuration
 
@@ -389,7 +490,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
     hw_preset_nodes = {}
     hw_preset_partitions = {}
     nodes_states = {}
-    # what nodes are using the preset:
+    # what nodes are using the preset (directly on the node):
     if 'nodes' in configuration:
         for node in configuration['nodes']:
             if 'hw_preset_name' in node and node['hw_preset_name']:
@@ -398,13 +499,22 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 hw_preset_nodes[node['hw_preset_name']].append(node['name'])
             if 'properties' in node and 'State' in node['properties'] and node['properties']['State']:
                 nodes_states[node['name']] = node['properties']['State']
-    # what partitions are using the preset:
+    # what partitions are using the preset — also propagate to nodes in that partition
+    # so nodes that inherit HWPreset only via their partition get a proper NodeName= line
     if 'partitions' in configuration:
         for partition in configuration['partitions']:
             if 'hw_preset_name' in partition and partition['hw_preset_name']:
                 if partition['hw_preset_name'] not in hw_preset_partitions:
                     hw_preset_partitions[partition['hw_preset_name']] = []
                 hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
+                # propagate to all nodes in this partition that don't already have
+                # an explicit hw_preset_name set directly
+                for node_name in (partition.get('node_names') or []):
+                    node_obj = next((n for n in configuration.get('nodes', []) if n['name'] == node_name), None)
+                    if node_obj and not node_obj.get('hw_preset_name'):
+                        hw_preset_nodes.setdefault(partition['hw_preset_name'], [])
+                        if node_name not in hw_preset_nodes[partition['hw_preset_name']]:
+                            hw_preset_nodes[partition['hw_preset_name']].append(node_name)
     # now let's build a per node preset list and the hw presets themselves:
     if 'hw_presets' in configuration:
         for hw_preset in configuration['hw_presets']:
@@ -412,7 +522,8 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 hw_preset_line="HWPresetName="+hw_preset['name']+" "
                 hw_preset_properties = ""
                 for key, value in hw_preset['properties'].items():
-                    if not (key == "State" and value == "UNKNOWN"):
+                    if not (key == "State" and value == "UNKNOWN") and key != "Gres" \
+                            and value != "" and value is not None:
                         hw_preset_line+=f"{key}={value} "
                         hw_preset_properties+=f"{key}={value} "
                 hw_preset_line+="# "
@@ -425,7 +536,18 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         if node in nodes_states:
                             properties_addons += "State="+nodes_states[node]
                             del nodes_states[node]
-                        node_preset_line="NodeName="+node+" "+hw_preset_properties+properties_addons+" # HWPreset="+hw_preset["name"]
+                        # Append Gres= so the Jinja template writes it into the TrinityX block.
+                        # Read the already-resolved value from node['properties']['Gres']
+                        # (set by save_configuration, includes partition-propagated presets).
+                        gres_str = ""
+                        node_obj = next((n for n in configuration.get('nodes',[]) if n['name'] == node), None)
+                        resolved_gres = (node_obj or {}).get('properties', {}).get('Gres')
+                        if resolved_gres:
+                            gres_str = "Gres=" + resolved_gres + " "
+                        gres_preset_annotation = ""
+                        if node_obj and node_obj.get('gres_preset_names'):
+                            gres_preset_annotation = " GresPreset=" + ','.join(node_obj['gres_preset_names'])
+                        node_preset_line="NodeName="+node+" "+hw_preset_properties+gres_str+properties_addons+" # HWPreset="+hw_preset["name"]+gres_preset_annotation
                         hw_presets["NodeName="+node]=node_preset_line
                 if hw_preset['name'] in hw_preset_partitions:
                     hw_preset_line+="Partitions="+compress(','.join(hw_preset_partitions[hw_preset['name']]))
@@ -434,9 +556,33 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         partition_preset_line="PartitionName="+partition+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
                         hw_presets["PartitionName="+partition]=partition_preset_line
                 hw_presets["HWPresetName="+hw_preset['name']]=hw_preset_line
-    # a tiny entry for nodes that do not have a hw preset but set a State:
-    for node in nodes_states:
-        hw_presets["NodeName="+node]="NodeName="+node+" State="+nodes_states[node]
+    # a tiny entry for nodes that do not have a hw preset but set a State
+    # and/or GRES presets — write all resolved properties for the Jinja template.
+    node_map = {n['name']: n for n in configuration.get('nodes', [])}
+    for node_name in nodes_states:
+        node_obj = node_map.get(node_name)
+        line = "NodeName=" + node_name + " State=" + nodes_states[node_name]
+        resolved_gres = (node_obj or {}).get('properties', {}).get('Gres')
+        if resolved_gres:
+            line += " Gres=" + resolved_gres
+        gres_preset_annotation = ""
+        if node_obj and node_obj.get('gres_preset_names'):
+            gres_preset_annotation = " # GresPreset=" + ','.join(node_obj['gres_preset_names'])
+        hw_presets["NodeName="+node_name] = line + gres_preset_annotation
+    # also handle nodes with GRES presets but no HWPreset and no State
+    # (they would be completely missed by both the HWPreset loop and nodes_states loop)
+    for node_obj in configuration.get('nodes', []):
+        key = "NodeName=" + node_obj['name']
+        if key in hw_presets or node_obj.get('hw_preset_name'):
+            continue   # already handled above or by HWPreset loop
+        resolved_gres = node_obj.get('properties', {}).get('Gres')
+        if not resolved_gres:
+            continue   # nothing to write — truly empty node
+        line = "NodeName=" + node_obj['name'] + " Gres=" + resolved_gres
+        gres_preset_annotation = ""
+        if node_obj.get('gres_preset_names'):
+            gres_preset_annotation = " # GresPreset=" + ','.join(node_obj['gres_preset_names'])
+        hw_presets[key] = line + gres_preset_annotation
 
     # now we build the raw content:
     for hw_preset, entry in sorted(hw_presets.items()):
@@ -499,6 +645,146 @@ def render_raw_partitions_defaults(configuration, slurm_files=SLURM_FILES):
 
     #sys.stdout.write(f"RENDER PART RAW BLOCK:\n{raw_block}\n")
     return raw_block
+
+
+def render_raw_gres_defaults(configuration):
+    """
+    Build the Defaults block content for gres.conf.
+
+    Each GRES preset becomes a comment line:
+      # GRESPresetName=<name> Name=<n> [Type=<t>] Count=<c> [File=<f>] [no_consume]
+    Followed by comment annotations tracking which nodes/partitions use each preset:
+      # GRESPresetName=<name> # Nodes=<hostlist> Partitions=<list>
+    """
+    raw_block = ''
+
+    gres_preset_nodes = {}      # preset_name -> [node_name, ...]
+    gres_preset_partitions = {} # preset_name -> [partition_name, ...]
+
+    for node in configuration.get('nodes', []):
+        for pname in (node.get('gres_preset_names') or []):
+            gres_preset_nodes.setdefault(pname, [])
+            if node['name'] not in gres_preset_nodes[pname]:
+                gres_preset_nodes[pname].append(node['name'])
+
+    for part in configuration.get('partitions', []):
+        for pname in (part.get('gres_preset_names') or []):
+            gres_preset_partitions.setdefault(pname, [])
+            if part['name'] not in gres_preset_partitions[pname]:
+                gres_preset_partitions[pname].append(part['name'])
+            # propagate to all nodes in this partition for the Nodes= annotation
+            for node_name in (part.get('node_names') or []):
+                gres_preset_nodes.setdefault(pname, [])
+                if node_name not in gres_preset_nodes[pname]:
+                    gres_preset_nodes[pname].append(node_name)
+
+    for preset in configuration.get('gres_presets', []):
+        pname = preset['name']
+        props = preset.get('properties', {})
+        line = f"GRESPresetName={pname}"
+        if props.get('Name'):
+            line += f" Name={props['Name']}"
+        if props.get('Type'):
+            line += f" Type={props['Type']}"
+        if props.get('Count'):
+            line += f" Count={props['Count']}"
+        if props.get('File'):
+            line += f" File={props['File']}"
+        if props.get('no_consume'):
+            line += " no_consume"
+        line += " #"
+        if pname in gres_preset_nodes:
+            line += " Nodes=" + compress(','.join(gres_preset_nodes[pname]))
+        if pname in gres_preset_partitions:
+            line += " Partitions=" + compress(','.join(gres_preset_partitions[pname]))
+        raw_block += "# " + line + "\n"
+
+    return raw_block
+
+
+def save_gres_configuration(configuration, slurm_files=SLURM_FILES, defaults_only=False):
+    """
+    Write the gres.conf Defaults block (preset definitions + assignments)
+    and optionally the TrinityX managed block (running NodeName= lines).
+
+    defaults_only=True  — write Defaults block only (called before Generate())
+    defaults_only=False — write TrinityX block only (called after Generate()
+                          to overwrite the empty output from slurm-gres.j2)
+    """
+    gres_file = slurm_files.get('gres')
+    if not gres_file:
+        return
+
+    if defaults_only:
+        # --- Defaults block only ---
+        raw_defaults = render_raw_gres_defaults(configuration)
+        gres_config_file = ConfigFile.read(gres_file)
+        if gres_config_file.ismanaged('Defaults'):
+            gres_config_file.set_managed_block('Defaults', raw_defaults)
+            gres_config_file.write(gres_file)
+        return
+
+    # --- TrinityX managed block: running NodeName= lines ---
+    # Build a lookup: preset_name -> preset properties
+    preset_map = {p['name']: p.get('properties', {})
+                  for p in configuration.get('gres_presets', [])}
+
+    # Build a lookup: partition_name -> [node_names]
+    partition_nodes = {}
+    for part in configuration.get('partitions', []):
+        partition_nodes[part['name']] = part.get('node_names') or []
+
+    # Collect effective gres_preset_names per node:
+    # start from the node's own assignments, then add any presets inherited
+    # from partitions that contain this node.
+    node_effective_presets = {}   # node_name -> set of preset_names
+    for node in configuration.get('nodes', []):
+        node_effective_presets[node['name']] = set(node.get('gres_preset_names') or [])
+    for part in configuration.get('partitions', []):
+        for pname in (part.get('gres_preset_names') or []):
+            for node_name in (part.get('node_names') or []):
+                node_effective_presets.setdefault(node_name, set())
+                node_effective_presets[node_name].add(pname)
+
+    # Group nodes that share identical preset properties for hostlist compression
+    # key: (preset_name, Name, Type, Count, File, no_consume) -> [node_names]
+    line_groups = {}
+    for node_name, presets in node_effective_presets.items():
+        for pname in presets:
+            if pname not in preset_map:
+                continue
+            props = preset_map[pname]
+            key = (pname,
+                   props.get('Name', ''),
+                   props.get('Type', ''),
+                   props.get('Count', ''),
+                   props.get('File', ''),
+                   bool(props.get('no_consume', False)))
+            line_groups.setdefault(key, [])
+            if node_name not in line_groups[key]:
+                line_groups[key].append(node_name)
+
+    running_block = ''
+    for (pname, name, gtype, count, gfile, no_cons), node_names in sorted(line_groups.items()):
+        nodelist = compress(','.join(node_names))
+        line = f"NodeName={nodelist}"
+        if name:
+            line += f" Name={name}"
+        if gtype:
+            line += f" Type={gtype}"
+        if count:
+            line += f" Count={count}"
+        if gfile:
+            line += f" File={gfile}"
+        if no_cons:
+            line += " no_consume"
+        running_block += line + "\n"
+
+    # Re-read after defaults write so we update the right block
+    gres_config_file = ConfigFile.read(gres_file)
+    if gres_config_file.ismanaged(MANAGER_NAME):
+        gres_config_file.set_managed_block(MANAGER_NAME, running_block)
+        gres_config_file.write(gres_file)
 
 
 # Pages
@@ -576,6 +862,16 @@ def get_hw_presets_route():
         slurm_files = SLURM_BACKUP_FILES
     configuration = load_configuration(slurm_files=slurm_files)
     return jsonify(configuration["hw_presets"])
+
+
+@app.route("/json/configuration/gres_presets", methods=["GET"])
+def get_gres_presets_route():
+    load_from_backup = request.args.get("load_from_backup")
+    slurm_files = SLURM_FILES
+    if load_from_backup:
+        slurm_files = SLURM_BACKUP_FILES
+    configuration = load_configuration(slurm_files=slurm_files)
+    return jsonify(configuration["gres_presets"])
 
 
 """
@@ -718,20 +1014,23 @@ def configuration_preview_route():
         nodes_preview_lines = config_block.dump()
         config_block = ConfigFile.read(SLURM_BACKUP_FILES['partitions'])
         partitions_preview_lines = config_block.dump()
+        config_block = ConfigFile.read(SLURM_BACKUP_FILES['gres'])
+        gres_preview_lines = config_block.dump()
     else:
         configuration = parse_raw_configuration(request.json)
-        nodes_preview_lines, partitions_preview_lines = save_tmp_files(configuration)
+        nodes_preview_lines, partitions_preview_lines, gres_preview_lines = save_tmp_files(configuration)
     return render_template(
         "components/configuration_preview.html",
         partitions_preview_lines=partitions_preview_lines,
         nodes_preview_lines=nodes_preview_lines,
+        gres_preview_lines=gres_preview_lines,
     )
 
 
 @app.route("/json/configuration/test", methods=["POST"])
 def test_configuration_route():
     configuration = parse_raw_configuration(request.json)
-    node_lines, partition_lines = save_tmp_files(configuration)
+    node_lines, partition_lines, _gres_lines = save_tmp_files(configuration)
 
     configuration_lines = node_lines + partition_lines
     configuration_lines = configuration_lines.split("\n")

@@ -5,6 +5,20 @@
           user-select: none;
 }
 
+/* TRIX-1691 — make OOD-gated disabled buttons clearly unclickable.
+   Bootstrap 4 default is opacity:0.65 which is too subtle.
+   We override to a flat grey appearance + not-allowed cursor so the
+   locked state is immediately obvious without the toggle being on. */
+.btn:disabled,
+.btn.disabled {
+  opacity: 1;
+  color: #868e96 !important;
+  background-color: #dee2e6 !important;
+  border-color: #ced4da !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .dropzone {
   border: 2px dashed #007bff;
   border-radius: 5px;
@@ -47,6 +61,63 @@
 }
 .table {
   margin-top: 10px
+}
+/* no_consume toggle cell — pointer cursor to signal single-click toggles the value */
+.tabulator .tabulator-cell[tabulator-field="properties.no_consume"] {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* no_consume toggle pill */
+.toggle-pill {
+  display: inline-block;
+  padding: 0.2em 0.65em;
+  font-size: 0.78em;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: .03em;
+  transition: background-color .15s ease, color .15s ease;
+}
+.toggle-on {
+  background-color: #2b8a3e;
+  color: #fff;
+}
+.toggle-off {
+  background-color: #dee2e6;
+  color: #868e96;
+}
+/* darken slightly on row hover so it feels clickable */
+.tabulator-row:hover .toggle-on  { background-color: #237032; }
+.tabulator-row:hover .toggle-off { background-color: #ced4da; color: #495057; }
+
+/* HW preset badge — shown in HWPreset cells on Nodes and Partitions tables */
+.badge-hwpreset {
+  display: inline-block;
+  padding: 0.2em 0.55em;
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  background-color: #2b8a3e;
+  border-radius: 0.35rem;
+  white-space: nowrap;
+}
+
+/* GRES preset badge — shown in GRES Preset(s) cells on Nodes and Partitions tables */
+.badge-gres {
+  display: inline-block;
+  padding: 0.2em 0.55em;
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  background-color: #5a67d8;
+  border-radius: 0.35rem;
+  margin-right: 2px;
+  white-space: nowrap;
 }
 a.nav-link {
   color: black;
