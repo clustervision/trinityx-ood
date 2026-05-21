@@ -295,7 +295,10 @@ window.onload = function() {
                 {title:"# CoresPerSocket", field:"properties.CoresPerSocket", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"# ThreadsPerCore", field:"properties.ThreadsPerCore", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"RealMemory (MB)", field:"properties.RealMemory", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
-                {title:"TmpDisk (MB)", field:"properties.TmpDisk", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
+                {title:"TmpDisk (MB)", field:"properties.TmpDisk", sorter:"number",  editor:"input", validator:[function(cell, value) {
+                    if (value === "" || value === null || value === undefined) return true;
+                    return Number.isInteger(Number(value)) && Number(value) >= 0;
+                }]},
                 // Generic Resources (Gres=) removed — now managed exclusively via the GRES tab.
                 // Gres= is auto-derived from GRES preset assignments at save time.
                 {title:"CpuBind", field:"properties.CpuBind", sorter:"string",  editor:"list", editorParams:{values:["socket", "ldom", "core", "thread"], clearable: true}},
@@ -313,7 +316,7 @@ window.onload = function() {
                 "CoresPerSocket": 1,
                 "ThreadsPerCore": 1,
                 "RealMemory": 1,
-                "TmpDisk": 1,
+                "TmpDisk": "",
             }
         });
         tables.hw_presets.validate();
