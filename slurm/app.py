@@ -513,7 +513,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 hw_preset_line="HWPresetName="+hw_preset['name']+" "
                 hw_preset_properties = ""
                 for key, value in hw_preset['properties'].items():
-                    if not (key == "State" and value == "UNKNOWN"):
+                    if not (key == "State" and value == "UNKNOWN") and key != "Gres":
                         hw_preset_line+=f"{key}={value} "
                         hw_preset_properties+=f"{key}={value} "
                 hw_preset_line+="# "
