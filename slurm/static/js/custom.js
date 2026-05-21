@@ -351,7 +351,8 @@ window.onload = function() {
                  tooltip: "Number of resources on each node"},
                 {title: "File", field: "properties.File", sorter: "string",
                  editor: "input",
-                 tooltip: "Device file path, e.g. /dev/nvidia[0-3]"},
+                 tooltip: "Device file path, e.g. /dev/nvidia[0-3]",
+                 hozAlign: "left", headerHozAlign: "center", width: 160, minWidth: 300},
                 {title: "no_consume", field: "properties.no_consume", sorter: "boolean",
                  formatter: function(cell) {
                      var val = cell.getValue();
@@ -361,7 +362,7 @@ window.onload = function() {
                          return '<span class="toggle-pill toggle-off"><i class="fas fa-times"></i> off</span>';
                      }
                  },
-                 hozAlign: "center", headerHozAlign: "center", width: 160, minWidth: 160,
+                 hozAlign: "center", headerHozAlign: "center", width: 160, minWidth: 200,
                  tooltip: "Click to toggle — shared/non-consumable resource",
                  cellClick: function(e, cell) {
                      cell.setValue(!cell.getValue());
