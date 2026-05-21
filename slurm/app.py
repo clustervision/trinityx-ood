@@ -357,8 +357,6 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
     for node in configuration.get('nodes', []):
         gres_names = node_effective_gres.get(node['name'], set())
         if gres_names:
-            # GRES presets assigned — derive Gres= from them, takes priority
-            # over any Gres= set directly on the HW preset (Generic Resources).
             parts = []
             for pname in sorted(gres_names):  # sorted for deterministic output
                 if pname in preset_map:
@@ -373,22 +371,8 @@ def save_configuration(configuration, slurm_files=SLURM_FILES, backup=True, mana
             if parts:
                 node.setdefault('properties', {})['Gres'] = ','.join(parts)
         else:
-            # No GRES presets assigned — fall back to any Gres= set directly
-            # on the node's HW preset via the Generic Resources column.
-            # This supports simple configs like Gres=gpu:8 without a full
-            # gres.conf, which is valid Slurm when no File/Cores spec is needed.
-            hw_preset_name = node.get('hw_preset_name')
-            hw_gres = None
-            if hw_preset_name:
-                hw_preset = next((p for p in configuration.get('hw_presets', [])
-                                  if p['name'] == hw_preset_name), None)
-                if hw_preset:
-                    hw_gres = hw_preset.get('properties', {}).get('Gres')
-            if hw_gres:
-                node.setdefault('properties', {})['Gres'] = hw_gres
-            else:
-                # Neither GRES presets nor HW preset Gres= — clear any stale value
-                node.get('properties', {}).pop('Gres', None)
+            # Clear Gres= if no presets assigned
+            node.get('properties', {}).pop('Gres', None)
 
     fullset = []
     if 'groups' in configuration:
@@ -529,7 +513,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 hw_preset_line="HWPresetName="+hw_preset['name']+" "
                 hw_preset_properties = ""
                 for key, value in hw_preset['properties'].items():
-                    if not (key == "State" and value == "UNKNOWN") and key != "Gres":
+                    if not (key == "State" and value == "UNKNOWN"):
                         hw_preset_line+=f"{key}={value} "
                         hw_preset_properties+=f"{key}={value} "
                 hw_preset_line+="# "
@@ -542,9 +526,8 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         if node in nodes_states:
                             properties_addons += "State="+nodes_states[node]
                             del nodes_states[node]
-                        # Append Gres= so the Jinja template writes it into
-                        # the TrinityX running block.
-                        # Priority: GRES presets > HW preset Generic Resources fallback.
+                        # Append Gres= derived from GRES presets so the Jinja
+                        # template writes it into the TrinityX running block
                         gres_str = ""
                         node_obj = next((n for n in configuration.get('nodes',[]) if n['name'] == node), None)
                         if node_obj and node_obj.get('gres_preset_names'):
@@ -559,11 +542,6 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                                     if g: parts.append(g)
                             if parts:
                                 gres_str = "Gres=" + ','.join(parts) + " "
-                        else:
-                            # Fallback: use Gres= from the HW preset itself (Generic Resources)
-                            hw_gres = hw_preset.get('properties', {}).get('Gres')
-                            if hw_gres:
-                                gres_str = "Gres=" + hw_gres + " "
                         gres_preset_annotation = ""
                         if node_obj and node_obj.get('gres_preset_names'):
                             gres_preset_annotation = " GresPreset=" + ','.join(node_obj['gres_preset_names'])
