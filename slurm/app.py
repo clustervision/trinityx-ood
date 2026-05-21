@@ -490,7 +490,7 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
     hw_preset_nodes = {}
     hw_preset_partitions = {}
     nodes_states = {}
-    # what nodes are using the preset:
+    # what nodes are using the preset (directly on the node):
     if 'nodes' in configuration:
         for node in configuration['nodes']:
             if 'hw_preset_name' in node and node['hw_preset_name']:
@@ -499,13 +499,22 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                 hw_preset_nodes[node['hw_preset_name']].append(node['name'])
             if 'properties' in node and 'State' in node['properties'] and node['properties']['State']:
                 nodes_states[node['name']] = node['properties']['State']
-    # what partitions are using the preset:
+    # what partitions are using the preset — also propagate to nodes in that partition
+    # so nodes that inherit HWPreset only via their partition get a proper NodeName= line
     if 'partitions' in configuration:
         for partition in configuration['partitions']:
             if 'hw_preset_name' in partition and partition['hw_preset_name']:
                 if partition['hw_preset_name'] not in hw_preset_partitions:
                     hw_preset_partitions[partition['hw_preset_name']] = []
                 hw_preset_partitions[partition['hw_preset_name']].append(partition['name'])
+                # propagate to all nodes in this partition that don't already have
+                # an explicit hw_preset_name set directly
+                for node_name in (partition.get('node_names') or []):
+                    node_obj = next((n for n in configuration.get('nodes', []) if n['name'] == node_name), None)
+                    if node_obj and not node_obj.get('hw_preset_name'):
+                        hw_preset_nodes.setdefault(partition['hw_preset_name'], [])
+                        if node_name not in hw_preset_nodes[partition['hw_preset_name']]:
+                            hw_preset_nodes[partition['hw_preset_name']].append(node_name)
     # now let's build a per node preset list and the hw presets themselves:
     if 'hw_presets' in configuration:
         for hw_preset in configuration['hw_presets']:
@@ -526,22 +535,14 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         if node in nodes_states:
                             properties_addons += "State="+nodes_states[node]
                             del nodes_states[node]
-                        # Append Gres= derived from GRES presets so the Jinja
-                        # template writes it into the TrinityX running block
+                        # Append Gres= so the Jinja template writes it into the TrinityX block.
+                        # Read the already-resolved value from node['properties']['Gres']
+                        # (set by save_configuration, includes partition-propagated presets).
                         gres_str = ""
                         node_obj = next((n for n in configuration.get('nodes',[]) if n['name'] == node), None)
-                        if node_obj and node_obj.get('gres_preset_names'):
-                            preset_map = {p['name']: p.get('properties',{}) for p in configuration.get('gres_presets',[])}
-                            parts = []
-                            for pname in node_obj['gres_preset_names']:
-                                if pname in preset_map:
-                                    props = preset_map[pname]
-                                    g = props.get('Name','')
-                                    if props.get('Type'): g += ':' + props['Type']
-                                    if props.get('Count'): g += ':' + str(props['Count'])
-                                    if g: parts.append(g)
-                            if parts:
-                                gres_str = "Gres=" + ','.join(parts) + " "
+                        resolved_gres = (node_obj or {}).get('properties', {}).get('Gres')
+                        if resolved_gres:
+                            gres_str = "Gres=" + resolved_gres + " "
                         gres_preset_annotation = ""
                         if node_obj and node_obj.get('gres_preset_names'):
                             gres_preset_annotation = " GresPreset=" + ','.join(node_obj['gres_preset_names'])
