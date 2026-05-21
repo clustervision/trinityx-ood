@@ -544,15 +544,26 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                             del nodes_states[node]
                         # Append Gres= so the Jinja template writes it into
                         # the TrinityX running block.
-                        # By this point save_configuration() has already resolved
-                        # the correct Gres= value (GRES preset priority > HW preset
-                        # Generic Resources fallback, including partition propagation)
-                        # and written it to node['properties']['Gres'] — read it directly.
+                        # Priority: GRES presets > HW preset Generic Resources fallback.
                         gres_str = ""
                         node_obj = next((n for n in configuration.get('nodes',[]) if n['name'] == node), None)
-                        resolved_gres = (node_obj or {}).get('properties', {}).get('Gres')
-                        if resolved_gres:
-                            gres_str = "Gres=" + resolved_gres + " "
+                        if node_obj and node_obj.get('gres_preset_names'):
+                            preset_map = {p['name']: p.get('properties',{}) for p in configuration.get('gres_presets',[])}
+                            parts = []
+                            for pname in node_obj['gres_preset_names']:
+                                if pname in preset_map:
+                                    props = preset_map[pname]
+                                    g = props.get('Name','')
+                                    if props.get('Type'): g += ':' + props['Type']
+                                    if props.get('Count'): g += ':' + str(props['Count'])
+                                    if g: parts.append(g)
+                            if parts:
+                                gres_str = "Gres=" + ','.join(parts) + " "
+                        else:
+                            # Fallback: use Gres= from the HW preset itself (Generic Resources)
+                            hw_gres = hw_preset.get('properties', {}).get('Gres')
+                            if hw_gres:
+                                gres_str = "Gres=" + hw_gres + " "
                         gres_preset_annotation = ""
                         if node_obj and node_obj.get('gres_preset_names'):
                             gres_preset_annotation = " GresPreset=" + ','.join(node_obj['gres_preset_names'])
