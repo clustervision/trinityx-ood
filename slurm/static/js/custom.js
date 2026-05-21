@@ -296,7 +296,8 @@ window.onload = function() {
                 {title:"# ThreadsPerCore", field:"properties.ThreadsPerCore", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"RealMemory (MB)", field:"properties.RealMemory", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
                 {title:"TmpDisk (MB)", field:"properties.TmpDisk", sorter:"number",  editor:"input", validator:[ "integer", "min:0", "required"]},
-                {title:"Generic Resources", field:"properties.Gres", sorter:"string", editor:"input", width:"15%", validator:[GresValidator], cellEdited: HWPresetCellEdited, cellEditCancelled:HWPresetCellEdited },
+                // Generic Resources (Gres=) removed — now managed exclusively via the GRES tab.
+                // Gres= is auto-derived from GRES preset assignments at save time.
                 {title:"CpuBind", field:"properties.CpuBind", sorter:"string",  editor:"list", editorParams:{values:["socket", "ldom", "core", "thread"], clearable: true}},
             ]},
         ],
