@@ -338,7 +338,7 @@ watch(
 
 
 const networkLookupName = computed(() => {
-  if (isAdd.value) return form.name.trim()
+  if (isAdd.value) return ''
   return props.switchName.trim()
 })
 
@@ -355,22 +355,15 @@ async function loadNetworkOptions() {
   const requestId = ++networkRequestId
 
   networkErrorMsg.value = ''
-
-  if (!lookupName) {
-    networkOptions.value = []
-
-    if (isAdd.value) {
-      form.network = ''
-    }
-
-    return
-  }
-
   networkLoading.value = true
 
   try {
+    const endpoint = lookupName
+      ? `/api/v1/get_networks/${encodeURIComponent(lookupName)}`
+      : '/api/v1/get_networks'
+
     const { data } = await props.apiClient.get<NetworkListResponse>(
-      `/api/v1/get_networks/${encodeURIComponent(lookupName)}`,
+      endpoint,
       { validateStatus: () => true }
     )
 
@@ -383,10 +376,8 @@ async function loadNetworkOptions() {
     networkOptions.value = options
 
     if (isAdd.value) {
-      // Add mode should not preselect anything.
-      if (!options.includes(form.network)) {
-        form.network = ''
-      }
+      // Add mode: show all networks, but do not preselect anything.
+      form.network = ''
       return
     }
 
@@ -396,10 +387,7 @@ async function loadNetworkOptions() {
     if (requestId !== networkRequestId) return
 
     networkOptions.value = []
-
-    if (isAdd.value) {
-      form.network = ''
-    }
+    form.network = ''
 
     networkErrorMsg.value =
       err instanceof Error ? err.message : 'Could not load switch networks.'
@@ -572,9 +560,9 @@ async function onSubmit() {
 <template>
   <BaseModal size="large" @close="emit('close')">
     <div class="tx-form-page switch-modal-page">
-       <div v-if="liveNameValidationMsg || errorMsg" class="alert-danger" role="alert">
-          {{ liveNameValidationMsg || errorMsg }}
-        </div>
+       <div v-if="liveNameValidationMsg || errorMsg || networkErrorMsg" class="alert-danger" role="alert">
+        {{ liveNameValidationMsg || errorMsg || networkErrorMsg }}
+      </div>
       <div v-if="successMsg" class="alert-success" role="alert">{{ successMsg }}</div>
 
       <template v-if="!fatalError">
@@ -647,7 +635,7 @@ async function onSubmit() {
                   <label class="switch-field-label" for="switch-network">NETWORK:</label>
 
                   <div class="switch-select-wrapper">
-                    <select id="switch-network" v-model="form.network" class="switch-select" :class="{ 'switch-select-placeholder': !form.network }" :disabled="networkLoading || (isAdd && !form.name.trim())">
+                    <select id="switch-network" v-model="form.network" class="switch-select" :class="{ 'switch-select-placeholder': !form.network }" :disabled="networkLoading">
                       <option value="">--- Select ---</option>
                       <option v-for="network in networkOptions" :key="network" :value="network">{{ network }}</option>
                     </select>
