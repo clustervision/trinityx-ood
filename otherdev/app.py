@@ -37,6 +37,8 @@ from flask_cors import CORS
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from log import Log
+from model import Model
+
 
 LOGGER = Log.init_log('INFO')
 TABLE = 'otherdev'
@@ -191,6 +193,33 @@ def delete_record(record: str):
     response = Rest().get_delete(TABLE, record)
     LOGGER.info(response)
     return jsonify(response), 200
+
+
+@app.route('/api/v1/get_networks', methods=['GET'])
+@app.route('/api/v1/get_networks/<string:record>', methods=['GET'])
+def get_networks(record: str = ""):
+    """
+    Get a JSON list of all get_networks for the Vue frontend table.
+    """
+    body = {"network_list": []}
+    if record:
+        data = {"network": ""}
+        table_data = Rest().get_data(TABLE, record)
+        LOGGER.info(table_data)
+        if "status" in table_data:
+            if table_data["status"] is True:
+                data = table_data["content"]["config"][TABLE][record]
+            else:
+                return jsonify(table_data)
+        else:
+            return jsonify(table_data)
+
+        network_list = Model().get_list_options_json('network', data.get("network"))
+        body = {"network_list": network_list}
+    else:
+        network_list = Model().get_list_options_json('network')
+        body = {"network_list": network_list}
+    return jsonify(body), 200
 
 
 @app.route(f"/api/{API_VERSION}/license", methods=['GET'])
