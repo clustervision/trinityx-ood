@@ -109,6 +109,13 @@ function GresValidator(cell, value, parameters) {
     return isValid;
 }
 
+// ── HW Preset formatter ────────────────────────────────────────────────────
+function HWPresetFormatter(cell, formatterParams, onRendered) {
+    var val = cell.getValue();
+    if (!val) return "";
+    return '<span class="badge badge-hwpreset">' + val + '</span>';
+}
+
 // ── GRES Preset helpers ────────────────────────────────────────────────────
 const GresPresetEditorParams = {
     valuesLookup: function() {
@@ -386,7 +393,7 @@ window.onload = function() {
               }},
             {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator], editable: NodesRowIsEditable},
             {title:"Luna Group", field:"group_name", sorter:"string"},
-            {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
+            {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, formatter:HWPresetFormatter, validator:[HWPresetColumnValidator]},
             {title:"GRES Preset(s)", field:"gres_preset_names", sorter:"string", editor:"list",
              editorParams:GresPresetEditorParams, formatter:GresPresetFormatter,
              validator:[GresPresetColumnValidator], cellEdited:GresPresetCellEdited,
@@ -429,7 +436,7 @@ window.onload = function() {
               }},
             {title:"Name", frozen:true, field:"name", sorter:"string",  editor: "input", validator:[ "unique", "required", nameRegexValidator]},
             {title:"Nodes", field:"node_names", sorter:"string", editor:"list", width:300, editorParams:NodesEditorParams, validator:[NodesColumnValidator]},
-            {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, validator:[HWPresetColumnValidator]},
+            {title:"HWPreset", field:"hw_preset_name", sorter:"string", editor:"list", editorParams:HWPresetEditorParams, formatter:HWPresetFormatter, validator:[HWPresetColumnValidator]},
             {title:"GRES Preset(s)", field:"gres_preset_names", sorter:"string", editor:"list",
              editorParams:GresPresetEditorParams, formatter:GresPresetFormatter,
              validator:[GresPresetColumnValidator], cellEdited:GresPresetCellEdited,
