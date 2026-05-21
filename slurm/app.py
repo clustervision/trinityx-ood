@@ -554,9 +554,33 @@ def render_raw_nodes_defaults(configuration, slurm_files=SLURM_FILES):
                         partition_preset_line="PartitionName="+partition+" "+hw_preset_properties+" # HWPreset="+hw_preset["name"]
                         hw_presets["PartitionName="+partition]=partition_preset_line
                 hw_presets["HWPresetName="+hw_preset['name']]=hw_preset_line
-    # a tiny entry for nodes that do not have a hw preset but set a State:
-    for node in nodes_states:
-        hw_presets["NodeName="+node]="NodeName="+node+" State="+nodes_states[node]
+    # a tiny entry for nodes that do not have a hw preset but set a State
+    # and/or GRES presets — write all resolved properties for the Jinja template.
+    node_map = {n['name']: n for n in configuration.get('nodes', [])}
+    for node_name in nodes_states:
+        node_obj = node_map.get(node_name)
+        line = "NodeName=" + node_name + " State=" + nodes_states[node_name]
+        resolved_gres = (node_obj or {}).get('properties', {}).get('Gres')
+        if resolved_gres:
+            line += " Gres=" + resolved_gres
+        gres_preset_annotation = ""
+        if node_obj and node_obj.get('gres_preset_names'):
+            gres_preset_annotation = " # GresPreset=" + ','.join(node_obj['gres_preset_names'])
+        hw_presets["NodeName="+node_name] = line + gres_preset_annotation
+    # also handle nodes with GRES presets but no HWPreset and no State
+    # (they would be completely missed by both the HWPreset loop and nodes_states loop)
+    for node_obj in configuration.get('nodes', []):
+        key = "NodeName=" + node_obj['name']
+        if key in hw_presets or node_obj.get('hw_preset_name'):
+            continue   # already handled above or by HWPreset loop
+        resolved_gres = node_obj.get('properties', {}).get('Gres')
+        if not resolved_gres:
+            continue   # nothing to write — truly empty node
+        line = "NodeName=" + node_obj['name'] + " Gres=" + resolved_gres
+        gres_preset_annotation = ""
+        if node_obj.get('gres_preset_names'):
+            gres_preset_annotation = " # GresPreset=" + ','.join(node_obj['gres_preset_names'])
+        hw_presets[key] = line + gres_preset_annotation
 
     # now we build the raw content:
     for hw_preset, entry in sorted(hw_presets.items()):
