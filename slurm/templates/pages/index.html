@@ -61,6 +61,14 @@
                         <i class="fa-solid fa-trash"></i>
                         Delete Selected Hardware Presets
                     </button>
+                    <div class="alert alert-info mt-2 mb-1 py-2 px-3" role="alert" style="font-size:.85rem">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Hardware Presets</strong> define reusable sets of physical node properties
+                        (boards, sockets, cores, memory, etc.). Assign a preset to a <strong>Node</strong> or
+                        <strong>Partition</strong> in their respective tabs — the properties are then written
+                        into <code>slurm-nodes.conf</code> and <code>slurm-partitions.conf</code> as the
+                        Defaults block template. Changes here do not take effect until you <strong>Save</strong>.
+                    </div>
                     <table class="table table-bordered" id="hw-presets-table"></table>
                 </div>
                 <div id="gres-tab" class="tab-pane fade">
@@ -93,6 +101,15 @@
                         <i class="fa-solid fa-trash"></i>
                         Delete Selected Nodes
                     </button>
+                    <div class="alert alert-info mt-2 mb-1 py-2 px-3" role="alert" style="font-size:.85rem">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Nodes</strong> represent individual compute nodes in the cluster.
+                        Assign a <strong>HWPreset</strong> to apply a set of hardware properties, and one or more
+                        <strong>GRES Presets</strong> to enable generic resources (GPUs, FPGAs, etc.) on that node.
+                        <code>Gres=</code> in <code>slurm-nodes.conf</code> and the corresponding
+                        <code>NodeName=</code> lines in <code>gres.conf</code> are generated automatically on Save.
+                        Add/Delete/Import requires the <strong>OOD manager toggle</strong> to be enabled.
+                    </div>
                     <table class="table table-bordered" id="nodes-table"></table>
                 </div>
                 <div id="partitions-tab" class="tab-pane fade">
@@ -104,6 +121,15 @@
                         <i class="fa-solid fa-trash"></i>
                         Delete Selected Partitions
                     </button>
+                    <div class="alert alert-info mt-2 mb-1 py-2 px-3" role="alert" style="font-size:.85rem">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Partitions</strong> group nodes into logical job queues written to <code>slurm-partitions.conf</code>.
+                        Assign a <strong>HWPreset</strong> to set partition-level hardware defaults, and one or more
+                        <strong>GRES Presets</strong> to annotate which generic resources are available in this partition —
+                        GRES presets on a partition propagate to <em>all nodes</em> listed under it, automatically
+                        generating the corresponding <code>NodeName=</code> lines in <code>gres.conf</code>.
+                        Add/Delete requires the <strong>OOD manager toggle</strong> to be enabled.
+                    </div>
                     <table class="table table-bordered" id="partitions-table"></table>
                 </div>
 
