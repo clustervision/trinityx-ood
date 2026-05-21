@@ -353,9 +353,16 @@ window.onload = function() {
                  editor: "input",
                  tooltip: "Device file path, e.g. /dev/nvidia[0-3]"},
                 {title: "no_consume", field: "properties.no_consume", sorter: "boolean",
-                 formatter: "tickCross", formatterParams: {allowEmpty: false, allowTruthy: true},
+                 formatter: function(cell) {
+                     var val = cell.getValue();
+                     if (val) {
+                         return '<span class="toggle-pill toggle-on"><i class="fas fa-check"></i> on</span>';
+                     } else {
+                         return '<span class="toggle-pill toggle-off"><i class="fas fa-times"></i> off</span>';
+                     }
+                 },
                  hozAlign: "center", headerHozAlign: "center", width: 110,
-                 tooltip: "Click to toggle \342\200\224 shared/non-consumable resource",
+                 tooltip: "Click to toggle — shared/non-consumable resource",
                  cellClick: function(e, cell) {
                      cell.setValue(!cell.getValue());
                  }},

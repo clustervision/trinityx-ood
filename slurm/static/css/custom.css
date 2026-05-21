@@ -68,6 +68,31 @@
   user-select: none;
 }
 
+/* no_consume toggle pill */
+.toggle-pill {
+  display: inline-block;
+  padding: 0.2em 0.65em;
+  font-size: 0.78em;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  letter-spacing: .03em;
+  transition: background-color .15s ease, color .15s ease;
+}
+.toggle-on {
+  background-color: #2b8a3e;
+  color: #fff;
+}
+.toggle-off {
+  background-color: #dee2e6;
+  color: #868e96;
+}
+/* darken slightly on row hover so it feels clickable */
+.tabulator-row:hover .toggle-on  { background-color: #237032; }
+.tabulator-row:hover .toggle-off { background-color: #ced4da; color: #495057; }
+
 /* HW preset badge — shown in HWPreset cells on Nodes and Partitions tables */
 .badge-hwpreset {
   display: inline-block;
