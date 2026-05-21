@@ -361,7 +361,7 @@ window.onload = function() {
                          return '<span class="toggle-pill toggle-off"><i class="fas fa-times"></i> off</span>';
                      }
                  },
-                 hozAlign: "center", headerHozAlign: "center", width: 110,
+                 hozAlign: "center", headerHozAlign: "center", width: 160, minWidth: 160,
                  tooltip: "Click to toggle — shared/non-consumable resource",
                  cellClick: function(e, cell) {
                      cell.setValue(!cell.getValue());
