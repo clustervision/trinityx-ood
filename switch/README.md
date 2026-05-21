@@ -255,9 +255,9 @@ Could not load backend routes. Check whether the Luna configuration file and tok
     "route": "https://vmware-controller1.cluster:7755/api/v1/routes"
   },
   {
-    "function": "switchs",
+    "function": "switches",
     "method": "GET",
-    "route": "https://vmware-controller1.cluster:7755/api/v1/switchs"
+    "route": "https://vmware-controller1.cluster:7755/api/v1/switches"
   }
 ]
 ```
@@ -311,7 +311,7 @@ Could not load the Switch application. Check the backend configuration and Open 
 ## 7.3 List switches
 
 ```http
-GET /api/v1/switchs
+GET /api/v1/switches
 ```
 
 Returns all switch records available from the Luna2 daemon.
@@ -322,7 +322,7 @@ Internally calls:
 GET <luna-daemon>/config/switch
 ```
 
-Note: the current route is `/switchs` because that is the function/route name used in the backend. The UI can display the label as “Switches”.
+Note: the current route is `/switches` because that is the function/route name used in the backend. The UI can display the label as “Switches”.
 
 ### Success message box
 
@@ -966,7 +966,7 @@ curl -k https://vmware-controller1.cluster:7755/api/v1/routes
 ## List switches
 
 ```bash
-curl -k https://vmware-controller1.cluster:7755/api/v1/switchs
+curl -k https://vmware-controller1.cluster:7755/api/v1/switches
 ```
 
 ## Add switch
@@ -1073,7 +1073,7 @@ These details matter for frontend implementation.
 6. Delete calls the Luna daemon using the daemon-specific `_delete` route.
 7. The route method exposed to the frontend may differ from the method used internally against the Luna daemon.
 8. Most API routes return JSON, but the application shell, licence route and configuration errors return HTML/text.
-9. The frontend should refresh `/api/v1/switchs` after add, update, clone, rename or delete actions.
+9. The frontend should refresh `/api/v1/switches` after add, update, clone, rename or delete actions.
 10. The frontend should show daemon validation messages directly where possible because they explain the real reason for failure.
 11. SNMP community strings should be handled as sensitive configuration data in the UI and logs.
 
@@ -1120,7 +1120,7 @@ The failure box should prefer messages in this order:
 | --- | --- | --- |
 | `GET` | `/` | Serve Open OnDemand application shell |
 | `GET` | `/api/v1/routes` | List available backend routes |
-| `GET` | `/api/v1/switchs` | List all Luna2 switches |
+| `GET` | `/api/v1/switches` | List all Luna2 switches |
 | `POST` | `/api/v1/add` | Add a switch |
 | `PUT` | `/api/v1/update` | Update a switch |
 | `POST` | `/api/v1/clone` | Clone a switch |
@@ -1134,7 +1134,7 @@ The failure box should prefer messages in this order:
 
 These are not blockers, but they are useful to know before connecting the Vue.js frontend.
 
-- The list route is currently named `/api/v1/switchs`; the UI can still label the objects as “Switches”.
+- The list route is currently named `/api/v1/switches`; the UI can still label the objects as “Switches”.
 - Some error responses are JSON, while others are HTML/text.
 - Some Flask routes return HTTP `200` even when the body contains an error status.
 - `rename` returns a missing-payload error without `status_code`.
@@ -1142,7 +1142,7 @@ These are not blockers, but they are useful to know before connecting the Vue.js
 - Create, update, clone and rename assume one switch object per request.
 - The backend currently trusts the payload shape and passes validation mainly to the Luna daemon.
 - If the `Rest.post_data()` implementation has not been updated for `action == "clone"`, the clone route may not return a correct success response even when the daemon accepts the request.
-- SNMP community strings are returned in the current `/api/v1/switchs` response. The frontend should mask sensitive values, and the backend may later consider redacting `rw` before sending data to the browser.
+- SNMP community strings are returned in the current `/api/v1/switches` response. The frontend should mask sensitive values, and the backend may later consider redacting `rw` before sending data to the browser.
 
 For a cleaner frontend contract later, consider standardising all API errors as JSON under the same envelope:
 
@@ -1162,7 +1162,7 @@ A cleaner display name helper can keep UI/backend messages readable:
 DISPLAY_NAME = "Switch"
 ```
 
-For future cleanup, the route could also be renamed from `/switchs` to `/switches`, while keeping `/switchs` as a backwards-compatible alias.
+For future cleanup, the route could also be renamed from `/switches` to `/switches`, while keeping `/switches` as a backwards-compatible alias.
 
 ---
 
