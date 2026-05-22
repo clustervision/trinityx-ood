@@ -3,12 +3,19 @@
     <div class="tx-form-page">
       <h2 class="tx-title" style="margin-bottom: 1rem">Check IP — {{ networkName }}</h2>
       <div v-if="errorMsg" class="alert-danger">{{ errorMsg }}</div>
-      <div class="tx-field tx-field-match" style="max-width: 420px">
+      <div class="tx-field tx-field-match tx-ipv4-field" style="max-width: 420px">
         <span class="tx-label">IP Address:</span>
-        <input v-model="ip" type="text" placeholder="__.___.___.___" @keyup.enter="runCheck" />
+        <input
+          :value="ip"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="0.0.0.0"
+          @input="onIpInput"
+          @keyup.enter="runCheck"
+        />
       </div>
       <div class="tx-form-footer-right" style="margin-top: 1rem">
-        <button type="button" class="tx-btn tx-btn-outline-blue" @click="$emit('close')">Close</button>
         <button type="button" class="tx-btn tx-btn-blue" :disabled="loading" @click="runCheck">
           {{ loading ? 'Checking...' : 'Check IP' }}
         </button>
@@ -22,6 +29,7 @@
 import { ref } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { fetchIpInfo } from '@/api'
+import { formatIpv4Typing, ipv4ForSubmit } from '@/utils/ipv4Input'
 
 const props = defineProps<{ networkName: string }>()
 defineEmits<{ close: [] }>()
@@ -31,8 +39,12 @@ const result = ref('')
 const errorMsg = ref('')
 const loading = ref(false)
 
+function onIpInput(e: Event) {
+  ip.value = formatIpv4Typing((e.target as HTMLInputElement).value)
+}
+
 async function runCheck() {
-  const addr = ip.value.trim()
+  const addr = ipv4ForSubmit(ip.value)
   if (!addr) {
     errorMsg.value = 'Enter an IP address.'
     return

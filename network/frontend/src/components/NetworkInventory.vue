@@ -98,7 +98,7 @@
                 </button>
                 <button
                   type="button"
-                  class="tx-btn tx-btn-blue tx-btn-compact"
+                  class="tx-btn tx-btn-outline-blue tx-btn-compact tx-btn-next-ip-inv"
                   title="Next IP"
                   :disabled="nextIpLoading === row.name"
                   @click="doNextIp(row.name)"

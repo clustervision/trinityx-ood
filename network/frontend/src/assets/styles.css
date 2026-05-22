@@ -2732,6 +2732,29 @@ select.tx-select-placeholder {
   border-radius: 6px;
 }
 
+/* Next IP: white fill, blue text + border (not solid blue pill) */
+.tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue {
+  background: #fff;
+  color: #5376ea;
+  border: 2px solid #5376ea;
+  font-weight: 400;
+}
+
+.tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue:hover {
+  background: #f5f7ff;
+  opacity: 1;
+}
+
+.tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue:disabled {
+  opacity: 0.55;
+  background: #fff;
+}
+
+.tx-ipv4-field input {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
 .tx-network-range-cell {
   display: flex;
   flex-direction: column;
