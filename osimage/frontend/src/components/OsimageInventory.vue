@@ -196,7 +196,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { fetchOsimages, fetchOsimageDetail, packOsimage, checkPackStatus } from '../api'
 import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
 import { publicAssetUrl, messageForDisplay, resolveChrootBaseUrl, rewriteIfShellOrigin } from '../utils'
@@ -555,7 +555,24 @@ async function pollPackStatus(name, rid) {
   await tick()
 }
 
+function handleEscKey(event) {
+  if (event.key !== 'Escape') return
+  if (packOpen.value) {
+    closePackDialog()
+    return
+  }
+  if (helpOpen.value) {
+    helpOpen.value = false
+  }
+}
+
 defineExpose({ loadData })
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>
