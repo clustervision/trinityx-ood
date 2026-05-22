@@ -15,6 +15,13 @@ import { messageForDisplay } from './utils'
 const TABLE = 'network'
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
 
+/** OOD Pun mount, e.g. https://host:8080/pun/sys/trinity_network */
+function baseFromBrowserLocation(): string {
+  if (typeof window === 'undefined') return ''
+  const path = window.location.pathname.replace(/\/+$/, '') || ''
+  return `${window.location.origin}${path}`.replace(/\/$/, '')
+}
+
 export function baseUrl(): string {
   if (import.meta.env.DEV) return '/network-backend'
 
@@ -25,15 +32,21 @@ export function baseUrl(): string {
   if (explicit) {
     try {
       const parsed = new URL(explicit)
-      if (window.location?.origin) {
-        return `${window.location.origin}${parsed.pathname}`.replace(/\/$/, '')
+      const path = parsed.pathname.replace(/\/+$/, '') || ''
+      // Flask under OOD often injects APP_URL with pathname '/' only — not the Pun prefix.
+      if (path && path !== '/') {
+        if (window.location?.origin) {
+          return `${window.location.origin}${path}`.replace(/\/$/, '')
+        }
+        return explicit.replace(/\/$/, '')
       }
     } catch {
-      /* fall through */
+      if (!/^https?:\/\//i.test(explicit)) {
+        return explicit.replace(/\/$/, '')
+      }
     }
-    return explicit
   }
-  return ''
+  return baseFromBrowserLocation()
 }
 
 function apiPath(suffix: string): string {
