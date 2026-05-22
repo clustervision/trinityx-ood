@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { publicAssetUrl } from '../utils'
 
 const props = defineProps({
@@ -90,6 +90,20 @@ function openCommentEditDialog() {
 function closeCommentEditDialog() {
   commentEditDialogOpen.value = false
 }
+
+function handleEscKey(event) {
+  if (event.key === 'Escape' && commentEditDialogOpen.value) {
+    event.stopImmediatePropagation()
+    closeCommentEditDialog()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleEscKey, true)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey, true)
+})
 
 function applyCommentEditDialog() {
   emit('update:modelValue', commentEditDraft.value)
