@@ -285,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { fetchNodes } from '../api'
 import { displayNameTitle, formatDisplayName } from '../constants/displayName'
 import { actionIcons } from '../utils/assetImg'
@@ -523,7 +523,19 @@ function collectInventoryIpv4Records(): InventoryIpv4Record[] {
   return out
 }
 
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && helpOpen.value) {
+    helpOpen.value = false
+  }
+}
+
 defineExpose({ loadData, collectInventoryIpv4Records })
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>

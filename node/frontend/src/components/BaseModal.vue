@@ -16,9 +16,15 @@ const props = defineProps<{
   size?: 'small' | 'medium' | 'large' | 'wide'
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
 }>()
+
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    emit('close')
+  }
+}
 
 const sizeClass = computed((): string => {
   if (props.size === 'small') return 'tx-modal-sm'
@@ -27,6 +33,12 @@ const sizeClass = computed((): string => {
   return 'tx-modal-lg'
 })
 
-onMounted(() => { document.body.style.overflow = 'hidden' })
-onUnmounted(() => { document.body.style.overflow = '' })
+onMounted(() => {
+  document.body.style.overflow = 'hidden'
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>
