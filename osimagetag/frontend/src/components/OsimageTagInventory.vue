@@ -139,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { fetchOsimageTags, appStaticAssetUrl } from '../api'
 import { formatOsimageNameDisplay, osimageNameTitle } from '../constants/osimageName'
 import { formatTagNameDisplay, tagNameTitle } from '../constants/tagName'
@@ -259,7 +259,19 @@ async function loadData() {
   }
 }
 
+function handleEscKey(event) {
+  if (event.key === 'Escape' && helpOpen.value) {
+    helpOpen.value = false
+  }
+}
+
 defineExpose({ loadData })
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>
