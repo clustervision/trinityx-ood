@@ -4,7 +4,13 @@ import { computed, onMounted, onUnmounted } from 'vue'
 const props = defineProps({
   size: { type: String, default: 'large' },
 })
-defineEmits(['close'])
+const emit = defineEmits(['close'])
+
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    emit('close')
+  }
+}
 
 const sizeClass = computed(() => {
   if (props.size === 'small') return 'tx-modal-sm'
@@ -13,8 +19,14 @@ const sizeClass = computed(() => {
   return 'tx-modal-lg'
 })
 
-onMounted(() => { document.body.style.overflow = 'hidden' })
-onUnmounted(() => { document.body.style.overflow = '' })
+onMounted(() => {
+  document.body.style.overflow = 'hidden'
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  document.body.style.overflow = ''
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>
 
 <template>
