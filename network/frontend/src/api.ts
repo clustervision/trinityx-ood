@@ -11,42 +11,13 @@ import type {
   ReservedIpRow,
 } from './types'
 import { messageForDisplay } from './utils'
+import { oodAppRoot } from './utils/oodAppRoot'
 
 const TABLE = 'network'
-const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
-
-/** OOD Pun mount, e.g. https://host:8080/pun/sys/trinity_network */
-function baseFromBrowserLocation(): string {
-  if (typeof window === 'undefined') return ''
-  const path = window.location.pathname.replace(/\/+$/, '') || ''
-  return `${window.location.origin}${path}`.replace(/\/$/, '')
-}
 
 export function baseUrl(): string {
   if (import.meta.env.DEV) return '/network-backend'
-
-  let explicit = String(window.APP_URL || import.meta.env.VITE_APP_URL || '')
-    .trim()
-    .replace(/\/$/, '')
-  if (UNSUBSTITUTED_APP_URL.test(explicit)) explicit = ''
-  if (explicit) {
-    try {
-      const parsed = new URL(explicit)
-      const path = parsed.pathname.replace(/\/+$/, '') || ''
-      // Flask under OOD often injects APP_URL with pathname '/' only — not the Pun prefix.
-      if (path && path !== '/') {
-        if (window.location?.origin) {
-          return `${window.location.origin}${path}`.replace(/\/$/, '')
-        }
-        return explicit.replace(/\/$/, '')
-      }
-    } catch {
-      if (!/^https?:\/\//i.test(explicit)) {
-        return explicit.replace(/\/$/, '')
-      }
-    }
-  }
-  return baseFromBrowserLocation()
+  return oodAppRoot()
 }
 
 function apiPath(suffix: string): string {
