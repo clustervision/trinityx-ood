@@ -189,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { fetchNetworks, fetchNextIp } from '@/api'
 import { formatNetworkNameDisplay, networkNameTitle } from '@/constants/networkName'
 import { punAppAssetUrl } from '@/utils'
@@ -349,7 +349,24 @@ async function doNextIp(name: string) {
   }
 }
 
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key !== 'Escape') return
+  if (nextIpDialog.value) {
+    nextIpDialog.value = ''
+    return
+  }
+  if (helpOpen.value) {
+    helpOpen.value = false
+  }
+}
+
 defineExpose({ loadData })
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>
