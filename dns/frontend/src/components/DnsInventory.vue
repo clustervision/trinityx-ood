@@ -5,8 +5,8 @@
     <div class="tx-header">
       <h2 class="tx-title">DNS Entries</h2>
       <div class="tx-header-actions">
-        <button class="tx-btn tx-btn-help" type="button" title="Help" @click="helpOpen = true">?</button>
         <button type="button" class="tx-btn tx-btn-blue" @click="$emit('open-add')">Add New DNS</button>
+        <button class="tx-btn tx-btn-help" type="button" title="Help" @click="helpOpen = true">?</button>
         <div class="tx-inline-search">
           <label class="tx-inline-search-label" for="txDnsSearch">Search:</label>
           <input

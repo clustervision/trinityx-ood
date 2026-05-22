@@ -106,7 +106,7 @@ export async function saveDnsEntry(
     }),
   })
   const data = await readJson<ApiEnvelope>(res)
-  if (!res.ok && res.status !== 201) {
+  if (!res.ok) {
     throw new Error(apiError(res, data))
   }
 }

@@ -21,7 +21,7 @@ import BaseModal from './BaseModal.vue'
 import DnsFormFields from './DnsFormFields.vue'
 import { fetchDnsEntries, fetchNetworks, saveDnsEntry } from '@/api'
 import { validateDnsLabel } from '@/constants/dnsName'
-import { ipv4ForSubmit } from '@/utils/ipv4Input'
+import { validateIpv4ForSubmit } from '@/utils/ipv4Input'
 import type { DnsFormState } from '@/types'
 
 const props = defineProps<{ network: string; host: string }>()
@@ -74,16 +74,16 @@ async function submit() {
     saving.value = false
     return
   }
-  const ip = ipv4ForSubmit(form.ipaddress)
-  if (!ip) {
-    alertMsg.value = 'IP address is required.'
+  const ip = validateIpv4ForSubmit(form.ipaddress)
+  if (!ip.ok) {
+    alertMsg.value = ip.message
     saving.value = false
     return
   }
 
   try {
     await saveDnsEntry(
-      { network: net.value, host: host.value, ipaddress: ip },
+      { network: net.value, host: host.value, ipaddress: ip.value },
       original,
     )
     alertMsg.value = 'DNS entry updated successfully.'
