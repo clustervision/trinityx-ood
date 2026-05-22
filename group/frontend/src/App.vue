@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -221,9 +221,21 @@ async function loadData() {
     loading.value = false
   }
 }
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && helpOpen.value) {
+    helpOpen.value = false
+  }
+}
+
 defineExpose({ loadData })
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
 // console.log(filteredRows.value);
 </script>
 
