@@ -120,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { fetchDnsEntries } from '@/api'
 import { punAppAssetUrl } from '@/utils'
 import {
@@ -192,7 +192,19 @@ async function loadData() {
   }
 }
 
+function handleEscKey(event: KeyboardEvent) {
+  if (event.key === 'Escape' && helpOpen.value) {
+    helpOpen.value = false
+  }
+}
+
 defineExpose({ loadData })
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  window.addEventListener('keydown', handleEscKey)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEscKey)
+})
 </script>
