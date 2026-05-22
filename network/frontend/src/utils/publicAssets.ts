@@ -1,3 +1,5 @@
+import { oodAppRoot } from './oodAppRoot'
+
 function upgradeScheme(url: string): string {
   if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
     return url.replace(/^http:\/\//i, 'https://')
@@ -11,12 +13,19 @@ export function publicAssetUrl(relativePath: string): string {
   return `${base}${r}`
 }
 
-/** Assets served by Flask as `…/app/assets/<path>`. */
+/** Assets served by Flask as `…/pun/sys/<app>/app/assets/<path>`. */
 export function punAppAssetUrl(relativePath: string): string {
   const r = String(relativePath || '').replace(/^\//, '')
-  const appUrl = window.APP_URL?.trim()
-  if (appUrl && !/^\{\{\s*APP_URL\s*\}\}$/i.test(appUrl)) {
-    return upgradeScheme(`${appUrl.replace(/\/+$/, '')}/app/assets/${r}`)
+  if (import.meta.env.DEV) {
+    return `/network-backend/app/assets/${r}`
   }
-  return publicAssetUrl(r)
+  const root = oodAppRoot()
+  if (root) {
+    return upgradeScheme(`${root.replace(/\/+$/, '')}/app/assets/${r}`)
+  }
+  if (typeof window !== 'undefined') {
+    const path = window.location.pathname.replace(/\/+$/, '')
+    return `${path}/app/assets/${r}`
+  }
+  return `/app/assets/${r}`
 }

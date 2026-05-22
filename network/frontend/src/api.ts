@@ -11,29 +11,13 @@ import type {
   ReservedIpRow,
 } from './types'
 import { messageForDisplay } from './utils'
+import { oodAppRoot } from './utils/oodAppRoot'
 
 const TABLE = 'network'
-const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
 
 export function baseUrl(): string {
   if (import.meta.env.DEV) return '/network-backend'
-
-  let explicit = String(window.APP_URL || import.meta.env.VITE_APP_URL || '')
-    .trim()
-    .replace(/\/$/, '')
-  if (UNSUBSTITUTED_APP_URL.test(explicit)) explicit = ''
-  if (explicit) {
-    try {
-      const parsed = new URL(explicit)
-      if (window.location?.origin) {
-        return `${window.location.origin}${parsed.pathname}`.replace(/\/$/, '')
-      }
-    } catch {
-      /* fall through */
-    }
-    return explicit
-  }
-  return ''
+  return oodAppRoot()
 }
 
 function apiPath(suffix: string): string {
