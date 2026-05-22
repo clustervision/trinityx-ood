@@ -5,7 +5,7 @@
       <DnsInventory
         ref="inventoryRef"
         @open-add="addOpen = true"
-        @open-edit="openEdit"
+        @open-update="openUpdate"
         @open-delete="openDelete"
       />
     </main>
@@ -13,12 +13,12 @@
   </div>
 
   <AddDnsModal v-if="addOpen" @close="addOpen = false" @saved="onSaved" />
-  <EditDnsModal
-    v-if="editOpen && editKey"
-    :key="editKey"
-    :network="editNetwork"
-    :host="editHost"
-    @close="closeEdit"
+  <UpdateDnsModal
+    v-if="updateOpen && updateKey"
+    :key="updateKey"
+    :network="updateNetwork"
+    :host="updateHost"
+    @close="closeUpdate"
     @saved="onSaved"
   />
   <DeleteDnsModal
@@ -37,32 +37,32 @@ import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import DnsInventory from './components/DnsInventory.vue'
 import AddDnsModal from './components/AddDnsModal.vue'
-import EditDnsModal from './components/EditDnsModal.vue'
+import UpdateDnsModal from './components/UpdateDnsModal.vue'
 import DeleteDnsModal from './components/DeleteDnsModal.vue'
 
 const inventoryRef = ref<{ loadData?: () => void } | null>(null)
 const addOpen = ref(false)
-const editOpen = ref(false)
-const editNetwork = ref('')
-const editHost = ref('')
-const editKey = ref('')
+const updateOpen = ref(false)
+const updateNetwork = ref('')
+const updateHost = ref('')
+const updateKey = ref('')
 const deleteOpen = ref(false)
 const deleteNetwork = ref('')
 const deleteHost = ref('')
 const deleteKey = ref('')
 
-function openEdit(network: string, host: string) {
-  editNetwork.value = network || ''
-  editHost.value = host || ''
-  editKey.value = `${editNetwork.value}::${editHost.value}`
-  editOpen.value = !!(editNetwork.value && editHost.value)
+function openUpdate(network: string, host: string) {
+  updateNetwork.value = network || ''
+  updateHost.value = host || ''
+  updateKey.value = `${updateNetwork.value}::${updateHost.value}`
+  updateOpen.value = !!(updateNetwork.value && updateHost.value)
 }
 
-function closeEdit() {
-  editOpen.value = false
-  editNetwork.value = ''
-  editHost.value = ''
-  editKey.value = ''
+function closeUpdate() {
+  updateOpen.value = false
+  updateNetwork.value = ''
+  updateHost.value = ''
+  updateKey.value = ''
 }
 
 function openDelete(network: string, host: string) {
@@ -81,7 +81,7 @@ function closeDelete() {
 
 function onSaved() {
   addOpen.value = false
-  closeEdit()
+  closeUpdate()
   inventoryRef.value?.loadData?.()
 }
 

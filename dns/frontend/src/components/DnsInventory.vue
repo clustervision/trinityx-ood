@@ -48,7 +48,7 @@
                 type="button"
                 class="tx-name-link tx-cell-ellipsis"
                 :title="dnsLabelTitle(row.host)"
-                @click="$emit('open-edit', row.network, row.host)"
+                @click="$emit('open-update', row.network, row.host)"
               >
                 {{ formatDnsLabelDisplay(row.host) }}
               </button>
@@ -58,14 +58,6 @@
             </td>
             <td class="tx-col-actions tx-td-sep-blue">
               <div class="tx-action-icons">
-                <button
-                  type="button"
-                  class="tx-icon-act tx-icon-link"
-                  title="Edit"
-                  @click="$emit('open-edit', row.network, row.host)"
-                >
-                  <img :src="actionIcons.edit" alt="Edit" width="28" height="28" class="tx-icon-img" />
-                </button>
                 <button
                   type="button"
                   class="tx-icon-act tx-icon-danger"
@@ -118,7 +110,7 @@
           <h2 class="tx-help-title">How to use this app</h2>
           <ul class="tx-help-list">
             <li><strong>Add New DNS</strong> — Create a host record on a network.</li>
-            <li><strong>Edit</strong> — Click host name or edit icon.</li>
+            <li><strong>Update</strong> — Click the host name.</li>
             <li><strong>Delete</strong> — Remove a DNS entry.</li>
           </ul>
         </div>
@@ -139,12 +131,11 @@ import type { DnsEntryRow } from '@/types'
 
 defineEmits<{
   'open-add': []
-  'open-edit': [network: string, host: string]
+  'open-update': [network: string, host: string]
   'open-delete': [network: string, host: string]
 }>()
 
 const actionIcons = {
-  edit: punAppAssetUrl('icons/icon-edit.png'),
   delete: punAppAssetUrl('icons/icon-delete.png'),
 }
 

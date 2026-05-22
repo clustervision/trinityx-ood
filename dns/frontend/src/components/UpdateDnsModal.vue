@@ -1,14 +1,14 @@
 <template>
   <BaseModal size="wide" @close="$emit('close')">
     <div class="tx-form-page">
-      <h2 class="tx-title" style="margin-bottom: 1rem">Edit DNS Entry</h2>
+      <h2 class="tx-title" style="margin-bottom: 1rem">Update DNS Entry</h2>
       <div v-if="alertMsg" :class="alertOk ? 'alert-success' : 'alert-danger'" role="alert">
         {{ alertMsg }}
       </div>
       <DnsFormFields :form="form" :network-options="networkOptions" />
       <div class="tx-form-footer-right" style="margin-top: 1.25rem">
         <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="submit">
-          {{ saving ? 'Saving...' : 'Save Changes' }}
+          {{ saving ? 'Updating...' : 'Update DNS Entry' }}
         </button>
       </div>
     </div>
@@ -90,7 +90,7 @@ async function submit() {
     alertOk.value = true
     setTimeout(() => emit('saved'), 500)
   } catch (e) {
-    alertMsg.value = e instanceof Error ? e.message : 'Save failed.'
+    alertMsg.value = e instanceof Error ? e.message : 'Update failed.'
     alertOk.value = false
   } finally {
     saving.value = false
