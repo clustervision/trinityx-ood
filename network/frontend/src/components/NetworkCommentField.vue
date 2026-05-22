@@ -43,11 +43,10 @@
         </button>
         <div class="tx-form-page">
           <h2 id="network-comment-edit-title" class="tx-title" style="margin-bottom: 1rem">Edit comment</h2>
-          <textarea v-model="commentEditDraft" rows="14" aria-label="Comment text"></textarea>
+          <div class="tx-comment-edit-body">
+            <textarea v-model="commentEditDraft" rows="14" aria-label="Comment text"></textarea>
+          </div>
           <div class="tx-comment-edit-actions">
-            <button type="button" class="tx-btn tx-btn-outline-blue" @click="closeCommentEditDialog">
-              Cancel
-            </button>
             <button type="button" class="tx-btn tx-btn-blue" @click="applyCommentEditDialog">OK</button>
           </div>
         </div>

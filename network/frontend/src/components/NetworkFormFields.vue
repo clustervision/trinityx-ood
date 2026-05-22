@@ -1,7 +1,7 @@
 <template>
-  <div class="tx-network-form">
+  <div class="tx-network-form tx-add-form-main">
     <div class="tx-network-row tx-network-row-4">
-      <div v-if="showNameField" class="tx-field tx-field-emphasis tx-field-name-with-rename">
+      <div v-if="showNameField" class="tx-field tx-field-strong tx-field-name-with-rename">
         <span class="tx-label">Name:</span>
         <div class="tx-name-input-wrap">
           <template v-if="renameMode">
@@ -45,18 +45,18 @@
           />
         </div>
       </div>
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-strong">
         <span class="tx-label">Network:</span>
         <input v-model="form.network" type="text" />
       </div>
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-match">
         <span class="tx-label">Type:</span>
         <select v-model="form.type" :class="{ 'tx-select-placeholder': !form.type }">
           <option value="">--- Select ---</option>
           <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
         </select>
       </div>
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-match">
         <span class="tx-label">Zone:</span>
         <select v-model="form.zone" :class="{ 'tx-select-placeholder': !form.zone }">
           <option value="">--- Select ---</option>
@@ -66,7 +66,7 @@
     </div>
 
     <div class="tx-network-row tx-network-row-3">
-      <label class="tx-field tx-field-dhcp-wrap" for="tx-network-dhcp">
+      <label class="tx-field tx-field-match tx-field-dhcp-wrap" for="tx-network-dhcp">
         <span class="tx-label">DHCP:</span>
         <input
           id="tx-network-dhcp"
@@ -77,22 +77,22 @@
           @click.prevent="form.dhcp = !form.dhcp"
         />
       </label>
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-match">
         <span class="tx-label">DHCP Range Begin:</span>
         <input v-model="form.dhcp_range_begin" type="text" placeholder="__.___.___.___" />
       </div>
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-match">
         <span class="tx-label">DHCP Range End:</span>
         <input v-model="form.dhcp_range_end" type="text" placeholder="__.___.___.___" />
       </div>
     </div>
 
     <div class="tx-network-row tx-network-row-2">
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-match">
         <span class="tx-label">Network Gateway:</span>
         <input v-model="form.gateway" type="text" />
       </div>
-      <div class="tx-field tx-field-emphasis">
+      <div class="tx-field tx-field-match">
         <span class="tx-label">Nameserver IP:</span>
         <input v-model="form.nameserver_ip" type="text" />
       </div>
@@ -107,7 +107,6 @@
         Advanced
         <span class="tx-advanced-chevron tx-advanced-chevron-blue"></span>
       </button>
-      <slot name="footer-collapsed" />
     </div>
 
     <template v-else>
@@ -123,17 +122,17 @@
       </div>
       <div class="tx-advanced-body">
         <div class="tx-network-row tx-network-row-2">
-          <div class="tx-field tx-field-emphasis">
+          <div class="tx-field tx-field-match">
             <span class="tx-label">NTP Server:</span>
             <input v-model="form.ntp_server" type="text" />
           </div>
-          <div class="tx-field tx-field-emphasis">
+          <div class="tx-field tx-field-match">
             <span class="tx-label">Gateway Metric:</span>
             <input v-model="form.gateway_metric" type="text" placeholder="1-1000" />
           </div>
         </div>
         <div class="tx-network-row tx-network-row-4 tx-network-adv-toggles">
-          <div class="tx-field tx-field-emphasis">
+          <div class="tx-field tx-field-match">
             <span class="tx-label">Shared:</span>
             <select v-model="form.shared" :class="{ 'tx-select-placeholder': !form.shared }">
               <option value="">--- Select ---</option>
@@ -141,9 +140,9 @@
               <option value="false">false</option>
             </select>
           </div>
-          <BoolToggle v-model="form.dhcp_nodes_only" label="DHCP Nodes Only" />
-          <BoolToggle v-model="form.dhcp_nodes_in_pool" label="DHCP Nodes In Pool" />
-          <label class="tx-field tx-field-dhcp-wrap tx-network-non-auth" for="tx-network-non-auth">
+          <BoolToggle v-model="dhcpNodesOnly" label="DHCP Nodes Only" />
+          <BoolToggle v-model="dhcpNodesInPool" label="DHCP Nodes In Pool" />
+          <label class="tx-field tx-field-match tx-field-dhcp-wrap tx-network-non-auth" for="tx-network-non-auth">
             <span class="tx-label">Non-Authoritative:</span>
             <input
               id="tx-network-non-auth"
@@ -206,6 +205,23 @@ const renameIconUrl = punAppAssetUrl('icons/icon-rename.png')
 const nameModel = computed({
   get: () => props.name,
   set: (v: string) => emit('update:name', v),
+})
+
+/** Opposite toggles: one TRUE → other FALSE; one FALSE → other TRUE. */
+const dhcpNodesOnly = computed({
+  get: () => props.form.dhcp_nodes_only,
+  set: (value: boolean) => {
+    props.form.dhcp_nodes_only = value
+    props.form.dhcp_nodes_in_pool = !value
+  },
+})
+
+const dhcpNodesInPool = computed({
+  get: () => props.form.dhcp_nodes_in_pool,
+  set: (value: boolean) => {
+    props.form.dhcp_nodes_in_pool = value
+    props.form.dhcp_nodes_only = !value
+  },
 })
 
 function startRename() {

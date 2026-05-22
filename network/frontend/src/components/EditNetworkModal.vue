@@ -14,11 +14,6 @@
           :zone-options="zoneOptions"
           rename-mode
         >
-          <template #footer-collapsed>
-            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doSave">
-              {{ saving ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </template>
           <template #footer-expanded>
             <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doSave">
               {{ saving ? 'Saving...' : 'Save Changes' }}

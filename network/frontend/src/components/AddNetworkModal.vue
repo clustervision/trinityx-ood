@@ -10,11 +10,6 @@
         :zone-options="zoneOptions"
         :rename-mode="false"
       >
-        <template #footer-collapsed>
-          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
-            {{ saving ? 'Saving...' : 'Add Network' }}
-          </button>
-        </template>
         <template #footer-expanded>
           <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
             {{ saving ? 'Saving...' : 'Add Network' }}

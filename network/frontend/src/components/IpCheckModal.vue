@@ -3,7 +3,7 @@
     <div class="tx-form-page">
       <h2 class="tx-title" style="margin-bottom: 1rem">Check IP — {{ networkName }}</h2>
       <div v-if="errorMsg" class="alert-danger">{{ errorMsg }}</div>
-      <div class="tx-field tx-field-emphasis" style="max-width: 420px">
+      <div class="tx-field tx-field-match" style="max-width: 420px">
         <span class="tx-label">IP Address:</span>
         <input v-model="ip" type="text" placeholder="__.___.___.___" @keyup.enter="runCheck" />
       </div>

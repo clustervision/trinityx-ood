@@ -87,7 +87,7 @@
               </template>
             </td>
             <td class="tx-col-actions tx-td-sep-blue">
-              <div class="tx-action-icons tx-network-actions">
+              <div class="tx-action-icons">
                 <button
                   type="button"
                   class="tx-btn tx-btn-blue tx-btn-compact"
@@ -111,7 +111,7 @@
                   title="Reserved IPs"
                   @click="$emit('open-reserved', row.name)"
                 >
-                  <img :src="actionIcons.list" alt="Reserved" width="28" height="28" class="tx-icon-img" />
+                  <img :src="actionIcons.reserved" alt="Reserved" width="28" height="28" class="tx-icon-img" />
                 </button>
                 <button
                   type="button"
@@ -203,7 +203,7 @@ defineEmits<{
 }>()
 
 const actionIcons = {
-  list: punAppAssetUrl('icons/icon-pack.png'),
+  reserved: punAppAssetUrl('icons/icon-reserved.png'),
   delete: punAppAssetUrl('icons/icon-delete.png'),
 }
 

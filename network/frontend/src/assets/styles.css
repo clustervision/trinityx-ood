@@ -549,12 +549,19 @@ button.tx-name-link.tx-cell-truncate-js {
 .tx-col-actions {
   white-space: nowrap;
   width: 1%;
-  min-width: 9rem;
+  min-width: 18rem;
   overflow: visible;
+  text-align: center;
 }
 
 .tx-inventory-table td.tx-col-actions .tx-action-icons {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .tx-inventory-table td:not(.tx-col-actions):not(.tx-iface-cell) {
@@ -847,6 +854,10 @@ button.tx-name-link.tx-cell-truncate-js {
   overflow-y: auto;
 }
 
+.tx-modal-overlay-nested {
+  z-index: 9100;
+}
+
 .tx-modal-container {
   position: relative;
   background: #ffffff;
@@ -919,6 +930,14 @@ button.tx-name-link.tx-cell-truncate-js {
 .tx-form-page .tx-title.tx-clone-page-title .tx-clone-source-node-name {
   margin-left: 0.35em;
   color: #321DFF !important;
+}
+
+.tx-reserved-title-name {
+  margin-left: 0.35em;
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: inherit;
+  font-weight: 400;
+  color: #321dff;
 }
 
 /* OS Push / OS Grab: node name matches form controls (select/input), same blue as title */
@@ -1569,6 +1588,12 @@ button.tx-name-link.tx-cell-truncate-js {
   padding-bottom: 2.25rem;
 }
 
+.tx-field-block textarea.tx-comment-preview.tx-comment-inline-editable {
+  cursor: text;
+  background: #fff;
+  padding-right: 3rem;
+}
+
 .tx-expand-text-trigger {
   position: absolute;
   right: 6px;
@@ -1837,6 +1862,17 @@ button.tx-name-link.tx-cell-truncate-js {
   justify-content: space-between;
   margin-top: 1.5rem;
   gap: 0.75rem;
+}
+
+.tx-form-footer-right {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  gap: 0.75rem;
+}
+
+.tx-form-footer-no-submit {
+  margin-bottom: 0;
 }
 
 /* Advanced: same 12×12 #5376EA chevron as .tx-field select (e.g. Switch); only this control — do not change select arrows */
@@ -2480,7 +2516,7 @@ select.tx-select-placeholder {
 }
 
 .tx-network-row-3 {
-  grid-template-columns: minmax(120px, auto) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(9.5rem, auto) minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .tx-network-row-2 {
@@ -2488,22 +2524,204 @@ select.tx-select-placeholder {
 }
 
 .tx-network-adv-toggles {
-  align-items: end;
-}
-
-.tx-network-bool-toggle .tx-label {
-  white-space: nowrap;
+  align-items: stretch;
+  grid-template-columns:
+    minmax(7.5rem, 0.9fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(6.75rem, max-content);
 }
 
 .tx-network-non-auth {
   min-width: 0;
+  max-width: 10.5rem;
+  width: 100%;
 }
 
-.tx-network-actions {
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  justify-content: flex-end;
+.tx-network-non-auth .tx-label {
+  padding: 0.35rem 0.4rem;
+  white-space: nowrap;
+}
+
+/* Network form (match group add/edit): field height + TRUE/FALSE toggles */
+.tx-network-form.tx-add-form-main .tx-field {
+  min-height: 38px;
+  width: 100%;
+  max-width: none;
+}
+
+/* TRUE/FALSE: same row as label, tight layout (group .tx-add-form-main) */
+.tx-network-form .tx-network-bool-toggle {
+  flex-direction: row;
+  align-items: stretch;
+  overflow: visible;
+  min-height: 38px;
+  height: 38px;
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.tx-network-form .tx-network-bool-toggle .tx-label {
+  flex: 0 0 auto;
+  max-width: none;
+  white-space: nowrap;
+  padding: 0.35rem 0.45rem 0.35rem 0.5rem;
+}
+
+.tx-network-form .tx-network-bool-toggle .tx-tri-inner {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0 0.35rem 0 0.25rem;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
+  background: #fff;
+}
+
+.tx-network-form .tx-network-bool-toggle .tx-segmented {
+  flex: 0 0 auto;
+}
+
+.tx-network-form .tx-network-bool-toggle .tx-seg {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tx-network-form.tx-add-form-main .tx-field input,
+.tx-network-form.tx-add-form-main .tx-field select {
+  height: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+.tx-network-form.tx-add-form-main .tx-tri-field .tx-tri-inner {
+  justify-content: center;
+}
+
+/* DHCP / Non-Authoritative in popup: blue text on #E6EEFF (same as Name label) */
+.tx-modal-container .tx-network-form .tx-field-dhcp-wrap.tx-field-match,
+.tx-network-form .tx-field-dhcp-wrap.tx-field-match {
+  border: 2px solid #e6eeff;
+  overflow: visible;
+  min-width: 0;
+  background: #fff;
+}
+
+.tx-modal-container .tx-network-form .tx-field-dhcp-wrap .tx-label,
+.tx-network-form .tx-field-dhcp-wrap .tx-label {
+  background: #e6eeff !important;
+  color: #5376ea !important;
+  font-weight: 400 !important;
+}
+
+.tx-modal-container .tx-network-form .tx-field-dhcp-wrap input[type="checkbox"],
+.tx-network-form .tx-field-dhcp-wrap input[type="checkbox"] {
+  border: 2px solid #5376ea !important;
+  margin-right: 0.45rem;
+}
+
+.tx-modal-container .tx-network-form .tx-field-dhcp-wrap input.tx-dhcp-checkbox.tx-dhcp-on,
+.tx-modal-container .tx-network-form .tx-field-dhcp-wrap input[type="checkbox"]:checked,
+.tx-network-form .tx-field-dhcp-wrap input.tx-dhcp-checkbox.tx-dhcp-on,
+.tx-network-form .tx-field-dhcp-wrap input[type="checkbox"]:checked {
+  background-color: #5376ea !important;
+  border-color: #5376ea !important;
+}
+
+.tx-modal-container .tx-network-form .tx-field-dhcp-wrap input[type="checkbox"]:focus-visible,
+.tx-network-form .tx-field-dhcp-wrap input[type="checkbox"]:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
+}
+
+/* Comment field + edit dialog */
+.tx-comment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.tx-btn-comment-popup-edit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  margin-left: 0.35rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.tx-btn-comment-popup-edit:hover {
+  background: rgba(83, 118, 234, 0.12);
+}
+
+.tx-btn-comment-popup-edit:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 1px;
+}
+
+.tx-btn-comment-popup-edit img {
+  display: block;
+  pointer-events: none;
+}
+
+.tx-comment-preview-wrap {
+  position: relative;
+}
+
+.tx-btn-comment-popup-floating {
+  position: absolute;
+  bottom: 0.35rem;
+  right: 0.45rem;
+  z-index: 2;
+  margin-left: 0;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.tx-btn-comment-popup-floating:hover {
+  background: #fff;
+}
+
+.tx-comment-edit-dialog .tx-form-page {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tx-comment-edit-dialog .tx-comment-edit-body {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tx-comment-edit-dialog textarea {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  resize: none;
+  padding: 0.5rem 0.65rem;
+  font-size: 15px;
+  line-height: 1.45;
+  border: 1px solid #a7c5ff;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-family: inherit;
+  margin: 0 auto;
+}
+
+.tx-comment-edit-dialog textarea:focus {
+  border-color: #5376ea;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(83, 118, 234, 0.15);
 }
 
 .tx-inventory-page .tx-btn-compact {

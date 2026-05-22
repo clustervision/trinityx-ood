@@ -2,7 +2,7 @@
   <BaseModal size="wide" @close="$emit('close')">
     <div class="tx-form-page">
       <h2 class="tx-title" style="margin-bottom: 1.25rem">
-        IP Address Reserved With <strong class="tx-title-name-suffix">{{ networkName }}</strong>
+        IP Address Reserved With <span class="tx-reserved-title-name">{{ networkName }}</span>
       </h2>
       <div v-if="errorMsg" class="alert-danger">{{ errorMsg }}</div>
       <div v-if="loading" class="tx-loading">Loading...</div>
