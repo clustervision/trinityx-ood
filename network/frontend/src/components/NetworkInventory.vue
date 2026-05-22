@@ -101,9 +101,10 @@
                   class="tx-btn tx-btn-outline-blue tx-btn-compact tx-btn-next-ip-inv"
                   title="Next IP"
                   :disabled="nextIpLoading === row.name"
+                  :aria-busy="nextIpLoading === row.name"
                   @click="doNextIp(row.name)"
                 >
-                  {{ nextIpLoading === row.name ? '...' : 'Next IP' }}
+                  Next IP
                 </button>
                 <button
                   type="button"

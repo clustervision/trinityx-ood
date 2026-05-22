@@ -2732,12 +2732,19 @@ select.tx-select-placeholder {
   border-radius: 6px;
 }
 
-/* Next IP: white fill, blue text + border (not solid blue pill) */
+/* Next IP: white fill, blue text + border; fixed size so row does not shift on click */
 .tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue {
   background: #fff;
   color: #5376ea;
   border: 2px solid #5376ea;
   font-weight: 400;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  min-width: 4.65rem;
+  width: 4.65rem;
+  padding-left: 0;
+  padding-right: 0;
+  transition: opacity 0.15s;
 }
 
 .tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue:hover {
@@ -2745,9 +2752,14 @@ select.tx-select-placeholder {
   opacity: 1;
 }
 
+.tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue:active {
+  transform: none;
+}
+
 .tx-inventory-page .tx-btn-next-ip-inv.tx-btn-outline-blue:disabled {
-  opacity: 0.55;
+  opacity: 0.6;
   background: #fff;
+  cursor: wait;
 }
 
 .tx-ipv4-field input {
