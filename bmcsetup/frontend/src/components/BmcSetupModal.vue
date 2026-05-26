@@ -4,6 +4,8 @@ import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue'
 import type { AxiosInstance } from 'axios'
 import BaseModal from './BaseModal.vue'
 import TextEditorModal from './TextEditorModal.vue'
+import { BMC_NAME_MAX_LENGTH, validateBmcNameInput } from '@/constants/bmcName'
+import { punAppAssetUrl } from '@/utils/publicAssets'
 
 interface BMCSetup {
   name: string
@@ -42,8 +44,10 @@ const errorMsg = ref('')
 const successMsg = ref('')
 const fatalError = ref(false)
 const showPassword = ref(false)
-const nameEditable = ref(false)
+const renaming = ref(false)
+const renameDraft = ref('')
 const showCommentEditor = ref(false)
+const renameIconUrl = punAppAssetUrl('icons/icon-rename.png')
 
 const isAdd = computed(() => props.mode === 'add')
 const isUpdate = computed(() => props.mode === 'update')
@@ -78,6 +82,28 @@ function nameExists(name: string): boolean {
   return props.bmcList.some((existingName) => existingName.trim() === trimmedName)
 }
 
+function startRename() {
+  renameDraft.value = form.name
+  renaming.value = true
+}
+
+function cancelRename() {
+  renaming.value = false
+  renameDraft.value = ''
+}
+
+/** Name used on update submit (inline rename, same pattern as osimage). */
+function resolveUpdateName(): string {
+  const sourceName = props.bmcName.trim()
+  if (!renaming.value) return form.name.trim() || sourceName
+  const trimmed = renameDraft.value.trim()
+  if (!trimmed || trimmed === sourceName) {
+    cancelRename()
+    return sourceName
+  }
+  return trimmed
+}
+
 function getSourceBmcData(): BmcData {
   const data = props.bmcData || {}
   const sourceName = props.bmcName.trim()
@@ -109,13 +135,18 @@ const liveNameValidationMsg = computed(() => {
   if (isAdd.value) {
     const name = form.name.trim()
     if (!name) return ''
+    const check = validateBmcNameInput(name)
+    if (!check.ok) return check.message
     if (nameExists(name)) return `BMC Setup "${name}" already exists.`
     return ''
   }
 
   if (isUpdate.value) {
-    const updateName = form.name.trim()
+    if (!renaming.value) return ''
+    const updateName = renameDraft.value.trim()
     if (!updateName) return ''
+    const check = validateBmcNameInput(updateName)
+    if (!check.ok) return check.message
     if (updateName !== sourceName && nameExists(updateName)) {
       return `BMC Setup "${updateName}" already exists.`
     }
@@ -138,7 +169,11 @@ const liveNameValidationMsg = computed(() => {
 })
 
 const submitValidationMsg = computed(() => {
-  if ((isAdd.value || isUpdate.value) && !form.name.trim()) {
+  if (isAdd.value && !form.name.trim()) {
+    return 'Name is required.'
+  }
+
+  if (isUpdate.value && renaming.value && !renameDraft.value.trim()) {
     return 'Name is required.'
   }
 
@@ -275,7 +310,8 @@ function emptyToNull(value: string): string | null {
 watch(
   () => [props.mode, props.bmcData, props.bmcName] as const,
   () => {
-    nameEditable.value = props.mode === 'add'
+    renaming.value = false
+    renameDraft.value = ''
     errorMsg.value = ''
     successMsg.value = ''
 
@@ -370,7 +406,7 @@ async function onSubmit() {
     ? form.name.trim()
     : props.bmcName.trim()
 
-  const updateName = form.name.trim()
+  const updateName = props.mode === 'update' ? resolveUpdateName() : form.name.trim()
   const newbmcname = form.newbmcname.trim()
 
   if (!sourceName) {
@@ -378,14 +414,24 @@ async function onSubmit() {
     return
   }
 
+  if (props.mode === 'add') {
+    const nameCheck = validateBmcNameInput(form.name)
+    if (!nameCheck.ok) {
+      errorMsg.value = nameCheck.message
+      return
+    }
+  }
 
-  if (props.mode === 'update') {
+  if (props.mode === 'update' && renaming.value) {
+    const nameCheck = validateBmcNameInput(renameDraft.value)
+    if (!nameCheck.ok) {
+      errorMsg.value = nameCheck.message
+      return
+    }
     if (!updateName) {
       errorMsg.value = 'Name is required.'
       return
     }
-
-
   }
 
   if (props.mode === 'clone') {
@@ -485,24 +531,58 @@ async function onSubmit() {
               <div v-if="!isClone" class="bmc-form-field mandatory">
                 <label class="bmc-field-label" for="bmc-name">NAME:</label>
 
-                <div class="bmc-name-wrapper">
-                  <input id="bmc-name" v-model.trim="form.name" type="text" autocomplete="off" :disabled="isUpdate && !nameEditable" required class="bmc-input" :class="{'bmc-input-disabled': isUpdate && !nameEditable,'bmc-input-with-edit-icon': isUpdate,'bmc-input-error': liveNameValidationMsg && !isClone}">
-
-                  <button v-if="isUpdate" type="button" class="bmc-edit-icon-btn" :class="{ 'is-active': nameEditable }" aria-label="Enable BMC name editing" title="Rename BMC setup" @click="nameEditable = true">
-                    <svg viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                      <g clip-path="url(#bmc-edit-name-clip)">
-                        <path d="M6.22774 17.4148C5.80661 17.4148 5.39292 17.2488 5.0907 16.9466C4.72903 16.5849 4.5581 16.0697 4.63489 15.5643L5.10556 12.4777L12.1235 5.45978L16.5627 9.89894L9.54472 16.9169L6.47546 17.3999C6.39371 17.4123 6.30949 17.4197 6.22774 17.4197V17.4148ZM6.96595 13.4166L6.67116 15.3587L8.60091 15.0565L13.7609 9.89646L12.1235 8.25902L6.96595 13.4166Z" fill="#5376EA"/>
-                        <path d="M15.1284 11.3308L10.6892 6.8916L12.3192 5.2616C13.216 4.36485 14.675 4.36485 15.5718 5.2616L16.7609 6.45066C17.6576 7.34741 17.6576 8.80648 16.7609 9.70323L15.1308 11.3332L15.1284 11.3308ZM13.4909 6.8916L15.1284 8.52904L15.3587 8.29866C15.4826 8.1748 15.4826 7.97414 15.3587 7.85028L14.1697 6.66122C14.0458 6.53736 13.8452 6.53736 13.7213 6.66122L13.4909 6.8916Z" fill="#5376EA"/>
-                        <path d="M19.8053 18.4329H5.1947V20.4147H19.8053V18.4329Z" fill="#5376EA"/>
-                        <path d="M21.5319 25H3.46809C1.55569 25 0 23.4443 0 21.5319V3.46809C0 1.55569 1.55569 0 3.46809 0H21.5319C23.4443 0 25 1.55569 25 3.46809V21.5319C25 23.4443 23.4443 25 21.5319 25ZM3.46809 1.98177C2.64814 1.98177 1.98177 2.64814 1.98177 3.46809V21.5319C1.98177 22.3519 2.64814 23.0182 3.46809 23.0182H21.5319C22.3519 23.0182 23.0182 22.3519 23.0182 21.5319V3.46809C23.0182 2.64814 22.3519 1.98177 21.5319 1.98177H3.46809Z" fill="#5376EA"/>
-                      </g>
-                      <defs>
-                        <clipPath id="bmc-edit-name-clip">
-                          <rect width="25" height="25" fill="white"/>
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </button>
+                <div class="bmc-name-wrapper" :class="{ 'bmc-name-wrapper--rename': isUpdate }">
+                  <input
+                    v-if="isAdd"
+                    id="bmc-name"
+                    v-model.trim="form.name"
+                    type="text"
+                    autocomplete="off"
+                    required
+                    class="bmc-input"
+                    :maxlength="BMC_NAME_MAX_LENGTH"
+                    :class="{ 'bmc-input-error': liveNameValidationMsg }"
+                  />
+                  <div v-else-if="isUpdate" class="tx-name-input-wrap bmc-name-rename-wrap">
+                    <template v-if="!renaming">
+                      <input
+                        id="bmc-name"
+                        type="text"
+                        class="tx-name-input-readonly"
+                        :value="form.name"
+                        readonly
+                      />
+                      <button
+                        type="button"
+                        class="tx-btn-rename"
+                        title="Edit name"
+                        aria-label="Edit name"
+                        @click="startRename"
+                      >
+                        <img :src="renameIconUrl" alt="" width="20" height="20" />
+                      </button>
+                    </template>
+                    <template v-else>
+                      <input
+                        id="bmc-name"
+                        v-model.trim="renameDraft"
+                        type="text"
+                        class="tx-name-input-editing"
+                        :maxlength="BMC_NAME_MAX_LENGTH"
+                        aria-label="BMC setup name"
+                        @keyup.escape="cancelRename"
+                      />
+                      <button
+                        type="button"
+                        class="tx-btn-rename tx-btn-rename-cancel-char"
+                        title="Stop editing name"
+                        aria-label="Stop editing name"
+                        @click="cancelRename"
+                      >
+                        ×
+                      </button>
+                    </template>
+                  </div>
                 </div>
               </div>
 

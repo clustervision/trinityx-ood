@@ -2244,7 +2244,7 @@ select.tx-select-placeholder {
   border: none;
   border-radius: 0;
   padding: 1rem;
-  resize: vertical;
+  resize: none;
   outline: none;
 }
 
@@ -2336,8 +2336,93 @@ select.tx-select-placeholder {
   width: 100%;
 }
 
+/* Update name: osimage-style inline rename (flex, no absolute icon) */
+.bmc-name-wrapper--rename {
+  overflow: hidden;
+  border-radius: 0 10px 10px 0;
+}
+
+.bmc-name-rename-wrap.tx-name-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: #fff;
+  border: 2px solid var(--brand-light);
+  border-radius: 0 10px 10px 0;
+  box-sizing: border-box;
+}
+
+.bmc-name-rename-wrap .tx-name-input-readonly {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0.5rem 0.35rem 0.5rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--gray-800);
+  background: #fff;
+}
+
+.bmc-name-rename-wrap .tx-name-input-editing {
+  flex: 1;
+  min-width: 0;
+  margin: 0.2rem 0.15rem 0.2rem 0.75rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1px solid #a7c5ff;
+  border-radius: 4px;
+  outline: none;
+  background: #fff;
+}
+
+.bmc-name-rename-wrap .tx-name-input-editing:focus {
+  border-color: #5376ea;
+  box-shadow: 0 0 0 2px rgba(83, 118, 234, 0.15);
+}
+
+.bmc-name-rename-wrap .tx-btn-rename-cancel-char {
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #5376ea;
+}
+
+.bmc-name-rename-wrap .tx-btn-rename {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  margin: 0 0.35rem 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.bmc-name-rename-wrap .tx-btn-rename:hover {
+  background: rgba(83, 118, 234, 0.1);
+}
+
+.bmc-name-rename-wrap .tx-btn-rename:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 1px;
+}
+
+.bmc-name-rename-wrap .tx-btn-rename img {
+  display: block;
+  pointer-events: none;
+}
+
 .bmc-input-with-edit-icon {
-  padding-right: 3rem;
+  padding-right: 2.75rem;
 }
 
 .bmc-input-disabled {
@@ -2381,36 +2466,13 @@ select.tx-select-placeholder {
   border-radius: 4px;
 }
 
-
-.bmc-name-wrapper {
-  position: relative;
-  display: flex;
-  align-items: stretch;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.bmc-name-wrapper .bmc-input {
-  width: 100%;
-}
-
-.bmc-input-with-edit-icon {
-  padding-right: 3rem;
-}
-
-.bmc-input-disabled {
-  background-color: #F9FAFB;
-  color: #6B7280;
-  cursor: not-allowed;
-}
-
 .bmc-edit-icon-btn {
   position: absolute;
-  right: 0.65rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   margin: 0;
   border: none;
@@ -2420,11 +2482,12 @@ select.tx-select-placeholder {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .bmc-edit-icon-btn svg {
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   display: block;
 }
 
