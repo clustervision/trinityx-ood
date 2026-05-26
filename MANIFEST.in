@@ -119,38 +119,6 @@ include secrets/templates/*
 include secrets/templates/layout
 include secrets/templates/layout/*
 
-include service
-include service/*
-include service/static
-include service/static/*
-include service/static/css
-include service/static/css/*
-include service/static/fonts
-include service/static/fonts/*
-include service/static/img
-include service/static/img/*
-include service/static/js
-include service/static/js/*
-include service/templates
-include service/templates/*
-include service/templates/layout
-include service/templates/layout/*
-
-
-include monitor
-include monitor/*
-include monitor/static
-include monitor/static/*
-include monitor/static/css
-include monitor/static/css/*
-include monitor/static/img
-include monitor/static/img/*
-include monitor/static/js
-include monitor/static/js/*
-include monitor/templates
-include monitor/templates/*
-include monitor/templates/layout
-include monitor/templates/layout/*
 
 include dns
 include dns/*
@@ -169,25 +137,12 @@ recursive-include sensu *
 
 include rack
 include rack/*
-include rack/static
-include rack/static/*
-include rack/static/css
-include rack/static/css/*
-include rack/static/fonts
-include rack/static/fonts/*
-include rack/static/img
-include rack/static/img/*
-include rack/static/js
-include rack/static/js/*
-include rack/static/icons
-include rack/static/icons/*
-include rack/templates
-include rack/templates/*
-include rack/templates/layout
-include rack/templates/layout/*
+include rack/app
+include rack/app/*
+include rack/app/assets
+include rack/app/assets/*
 
 recursive-include rack *
-
 
 include alertx
 include alertx/*
@@ -195,7 +150,6 @@ include alertx/app
 include alertx/app/*
 include alertx/app/assets
 include alertx/app/assets/*
-
 
 include passwd
 include passwd/*
