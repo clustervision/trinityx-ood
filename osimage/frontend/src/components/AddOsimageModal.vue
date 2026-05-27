@@ -3,12 +3,14 @@
     <div class="tx-form-page">
       <h2 class="tx-title" style="margin-bottom:1.25rem;">Add OS Image</h2>
 
-      <div v-if="alertMsg" :class="alertOk ? 'alert-success' : 'alert-danger'">{{ alertMsg }}</div>
+      <div v-if="liveNameValidationMsg || alertMsg" :class="alertOk && !liveNameValidationMsg ? 'alert-success' : 'alert-danger'">
+        {{ liveNameValidationMsg || alertMsg }}
+      </div>
 
       <div class="tx-osimage-main-row">
         <div class="tx-field tx-field-emphasis tx-osimage-main-col">
           <span class="tx-label">Name:</span>
-          <input v-model="form.name" type="text" />
+          <input v-model="form.name" type="text" :class="{ 'input-error': liveNameValidationMsg }" />
         </div>
         <div class="tx-field tx-field-emphasis tx-osimage-main-col">
           <span class="tx-label">Kernel Version:</span>
@@ -57,7 +59,7 @@
           Advanced
           <span class="tx-advanced-chevron tx-advanced-chevron-blue"></span>
         </button>
-        <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
+        <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || Boolean(liveNameValidationMsg)" @click="doAdd">
           {{ saving ? 'Saving...' : 'Add OS Image' }}
         </button>
       </div>
@@ -114,7 +116,7 @@
         </div>
 
         <div class="tx-form-footer-right">
-          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
+          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || Boolean(liveNameValidationMsg)" @click="doAdd">
             {{ saving ? 'Saving...' : 'Add OS Image' }}
           </button>
         </div>
@@ -124,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimages, submitOsimageForm } from '../api'
@@ -136,6 +138,13 @@ const advancedOpen = ref(false)
 const saving = ref(false)
 const alertMsg = ref('')
 const alertOk = ref(false)
+
+const liveNameValidationMsg = computed(() => {
+  const n = String(form.name || '').trim()
+  if (!n) return ''
+  const check = validateOsimageNameInput(n)
+  return check.ok ? '' : check.message
+})
 
 const form = reactive({
   name: '',

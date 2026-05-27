@@ -6,7 +6,9 @@
       </h2>
 
       <div v-if="loadError" class="alert-danger">{{ loadError }}</div>
-      <div v-if="alertMsg" :class="alertOk ? 'alert-success' : 'alert-danger'">{{ alertMsg }}</div>
+      <div v-if="liveNameValidationMsg || alertMsg" :class="alertOk && !liveNameValidationMsg ? 'alert-success' : 'alert-danger'">
+        {{ liveNameValidationMsg || alertMsg }}
+      </div>
       <div v-if="loadingData" class="tx-loading">Loading...</div>
 
       <template v-if="!loadingData && !loadError">
@@ -37,8 +39,9 @@
                   v-model="newName"
                   type="text"
                   class="tx-name-input-editing"
+                  :class="{ 'input-error': liveNameValidationMsg }"
                   aria-label="OS image name"
-                  @keyup.escape="cancelRename"
+                  @keydown.escape.stop="onRenameEscape"
                 />
                 <button
                   type="button"
@@ -102,7 +105,7 @@
             Advanced
             <span class="tx-advanced-chevron tx-advanced-chevron-blue"></span>
           </button>
-          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doSave">
+          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || Boolean(liveNameValidationMsg)" @click="doSave">
             {{ saving ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>
@@ -165,7 +168,7 @@
           </div>
 
           <div class="tx-form-footer-right">
-            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doSave">
+            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || Boolean(liveNameValidationMsg)" @click="doSave">
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
           </div>
@@ -176,7 +179,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimageEditData, submitOsimageForm } from '../api'
@@ -198,6 +201,14 @@ const currentName = ref('')
 const renaming = ref(false)
 const newName = ref('')
 const renameIconUrl = publicAssetUrl('icons/icon-rename.png')
+
+const liveNameValidationMsg = computed(() => {
+  if (!renaming.value) return ''
+  const n = String(newName.value || '').trim()
+  if (!n) return ''
+  const check = validateOsimageNameInput(n)
+  return check.ok ? '' : check.message
+})
 
 const form = reactive({
   kernelversion: '',
@@ -224,6 +235,14 @@ function startRename() {
 function cancelRename() {
   renaming.value = false
   newName.value = ''
+  void nextTick(() => {
+    const el = document.activeElement
+    if (el instanceof HTMLElement) el.blur()
+  })
+}
+
+function onRenameEscape() {
+  cancelRename()
 }
 
 /** Inline rename is committed together with Save (same pattern as ../node Edit Node). */

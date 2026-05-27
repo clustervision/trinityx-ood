@@ -62,10 +62,12 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis"
+                  class="tx-name-link"
                   :title="osimageNameTitle(row.name)"
                   @click="$emit('open-edit', row.name)"
-                >{{ formatOsimageNameDisplay(row.name) }}</button>
+                >
+                  <span class="tx-cell-ellipsis">{{ formatOsimageNameDisplay(row.name) }}</span>
+                </button>
               </template>
               <template v-else-if="col.field === 'kerneldetails'">
                 <div
