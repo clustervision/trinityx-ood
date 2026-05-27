@@ -2454,6 +2454,90 @@ select.tx-select-placeholder {
   transform: none;
 }
 
+/* ================================================================
+   Inline rename (osimage-like) for Other Device name
+   ================================================================ */
+.otherdev-name-wrapper {
+  overflow: hidden;
+}
+
+.otherdev-name-rename-wrap.tx-name-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: #fff;
+  border: 2px solid var(--brand-light);
+  border-radius: 0 10px 10px 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.otherdev-name-rename-wrap .tx-name-input-readonly {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0.5rem 0.35rem 0.5rem 1rem;
+  font-size: 1rem;
+  background: transparent;
+  color: var(--gray-800);
+}
+
+.otherdev-name-rename-wrap .tx-name-input-editing {
+  flex: 1;
+  min-width: 0;
+  margin: 0.2rem 0.15rem 0.2rem 0.45rem;
+  padding: 0.3rem 0.45rem;
+  font-size: 1rem;
+  border: 1px solid #a7c5ff;
+  border-radius: 4px;
+  outline: none;
+  background: #fff;
+}
+
+.otherdev-name-rename-wrap .tx-name-input-editing:focus {
+  border-color: #5376ea;
+  box-shadow: 0 0 0 2px rgba(83, 118, 234, 0.15);
+}
+
+.otherdev-name-rename-wrap .tx-btn-rename-cancel-char {
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
+  color: #5376ea;
+}
+
+.otherdev-name-rename-wrap .tx-btn-rename {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 30px;
+  margin: 0 0.2rem 0 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.otherdev-name-rename-wrap .tx-btn-rename:hover {
+  background: rgba(83, 118, 234, 0.1);
+}
+
+.otherdev-name-rename-wrap .tx-btn-rename:focus-visible {
+  outline: 2px solid #5376ea;
+  outline-offset: 1px;
+}
+
+.otherdev-name-rename-wrap .tx-btn-rename svg {
+  pointer-events: none;
+}
+
 
 .otherdev-input-error {
   border-color: #E74C3C !important;
