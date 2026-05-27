@@ -1,5 +1,6 @@
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
+    <div v-if="liveNameValidationMsg" class="alert alert-danger" role="alert">{{ liveNameValidationMsg }}</div>
     <div class="tx-add-grid tx-add-form-main tx-node-add-main">
       <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
         <span class="tx-label">Clone Name:</span>
@@ -7,6 +8,7 @@
           v-model="form.newnodename"
           type="text"
           :placeholder="form.name || ''"
+          :class="{ 'input-error': liveNameValidationMsg }"
           @keypress="noSpaces"
           @blur="onCloneNameBlur"
           maxlength="100"
@@ -38,11 +40,13 @@
               v-model="nameDraft"
               type="text"
               class="tx-name-input-editing"
+              :class="{ 'input-error': liveNameValidationMsg }"
               maxlength="100"
               required
               aria-label="Node name"
               @keypress="noSpaces"
               @blur="onNameDraftBlur"
+              @keydown.escape.stop="onNameDraftEscape"
             />
             <button
               type="button"
@@ -59,6 +63,7 @@
           v-else
           type="text"
           v-model="form.name"
+          :class="{ 'input-error': liveNameValidationMsg }"
           @keypress="noSpaces"
           @blur="onAddNameBlur"
           maxlength="100"
@@ -335,7 +340,7 @@
           aria-hidden="true"
         />
       </button>
-      <button type="submit" class="tx-btn tx-btn-blue">{{ submitLabel }}</button>
+      <button type="submit" class="tx-btn tx-btn-blue" :disabled="Boolean(liveNameValidationMsg)">{{ submitLabel }}</button>
     </div>
 
     <TextEditorModal
@@ -351,10 +356,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, nextTick } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
 import { punAppAssetUrl } from '../utils/publicAssets'
+import { validateNodeNameInput } from '@/constants/displayName'
 
 const renameIcon = punAppAssetUrl('icon-rename.png')
 import type { NodeFormInterface, NodeFormData, InventoryIpv4Record } from '@/types'
@@ -398,6 +404,29 @@ const showAdvanced = ref(false)
 const originalNodeName = ref('')
 const nameInlineEdit = ref(false)
 const nameDraft = ref('')
+
+const liveNameValidationMsg = computed(() => {
+  if (props.mode === 'clone') {
+    const n = String(form.newnodename || '').trim()
+    if (!n) return ''
+    const check = validateNodeNameInput(n)
+    return check.ok ? '' : check.message
+  }
+  if (props.mode === 'add') {
+    const n = String(form.name || '').trim()
+    if (!n) return ''
+    const check = validateNodeNameInput(n)
+    return check.ok ? '' : check.message
+  }
+  if (props.mode === 'edit' && nameInlineEdit.value) {
+    const n = String(nameDraft.value || '').trim()
+    if (!n) return ''
+    const check = validateNodeNameInput(n)
+    return check.ok ? '' : check.message
+  }
+  return ''
+})
+
 const textEditorOpen = ref(false)
 const textEditorTitle = ref('')
 const textEditorField = ref('')
@@ -602,6 +631,14 @@ function startInlineRename() {
 function cancelInlineRename() {
   nameInlineEdit.value = false
   nameDraft.value = form.name || originalNodeName.value
+  void nextTick(() => {
+    const el = document.activeElement
+    if (el instanceof HTMLElement) el.blur()
+  })
+}
+
+function onNameDraftEscape() {
+  cancelInlineRename()
 }
 
 function getPendingRename(): { oldName: string; newName: string } | null {

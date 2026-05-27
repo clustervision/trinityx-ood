@@ -122,10 +122,12 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  class="tx-name-link"
                   :title="displayNameTitle(row.name)"
                   @click="$emit('open-edit', canonicalName(row.name))"
-                >{{ formatDisplayName(row.name) }}</button>
+                >
+                  <span class="tx-cell-ellipsis tx-cell-truncate-js">{{ formatDisplayName(row.name) }}</span>
+                </button>
               </template>
               <template v-else-if="col.field === 'osimage'">
                 <span v-if="isInvalidOs(row)" class="tx-os-invalid">!!Invalid!!</span>

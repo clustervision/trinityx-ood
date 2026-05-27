@@ -413,13 +413,28 @@ optgroup {
   white-space: nowrap;
 }
 
-button.tx-name-link.tx-cell-ellipsis,
-button.tx-name-link.tx-cell-truncate-js {
+button.tx-name-link {
+  display: block;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   text-align: center;
-  overflow: visible;
-  text-overflow: clip;
-  line-height: 1.25;
+  overflow: hidden;
+}
+
+button.tx-name-link:focus {
+  outline: none;
+}
+
+button.tx-name-link:focus-visible {
+  outline: none;
+}
+
+button.tx-name-link:focus-visible .tx-cell-ellipsis,
+button.tx-name-link:focus-visible .tx-cell-truncate-js {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .tx-inventory-table .tx-cell-ellipsis {
@@ -503,7 +518,7 @@ button.tx-name-link.tx-cell-truncate-js {
   border-top: none;
 }
 
-/* ---------- Name link ---------- */
+/* ---------- Name link (underline on inner span, match group) ---------- */
 .tx-name-link {
   border: none;
   background: none;
@@ -515,13 +530,18 @@ button.tx-name-link.tx-cell-truncate-js {
   font-style: normal;
   line-height: 1.25;
   color: #111111;
-  text-decoration: underline;
-  text-decoration-style: solid;
-  text-underline-offset: 2px;
-  text-decoration-thickness: 1.5px;
-  text-decoration-skip-ink: none;
   cursor: pointer;
   text-align: center;
+}
+
+.tx-name-link .tx-cell-ellipsis,
+.tx-name-link .tx-cell-truncate-js {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 2px;
+  line-height: 1.25;
   white-space: nowrap;
 }
 
@@ -1064,6 +1084,12 @@ button.tx-name-link.tx-cell-truncate-js {
   outline: none;
   padding: 0.35rem 0.35rem 0.35rem 0.55rem;
   font-size: 15px;
+}
+
+.tx-field-name-with-rename .tx-name-input-readonly:focus,
+.tx-field-name-with-rename .tx-name-input-readonly:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .tx-field-name-with-rename .tx-name-input-editing {
