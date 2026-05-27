@@ -128,6 +128,7 @@ import { ref, reactive } from 'vue'
 import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimages, submitOsimageForm } from '../api'
+import { validateOsimageNameInput } from '../constants/osimageName'
 
 const emit = defineEmits(['close', 'saved'])
 
@@ -156,6 +157,12 @@ async function doAdd() {
   const enteredName = String(form.name || '').trim()
   if (!enteredName) {
     alertMsg.value = 'Name is required.'
+    alertOk.value = false
+    return
+  }
+  const nameCheck = validateOsimageNameInput(enteredName)
+  if (!nameCheck.ok) {
+    alertMsg.value = nameCheck.message
     alertOk.value = false
     return
   }

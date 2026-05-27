@@ -181,6 +181,7 @@ import BaseModal from './BaseModal.vue'
 import OsimageCommentField from './OsimageCommentField.vue'
 import { fetchOsimageEditData, submitOsimageForm } from '../api'
 import { publicAssetUrl } from '../utils'
+import { validateOsimageNameInput } from '../constants/osimageName'
 
 const props = defineProps({
   imageName: { type: String, required: true },
@@ -232,6 +233,12 @@ async function commitPendingRename() {
   if (!trimmed || trimmed === currentName.value) {
     cancelRename()
     return true
+  }
+  const nameCheck = validateOsimageNameInput(trimmed)
+  if (!nameCheck.ok) {
+    alertMsg.value = nameCheck.message
+    alertOk.value = false
+    return false
   }
   const fd = new FormData()
   fd.append('name', currentName.value)
