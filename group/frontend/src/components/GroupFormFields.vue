@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch, computed, nextTick } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
 import { punAppAssetUrl } from '@/utils/publicAssets'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
-import { GROUP_NAME_MAX_LENGTH } from '@/constants/groupName'
+import { GROUP_NAME_MAX_LENGTH, normalizeGroupName, validateGroupNameInput } from '@/constants/groupName'
 
 const renameIcon = punAppAssetUrl('icons/icon-rename.png')
 
@@ -19,6 +19,7 @@ const props = defineProps({
   bondModeOptions: { type: Array as () => string[], default: () => [], },
   submitLabel: { type: String, default: 'Submit' },
   hints: { type: Object, default: () => ({}) },
+  submitting: { type: Boolean, default: false },
 })
 
 defineEmits(['submit'])
@@ -198,16 +199,7 @@ function noSpaces(e: KeyboardEvent) {
   }
 }
 
-/** Match Document/node Luna name rules for rename / edit. */
-function normalizeGroupName(s: unknown): string {
-  return String(s ?? '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9.-]/g, '')
-}
-
 function onNameDraftBlur() {
-  nameDraft.value = normalizeGroupName(nameDraft.value)
   validateRenameTarget(nameDraft.value)
 }
 
@@ -223,11 +215,30 @@ function cancelInlineRename() {
   nameDraft.value = form.name || originalGroupName.value
   nameError.value = ''
   isSubmitDisabled.value = false
+  void nextTick(() => {
+    const el = document.activeElement
+    if (el instanceof HTMLElement) el.blur()
+  })
+}
+
+function onNameDraftEscape() {
+  cancelInlineRename()
 }
 
 function validateRenameTarget(value: string) {
   if (props.mode !== 'edit' || !nameInlineEdit.value) return
-  const n = normalizeGroupName(value)
+  if (!String(value || '').trim()) {
+    nameError.value = ''
+    isSubmitDisabled.value = false
+    return
+  }
+  const check = validateGroupNameInput(value)
+  if (!check.ok) {
+    nameError.value = check.message
+    isSubmitDisabled.value = true
+    return
+  }
+  const n = check.name
   const orig = normalizeGroupName(originalGroupName.value)
   if (n && n !== orig && props.groupList.includes(n)) {
     nameError.value = 'Group name already exists'
@@ -454,7 +465,18 @@ defineExpose({
 const nameError = ref('')
 const isSubmitDisabled = ref(false)
 function validateName(value: string) {
-  const exists = props.groupList.includes(value)
+  if (!String(value || '').trim()) {
+    nameError.value = ''
+    isSubmitDisabled.value = false
+    return
+  }
+  const check = validateGroupNameInput(value)
+  if (!check.ok) {
+    nameError.value = check.message
+    isSubmitDisabled.value = true
+    return
+  }
+  const exists = props.groupList.includes(check.name)
 
   if (exists) {
     nameError.value = 'Group name already exists'
@@ -478,7 +500,7 @@ function validateName(value: string) {
       <div class="tx-add-col">
         <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
-          <input type="text" v-model="form.newgroupname" autocomplete="off" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
+          <input type="text" v-model="form.newgroupname" autocomplete="off" @input="validateName(form.newgroupname)" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
         </div>
         <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-with-rename': mode === 'edit' }">
           <span class="tx-label">Name:</span>
@@ -511,6 +533,7 @@ function validateName(value: string) {
                 @keypress="noSpaces"
                 @blur="onNameDraftBlur"
                 @input="validateRenameTarget(nameDraft)"
+                @keydown.escape.stop="onNameDraftEscape"
               />
               <button
                 type="button"
@@ -765,7 +788,14 @@ function validateName(value: string) {
     <!-- Single footer: Advanced + submit always at bottom of form -->
     <div class="tx-form-footer">
       <button type="button" class="tx-btn tx-btn-outline-blue" @click="showAdvanced = !showAdvanced">Advanced {{ showAdvanced ? '\u25B4' : '\u25BE' }}</button>
-      <button type="submit" :disabled="isSubmitDisabled" class="tx-btn tx-btn-blue" :class="{ 'tx-btn-disabled': isSubmitDisabled }">{{ submitLabel }}</button>
+      <button
+        type="submit"
+        :disabled="isSubmitDisabled || submitting"
+        class="tx-btn tx-btn-blue"
+        :class="{ 'tx-btn-disabled': isSubmitDisabled || submitting }"
+      >
+        {{ submitLabel }}
+      </button>
     </div>
 
     <!-- Text Editor Modal -->

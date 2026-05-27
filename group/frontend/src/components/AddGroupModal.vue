@@ -19,6 +19,7 @@ const emit = defineEmits(['close', 'saved'])
 const loading = ref(true)
 const errorMsg = ref('')
 const fatalError = ref(false)
+const submitting = ref(false)
 
 const bmcsetupOptions = ref<string[]>([])
 const osimageOptions = ref<string[]>([])
@@ -45,8 +46,10 @@ onMounted(async () => {
 const successMsg = ref('')
 async function onSubmit() {
   if (!formRef.value) return
+  if (submitting.value) return
 
   errorMsg.value = ''
+  submitting.value = true
 
   try {
     const payload = formRef.value.buildPayload()
@@ -54,11 +57,8 @@ async function onSubmit() {
     const result = await submitForm('/api/v1/add', payload)
 
     if (result.status === true && result.content?.message) {
-      setTimeout(() => {
-        emit('saved')
-        emit('close')
-      }, 3000)
-      successMsg.value = result.content.message
+      emit('saved')
+      emit('close')
     } else {
       errorMsg.value = result.content?.message
     }
@@ -69,6 +69,8 @@ async function onSubmit() {
     } else {
       errorMsg.value = 'Unknown error occurred'
     }
+  } finally {
+    submitting.value = false
   }
 }
 </script>
@@ -97,6 +99,7 @@ async function onSubmit() {
           :osimage-options="osimageOptions"
           :network-options="networkOptions"
           :bond-mode-options="bondModeOptions"
+          :submitting="submitting"
           submit-label="Add This Group"
           @submit="onSubmit"
         />
