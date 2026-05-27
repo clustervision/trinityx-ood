@@ -15,12 +15,12 @@
           rename-mode
         >
           <template #footer-expanded>
-            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doSave">
+            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || isNameInvalid" @click="doSave">
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
           </template>
           <template #footer-actions>
-            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doSave">
+            <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || isNameInvalid" @click="doSave">
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
           </template>
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import NetworkFormFields from './NetworkFormFields.vue'
 import {
@@ -49,6 +49,7 @@ const props = defineProps<{ networkName: string }>()
 const emit = defineEmits<{ close: []; saved: []; renamed: [name: string] }>()
 
 const fieldsRef = ref<InstanceType<typeof NetworkFormFields> | null>(null)
+const isNameInvalid = computed(() => Boolean(fieldsRef.value?.liveNameValidationMsg))
 const loadingData = ref(true)
 const loadError = ref('')
 const saving = ref(false)

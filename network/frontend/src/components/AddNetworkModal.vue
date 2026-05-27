@@ -4,6 +4,7 @@
       <h2 class="tx-title" style="margin-bottom: 1.25rem">Add Network</h2>
       <div v-if="alertMsg" :class="alertOk ? 'alert-success' : 'alert-danger'">{{ alertMsg }}</div>
       <NetworkFormFields
+        ref="fieldsRef"
         v-model:name="name"
         :form="form"
         :type-options="typeOptions"
@@ -11,12 +12,12 @@
         :rename-mode="false"
       >
         <template #footer-expanded>
-          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
+          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || isNameInvalid" @click="doAdd">
             {{ saving ? 'Saving...' : 'Add Network' }}
           </button>
         </template>
         <template #footer-actions>
-          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="doAdd">
+          <button type="button" class="tx-btn tx-btn-blue" :disabled="saving || isNameInvalid" @click="doAdd">
             {{ saving ? 'Saving...' : 'Add Network' }}
           </button>
         </template>
@@ -26,7 +27,8 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
+import type NetworkFormFields from './NetworkFormFields.vue'
 import BaseModal from './BaseModal.vue'
 import NetworkFormFields from './NetworkFormFields.vue'
 import { createNetwork, DEFAULT_NETWORK_TYPES, DEFAULT_NETWORK_ZONES } from '@/api'
@@ -39,6 +41,8 @@ const name = ref('')
 const form = reactive(emptyNetworkForm())
 const typeOptions = [...DEFAULT_NETWORK_TYPES]
 const zoneOptions = [...DEFAULT_NETWORK_ZONES]
+const fieldsRef = ref<InstanceType<typeof NetworkFormFields> | null>(null)
+const isNameInvalid = computed(() => Boolean(fieldsRef.value?.liveNameValidationMsg))
 const saving = ref(false)
 const alertMsg = ref('')
 const alertOk = ref(false)

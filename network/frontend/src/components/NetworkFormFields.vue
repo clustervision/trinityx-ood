@@ -1,5 +1,6 @@
 <template>
   <div class="tx-network-form tx-add-form-main">
+    <div v-if="liveNameValidationMsg" class="alert alert-danger" role="alert">{{ liveNameValidationMsg }}</div>
     <div class="tx-network-row tx-network-row-4">
       <div v-if="showNameField" class="tx-field tx-field-strong tx-field-name-with-rename">
         <span class="tx-label">Name:</span>
@@ -22,6 +23,7 @@
                 v-model="renameDraft"
                 type="text"
                 class="tx-name-input-editing"
+                :class="{ 'input-error': liveNameValidationMsg }"
                 :maxlength="NETWORK_NAME_MAX_LENGTH"
                 aria-label="Network name"
                 @keyup.escape="cancelRename"
@@ -41,6 +43,7 @@
             v-else
             v-model="nameModel"
             type="text"
+            :class="{ 'input-error': liveNameValidationMsg }"
             :maxlength="NETWORK_NAME_MAX_LENGTH"
           />
         </div>
@@ -170,7 +173,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { NetworkFormState } from '@/types'
-import { NETWORK_NAME_MAX_LENGTH } from '@/constants/networkName'
+import { NETWORK_NAME_MAX_LENGTH, validateNetworkNameInput } from '@/constants/networkName'
 import { punAppAssetUrl } from '@/utils'
 import BoolToggle from './BoolToggle.vue'
 import NetworkCommentField from './NetworkCommentField.vue'
@@ -205,6 +208,15 @@ const renameIconUrl = punAppAssetUrl('icons/icon-rename.png')
 const nameModel = computed({
   get: () => props.name,
   set: (v: string) => emit('update:name', v),
+})
+
+const liveNameValidationMsg = computed(() => {
+  if (!props.showNameField) return ''
+  const raw = props.renameMode && renaming.value ? renameDraft.value : nameModel.value
+  const n = String(raw || '').trim()
+  if (!n) return ''
+  const check = validateNetworkNameInput(n)
+  return check.ok ? '' : check.message
 })
 
 /** Opposite toggles: one TRUE → other FALSE; one FALSE → other TRUE. */
@@ -246,5 +258,5 @@ function getPendingRename(): { pending: boolean; newName: string } {
   return { pending: true, newName: trimmed }
 }
 
-defineExpose({ getPendingRename, cancelRename, advancedOpen })
+defineExpose({ getPendingRename, cancelRename, advancedOpen, liveNameValidationMsg })
 </script>
