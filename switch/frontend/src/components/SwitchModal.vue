@@ -486,6 +486,18 @@ function buildRenamePayload(oldName: string, newswitchname: string) {
   }
 }
 
+async function cloneAppearsCreated(cloneName: string): Promise<boolean> {
+  if (!cloneName) return false
+
+  try {
+    const verifyResponse = await props.apiClient.get('/api/v1/switches')
+    const raw = verifyResponse.data?.content?.config?.switch as Record<string, unknown> | undefined
+    return Boolean(raw && Object.prototype.hasOwnProperty.call(raw, cloneName))
+  } catch {
+    return false
+  }
+}
+
 async function onSubmit() {
   errorMsg.value = ''
   successMsg.value = ''
@@ -599,24 +611,26 @@ async function onSubmit() {
       return
     }
 
-    if (props.mode === 'clone' && cloneName) {
-      const message = String(data.content?.message || '').toLowerCase()
-      if (message.includes('already') && message.includes('exist')) {
-        const verifyResponse = await props.apiClient.get('/api/v1/switches')
-        const raw = verifyResponse.data?.content?.config?.switch as Record<string, unknown> | undefined
-        if (raw && Object.prototype.hasOwnProperty.call(raw, cloneName)) {
-          successMsg.value = `Switch "${cloneName}" already exists and appears to be cloned successfully.`
-          emit('saved')
-          setTimeout(() => {
-            emit('close')
-          }, 800)
-          return
-        }
-      }
+    if (props.mode === 'clone' && cloneName && await cloneAppearsCreated(cloneName)) {
+      successMsg.value = `Switch "${cloneName}" has been created successfully.`
+      emit('saved')
+      setTimeout(() => {
+        emit('close')
+      }, 800)
+      return
     }
 
     errorMsg.value = data.content?.message || 'Switch save failed.'
   } catch (err: unknown) {
+    const cloneName = form.newswitchname.trim()
+    if (props.mode === 'clone' && cloneName && await cloneAppearsCreated(cloneName)) {
+      successMsg.value = `Switch "${cloneName}" has been created successfully.`
+      emit('saved')
+      setTimeout(() => {
+        emit('close')
+      }, 800)
+      return
+    }
     errorMsg.value = err instanceof Error ? err.message : 'Unknown error occurred.'
   } finally {
     loading.value = false
