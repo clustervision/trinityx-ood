@@ -9,7 +9,7 @@
           Retry
         </button>
       </div>
-      <div v-if="errorMsg" class="alert-danger" style="margin-top:1rem;">{{ errorMsg }}</div>
+      <div v-if="liveValidationMsg || errorMsg" class="alert-danger" style="margin-top:1rem;">{{ liveValidationMsg || errorMsg }}</div>
       <div v-if="successMsg" class="alert-success" style="margin-top:1rem;">{{ successMsg }}</div>
 
       <form @submit.prevent="handleSubmit" style="margin-top:1.25rem;">
@@ -45,7 +45,7 @@
           </p>
           <div class="tx-field" style="width:100%;">
             <label class="tx-label" for="addTag">TAG</label>
-            <input id="addTag" v-model="form.tag" type="text" required class="tx-field-input-tag" style="flex:1;" />
+            <input id="addTag" v-model="form.tag" type="text" required class="tx-field-input-tag" :class="{ 'input-error': liveValidationMsg }" style="flex:1;" />
           </div>
         </div>
         <div class="tx-form-footer-right">
@@ -53,7 +53,7 @@
           <button
             type="submit"
             class="tx-btn tx-btn-blue"
-            :disabled="submitting || osimageLoading || !osimageOptions.length"
+            :disabled="submitting || osimageLoading || !osimageOptions.length || Boolean(liveValidationMsg)"
           >
             {{ submitting ? 'Adding...' : 'Add Tag' }}
           </button>
@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
 import { addTagToOsimage, fetchOsimageNames } from '../api'
 import { formatOsimageNameDisplay, osimageNameTitle, validateOsimageNameInput } from '../constants/osimageName'
@@ -73,6 +73,20 @@ import { validateTagNameInput } from '../constants/tagName'
 const emit = defineEmits(['close', 'saved'])
 
 const form = ref({ osimage: '', tag: '' })
+
+const liveValidationMsg = computed(() => {
+  const tag = String(form.value.tag || '').trim()
+  if (tag) {
+    const tagCheck = validateTagNameInput(tag)
+    if (!tagCheck.ok) return tagCheck.message
+  }
+  const img = String(form.value.osimage || '').trim()
+  if (img) {
+    const imgCheck = validateOsimageNameInput(img)
+    if (!imgCheck.ok) return imgCheck.message
+  }
+  return ''
+})
 const osimageOptions = ref([])
 const osimageLoading = ref(true)
 const listError = ref('')
