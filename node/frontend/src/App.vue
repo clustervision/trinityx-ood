@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import type { InventoryIpv4Record } from '@/types'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
@@ -86,9 +86,17 @@ function openEdit(name: string) {
   editOpen.value = true
 }
 
+function blurInventoryNameFocus() {
+  void nextTick(() => {
+    const el = document.activeElement
+    if (el instanceof HTMLElement && el.closest('.tx-name-link')) el.blur()
+  })
+}
+
 function closeEdit() {
   editOpen.value = false
   editNodeName.value = ''
+  blurInventoryNameFocus()
 }
 
 function openPushFlow(flow: string, name: string) {

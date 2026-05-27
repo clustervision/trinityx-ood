@@ -37,6 +37,7 @@ import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeEditData, submitNodeRename, submitNodeUpdate } from '../api'
 import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
+import { validateNodeNameInput } from '@/constants/displayName'
 
 const props = withDefaults(defineProps<{
   nodeName: string
@@ -111,6 +112,13 @@ async function onSubmit() {
   if (!formRef.value) return
   errorMsg.value = ''
   const pending = formRef.value.getPendingRename?.() ?? null
+  if (pending) {
+    const nameCheck = validateNodeNameInput(pending.newName)
+    if (!nameCheck.ok) {
+      errorMsg.value = nameCheck.message
+      return
+    }
+  }
   try {
     const record = formRef.value.buildLunaNodeRecord()
     const urlNode = pending ? pending.oldName : props.nodeName
