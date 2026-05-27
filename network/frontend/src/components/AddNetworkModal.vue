@@ -28,7 +28,6 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import type NetworkFormFields from './NetworkFormFields.vue'
 import BaseModal from './BaseModal.vue'
 import NetworkFormFields from './NetworkFormFields.vue'
 import { createNetwork, DEFAULT_NETWORK_TYPES, DEFAULT_NETWORK_ZONES } from '@/api'
