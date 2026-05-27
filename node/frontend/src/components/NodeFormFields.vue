@@ -579,7 +579,6 @@ function normalizeLunaNodeName(s: unknown): string {
   return String(s ?? '')
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9.-]/g, '')
 }
 
 function onNameDraftBlur() {

@@ -40,6 +40,7 @@ import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeCloneData, submitNodeClone } from '../api'
 import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
+import { validateNodeNameInput } from '@/constants/displayName'
 
 const props = withDefaults(defineProps<{
   sourceNodeName: string
@@ -123,6 +124,11 @@ async function onSubmit() {
     const newName = String(record.newnodename ?? '').trim()
     if (!newName) {
       errorMsg.value = 'Please enter a clone name.'
+      return
+    }
+    const nameCheck = validateNodeNameInput(newName)
+    if (!nameCheck.ok) {
+      errorMsg.value = nameCheck.message
       return
     }
     const { ok, data, status } = await submitNodeClone(newName, record)

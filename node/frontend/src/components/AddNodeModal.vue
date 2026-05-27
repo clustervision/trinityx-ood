@@ -34,6 +34,7 @@ import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeAddData, fetchNodes, submitNodeAdd } from '../api'
 import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
+import { validateNodeNameInput } from '@/constants/displayName'
 
 withDefaults(defineProps<{
   getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
@@ -109,6 +110,11 @@ async function onSubmit() {
     const nodeName = normalizeNodeName(nodeNameRaw)
     if (!nodeNameRaw) {
       errorMsg.value = 'Please enter a node name.'
+      return
+    }
+    const nameCheck = validateNodeNameInput(nodeNameRaw)
+    if (!nameCheck.ok) {
+      errorMsg.value = nameCheck.message
       return
     }
     const existing = await fetchNodes()
