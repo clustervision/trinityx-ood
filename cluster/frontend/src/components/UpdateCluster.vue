@@ -1,8 +1,9 @@
 <script setup lang="ts">
 
-import { ref, onMounted, onBeforeUnmount, watch, reactive } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue'
 import type { AxiosInstance } from 'axios'
 import BaseModal from './BaseModal.vue'
+import { validateClusterNameInput } from '@/constants/clusterName'
 
 interface Controller {
   hostname: string
@@ -182,6 +183,12 @@ async function onSubmit() {
   errorMsg.value = ''
   successMsg.value = ''
 
+  const nameCheck = validateClusterNameInput(form.name)
+  if (!nameCheck.ok) {
+    errorMsg.value = nameCheck.message
+    return
+  }
+
   try {
     const payload = buildPayload()
     const { data } = await props.apiClient.put('/api/v1/update', payload)
@@ -199,13 +206,23 @@ async function onSubmit() {
   }
 }
 const nameEditable = ref(false)
+
+const liveNameValidationMsg = computed(() => {
+  if (!nameEditable.value) return ''
+  const n = String(form.name || '').trim()
+  if (!n) return ''
+  const check = validateClusterNameInput(form.name)
+  return check.ok ? '' : check.message
+})
 </script>
 
 <template>
   <BaseModal size="large" @close="$emit('close')">
 
     <div class="tx-form-page">
-      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
+      <div v-if="liveNameValidationMsg || errorMsg" class="alert alert-danger" role="alert">
+        {{ liveNameValidationMsg || errorMsg }}
+      </div>
       <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
       <p v-if="loading" class="tx-loading">Loading...</p>
       <template v-if="!loading && !fatalError">
@@ -219,7 +236,7 @@ const nameEditable = ref(false)
               <div class="label-part">
                 <label>NAME:</label>
               </div>
-              <input type="text" id="name" v-model="form.name" :disabled="!nameEditable" :class="{ 'is-disabled-field': !nameEditable }">
+              <input type="text" id="name" v-model="form.name" :disabled="!nameEditable" :class="{ 'is-disabled-field': !nameEditable, 'input-error': liveNameValidationMsg }">
               <!-- <svg class="edit-icon" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"> -->
               <svg class="edit-icon" :class="{ 'is-active': nameEditable }" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg" role="button" tabindex="0" @click="nameEditable = true" @keydown.enter="nameEditable = true">
                 <g clip-path="url(#clip0)">
@@ -454,7 +471,7 @@ const nameEditable = ref(false)
                   </div>
                 </div>
               </div> -->
-              <button type="submit">Save Changes</button>
+              <button type="submit" :disabled="Boolean(liveNameValidationMsg)">Save Changes</button>
             </div>
           </div>
         </form>
