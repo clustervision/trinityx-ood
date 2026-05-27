@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import OsimageInventory from './components/OsimageInventory.vue'
@@ -66,9 +66,17 @@ function openEdit(name) {
   editOpen.value = true
 }
 
+function blurInventoryNameFocus() {
+  void nextTick(() => {
+    const el = document.activeElement
+    if (el instanceof HTMLElement && el.closest('.tx-name-link')) el.blur()
+  })
+}
+
 function closeEdit() {
   editOpen.value = false
   editName.value = ''
+  blurInventoryNameFocus()
 }
 
 function openClone(name) {
