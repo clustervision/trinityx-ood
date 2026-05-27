@@ -2245,7 +2245,7 @@ select.tx-select-placeholder {
   border: none;
   border-radius: 0;
   padding: 1rem;
-  resize: vertical;
+  resize: none;
   outline: none;
 }
 
