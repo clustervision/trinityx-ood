@@ -18,7 +18,7 @@ const successMsg = ref('')
 const emit = defineEmits(['close', 'deleted'])
 
 function handleEscKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && !deleting.value) {
     emit('close')
   }
 }
@@ -36,11 +36,11 @@ async function onDelete() {
 
     if (data.status === true) {
       successMsg.value = data.content?.message || 'Switch deleted successfully.'
+      emit('deleted')
 
       setTimeout(() => {
-        emit('deleted')
         emit('close')
-      }, 3000)
+      }, 800)
 
       return
     }
@@ -65,14 +65,14 @@ onBeforeUnmount(() => {
 
 
 <template>
-  <BaseModal size="small" @close="$emit('close')">
+  <BaseModal size="small" :close-disabled="deleting" @close="$emit('close')">
     <div class="tx-delete-confirm">
       <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
       <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
       <h3 class="tx-delete-title">Delete Switch <strong class="tx-title-highlight-name" :title="switchNameTitle(switchName)">{{ formatSWITCHNameDisplay(switchName) }}</strong>?</h3>
       <p class="tx-delete-desc">This action cannot be undone.</p>
       <div class="tx-delete-actions">
-        <button type="button" class="tx-btn tx-btn-outline-blue" @click="$emit('close')">Cancel</button>
+        <button type="button" class="tx-btn tx-btn-outline-blue" :disabled="deleting" :class="{ 'tx-btn-disabled': deleting }" @click="$emit('close')">Cancel</button>
         <button type="button" class="tx-btn tx-btn-danger" :disabled="deleting" :class="{ 'tx-btn-disabled': deleting }" @click="onDelete">{{ deleting ? 'Deleting...' : 'Delete' }}</button>
       </div>
     </div>
