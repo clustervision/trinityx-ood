@@ -483,6 +483,20 @@ button.tx-name-link {
   color: #000000;
 }
 
+button.tx-name-link:focus {
+  outline: none;
+}
+
+button.tx-name-link:focus-visible {
+  outline: none;
+}
+
+button.tx-name-link:focus-visible .tx-cell-ellipsis {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ---------- NOT AVAILABLE badge ---------- */
 .tx-na-box {
   display: inline-block;
@@ -990,6 +1004,12 @@ button.tx-name-link {
   outline: none;
   padding: 0.35rem 0.35rem 0.35rem 0.55rem;
   font-size: 15px;
+}
+
+.tx-field-name-with-rename .tx-name-input-readonly:focus,
+.tx-field-name-with-rename .tx-name-input-readonly:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .tx-field-name-with-rename .tx-name-input-editing {

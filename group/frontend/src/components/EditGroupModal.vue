@@ -24,6 +24,7 @@ const loading = ref(true)
 const errorMsg = ref('')
 const successMsg = ref('')
 const fatalError = ref(false)
+const submitting = ref(false)
 
 const formData = ref({})
 
@@ -122,8 +123,10 @@ function buildHints(d: any) {
 async function onSubmit() {
 
   if (!formRef.value || !initialSnapshot.value) { return }
+  if (submitting.value) return
   errorMsg.value = ''
   successMsg.value = ''
+  submitting.value = true
 
   try {
     const currentSnapshot = formRef.value.comparableSnapshot()
@@ -140,11 +143,8 @@ async function onSubmit() {
     const result = await submitForm(`/api/v1/edit`, payload)
 
     if (result.status === true && result.content?.message) {
-      successMsg.value = result.content.message
-      setTimeout(() => {
-        emit('saved')
-        emit('close')
-      }, 3000)
+      emit('saved')
+      emit('close')
       return
     }
     errorMsg.value = result.content?.message || 'Update failed.'
@@ -154,6 +154,8 @@ async function onSubmit() {
     } else {
       errorMsg.value = 'Unknown error occurred'
     }
+  } finally {
+    submitting.value = false
   }
 }
 </script>
@@ -179,6 +181,7 @@ async function onSubmit() {
           :network-options="networkOptions"
           :bond-mode-options="bondModeOptions"
           :hints="hints"
+          :submitting="submitting"
           submit-label="Save Changes"
           @submit="onSubmit"
         />
