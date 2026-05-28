@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { appUrlFromRuntime, publicAssetUrl } from '@/utils'
+import { appUrlFromRuntime, punAppAssetUrl } from '@/utils'
 
 const homeUrl = computed(() => {
   const raw = appUrlFromRuntime()
@@ -32,5 +32,5 @@ const homeUrl = computed(() => {
   return typeof window !== 'undefined' ? `https://${window.location.hostname}:8080` : '#'
 })
 
-const logoSrc = computed(() => publicAssetUrl('img/logo.png'))
+const logoSrc = computed(() => punAppAssetUrl('img/logo.png'))
 </script>
