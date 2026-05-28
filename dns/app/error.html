@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ table }} :: Error</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 2rem; color: #333; }
+      .alert { background: #fdecea; border: 1px solid #f5c2c7; padding: 1rem; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <h1>{{ table }}</h1>
+    <div class="alert">{{ error | safe }}</div>
+  </body>
+</html>
