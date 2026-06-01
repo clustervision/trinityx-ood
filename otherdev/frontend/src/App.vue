@@ -299,9 +299,8 @@ function canonicalName(name: string) {
                   </li>
 
                   <li>
-                    <strong>Network</strong> — The Luna network associated with this device.
-                    In add mode, no network is selected by default, but all available networks are shown.
-                    In update or clone mode, the app selects the source device network if one is available.
+                    <strong>Network</strong> — Optional Luna network for this device.
+                    Leave blank if the device is not tied to a network. In update or clone mode, the source device network is preselected when available.
                   </li>
 
                   <li>
@@ -332,7 +331,7 @@ function canonicalName(name: string) {
 
                   <li>
                     <strong>Add</strong> — Creates a new Other Device entry.
-                    The device name must be unique. Network options are loaded automatically, but no network is preselected.
+                    The device name must be unique. Network is optional and is not preselected in add mode.
                   </li>
 
                   <li>

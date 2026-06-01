@@ -49,7 +49,7 @@ const emit = defineEmits<{
   (event: 'saved'): void
 }>()
 
-const loading = ref(false)
+const submitting = ref(false)
 const errorMsg = ref('')
 const fatalError = ref(false)
 const networkLoading = ref(false)
@@ -195,15 +195,11 @@ const submitValidationMsg = computed(() => {
     return 'Other Device New Name is required for clone.'
   }
 
-  if (!form.network.trim()) {
-    return 'Please select a network.'
-  }
-
   return liveNameValidationMsg.value
 })
 
 const isSubmitDisabled = computed(() => {
-  return loading.value || Boolean(submitValidationMsg.value)
+  return submitting.value || Boolean(submitValidationMsg.value)
 })
 
 
@@ -236,7 +232,7 @@ const form = reactive<{
 })
 
 function handleEscKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && !submitting.value) {
     emit('close')
   }
 }
@@ -407,10 +403,8 @@ async function loadNetworkOptions() {
 
     networkOptions.value = options
 
-    if (data.record_error) {
+    if (data.record_error && !isAdd.value) {
       networkErrorMsg.value = data.record_error
-    } else if (options.length === 0) {
-      networkErrorMsg.value = 'No networks found in Luna. Create a network first.'
     }
 
     if (isAdd.value) {
@@ -541,7 +535,8 @@ async function onSubmit() {
 
   }
 
-  loading.value = true
+  if (submitting.value) return
+  submitting.value = true
 
   try {
     let data
@@ -586,13 +581,13 @@ async function onSubmit() {
   } catch (err: unknown) {
     errorMsg.value = err instanceof Error ? err.message : 'Unknown error occurred.'
   } finally {
-    loading.value = false
+    submitting.value = false
   }
 }
 </script>
 
 <template>
-  <BaseModal size="large" @close="emit('close')">
+  <BaseModal size="large" :close-disabled="submitting" @close="emit('close')">
     <div class="tx-form-page otherdev-modal-page">
        <div v-if="liveNameValidationMsg || errorMsg || networkErrorMsg" class="alert-danger" role="alert">
           {{ liveNameValidationMsg || errorMsg || networkErrorMsg }}
@@ -601,8 +596,6 @@ async function onSubmit() {
         <div class="otherdev-header otherdev-modal-header">
           <h2 class="otherdev-title">{{ modalTitle }}</h2>
         </div>
-
-        <p v-if="loading" class="tx-loading">Saving...</p>
 
         <form id="otherdevForm" class="otherdev-form" @submit.prevent="onSubmit">
           <div class="otherdev-form-container">
@@ -683,11 +676,11 @@ async function onSubmit() {
               </div>
 
 
-                <div class="otherdev-form-field mandatory">
+                <div class="otherdev-form-field">
                 <label class="otherdev-field-label" for="otherdev-network">NETWORK:</label>
 
                 <div class="otherdev-select-wrapper">
-                  <select id="otherdev-network" v-model="form.network" class="otherdev-select" :class="{ 'otherdev-select-placeholder': !form.network, 'otherdev-input-error': !form.network.trim() && submitValidationMsg === 'Please select a network.' }" :disabled="networkLoading" required>
+                  <select id="otherdev-network" v-model="form.network" class="otherdev-select" :class="{ 'otherdev-select-placeholder': !form.network }" :disabled="networkLoading">
                     <option value="">--- Select ---</option>
                     <option v-for="network in networkOptions" :key="network" :value="network">{{ network }}</option>
                   </select>
@@ -758,7 +751,7 @@ async function onSubmit() {
             <TextEditorModal v-if="showCommentEditor" v-model="form.comment" title="Edit Other Device Comment" @close="showCommentEditor = false" />
 
             <div class="otherdev-button-container">
-              <button type="submit" class="otherdev-submit-btn" :disabled="isSubmitDisabled" :class="{ 'otherdev-submit-btn-disabled': isSubmitDisabled }">{{ loading ? savingText : submitText }}</button>
+              <button type="submit" class="otherdev-submit-btn" :disabled="isSubmitDisabled" :class="{ 'otherdev-submit-btn-disabled': isSubmitDisabled }">{{ submitting ? savingText : submitText }}</button>
             </div>
 
           </div>
