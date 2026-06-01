@@ -4,13 +4,14 @@ import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue'
 import type { AxiosInstance } from 'axios'
 import BaseModal from './BaseModal.vue'
 import TextEditorModal from './TextEditorModal.vue'
-import { OTHER_DEV_NAME_MAX_LENGTH, validateOtherdevNameInput } from '@/constants/otherdevName'
+import { validateOtherdevNameInput } from '@/constants/otherdevName'
 
 interface NetworkListResponse {
   network_list?: {
     options?: string[]
     selected?: string | null
   }
+  record_error?: string
   content?: {
     message?: string
   }
@@ -50,7 +51,6 @@ const emit = defineEmits<{
 
 const loading = ref(false)
 const errorMsg = ref('')
-const successMsg = ref('')
 const fatalError = ref(false)
 const networkLoading = ref(false)
 const networkErrorMsg = ref('')
@@ -195,6 +195,10 @@ const submitValidationMsg = computed(() => {
     return 'Other Device New Name is required for clone.'
   }
 
+  if (!form.network.trim()) {
+    return 'Please select a network.'
+  }
+
   return liveNameValidationMsg.value
 })
 
@@ -329,7 +333,6 @@ watch(
     renameDraft.value = ''
     errorMsg.value = ''
     networkErrorMsg.value = ''
-    successMsg.value = ''
 
     if (props.mode === 'add') {
       form.name = ''
@@ -389,11 +392,26 @@ async function loadNetworkOptions() {
 
     if (requestId !== networkRequestId) return
 
+    if (data.status === false) {
+      const msg =
+        (typeof data.content === 'string' ? data.content : data.content?.message) ||
+        'Could not load networks from Luna.'
+      networkOptions.value = []
+      networkErrorMsg.value = String(msg)
+      return
+    }
+
     const options = data.network_list?.options ?? []
     const selected = data.network_list?.selected ?? null
     const sourceNetwork = asString(getSourceOtherDevData().network)
 
     networkOptions.value = options
+
+    if (data.record_error) {
+      networkErrorMsg.value = data.record_error
+    } else if (options.length === 0) {
+      networkErrorMsg.value = 'No networks found in Luna. Create a network first.'
+    }
 
     if (isAdd.value) {
       form.network = ''
@@ -466,7 +484,6 @@ function buildRenamePayload(oldName: string, newotherdevname: string) {
 
 async function onSubmit() {
   errorMsg.value = ''
-  successMsg.value = ''
 
   if (submitValidationMsg.value) {
   errorMsg.value = submitValidationMsg.value
@@ -560,19 +577,8 @@ async function onSubmit() {
     }
 
     if (data.status === true) {
-      successMsg.value =
-        data.content?.message ||
-        (props.mode === 'add'
-          ? 'Other Device added successfully.'
-          : props.mode === 'update'
-            ? 'Other Device updated successfully.'
-            : 'Other Device cloned successfully.')
-
-      setTimeout(() => {
-        emit('saved')
-        emit('close')
-      }, 3000)
-
+      emit('saved')
+      emit('close')
       return
     }
 
@@ -588,11 +594,9 @@ async function onSubmit() {
 <template>
   <BaseModal size="large" @close="emit('close')">
     <div class="tx-form-page otherdev-modal-page">
-       <div v-if="liveNameValidationMsg || errorMsg" class="alert-danger" role="alert">
-          {{ liveNameValidationMsg || errorMsg }}
+       <div v-if="liveNameValidationMsg || errorMsg || networkErrorMsg" class="alert-danger" role="alert">
+          {{ liveNameValidationMsg || errorMsg || networkErrorMsg }}
         </div>
-      <div v-if="successMsg" class="alert-success" role="alert">{{ successMsg }}</div>
-
       <template v-if="!fatalError">
         <div class="otherdev-header otherdev-modal-header">
           <h2 class="otherdev-title">{{ modalTitle }}</h2>
@@ -616,7 +620,6 @@ async function onSubmit() {
                     autocomplete="off"
                     required
                     class="otherdev-input"
-                    :maxlength="OTHER_DEV_NAME_MAX_LENGTH"
                     :class="{ 'otherdev-input-error': liveNameValidationMsg }"
                   >
                   <div v-else-if="isUpdate" class="tx-name-input-wrap otherdev-name-rename-wrap">
@@ -656,7 +659,7 @@ async function onSubmit() {
                         v-model.trim="renameDraft"
                         type="text"
                         class="tx-name-input-editing"
-                        :maxlength="OTHER_DEV_NAME_MAX_LENGTH"
+                        :class="{ 'otherdev-input-error': liveNameValidationMsg }"
                         aria-label="Other device name"
                         @keyup.escape="cancelRename"
                       >
@@ -676,15 +679,15 @@ async function onSubmit() {
 
               <div v-if="isClone" class="otherdev-form-field mandatory">
                 <label class="otherdev-field-label" for="otherdev-new-name">CLONE NAME:</label>
-                <input id="otherdev-new-name" v-model.trim="form.newotherdevname" type="text" class="otherdev-input" autocomplete="off" :maxlength="OTHER_DEV_NAME_MAX_LENGTH" :class="{ 'otherdev-input-error': liveNameValidationMsg }" required>
+                <input id="otherdev-new-name" v-model.trim="form.newotherdevname" type="text" class="otherdev-input" autocomplete="off" :class="{ 'otherdev-input-error': liveNameValidationMsg }" required>
               </div>
 
 
-                <div class="otherdev-form-field">
+                <div class="otherdev-form-field mandatory">
                 <label class="otherdev-field-label" for="otherdev-network">NETWORK:</label>
 
                 <div class="otherdev-select-wrapper">
-                  <select id="otherdev-network" v-model="form.network" class="otherdev-select" :class="{ 'otherdev-select-placeholder': !form.network }" :disabled="networkLoading">
+                  <select id="otherdev-network" v-model="form.network" class="otherdev-select" :class="{ 'otherdev-select-placeholder': !form.network, 'otherdev-input-error': !form.network.trim() && submitValidationMsg === 'Please select a network.' }" :disabled="networkLoading" required>
                     <option value="">--- Select ---</option>
                     <option v-for="network in networkOptions" :key="network" :value="network">{{ network }}</option>
                   </select>
