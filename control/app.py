@@ -17,10 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
-"""
-This File is a Main File Luna 2 Control Process.
-This file will create flask object and serve the all routes for on demand.
-"""
+"""Control SPA shell + API relay for Luna daemon."""
 
 __author__      = 'Sumit Sharma'
 __copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
@@ -31,16 +28,21 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
-from textwrap import wrap
-from flask import Flask, json, request, render_template, flash, url_for, redirect
+from flask import Flask, jsonify, request, render_template
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from helper import Helper
 from log import Log
 
 LOGGER = Log.init_log('INFO')
-TABLE = 'Control Nodes'
-app = Flask(__name__, static_folder="static")
+TABLE = 'control'
+TABLE_CAP = 'Control Nodes'
+app = Flask(
+    __name__,
+    static_folder="app/assets",
+    static_url_path="/app/assets",
+    template_folder="app",
+)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False:
@@ -53,16 +55,16 @@ def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
     """
-    if request.path.startswith('/static/'):
-        return
+    if request.path.startswith('/app/assets/'):
+        return None
     if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table=TABLE, data="", error=TOKEN_FILE["error"])
+        return render_template("error.html", table=TABLE_CAP, data="", error=TOKEN_FILE["error"])
     file_check = os.path.isfile(INI_FILE)
     if file_check is False:
-        return render_template("error.html", table=TABLE, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
     read_check = os.access(INI_FILE, os.R_OK)
     if read_check is False:
-        return render_template("error.html", table=TABLE, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
+        return render_template("error.html", table=TABLE_CAP, data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 
@@ -75,138 +77,63 @@ def page_not_found(e):
 
 
 @app.route('/', methods=['GET'])
-@app.route('/<string:system>/<string:action>/<string:nodename>', methods=['GET'])
-def home(system=None, action=None, nodename=None):
-    """
-    This is the main method of application.
-    It will list all Control which is available with daemon.
-    """
-    data, payload = [], []
-    message = ''
-    if action and nodename:
-        uri = f'control/action/{system}/{nodename}/_{action}'
-        result = Rest().get_raw(uri)
-
-        if result.content:
-            content = result.json()
-            if 'control' in content.keys():
-                message = content['control'][system]
-            elif 'message' in content.keys():
-                message = content['message']
-            else:
-                message = 'NO message received'
-        else:
-            message = action
-        if len(message) >= 150:
-            message = '<br />'.join(wrap(message, width=150))
-            message = f'<br />{message}'
-        if result.status_code in [200, 204]:
-            if 'off' in message:
-                flash(f'<strong>Node {nodename} {system} {action} :: {message}.</strong>', "danger")
-            else:
-                flash(f'<strong>Node {nodename} {system} {action} :: {message}.</strong>', "success")
-        else:
-            flash(f'<strong>{nodename} {system} {action} :: {message}.</strong>', "warning")
-        return redirect(url_for('home'), code=302)
-
-    node_list = Helper().get_name_list('node')
-
-    if node_list:
-        payload = json.dumps({'hostlist': node_list})
-    else:
-        flash('No Nodes are available at this time.', "error")
-    return render_template("power.html", table=TABLE, data=data, payload= payload)
+def home():
+    url = Rest().app_url(request)
+    return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-@app.route('/get_status', methods=['POST'])
+@app.route('/api/v1/status', methods=['GET'])
 def get_status():
-    """
-    This method will fetch the raw data from the daemon.
-    """
-    system = {'power': 'status', 'sel': 'list', 'chassis': 'identify'}
-    request_data = json.loads(request.get_json())
-    hostlist = request_data['hostlist']
-    hostlist = Helper().collect_nodelist(hostlist)
-    response = []
-    for key, value in system.items():
-        payload = {'control': {key: {value: {"hostlist": hostlist}}}}
-        uri = f'control/action/{key}/_{value}'
+    node_list = Helper().get_name_list('node')
+    hostlist = Helper().collect_nodelist(node_list)
+    systems = {'power': 'status', 'sel': 'list', 'chassis': 'identify'}
+    results = []
+    request_ids = {'power': '', 'sel': '', 'chassis': ''}
+
+    for system, action in systems.items():
+        payload = {'control': {system: {action: {"hostlist": hostlist}}}}
+        uri = f'control/action/{system}/_{action}'
         result = Rest().post_raw(uri, payload)
-        result = result.json()
-        response.append(result)
-    response = json.dumps(response)
-    return response
+        if result is False:
+            continue
+        body = result.json()
+        results.append(body)
+        request_ids[system] = str(body.get('request_id', ''))
+    return jsonify({'results': results, 'request_ids': request_ids, 'nodes': node_list})
 
 
-@app.route('/check_status/<string:power_id>/<string:sel_id>/<string:chassis_id>', methods=['GET'])
-def check_status(power_id=None, sel_id=None, chassis_id=None):
-    """
-    This method will check the status of request on behalf of request ID.
-    """
-    response = []
-    uri = f'control/status/{power_id}'
-    result = Rest().get_raw(uri)
-    LOGGER.info(f'{result.status_code} {result.content}')
-    result = result.json()
-    response.append(result)
-
-    uri = f'control/status/{sel_id}'
-    result = Rest().get_raw(uri)
-    LOGGER.info(f'{result.status_code} {result.content}')
-    result = result.json()
-    response.append(result)
-
-    uri = f'control/status/{chassis_id}'
-    result = Rest().get_raw(uri)
-    LOGGER.info(f'{result.status_code} {result.content}')
-    result = result.json()
-    response.append(result)
-
-    response = json.dumps(response)
-    return response
-
-
-@app.route('/perform/<string:system>/<string:action>', methods=['POST'])
+@app.route('/api/v1/action/<string:system>/<string:action>', methods=['POST'])
 def perform(system=None, action=None):
-    """
-    This method will fetch the raw data from the daemon.
-    """
-    request_data = json.loads(request.get_json())
-    hostlist = request_data['hostlist']
+    request_data = request.get_json(silent=True) or {}
+    hostlist = request_data.get('hostlist', [])
     hostlist = Helper().collect_nodelist(hostlist)
     payload = {'control': {system: {action: {"hostlist": hostlist}}}}
     uri = f'control/action/{system}/_{action}'
     result = Rest().post_raw(uri, payload)
-    result = result.json()
-    response = json.dumps(result)
-    return response
+    if result is False:
+        return jsonify({"message": "No response from daemon"}), 502
+    return jsonify(result.json()), result.status_code
 
 
-@app.route('/check_request/<string:request_id>', methods=['GET'])
+@app.route('/api/v1/request/<string:request_id>', methods=['GET'])
 def check_request(request_id=None):
-    """
-    This method will check the status of request on behalf of request ID.
-    """
     uri = f'control/status/{request_id}'
     result = Rest().get_raw(uri)
-    LOGGER.info(f'{result.status_code} {result.content}')
-    result = result.json()
-    response = json.dumps(result)
-    return response
+    if result is False:
+        return jsonify({"message": "No response from daemon"}), 502
+    LOGGER.info('%s %s', result.status_code, result.content)
+    return jsonify(result.json()), result.status_code
 
 
-@app.route('/license', methods=['GET'])
+@app.route('/api/v1/license', methods=['GET'])
 def license_info():
-    """
-    This Method will provide license in details.
-    """
-    response= 'LICENSE Information is not available at this moment.'
+    response = 'LICENSE Information is not available at this moment.'
     file_check = os.path.isfile(LICENSE)
     read_check = os.access(LICENSE, os.R_OK)
     if file_check and read_check:
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
             response = file_data.read()
-    return response
+    return jsonify({"license": response})
 
 
 if __name__ == "__main__":
