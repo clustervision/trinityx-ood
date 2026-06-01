@@ -13,3 +13,13 @@ In order to fully integrate this app inside OOD the following steps are required
 - Install `python3` and `python3-pip`
 - Clone the repository to `/var/www/ood/apps/sys/`
 - Install the python modules located inside `requirements.txt`
+
+## Frontend (Vue SPA)
+The UI is built from the separate `control` repository (Vite + Vue), not from `static/` or `templates/` in this tree.
+
+```bash
+cd control && npm ci && npm run build
+# Deploy dist/index.js and dist/index.css into app/assets/ on the controller
+```
+
+Flask serves the SPA shell from `app/index.html` and static files from `app/assets/` (`static_url_path=/app/assets`).
