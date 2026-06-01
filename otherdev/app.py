@@ -195,30 +195,53 @@ def delete_record(record: str):
     return jsonify(response), 200
 
 
+def _otherdev_record_network(table_data: dict, record: str):
+    """
+    Return the network field for an otherdev record, or (None, error_message).
+    """
+    if "status" not in table_data:
+        return None, "Unexpected response while loading Other Device record."
+
+    if table_data["status"] is not True:
+        content = table_data.get("content")
+        if isinstance(content, dict):
+            message = content.get("message")
+            if message:
+                return None, str(message)
+        if content:
+            return None, str(content)
+        return None, "Could not load Other Device record."
+
+    try:
+        data = table_data["content"]["config"][TABLE][record]
+    except (KeyError, TypeError, AttributeError):
+        return None, f"Other Device '{record}' not found in config."
+
+    network = data.get("network")
+    if network in (None, ""):
+        return None, None
+    return network, None
+
+
 @app.route('/api/v1/get_networks', methods=['GET'])
 @app.route('/api/v1/get_networks/<string:record>', methods=['GET'])
 def get_networks(record: str = ""):
     """
-    Get a JSON list of all get_networks for the Vue frontend table.
+    Network names for Vue selects. Always returns network_list from Luna.
+    With a record, sets selected from that otherdev when the record loads.
     """
-    body = {"network_list": []}
+    selected = None
+    record_error = None
+
     if record:
-        data = {"network": ""}
         table_data = Rest().get_data(TABLE, record)
         LOGGER.info(table_data)
-        if "status" in table_data:
-            if table_data["status"] is True:
-                data = table_data["content"]["config"][TABLE][record]
-            else:
-                return jsonify(table_data)
-        else:
-            return jsonify(table_data)
+        selected, record_error = _otherdev_record_network(table_data, record)
 
-        network_list = Model().get_list_options_json('network', data.get("network"))
-        body = {"network_list": network_list}
-    else:
-        network_list = Model().get_list_options_json('network')
-        body = {"network_list": network_list}
+    network_list = Model().get_list_options_json('network', selected)
+    body = {"network_list": network_list}
+    if record_error:
+        body["record_error"] = record_error
     return jsonify(body), 200
 
 
