@@ -41,15 +41,34 @@ const props = defineProps<{
   cluster: Cluster | null
 }>()
 
-const emit = defineEmits(['close', 'saved'])
+const emit = defineEmits<{
+  (event: 'close'): void
+  (event: 'saved', message: string): void
+}>()
+
+function extractDaemonMessage(content: unknown): string {
+  if (content == null || content === '') return ''
+  if (typeof content === 'string') return content.trim()
+  if (typeof content === 'object') {
+    const record = content as Record<string, unknown>
+    for (const key of ['message', 'msg', 'detail', 'error']) {
+      const value = record[key]
+      if (typeof value === 'string' && value.trim()) {
+        return value.trim()
+      }
+    }
+  }
+  return ''
+}
 
 function handleEscKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
+  if (event.key === 'Escape' && !submitting.value) {
     emit('close')
   }
 }
 
 const loading = ref(false)
+const submitting = ref(false)
 const errorMsg = ref('')
 const successMsg = ref('')
 const fatalError = ref(false)
@@ -189,20 +208,23 @@ async function onSubmit() {
     return
   }
 
+  if (submitting.value) return
+  submitting.value = true
+
   try {
     const payload = buildPayload()
     const { data } = await props.apiClient.put('/api/v1/update', payload)
     if (data.status === true) {
-      successMsg.value = data.content?.message || 'Cluster updated successfully.'
-      setTimeout(() => {
-        emit('saved')
-        emit('close')
-      }, 1500)
+      const daemonMessage = extractDaemonMessage(data.content)
+      emit('saved', daemonMessage || 'Cluster updated successfully.')
+      emit('close')
       return
     }
-    errorMsg.value = data.content?.message || 'Update failed.'
+    errorMsg.value = extractDaemonMessage(data.content) || 'Update failed.'
   } catch (err: unknown) {
     errorMsg.value = err instanceof Error ? err.message : 'Unknown error occurred.'
+  } finally {
+    submitting.value = false
   }
 }
 const nameEditable = ref(false)
@@ -217,7 +239,7 @@ const liveNameValidationMsg = computed(() => {
 </script>
 
 <template>
-  <BaseModal size="large" @close="$emit('close')">
+  <BaseModal size="large" :close-disabled="submitting" @close="$emit('close')">
 
     <div class="tx-form-page">
       <div v-if="liveNameValidationMsg || errorMsg" class="alert alert-danger" role="alert">
@@ -471,7 +493,7 @@ const liveNameValidationMsg = computed(() => {
                   </div>
                 </div>
               </div> -->
-              <button type="submit" :disabled="Boolean(liveNameValidationMsg)">Save Changes</button>
+              <button type="submit" :disabled="submitting || Boolean(liveNameValidationMsg)">{{ submitting ? 'Saving...' : 'Save Changes' }}</button>
             </div>
           </div>
         </form>
