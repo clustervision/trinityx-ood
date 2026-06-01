@@ -5,7 +5,7 @@ import TextEditorModal from './TextEditorModal.vue'
 import { punAppAssetUrl } from '@/utils/publicAssets'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
-import { GROUP_NAME_MAX_LENGTH, normalizeGroupName, validateGroupNameInput } from '@/constants/groupName'
+import { normalizeGroupName, validateGroupNameInput } from '@/constants/groupName'
 
 const renameIcon = punAppAssetUrl('icons/icon-rename.png')
 
@@ -199,22 +199,15 @@ function noSpaces(e: KeyboardEvent) {
   }
 }
 
-function onNameDraftBlur() {
-  validateRenameTarget(nameDraft.value)
-}
-
 function startInlineRename() {
   if (props.mode !== 'edit') return
   nameInlineEdit.value = true
   nameDraft.value = form.name || originalGroupName.value
-  validateRenameTarget(nameDraft.value)
 }
 
 function cancelInlineRename() {
   nameInlineEdit.value = false
   nameDraft.value = form.name || originalGroupName.value
-  nameError.value = ''
-  isSubmitDisabled.value = false
   void nextTick(() => {
     const el = document.activeElement
     if (el instanceof HTMLElement) el.blur()
@@ -223,30 +216,6 @@ function cancelInlineRename() {
 
 function onNameDraftEscape() {
   cancelInlineRename()
-}
-
-function validateRenameTarget(value: string) {
-  if (props.mode !== 'edit' || !nameInlineEdit.value) return
-  if (!String(value || '').trim()) {
-    nameError.value = ''
-    isSubmitDisabled.value = false
-    return
-  }
-  const check = validateGroupNameInput(value)
-  if (!check.ok) {
-    nameError.value = check.message
-    isSubmitDisabled.value = true
-    return
-  }
-  const n = check.name
-  const orig = normalizeGroupName(originalGroupName.value)
-  if (n && n !== orig && props.groupList.includes(n)) {
-    nameError.value = 'Group name already exists'
-    isSubmitDisabled.value = true
-  } else {
-    nameError.value = ''
-    isSubmitDisabled.value = false
-  }
 }
 
 function openTextEditor(title: string, field: string) {
@@ -462,30 +431,38 @@ defineExpose({
   comparableSnapshot,
 })
 
-const nameError = ref('')
-const isSubmitDisabled = ref(false)
-function validateName(value: string) {
-  if (!String(value || '').trim()) {
-    nameError.value = ''
-    isSubmitDisabled.value = false
-    return
+const liveNameValidationMsg = computed(() => {
+  if (props.mode === 'clone') {
+    const n = String(form.newgroupname || '').trim()
+    if (!n) return ''
+    const check = validateGroupNameInput(n)
+    if (!check.ok) return check.message
+    if (props.groupList.includes(check.name)) return 'Group name already exists'
+    return ''
   }
-  const check = validateGroupNameInput(value)
-  if (!check.ok) {
-    nameError.value = check.message
-    isSubmitDisabled.value = true
-    return
+  if (props.mode === 'add') {
+    const n = String(form.name || '').trim()
+    if (!n) return ''
+    const check = validateGroupNameInput(n)
+    if (!check.ok) return check.message
+    if (props.groupList.includes(check.name)) return 'Group name already exists'
+    return ''
   }
-  const exists = props.groupList.includes(check.name)
+  if (props.mode === 'edit' && nameInlineEdit.value) {
+    const n = String(nameDraft.value || '').trim()
+    if (!n) return ''
+    const check = validateGroupNameInput(n)
+    if (!check.ok) return check.message
+    const orig = normalizeGroupName(originalGroupName.value)
+    if (check.name && check.name !== orig && props.groupList.includes(check.name)) {
+      return 'Group name already exists'
+    }
+    return ''
+  }
+  return ''
+})
 
-  if (exists) {
-    nameError.value = 'Group name already exists'
-    isSubmitDisabled.value = true
-  } else {
-    nameError.value = ''
-    isSubmitDisabled.value = false
-  }
-}
+const isSubmitDisabled = computed(() => Boolean(liveNameValidationMsg.value))
 
 </script>
 
@@ -493,14 +470,14 @@ function validateName(value: string) {
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
     <!-- 3-column top grid -->
-    <div v-if="nameError" class="alert alert-danger" role="alert">{{ nameError }}</div>
+    <div v-if="liveNameValidationMsg" class="alert alert-danger" role="alert">{{ liveNameValidationMsg }}</div>
     <div class="tx-add-grid tx-add-form-main">
       <!-- Column 1 -->
 
       <div class="tx-add-col">
         <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
           <span class="tx-label">Clone Name:</span>
-          <input type="text" v-model="form.newgroupname" autocomplete="off" @input="validateName(form.newgroupname)" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
+          <input type="text" v-model="form.newgroupname" autocomplete="off" :class="{ 'input-error': liveNameValidationMsg }" @keypress="noSpaces" required />
         </div>
         <div v-else class="tx-field tx-field-strong" :class="{ 'tx-field-name-with-rename': mode === 'edit' }">
           <span class="tx-label">Name:</span>
@@ -527,12 +504,10 @@ function validateName(value: string) {
                 v-model="nameDraft"
                 type="text"
                 class="tx-name-input-editing"
-                :maxlength="GROUP_NAME_MAX_LENGTH"
+                :class="{ 'input-error': liveNameValidationMsg }"
                 required
                 aria-label="Group name"
                 @keypress="noSpaces"
-                @blur="onNameDraftBlur"
-                @input="validateRenameTarget(nameDraft)"
                 @keydown.escape.stop="onNameDraftEscape"
               />
               <button
@@ -546,7 +521,7 @@ function validateName(value: string) {
               </button>
             </template>
           </div>
-          <input v-else type="text" v-model="form.name" @input="validateName(form.name)" @keypress="noSpaces" :maxlength="GROUP_NAME_MAX_LENGTH" required />
+          <input v-else type="text" v-model="form.name" :class="{ 'input-error': liveNameValidationMsg }" @keypress="noSpaces" required />
         </div>
         <template v-if="mode === 'clone'">
           <div class="tx-add-form-clone-roles-netboot tx-add-form-main">
