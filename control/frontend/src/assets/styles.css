@@ -605,9 +605,10 @@ body {
 }
 
 .tx-navbar-logo {
-  width: 40px;
-  height: 40px;
   display: block;
+  height: 40px;
+  width: auto;
+  max-width: 140px;
   object-fit: contain;
 }
 

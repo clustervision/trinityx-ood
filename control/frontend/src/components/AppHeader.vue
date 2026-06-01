@@ -3,7 +3,7 @@
     <ol class="tx-breadcrumb">
       <li class="tx-breadcrumb-logo">
         <a :href="homeUrl">
-          <img v-if="!logoHidden" :src="logoSrc" alt="Logo" class="tx-navbar-logo" @error="onLogoError" />
+          <img v-if="!logoHidden" :src="logoSrc" alt="trinityX" class="tx-navbar-logo" @error="onLogoError" />
         </a>
       </li>
       <li class="tx-breadcrumb-item">
@@ -36,7 +36,11 @@ const homeUrl = computed(() => {
   return `https://${window.location.hostname}:8080`
 })
 
-const logoSrc = computed(() => (logoHidden.value ? '' : punAppAssetUrl('static/img/logo.png')))
+const logoSrc = computed(() => {
+  if (logoHidden.value) return ''
+  if (import.meta.env.DEV) return '/img/logo.png'
+  return punAppAssetUrl('img/logo.png')
+})
 
 function onLogoError() {
   logoHidden.value = true

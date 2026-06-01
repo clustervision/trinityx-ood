@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy:ood": "npm run build && node -e \"const fs=require('fs');const p=require('path');const src='dist';const dest=p.join('..','trinityx-ood','control','app','assets');fs.mkdirSync(p.join(dest,'img'),{recursive:true});['index.js','index.css'].forEach(f=>fs.copyFileSync(p.join(src,f),p.join(dest,f)));fs.copyFileSync(p.join(src,'img','logo.png'),p.join(dest,'img','logo.png'));console.log('Deployed to',dest);\"",
     "preview": "vite preview",
     "type-check": "vue-tsc --build"
   },
