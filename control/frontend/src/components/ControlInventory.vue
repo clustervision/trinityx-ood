@@ -99,8 +99,8 @@
                 <td class="tx-td-name tx-col-name">{{ row.node }}</td>
                 <td class="tx-td-actions">
                   <div class="tx-control-cell-actions tx-control-cell-actions--row">
-                    <span :class="statusDotClass(row.power)" aria-hidden="true" />
-                    <span :class="statusClass(row.power)">{{ row.power || 'UNKNOWN' }}</span>
+                    <span :class="powerStatusDotClass(row.power)" aria-hidden="true" />
+                    <span :class="powerStatusTextClass(row.power)">{{ powerStatusLabel(row.power) }}</span>
                     <button type="button" class="tx-btn tx-btn-orange tx-btn-cell" @click="emitSingle('power', 'reset', row.node)">
                       RESET
                     </button>
@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import type { ControlStatusRow } from '@/types'
+import { powerStatusDotClass, powerStatusLabel, powerStatusTextClass } from '@/utils'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -245,17 +246,4 @@ function emitSingle(system: string, action: string, node: string) {
   emit('single', system, action, node)
 }
 
-function statusClass(value: string): string {
-  const v = value.toUpperCase()
-  if (v.includes('ON') || v.includes('OK')) return 'tx-status-text tx-status-ok-text'
-  if (v.includes('OFF')) return 'tx-status-text tx-status-warn-text'
-  return 'tx-status-text tx-status-bad-text'
-}
-
-function statusDotClass(value: string): string {
-  const v = value.toUpperCase()
-  if (v.includes('ON') || v.includes('OK')) return 'tx-status-dot tx-status-ok'
-  if (v.includes('OFF')) return 'tx-status-dot tx-status-warn'
-  return 'tx-status-dot tx-status-bad'
-}
 </script>

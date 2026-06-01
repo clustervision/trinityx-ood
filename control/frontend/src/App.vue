@@ -22,7 +22,7 @@ import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import ControlInventory from './components/ControlInventory.vue'
 import { fetchControlStatus, pollRequestDone, triggerAction } from './api'
-import { appUrlFromRuntime } from './utils'
+import { appUrlFromRuntime, resetPowerNotification } from './utils'
 import type { ControlStatusRow } from './types'
 
 const rows = ref<ControlStatusRow[]>([])
@@ -56,7 +56,10 @@ async function runAction(system: string, action: string, hostlist: string[]) {
     if (requestId) await pollRequestDone(requestId)
     await refresh()
     messageOk.value = true
-    message.value = `${system}/${action} completed for ${hostlist.join(', ')}`
+    const resetMsg =
+      system === 'power' && action === 'reset' ? resetPowerNotification(rows.value, hostlist) : null
+    message.value =
+      resetMsg ?? `${system}/${action} completed for ${hostlist.join(', ')}`
   } catch (e) {
     messageOk.value = false
     message.value = e instanceof Error ? e.message : 'Operation failed.'
