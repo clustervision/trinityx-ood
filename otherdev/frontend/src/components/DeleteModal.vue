@@ -14,7 +14,6 @@ const props = defineProps<{
 
 const deleting = ref(false)
 const errorMsg = ref('')
-const successMsg = ref('')
 
 const emit = defineEmits(['close', 'deleted'])
 
@@ -29,20 +28,14 @@ async function onDelete() {
 
   deleting.value = true
   errorMsg.value = ''
-  successMsg.value = ''
 
   try {
     const recordName = encodeURIComponent(props.otherdevName)
     const { data } = await props.apiClient.delete(`/api/v1/delete/${recordName}`)
 
     if (data.status === true) {
-      successMsg.value = data.content?.message || 'Other Device deleted successfully.'
-
-      setTimeout(() => {
-        emit('deleted')
-        emit('close')
-      }, 3000)
-
+      emit('deleted')
+      emit('close')
       return
     }
 
@@ -69,7 +62,6 @@ onBeforeUnmount(() => {
   <BaseModal size="small" @close="$emit('close')">
     <div class="tx-delete-confirm">
       <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-      <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
       <h3 class="tx-delete-title">Delete Other Device <strong class="tx-title-highlight-name" :title="otherdevNameTitle(otherdevName)">{{ formatOtherDevNameDisplay(otherdevName) }}</strong>?</h3>
       <p class="tx-delete-desc">This action cannot be undone.</p>
       <div class="tx-delete-actions">

@@ -50,7 +50,6 @@ const emit = defineEmits<{
 
 const loading = ref(false)
 const errorMsg = ref('')
-const successMsg = ref('')
 const fatalError = ref(false)
 const networkLoading = ref(false)
 const networkErrorMsg = ref('')
@@ -329,7 +328,6 @@ watch(
     renameDraft.value = ''
     errorMsg.value = ''
     networkErrorMsg.value = ''
-    successMsg.value = ''
 
     if (props.mode === 'add') {
       form.name = ''
@@ -466,7 +464,6 @@ function buildRenamePayload(oldName: string, newotherdevname: string) {
 
 async function onSubmit() {
   errorMsg.value = ''
-  successMsg.value = ''
 
   if (submitValidationMsg.value) {
   errorMsg.value = submitValidationMsg.value
@@ -560,19 +557,8 @@ async function onSubmit() {
     }
 
     if (data.status === true) {
-      successMsg.value =
-        data.content?.message ||
-        (props.mode === 'add'
-          ? 'Other Device added successfully.'
-          : props.mode === 'update'
-            ? 'Other Device updated successfully.'
-            : 'Other Device cloned successfully.')
-
-      setTimeout(() => {
-        emit('saved')
-        emit('close')
-      }, 3000)
-
+      emit('saved')
+      emit('close')
       return
     }
 
@@ -591,8 +577,6 @@ async function onSubmit() {
        <div v-if="liveNameValidationMsg || errorMsg" class="alert-danger" role="alert">
           {{ liveNameValidationMsg || errorMsg }}
         </div>
-      <div v-if="successMsg" class="alert-success" role="alert">{{ successMsg }}</div>
-
       <template v-if="!fatalError">
         <div class="otherdev-header otherdev-modal-header">
           <h2 class="otherdev-title">{{ modalTitle }}</h2>
