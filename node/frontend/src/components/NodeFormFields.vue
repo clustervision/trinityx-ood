@@ -11,7 +11,6 @@
           :class="{ 'input-error': liveNameValidationMsg }"
           @keypress="noSpaces"
           @blur="onCloneNameBlur"
-          maxlength="100"
           required
         />
       </div>
@@ -41,7 +40,6 @@
               type="text"
               class="tx-name-input-editing"
               :class="{ 'input-error': liveNameValidationMsg }"
-              maxlength="100"
               required
               aria-label="Node name"
               @keypress="noSpaces"
@@ -66,7 +64,6 @@
           :class="{ 'input-error': liveNameValidationMsg }"
           @keypress="noSpaces"
           @blur="onAddNameBlur"
-          maxlength="100"
           required
         />
       </div>
