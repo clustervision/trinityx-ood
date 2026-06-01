@@ -55,6 +55,7 @@ const cluster = ref<Cluster | null>(null)
 const ha_controllers = ref<Controller[]>([]);
 
 const errorMsg = ref('')
+const successMsg = ref('')
 const httpError = ref('')
 const helpOpen = ref(false)
 
@@ -65,6 +66,7 @@ const activeModal = ref(false);
  * UI Actions
  * ---------------------- */
 function openModal() {
+  successMsg.value = ''
   activeModal.value = true
 }
 
@@ -72,10 +74,11 @@ function closeModal() {
   activeModal.value = false
 }
 
-function onSaved() {
+function onSaved(message: string) {
   closeModal()
+  errorMsg.value = ''
+  successMsg.value = message
   loadData()
-  // inventoryRef.value?.loadData?.()
 }
 const CLUSTER_STATIC_KEYS = new Set([
   'name', 'user', 'domain_search', 'nameserver_ip', 'forwardserver_ip',
@@ -99,8 +102,10 @@ async function loadData() {
       } else {
         errorMsg.value = data.content?.message
       }
+      successMsg.value = ''
     }
   } catch (err: unknown) {
+    successMsg.value = ''
     if (err instanceof Error) {
       errorMsg.value = err.message
     } else {
@@ -135,6 +140,7 @@ function boolBadge(value: boolean | string | null | undefined): string {
     <main class="tx-app-main">
 
       <div class="tx-shell tx-inventory-page">
+        <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
         <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
 
         <div class="tx-header">
