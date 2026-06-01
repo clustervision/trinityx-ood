@@ -11,6 +11,7 @@ interface NetworkListResponse {
     options?: string[]
     selected?: string | null
   }
+  record_error?: string
   content?: {
     message?: string
   }
@@ -192,6 +193,10 @@ const submitValidationMsg = computed(() => {
 
   if (isClone.value && !form.newotherdevname.trim()) {
     return 'Other Device New Name is required for clone.'
+  }
+
+  if (!form.network.trim()) {
+    return 'Please select a network.'
   }
 
   return liveNameValidationMsg.value
@@ -387,11 +392,26 @@ async function loadNetworkOptions() {
 
     if (requestId !== networkRequestId) return
 
+    if (data.status === false) {
+      const msg =
+        (typeof data.content === 'string' ? data.content : data.content?.message) ||
+        'Could not load networks from Luna.'
+      networkOptions.value = []
+      networkErrorMsg.value = String(msg)
+      return
+    }
+
     const options = data.network_list?.options ?? []
     const selected = data.network_list?.selected ?? null
     const sourceNetwork = asString(getSourceOtherDevData().network)
 
     networkOptions.value = options
+
+    if (data.record_error) {
+      networkErrorMsg.value = data.record_error
+    } else if (options.length === 0) {
+      networkErrorMsg.value = 'No networks found in Luna. Create a network first.'
+    }
 
     if (isAdd.value) {
       form.network = ''
@@ -574,8 +594,8 @@ async function onSubmit() {
 <template>
   <BaseModal size="large" @close="emit('close')">
     <div class="tx-form-page otherdev-modal-page">
-       <div v-if="liveNameValidationMsg || errorMsg" class="alert-danger" role="alert">
-          {{ liveNameValidationMsg || errorMsg }}
+       <div v-if="liveNameValidationMsg || errorMsg || networkErrorMsg" class="alert-danger" role="alert">
+          {{ liveNameValidationMsg || errorMsg || networkErrorMsg }}
         </div>
       <template v-if="!fatalError">
         <div class="otherdev-header otherdev-modal-header">
@@ -663,11 +683,11 @@ async function onSubmit() {
               </div>
 
 
-                <div class="otherdev-form-field">
+                <div class="otherdev-form-field mandatory">
                 <label class="otherdev-field-label" for="otherdev-network">NETWORK:</label>
 
                 <div class="otherdev-select-wrapper">
-                  <select id="otherdev-network" v-model="form.network" class="otherdev-select" :class="{ 'otherdev-select-placeholder': !form.network }" :disabled="networkLoading">
+                  <select id="otherdev-network" v-model="form.network" class="otherdev-select" :class="{ 'otherdev-select-placeholder': !form.network, 'otherdev-input-error': !form.network.trim() && submitValidationMsg === 'Please select a network.' }" :disabled="networkLoading" required>
                     <option value="">--- Select ---</option>
                     <option v-for="network in networkOptions" :key="network" :value="network">{{ network }}</option>
                   </select>
