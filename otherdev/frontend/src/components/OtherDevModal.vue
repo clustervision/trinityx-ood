@@ -4,7 +4,7 @@ import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue'
 import type { AxiosInstance } from 'axios'
 import BaseModal from './BaseModal.vue'
 import TextEditorModal from './TextEditorModal.vue'
-import { OTHER_DEV_NAME_MAX_LENGTH, validateOtherdevNameInput } from '@/constants/otherdevName'
+import { validateOtherdevNameInput } from '@/constants/otherdevName'
 
 interface NetworkListResponse {
   network_list?: {
@@ -616,7 +616,6 @@ async function onSubmit() {
                     autocomplete="off"
                     required
                     class="otherdev-input"
-                    :maxlength="OTHER_DEV_NAME_MAX_LENGTH"
                     :class="{ 'otherdev-input-error': liveNameValidationMsg }"
                   >
                   <div v-else-if="isUpdate" class="tx-name-input-wrap otherdev-name-rename-wrap">
@@ -656,7 +655,7 @@ async function onSubmit() {
                         v-model.trim="renameDraft"
                         type="text"
                         class="tx-name-input-editing"
-                        :maxlength="OTHER_DEV_NAME_MAX_LENGTH"
+                        :class="{ 'otherdev-input-error': liveNameValidationMsg }"
                         aria-label="Other device name"
                         @keyup.escape="cancelRename"
                       >
@@ -676,7 +675,7 @@ async function onSubmit() {
 
               <div v-if="isClone" class="otherdev-form-field mandatory">
                 <label class="otherdev-field-label" for="otherdev-new-name">CLONE NAME:</label>
-                <input id="otherdev-new-name" v-model.trim="form.newotherdevname" type="text" class="otherdev-input" autocomplete="off" :maxlength="OTHER_DEV_NAME_MAX_LENGTH" :class="{ 'otherdev-input-error': liveNameValidationMsg }" required>
+                <input id="otherdev-new-name" v-model.trim="form.newotherdevname" type="text" class="otherdev-input" autocomplete="off" :class="{ 'otherdev-input-error': liveNameValidationMsg }" required>
               </div>
 
 
