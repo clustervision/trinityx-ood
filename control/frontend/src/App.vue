@@ -1,32 +1,35 @@
 <template>
-  <div class="tx-app">
+  <div class="tx-app-layout">
     <AppHeader />
-    <main class="tx-main">
-      <div v-if="message" :class="messageOk ? 'alert-success' : 'alert-danger'">{{ message }}</div>
+    <main class="tx-app-main">
       <ControlInventory
         :rows="rows"
         :selected="selectedNodes"
+        :message="message"
+        :message-ok="messageOk"
         @toggle-select="(v) => (selectedNodes = v)"
         @bulk="runBulk"
         @single="runSingle"
       />
     </main>
-    <AppFooter />
+    <AppFooter :app-url="appUrl" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import ControlInventory from './components/ControlInventory.vue'
 import { fetchControlStatus, pollRequestDone, triggerAction } from './api'
+import { appUrlFromRuntime } from './utils'
 import type { ControlStatusRow } from './types'
 
 const rows = ref<ControlStatusRow[]>([])
 const selectedNodes = ref<string[]>([])
 const message = ref('')
 const messageOk = ref(true)
+const appUrl = computed(() => appUrlFromRuntime())
 
 async function refresh() {
   const status = await fetchControlStatus()

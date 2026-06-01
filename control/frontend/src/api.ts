@@ -1,12 +1,7 @@
 import type { BulkStatusResult, ControlStatusRow, RequestEnvelope } from './types'
+import { oodAppRoot } from './utils/oodAppRoot'
 
-function oodAppRoot(): string {
-  const explicit = String(window.APP_URL || import.meta.env.VITE_APP_URL || '').trim().replace(/\/$/, '')
-  if (explicit && !/^\{\{/.test(explicit)) return explicit
-  return `${window.location.origin}${window.location.pathname}`.replace(/\/$/, '')
-}
-
-function baseUrl(): string {
+export function baseUrl(): string {
   if (import.meta.env.DEV) return '/control-backend'
   return oodAppRoot()
 }
