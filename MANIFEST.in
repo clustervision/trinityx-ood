@@ -28,20 +28,10 @@ include cluster/app/assets/*
 
 include control
 include control/*
-include control/static
-include control/static/*
-include control/static/css
-include control/static/css/*
-include control/static/fonts
-include control/static/fonts/*
-include control/static/img
-include control/static/img/*
-include control/static/js
-include control/static/js/*
-include control/templates
-include control/templates/*
-include control/templates/layout
-include control/templates/layout/*
+include control/app
+include control/app/*
+include control/app/assets
+include control/app/assets/*
 
 include bmcsetup
 include bmcsetup/*

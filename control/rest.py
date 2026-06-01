@@ -107,6 +107,14 @@ class Rest():
         return response
 
 
+    def app_url(self, request):
+        """
+        Base URL for the SPA shell.
+        """
+        full_url = f"{request.scheme}://{request.host}{request.path}"
+        return {"APP_URL": full_url}
+
+
     def token(self):
         """
         This method will fetch a valid token for further use.
