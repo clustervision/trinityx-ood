@@ -94,20 +94,10 @@ include switch/app/assets/*
 
 include secrets
 include secrets/*
-include secrets/static
-include secrets/static/*
-include secrets/static/css
-include secrets/static/css/*
-include secrets/static/fonts
-include secrets/static/fonts/*
-include secrets/static/img
-include secrets/static/img/*
-include secrets/static/js
-include secrets/static/js/*
-include secrets/templates
-include secrets/templates/*
-include secrets/templates/layout
-include secrets/templates/layout/*
+include secrets/app
+include secrets/app/*
+include secrets/app/assets
+include secrets/app/assets/*
 
 
 include dns

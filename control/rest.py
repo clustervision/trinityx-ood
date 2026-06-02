@@ -109,10 +109,21 @@ class Rest():
 
     def app_url(self, request):
         """
-        Base URL for the SPA shell.
+        Base URL for the SPA shell (window.APP_URL). Uses SCRIPT_NAME so OOD
+        paths like /pun/sys/trinity_control are included.
         """
-        full_url = f"{request.scheme}://{request.host}{request.path}"
-        return {"APP_URL": full_url}
+        from flask import url_for
+
+        scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+        root = f"{scheme}://{request.host}".rstrip('/')
+        sr = (getattr(request, 'script_root', None) or request.environ.get('SCRIPT_NAME') or '').rstrip('/')
+        if sr:
+            return {"APP_URL": f"{root}{sr}"}
+        home = url_for('home', _external=False)
+        if home and home != '/':
+            return {"APP_URL": f"{root}{home}".rstrip('/')}
+        path = (request.path or '/').rstrip('/')
+        return {"APP_URL": f"{root}{path}" if path else root}
 
 
     def token(self):
