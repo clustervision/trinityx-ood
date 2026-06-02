@@ -1,313 +1,163 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-# This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>
-
-"""
-This File is a Main File Luna 2 Secrets.
-This file will create flask object and serve the all routes for on demand.
-"""
-
-__author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
-__license__     = 'GPL'
-__version__     = '2.0'
-__maintainer__  = 'Sumit Sharma'
-__email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
-
-
 import os
-import json
-from html import unescape
-from flask import Flask, request, abort, render_template, flash, url_for, redirect
+from flask import Flask, jsonify, render_template, request
+from flask_cors import CORS
+from constant import APP_STATE, INI_FILE, LICENSE, TOKEN_FILE
 from log import Log
 from rest import Rest
-from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
-from helper import Helper
-from presenter import Presenter
-from model import Model
 
-logger = Log.init_log('INFO')
-app = Flask(__name__, static_folder="static")
+LOGGER = Log.init_log("INFO")
+TABLE = "secrets"
+API_VERSION = "v1"
+ENTITIES = {"group", "node"}
+
+app = Flask(__name__, static_folder="static", template_folder="app")
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
-
-if APP_STATE is False: 
+if APP_STATE is False:
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
     app.config["DEBUG"] = True
     os.environ["FLASK_ENV"] = "development"
 
 
 @app.before_request
 def validate_home_directory():
-    """
-    Validate the $HOME directory of the user before proceeding further.
-    """
-    if request.path.startswith('/static/'):
-        return
+    if request.path.startswith("/static/"):
+        return None
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table="Secrets", data="", error=TOKEN_FILE["error"])
-    file_check = os.path.isfile(INI_FILE)
-    if file_check is False:
-        return render_template("error.html", table="Secrets", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
-    read_check = os.access(INI_FILE, os.R_OK)
-    if read_check is False:
-        return render_template("error.html", table="Secrets", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
+    if not os.path.isfile(INI_FILE):
+        return render_template("error.html", table="Secrets", data="", error=f"Luna Configuration File: <strong>{INI_FILE}</strong> Not Found")
+    if not os.access(INI_FILE, os.R_OK):
+        return render_template("error.html", table="Secrets", data="", error=f"Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.")
     return None
 
 
 @app.errorhandler(404)
 def page_not_found(e):
-    """
-    This method will redirect to error Template Page with Error Message on 404.
-    """
     return render_template("error.html", table="Secrets", data="", error=f"ERROR :: {e}"), 200
 
 
-@app.route('/', methods=['GET'])
-@app.route('/<string:entity>', methods=['GET'])
-def home(entity=None):
+def _response_from_requests(resp, ok_statuses):
+    if resp is False or resp is None:
+        return {"status": False, "status_code": 500, "content": {"message": "Daemon request failed"}}
+    try:
+        body = resp.json()
+    except Exception:
+        body = {"message": resp.text if getattr(resp, "text", "") else "Invalid daemon response"}
+    status_ok = resp.status_code in ok_statuses
+    return {"status": status_ok, "status_code": resp.status_code, "content": body if isinstance(body, dict) else {"message": str(body)}}
+
+
+def _secret_payload(entity, owner, secret, path, content):
+    return {"config": {TABLE: {entity: {owner: [{"name": secret, "path": path, "content": content}]}}}}
+
+
+@app.route("/", methods=["GET"])
+def home():
+    return render_template("index.html", APP_URL=request.base_url.rstrip("/"))
+
+
+@app.route(f"/api/{API_VERSION}/routes", methods=["GET"])
+def routes():
+    response = []
+    for rule in app.url_map.iter_rules():
+        if str(rule.endpoint) == "static":
+            continue
+        method = ",".join(sorted(m for m in rule.methods if m not in {"HEAD", "OPTIONS"}))
+        response.append({"route": f"https://{request.environ['HTTP_HOST']}{rule}", "function": str(rule.endpoint), "method": method})
+    return jsonify(response), 200
+
+
+@app.route(f"/api/{API_VERSION}/secrets", methods=["GET"])
+def list_secrets():
     """
-    This is the main method of application. It will list all Secrets which is available with daemon.
+    Return all secrets from the Luna daemon.
+
+    Important: always respond with HTTP 200 so the SPA can rely on the
+    JSON envelope (`status` + `status_code`) instead of the HTTP code,
+    matching the behaviour of the Network / Group / Node backends.
     """
-    table = 'secrets'
-    secrets = True
-    group_secrets, node_secrets = '', ''
-    record=None
-    secret=None
-    uri = 'secrets'
-    if record:
-        uri = f'{uri}/{entity}/{record}'
-        if secret:
-            uri = f'{uri}/{secret}'
-    secret_list = Rest().get_data(uri)
-    if secret_list:
-        secret_data = secret_list['config']['secrets']
-        if 'group' in secret_data:
-            fields, rows  =  Helper().get_secrets('groupsecrets', secret_data['group'])
-            group_secrets = Presenter().show_table(fields, rows)
-            group_secrets = unescape(group_secrets)
-        if 'node' in secret_data:
-            fields, rows  =  Helper().get_secrets('nodesecrets', secret_data['node'])
-            node_secrets = Presenter().show_table(fields, rows)
-            node_secrets = unescape(node_secrets)
-    else:
-        flash('Secrets are not available.', 'error')
-        secrets = False
-    if entity:
-        if entity == 'group':
-            node_secrets = ''
-        elif entity == 'node':
-            group_secrets = ''
-        else:
-            abort(404, None)
-
-    return render_template("inventory.html", table = table.capitalize(), secrets=secrets, group_secrets=group_secrets, node_secrets=node_secrets, data=None, entity=entity)
+    response = Rest().get_data(TABLE)
+    if not response:
+        return jsonify(
+            {
+                "status": False,
+                "status_code": 400,
+                "content": {"message": "Failed to load secrets from daemon."},
+            }
+        ), 200
+    return jsonify({"status": True, "status_code": 200, "content": response}), 200
 
 
-@app.route('/show/<string:table>/<string:record>/<string:secret>', methods=['GET'])
-def show(table=None, record=None, secret=None):
-    """
-    This Method will show a specific record.
-    """
-    data = ""
-    entity = table.replace('secrets', '')
-    table = 'secrets'
-    entity_name = record
-    secret_name = secret
-    record = f'{entity}/{entity_name}/{secret_name}'
-    table_data = Rest().get_data(table, record)
-    if table_data:
-        raw_data = table_data['config'][table][entity][entity_name]
-        raw_data = Helper().prepare_json(raw_data)
-        fields, rows  = Helper().filter_secret_col(
-                entity+table,
-                table_data['config'][table][entity]
-            )
-        data = Presenter().show_table_col(fields, rows)
-        data = unescape(data)
-    else:
-        error = f'{record} From {table.capitalize()} is Not available at this time'
-    return render_template("info.html", table = table.capitalize(), data = data, entity=entity, entity_name=entity_name, secret_name=secret_name, record=record)
+@app.route(f"/api/{API_VERSION}/add", methods=["POST"])
+def add_secret():
+    payload = request.get_json(silent=True) or {}
+    entity = str(payload.get("entity", "")).strip().lower()
+    owner = str(payload.get("owner", "")).strip()
+    secret = str(payload.get("secret", "")).strip()
+    path = str(payload.get("path", "")).strip()
+    content = str(payload.get("content", ""))
+    if entity not in ENTITIES or not owner or not secret:
+        return jsonify({"status": False, "status_code": 400, "content": {"message": "entity, owner and secret are required"}}), 400
+    request_data = _secret_payload(entity, owner, secret, path, content)
+    resp = Rest().post_data(TABLE, f"{entity}/{owner}", request_data)
+    return jsonify(_response_from_requests(resp, {201, 204})), 200
 
 
-@app.route('/get_list/<string:table>', methods=['GET', 'POST'])
-def get_list(table=None):
-    """
-    This method will return the list of element in table for as option for select tag.
-    """
-    response = None
-    if request:
-        response = Model().get_list_options(table)
-        response = json.dumps(response)
-    return response
+@app.route(f"/api/{API_VERSION}/update", methods=["PUT"])
+def update_secret():
+    payload = request.get_json(silent=True) or {}
+    original = payload.get("original", {})
+    updated = payload.get("updated", {})
+    entity = str(original.get("entity", "")).strip().lower()
+    owner = str(original.get("owner", "")).strip()
+    secret = str(original.get("secret", "")).strip()
+    new_name = str(updated.get("secret", secret)).strip()
+    path = str(updated.get("path", "")).strip()
+    content = str(updated.get("content", ""))
+    if entity not in ENTITIES or not owner or not secret:
+        return jsonify({"status": False, "status_code": 400, "content": {"message": "original.entity, original.owner and original.secret are required"}}), 400
+    request_data = _secret_payload(entity, owner, new_name, path, content)
+    resp = Rest().post_data(TABLE, f"{entity}/{owner}/{secret}", request_data)
+    return jsonify(_response_from_requests(resp, {204, 201})), 200
 
 
-@app.route('/add/<string:table>', methods=['GET', 'POST'])
-def add(table=None):
-    """
-    This Method will add a requested record.
-    """
-    page = "Add New Secret"
-    table_split = table.split('_')
-    entity = table_split[0]
-    table_name = table_split[1]
-    table_capital = f'{entity.capitalize()} {table_name.capitalize()}'
-    select_list = Model().get_list_option_html(entity)
-    if request.method == 'POST':
-        payload = Helper().prepare_payload(None, request.form)
-        table_data = Rest().get_data('secrets', f'{entity}/{payload["name"]}/{payload["secret"]}')        
-        if table_data:
-            for each in table_data['config']['secrets'][entity][payload["name"]]:
-                if payload['secret'] in each['name']:
-                    error = f'HTTP ERROR :: {payload["secret"]} is already present in the {payload["name"]}.'
-                    flash(error, "error")
-                    return redirect(url_for('add', table=table), code=302)
-        entity_name = payload['name']
-        del payload['name']
-        payload['name'] = payload['secret']
-        del payload['secret']
-        request_data = {'config': {'secrets': {entity: {entity_name: [payload]}}}}
-        uri = f'{entity}/{entity_name}'
-        response = Rest().post_data('secrets', uri, request_data)
-
-        if response.status_code == 201:
-            flash(f'{table_name.capitalize()}, {payload["name"]} Created.', "success")
-            return redirect(url_for('home'), code=302)
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-            return redirect(url_for('add', table=table), code=302)
-    else:
-        return render_template("add.html", table = table_name.capitalize(), entity=entity, select_list=select_list, page=page)
+@app.route(f"/api/{API_VERSION}/clone", methods=["POST"])
+def clone_secret():
+    payload = request.get_json(silent=True) or {}
+    original = payload.get("original", {})
+    clone = payload.get("clone", {})
+    entity = str(original.get("entity", "")).strip().lower()
+    owner = str(original.get("owner", "")).strip()
+    secret = str(original.get("secret", "")).strip()
+    new_name = str(clone.get("secret", "")).strip()
+    path = str(clone.get("path", "")).strip()
+    content = str(clone.get("content", ""))
+    if entity not in ENTITIES or not owner or not secret or not new_name:
+        return jsonify({"status": False, "status_code": 400, "content": {"message": "original + clone.secret are required"}}), 400
+    request_data = _secret_payload(entity, owner, secret, path, content)
+    request_data["config"][TABLE][entity][owner][0]["newsecretname"] = new_name
+    resp = Rest().post_clone(TABLE, f"{entity}/{owner}/{secret}", request_data)
+    return jsonify(_response_from_requests(resp, {201, 204})), 200
 
 
-@app.route('/edit/<string:table>/<string:record>/<string:secret>', methods=['GET', 'POST'])
-def edit(table=None, record=None, secret=None):
-    """
-    This Method will add a requested record.
-    """
-    data = {}
-    return_table = table
-    entity = table.replace('secrets', '')
-    table = 'secrets'
-    entity_name = record
-    secret_name = secret
-    uri = f'{entity}/{entity_name}/{secret_name}'
-    table_data = Rest().get_data(table, uri)
-    if isinstance(table_data, dict):
-        data = table_data['config'][table][entity][entity_name][0]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
-    if request.method == 'POST':
-        payload = Helper().prepare_payload(None, request.form)
-        del payload['name']
-        payload['name'] = payload['secret']
-        del payload['secret']
-        request_data = {'config': {'secrets': {entity: {entity_name: [payload]}}}}
-        uri = f'{entity}/{entity_name}'
-        response = Rest().post_data('secrets', uri, request_data)
-
-        if response.status_code == 204:
-            flash(f'{table.capitalize()}, {payload["name"]} Updated.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('edit', table=return_table, record=record, secret=secret), code=302)
-    else:
-        return render_template("edit.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name, record=record)
+@app.route(f"/api/{API_VERSION}/delete/<string:entity>/<string:owner>/<string:secret>", methods=["DELETE"])
+def delete_secret(entity, owner, secret):
+    if entity not in ENTITIES:
+        return jsonify({"status": False, "status_code": 400, "content": {"message": "entity must be group or node"}}), 400
+    resp = Rest().get_delete(TABLE, f"{entity}/{owner}/{secret}")
+    return jsonify(_response_from_requests(resp, {204})), 200
 
 
-@app.route('/delete/<string:table>/<string:record>/<string:secret>', methods=['GET'])
-def delete(table=None, record=None, secret=None):
-    """
-    This Method will delete a requested record.
-    """
-    entity = table.replace('secrets', '')
-    table = 'secrets'
-    entity_name = record
-    secret_name = secret
-    uri = f'{entity}/{entity_name}/{secret_name}'
-    response = Rest().get_delete(table, uri)
-
-    if response.status_code == 204:
-        flash(f'{entity_name} secret {secret_name} is deleted.', "success")
-    else:
-        flash('ERROR :: Something went wrong!', "error")
-    return redirect(url_for('home'), code=302)
-
-
-@app.route('/clone/<string:table>/<string:record>/<string:secret>', methods=['GET', 'POST'])
-def clone(table=None, record=None, secret=None):
-    """
-    This Method will add a requested record.
-    """
-    data = {}
-    return_table = table
-    entity = table.replace('secrets', '')
-    table = 'secrets'
-    entity_name = record
-    secret_name = secret
-    uri = f'{entity}/{entity_name}/{secret_name}'
-    table_data = Rest().get_data(table, uri)
-    if isinstance(table_data, dict):
-        data = table_data['config'][table][entity][entity_name][0]
-        data = {k: v for k, v in data.items() if v not in [None, '', 'None']}
-        data = Helper().prepare_json(data)
-    if request.method == 'POST':
-        payload = Helper().prepare_payload(None, request.form)
-        del payload['name']
-        payload['name'] = payload['secret']
-        del payload['secret']
-        request_data = {'config': {'secrets': {entity: {entity_name: [payload]}}}}
-        uri = f'{entity}/{entity_name}/{secret_name}'
-
-        response = Rest().post_clone('secrets', uri, request_data)
-
-        if response.status_code == 201:
-            flash(f'{table.capitalize()}, {payload["name"]} Cloned to {payload["newsecretname"]}.', "success")
-        else:
-            response_json = response.json()
-            error = f'HTTP ERROR :: {response.status_code} - {response_json["message"]}'
-            flash(error, "error")
-        return redirect(url_for('clone', table=return_table, record=record, secret=secret), code=302)
-    else:
-        return render_template("clone.html", table = table.capitalize(), data=data, entity=entity, entity_name=entity_name, secret_name=secret_name)
-
-
-@app.route('/license', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/license", methods=["GET"])
 def license_info():
-    """
-    This Method will provide license in details.
-    """
-    response= 'LICENSE Information is not available at this moment.'
-    file_check = os.path.isfile(LICENSE)
-    read_check = os.access(LICENSE, os.R_OK)
-    if file_check and read_check:
-        with open(LICENSE, 'r', encoding="utf-8") as file_data:
-            response = file_data.readlines()
-            response = '<br />'.join(response)
+    response = "LICENSE Information is not available at this moment."
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, "r", encoding="utf-8") as file_data:
+            response = "<br />".join(file_data.readlines())
     return response
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
-        app.run(host='0.0.0.0', port=7755, debug=True)
-    else:
-        app.run()
+    app.run(host="0.0.0.0", port=7755, debug=(APP_STATE is False))

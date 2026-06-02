@@ -23,3 +23,5 @@ cd control && npm ci && npm run build
 ```
 
 Flask serves the SPA shell from `app/index.html` and static files from `app/assets/` (`static_url_path=/app/assets`).
+
+Copy the logo from the frontend build: `control/public/img/logo.png` → `app/assets/img/logo.png` (deploy `dist/img/` with `dist/index.js` and `dist/index.css`).
