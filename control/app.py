@@ -73,6 +73,12 @@ def page_not_found(e):
     """
     This method will redirect to error Template Page with Error Message on 404.
     """
+    try:
+        p = request.path or ""
+    except RuntimeError:
+        p = ""
+    if p.startswith("/app/assets/"):
+        return "Not Found", 404, {"Content-Type": "text/plain; charset=utf-8"}
     return render_template("error.html", table="Control Nodes", data="", error=f"ERROR :: {e}"), 200
 
 
