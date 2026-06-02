@@ -11,7 +11,12 @@ TABLE = "secrets"
 API_VERSION = "v1"
 ENTITIES = {"group", "node"}
 
-app = Flask(__name__, static_folder="static", template_folder="app")
+app = Flask(
+    __name__,
+    static_folder="app/assets",
+    static_url_path="/app/assets",
+    template_folder="app",
+)
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False:
@@ -22,7 +27,7 @@ if APP_STATE is False:
 
 @app.before_request
 def validate_home_directory():
-    if request.path.startswith("/static/"):
+    if request.path.startswith("/app/assets/"):
         return None
     if isinstance(TOKEN_FILE, dict):
         return render_template("error.html", table="Secrets", data="", error=TOKEN_FILE["error"])
