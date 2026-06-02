@@ -1,4 +1,5 @@
 export const DNS_NAME_MAX_LENGTH = 200
+export const DNS_HOST_MAX_LENGTH = 63
 export const DNS_NAME_DISPLAY_MAX = 25
 
 /** Host / network label: letters, digits, dot, hyphen, underscore; no spaces. */
@@ -12,6 +13,7 @@ export function validateDnsLabel(
   raw: unknown,
   fieldLabel: string,
   required = true,
+  maxLength = DNS_NAME_MAX_LENGTH,
 ): DnsLabelValidation {
   const trimmed = String(raw ?? '').trim()
   if (!trimmed) {
@@ -19,10 +21,10 @@ export function validateDnsLabel(
       ? { ok: false, message: `${fieldLabel} is required.` }
       : { ok: true, value: '' }
   }
-  if (trimmed.length > DNS_NAME_MAX_LENGTH) {
+  if (trimmed.length > maxLength) {
     return {
       ok: false,
-      message: `${fieldLabel} must be at most ${DNS_NAME_MAX_LENGTH} characters.`,
+      message: `${fieldLabel} must be at most ${maxLength} characters.`,
     }
   }
   if (/\s/.test(trimmed)) {
