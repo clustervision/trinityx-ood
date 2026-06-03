@@ -41,15 +41,16 @@ for arg in "$@"; do
 done
 
 if [[ -n "$OS_IMAGE" && -n "$CHROOT_PATH" && -n "$FAKE_KERN" ]]; then
-    if [[ -f /trinity/images/compute/tmp/lchroot.lock ]]; then
+    LCHROOT_LOCK="$CHROOT_PATH/tmp/lchroot.lock"
+    if [[ -f "$LCHROOT_LOCK" ]]; then
         echo "lchroot is already running, waiting for it to finish (press f to force)"
 
-        while [[ -f /trinity/images/compute/tmp/lchroot.lock ]]; do
+        while [[ -f "$LCHROOT_LOCK" ]]; do
             read -t 1 -n 1 -s key
             if [[ $key == "f" ]]; then
                 echo ""
                 echo "Forcing lchroot to stop"
-                sudo rm /trinity/images/compute/tmp/lchroot.lock
+                sudo /bin/rm "$LCHROOT_LOCK"
                 break
             else
                 echo -n "."
@@ -60,7 +61,7 @@ if [[ -n "$OS_IMAGE" && -n "$CHROOT_PATH" && -n "$FAKE_KERN" ]]; then
     # clean() {
     #     sudo rm /trinity/images/compute/tmp/lchroot.lock
     # }
-    sudo lchroot $(basename $CHROOT_PATH)
+    sudo /usr/sbin/lchroot $(basename "$CHROOT_PATH")
 else
     exec /usr/bin/ssh "$@"
 fi
