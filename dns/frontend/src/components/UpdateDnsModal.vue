@@ -20,7 +20,7 @@ import { onMounted, reactive, ref } from 'vue'
 import BaseModal from './BaseModal.vue'
 import DnsFormFields from './DnsFormFields.vue'
 import { fetchDnsEntries, fetchNetworks, saveDnsEntry } from '@/api'
-import { validateDnsLabel } from '@/constants/dnsName'
+import { DNS_HOST_MAX_LENGTH, validateDnsLabel } from '@/constants/dnsName'
 import { validateIpv4ForSubmit } from '@/utils/ipv4Input'
 import type { DnsFormState } from '@/types'
 
@@ -68,7 +68,7 @@ async function submit() {
     saving.value = false
     return
   }
-  const host = validateDnsLabel(form.host, 'Host')
+  const host = validateDnsLabel(form.host, 'Host', true, DNS_HOST_MAX_LENGTH)
   if (!host.ok) {
     alertMsg.value = host.message
     saving.value = false

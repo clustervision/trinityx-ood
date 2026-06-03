@@ -12,7 +12,7 @@
       <input
         v-model="form.host"
         type="text"
-        :maxlength="DNS_NAME_MAX_LENGTH"
+        :maxlength="DNS_HOST_MAX_LENGTH"
         @keydown.space.prevent
       />
     </div>
@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import type { DnsFormState } from '@/types'
-import { DNS_NAME_MAX_LENGTH } from '@/constants/dnsName'
+import { DNS_HOST_MAX_LENGTH } from '@/constants/dnsName'
 import { formatIpv4Typing } from '@/utils/ipv4Input'
 
 const props = defineProps<{
