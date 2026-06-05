@@ -1,37 +1,33 @@
 import type { ControlStatusRow } from '@/types'
+import { isStatusLoading, isStatusOk, statusDotClass, statusLabel, statusTextClass } from './statusDisplay'
 
 /** True when the power status string refers to a reset action/result. */
 export function isResetPowerStatus(value: string): boolean {
   return String(value ?? '').toUpperCase().includes('RESET')
 }
 
-/** True when the power status should show a green dot (ON / OK / reset). */
 export function isPowerStatusOk(value: string): boolean {
-  const v = String(value ?? '').toUpperCase()
-  if (isResetPowerStatus(v)) return true
-  if (v.includes('OFF')) return false
-  return v.includes('ON') || v.includes('OK')
+  return isStatusOk(value)
 }
 
-/** Table label: green-dot states show "ON"; others show the raw status. */
+export function isPowerLoading(value: string): boolean {
+  return isStatusLoading(value)
+}
+
 export function powerStatusLabel(value: string): string {
-  if (isPowerStatusOk(value)) return 'ON'
-  const s = String(value ?? '').trim()
-  return s || 'UNKNOWN'
+  if (isStatusLoading(value)) return ''
+  if (isStatusOk(value) && !String(value).toUpperCase().includes('OFF')) return 'ON'
+  return statusLabel(value)
 }
 
 export function powerStatusTextClass(value: string): string {
-  if (isPowerStatusOk(value)) return 'tx-status-text tx-status-ok-text'
-  const v = String(value ?? '').toUpperCase()
-  if (v.includes('OFF')) return 'tx-status-text tx-status-warn-text'
-  return 'tx-status-text tx-status-bad-text'
+  if (isStatusLoading(value)) return 'tx-status-text tx-status-loading-text'
+  return statusTextClass(value)
 }
 
 export function powerStatusDotClass(value: string): string {
-  if (isPowerStatusOk(value)) return 'tx-status-dot tx-status-ok'
-  const v = String(value ?? '').toUpperCase()
-  if (v.includes('OFF')) return 'tx-status-dot tx-status-warn'
-  return 'tx-status-dot tx-status-bad'
+  if (isStatusLoading(value)) return 'tx-status-dot tx-status-bad'
+  return statusDotClass(value)
 }
 
 /** Build a notification message from reset power statuses for the given nodes. */
@@ -49,6 +45,6 @@ export function resetPowerNotification(
   }
   if (parts.length === 0) return null
   const unique = [...new Set(parts)]
-  if (unique.length === 1) return unique[0]
+  if (unique.length === 1) return unique[0] ?? null
   return unique.join('; ')
 }
