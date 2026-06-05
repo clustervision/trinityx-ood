@@ -76,7 +76,23 @@
       </aside>
 
       <div class="tx-control-table-area">
-        <div class="tx-inventory-table-wrap">
+        <aside v-if="toasts.length" class="tx-toast-stack" aria-live="polite" aria-label="Luna status messages">
+          <div v-for="toast in toasts" :key="toast.id" class="tx-toast" role="status">
+            <span class="tx-toast-text">{{ toast.message }}</span>
+            <button type="button" class="tx-toast-close" aria-label="Dismiss" @click="emit('dismissToast', toast.id)">
+              &times;
+            </button>
+          </div>
+        </aside>
+
+        <div
+          class="tx-inventory-table-wrap"
+          :class="{ 'tx-inventory-table-wrap--loading': nodesLoading && rows.length === 0 }"
+        >
+          <div v-if="nodesLoading && rows.length === 0" class="tx-table-loading-overlay" aria-live="polite">
+            <span class="tx-table-loading-spinner" aria-hidden="true" />
+            <span class="tx-table-loading-text">Loading nodes…</span>
+          </div>
           <table class="tx-inventory-table">
             <thead>
               <tr>
@@ -89,8 +105,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="filteredRows.length === 0">
-                <td colspan="6" class="tx-empty-cell">No nodes match your search.</td>
+              <tr v-if="!nodesLoading && filteredRows.length === 0">
+                <td colspan="6" class="tx-empty-cell">
+                  {{ rows.length === 0 ? 'No nodes available.' : 'No nodes match your search.' }}
+                </td>
               </tr>
               <tr v-for="row in pagedRows" :key="row.node">
                 <td class="tx-col-check">
@@ -100,7 +118,11 @@
                 <td class="tx-td-actions">
                   <div class="tx-control-cell-actions tx-control-cell-actions--row">
                     <span :class="powerStatusDotClass(row.power)" aria-hidden="true" />
-                    <span :class="powerStatusTextClass(row.power)">{{ powerStatusLabel(row.power) }}</span>
+                    <template v-if="isPowerRowLoading(row.node)">
+                      <span class="tx-power-loading-spinner" aria-hidden="true" />
+                      <span class="tx-status-text tx-status-loading-text" aria-live="polite">Loading…</span>
+                    </template>
+                    <span v-else :class="powerStatusTextClass(row.power)">{{ powerStatusLabel(row.power) }}</span>
                     <button type="button" class="tx-btn tx-btn-orange tx-btn-cell" @click="emitSingle('power', 'reset', row.node)">
                       RESET
                     </button>
@@ -178,13 +200,16 @@
 </template>
 
 <script setup lang="ts">
-import type { ControlStatusRow } from '@/types'
+import type { ControlStatusRow, StatusToast } from '@/types'
 import { powerStatusDotClass, powerStatusLabel, powerStatusTextClass } from '@/utils'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
   rows: ControlStatusRow[]
   selected: string[]
+  toasts?: StatusToast[]
+  powerLoadingNodes?: Record<string, boolean>
+  nodesLoading?: boolean
   message?: string
   messageOk?: boolean
 }>()
@@ -193,7 +218,17 @@ const emit = defineEmits<{
   bulk: [system: string, action: string]
   single: [system: string, action: string, node: string]
   toggleSelect: [next: string[]]
+  dismissToast: [id: string]
+  loadPage: [nodes: string[]]
 }>()
+
+const toasts = computed(() => props.toasts ?? [])
+const nodesLoading = computed(() => Boolean(props.nodesLoading))
+const rows = computed(() => props.rows)
+
+function isPowerRowLoading(node: string): boolean {
+  return Boolean(props.powerLoadingNodes?.[node])
+}
 
 const searchQuery = ref('')
 const helpOpen = ref(false)
@@ -222,6 +257,20 @@ const pagedRows = computed(() => {
 watch([searchQuery, pageSize], () => {
   page.value = 1
 })
+
+function emitCurrentPageLoad(): void {
+  emit('loadPage', pagedRows.value.map((r) => r.node))
+}
+
+watch([page, pageSize, searchQuery], emitCurrentPageLoad, { flush: 'post' })
+
+watch(
+  () => props.rows.length,
+  (len, prev) => {
+    if (len > 0 && prev === 0) emitCurrentPageLoad()
+  },
+  { flush: 'post' },
+)
 
 function toggleOne(node: string) {
   const next = new Set(selectedSet.value)
