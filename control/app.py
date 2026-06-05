@@ -88,9 +88,39 @@ def home():
     return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-@app.route('/api/v1/status', methods=['GET'])
-def get_status():
+def _status_node_list():
+    """Resolve node names for status queries (optional subset via GET query or POST body)."""
+    node_list = []
+    if request.method == 'POST':
+        data = request.get_json(silent=True) or {}
+        raw = data.get('hostlist') or data.get('nodes') or []
+        if isinstance(raw, list):
+            node_list = [str(n).strip() for n in raw if str(n).strip()]
+        elif isinstance(raw, str) and raw.strip():
+            node_list = [n.strip() for n in raw.split(',') if n.strip()]
+    else:
+        raw = request.args.get('hostlist') or request.args.get('nodes') or ''
+        if raw:
+            node_list = [n.strip() for n in raw.split(',') if n.strip()]
+    if not node_list:
+        node_list = Helper().get_name_list('node')
+    return node_list
+
+
+@app.route('/api/v1/get_nodes', methods=['GET'])
+def get_nodes():
+    """
+    Return all node names for the Vue table without querying per-node status.
+    """
     node_list = Helper().get_name_list('node')
+    return jsonify({'node_list': node_list}), 200
+
+
+@app.route('/api/v1/status', methods=['GET', 'POST'])
+def get_status():
+    node_list = _status_node_list()
+    if not node_list:
+        return jsonify({'results': [], 'request_ids': {'power': '', 'sel': '', 'chassis': ''}, 'nodes': []}), 200
     hostlist = Helper().collect_nodelist(node_list)
     systems = {'power': 'status', 'sel': 'list', 'chassis': 'identify'}
     results = []
