@@ -33,3 +33,11 @@ export interface StatusSnapshot {
 }
 
 export interface BulkStatusResult extends StatusSnapshot {}
+
+export interface SelLogEntry {
+  node: string
+  text: string
+  error?: boolean
+  /** When Luna returns one combined log for many nodes. */
+  nodes?: string[]
+}

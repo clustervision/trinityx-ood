@@ -18,6 +18,14 @@
       />
     </main>
     <AppFooter :app-url="appUrl" />
+    <SelLogModal
+      :open="selLogOpen"
+      :loading="selLogLoading"
+      :entries="selLogEntries"
+      :node-count="selLogNodeCount"
+      :loading-detail="selLogLoadingDetail"
+      @close="closeSelLogModal"
+    />
   </div>
 </template>
 
@@ -26,10 +34,13 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import ControlInventory from './components/ControlInventory.vue'
+import SelLogModal from './components/SelLogModal.vue'
 import {
   fetchNodeList,
   fetchPageStatusSnapshot,
+  mergeActionBodyIntoRows,
   mergeRowUpdates,
+  pollActionForResult,
   pollActionInBackground,
   rowsFromNodeList,
   startBackgroundStatusPoll,
@@ -37,7 +48,12 @@ import {
 } from './api'
 import { TOAST_TTL_MS, useToasts } from './composables/useToasts'
 import { appUrlFromRuntime, resetPowerNotification } from './utils'
-import type { ControlStatusRow, StatusToast } from './types'
+import {
+  extractSelListResults,
+  isSelListResponseReady,
+  orderSelLogEntries,
+} from './utils/selLogDisplay'
+import type { ControlStatusRow, SelLogEntry, StatusToast } from './types'
 
 const rows = ref<ControlStatusRow[]>([])
 const selectedNodes = ref<string[]>([])
@@ -50,8 +66,24 @@ const { toasts, pushToast, dismissToast, clearToasts } = useToasts()
 
 let stopStatusPoll: (() => void) | null = null
 let stopActionPoll: (() => void) | null = null
+let stopSelListPoll: AbortController | null = null
 let messageTimer: ReturnType<typeof setTimeout> | null = null
 let pageStatusRequest = 0
+let selListRequest = 0
+
+const selLogOpen = ref(false)
+const selLogLoading = ref(false)
+const selLogEntries = ref<SelLogEntry[]>([])
+const selLogNodeCount = ref(0)
+const selLogLoadingDetail = ref('')
+const SEL_LIST_BATCH_SIZE = 10
+
+function closeSelLogModal(): void {
+  selLogOpen.value = false
+  selLogLoading.value = false
+  stopSelListPoll?.abort()
+  stopSelListPoll = null
+}
 
 function scheduleMessageClear(): void {
   if (messageTimer) clearTimeout(messageTimer)
@@ -165,7 +197,108 @@ async function runSingle(system: string, action: string, node: string) {
   await runAction(system, action, [node])
 }
 
+async function fetchSelListBatch(
+  batch: string[],
+  requestId: number,
+): Promise<SelLogEntry[]> {
+  const { requestId: actionRequestId, immediateToasts, body: immediateBody } = await triggerAction(
+    'sel',
+    'list',
+    batch,
+  )
+  if (requestId !== selListRequest) return []
+
+  if (immediateToasts.length > 0) {
+    return batch.map((node) => {
+      const toast = immediateToasts.find((t) => t.node === node) ?? immediateToasts[0]
+      return {
+        node,
+        text: toast?.message ?? 'SEL list failed to start.',
+        error: true,
+      }
+    })
+  }
+
+  let body = immediateBody
+  if (actionRequestId && !isSelListResponseReady(immediateBody, batch)) {
+    const polled = await pollActionForResult(actionRequestId, batch, 'sel', 'list', {
+      signal: stopSelListPoll?.signal,
+    })
+    if (requestId !== selListRequest) return []
+    body = polled.body
+    if (polled.timedOut) {
+      return extractSelListResults(body, batch).map((entry) =>
+        entry.text.trim()
+          ? entry
+          : { ...entry, text: 'Timed out waiting for SEL log.', error: true },
+      )
+    }
+  }
+
+  const { rows: updatedRows } = mergeActionBodyIntoRows(rows.value, body, batch, 'sel', 'list')
+  rows.value = mergeRowUpdates(rows.value, updatedRows)
+  return extractSelListResults(body, batch)
+}
+
+async function runSelList(hostlist: string[]) {
+  if (messageTimer) clearTimeout(messageTimer)
+  message.value = ''
+  clearToasts()
+  stopSelListPoll?.abort()
+  stopSelListPoll = new AbortController()
+
+  const requestId = ++selListRequest
+  selLogOpen.value = true
+  selLogLoading.value = true
+  selLogEntries.value = []
+  selLogNodeCount.value = hostlist.length
+  selLogLoadingDetail.value = `Fetching system event log (0/${hostlist.length})…`
+
+  try {
+    const merged: SelLogEntry[] = []
+    const batches: string[][] = []
+    for (let i = 0; i < hostlist.length; i += SEL_LIST_BATCH_SIZE) {
+      batches.push(hostlist.slice(i, i + SEL_LIST_BATCH_SIZE))
+    }
+
+    for (let index = 0; index < batches.length; index += 1) {
+      const batch = batches[index]
+      if (!batch || batch.length === 0) continue
+      if (requestId !== selListRequest) return
+
+      const doneBefore = index * SEL_LIST_BATCH_SIZE
+      selLogLoadingDetail.value = `Fetching system event log (${doneBefore}/${hostlist.length})…`
+      const batchEntries = await fetchSelListBatch(batch, requestId)
+      if (requestId !== selListRequest) return
+
+      merged.push(...batchEntries)
+      selLogEntries.value = orderSelLogEntries(merged, hostlist)
+      selLogLoadingDetail.value = `Fetching system event log (${merged.length}/${hostlist.length})…`
+    }
+
+    selLogEntries.value = orderSelLogEntries(merged, hostlist)
+    selLogNodeCount.value = hostlist.length
+  } catch (e) {
+    if (requestId !== selListRequest) return
+    selLogEntries.value = [{
+      node: hostlist.length === 1 ? (hostlist[0] ?? 'node') : `${hostlist.length} nodes`,
+      nodes: hostlist.length > 1 ? hostlist : undefined,
+      text: e instanceof Error ? e.message : 'Failed to load SEL log.',
+      error: true,
+    }]
+  } finally {
+    if (requestId === selListRequest) {
+      selLogLoading.value = false
+      selLogLoadingDetail.value = ''
+    }
+  }
+}
+
 async function runAction(system: string, action: string, hostlist: string[]) {
+  if (system === 'sel' && action === 'list') {
+    await runSelList(hostlist)
+    return
+  }
   if (messageTimer) clearTimeout(messageTimer)
   message.value = ''
   clearToasts()
@@ -227,5 +360,6 @@ onBeforeUnmount(() => {
   if (messageTimer) clearTimeout(messageTimer)
   stopStatusPoll?.()
   stopActionPoll?.()
+  stopSelListPoll?.abort()
 })
 </script>

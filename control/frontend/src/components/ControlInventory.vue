@@ -22,8 +22,16 @@
     <div class="tx-control-layout">
       <aside class="tx-control-sidebar" aria-label="Bulk actions">
         <label class="tx-control-sidebar-head">
-          <input type="checkbox" :checked="allSelected" @change="toggleAll" />
-          <span>ACTIONS FOR SELECTED NODES</span>
+          <input
+            type="checkbox"
+            :checked="allPageSelected"
+            :title="`Select all ${pagedRows.length} nodes on this page`"
+            @change="togglePageSelection"
+          />
+          <span class="tx-control-sidebar-head-text">
+            <span>ACTIONS FOR SELECTED NODES</span>
+            <span class="tx-control-selected-count">{{ selectedCountLabel }}</span>
+          </span>
         </label>
 
         <section class="tx-control-section">
@@ -237,9 +245,17 @@ const pageSize = ref(10)
 const pageSizeOptions = [10, 25, 50]
 
 const selectedSet = computed(() => new Set(props.selected))
-const allSelected = computed(
-  () => filteredRows.value.length > 0 && filteredRows.value.every((r) => selectedSet.value.has(r.node)),
+/** True when every node on the current page is selected. */
+const allPageSelected = computed(
+  () => pagedRows.value.length > 0 && pagedRows.value.every((r) => selectedSet.value.has(r.node)),
 )
+
+const selectedCountLabel = computed(() => {
+  const count = props.selected.length
+  if (count === 0) return 'No nodes selected'
+  if (count === 1) return '1 node selected'
+  return `${count} nodes selected`
+})
 
 const filteredRows = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -279,12 +295,18 @@ function toggleOne(node: string) {
   emit('toggleSelect', [...next])
 }
 
-function toggleAll() {
-  if (allSelected.value) {
-    emit('toggleSelect', [])
+function togglePageSelection() {
+  const pageNodes = pagedRows.value.map((r) => r.node)
+  const pageSet = new Set(pageNodes)
+  if (allPageSelected.value) {
+    emit(
+      'toggleSelect',
+      [...selectedSet.value].filter((node) => !pageSet.has(node)),
+    )
     return
   }
-  emit('toggleSelect', filteredRows.value.map((r) => r.node))
+  // Replace selection with current page only (do not keep nodes from other pages).
+  emit('toggleSelect', pageNodes)
 }
 
 function emitBulk(system: string, action: string) {

@@ -5,6 +5,7 @@ import type {
   StatusSnapshot,
   StatusToast,
 } from './types'
+import { isSelListResponseReady } from './utils/selLogDisplay'
 import { pendingStatus } from './utils/statusDisplay'
 import { oodAppRoot } from './utils/oodAppRoot'
 
@@ -204,8 +205,12 @@ function extractRequestId(data: unknown): string {
   return ''
 }
 
-function pollTimeoutMs(system: string, action: string): number {
+function pollTimeoutMs(system: string, action: string, hostlist?: string[]): number {
   if (system === 'power' && action === 'reset') return 120000
+  if (system === 'sel' && action === 'list') {
+    const count = hostlist?.length ?? 1
+    return Math.min(300000, 60000 + count * 2000)
+  }
   return BACKGROUND_POLL_MS
 }
 
@@ -456,7 +461,7 @@ export async function triggerAction(
   system: string,
   action: string,
   hostlist: string[],
-): Promise<{ requestId: string; immediateToasts: StatusToast[] }> {
+): Promise<{ requestId: string; immediateToasts: StatusToast[]; body: unknown }> {
   const res = await fetch(apiPath(`/api/v1/action/${encodeURIComponent(system)}/${encodeURIComponent(action)}`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -471,7 +476,7 @@ export async function triggerAction(
     system,
     requestId || `${system}/${action}/${Date.now()}`,
   )
-  return { requestId, immediateToasts }
+  return { requestId, immediateToasts, body: data }
 }
 
 export function pollActionInBackground(
@@ -484,7 +489,7 @@ export function pollActionInBackground(
 ): () => void {
   const ac = new AbortController()
   const rowMap = rowMapFromRows(initialRows)
-  const timeoutMs = pollTimeoutMs(system, action)
+  const timeoutMs = pollTimeoutMs(system, action, hostlist)
   const pending = pendingStatus()
   const field = ALL_STATUS_FIELDS.find((f) => f === system)
   if (field) {
@@ -504,4 +509,67 @@ export function pollActionInBackground(
 
 export function actionPollTimeoutMs(system: string, action: string): number {
   return pollTimeoutMs(system, action)
+}
+
+function isActionResponseReady(
+  body: unknown,
+  system: string,
+  action: string,
+  hostlist: string[],
+  field: PollField,
+  ok: boolean,
+): boolean {
+  if (system === 'sel' && action === 'list') {
+    return isSelListResponseReady(body, hostlist)
+  }
+  return ok && hasControlPayload(body, field, action)
+}
+
+/** Poll until Luna returns a final action body (used by SEL LIST modal). */
+export async function pollActionForResult(
+  requestId: string,
+  hostlist: string[],
+  system: string,
+  action: string,
+  options?: { signal?: AbortSignal },
+): Promise<{ body: unknown; timedOut: boolean }> {
+  const field = (ALL_STATUS_FIELDS.find((f) => f === system) ?? 'power') as PollField
+  const timeoutMs = pollTimeoutMs(system, action, hostlist)
+  const signal = options?.signal
+  const start = Date.now()
+  let lastBody: unknown = {}
+
+  while (!signal?.aborted && Date.now() - start < timeoutMs) {
+    const { ok, status, body } = await fetchRequestBody(requestId)
+    lastBody = body
+    if (isActionResponseReady(body, system, action, hostlist, field, ok)) {
+      return { body, timedOut: false }
+    }
+    if (!ok && !isPendingRequestStatus(status)) {
+      return { body, timedOut: false }
+    }
+    await sleep(POLL_INTERVAL_MS)
+  }
+
+  return { body: lastBody, timedOut: true }
+}
+
+export function mergeActionBodyIntoRows(
+  existing: ControlStatusRow[],
+  body: unknown,
+  hostlist: string[],
+  system: StatusField,
+  action?: string,
+): { rows: ControlStatusRow[]; toasts: StatusToast[] } {
+  const rowMap = rowMapFromRows(existing)
+  const toasts: StatusToast[] = []
+  applyResultItem(rowMap, body, toasts, {
+    system: system as PollField,
+    hostlist,
+    action,
+  })
+  if (toasts.length === 0) {
+    toasts.push(...collectFailuresFromBody(body, system, hostlist))
+  }
+  return { rows: sortedRows(rowMap), toasts }
 }
