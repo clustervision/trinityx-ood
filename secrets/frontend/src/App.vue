@@ -22,25 +22,30 @@
         <p v-if="error" class="alert-danger">{{ error }}</p>
         <p v-if="success" class="alert-success">{{ success }}</p>
 
-        <div class="tx-secrets-split">
+        <div class="tx-secrets-split" :class="{ 'tx-secrets-split-single': scope !== 'all' }">
           <section class="tx-secrets-pane" v-if="scope !== 'node'">
             <h2 class="tx-title tx-pane-title">Group Secrets</h2>
             <label class="tx-inline-search" style="margin-bottom: 0.5rem">
               <span class="tx-inline-search-label">Search:</span>
               <input v-model="groupSearch" class="tx-inline-search-input" />
             </label>
-            <table class="tx-inventory-table">
-              <thead>
-                <tr><th class="tx-th-regular">Name</th><th class="tx-th-regular">Group</th><th class="tx-th-regular">Path</th><th class="tx-th-regular">Content</th><th class="tx-th-regular">Actions</th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in groupRows" :key="`g-${row.owner}-${row.name}`">
-                  <td>{{ row.name }}</td><td>{{ row.owner }}</td><td>{{ row.path }}</td><td>{{ preview(row.content) }}</td>
-                  <td><div class="tx-action-icons"><button class="tx-icon-act tx-icon-link" @click="openEdit(row)">✎</button><button class="tx-icon-act tx-icon-clone" @click="openClone(row)">⧉</button><button class="tx-icon-act tx-icon-danger" @click="openDelete(row)">🗑</button></div></td>
-                </tr>
-                <tr v-if="groupRows.length === 0"><td colspan="5">There are no Group Secrets</td></tr>
-              </tbody>
-            </table>
+            <div class="tx-inventory-table-wrap">
+              <table class="tx-inventory-table tx-secrets-table">
+                <thead>
+                  <tr><th class="tx-th-regular">Name</th><th class="tx-th-regular">Group</th><th class="tx-th-regular">Path</th><th class="tx-th-regular">Content</th><th class="tx-th-regular tx-th-actions">Actions</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in groupRows" :key="`g-${row.owner}-${row.name}`">
+                    <td><span class="tx-cell-ellipsis">{{ row.name }}</span></td>
+                    <td><span class="tx-cell-ellipsis">{{ row.owner }}</span></td>
+                    <td><span class="tx-cell-ellipsis">{{ row.path }}</span></td>
+                    <td><span class="tx-cell-ellipsis" :title="row.content">{{ preview(row.content) }}</span></td>
+                    <td class="tx-col-actions"><div class="tx-action-icons"><button class="tx-icon-act tx-icon-link" @click="openEdit(row)">✎</button><button class="tx-icon-act tx-icon-clone" @click="openClone(row)">⧉</button><button class="tx-icon-act tx-icon-danger" @click="openDelete(row)">🗑</button></div></td>
+                  </tr>
+                  <tr v-if="groupRows.length === 0"><td colspan="5">There are no Group Secrets</td></tr>
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section class="tx-secrets-pane" v-if="scope !== 'group'">
@@ -49,18 +54,23 @@
               <span class="tx-inline-search-label">Search:</span>
               <input v-model="nodeSearch" class="tx-inline-search-input" />
             </label>
-            <table class="tx-inventory-table">
-              <thead>
-                <tr><th class="tx-th-regular">Name</th><th class="tx-th-regular">Group</th><th class="tx-th-regular">Path</th><th class="tx-th-regular">Content</th><th class="tx-th-regular">Actions</th></tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in nodeRows" :key="`n-${row.owner}-${row.name}`">
-                  <td>{{ row.name }}</td><td>{{ row.owner }}</td><td>{{ row.path }}</td><td>{{ preview(row.content) }}</td>
-                  <td><div class="tx-action-icons"><button class="tx-icon-act tx-icon-link" @click="openEdit(row)">✎</button><button class="tx-icon-act tx-icon-clone" @click="openClone(row)">⧉</button><button class="tx-icon-act tx-icon-danger" @click="openDelete(row)">🗑</button></div></td>
-                </tr>
-                <tr v-if="nodeRows.length === 0"><td colspan="5">There are no Node Secrets</td></tr>
-              </tbody>
-            </table>
+            <div class="tx-inventory-table-wrap">
+              <table class="tx-inventory-table tx-secrets-table">
+                <thead>
+                  <tr><th class="tx-th-regular">Name</th><th class="tx-th-regular">Node</th><th class="tx-th-regular">Path</th><th class="tx-th-regular">Content</th><th class="tx-th-regular tx-th-actions">Actions</th></tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in nodeRows" :key="`n-${row.owner}-${row.name}`">
+                    <td><span class="tx-cell-ellipsis">{{ row.name }}</span></td>
+                    <td><span class="tx-cell-ellipsis">{{ row.owner }}</span></td>
+                    <td><span class="tx-cell-ellipsis">{{ row.path }}</span></td>
+                    <td><span class="tx-cell-ellipsis" :title="row.content">{{ preview(row.content) }}</span></td>
+                    <td class="tx-col-actions"><div class="tx-action-icons"><button class="tx-icon-act tx-icon-link" @click="openEdit(row)">✎</button><button class="tx-icon-act tx-icon-clone" @click="openClone(row)">⧉</button><button class="tx-icon-act tx-icon-danger" @click="openDelete(row)">🗑</button></div></td>
+                  </tr>
+                  <tr v-if="nodeRows.length === 0"><td colspan="5">There are no Node Secrets</td></tr>
+                </tbody>
+              </table>
+            </div>
           </section>
         </div>
       </section>
@@ -68,9 +78,9 @@
     <AppFooter />
   </div>
 
-  <SecretFormModal v-if="addOpen" title="Add Secret" submit-text="Add" :initial="emptyForm" @close="closeAll" @submit="onAdd" />
-  <SecretFormModal v-if="editOpen" title="Edit Secret" submit-text="Save" :initial="formState" @close="closeAll" @submit="onEdit" />
-  <SecretFormModal v-if="cloneOpen" title="Clone Secret" submit-text="Clone" :initial="formState" @close="closeAll" @submit="onClone" />
+  <SecretFormModal v-if="addOpen" mode="add" title="Add Secret" :initial="emptyForm" @close="closeAll" @submit="onAdd" />
+  <SecretFormModal v-if="editOpen" mode="edit" title="Edit Secret" :initial="formState" @close="closeAll" @submit="onEdit" />
+  <SecretFormModal v-if="cloneOpen" mode="clone" title="Clone Secret" :initial="formState" @close="closeAll" @submit="onClone" />
   <DeleteSecretModal v-if="deleteOpen && current" :item="current" @close="closeAll" @confirm="onDelete" />
 </template>
 

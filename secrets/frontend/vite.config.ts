@@ -1,6 +1,23 @@
+import { copyFileSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url))
+
+/** Ensure `public/img/logo.png` is in dist for Flask `app/assets/img/`. */
+function copyLogoPlugin() {
+  return {
+    name: 'copy-logo',
+    closeBundle() {
+      const src = join(projectRoot, 'public/img/logo.png')
+      const outDir = join(projectRoot, 'dist/img')
+      mkdirSync(outDir, { recursive: true })
+      copyFileSync(src, join(outDir, 'logo.png'))
+    },
+  }
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -29,7 +46,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: mode === 'production' ? normalizedBasePath : '/',
-    plugins: [vue()],
+    plugins: [vue(), copyLogoPlugin()],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

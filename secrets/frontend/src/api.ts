@@ -25,7 +25,18 @@ function encodeBase64(s: string): string {
 
 async function readJson<T = unknown>(res: Response): Promise<T> {
   const text = await res.text()
-  return (text ? JSON.parse(text) : {}) as T
+  if (!text.trim()) return {} as T
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    const snippet = text.trim().slice(0, 80).replace(/\s+/g, ' ')
+    const isHtml = /^</.test(text.trim())
+    throw new Error(
+      isHtml
+        ? `Server returned HTML instead of JSON (HTTP ${res.status}). Redeploy the Secrets backend if group/node lists fail to load.`
+        : `Invalid JSON from server (HTTP ${res.status}): ${snippet}`,
+    )
+  }
 }
 
 function messageFromEnvelope(data: unknown): string {
@@ -60,6 +71,32 @@ function flattenSecrets(content: unknown): SecretRecord[] {
     }
   }
   return rows
+}
+
+function namesFromDaemonConfig(content: unknown, table: 'group' | 'node'): string[] {
+  const cfg = (content as { config?: Record<string, unknown> })?.config
+  const entries = cfg?.[table]
+  if (!entries || typeof entries !== 'object' || Array.isArray(entries)) return []
+  return Object.keys(entries as Record<string, unknown>).sort()
+}
+
+async function fetchNameList(path: string, table: 'group' | 'node'): Promise<string[]> {
+  const res = await fetch(apiPath(path), { headers: { Accept: 'application/json' } })
+  const data = await readJson<DaemonEnvelope<{ names?: string[] }>>(res)
+  if (data.status === false) throw new Error(messageFromEnvelope(data))
+  const names = data.content?.names
+  if (Array.isArray(names)) return names
+  const fromConfig = namesFromDaemonConfig(data.content ?? data, table)
+  if (fromConfig.length) return fromConfig
+  return []
+}
+
+export async function fetchGroupNames(): Promise<string[]> {
+  return fetchNameList('/api/v1/groups', 'group')
+}
+
+export async function fetchNodeNames(): Promise<string[]> {
+  return fetchNameList('/api/v1/nodes', 'node')
 }
 
 export async function fetchSecrets(): Promise<{ rows: SecretRecord[]; error: string }> {
