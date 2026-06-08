@@ -446,8 +446,9 @@ function buildPayload(targetName?: string) {
     ? form.name.trim()
     : (targetName || props.switchName.trim())
 
-  const switchPayload: Record<string, unknown> = {
-    name: sourceName,
+  const omitEmptyOptionalFields = props.mode === 'add' || props.mode === 'clone'
+
+  const optionalFieldValues: Record<string, string | null> = {
     read: emptyToNull(form.read),
     rw: emptyToNull(form.rw),
     oid: emptyToNull(form.oid),
@@ -458,6 +459,14 @@ function buildPayload(targetName?: string) {
     vendor: emptyToNull(form.vendor),
     uplinkports: emptyToNull(form.uplinkports),
     comment: encodeCommentValue(form.comment)
+  }
+
+  const switchPayload: Record<string, unknown> = { name: sourceName }
+
+  for (const [key, value] of Object.entries(optionalFieldValues)) {
+    if (!omitEmptyOptionalFields || value !== null) {
+      switchPayload[key] = value
+    }
   }
 
   if (props.mode === 'clone') {
