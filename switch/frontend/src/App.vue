@@ -357,6 +357,7 @@ function canonicalName(name: string) {
 
                   <li>
                     <strong>Add</strong> — Creates a new switch entry.
+                    Only the switch name is required; IP address and other advanced fields are optional.
                     The switch name must be unique.
                   </li>
 
