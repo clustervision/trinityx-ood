@@ -40,6 +40,14 @@ def validate_home_directory():
 
 @app.errorhandler(404)
 def page_not_found(e):
+    if request.path.startswith("/api/"):
+        return jsonify(
+            {
+                "status": False,
+                "status_code": 404,
+                "content": {"message": f"API route not found: {request.path}"},
+            }
+        ), 200
     return render_template("error.html", table="Secrets", data="", error=f"ERROR :: {e}"), 200
 
 
@@ -81,6 +89,34 @@ def _empty_secrets_payload():
 def _is_empty_secrets_message(message):
     text = str(message or "").strip().lower()
     return "no secrets" in text
+
+
+def _names_from_daemon_table(table):
+    rest = Rest()
+    response = rest.get_data(table)
+    if not response:
+        detail = "; ".join(rest.errors) if rest.errors else f"Failed to load {table} list from daemon."
+        return [], detail
+    entries = response.get("config", {}).get(table, {})
+    if not isinstance(entries, dict):
+        return [], f"Unexpected {table} response from daemon."
+    return sorted(entries.keys()), ""
+
+
+@app.route(f"/api/{API_VERSION}/groups", methods=["GET"])
+def list_groups():
+    names, detail = _names_from_daemon_table("group")
+    if detail:
+        return jsonify({"status": False, "status_code": 400, "content": {"message": detail}}), 200
+    return jsonify({"status": True, "status_code": 200, "content": {"names": names}}), 200
+
+
+@app.route(f"/api/{API_VERSION}/nodes", methods=["GET"])
+def list_nodes():
+    names, detail = _names_from_daemon_table("node")
+    if detail:
+        return jsonify({"status": False, "status_code": 400, "content": {"message": detail}}), 200
+    return jsonify({"status": True, "status_code": 200, "content": {"names": names}}), 200
 
 
 @app.route(f"/api/{API_VERSION}/secrets", methods=["GET"])
