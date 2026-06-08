@@ -6,15 +6,19 @@ import vue from '@vitejs/plugin-vue'
 
 const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 
-/** Ensure `public/img/logo.png` is in dist for Flask `app/assets/img/`. */
-function copyLogoPlugin() {
+/** Copy static assets from `public/` into dist for Flask `app/assets/`. */
+function copyPublicAssetsPlugin() {
   return {
-    name: 'copy-logo',
+    name: 'copy-public-assets',
     closeBundle() {
-      const src = join(projectRoot, 'public/img/logo.png')
-      const outDir = join(projectRoot, 'dist/img')
-      mkdirSync(outDir, { recursive: true })
-      copyFileSync(src, join(outDir, 'logo.png'))
+      const logoSrc = join(projectRoot, 'public/img/logo.png')
+      const logoOut = join(projectRoot, 'dist/img')
+      mkdirSync(logoOut, { recursive: true })
+      copyFileSync(logoSrc, join(logoOut, 'logo.png'))
+
+      for (const icon of ['icon-clone.png', 'icon-delete.png', 'icon-edit.png']) {
+        copyFileSync(join(projectRoot, 'public', icon), join(projectRoot, 'dist', icon))
+      }
     },
   }
 }
@@ -46,7 +50,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: mode === 'production' ? normalizedBasePath : '/',
-    plugins: [vue(), copyLogoPlugin()],
+    plugins: [vue(), copyPublicAssetsPlugin()],
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),

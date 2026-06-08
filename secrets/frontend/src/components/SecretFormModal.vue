@@ -47,8 +47,27 @@
             <span>Upload</span>
           </label>
         </div>
-        <textarea v-model="local.content" rows="8"></textarea>
+        <div class="tx-field-block-body tx-secret-content-field">
+          <span class="tx-secret-masked">***</span>
+          <button
+            type="button"
+            class="tx-secret-content-edit"
+            title="Edit content"
+            @click="contentEditorOpen = true"
+          >
+            <img :src="actionIcons.edit" alt="Edit content" width="28" height="28" />
+          </button>
+        </div>
       </label>
+
+      <TextEditorModal
+        v-if="contentEditorOpen"
+        nested
+        title="Edit Content"
+        :model-value="local.content"
+        @saved="onContentSaved"
+        @close="contentEditorOpen = false"
+      />
 
       <p v-if="loadError" class="alert-danger">{{ loadError }}</p>
       <p v-if="error" class="alert-danger">{{ error }}</p>
@@ -63,7 +82,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
+import TextEditorModal from './TextEditorModal.vue'
 import { fetchGroupNames, fetchNodeNames } from '@/api'
+import { actionIcons } from '@/utils/assetImg'
 import type { SecretEntity, SecretFormState } from '@/types'
 import { validateSecretNameInput } from '@/constants/secretName'
 
@@ -79,6 +100,7 @@ const error = ref('')
 const loadError = ref('')
 const groupNames = ref<string[]>([])
 const nodeNames = ref<string[]>([])
+const contentEditorOpen = ref(false)
 
 const ownerLabel = computed(() => (local.entity === 'node' ? 'Node' : 'Group'))
 const ownerOptions = computed(() => (local.entity === 'node' ? nodeNames.value : groupNames.value))
@@ -93,6 +115,7 @@ watch(
   (v) => {
     Object.assign(local, v)
     error.value = ''
+    contentEditorOpen.value = false
   },
   { deep: true },
 )
@@ -119,6 +142,11 @@ async function loadOwners() {
 onMounted(() => {
   void loadOwners()
 })
+
+function onContentSaved(value: string) {
+  local.content = value
+  contentEditorOpen.value = false
+}
 
 function onUpload(event: Event) {
   const input = event.target as HTMLInputElement
