@@ -44,6 +44,13 @@ export function ipv4ForSubmit(display: string): string {
   return formatIpv4Typing(display).trim()
 }
 
+export const UNSPECIFIED_IPV4 = '0.0.0.0'
+
+/** True when the formatted value is exactly 0.0.0.0. */
+export function isUnspecifiedIpv4(display: string): boolean {
+  return ipv4ForSubmit(display) === UNSPECIFIED_IPV4
+}
+
 export type Ipv4Validation =
   | { ok: true; value: string }
   | { ok: false; message: string }
