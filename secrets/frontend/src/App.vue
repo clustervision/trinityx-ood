@@ -8,14 +8,14 @@
           <div class="tx-header-actions">
             <button class="tx-btn tx-btn-blue" @click="openAdd">Add Secret</button>
             <button class="tx-btn tx-btn-help">?</button>
-            <label class="tx-inline-search">
+            <div class="tx-inline-search">
               <span class="tx-inline-search-label">SHOW:</span>
-              <select v-model="scope" class="tx-inline-search-input">
+              <select v-model="scope" class="tx-inline-search-input tx-inline-search-select">
                 <option value="all">All Secrets</option>
                 <option value="group">Group Secrets</option>
                 <option value="node">Node Secrets</option>
               </select>
-            </label>
+            </div>
           </div>
         </div>
 

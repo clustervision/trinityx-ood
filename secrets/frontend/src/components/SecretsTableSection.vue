@@ -19,8 +19,8 @@
         <tbody>
           <tr v-for="row in rows" :key="`${row.entity}-${row.owner}-${row.name}`">
             <td>
-              <button type="button" class="tx-name-link" :title="row.name" @click="$emit('edit', row)">
-                <span class="tx-cell-ellipsis tx-cell-truncate-js">{{ row.name }}</span>
+              <button type="button" class="tx-name-link" :title="secretNameTitle(row.name)" @click="$emit('edit', row)">
+                <span class="tx-cell-ellipsis tx-cell-truncate-js">{{ formatSecretNameDisplay(row.name) }}</span>
               </button>
             </td>
             <td><span class="tx-cell-ellipsis">{{ row.owner }}</span></td>
@@ -60,6 +60,7 @@
 
 <script setup lang="ts">
 import { actionIcons } from '@/utils/assetImg'
+import { formatSecretNameDisplay, secretNameTitle } from '@/constants/secretName'
 import type { SecretRecord } from '@/types'
 
 defineProps<{

@@ -20,7 +20,14 @@
       <div class="tx-secret-form-row tx-add-form-main">
         <label class="tx-field tx-field-strong">
           <span class="tx-label">Name</span>
-          <input v-model="local.name" maxlength="200" autocomplete="off" />
+          <input
+            v-model="local.name"
+            type="text"
+            :maxlength="SECRET_NAME_MAX_LENGTH"
+            :class="{ 'input-error': liveNameError }"
+            autocomplete="off"
+            @keydown.space.prevent
+          />
         </label>
         <label class="tx-field tx-field-strong">
           <span class="tx-label">{{ ownerLabel }}</span>
@@ -69,6 +76,7 @@
         @close="contentEditorOpen = false"
       />
 
+      <p v-if="liveNameError" class="alert-danger">{{ liveNameError }}</p>
       <p v-if="loadError" class="alert-danger">{{ loadError }}</p>
       <p v-if="error" class="alert-danger">{{ error }}</p>
 
@@ -86,7 +94,7 @@ import TextEditorModal from './TextEditorModal.vue'
 import { fetchGroupNames, fetchNodeNames } from '@/api'
 import { actionIcons } from '@/utils/assetImg'
 import type { SecretEntity, SecretFormState } from '@/types'
-import { validateSecretNameInput } from '@/constants/secretName'
+import { SECRET_NAME_MAX_LENGTH, validateSecretNameInput } from '@/constants/secretName'
 
 const props = defineProps<{
   title: string
@@ -108,6 +116,13 @@ const submitLabel = computed(() => {
   if (props.mode === 'edit') return 'Save Secret'
   if (props.mode === 'clone') return local.entity === 'node' ? 'Clone Node Secret' : 'Clone Group Secret'
   return local.entity === 'node' ? 'Add Node Secret' : 'Add Group Secret'
+})
+
+const liveNameError = computed(() => {
+  const trimmed = local.name.trim()
+  if (!trimmed) return ''
+  const check = validateSecretNameInput(trimmed)
+  return check.ok ? '' : check.message
 })
 
 watch(
