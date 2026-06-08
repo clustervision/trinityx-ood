@@ -8,14 +8,14 @@
           <div class="tx-header-actions">
             <button class="tx-btn tx-btn-blue" @click="openAdd">Add Secret</button>
             <button class="tx-btn tx-btn-help">?</button>
-            <label class="tx-inline-search">
+            <div class="tx-inline-search">
               <span class="tx-inline-search-label">SHOW:</span>
-              <select v-model="scope" class="tx-inline-search-input">
+              <select v-model="scope" class="tx-inline-search-input tx-inline-search-select">
                 <option value="all">All Secrets</option>
                 <option value="group">Group Secrets</option>
                 <option value="node">Node Secrets</option>
               </select>
-            </label>
+            </div>
           </div>
         </div>
 
@@ -23,55 +23,30 @@
         <p v-if="success" class="alert-success">{{ success }}</p>
 
         <div class="tx-secrets-split" :class="{ 'tx-secrets-split-single': scope !== 'all' }">
-          <section class="tx-secrets-pane" v-if="scope !== 'node'">
-            <h2 class="tx-title tx-pane-title">Group Secrets</h2>
-            <label class="tx-inline-search" style="margin-bottom: 0.5rem">
-              <span class="tx-inline-search-label">Search:</span>
-              <input v-model="groupSearch" class="tx-inline-search-input" />
-            </label>
-            <div class="tx-inventory-table-wrap">
-              <table class="tx-inventory-table tx-secrets-table">
-                <thead>
-                  <tr><th class="tx-th-regular">Name</th><th class="tx-th-regular">Group</th><th class="tx-th-regular">Path</th><th class="tx-th-regular">Content</th><th class="tx-th-regular tx-th-actions">Actions</th></tr>
-                </thead>
-                <tbody>
-                  <tr v-for="row in groupRows" :key="`g-${row.owner}-${row.name}`">
-                    <td><span class="tx-cell-ellipsis">{{ row.name }}</span></td>
-                    <td><span class="tx-cell-ellipsis">{{ row.owner }}</span></td>
-                    <td><span class="tx-cell-ellipsis">{{ row.path }}</span></td>
-                    <td><span class="tx-cell-ellipsis" :title="row.content">{{ preview(row.content) }}</span></td>
-                    <td class="tx-col-actions"><div class="tx-action-icons"><button class="tx-icon-act tx-icon-link" @click="openEdit(row)">✎</button><button class="tx-icon-act tx-icon-clone" @click="openClone(row)">⧉</button><button class="tx-icon-act tx-icon-danger" @click="openDelete(row)">🗑</button></div></td>
-                  </tr>
-                  <tr v-if="groupRows.length === 0"><td colspan="5">There are no Group Secrets</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="tx-secrets-pane" v-if="scope !== 'group'">
-            <h2 class="tx-title tx-pane-title">Node Secrets</h2>
-            <label class="tx-inline-search" style="margin-bottom: 0.5rem">
-              <span class="tx-inline-search-label">Search:</span>
-              <input v-model="nodeSearch" class="tx-inline-search-input" />
-            </label>
-            <div class="tx-inventory-table-wrap">
-              <table class="tx-inventory-table tx-secrets-table">
-                <thead>
-                  <tr><th class="tx-th-regular">Name</th><th class="tx-th-regular">Node</th><th class="tx-th-regular">Path</th><th class="tx-th-regular">Content</th><th class="tx-th-regular tx-th-actions">Actions</th></tr>
-                </thead>
-                <tbody>
-                  <tr v-for="row in nodeRows" :key="`n-${row.owner}-${row.name}`">
-                    <td><span class="tx-cell-ellipsis">{{ row.name }}</span></td>
-                    <td><span class="tx-cell-ellipsis">{{ row.owner }}</span></td>
-                    <td><span class="tx-cell-ellipsis">{{ row.path }}</span></td>
-                    <td><span class="tx-cell-ellipsis" :title="row.content">{{ preview(row.content) }}</span></td>
-                    <td class="tx-col-actions"><div class="tx-action-icons"><button class="tx-icon-act tx-icon-link" @click="openEdit(row)">✎</button><button class="tx-icon-act tx-icon-clone" @click="openClone(row)">⧉</button><button class="tx-icon-act tx-icon-danger" @click="openDelete(row)">🗑</button></div></td>
-                  </tr>
-                  <tr v-if="nodeRows.length === 0"><td colspan="5">There are no Node Secrets</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <SecretsTableSection
+            v-if="scope !== 'node'"
+            title="Group Secrets"
+            owner-header="Group"
+            :rows="groupRows"
+            v-model:search="groupSearch"
+            empty-text="There are no Group Secrets"
+            @edit="openEdit"
+            @edit-content="openContentEdit"
+            @clone="openClone"
+            @delete="openDelete"
+          />
+          <SecretsTableSection
+            v-if="scope !== 'group'"
+            title="Node Secrets"
+            owner-header="Node"
+            :rows="nodeRows"
+            v-model:search="nodeSearch"
+            empty-text="There are no Node Secrets"
+            @edit="openEdit"
+            @edit-content="openContentEdit"
+            @clone="openClone"
+            @delete="openDelete"
+          />
         </div>
       </section>
     </main>
@@ -82,6 +57,13 @@
   <SecretFormModal v-if="editOpen" mode="edit" title="Edit Secret" :initial="formState" @close="closeAll" @submit="onEdit" />
   <SecretFormModal v-if="cloneOpen" mode="clone" title="Clone Secret" :initial="formState" @close="closeAll" @submit="onClone" />
   <DeleteSecretModal v-if="deleteOpen && current" :item="current" @close="closeAll" @confirm="onDelete" />
+  <TextEditorModal
+    v-if="contentEditOpen && contentEditRow"
+    title="Edit Content"
+    :model-value="contentEditValue"
+    @saved="onContentSaved"
+    @close="closeContentEdit"
+  />
 </template>
 
 <script setup lang="ts">
@@ -90,6 +72,8 @@ import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import SecretFormModal from './components/SecretFormModal.vue'
 import DeleteSecretModal from './components/DeleteSecretModal.vue'
+import SecretsTableSection from './components/SecretsTableSection.vue'
+import TextEditorModal from './components/TextEditorModal.vue'
 import { addSecret, cloneSecret, deleteSecret, fetchSecrets, updateSecret } from './api'
 import type { SecretFormState, SecretRecord } from './types'
 
@@ -104,6 +88,9 @@ const addOpen = ref(false)
 const editOpen = ref(false)
 const cloneOpen = ref(false)
 const deleteOpen = ref(false)
+const contentEditOpen = ref(false)
+const contentEditRow = ref<SecretRecord | null>(null)
+const contentEditValue = ref('')
 
 const emptyForm: SecretFormState = { entity: 'group', owner: '', name: '', path: '', content: '' }
 const formState = ref<SecretFormState>({ ...emptyForm })
@@ -116,12 +103,8 @@ function filterRows(entity: 'group' | 'node', q: string): SecretRecord[] {
   return rows.value.filter((r) => {
     if (r.entity !== entity) return false
     if (!text) return true
-    return [r.name, r.owner, r.path, r.content].join(' ').toLowerCase().includes(text)
+    return [r.name, r.owner, r.path].join(' ').toLowerCase().includes(text)
   })
-}
-
-function preview(content: string): string {
-  return content.length > 30 ? `${content.slice(0, 27)}...` : content
 }
 
 function openAdd() {
@@ -141,6 +124,16 @@ function openClone(item: SecretRecord) {
 function openDelete(item: SecretRecord) {
   current.value = item
   deleteOpen.value = true
+}
+function openContentEdit(item: SecretRecord) {
+  contentEditRow.value = item
+  contentEditValue.value = item.content
+  contentEditOpen.value = true
+}
+function closeContentEdit() {
+  contentEditOpen.value = false
+  contentEditRow.value = null
+  contentEditValue.value = ''
 }
 function closeAll() {
   addOpen.value = false
@@ -169,6 +162,13 @@ async function onClone(form: SecretFormState) {
 async function onDelete() {
   if (!current.value) return
   await handleAction(() => deleteSecret(current.value!.entity, current.value!.owner, current.value!.name), 'Secret deleted.')
+}
+
+async function onContentSaved(value: string) {
+  const row = contentEditRow.value
+  closeContentEdit()
+  if (!row) return
+  await handleAction(() => updateSecret(row, { ...row, content: value }), 'Secret content updated.')
 }
 
 async function handleAction(action: () => Promise<void>, msg: string) {

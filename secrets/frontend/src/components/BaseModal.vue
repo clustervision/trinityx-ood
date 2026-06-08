@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div class="tx-modal-overlay" @mousedown.self="$emit('close')">
+    <div class="tx-modal-overlay" :class="{ 'tx-modal-overlay-nested': nested }" @mousedown.self="$emit('close')">
       <div class="tx-modal-container" :class="sizeClass">
         <button type="button" class="tx-modal-x" aria-label="Close" @click="$emit('close')">&times;</button>
         <slot />
@@ -15,8 +15,9 @@ import { computed, onMounted, onUnmounted } from 'vue'
 const props = withDefaults(
   defineProps<{
     size?: 'small' | 'medium' | 'large' | 'wide'
+    nested?: boolean
   }>(),
-  { size: 'large' },
+  { size: 'large', nested: false },
 )
 
 const emit = defineEmits<{ close: [] }>()
