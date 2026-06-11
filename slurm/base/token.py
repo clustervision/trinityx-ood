@@ -17,7 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 
-import os
+import os, sys
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
@@ -49,18 +49,24 @@ class Token:
         try:
             x = session.post(f'{protocol}://{endpoint}/token', json=token_credentials, stream=True, timeout=10, verify=verify_certificate)
             if (str(x.status_code) in RET):
+                sys.stderr.write("ERROR :: "+RET[str(x.status_code)]+"\n")
                 raise Exception(RET[str(x.status_code)])
             DATA = json.loads(x.text)
             if (not 'token' in DATA):
+                sys.stderr.write("ERROR :: i did not receive a token. i cannot continue.\n")
                 raise Exception("i did not receive a token. i cannot continue.")
             return DATA["token"]
         except requests.exceptions.SSLError as ssl_loop_error:
+            sys.stderr.write(f'ERROR :: {ssl_loop_error}\n')
             raise Exception(f"{ssl_loop_error}")
         except requests.exceptions.HTTPError as err:
+            sys.stderr.write("ERROR :: trouble getting my token: "+str(err)+"\n")
             raise Exception("trouble getting my token: "+str(err))
         except requests.exceptions.ConnectionError as err:
+            sys.stderr.write("ERROR :: trouble getting my token: "+str(err)+"\n")
             raise Exception("trouble getting my token: "+str(err))
         except requests.exceptions.Timeout as err:
+            sys.stderr.write("ERROR :: trouble getting my token: "+str(err)+"\n")
             raise Exception("trouble getting my token: "+str(err))
     #    Below commented out as this catch all will also catch legit responses for e.g. 401 and 404
     #    except:
