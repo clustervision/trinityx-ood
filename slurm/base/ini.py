@@ -17,7 +17,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 
-import os, sys
+import os
 from configparser import RawConfigParser
 
 class Ini:
@@ -58,9 +58,5 @@ class Ini:
         else:
             errors.append(f'{ini_file} is not found on this machine.')
         if errors:
-            sys.stderr.write('You need to fix following errors...\n')
-            num = 1
-            for error in errors:
-                sys.stderr.write(f'{num}. {error}\n')
-            sys.exit(1)
+            raise Exception('You need to fix following errors: ' + '; '.join(errors))
         return config
