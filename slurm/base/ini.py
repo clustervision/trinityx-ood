@@ -62,5 +62,6 @@ class Ini:
             num = 1
             for error in errors:
                 sys.stderr.write(f'{num}. {error}\n')
-            sys.exit(1)
+                num += 1
+            raise Exception('You need to fix following errors: ' + '; '.join(errors))
         return config
