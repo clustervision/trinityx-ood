@@ -111,9 +111,11 @@ const metricOptions = [
   'GPU Temperature'
 ];
 
-/** 红→黄→绿→青→蓝→紫 彩虹条（所有指标共用） */
+
+const SCALE_BAR_EMPTY = '#b8c0d0';
+/** Low (left): blue/green → mid: yellow/orange → high (right): red */
 const RAINBOW_BAR =
-  'linear-gradient(90deg, #ff0000 0%, #ffaa00 14%, #ffee00 28%, #22c55e 42%, #06b6d4 56%, #2563eb 70%, #7c3aed 84%, #db2777 100%)';
+  'linear-gradient(90deg, #2563eb 0%, #22c55e 16%, #84cc16 30%, #ffee00 50%, #ffaa00 70%, #ff6600 85%, #ff0000 100%)';
 
 function formatPeak(n: number): string {
   if (!Number.isFinite(n)) return '—';
@@ -123,15 +125,23 @@ function formatPeak(n: number): string {
   return n.toFixed(2);
 }
 
-const barFillStyle1 = computed(() => ({
-  width: props.metric1 ? '100%' : '0%',
-  background: props.metric1 ? RAINBOW_BAR : '#b8c0d0',
-}));
+const barFillStyle1 = computed(() => {
+  const active = Boolean(props.metric1);
+  const hasData = Boolean(props.range1?.hasData);
+  return {
+    width: active ? '100%' : '0%',
+    background: active && hasData ? RAINBOW_BAR : SCALE_BAR_EMPTY,
+  };
+});
 
-const barFillStyle2 = computed(() => ({
-  width: props.metric2 ? '100%' : '0%',
-  background: props.metric2 ? RAINBOW_BAR : '#b8c0d0',
-}));
+const barFillStyle2 = computed(() => {
+  const active = Boolean(props.metric2);
+  const hasData = Boolean(props.range2?.hasData);
+  return {
+    width: active ? '100%' : '0%',
+    background: active && hasData ? RAINBOW_BAR : SCALE_BAR_EMPTY,
+  };
+});
 
 const maxLabel1 = computed(() => {
   if (!props.metric1) return '';

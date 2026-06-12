@@ -37,9 +37,9 @@ const setView = (viewName: string) => {
 const headerBreadcrumbs = computed(() => {
   const map: Record<string, { label: string; view?: string }[]> = {
     'dashboard': [{ label: 'Home', view: 'dashboard' }, { label: 'Rack' }],
-    'manage-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack Frames' }],
+    'manage-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack' }],
     'manage-inventory': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Inventory' }],
-    'show-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack Frames', view: 'manage-rack' }, { label: 'Show Rack' }],
+    'show-rack': [{ label: 'Home', view: 'dashboard' }, { label: 'Manage Rack', view: 'manage-rack' }, { label: 'Show Rack' }],
   };
   return map[currentView.value] ?? [{ label: 'Home', view: 'dashboard' }, { label: 'Page' }];
 });

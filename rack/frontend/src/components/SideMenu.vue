@@ -13,7 +13,7 @@
       <li class="menu-item side-rack-nav" :class="{ 'is-active': isManageRackActive }">
         <a href="javascript:void(0);" class="menu-link" @click="$emit('change-view', 'manage-rack')">
           <i class="menu-icon tf-icons bx bx-menu"></i>
-          <div data-i18n="Rack">Manage Rack Frames</div>
+          <div data-i18n="Rack">Manage Rack</div>
         </a>
       </li>
 
@@ -349,16 +349,19 @@ onMounted(() => {
 
   :deep(.side-rack-nav > .menu-link) {
     margin: 4px var(--side-h-inset) !important;
-    padding: 5px 8px !important;
-    min-height: 0 !important;
-    border-radius: 10px !important;
+    padding: 0 1rem !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    border-radius: 8px !important;
     font-family: var(--font-geist, 'Geist', system-ui, sans-serif) !important;
     font-weight: 500 !important;
-    font-size: 0.8125rem !important;
-    line-height: 1.25 !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
     background-color: #fff !important;
     color: #5376ea !important;
-    border: var(--side-border-width) solid #d0d7e2 !important;
+    border: 2px solid #d0d7e2 !important;
     box-shadow: none !important;
     box-sizing: border-box !important;
   }
@@ -372,12 +375,12 @@ onMounted(() => {
   :deep(.side-rack-nav.is-active > .menu-link) {
     background-color: #eef3ff !important;
     color: #5376ea !important;
-    border: var(--side-border-width) solid #5376ea !important;
+    border: 2px solid #5376ea !important;
   }
 
   :deep(.side-rack-nav .menu-icon) {
     color: #5376ea !important;
-    font-size: 1.1rem !important;
+    font-size: 14px !important;
   }
 
   /* py-1 uses padding !important — replace with explicit top inset so nav moves down */
