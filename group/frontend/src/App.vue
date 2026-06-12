@@ -201,8 +201,11 @@ async function loadData() {
     const data = await fetchGroups()
     if (data.status === true && data.content?.config?.group) {
       const groups_data: GroupMap = data.content.config.group
-      groups.value = Object.values(groups_data)
-      for (const key in groups_data) { groupList.value.push(key) }
+      groups.value = Object.entries(groups_data).map(([key, record]) => ({
+        ...(record as Group),
+        name: String((record as Group).name || key),
+      }))
+      groupList.value = Object.keys(groups_data)
 
     } else {
       if (data.status_code === 404) {
@@ -221,6 +224,7 @@ async function loadData() {
     loading.value = false
   }
 }
+
 function handleEscKey(event: KeyboardEvent) {
   if (event.key === 'Escape' && helpOpen.value) {
     helpOpen.value = false
@@ -378,13 +382,76 @@ onUnmounted(() => {
                 &times;
               </button>
               <h2 id="help-title" class="tx-help-title">How to use this app</h2>
+
+              <h3 class="tx-help-section-title">Main page</h3>
               <ul class="tx-help-list">
-                <li><strong>Add Group</strong> — Use the button to create a new group.</li>
-                <li><strong>Edit</strong> — Click an underlined group name.</li>
-                <li><strong>Clone / OS Push / Delete</strong> — Use the icons in the Actions column.</li>
-                <li><strong>Search</strong> — Filter the table as you type.</li>
-                <li><strong>Sort</strong> — Click a column header (or Name / Network under Interfaces) to sort; click again to reverse. </li>
+                <li><strong>Add Group</strong> — Opens the create dialog.</li>
+                <li><strong>Search</strong> — Filters the table as you type (all visible columns).</li>
+                <li><strong>Sort</strong> — Click a column header; click again to reverse. Under <strong>Interfaces</strong>, sort by interface <strong>Name</strong> or <strong>Network</strong>.</li>
+                <li><strong>Name</strong> — Group name (blue link). Click to edit.</li>
+                <li><strong>BMC Setup / OS Image / Scripts / Roles</strong> — Shown when configured; otherwise <em>NOT AVAILABLE</em>.</li>
+                <li><strong>Interfaces</strong> — Each group row lists interface name and network (yellow columns).</li>
+                <li><strong>Actions</strong> — Clone (copy group), OS Push (deploy image), Delete (remove group).</li>
+                <li><strong>Entries per Page</strong> — Page size at the bottom; use &lt; &gt; to change page.</li>
               </ul>
+
+              <h3 class="tx-help-section-title">Add / Edit group</h3>
+              <ul class="tx-help-list">
+                <li><strong>Name</strong> — Unique group identifier (letters, numbers, dot, hyphen).</li>
+                <li><strong>OS Image</strong> — OS image assigned to nodes in this group.</li>
+                <li><strong>Setup BMC</strong> — TRUE / FALSE / DEFAULT: whether BMC setup runs for members.</li>
+                <li><strong>Roles</strong> — Optional role string for group members.</li>
+                <li><strong>Net Boot</strong> — YES / NO / DEFAULT for network boot.</li>
+                <li><strong>Scripts</strong> — Script reference for the group.</li>
+                <li><strong>BMC Setup</strong> — BMC setup profile to use.</li>
+                <li><strong>+ Interfaces</strong> — Expand to add or edit network interfaces.</li>
+                <li><strong>Advanced</strong> — Domain, scripts (kernel / pre / part / post), provision settings, comment, and more.</li>
+                <li><strong>Save Changes</strong> — Writes edits to the cluster. Removing an interface in the form only updates the dialog until you save; after a successful save the main table refreshes.</li>
+              </ul>
+
+              <h3 class="tx-help-section-title">Interfaces (in Add / Edit / Clone)</h3>
+              <ul class="tx-help-list">
+                <li><strong>Interface</strong> — Interface name (e.g. BOOTIF, BMC).</li>
+                <li><strong>Network</strong> — Luna network this interface uses.</li>
+                <li><strong>MTU</strong> — 68–65535, optional.</li>
+                <li><strong>DHCP</strong> — Enable DHCP on this interface.</li>
+                <li><strong>Bond Mode / Bond Member</strong> — Link aggregation settings when used.</li>
+                <li><strong>VLAN ID / VLAN Parent</strong> — VLAN tagging when used.</li>
+                <li><strong>Options</strong> — Extra interface options; use the edit icon for a larger editor.</li>
+                <li><strong>Remove Interface</strong> — Removes the row in this dialog only. Click <strong>Save Changes</strong> (Edit) or <strong>Clone Group</strong> (Clone) to apply.</li>
+                <li><strong>+ Add</strong> — Inserts another interface row below.</li>
+              </ul>
+
+              <h3 class="tx-help-section-title">Advanced fields</h3>
+              <ul class="tx-help-list">
+                <li><strong>Domain</strong> — DNS domain for group members.</li>
+                <li><strong>Unmanaged BMC Users</strong> — BMC user slot configuration.</li>
+                <li><strong>Kernel Options | OS Image</strong> — Kernel command line (may inherit from OS image).</li>
+                <li><strong>Pre / Part / Post Script</strong> — Provisioning scripts at different stages.</li>
+                <li><strong>OS Image Tag</strong> — Tag for the OS image variant.</li>
+                <li><strong>Provision Interface / Method / Fallback</strong> — How nodes in this group are provisioned.</li>
+                <li><strong>Comment</strong> — Free-text notes; upload or expand editor for long text.</li>
+              </ul>
+
+              <h3 class="tx-help-section-title">Clone group</h3>
+              <ul class="tx-help-list">
+                <li><strong>Clone Name</strong> — Name for the new group (must not already exist).</li>
+                <li>Other fields are copied from the source group; adjust as needed, then <strong>Clone Group</strong>.</li>
+              </ul>
+
+              <h3 class="tx-help-section-title">Push OS Image</h3>
+              <ul class="tx-help-list">
+                <li><strong>OS Image</strong> — Image to push to nodes in this group.</li>
+                <li><strong>No Dry</strong> — When checked, runs a live push (not dry-run only).</li>
+                <li><strong>Push OS Image</strong> — Starts the push job; status may appear below when logging is enabled.</li>
+              </ul>
+
+              <h3 class="tx-help-section-title">Delete group</h3>
+              <ul class="tx-help-list">
+                <li>Confirms permanent deletion of the group. This cannot be undone.</li>
+              </ul>
+
+              <p class="tx-help-note">Press <strong>Esc</strong> or click outside the help panel to close it.</p>
             </div>
           </div>
         </Teleport>

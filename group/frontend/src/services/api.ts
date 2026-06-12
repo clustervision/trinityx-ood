@@ -21,15 +21,12 @@ export async function deleteGroup(name: string) {
   return data
 }
 
-export async function removeInterface(
-  record: string,
-  iface: string
-) {
+export async function removeInterface(record: string, iface: string) {
   const { data } = await apiClient.get(
     `/api/v1/remove-interface/${encodeURIComponent(record)}/${encodeURIComponent(iface)}`
   )
 
-  if (data.status === false) {
+  if (data.status === false || data.status === 'false') {
     const message =
       typeof data.content === 'object' && data.content?.message
         ? data.content.message

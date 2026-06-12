@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { punAppAssetUrl } from '@/utils/publicAssets'
+
+const logoUrl = punAppAssetUrl('static/img/logo.png')
 
 defineProps({
   app_url: {
@@ -13,7 +16,7 @@ defineProps({
     <ol class="tx-breadcrumb">
       <li class="tx-breadcrumb-logo">
         <a href="/">
-          <img :src="`${$props.app_url}/app/assets/static/img/logo.png`" alt="Logo" class="tx-navbar-logo" />
+          <img :src="logoUrl" alt="Logo" class="tx-navbar-logo" />
         </a>
       </li>
       <li class="tx-breadcrumb-item">

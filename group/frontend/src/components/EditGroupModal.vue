@@ -3,8 +3,9 @@
 import { ref, onMounted, watch, nextTick } from 'vue'
 import BaseModal from './BaseModal.vue'
 import GroupFormFields from './GroupFormFields.vue'
-import { fetchGroupResources, submitForm } from '@/services/api'
+import { fetchGroupResources, removeInterface, submitForm } from '@/services/api'
 import { formatGroupNameDisplay, groupNameTitle } from '@/constants/groupName'
+import { removedInterfaceNames } from '@/utils/groupInterfaces'
 
 const props = defineProps({
   groupName: { type: String, required: true },
@@ -136,10 +137,15 @@ async function onSubmit() {
       return
     }
 
+    const removed = removedInterfaceNames(
+      initialSnapshot.value,
+      formRef.value.form.interfaces,
+    )
+    for (const ifaceName of removed) {
+      await removeInterface(props.groupName, ifaceName)
+    }
+
     const payload = formRef.value.buildPayload()
-
-    // console.log('Submitting edit payload:', payload)
-
     const result = await submitForm(`/api/v1/edit`, payload)
 
     if (result.status === true && result.content?.message) {
@@ -158,6 +164,7 @@ async function onSubmit() {
     submitting.value = false
   }
 }
+
 </script>
 
 <template>
@@ -174,6 +181,7 @@ async function onSubmit() {
         <GroupFormFields
           ref="formRef"
           mode="edit"
+          :record-name="props.groupName"
           :groupList="props.groupList"
           :initial-data="formData"
           :bmcsetup-options="bmcsetupOptions"

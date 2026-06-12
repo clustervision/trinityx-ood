@@ -65,11 +65,6 @@ optgroup {
   margin-right: auto;
 }
 
-.tx-inventory-page .tx-header-actions > .tx-btn-blue {
-  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
-  font-weight: 400;
-}
-
 .tx-inventory-page .tx-inline-search-label {
   font-weight: 400;
 }
@@ -169,6 +164,33 @@ optgroup {
   padding: 0;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+/* Inventory toolbar: match Add / ? / Search height & typography */
+.tx-inventory-page .tx-header-actions {
+  align-items: stretch;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-blue,
+.tx-inventory-page .tx-header-actions > .tx-btn-help {
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-blue {
+  border: 2px solid transparent;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-help {
+  width: auto;
+  min-width: 2.75rem;
+  height: auto;
 }
 
 .tx-btn-block-col {
@@ -482,7 +504,7 @@ button.tx-name-link {
   font-weight: 700;
   font-style: normal;
   line-height: 1.35;
-  color: #111111;
+  color: #321DFF;
   cursor: pointer;
   text-align: left;
 }
@@ -498,7 +520,7 @@ button.tx-name-link {
 }
 
 .tx-name-link:hover {
-  color: #000000;
+  color: #2818cc;
 }
 
 button.tx-name-link:focus {
@@ -724,8 +746,8 @@ button.tx-name-link:focus-visible .tx-cell-ellipsis {
 }
 
 .tx-navbar-logo {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   padding: 0;
 }
 
@@ -875,7 +897,11 @@ button.tx-name-link:focus-visible .tx-cell-ellipsis {
   color: #5376EA;
   font-size: 18px;
   font-weight: 500;
-  line-height: 1;
+  line-height: 1.35;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35em;
 }
 
 .tx-form-page .tx-title strong:not(.tx-title-highlight-name) {
@@ -886,16 +912,17 @@ button.tx-name-link:focus-visible .tx-cell-ellipsis {
 .tx-title-highlight-name {
   display: inline-block;
   max-width: min(100%, 28rem);
+  min-width: 0;
   background: #fff;
   color: #321dff !important;
   font-weight: 700;
-  padding: 0.12em 0.45em;
+  padding: 0;
   border-radius: 4px;
-  line-height: 1.25;
+  line-height: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  vertical-align: bottom;
+  vertical-align: baseline;
 }
 
 .tx-group-form-fixed {
@@ -1901,8 +1928,10 @@ select.tx-select-placeholder {
   position: relative;
   background: #fff;
   border-radius: 20px;
-  max-width: 700px;
+  max-width: 820px;
   width: calc(100% - 2rem);
+  max-height: min(85vh, 720px);
+  overflow-y: auto;
   padding: 1.75rem 2rem 2rem;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
 }
@@ -1929,6 +1958,24 @@ select.tx-select-placeholder {
 
 .tx-help-list li {
   margin-bottom: 0.5rem;
+}
+
+.tx-help-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #5376EA;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.tx-help-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.tx-help-note {
+  margin: 0.75rem 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #444;
 }
 
 /* ================================================================
