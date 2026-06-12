@@ -2,6 +2,7 @@
 import { ref, reactive, watch, computed, nextTick } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
+import { removeInterface as removeInterfaceApi } from '@/services/api'
 import { punAppAssetUrl } from '@/utils/publicAssets'
 import type { NetworkInterface } from '@/types/network'
 import type { Group } from '@/types/group'
@@ -29,6 +30,8 @@ const nameInlineEdit = ref(false)
 const nameDraft = ref('')
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
+const interfaceError = ref('')
+const removingInterface = ref(false)
 
 const textEditorOpen = ref(false)
 const textEditorTitle = ref('')
@@ -189,7 +192,25 @@ function addInterfaceAfter(idx: number) {
   )
 }
 
-function removeInterface(idx: number) {
+async function removeInterface(idx: number) {
+  interfaceError.value = ''
+  const iface = form.interfaces[idx]
+  const ifaceName = String(iface?.interface || '').trim()
+
+  if (props.mode === 'edit' && ifaceName && originalGroupName.value) {
+    if (removingInterface.value) return
+    removingInterface.value = true
+    try {
+      await removeInterfaceApi(originalGroupName.value, ifaceName)
+    } catch (err) {
+      interfaceError.value =
+        err instanceof Error ? err.message : 'Remove interface failed.'
+      return
+    } finally {
+      removingInterface.value = false
+    }
+  }
+
   form.interfaces.splice(idx, 1)
 }
 
@@ -599,6 +620,7 @@ const isSubmitDisabled = computed(() => Boolean(liveNameValidationMsg.value))
 
     <!-- Interface Section -->
     <div v-if="showInterfaces" class="tx-interface-section">
+      <div v-if="interfaceError" class="alert alert-danger" role="alert">{{ interfaceError }}</div>
       <InterfaceRow
         v-for="(iface, idx) in form.interfaces"
         :key="idx"

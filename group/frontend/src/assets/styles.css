@@ -453,6 +453,24 @@ button.tx-name-link {
   color: #111111;
 }
 
+/* Within a group row: alternate interface lines on light yellow background */
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(odd) {
+  background: #FDF9F3;
+}
+
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
+  background: #fffffd;
+}
+
+/* Within a group row: alternate interface lines on dark yellow background */
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
+  background: #FAF0E0;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+  background: #F5E8D4;
+}
+
 /* ---------- Name link ---------- */
 .tx-name-link {
   border: none;
