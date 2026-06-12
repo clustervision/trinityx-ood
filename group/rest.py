@@ -284,8 +284,14 @@ class Rest():
         try:
             response = requests.get(url=daemon_url, headers=headers, timeout=self.timeout, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
-            if response.status_code == 204:
-                response = {"status": True, "status_code": response.status_code, "content": {"message": f"{table.capitalize()} {name} is deleted successfully."}}
+            if 200 <= response.status_code < 300:
+                if response.status_code == 204 or not response.content:
+                    content = {"message": f"{table.capitalize()} {name} is deleted successfully."}
+                else:
+                    content = response.json()
+                    if not isinstance(content, dict):
+                        content = {"message": str(content)}
+                response = {"status": True, "status_code": response.status_code, "content": content}
             else:
                 data = response.json()
                 if isinstance(data, dict) and 'message' in data:

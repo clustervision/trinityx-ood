@@ -222,14 +222,26 @@ def rename(record=None):
     return render_template("rename.html", table=TABLE_CAP, data=data)
 
 
-@app.route('/api/v1/delete/<string:record>', methods=['DELETE'])
+@app.route('/api/v1/delete/<string:record>', methods=['DELETE', 'GET'])
 def delete(record: str=''):
     """
     This Method will delete a requested record.
     """
     response = Rest().get_delete(TABLE, record)
     LOGGER.info(response)
-    return response
+    return jsonify(response), 200
+
+
+@app.route('/api/v1/remove-interface/<path:record>/<path:interface>', methods=['GET'])
+@app.route('/remove/<path:record>/<path:interface>', methods=['GET'])
+def remove_interface(record: str = '', interface: str = ''):
+    """
+    Remove a group interface via daemon GET _delete (same pattern as node app).
+    """
+    uri = f'{record}/interfaces/{interface}'
+    response = Rest().get_delete(TABLE, uri)
+    LOGGER.info(response)
+    return jsonify(response), 200
 
 
 @app.route('/api/v1/ospush/<string:record>', methods=['POST'])
