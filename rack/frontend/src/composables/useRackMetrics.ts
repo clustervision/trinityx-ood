@@ -49,10 +49,55 @@ function prometheusInstantQueryParams(query: string): string {
   return `query=${encodeQueryParamValue(query)}`;
 }
 
+function prometheusUrlFromRuntime(): string {
+  const raw = String(
+    (typeof window !== 'undefined' && (window as Window & { PROMETHEUS_URL?: string }).PROMETHEUS_URL) ||
+      '',
+  ).trim()
+  return raw.replace(/\/$/, '')
+}
+
+/** Store metrics under short hostname and FQDN so rack device names match either form. */
+function storeMetricValue(
+  map: Record<string, Record<string, number>>,
+  rawHostname: string,
+  metricType: string,
+  value: number,
+) {
+  const shortHostname = rawHostname.split('.')[0]
+  const keys = [rawHostname, shortHostname].filter((k): k is string => Boolean(k))
+  for (const key of new Set(keys)) {
+    if (!map[key]) map[key] = {}
+    map[key][metricType] = value
+  }
+}
+
+function lookupDeviceMetrics(
+  map: Record<string, Record<string, number>>,
+  deviceName: string,
+): Record<string, number> | undefined {
+  if (map[deviceName]) return map[deviceName]
+  const short = deviceName.split('.')[0]
+  if (short && map[short]) return map[short]
+  for (const [key, metrics] of Object.entries(map)) {
+    if (key === deviceName || key.split('.')[0] === short) return metrics
+  }
+  return undefined
+}
+
+async function queryPrometheus(promql: string): Promise<PrometheusResponse> {
+  const promeUrl = prometheusUrlFromRuntime()
+  if (!promeUrl) {
+    throw new Error('PROMETHEUS_URL is not configured')
+  }
+
+  const response = await axios.get<PrometheusResponse>(
+    `${promeUrl}/api/v1/query?${prometheusInstantQueryParams(promql)}`,
+  )
+  return response.data
+}
 
 export function useRackMetrics() {
-  //@ts-ignore
-  const prome_url = window.PROMETHEUS_URL;
   const metric1 = ref<string | null>(null);
   const metric2 = ref<string | null>(null);
   const metricDataMap = ref<Record<string, Record<string, number>>>({});
@@ -78,13 +123,11 @@ export function useRackMetrics() {
 
     try {
       const promql = plusFormToPromQL(query);
-      const response = await axios.get<PrometheusResponse>(
-        `${prome_url}/api/v1/query?${prometheusInstantQueryParams(promql)}`
-      );
+      const payload = await queryPrometheus(promql);
 
-      if (response.data.status !== 'success') return;
+      if (payload.status !== 'success') return;
 
-      const results = response.data.data.result;
+      const results = payload.data.result;
 
       if (!results.length) {
         rangeRef.value = { ...EMPTY_RANGE };
@@ -99,17 +142,13 @@ export function useRackMetrics() {
       results.forEach((item) => {
         const rawHostname = item.metric.hostname;
         if (!rawHostname) return;
-        const parts = rawHostname.split('.');
-        const hostname = parts[0];
-        if (!hostname) return;
         const value = parseFloat(item.value[1]);
         if (!Number.isFinite(value)) return;
         if (value > maxVal) maxVal = value;
         sum += value;
         count += 1;
 
-        if (!metricDataMap.value[hostname]) metricDataMap.value[hostname] = {};
-        metricDataMap.value[hostname][metricType] = value;
+        storeMetricValue(metricDataMap.value, rawHostname, metricType, value);
       });
 
       if (count === 0) {
@@ -145,7 +184,7 @@ export function useRackMetrics() {
   };
   const getMetricForDevice = (device: Device | null, type: string | null, isMetric1: boolean) => {
     if (!device || !type || type === 'No Scale') return undefined;
-    const deviceMetrics = metricDataMap.value[device.name];
+    const deviceMetrics = lookupDeviceMetrics(metricDataMap.value, device.name);
 
     if (deviceMetrics && deviceMetrics[type] !== undefined) {
       const val = deviceMetrics[type];

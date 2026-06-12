@@ -72,8 +72,6 @@ const handleCrumbClick = (crumb: { label: string; view?: string }, index: number
   align-items: center;
   position: relative;
   z-index: 20;
-  background-color: #e7e7e7;
-  box-shadow: 0 0.125rem 0.25rem rgba(161, 172, 184, 0.4);
   border: none;
 }
 
@@ -86,20 +84,30 @@ const handleCrumbClick = (crumb: { label: string; view?: string }, index: number
 
 .navbar {
   width: 100%;
-  background-color: transparent;
+  background: linear-gradient(
+    to right,
+    #4a54f1 0%,
+    #4a54f1 10%,
+    #7d4dbb 25%,
+    #c63d7b 45%,
+    #e95f4a 65%,
+    #f3a133 85%,
+    #f8c325 100%
+  ) !important;
   position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem;
+  padding: 0.5rem 1rem;
   height: 100%;
   box-sizing: border-box;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
 }
 
 .img-logo {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   margin-right: 20px;
   padding: 0;
 }
@@ -128,21 +136,24 @@ const handleCrumbClick = (crumb: { label: string; view?: string }, index: number
 
 .breadcrumb-item + .breadcrumb-item::before {
   content: "/";
-  padding: 0 0.5rem;
-  color: #5376ea;
+  padding: 0 0.4rem;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .breadcrumb-item .align-middle {
-  color: #5376ea;
+  color: #ffffff;
   text-decoration: none;
   background-color: transparent;
   font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
-  font-size: 0.9375rem;
+  font-size: 18px;
   font-weight: 500;
 }
 
 .breadcrumb-item a.align-middle:hover {
+  color: #ffffff;
   text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255, 255, 255, 0.85);
 }
 
 .breadcrumb-item.active .align-middle {
