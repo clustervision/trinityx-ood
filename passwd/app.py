@@ -38,7 +38,6 @@ from helper import Helper
 
 LOGGER = Log.init_log('INFO')
 app = Flask(__name__, static_folder="static", template_folder="templates")
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 
 if APP_STATE is False: 

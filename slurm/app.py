@@ -87,13 +87,13 @@ def validate_home_directory():
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table="Slurm", data="", error=TOKEN_FILE["error"])
+        raise Exception(TOKEN_FILE["error"])
     file_check = os.path.isfile(INI_FILE)
     if file_check is False:
-        return render_template("error.html", table="Slurm", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+        raise Exception(f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
     read_check = os.access(INI_FILE, os.R_OK)
     if read_check is False:
-        return render_template("error.html", table="Slurm", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
+        raise Exception(f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 # add a wrapper to all the routes to catch errors

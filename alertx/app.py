@@ -46,7 +46,7 @@ LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+
 if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
     CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
