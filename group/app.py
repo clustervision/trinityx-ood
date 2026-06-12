@@ -55,7 +55,6 @@ app = Flask(
     static_url_path="/app/assets",
     template_folder="app",
 )
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
@@ -156,43 +155,6 @@ def get_resources(record: str = ""):
     return jsonify(body)
 
 
-
-
-# @app.route('/groups', methods=['GET'])
-# def api_groups():
-#     """
-#     JSON list of all groups for the Vue frontend table.
-#     Always returns HTTP 200 with { fields, groups, error } when the handler runs.
-#     """
-#     empty = {"fields": [], "groups": [], "error": ""}
-#     try:
-#         table_data = Rest().get_data(TABLE)
-#         LOGGER.info(table_data)
-#         if not table_data:
-#             empty["error"] = f'No {TABLE_CAP} Available at this time.'
-#             return jsonify(empty)
-#         if not isinstance(table_data, dict) or 'config' not in table_data:
-#             empty["error"] = 'Daemon returned an unexpected JSON shape (missing config).'
-#             return jsonify(empty)
-#         raw_data = table_data['config'].get(TABLE)
-#         if raw_data is None:
-#             empty["error"] = 'No Groups key in daemon config.'
-#             return jsonify(empty)
-#         if not isinstance(raw_data, dict):
-#             empty["error"] = 'Group data from daemon is not a mapping; check Luna daemon response.'
-#             return jsonify(empty)
-#         raw_data = Helper().prepare_json(raw_data, True)
-#         fields, groups = Helper().filter_data_json(TABLE, raw_data)
-#         return jsonify({"fields": fields, "groups": groups, "error": ""})
-#     except Exception as exc:
-#         LOGGER.exception("api_groups failed")
-#         return jsonify({
-#             "fields": [],
-#             "groups": [],
-#             "error": f'api_groups: {exc}',
-#         })
-
-
 @app.route('/api/v1/group/<string:record>', methods=['GET'])
 def group(record=None):
     """
@@ -200,18 +162,6 @@ def group(record=None):
     """
     response = Rest().get_data(TABLE, record)
     return response
-
-
-# @app.route('/get_list/<string:table>', methods=['GET', 'POST'])
-# def get_list(table=None):
-#     """
-#     This method will return the list of element in table for as option for select tag.
-#     """
-#     response = None
-#     if request:
-#         response = Model().get_list_options(table)
-#         response = json.dumps(response)
-#     return response
 
 
 @app.route('/api/v1/add', methods=['POST'])

@@ -38,7 +38,7 @@ from flask import Flask, render_template, request, jsonify, Response, stream_wit
 import urllib3
 from flask_cors import CORS
 from rest import Rest
-from constant import LICENSE, TOKEN_FILE, APP_STATE, APP_KEY
+from constant import LICENSE, TOKEN_FILE, APP_STATE
 from log import Log
 from helper import Helper
 
@@ -46,7 +46,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = Log.init_log('INFO')
 app = Flask(__name__, static_folder="app/assets", template_folder="app")
-app.secret_key = APP_KEY
 
 if APP_STATE is False: # FOR Development Only
     CORS(app, resources = {r"/get_nodes/*":         {"origins": "http://localhost:5173"}} )

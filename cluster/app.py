@@ -44,8 +44,6 @@ TABLE_CAP = 'Cluster'
 API_VERSION = 'v1'
 
 app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-
 
 if APP_STATE is False:
     CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
