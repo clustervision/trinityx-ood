@@ -20,6 +20,7 @@ const props = defineProps({
   submitLabel: { type: String, default: 'Submit' },
   hints: { type: Object, default: () => ({}) },
   submitting: { type: Boolean, default: false },
+  recordName: { type: String, default: '' },
 })
 
 defineEmits(['submit'])
@@ -29,7 +30,6 @@ const nameInlineEdit = ref(false)
 const nameDraft = ref('')
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
-
 const textEditorOpen = ref(false)
 const textEditorTitle = ref('')
 const textEditorField = ref('')
@@ -132,11 +132,18 @@ function hydrateForm(d: Partial<Group>) {
   }
 
   if (props.mode === 'edit') {
-    const n = form.name || ''
-    originalGroupName.value = n
-    nameDraft.value = n
+    const n = String(d.name || props.recordName || '').trim()
+    if (n) form.name = n
+    originalGroupName.value = String(props.recordName || n).trim()
+    nameDraft.value = form.name
     nameInlineEdit.value = false
   }
+}
+
+function groupRecordName(): string {
+  return String(
+    originalGroupName.value || props.recordName || form.name || '',
+  ).trim()
 }
 
 watch(
@@ -580,9 +587,9 @@ const isSubmitDisabled = computed(() => Boolean(liveNameValidationMsg.value))
           <span class="tx-label">Setup BMC:</span>
           <div class="tx-tri-inner">
             <div class="tx-segmented" role="group" aria-label="BMC setup">
-              <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">YES</button>
-              <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">NO</button>
-              <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''">DEFAULT (YES)</button>
+              <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">TRUE</button>
+              <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">FALSE</button>
+              <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''">DEFAULT (TRUE)</button>
             </div>
           </div>
         </div>

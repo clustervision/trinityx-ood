@@ -21,14 +21,17 @@ export async function deleteGroup(name: string) {
   return data
 }
 
-export async function removeInterface(
-  record: string,
-  iface: string
-) {
-  const { data } = await apiClient.get(`/remove/${encodeURIComponent(record)}/${encodeURIComponent(iface)}`)
+export async function removeInterface(record: string, iface: string) {
+  const { data } = await apiClient.get(
+    `/api/v1/remove-interface/${encodeURIComponent(record)}/${encodeURIComponent(iface)}`
+  )
 
-  if (data.status !== 'success') {
-    throw new Error(data.message || 'Remove interface failed')
+  if (data.status === false || data.status === 'false') {
+    const message =
+      typeof data.content === 'object' && data.content?.message
+        ? data.content.message
+        : 'Remove interface failed'
+    throw new Error(message)
   }
 
   return data
