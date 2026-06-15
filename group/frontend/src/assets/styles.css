@@ -321,10 +321,10 @@ optgroup {
 
 /* ========== Vertical Separators (Blue & Orange) ========== */
 .tx-th-sep-blue {
-  border-left: 2px solid rgba(83, 118, 234, 0.2) !important;
+  border-left: 2px solid #e6eeff !important;
 }
 .tx-td-sep-blue {
-  border-left: 2px solid rgba(83, 118, 234, 0.2) !important;
+  border-left: 2px solid #e6eeff !important;
 }
 .tx-th-sep-orange-left,
 .tx-td-sep-orange-left {
