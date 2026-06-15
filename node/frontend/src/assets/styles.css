@@ -534,7 +534,7 @@ button.tx-name-link:focus-visible .tx-cell-truncate-js {
 .tx-iface-entry {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 2.5rem;
   box-sizing: border-box;
   padding: 0.45rem 0.75rem;
@@ -542,7 +542,13 @@ button.tx-name-link:focus-visible .tx-cell-truncate-js {
   font-weight: 400;
   line-height: 1.2;
   color: #111111;
-  text-align: center;
+  text-align: left;
+}
+
+.tx-inventory-table tbody td.tx-iface-cell.tx-iface-name .tx-iface-entry,
+.tx-inventory-table tbody td.tx-iface-cell.tx-iface-name .tx-cell-ellipsis {
+  text-align: left;
+  justify-content: flex-start;
 }
 
 .tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry + .tx-iface-entry {
