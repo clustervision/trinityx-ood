@@ -286,11 +286,13 @@ function canonicalName(name: string) {
               <h2 id="help-title" class="tx-help-title">How to use this Other Devices app</h2>
 
               <div class="tx-help-content">
+                <h3 class="tx-help-section-title">Overview</h3>
                 <p class="tx-help-intro">
                   Use this app to view, add, update, clone, rename, and delete other device definitions stored in the Luna2 daemon.
                   An Other Device entry is used for infrastructure devices that are part of the environment but are not managed as compute nodes, switches, or BMC setup profiles.
                 </p>
 
+                <h3 class="tx-help-section-title">Device fields</h3>
                 <ul class="tx-help-list">
                   <li>
                     <strong>Other Device Name</strong> — The logical name of the device inside Luna.
