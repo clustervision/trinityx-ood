@@ -59,10 +59,12 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  class="tx-name-link"
                   :title="tagNameTitle(row.name)"
                   @click="$emit('open-detail', row)"
-                >{{ formatTagNameDisplay(row.name) }}</button>
+                >
+                  <span class="tx-cell-ellipsis">{{ formatTagNameDisplay(row.name) }}</span>
+                </button>
               </template>
               <template v-else-if="col.field === 'osimage'">
                 <span
@@ -125,13 +127,38 @@
         <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title-osimagetag">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="help-title-osimagetag" class="tx-help-title">How to use this app</h2>
+
+          <h3 class="tx-help-section-title">Main page</h3>
           <ul class="tx-help-list">
-            <li><strong>Add Tag</strong> — Pick an OS image from the list (from Luna), enter a tag name, and save.</li>
-            <li><strong>Detail</strong> — Click a tag name to see its details.</li>
-            <li><strong>Delete</strong> — Trash icon in Actions removes the tag from that OS image.</li>
-            <li><strong>Search</strong> — Filter the table as you type.</li>
-            <li><strong>Sort</strong> — Click a column header to sort; click again to reverse.</li>
+            <li><strong>Add Tag</strong> — Opens the create dialog. Pick an OS image and enter a new tag name.</li>
+            <li><strong>Search</strong> — Filters the table as you type (all visible columns).</li>
+            <li><strong>Sort</strong> — Click a column header; click again to reverse.</li>
+            <li><strong>Tag Name</strong> — Blue link. Click to open tag details.</li>
+            <li><strong>OS Image</strong> — The parent OS image this tag belongs to.</li>
+            <li><strong>Kernel / Initrd / Image file / Path</strong> — Shown when configured; otherwise <em>NONE</em>.</li>
+            <li><strong>Nodes / Groups</strong> — Members using this tag when assigned.</li>
+            <li><strong>Actions</strong> — Delete removes the tag from the OS image.</li>
+            <li><strong>Entries per Page</strong> — Page size at the bottom; use &lt; &gt; to change page.</li>
           </ul>
+
+          <h3 class="tx-help-section-title">Add tag</h3>
+          <ul class="tx-help-list">
+            <li><strong>OS Image</strong> — Select the Luna OS image to attach the tag to.</li>
+            <li><strong>Tag Name</strong> — Unique tag identifier for that OS image.</li>
+            <li><strong>Add Tag</strong> — Creates the tag on the cluster.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Tag detail</h3>
+          <ul class="tx-help-list">
+            <li>Read-only view of tag fields returned from Luna (files, path, nodes, groups, and more).</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Delete tag</h3>
+          <ul class="tx-help-list">
+            <li>Confirms removal of the tag from the OS image. This cannot be undone.</li>
+          </ul>
+
+          <p class="tx-help-note">Press <strong>Esc</strong> or click outside the help panel to close it.</p>
         </div>
       </div>
     </Teleport>
