@@ -75,8 +75,12 @@ function closeDelete() {
 }
 
 function onDeleteSaved() {
+  const target = deleteTarget.value
+  if (target && inventoryRef.value?.removeTag) {
+    inventoryRef.value.removeTag(target.osimage, target.name)
+  }
   closeDelete()
-  inventoryRef.value?.loadData?.()
+  inventoryRef.value?.loadData?.({ silent: true })
 }
 
 function onSaved() {

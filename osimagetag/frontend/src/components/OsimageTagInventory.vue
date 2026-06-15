@@ -272,18 +272,31 @@ function toggleSort(field) {
   }
 }
 
-async function loadData() {
+async function loadData(options = {}) {
+  const silent = Boolean(options.silent)
   loading.value = true
-  errorMsg.value = ''
+  if (!silent) errorMsg.value = ''
   try {
     const data = await fetchOsimageTags()
     if (data.error) errorMsg.value = String(data.error || '').trim() || 'Failed to load OS image tags.'
     tags.value = data.tags || []
   } catch (err) {
-    errorMsg.value = String(err?.message || '').trim() || 'Network error while loading OS image tags.'
+    if (!silent) {
+      errorMsg.value = String(err?.message || '').trim() || 'Network error while loading OS image tags.'
+    }
   } finally {
     loading.value = false
   }
+}
+
+function removeTag(osimage, name) {
+  const img = String(osimage || '').trim()
+  const tag = String(name || '').trim()
+  if (!img || !tag) return
+  tags.value = tags.value.filter(
+    (row) => !(String(row.osimage || '').trim() === img && String(row.name || '').trim() === tag),
+  )
+  errorMsg.value = ''
 }
 
 function handleEscKey(event) {
@@ -292,7 +305,7 @@ function handleEscKey(event) {
   }
 }
 
-defineExpose({ loadData })
+defineExpose({ loadData, removeTag })
 
 onMounted(() => {
   loadData()
