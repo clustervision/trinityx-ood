@@ -32,5 +32,5 @@ const homeUrl = computed(() => {
   return typeof window !== 'undefined' ? `https://${window.location.hostname}:8080` : '#'
 })
 
-const logoSrc = computed(() => punAppAssetUrl('img/logo.png'))
+const logoSrc = computed(() => punAppAssetUrl('static/img/logo.png'))
 </script>

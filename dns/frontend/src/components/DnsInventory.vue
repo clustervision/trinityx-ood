@@ -46,11 +46,11 @@
             <td class="tx-td-sep-blue">
               <button
                 type="button"
-                class="tx-name-link tx-cell-ellipsis"
+                class="tx-name-link"
                 :title="dnsLabelTitle(row.host)"
                 @click="$emit('open-update', row.network, row.host)"
               >
-                {{ formatDnsLabelDisplay(row.host) }}
+                <span class="tx-cell-ellipsis">{{ formatDnsLabelDisplay(row.host) }}</span>
               </button>
             </td>
             <td class="tx-td-sep-blue">
@@ -108,10 +108,12 @@
         <div class="tx-help-dialog" role="dialog">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 class="tx-help-title">How to use this app</h2>
+          <h3 class="tx-help-section-title">Main page</h3>
           <ul class="tx-help-list">
             <li><strong>Add New DNS</strong> — Create a host record on a network.</li>
             <li><strong>Update</strong> — Click the host name.</li>
             <li><strong>Delete</strong> — Remove a DNS entry.</li>
+            <li><strong>Search</strong> — Filter the table as you type.</li>
           </ul>
         </div>
       </div>
