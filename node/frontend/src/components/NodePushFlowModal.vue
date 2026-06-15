@@ -6,10 +6,18 @@
 
       <div class="tx-header">
         <h2 v-if="flow === 'osgrab'" class="tx-title">
-          Grab OS Image for Node <span class="tx-title-node-name">{{ selectedNode || nodeName }}</span>
+          Grab OS Image for Node
+          <strong
+            class="tx-title-highlight-name"
+            :title="displayNameTitle(selectedNode || nodeName)"
+          >{{ formatDisplayName(selectedNode || nodeName) }}</strong>
         </h2>
         <h2 v-else class="tx-title">
-          Push OS Image for Node <span class="tx-title-node-name">{{ selectedNode || nodeName }}</span>
+          Push OS Image for Node
+          <strong
+            class="tx-title-highlight-name"
+            :title="displayNameTitle(selectedNode || nodeName)"
+          >{{ formatDisplayName(selectedNode || nodeName) }}</strong>
         </h2>
       </div>
 
@@ -64,6 +72,7 @@ import {
   submitOsgrab,
 } from '../api'
 import type { NodeRow, OsPushGrabPayload } from '@/types'
+import { displayNameTitle, formatDisplayName } from '@/constants/displayName'
 
 const props = defineProps<{
   flow: 'ospush' | 'osgrab'

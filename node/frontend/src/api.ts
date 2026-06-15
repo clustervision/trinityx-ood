@@ -431,6 +431,37 @@ export async function submitNodeUpdate(nodeName: string, record: Record<string, 
   return postSubmitResult(`${apiV1Base()}/update/${encodeURIComponent(nodeName)}`, record)
 }
 
+/** Remove a node interface via daemon GET _delete (same pattern as group app). */
+export async function removeInterface(record: string, iface: string): Promise<void> {
+  const { res, text } = await fetchText(
+    `${apiV1Base()}/remove-interface/${encodeURIComponent(record)}/${encodeURIComponent(iface)}`,
+  )
+  let data: Record<string, unknown> = {}
+  try {
+    data = text ? (JSON.parse(text) as Record<string, unknown>) : {}
+  } catch {
+    throw new Error('Remove interface failed: invalid server response')
+  }
+
+  if (!res.ok) {
+    const content = data.content
+    const message =
+      typeof content === 'object' && content !== null && 'message' in content
+        ? String((content as Record<string, unknown>).message)
+        : `Remove interface failed (HTTP ${res.status})`
+    throw new Error(message)
+  }
+
+  if (data.status === false || data.status === 'false') {
+    const content = data.content
+    const message =
+      typeof content === 'object' && content !== null && 'message' in content
+        ? String((content as Record<string, unknown>).message)
+        : 'Remove interface failed'
+    throw new Error(message)
+  }
+}
+
 /**
  * Rename-like POST handled by Luna through /api/v1/rename — same envelope as add with newnodename in record.
  */
