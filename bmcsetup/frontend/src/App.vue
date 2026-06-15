@@ -297,11 +297,13 @@ function canonicalName(name: string) {
               <h2 id="help-title" class="tx-help-title">How to use this BMC Setup app</h2>
 
               <div class="tx-help-content">
+                <h3 class="tx-help-section-title">Overview</h3>
                 <p class="tx-help-intro">
                   Use this app to view, add, update, clone, rename, and delete BMC Setup profiles stored in the Luna2 daemon.
                   A BMC Setup defines how Luna should access a node's Baseboard Management Controller for out-of-band management.
                 </p>
 
+                <h3 class="tx-help-section-title">BMC setup fields</h3>
                 <ul class="tx-help-list">
                   <li>
                     <strong>BMC Setup Name</strong> - The logical profile name for this BMC configuration.

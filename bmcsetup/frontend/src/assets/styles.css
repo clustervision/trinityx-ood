@@ -276,9 +276,6 @@ optgroup {
   overflow: hidden;
 }
 
-thead{
-  height: 80px;
-}
 .tx-th-actions {
   cursor: default !important;
 }

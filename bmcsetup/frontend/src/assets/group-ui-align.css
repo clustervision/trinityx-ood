@@ -1,0 +1,191 @@
+/**
+ * Shared UI alignment with group app (feedback_fix).
+ * Import after styles.css in each Luna OOD SPA.
+ */
+
+/* Inventory toolbar: Add / ? / Search — same height, +2px gap */
+.tx-inventory-page .tx-header-actions {
+  align-items: stretch;
+}
+
+.tx-header-actions {
+  gap: calc(0.65rem + 2px);
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-blue,
+.tx-inventory-page .tx-header-actions > .tx-btn-help {
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-blue {
+  border: 2px solid transparent;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-help {
+  width: auto;
+  min-width: 2.75rem;
+  height: auto;
+}
+
+.tx-inventory-page .tx-inline-search-label {
+  font-weight: 400;
+}
+
+/* Entries per page — centered number */
+.tx-page-length-box {
+  gap: 2px;
+  background: #E6EEFF;
+}
+
+.tx-page-length-box select {
+  min-width: 3.25rem;
+  padding: 0.3rem 1.75rem 0.3rem 1rem;
+  text-align: center;
+  text-align-last: center;
+  appearance: auto;
+}
+
+/* Navbar — OOD dashboard height */
+.tx-navbar {
+  min-height: 42px;
+  padding: 0 1rem;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.tx-breadcrumb {
+  gap: 2px;
+}
+
+.tx-breadcrumb-logo {
+  margin-right: 22px;
+  max-height: 42px;
+  padding: 6px 0;
+  box-sizing: border-box;
+}
+
+.tx-breadcrumb-logo a {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.tx-navbar-logo {
+  width: 30px;
+  height: 30px;
+  max-width: 30px;
+  max-height: 30px;
+  object-fit: contain;
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
+.tx-breadcrumb-item::before {
+  padding: 0 calc(0.4rem + 2px);
+}
+
+.tx-breadcrumb-link {
+  line-height: 1.3;
+  padding: 10px 0.4rem;
+  box-sizing: border-box;
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Page title — match group (26px / 500, same stack as body) */
+.tx-inventory-page .tx-header > h2.tx-title {
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: #5376EA;
+  margin: 0;
+}
+
+/* Table header row height — group has no fixed thead height */
+.tx-inventory-table thead {
+  height: auto;
+}
+
+/* Interface row zebra (4 shades within row) */
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(odd) {
+  background: #FDF9F3;
+}
+
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
+  background: #fffffd;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
+  background: #FAF0E0;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+  background: #F5E8D4;
+}
+
+/* Name link — blue + underline on inner span */
+button.tx-name-link {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tx-name-link {
+  font-weight: 700;
+  color: #321DFF;
+  text-decoration: none;
+}
+
+.tx-name-link .tx-cell-ellipsis,
+.tx-name-link .tx-cell-truncate-js {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 2px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.tx-name-link:hover {
+  color: #2818cc;
+}
+
+button.tx-name-link:focus {
+  outline: none;
+}
+
+button.tx-name-link:focus-visible .tx-cell-ellipsis,
+button.tx-name-link:focus-visible .tx-cell-truncate-js {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Help dialog sections */
+.tx-help-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #5376EA;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.tx-help-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.tx-help-note {
+  margin: 0.75rem 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #444;
+}
