@@ -122,7 +122,9 @@
                 <td class="tx-col-check">
                   <input type="checkbox" :checked="selectedSet.has(row.node)" @change="toggleOne(row.node)" />
                 </td>
-                <td class="tx-td-name tx-col-name">{{ row.node }}</td>
+                <td class="tx-td-name tx-col-name">
+                  <span class="tx-name-link"><span class="tx-cell-ellipsis">{{ row.node }}</span></span>
+                </td>
                 <td class="tx-td-actions">
                   <div class="tx-control-cell-actions tx-control-cell-actions--row">
                     <span :class="powerStatusDotClass(row.power)" aria-hidden="true" />
@@ -196,9 +198,16 @@
         <div class="tx-help-dialog" role="dialog" aria-labelledby="control-help-title">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="control-help-title" class="tx-help-title">How to use Control</h2>
+          <h3 class="tx-help-section-title">Bulk actions</h3>
           <ul class="tx-help-list">
             <li>Select nodes with checkboxes, then use the left panel for bulk actions.</li>
-            <li>Or use the action buttons in each row for a single node.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Row actions</h3>
+          <ul class="tx-help-list">
+            <li>Use the action buttons in each row for a single node.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Search</h3>
+          <ul class="tx-help-list">
             <li><strong>Search</strong> filters the table as you type.</li>
           </ul>
         </div>
