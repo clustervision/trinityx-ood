@@ -3,29 +3,7 @@
    Styles matched to the Nodes App design system
    ======================================================== */
 
-@font-face {
-  font-family: "Geist Sans";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("fonts/geist-sans-latin-400-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Geist Sans";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("fonts/geist-sans-latin-500-normal.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Geist Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("fonts/geist-sans-latin-700-normal.woff2") format("woff2");
-}
+/* Geist Sans loaded via @fontsource/geist-sans in main.ts */
 
 /* ---------- Reset / base ---------- */
 *,

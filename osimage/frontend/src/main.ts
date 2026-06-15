@@ -3,8 +3,10 @@
  * (usually Flask sets window.APP_URL in index.html).
  * Dev: do not set window.APP_URL from env - api.ts uses /osimage-backend + Vite proxy.
  */
+import '@fontsource/geist-sans/latin-400.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 import './assets/styles.css'
+import './assets/group-ui-align.css'
 
 createApp(App).mount('#app')
