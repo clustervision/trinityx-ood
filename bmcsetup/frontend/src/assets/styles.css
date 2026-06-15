@@ -397,6 +397,26 @@ optgroup {
   white-space: nowrap;
 }
 
+.tx-inventory-table td.tx-td-name {
+  width: 14%;
+  max-width: 14rem;
+}
+
+/* Value columns: vertically centered, text left-aligned (not name / actions) */
+.tx-inventory-table tbody td.tx-td-value {
+  text-align: left !important;
+  vertical-align: middle;
+}
+
+.tx-inventory-table tbody td.tx-td-value .tx-cell-ellipsis {
+  text-align: left;
+}
+
+/* NOT AVAILABLE badge stays centered in its column */
+.tx-inventory-table tbody td.tx-td-value:has(.tx-na-box) {
+  text-align: center !important;
+}
+
 button.tx-name-link {
   width: 100%;
   max-width: 100%;

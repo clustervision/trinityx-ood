@@ -3,6 +3,14 @@
  * Import after styles.css in each Luna OOD SPA.
  */
 
+/* OOD dashboard page background (trinityx-combined branding) */
+html,
+body,
+#app,
+.tx-app-layout {
+  background-color: #f2f2f2;
+}
+
 /* Inventory toolbar: Add / ? / Search — same height, +2px gap */
 .tx-inventory-page .tx-header-actions {
   align-items: stretch;
@@ -96,21 +104,46 @@
   line-height: 1.3;
   padding: 10px 0.4rem;
   box-sizing: border-box;
-  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Page title — match group (26px / 500, same stack as body) */
+/* Page title — match group (26px / 500) */
 .tx-inventory-page .tx-header > h2.tx-title {
   font-size: 26px;
   font-weight: 500;
   line-height: 1.15;
   color: #5376EA;
   margin: 0;
+  padding-left: 20px;
 }
 
-/* Table header row height — group has no fixed thead height */
+/* Table header row height — no fixed thead height */
 .tx-inventory-table thead {
   height: auto;
+}
+
+/* Vertical column dividers (blue) — match horizontal table frame (#e6eeff); iface orange unchanged */
+.tx-inventory-table .tx-th-sep-blue,
+.tx-inventory-table .tx-td-sep-blue {
+  border-left: 2px solid #e6eeff !important;
+}
+
+/* Main table: left-align data cells (values / variables) */
+.tx-inventory-table tbody td {
+  text-align: left !important;
+}
+
+.tx-inventory-table tbody td.tx-col-actions,
+.tx-inventory-table tbody td.tx-td-actions {
+  text-align: center !important;
+}
+
+.tx-inventory-table .tx-cell-ellipsis,
+.tx-inventory-table .tx-cell-truncate-js {
+  text-align: left;
+}
+
+.tx-inventory-table .tx-iface-entry {
+  text-align: left;
 }
 
 /* Interface row zebra (4 shades within row) */
@@ -137,6 +170,7 @@ button.tx-name-link {
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
+  text-align: left;
 }
 
 .tx-name-link {
