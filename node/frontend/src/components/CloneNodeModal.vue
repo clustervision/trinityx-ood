@@ -6,9 +6,12 @@
 
       <template v-if="!loading && !fatalError">
         <div class="tx-header">
-          <h2 class="tx-title tx-clone-page-title">
-            <span class="tx-clone-title-label">Clone Node</span>
-            <span class="tx-clone-source-node-name">{{ cloneSourceDisplayName }}</span>
+          <h2 class="tx-title">
+            Clone node
+            <strong
+              class="tx-title-highlight-name"
+              :title="displayNameTitle(cloneSourceDisplayName)"
+            >{{ formatDisplayName(cloneSourceDisplayName) }}</strong>
           </h2>
         </div>
 
@@ -40,7 +43,7 @@ import BaseModal from './BaseModal.vue'
 import NodeFormFields from './NodeFormFields.vue'
 import { fetchNodeCloneData, submitNodeClone } from '../api'
 import type { InventoryIpv4Record, NodeFormPayload } from '@/types'
-import { validateNodeNameInput } from '@/constants/displayName'
+import { displayNameTitle, formatDisplayName, validateNodeNameInput } from '@/constants/displayName'
 
 const props = withDefaults(defineProps<{
   sourceNodeName: string

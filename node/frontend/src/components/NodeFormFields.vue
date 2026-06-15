@@ -96,9 +96,9 @@
         <span class="tx-label">Setup BMC:</span>
         <div class="tx-tri-inner">
           <div class="tx-segmented" role="group" aria-label="BMC setup">
-            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">YES</button>
-            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">NO</button>
-            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''"> INHERITED (YES) </button>
+            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">TRUE</button>
+            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">FALSE</button>
+            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''"> DEFAULT (TRUE) </button>
           </div>
         </div>
       </div>
@@ -353,17 +353,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch, nextTick, toRaw } from 'vue'
+import { removedInterfaceNames } from '@/utils/nodeInterfaces'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
 import { punAppAssetUrl } from '../utils/publicAssets'
 import { validateNodeNameInput } from '@/constants/displayName'
 
-const renameIcon = punAppAssetUrl('icon-rename.png')
+const renameIcon = punAppAssetUrl('icons/icon-rename.png')
 import type { NodeFormInterface, NodeFormData, InventoryIpv4Record } from '@/types'
 
 const props = withDefaults(defineProps<{
   mode?: 'add' | 'edit' | 'clone'
+  recordName?: string
   initialData?: Record<string, unknown>
   groupOptions?: string[]
   switchOptions?: string[]
@@ -378,6 +380,7 @@ const props = withDefaults(defineProps<{
   inventoryExcludeNodeName?: string
 }>(), {
   mode: 'add',
+  recordName: '',
   initialData: () => ({}),
   groupOptions: () => [],
   switchOptions: () => [],
@@ -399,6 +402,7 @@ const emit = defineEmits<{
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
 const originalNodeName = ref('')
+const initialInterfacesJson = ref('')
 const nameInlineEdit = ref(false)
 const nameDraft = ref('')
 
@@ -568,12 +572,23 @@ function hydrateForm(d: Record<string, unknown> | null) {
     form.interfaces = []
   }
   if (props.mode === 'edit') {
-    const n = form.name || ''
-    originalNodeName.value = n
+    const n = String(d.name || props.recordName || '').trim()
+    form.name = n
+    originalNodeName.value = String(props.recordName || n).trim()
     nameDraft.value = n
     nameInlineEdit.value = false
+    if (!initialInterfacesJson.value && form.interfaces.length > 0) {
+      initialInterfacesJson.value = JSON.stringify(toRaw(form.interfaces))
+    }
   }
 }
+
+watch(
+  () => props.recordName,
+  () => {
+    initialInterfacesJson.value = ''
+  },
+)
 
 watch(() => props.initialData, (d: Record<string, unknown>) => hydrateForm(d), { immediate: true, deep: true })
 
@@ -851,5 +866,41 @@ function buildFormData(): FormData {
   return fd
 }
 
-defineExpose({ form, buildFormData, buildLunaNodeRecord, getPendingRename, applyRenamedInForm })
+function comparableSnapshot(): string {
+  const raw = toRaw(form)
+  const payload: Record<string, unknown> = {
+    ...raw,
+    interfaces: raw.interfaces.map((row) => ({ ...row })),
+  }
+  if (props.mode === 'edit' && nameInlineEdit.value) {
+    payload.name = normalizeLunaNodeName(nameDraft.value)
+  }
+  return JSON.stringify(payload)
+}
+
+function getRemovedInterfaceNames(): string[] {
+  if (initialInterfacesJson.value) {
+    let initial: NodeFormInterface[]
+    try {
+      initial = JSON.parse(initialInterfacesJson.value) as NodeFormInterface[]
+    } catch {
+      initial = []
+    }
+    return removedInterfaceNames(
+      JSON.stringify({ interfaces: initial }),
+      form.interfaces,
+    )
+  }
+  return []
+}
+
+defineExpose({
+  form,
+  buildFormData,
+  buildLunaNodeRecord,
+  getPendingRename,
+  applyRenamedInForm,
+  comparableSnapshot,
+  getRemovedInterfaceNames,
+})
 </script>

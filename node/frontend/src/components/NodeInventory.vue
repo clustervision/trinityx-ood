@@ -272,13 +272,74 @@
         <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title-node">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="help-title-node" class="tx-help-title">How to use this app</h2>
+
+          <h3 class="tx-help-section-title">Main page</h3>
           <ul class="tx-help-list">
-            <li><strong>Add Node</strong> — Opens the add-node form (interfaces and advanced match the group app).</li>
-            <li><strong>Edit</strong> — Click a node name (same modal style as the group app).</li>
-            <li><strong>Clone / OS Grab / OS Push / Delete</strong> — Clone opens the same form modal as Add Node (with clone icon in the title); OS Grab and OS Push use the group-style push dialog.</li>
-            <li><strong>Search</strong> — Filter the table as you type.</li>
-            <li><strong>Sort</strong> — Click a column header to sort; click again to reverse.</li>
+            <li><strong>Add Node</strong> — Opens the create dialog.</li>
+            <li><strong>Search</strong> — Filters the table as you type (all visible columns).</li>
+            <li><strong>Sort</strong> — Click a column header; click again to reverse. Under <strong>Interfaces</strong>, sort by interface <strong>Name</strong>, <strong>MAC address</strong>, or <strong>IP address</strong>.</li>
+            <li><strong>Name</strong> — Node name (blue link). Click to edit.</li>
+            <li><strong>Group / OS Image / BMC Setup / Status</strong> — Shown when configured; otherwise <em>NOT AVAILABLE</em>.</li>
+            <li><strong>Interfaces</strong> — Each node row lists interface name, MAC, and IP (yellow columns).</li>
+            <li><strong>Actions</strong> — Clone (copy node), OS Grab, OS Push (deploy image), Delete (remove node).</li>
+            <li><strong>Entries per Page</strong> — Page size at the bottom; use &lt; &gt; to change page.</li>
           </ul>
+
+          <h3 class="tx-help-section-title">Add / Edit node</h3>
+          <ul class="tx-help-list">
+            <li><strong>Name</strong> — Unique node identifier (letters, numbers, dot, hyphen).</li>
+            <li><strong>Group</strong> — Group this node belongs to.</li>
+            <li><strong>OS Image</strong> — OS image assigned to this node.</li>
+            <li><strong>Setup BMC</strong> — TRUE / FALSE / DEFAULT: whether BMC setup runs.</li>
+            <li><strong>Switch / Switch Port / Vendor</strong> — Network switch details when used.</li>
+            <li><strong>+ Interfaces</strong> — Expand to add or edit network interfaces.</li>
+            <li><strong>Advanced</strong> — Domain, scripts, provision settings, TPM fields, comment, and more.</li>
+            <li><strong>Save Changes</strong> — Writes edits to the cluster. Removing an interface in the form only updates the dialog until you save; after a successful save the main table refreshes.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Interfaces (in Add / Edit / Clone)</h3>
+          <ul class="tx-help-list">
+            <li><strong>Interface</strong> — Interface name (e.g. BOOTIF, BMC).</li>
+            <li><strong>Network</strong> — Luna network this interface uses.</li>
+            <li><strong>IP address / MAC address</strong> — Address assignments when used.</li>
+            <li><strong>MTU</strong> — 68–65535, optional.</li>
+            <li><strong>DHCP</strong> — Enable DHCP on this interface.</li>
+            <li><strong>Bond Mode / Bond Member</strong> — Link aggregation settings when used.</li>
+            <li><strong>VLAN ID / VLAN Parent</strong> — VLAN tagging when used.</li>
+            <li><strong>Options</strong> — Extra interface options; use the edit icon for a larger editor.</li>
+            <li><strong>Remove Interface</strong> — Removes the row in this dialog only. Click <strong>Save Changes</strong> (Edit) or <strong>Clone Node</strong> (Clone) to apply.</li>
+            <li><strong>+ Add</strong> — Inserts another interface row below.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Advanced fields</h3>
+          <ul class="tx-help-list">
+            <li><strong>Domain</strong> — DNS domain for the node.</li>
+            <li><strong>Kernel Options | OS Image</strong> — Kernel command line (may inherit from OS image).</li>
+            <li><strong>Pre / Part / Post Script</strong> — Provisioning scripts at different stages.</li>
+            <li><strong>Provision Interface / Method / Fallback</strong> — How the node is provisioned.</li>
+            <li><strong>TPM UUID / Public Key / SHA256</strong> — TPM-related fields when used.</li>
+            <li><strong>Comment</strong> — Free-text notes; upload or expand editor for long text.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Clone node</h3>
+          <ul class="tx-help-list">
+            <li><strong>Clone Name</strong> — Name for the new node (must not already exist).</li>
+            <li>Other fields are copied from the source node; adjust as needed, then <strong>Clone Node</strong>.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">OS Grab / OS Push</h3>
+          <ul class="tx-help-list">
+            <li><strong>OS Grab</strong> — Pull OS image content from the node.</li>
+            <li><strong>OS Push</strong> — Deploy an OS image to the node.</li>
+            <li><strong>No Dry</strong> — When checked, runs a live push (not dry-run only).</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Delete node</h3>
+          <ul class="tx-help-list">
+            <li>Confirms permanent deletion of the node. This cannot be undone.</li>
+          </ul>
+
+          <p class="tx-help-note">Press <strong>Esc</strong> or click outside the help panel to close it.</p>
         </div>
       </div>
     </Teleport>

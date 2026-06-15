@@ -8,9 +8,9 @@ const asCssUrl = (href: string): string =>
 
 document.documentElement.style.setProperty(
   '--tx-expand-icon-edit',
-  asCssUrl(punAppAssetUrl('icon-edit.png')),
+  asCssUrl(punAppAssetUrl('icons/icon-edit.png')),
 )
 document.documentElement.style.setProperty(
   '--tx-expand-icon-edit-orange',
-  asCssUrl(punAppAssetUrl('icon-edit-orange.png')),
+  asCssUrl(punAppAssetUrl('icons/icon-edit-orange.png')),
 )
