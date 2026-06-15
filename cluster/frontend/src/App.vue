@@ -314,11 +314,13 @@ function boolBadge(value: boolean | string | null | undefined): string {
               <h2 id="help-title" class="tx-help-title">How to use this Cluster app</h2>
 
               <div class="tx-help-content">
+                <h3 class="tx-help-section-title">Overview</h3>
                 <p class="tx-help-intro">
                   Use this app to view and update the Luna cluster configuration stored in the Luna2 daemon.
                   These fields map to <code>luna cluster change</code>.
                 </p>
 
+                <h3 class="tx-help-section-title">Cluster fields</h3>
                 <ul class="tx-help-list">
                   <li><strong>Cluster Name</strong> — The logical name of the Luna cluster.</li>
                   <li><strong>Controller IP</strong> — The IP address of the cluster controller. Maps to <code>--controller</code>.</li>
