@@ -174,12 +174,13 @@ def api_delete(name):
 
 
 @app.route('/api/v1/remove-interface/<path:record>/<path:interface>', methods=['DELETE', 'GET'])
+@app.route('/remove/<path:record>/<path:interface>', methods=['GET'])
 def api_remove_interface(record, interface):
     """DELETE / GET — match legacy Luna _delete URL pattern."""
     uri = f'{record}/interfaces/{interface}'
     resp = Rest().get_delete(TABLE, uri)
     LOGGER.info(resp)
-    return resp
+    return jsonify(resp), 200
 
 
 @app.route('/api/v1/clone', methods=['POST'])
