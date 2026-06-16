@@ -21,25 +21,34 @@ body,
 }
 
 .tx-inventory-page .tx-header-actions > .tx-btn-blue,
-.tx-inventory-page .tx-header-actions > .tx-btn-help {
+.tx-inventory-page .tx-header-actions > .tx-btn-help,
+.tx-inventory-page .tx-action-icons > .tx-btn-blue {
   font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
   font-size: 18px;
   font-weight: 400;
   line-height: 1.35;
-  padding: 0.3rem 0.55rem;
   border-radius: 8px;
   box-sizing: border-box;
   align-self: stretch;
 }
 
-.tx-inventory-page .tx-header-actions > .tx-btn-blue {
+.tx-inventory-page .tx-header-actions > .tx-btn-blue,
+.tx-inventory-page .tx-action-icons > .tx-btn-blue {
+  padding: 0.3rem 1.5rem;
   border: 2px solid transparent;
 }
 
 .tx-inventory-page .tx-header-actions > .tx-btn-help {
+  padding: 0.3rem 0.55rem;
   width: auto;
   min-width: 2.75rem;
   height: auto;
+}
+
+/* Blue buttons — uniform horizontal padding (match BMC modal submit) */
+.tx-btn.tx-btn-blue:not(.tx-btn-help) {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 
 .tx-inventory-page .tx-inline-search-label {
