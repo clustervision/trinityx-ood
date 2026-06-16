@@ -33,8 +33,7 @@ const homeUrl = computed(() => {
 
 const logoSrc = computed(() => {
   if (logoHidden.value) return ''
-  if (import.meta.env.DEV) return '/img/logo.png'
-  return punAppAssetUrl('img/logo.png')
+  return punAppAssetUrl('static/img/logo.png')
 })
 
 function onLogoError() {

@@ -7,7 +7,7 @@
           <h1 class="tx-title">Secrets</h1>
           <div class="tx-header-actions">
             <button class="tx-btn tx-btn-blue" @click="openAdd">Add Secret</button>
-            <button class="tx-btn tx-btn-help">?</button>
+            <button class="tx-btn tx-btn-help" type="button" title="Help" @click="helpOpen = true">?</button>
             <div class="tx-inline-search">
               <span class="tx-inline-search-label">SHOW:</span>
               <select v-model="scope" class="tx-inline-search-input tx-inline-search-select">
@@ -53,6 +53,28 @@
     <AppFooter />
   </div>
 
+  <Teleport to="body">
+    <div v-if="helpOpen" class="tx-modal-overlay" @mousedown.self="helpOpen = false">
+      <div class="tx-help-dialog" role="dialog" aria-labelledby="secrets-help-title">
+        <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
+        <h2 id="secrets-help-title" class="tx-help-title">How to use Secrets</h2>
+        <h3 class="tx-help-section-title">Main page</h3>
+        <ul class="tx-help-list">
+          <li><strong>SHOW</strong> — Filter by all secrets, group secrets, or node secrets.</li>
+          <li><strong>Search</strong> — Filter each table as you type.</li>
+        </ul>
+        <h3 class="tx-help-section-title">Secret actions</h3>
+        <ul class="tx-help-list">
+          <li><strong>Add Secret</strong> — Create a new group or node secret.</li>
+          <li><strong>Edit</strong> — Click a secret name to update metadata.</li>
+          <li><strong>Edit Content</strong> — Open the secret value in the text editor.</li>
+          <li><strong>Clone</strong> — Duplicate a secret with a new name.</li>
+          <li><strong>Delete</strong> — Remove a secret.</li>
+        </ul>
+      </div>
+    </div>
+  </Teleport>
+
   <SecretFormModal v-if="addOpen" mode="add" title="Add Secret" :initial="emptyForm" @close="closeAll" @submit="onAdd" />
   <SecretFormModal v-if="editOpen" mode="edit" title="Edit Secret" :initial="formState" @close="closeAll" @submit="onEdit" />
   <SecretFormModal v-if="cloneOpen" mode="clone" title="Clone Secret" :initial="formState" @close="closeAll" @submit="onClone" />
@@ -91,6 +113,7 @@ const deleteOpen = ref(false)
 const contentEditOpen = ref(false)
 const contentEditRow = ref<SecretRecord | null>(null)
 const contentEditValue = ref('')
+const helpOpen = ref(false)
 
 const emptyForm: SecretFormState = { entity: 'group', owner: '', name: '', path: '', content: '' }
 const formState = ref<SecretFormState>({ ...emptyForm })
