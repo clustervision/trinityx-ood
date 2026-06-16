@@ -11,8 +11,8 @@ import $ from "jquery";
 import "datatables.net-dt/css/dataTables.dataTables.min.css";
 import "datatables.net";
 window.$ = window.jQuery = $;
-
-
+import 'boxicons/css/boxicons.min.css'
+import 'boxicons/dist/boxicons.js'
 
 const app = createApp(App)
 

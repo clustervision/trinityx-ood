@@ -99,6 +99,7 @@ interface AlertManager {
     luna_group: string;
     nhc: boolean | null;
     severity: string;
+    disabled: boolean | null;
   }
 };
 
@@ -357,20 +358,22 @@ export default defineComponent({
                   alertsBelongs =  matchedAlerts ?? [];
                   ruleBelongs = [cleanRule];
                 }
-                this.rows.push({
-                  alert: alert.labels.alertname,
-                  nhc: String(alert.labels.nhc) === 'true',
-                  state: alert.status.state,
-                  severity: alert.labels.severity as keyof typeof severity_order,
-                  eventTime: this.parseTimestamp(alert.startsAt),
-                  hostname: alert.labels.hostname,
-                  exporter: alert.labels.exporter,
-                  job: alert.labels.job,
-                  rule: ruleBelongs as AlertRules[] || [],
-                  alerts: alertsBelongs as Alerts[] || [],
-                });
-                this.dataFrom = "Alert Manager";
-                this.sortRowsBySeverity();
+                if (String(alert.labels.disabled) === 'false' || alert.labels.disabled === undefined){
+                  this.rows.push({
+                    alert: alert.labels.alertname,
+                    nhc: String(alert.labels.nhc) === 'true',
+                    state: alert.status.state,
+                    severity: alert.labels.severity as keyof typeof severity_order,
+                    eventTime: this.parseTimestamp(alert.startsAt),
+                    hostname: alert.labels.hostname,
+                    exporter: alert.labels.exporter,
+                    job: alert.labels.job,
+                    rule: ruleBelongs as AlertRules[] || [],
+                    alerts: alertsBelongs as Alerts[] || [],
+                  });
+                  this.dataFrom = "Alert Manager";
+                  this.sortRowsBySeverity();
+                }
               }
 
             });

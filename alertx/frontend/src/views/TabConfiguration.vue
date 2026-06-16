@@ -185,11 +185,11 @@ const getComputedDisabled = (status: boolean | undefined) => computed({
                     <td>
                       <div style="display: inline-block;" class="tooltip-wrapper" data-bs-toggle="tooltip" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Edit This Rule</span>">
                         <button class="tooltip-modal-link" id="actions" :data-bs-target="`#rule_modal_generic_${index + 1}`" data-bs-toggle="modal">
-                          <box-icon name='edit' color="#696cff" size="md"></box-icon>
+                          <i class="bx bx-edit" style="font-size:38px; color:#696cff;"></i>
                         </button>
                       </div>
                       <button style="display: inline-block;" class="tooltip-modal-link" @click.prevent="deleteRule(index);" id="actions" data-bs-toggle="tooltip" data-bs-offset="0,4" data-bs-placement="top" data-bs-html="true" data-bs-original-title="<i class='bx bxs-arrow-from-left bx-xs'></i> <span>Delete This Rule</span>">
-                        <box-icon name='trash' color="red" size="md" ></box-icon>
+                        <i class="bx bx-trash" style="font-size:38px; color:red;"></i>
                       </button>
                       <RuleModals
                         configType = "generic"
