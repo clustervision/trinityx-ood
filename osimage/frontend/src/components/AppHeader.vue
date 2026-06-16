@@ -19,7 +19,7 @@
 <script setup>
 import { computed } from 'vue'
 import { baseUrl } from '../api'
-import { appUrlFromRuntime, publicAssetUrl } from '../utils'
+import { appUrlFromRuntime, punAppAssetUrl } from '../utils'
 
 function backendHostname() {
   const raw = appUrlFromRuntime()
@@ -45,5 +45,5 @@ const homeUrl = computed(() => {
   return h ? `https://${h}:8080` : '#'
 })
 
-const logoSrc = computed(() => publicAssetUrl('img/logo.png'))
+const logoSrc = computed(() => punAppAssetUrl('static/img/logo.png'))
 </script>

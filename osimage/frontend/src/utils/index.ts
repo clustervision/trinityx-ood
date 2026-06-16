@@ -1,3 +1,13 @@
+/** Assets under Flask `app/assets/` (logo, favicon, icons). */
+export function punAppAssetUrl(relativePath: string): string {
+  const r = String(relativePath || '').replace(/^\//, '')
+  const appUrl = appUrlFromRuntime()
+  if (appUrl) {
+    return `${appUrl.replace(/\/+$/, '')}/app/assets/${r}`
+  }
+  return publicAssetUrl(r)
+}
+
 export function publicAssetUrl(relativePath: string) {
   const r = String(relativePath || '').replace(/^\//, '')
   if (!r) return ''

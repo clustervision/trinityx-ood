@@ -5,8 +5,8 @@
     <div class="tx-header">
       <h2 class="tx-title">OS Images</h2>
       <div class="tx-header-actions">
-        <button class="tx-btn tx-btn-help" title="Help" type="button" @click="helpOpen = true">?</button>
         <button type="button" class="tx-btn tx-btn-blue" @click="$emit('open-add')">Add OS Image</button>
+        <button class="tx-btn tx-btn-help" title="Help" type="button" @click="helpOpen = true">?</button>
         <div class="tx-inline-search">
           <label class="tx-inline-search-label" for="txOsimageSearch">Search:</label>
           <input
@@ -164,14 +164,18 @@
         <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title-osimage">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="help-title-osimage" class="tx-help-title">How to use this app</h2>
+          <h3 class="tx-help-section-title">Main page</h3>
           <ul class="tx-help-list">
             <li><strong>Add OS Image</strong> — Opens the form to create a new OS image.</li>
+            <li><strong>Search</strong> — Filter the table as you type.</li>
+            <li><strong>Sort</strong> — Click a column header to sort; click again to reverse.</li>
+          </ul>
+          <h3 class="tx-help-section-title">OS image actions</h3>
+          <ul class="tx-help-list">
             <li><strong>Edit</strong> — Click an image name to open the edit form.</li>
             <li><strong>Clone</strong> — Duplicate an existing OS image with a new name.</li>
             <li><strong>Pack</strong> — Pack the OS image for deployment.</li>
             <li><strong>Delete</strong> — Remove an OS image.</li>
-            <li><strong>Search</strong> — Filter the table as you type.</li>
-            <li><strong>Sort</strong> — Click a column header to sort; click again to reverse.</li>
           </ul>
         </div>
       </div>
