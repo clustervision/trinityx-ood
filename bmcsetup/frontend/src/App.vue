@@ -209,7 +209,7 @@ function canonicalName(name: string) {
           <table class="tx-inventory-table">
             <thead>
               <tr>
-                <th v-for="(col) in regularColumns" :key="col.field" rowspan="2" class="tx-th-regular tx-th-sep-blue" @click="toggleSort(col.field)">
+                <th v-for="(col, cIdx) in regularColumns" :key="col.field" rowspan="2" class="tx-th-regular" :class="{ 'tx-th-sep-blue': cIdx > 0 }" @click="toggleSort(col.field)">
                   <span class="tx-th-label-clip">{{ col.label }}</span>
                   <span class="tx-sort-dt" aria-hidden="true">
                     <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -225,7 +225,7 @@ function canonicalName(name: string) {
               <tr v-if="loading"><td :colspan="totalColspan" style="text-align: center; padding: 2rem">Loading...</td></tr>
               <tr v-else-if="pagedRows.length === 0"><td :colspan="totalColspan" style="text-align: center; padding: 2rem; color: #999">{{ httpError }}</td></tr>
               <tr v-for="row in pagedRows" :key="row.name">
-                <td v-for="(col) in regularColumns" :key="col.field" style="text-align: center;" class="tx-td-sep-blue">
+                <td v-for="(col, cIdx) in regularColumns" :key="col.field" :class="{ 'tx-td-sep-blue': cIdx > 0, 'tx-td-name': col.field === 'name', 'tx-td-value': col.field !== 'name' }">
                   <template v-if="col.field === 'name'">
                     <button type="button" class="tx-name-link" :title="bmcNameTitle(row.name)" @click="openModal('update', canonicalName(row.name), row)">
                       <span class="tx-cell-ellipsis">{{ formatBMCNameDisplay(row.name) }}</span>
@@ -297,11 +297,13 @@ function canonicalName(name: string) {
               <h2 id="help-title" class="tx-help-title">How to use this BMC Setup app</h2>
 
               <div class="tx-help-content">
+                <h3 class="tx-help-section-title">Overview</h3>
                 <p class="tx-help-intro">
                   Use this app to view, add, update, clone, rename, and delete BMC Setup profiles stored in the Luna2 daemon.
                   A BMC Setup defines how Luna should access a node's Baseboard Management Controller for out-of-band management.
                 </p>
 
+                <h3 class="tx-help-section-title">BMC setup fields</h3>
                 <ul class="tx-help-list">
                   <li>
                     <strong>BMC Setup Name</strong> - The logical profile name for this BMC configuration.
