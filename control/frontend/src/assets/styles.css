@@ -50,6 +50,7 @@ body {
   width: calc(100% - 2rem);
   margin: 1.25rem auto;
   min-width: 0;
+  font-size: 15px;
 }
 
 .tx-title {
@@ -101,7 +102,7 @@ body {
   justify-content: center;
   padding: 0.4rem 1.1rem;
   border-radius: 6px;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
@@ -149,7 +150,7 @@ body {
 .tx-btn-sidebar {
   width: auto;
   padding: 0.35rem 0.5rem;
-  font-size: 0.72rem;
+  font-size: 0.84rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -169,7 +170,7 @@ body {
   align-items: center;
   margin: 0;
   padding: 0.3rem 0.55rem;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #5376ea;
   background: #e6eeff;
@@ -180,7 +181,7 @@ body {
   border: none;
   outline: none;
   padding: 0.3rem 0.55rem;
-  font-size: 16px;
+  font-size: 17px;
   min-width: 120px;
   width: 160px;
   max-width: 36vw;
@@ -190,7 +191,7 @@ body {
 .alert-success {
   border-radius: 8px;
   padding: 0.75rem 1rem;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   margin-bottom: 1rem;
 }
 
@@ -229,7 +230,7 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 0.45rem;
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   font-weight: 700;
   line-height: 1.25;
   color: #5376ea;
@@ -250,7 +251,7 @@ body {
 }
 
 .tx-control-selected-count {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 500;
   color: #666;
   letter-spacing: 0;
@@ -266,7 +267,7 @@ body {
 }
 
 .tx-control-section-title {
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #5376ea;
   margin-bottom: 0.4rem;
@@ -326,7 +327,7 @@ body {
   background: #fff5f5;
   border: 2px solid #f5c2c2;
   color: #8b1e1e;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   line-height: 1.4;
   pointer-events: auto;
   min-width: 220px;
@@ -412,7 +413,7 @@ body {
   text-align: center;
   padding: 0.6rem 0.35rem;
   font-weight: 500;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   vertical-align: middle;
 }
 
@@ -428,7 +429,7 @@ body {
   text-align: center;
   padding: 0.5rem 0.35rem;
   vertical-align: middle;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
 }
 
 .tx-inventory-table tbody tr:nth-child(odd) td {
@@ -473,7 +474,7 @@ body {
   min-width: 0;
   max-width: none;
   padding: 0.3rem 0.55rem;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   flex-shrink: 0;
 }
 
@@ -505,7 +506,7 @@ body {
 }
 
 .tx-table-loading-text {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 500;
   animation: tx-status-loading-pulse 1.2s ease-in-out infinite;
 }
@@ -528,6 +529,66 @@ body {
 
 .tx-status-bad {
   background: #e74c3c;
+}
+
+.tx-status-dot--power {
+  width: 12px;
+  height: 12px;
+}
+
+.tx-status-muted {
+  background: #c8c8c8;
+}
+
+.tx-status-loading-dot {
+  background: #adaeb0;
+  animation: tx-status-loading-pulse 1.2s ease-in-out infinite;
+}
+
+.tx-power-dot-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.tx-power-dot-btn--sidebar {
+  width: 24px;
+  height: 24px;
+}
+
+.tx-power-dot-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.tx-power-dot-btn:focus {
+  outline: none;
+}
+
+.tx-power-dot-btn:focus-visible {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #5376ea;
+}
+
+.tx-power-dot-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.tx-btn-inactive,
+.tx-btn-inactive:disabled {
+  background: #f0f0f0;
+  color: #b5b5b5;
+  border-color: #d6d6d6;
+  opacity: 1;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .tx-power-loading-spinner {
@@ -563,7 +624,7 @@ body {
 }
 
 .tx-status-text {
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 600;
 }
 
@@ -601,7 +662,7 @@ body {
   border: none;
   outline: none;
   color: #5376ea;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 500;
   padding: 0.35rem 0.65rem;
   background: #fff;
@@ -613,7 +674,7 @@ body {
   align-items: center;
   padding: 0.3rem 0.55rem;
   color: #5376ea;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 500;
   background: #e6eeff;
   white-space: nowrap;

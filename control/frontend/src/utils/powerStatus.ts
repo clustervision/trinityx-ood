@@ -1,7 +1,14 @@
 import type { ControlStatusRow } from '@/types'
-import { isStatusLoading, isStatusOk, statusDotClass, statusLabel, statusTextClass } from './statusDisplay'
+import {
+  isNodeControllable,
+  isStatusLoading,
+  isStatusOk,
+  statusLabel,
+  statusTextClass,
+} from './statusDisplay'
 
-/** True when the power status string refers to a reset action/result. */
+export type PowerToggleVisual = 'on' | 'off' | 'loading' | 'unknown'
+
 export function isResetPowerStatus(value: string): boolean {
   return String(value ?? '').toUpperCase().includes('RESET')
 }
@@ -26,8 +33,63 @@ export function powerStatusTextClass(value: string): string {
 }
 
 export function powerStatusDotClass(value: string): string {
-  if (isStatusLoading(value)) return 'tx-status-dot tx-status-bad'
-  return statusDotClass(value)
+  if (isStatusLoading(value)) return 'tx-status-dot tx-status-dot--power tx-status-loading-dot'
+  if (isPowerOn(value)) return 'tx-status-dot tx-status-dot--power tx-status-ok'
+  const v = String(value ?? '').trim().toUpperCase()
+  if (v.includes('OFF')) return 'tx-status-dot tx-status-dot--power tx-status-bad'
+  if (!isNodeControllable({ power: value })) return 'tx-status-dot tx-status-dot--power tx-status-muted'
+  return 'tx-status-dot tx-status-dot--power tx-status-bad'
+}
+
+export function isPowerOn(value: string): boolean {
+  if (isStatusLoading(value)) return false
+  const v = String(value ?? '').trim().toUpperCase()
+  if (!v || v === 'UNKNOWN' || v === 'ERROR') return false
+  if (v.includes('OFF')) return false
+  return isStatusOk(value)
+}
+
+export function powerToggleVisualState(power: string, loading = false): PowerToggleVisual {
+  if (loading || isStatusLoading(power)) return 'loading'
+  if (!isNodeControllable({ power })) return 'unknown'
+  return isPowerOn(power) ? 'on' : 'off'
+}
+
+/** Next power action when the user clicks the toggle (on ↔ off; unknown → on). */
+export function powerToggleAction(power: string, loading = false): 'on' | 'off' | null {
+  const visual = powerToggleVisualState(power, loading)
+  if (visual === 'on') return 'off'
+  if (visual === 'off' || visual === 'unknown') return 'on'
+  return null
+}
+
+export function bulkPowerToggleAction(
+  hostlist: string[],
+  rows: ControlStatusRow[],
+  loadingNodes: Record<string, boolean> = {},
+): 'on' | 'off' | null {
+  if (hostlist.length === 0) return null
+  for (const node of hostlist) {
+    if (loadingNodes[node]) return null
+  }
+  const anyNotOn = hostlist.some((node) => {
+    const row = rows.find((r) => r.node === node)
+    return !row || !isPowerOn(row.power)
+  })
+  return anyNotOn ? 'on' : 'off'
+}
+
+export function bulkPowerToggleVisualState(
+  hostlist: string[],
+  rows: ControlStatusRow[],
+  loadingNodes: Record<string, boolean> = {},
+): PowerToggleVisual {
+  if (hostlist.length === 0) return 'unknown'
+  if (hostlist.some((node) => loadingNodes[node])) return 'loading'
+  const powers = hostlist.map((node) => rows.find((r) => r.node === node)?.power ?? '')
+  if (powers.every((power) => isPowerOn(power))) return 'on'
+  if (powers.some((power) => !isNodeControllable({ power }))) return 'unknown'
+  return 'off'
 }
 
 /** Build a notification message from reset power statuses for the given nodes. */

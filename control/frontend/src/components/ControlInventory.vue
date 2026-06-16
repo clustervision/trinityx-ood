@@ -38,7 +38,14 @@
           <h3 class="tx-control-section-title">POWER</h3>
           <div class="tx-control-section-actions">
             <div class="tx-control-power-row">
-              <span class="tx-status-dot tx-status-ok" aria-hidden="true" />
+              <PowerStatusDot
+                :power="sidebarPowerDisplay"
+                :loading="sidebarPowerLoading"
+                :disabled="props.selected.length === 0"
+                size="sidebar"
+                label="selected nodes"
+                @click="onSidebarPowerToggle"
+              />
               <button type="button" class="tx-btn tx-btn-orange tx-btn-sidebar" @click="emitBulk('power', 'reset')">
                 RESET
               </button>
@@ -73,10 +80,10 @@
         <section class="tx-control-section">
           <h3 class="tx-control-section-title">REDFISH</h3>
           <div class="tx-control-section-actions tx-control-section-actions--row">
-            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-sidebar" @click="emitBulk('redfish', 'setting')">
+            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-sidebar tx-btn-inactive" disabled>
               SETTINGS
             </button>
-            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-sidebar" @click="emitBulk('redfish', 'upload')">
+            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-sidebar tx-btn-inactive" disabled>
               UPLOAD
             </button>
           </div>
@@ -122,15 +129,21 @@
                 <td class="tx-col-check">
                   <input type="checkbox" :checked="selectedSet.has(row.node)" @change="toggleOne(row.node)" />
                 </td>
-                <td class="tx-td-name tx-col-name">{{ row.node }}</td>
+                <td class="tx-td-name tx-col-name">
+                  <span class="tx-name-link"><span class="tx-cell-ellipsis">{{ row.node }}</span></span>
+                </td>
                 <td class="tx-td-actions">
                   <div class="tx-control-cell-actions tx-control-cell-actions--row">
-                    <span :class="powerStatusDotClass(row.power)" aria-hidden="true" />
+                    <PowerStatusDot
+                      :power="row.power"
+                      :loading="isPowerRowLoading(row.node)"
+                      :label="row.node"
+                      @click="onRowPowerToggle(row)"
+                    />
                     <template v-if="isPowerRowLoading(row.node)">
                       <span class="tx-power-loading-spinner" aria-hidden="true" />
                       <span class="tx-status-text tx-status-loading-text" aria-live="polite">Loading…</span>
                     </template>
-                    <span v-else :class="powerStatusTextClass(row.power)">{{ powerStatusLabel(row.power) }}</span>
                     <button type="button" class="tx-btn tx-btn-orange tx-btn-cell" @click="emitSingle('power', 'reset', row.node)">
                       RESET
                     </button>
@@ -158,10 +171,10 @@
                 </td>
                 <td class="tx-td-actions">
                   <div class="tx-control-cell-actions">
-                    <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-cell" @click="emitSingle('redfish', 'setting', row.node)">
+                    <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-cell tx-btn-inactive" disabled>
                       SETTINGS
                     </button>
-                    <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-cell" @click="emitSingle('redfish', 'upload', row.node)">
+                    <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-cell tx-btn-inactive" disabled>
                       UPLOAD
                     </button>
                   </div>
@@ -196,10 +209,42 @@
         <div class="tx-help-dialog" role="dialog" aria-labelledby="control-help-title">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="control-help-title" class="tx-help-title">How to use Control</h2>
+          <h3 class="tx-help-section-title">Overview</h3>
           <ul class="tx-help-list">
-            <li>Select nodes with checkboxes, then use the left panel for bulk actions.</li>
-            <li>Or use the action buttons in each row for a single node.</li>
-            <li><strong>Search</strong> filters the table as you type.</li>
+            <li>Control lets you run BMC actions against nodes in your cluster from one inventory table.</li>
+            <li>Status for the current page loads automatically when you open a page or change search or pagination.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Power</h3>
+          <ul class="tx-help-list">
+            <li><strong>Green dot</strong> — node power is on. Click the dot to turn power off.</li>
+            <li><strong>Red dot</strong> — node power is off. Click the dot to turn power on.</li>
+            <li><strong>Grey dot</strong> — power status is not yet known. Click the dot to turn power on.</li>
+            <li><strong>RESET</strong> — hard reset the node without using the power dot.</li>
+            <li>While a power action runs, a spinner appears next to the dot until Luna reports the new state.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Bulk actions</h3>
+          <ul class="tx-help-list">
+            <li>Select one or more nodes with the checkboxes, then use the left panel.</li>
+            <li>The header checkbox selects or clears every node on the <em>current page</em> only.</li>
+            <li>The power dot in the sidebar applies to all selected nodes: green when all are on (click to turn off), red when any are off (click to turn all on).</li>
+            <li>SEL, Chassis, and other bulk buttons run the same action on every selected node.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Row actions</h3>
+          <ul class="tx-help-list">
+            <li>Each table row has the same actions as the sidebar, scoped to that node only.</li>
+            <li><strong>SEL → LIST</strong> opens a log viewer for the System Event Log.</li>
+            <li><strong>SEL → CLEAR</strong> clears the SEL for that node.</li>
+            <li><strong>CHASSIS → IDENTIFY</strong> / <strong>NO IDENTIFY</strong> toggles chassis locate LED behaviour.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Search and pagination</h3>
+          <ul class="tx-help-list">
+            <li><strong>Search</strong> filters the table by node name as you type.</li>
+            <li>Use <strong>Entries per Page</strong> and the page arrows to move through large node lists.</li>
+          </ul>
+          <h3 class="tx-help-section-title">Messages</h3>
+          <ul class="tx-help-list">
+            <li>Success and error banners appear at the top of the page after an action.</li>
+            <li>Failed nodes may also show a toast in the upper-right corner with Luna error details.</li>
           </ul>
         </div>
       </div>
@@ -208,8 +253,13 @@
 </template>
 
 <script setup lang="ts">
+import PowerStatusDot from '@/components/PowerStatusDot.vue'
 import type { ControlStatusRow, StatusToast } from '@/types'
-import { powerStatusDotClass, powerStatusLabel, powerStatusTextClass } from '@/utils'
+import {
+  bulkPowerToggleAction,
+  bulkPowerToggleVisualState,
+  powerToggleAction,
+} from '@/utils'
 import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
@@ -236,6 +286,38 @@ const rows = computed(() => props.rows)
 
 function isPowerRowLoading(node: string): boolean {
   return Boolean(props.powerLoadingNodes?.[node])
+}
+
+const sidebarPowerLoading = computed(() =>
+  props.selected.some((node) => isPowerRowLoading(node)),
+)
+
+const sidebarPowerDisplay = computed(() => {
+  const visual = bulkPowerToggleVisualState(
+    props.selected,
+    props.rows,
+    props.powerLoadingNodes ?? {},
+  )
+  if (visual === 'on') return 'ON'
+  if (visual === 'off') return 'OFF'
+  if (visual === 'loading') return 'PENDING'
+  return 'UNKNOWN'
+})
+
+function onRowPowerToggle(row: ControlStatusRow) {
+  const action = powerToggleAction(row.power, isPowerRowLoading(row.node))
+  if (!action) return
+  emitSingle('power', action, row.node)
+}
+
+function onSidebarPowerToggle() {
+  const action = bulkPowerToggleAction(
+    props.selected,
+    props.rows,
+    props.powerLoadingNodes ?? {},
+  )
+  if (!action) return
+  emitBulk('power', action)
 }
 
 const searchQuery = ref('')
