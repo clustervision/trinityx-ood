@@ -276,14 +276,17 @@ async function postJson(url: string, body: Record<string, any>) {
 }
 
 export async function deleteOsimageTag(osimage: string, tag: string) {
-  const res = await fetch(apiPath('/api/v1/osimagetag/delete'), {
-    method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      osimage: String(osimage ?? '').trim(),
-      tag: String(tag ?? '').trim(),
-    }),
-  })
+  const os = String(osimage ?? '').trim()
+  const tagName = String(tag ?? '').trim()
+  const res = await fetch(
+    apiPath(
+      `/api/v1/delete/osimage/${encodeURIComponent(os)}/osimagetag/${encodeURIComponent(tagName)}`
+    ),
+    {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    }
+  )
   let data: any = {}
   if (res.status !== 204) {
     try {
