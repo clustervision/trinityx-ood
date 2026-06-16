@@ -1,5 +1,21 @@
 <template>
   <footer class="tx-footer">
-    <span>TrinityX Luna2 DNS</span>
+    <div class="tx-footer-inner">
+      <div class="tx-footer-left">
+        &copy; 2026, Copyright ClusterVision Solutions
+      </div>
+      <div class="tx-footer-right">
+        <a :href="licenseUrl" class="tx-footer-link" target="_blank" rel="noopener noreferrer">License</a>
+        <a href="https://docs.clustervision.com/" target="_blank" rel="noopener noreferrer" class="tx-footer-link">Docs</a>
+        <a href="https://support.clustervision.com/" target="_blank" class="tx-footer-link">Support</a>
+      </div>
+    </div>
   </footer>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { baseUrl } from '@/api'
+
+const licenseUrl = computed(() => `${baseUrl()}/api/v1/license`)
+</script>
