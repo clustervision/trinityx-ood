@@ -2524,6 +2524,8 @@ select.tx-select-placeholder {
       height: 20px;
       margin-right: 0.5rem;
       flex-shrink: 0;
+      align-self: center;
+      display: block;
     }
 
     .boolean-field {
