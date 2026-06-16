@@ -61,11 +61,11 @@
               <template v-if="col.field === 'name'">
                 <button
                   type="button"
-                  class="tx-name-link tx-cell-ellipsis tx-cell-truncate-js"
+                  class="tx-name-link"
                   :title="networkNameTitle(row.name)"
                   @click="$emit('open-edit', row.name)"
                 >
-                  {{ formatNetworkNameDisplay(row.name) }}
+                  <span class="tx-cell-ellipsis">{{ formatNetworkNameDisplay(row.name) }}</span>
                 </button>
               </template>
               <template v-else-if="col.field === 'dhcp'">
@@ -164,13 +164,17 @@
         <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title-network">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
           <h2 id="help-title-network" class="tx-help-title">How to use this app</h2>
+          <h3 class="tx-help-section-title">Main page</h3>
           <ul class="tx-help-list">
             <li><strong>Add Network</strong> — Create a new network definition.</li>
             <li><strong>Edit</strong> — Click a network name to update settings.</li>
+            <li><strong>Delete</strong> — Remove a network.</li>
+          </ul>
+          <h3 class="tx-help-section-title">IP tools</h3>
+          <ul class="tx-help-list">
             <li><strong>Check IP</strong> — Look up an address in a network.</li>
             <li><strong>Next IP</strong> — Show the next free address from Luna.</li>
             <li><strong>Reserved list</strong> — View reserved IPs and device names.</li>
-            <li><strong>Delete</strong> — Remove a network.</li>
           </ul>
         </div>
       </div>

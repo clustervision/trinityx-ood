@@ -55,5 +55,5 @@ const homeUrl = computed(() => {
   return h ? `https://${h}:8080` : '#'
 })
 
-const logoSrc = computed(() => punAppAssetUrl('img/logo.png'))
+const logoSrc = computed(() => punAppAssetUrl('static/img/logo.png'))
 </script>
