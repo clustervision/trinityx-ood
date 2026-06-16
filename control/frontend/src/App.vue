@@ -338,6 +338,11 @@ async function runAction(system: string, action: string, hostlist: string[]) {
             return
           }
         }
+        if (system === 'power' && (action === 'on' || action === 'off')) {
+          const verb = action === 'on' ? 'powered on' : 'powered off'
+          setBanner(`${hostlist.join(', ')} ${verb}.`, true)
+          return
+        }
         setBanner(`${system}/${action} completed for ${hostlist.join(', ')}.`, true)
       },
       system,
