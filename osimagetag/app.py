@@ -124,6 +124,21 @@ def api_v1_delete_osimagetag(osimage, tag):
     return Rest.forward_daemon_response(response)
 
 
+@app.route('/api/v1/osimagetag/delete', methods=['POST'])
+def api_v1_osimagetag_delete_post():
+    """SPA delete: JSON body { osimage, tag } (matches osimage-tag frontend)."""
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "Expected application/json body"}), 400
+    osimage = str(body.get('osimage', '')).strip()
+    tag = str(body.get('tag', '')).strip()
+    if not osimage or not tag:
+        return jsonify({"error": "JSON must include 'osimage' and 'tag'"}), 400
+    response = Rest().get_delete("osimage", f'{osimage}/osimagetag/{tag}')
+    LOGGER.info('delete tag %s on %s => %s %s', tag, osimage, response.status_code, response.content)
+    return Rest.forward_daemon_response(response)
+
+
 @app.route('/api/v1/get_record/<string:record>', methods=['GET'])
 def api_v1_get_record(record):
     return jsonify(Model().get_record(TABLE, record))
