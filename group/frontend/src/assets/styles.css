@@ -444,15 +444,15 @@ button.tx-name-link {
   background: #ffffff;
 }
 
-/* Interface column backgrounds */
+/* Interface column backgrounds — match first entry shade per row */
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-name,
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-network {
-  background: #FDF9F3;
+  background: #FAF0E0;
 }
 
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-name,
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-network {
-  background: #FAF0E0;
+  background: #FDF9F3;
 }
 
 /* Interface cells */
@@ -475,22 +475,22 @@ button.tx-name-link {
   color: #111111;
 }
 
-/* Within a group row: alternate interface lines on light yellow background */
+/* Blue main row: interface lines start darker (#FAF0E0 / #F5E8D4) */
 .tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(odd) {
-  background: #FDF9F3;
-}
-
-.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
-  background: #fffffd;
-}
-
-/* Within a group row: alternate interface lines on dark yellow background */
-.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
   background: #FAF0E0;
 }
 
-.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
   background: #F5E8D4;
+}
+
+/* White main row: interface lines start lighter (#FDF9F3 / #fffffd) */
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
+  background: #FDF9F3;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+  background: #fffffd;
 }
 
 /* ---------- Name link ---------- */
