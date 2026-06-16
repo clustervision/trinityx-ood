@@ -2,12 +2,11 @@
   <footer class="tx-footer">
     <div class="tx-footer-inner">
       <div class="tx-footer-left">
-        &copy; 2023, made with &#10084;&#65039; by
-        <a href="https://clustervision.com/" target="_blank" class="tx-footer-link">ClusterVision</a>
+        &copy; 2026, Copyright ClusterVision Solutions
       </div>
       <div class="tx-footer-right">
-        <a :href="licenseUrl" class="tx-footer-link" target="_blank">License</a>
-        <a href="https://github.com/clustervision/trinityX" target="_blank" class="tx-footer-link">Documentation</a>
+        <a :href="licenseUrl" class="tx-footer-link" target="_blank" rel="noopener noreferrer">License</a>
+        <a href="https://docs.clustervision.com/" target="_blank" rel="noopener noreferrer" class="tx-footer-link">Docs</a>
         <a href="https://support.clustervision.com/" target="_blank" class="tx-footer-link">Support</a>
       </div>
     </div>

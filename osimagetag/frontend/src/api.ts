@@ -83,6 +83,22 @@ async function readJsonResponse<T = Record<string, unknown>>(res: Response): Pro
   }
 }
 
+function daemonEnvelopeMessage(data: Record<string, unknown>): string {
+  const top = data.message ?? data.error
+  if (typeof top === 'string' && top.trim()) return top.trim()
+  const content = data.content
+  if (typeof content === 'string' && content.trim()) return content.trim()
+  if (content && typeof content === 'object' && 'message' in content) {
+    const m = (content as { message?: unknown }).message
+    if (typeof m === 'string' && m.trim()) return m.trim()
+  }
+  return ''
+}
+
+function isEmptyOsimageTagListMessage(msg: string): boolean {
+  return /no osimagetag is available/i.test(msg)
+}
+
 function unwrapGetData<T>(data: unknown, context = 'request'): T {
   if (data == null || typeof data !== 'object') {
     throw new Error(`${context}: invalid response`)
@@ -168,6 +184,12 @@ export async function fetchOsimageTags(): Promise<OsimageTagListResult> {
         (data && (data.error || data.message)) ||
         `Failed to load OS image tags: HTTP ${res.status} ${res.statusText || ''}`.trim()
       throw new Error(String(msg || `Failed to load OS image tags: HTTP ${res.status}`))
+    }
+    if (data && typeof data === 'object' && (data as DaemonEnvelope).status === false) {
+      const msg = daemonEnvelopeMessage(data as Record<string, unknown>)
+      if (isEmptyOsimageTagListMessage(msg)) {
+        return { tags: [], error: '' }
+      }
     }
     const content = unwrapGetData<OsimageTagConfigContent>(data, 'list osimagetag')
     const tagMap = content?.config?.[TABLE]
@@ -271,7 +293,14 @@ export async function deleteOsimageTag(osimage: string, tag: string) {
     }
   }
   if (!res.ok) {
-    throw new Error(String(data.message || data.error || `Delete failed (${res.status})`))
+    const msg = daemonEnvelopeMessage(data) || String(data.message || data.error || `Delete failed (${res.status})`)
+    throw new Error(msg)
+  }
+  if (data && typeof data === 'object' && data.status === false) {
+    const msg = daemonEnvelopeMessage(data)
+    if (!isEmptyOsimageTagListMessage(msg)) {
+      throw new Error(msg || 'Delete failed.')
+    }
   }
   const rawSuccessMsg = typeof data.message === 'string' ? data.message.trim() : ''
   return {
