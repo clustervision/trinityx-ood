@@ -482,36 +482,36 @@ button.tx-name-link:focus-visible .tx-cell-truncate-js {
  * Interfaces: one background per node row (all iface lines share the same shade).
  * Do NOT set display:flex on <td> — it breaks table column layout.
  * Solid td background fills any extra row height below the last entry.
- * Odd/even table rows: #FDF9F3 (deeper cream) / #FAF0E0 (lighter peach).
+ * Odd/even table rows: #FAF0E0 (darker) / #FDF9F3 (lighter) — matches first iface entry.
  */
 .tx-inventory-table tbody td.tx-iface-cell {
   vertical-align: top !important;
 }
 
 .tx-inventory-table tbody tr:nth-child(odd) td.tx-iface-cell {
-  background: #FDF9F3;
+  background: #FAF0E0;
 }
 
 .tx-inventory-table tbody tr:nth-child(even) td.tx-iface-cell {
-  background: #FAF0E0;
-}
-
-/* Within a node row: alternate interface lines on light yellow background */
-.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(odd) {
   background: #FDF9F3;
 }
 
-.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
-  background: #fffffd;
-}
-
-/* Within a node row: alternate interface lines on dark yellow background */
-.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
+/* Blue main row: interface lines start darker (#FAF0E0 / #F5E8D4) */
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(odd) {
   background: #FAF0E0;
 }
 
-.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
   background: #F5E8D4;
+}
+
+/* White main row: interface lines start lighter (#FDF9F3 / #fffffd) */
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
+  background: #FDF9F3;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+  background: #fffffd;
 }
 
 /* Interface cells */
@@ -534,7 +534,7 @@ button.tx-name-link:focus-visible .tx-cell-truncate-js {
 .tx-iface-entry {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 2.5rem;
   box-sizing: border-box;
   padding: 0.45rem 0.75rem;
@@ -542,7 +542,13 @@ button.tx-name-link:focus-visible .tx-cell-truncate-js {
   font-weight: 400;
   line-height: 1.2;
   color: #111111;
-  text-align: center;
+  text-align: left;
+}
+
+.tx-inventory-table tbody td.tx-iface-cell.tx-iface-name .tx-iface-entry,
+.tx-inventory-table tbody td.tx-iface-cell.tx-iface-name .tx-cell-ellipsis {
+  text-align: left;
+  justify-content: flex-start;
 }
 
 .tx-inventory-table tbody td.tx-iface-cell .tx-iface-entry + .tx-iface-entry {
