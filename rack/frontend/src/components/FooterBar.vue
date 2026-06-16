@@ -1,27 +1,27 @@
 <template>
-  <hr class="my-5" />
-  <footer class="content-footer footer bg-footer-theme">
-    <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
-      <div class="mb-2 mb-md-0">© 2025, made with ❤️ by
-        <a href="https://clustervision.com/" target="_blank" class="footer-link fw-bolder">ClusterVision</a>
+  <footer class="tx-footer">
+    <div class="tx-footer-inner">
+      <div class="tx-footer-left">
+        &copy; 2026, Copyright ClusterVision Solutions
       </div>
-      <div>
-        <a :href="`${url}/license`" class="footer-link me-4" target="_blank">License</a>
-        <a href="https://github.com/clustervision/trinityX" target="_blank" class="footer-link me-4">Documentation</a>
-        <a href="https://support.clustervision.com/" target="_blank" class="footer-link me-4">Support</a>
+      <div class="tx-footer-right">
+        <a :href="licenseUrl" class="tx-footer-link" target="_blank" rel="noopener noreferrer">License</a>
+        <a href="https://docs.clustervision.com/" target="_blank" rel="noopener noreferrer" class="tx-footer-link">Docs</a>
+        <a href="https://support.clustervision.com/" target="_blank" class="tx-footer-link">Support</a>
       </div>
     </div>
   </footer>
 </template>
 
-<script lang="ts">
-export default {
-  name: "FooterBar",
-  props: {
-    url: {
-      type: String,
-      required: true,
-    },
-  },
-}
+<script setup lang="ts">
+import { computed } from 'vue'
+
+const props = defineProps<{
+  appUrl: string
+}>()
+
+const licenseUrl = computed(() => {
+  const base = String(props.appUrl || '').replace(/\/+$/, '')
+  return base ? `${base}/license` : '/license'
+})
 </script>
