@@ -291,11 +291,13 @@ function canonicalName(name: string) {
               <h2 id="help-title" class="tx-help-title">How to use this Switch app</h2>
 
               <div class="tx-help-content">
+                <h3 class="tx-help-section-title">Overview</h3>
                 <p class="tx-help-intro">
                   Use this app to view, add, update, clone, rename, and delete switch definitions stored in the Luna2 daemon.
                   A switch definition tells Luna how a physical or logical network switch is identified, reached, and associated with a Luna network.
                 </p>
 
+                <h3 class="tx-help-section-title">Switch fields</h3>
                 <ul class="tx-help-list">
                   <li>
                     <strong>Switch Name</strong> — The logical name of the switch inside Luna.
