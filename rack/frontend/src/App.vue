@@ -14,7 +14,9 @@ import FooterBar from '@/components/FooterBar.vue';
 initConnectionStatus(useToast());
 
 const currentView = ref('dashboard');
-const footerBaseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+const footerAppUrl = typeof window !== 'undefined'
+  ? String((window as unknown as { APP_URL?: string }).APP_URL || window.location.origin).replace(/\/+$/, '')
+  : '';
 const selectedItemName = ref('');
 const rackEditOpen = ref(false);
 const inventoryEditOpen = ref(false);
@@ -22,7 +24,7 @@ const sideMenuRef = ref<InstanceType<typeof SideMenu> | null>(null);
 const rackViewRef = ref<InstanceType<typeof RackView> | null>(null);
 const manageRackRef = ref<InstanceType<typeof ManageView> | null>(null);
 const manageInventoryRef = ref<InstanceType<typeof ManageView> | null>(null);
-const HEADER_HEIGHT = 52;
+const HEADER_HEIGHT = 42;
 const scrollWrapperRef = ref<HTMLElement | null>(null);
 const layoutPageRef = ref<HTMLElement | null>(null);
 const wrapperScrollTop = ref(0);
@@ -184,8 +186,8 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <footer v-if="footerBaseUrl" class="layout-footer">
-        <FooterBar :url="footerBaseUrl" />
+      <footer v-if="footerAppUrl" class="layout-footer">
+        <FooterBar :app-url="footerAppUrl" />
       </footer>
     </div>
   </div>
@@ -221,7 +223,7 @@ html, body, #app {
 .layout-outer {
   min-height: 100vh;
   overflow: visible;
-  --header-height: 52px;
+  --header-height: 42px;
 }
 
 .layout-scroll-wrapper {
@@ -244,7 +246,7 @@ html, body, #app {
   flex-direction: row;
   flex-shrink: 0;
   min-width: 1200px;
-  min-height: calc(100vh - 52px);
+  min-height: calc(100vh - 42px);
 }
 
 .layout-sidebar {

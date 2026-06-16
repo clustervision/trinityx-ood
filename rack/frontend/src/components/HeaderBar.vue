@@ -1,25 +1,26 @@
 <template>
-  <header class="header-bar">
-    <nav class="navbar navbar-light">
-      <ol class="breadcrumb bg-transparent d-flex align-items-center">
-        <a
-          :href="contextUrl || 'javascript:void(0);'"
-          class="breadcrumb-logo"
-          aria-current="page"
-          @click.prevent="goHome"
-        >
-          <img src="/logo.png" class="img-logo" alt="trinityX" />
-        </a>
+  <header class="rack-header">
+    <nav class="tx-navbar">
+      <ol class="tx-breadcrumb">
+        <li class="tx-breadcrumb-logo">
+          <a
+            :href="contextUrl || 'javascript:void(0);'"
+            aria-current="page"
+            @click.prevent="goHome"
+          >
+            <img :src="logoUrl" alt="Logo" class="tx-navbar-logo" />
+          </a>
+        </li>
         <li
           v-for="(crumb, i) in breadcrumbs"
           :key="i"
-          class="breadcrumb-item"
+          class="tx-breadcrumb-item"
           :class="{ active: i === breadcrumbs.length - 1 }"
         >
           <a
             v-if="i < breadcrumbs.length - 1 && crumb.view"
             :href="crumb.label === 'Home' && contextUrl ? contextUrl : 'javascript:void(0);'"
-            class="align-middle"
+            class="tx-breadcrumb-link"
             @click.prevent="handleCrumbClick(crumb, i, breadcrumbs.length - 1)"
           >
             {{ crumb.label }}
@@ -32,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+import { rackStaticUrl } from '@/utils/publicAssets'
+
 defineProps<{
   breadcrumbs: Array<{ label: string; view?: string }>
 }>()
@@ -40,127 +43,36 @@ const emit = defineEmits<{
   navigate: [view: string]
 }>()
 
+const logoUrl = rackStaticUrl('static/img/logo.png')
+
 const contextUrl =
   typeof window !== 'undefined'
     ? ((window as unknown as { CONTEXT_URL?: string }).CONTEXT_URL || window.location.origin)
-    : '';
+    : ''
 
 const goHome = () => {
-  if (!contextUrl) return;
-  window.location.href = contextUrl;
-};
+  if (!contextUrl) return
+  window.location.href = contextUrl
+}
 
 const handleCrumbClick = (crumb: { label: string; view?: string }, index: number, lastIndex: number) => {
-  if (index === lastIndex || !crumb.view) return;
+  if (index === lastIndex || !crumb.view) return
 
   if (crumb.label === 'Home') {
-    goHome();
+    goHome()
   } else {
-    emit('navigate', crumb.view);
+    emit('navigate', crumb.view)
   }
-};
+}
 </script>
 
 <style scoped>
-.header-bar {
+.rack-header {
   width: 100%;
-  height: 52px;
-  min-height: 52px;
+  min-height: 42px;
   flex-shrink: 0;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
   position: relative;
   z-index: 20;
-  border: none;
-}
-
-.header-bar *,
-.header-bar *::before,
-.header-bar *::after {
-  border-left: none !important;
-  border-right: none !important;
-}
-
-.navbar {
-  width: 100%;
-  background: linear-gradient(
-    to right,
-    #4a54f1 0%,
-    #4a54f1 10%,
-    #7d4dbb 25%,
-    #c63d7b 45%,
-    #e95f4a 65%,
-    #f3a133 85%,
-    #f8c325 100%
-  ) !important;
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1rem;
-  height: 100%;
-  box-sizing: border-box;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
-}
-
-.img-logo {
-  width: 30px;
-  height: 30px;
-  margin-right: 20px;
-  padding: 0;
-}
-
-.breadcrumb-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 0;
-  padding: 0;
-  list-style: none;
-  background: transparent;
-}
-
-.breadcrumb-item {
-  display: flex;
-  align-items: center;
-}
-
-.breadcrumb-item + .breadcrumb-item::before {
-  content: "/";
-  padding: 0 0.4rem;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.breadcrumb-item .align-middle {
-  color: #ffffff;
-  text-decoration: none;
-  background-color: transparent;
-  font-family: var(--font-geist, 'Geist', system-ui, sans-serif);
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.breadcrumb-item a.align-middle:hover {
-  color: #ffffff;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  text-decoration-color: rgba(255, 255, 255, 0.85);
-}
-
-.breadcrumb-item.active .align-middle {
-  cursor: default;
-}
-
-.breadcrumb-item.active .align-middle:hover {
-  text-decoration: none;
 }
 </style>
