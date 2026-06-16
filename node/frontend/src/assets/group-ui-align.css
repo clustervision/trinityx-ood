@@ -113,7 +113,13 @@ body,
   line-height: 1.15;
   color: #5376EA;
   margin: 0;
-  padding-left: 20px;
+}
+
+/* Name column body cells — ~20px padding before variable (not page title or header) */
+.tx-inventory-table tbody td.tx-td-name,
+.tx-inventory-table tbody td.tx-col-name,
+.tx-inventory-table tbody td:has(> button.tx-name-link) {
+  padding-left: 20px !important;
 }
 
 /* Table header row height — no fixed thead height */
@@ -146,21 +152,21 @@ body,
   text-align: left;
 }
 
-/* Interface row zebra (4 shades within row) */
+/* Interface row zebra: blue row starts darker; white row starts lighter */
 .tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(odd) {
-  background: #FDF9F3;
-}
-
-.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
-  background: #fffffd;
-}
-
-.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
   background: #FAF0E0;
 }
 
-.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+.tx-inventory-table tbody tr:nth-child(odd) .tx-iface-entry:nth-child(even) {
   background: #F5E8D4;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(odd) {
+  background: #FDF9F3;
+}
+
+.tx-inventory-table tbody tr:nth-child(even) .tx-iface-entry:nth-child(even) {
+  background: #fffffd;
 }
 
 /* Name link — blue + underline on inner span */
