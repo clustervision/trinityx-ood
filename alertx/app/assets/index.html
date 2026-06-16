@@ -15,33 +15,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>
 -->
-
 <!doctype html>
-<html lang="en">
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-assets-path="../assets/">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="{{ url_for( 'static', filename='favicon.ico') }}?v=3" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rack View :: Luna</title>
-    <script type="module" crossorigin src="{{ url_for( 'static', filename='index.js') }}"></script>
-    <link rel="stylesheet" crossorigin href="{{ url_for( 'static', filename='index.css') }}" />
+    <link rel="icon" href="./favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>Alert Configurator :: Luna</title>
     <script>
-      window.PROMETHEUS_URL = "{{ PROMETHEUS_URL }}";
+      window.PROMQL_URL = "{{ PROMQL_URL }}";
       window.APP_URL = "{{ APP_URL }}";
-      window.CONTEXT_URL = "{{ CONTEXT_URL }}";
+      window.ALERT_URL = "{{ ALERT_URL }}";
     </script>
     <!-- <script>
-      window.PROMETHEUS_URL = "https://yixin3-dev-ctrl001:9090";
-      window.APP_URL = "https://yixin3-dev-ctrl001:7755";
-      window.CONTEXT_URL = "https://yixin3-dev-ctrl001:8080";
+      window.PROMQL_URL = "https://vmware-controller1.cluster:9090";
+      window.APP_URL = "https://vmware-controller1.cluster:7755";
+      window.ALERT_URL = "https://admin:yc55CaChA83LfiUBEL2E@vmware-controller1.cluster:9093/api/v2/alerts";
     </script> -->
-    <!-- <script>
-      window.PROMETHEUS_URL = "https://vmware-controller1.cluster:9090";
-      window.APP_URL = "http://vmware-controller1.cluster:7755";
-      window.CONTEXT_URL = 'https://vmware-controller1:8080/pun/sys'
-    </script> -->
+    <script type="module" crossorigin src="/index.js"></script>
+    <link rel="stylesheet" crossorigin href="/index.css">
   </head>
   <body>
     <div id="app"></div>
   </body>
 </html>
+
+

@@ -45,7 +45,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
-app = Flask(__name__, static_folder="app/assets", template_folder="app")
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 
 if APP_STATE is False: # FOR Development Only
     CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})

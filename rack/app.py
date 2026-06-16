@@ -45,7 +45,7 @@ from helper import Helper
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 LOGGER = Log.init_log('INFO')
-app = Flask(__name__, static_folder="app/assets", template_folder="app")
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 
 if APP_STATE is False: # FOR Development Only
     CORS(app, resources = {r"/get_nodes/*":         {"origins": "http://localhost:5173"}} )
@@ -69,7 +69,7 @@ def validate_home_directory():
     """
     Validate the $HOME directory of the user before proceeding further.
     """
-    if request.path.startswith('/static/'):
+    if request.path.startswith('/app/assets/') or request.path.startswith('/static/'):
         return
     if "does not exist" in TOKEN_FILE:
         response = {"status": False, "message": TOKEN_FILE}
