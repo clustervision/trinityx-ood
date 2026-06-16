@@ -96,6 +96,21 @@ def api_v1_osimagetag_list():
     return jsonify(Rest().get_data(TABLE))
 
 
+@app.route('/api/v1/osimagetag/delete', methods=['POST'])
+def api_v1_osimagetag_delete_post():
+    """SPA delete: JSON body { osimage, tag } (matches osimage-tag frontend)."""
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        return jsonify({"error": "Expected application/json body"}), 400
+    osimage = str(body.get('osimage', '')).strip()
+    tag = str(body.get('tag', '')).strip()
+    if not osimage or not tag:
+        return jsonify({"error": "JSON must include 'osimage' and 'tag'"}), 400
+    response = Rest().get_delete("osimage", f'{osimage}/osimagetag/{tag}')
+    LOGGER.info('delete tag %s on %s => %s %s', tag, osimage, response.status_code, response.content)
+    return Rest.forward_daemon_response(response)
+
+
 @app.route('/api/v1/osimagetag/<string:name>', methods=['GET'])
 def api_v1_osimagetag_one(name):
     return jsonify(Rest().get_data(TABLE, name))
@@ -116,7 +131,7 @@ def api_v1_osimage_tag_post(osimage):
 
 @app.route(
     '/api/v1/delete/osimage/<string:osimage>/osimagetag/<string:tag>',
-    methods=['DELETE'],
+    methods=['DELETE', 'POST'],
 )
 def api_v1_delete_osimagetag(osimage, tag):
     response = Rest().get_delete("osimage", f'{osimage}/osimagetag/{tag}')
@@ -124,24 +139,19 @@ def api_v1_delete_osimagetag(osimage, tag):
     return Rest.forward_daemon_response(response)
 
 
-@app.route('/api/v1/osimagetag/delete', methods=['POST'])
-def api_v1_osimagetag_delete_post():
-    """SPA delete: JSON body { osimage, tag } (matches osimage-tag frontend)."""
-    body = request.get_json(silent=True)
-    if not isinstance(body, dict):
-        return jsonify({"error": "Expected application/json body"}), 400
-    osimage = str(body.get('osimage', '')).strip()
-    tag = str(body.get('tag', '')).strip()
-    if not osimage or not tag:
-        return jsonify({"error": "JSON must include 'osimage' and 'tag'"}), 400
-    response = Rest().get_delete("osimage", f'{osimage}/osimagetag/{tag}')
-    LOGGER.info('delete tag %s on %s => %s %s', tag, osimage, response.status_code, response.content)
-    return Rest.forward_daemon_response(response)
-
-
 @app.route('/api/v1/get_record/<string:record>', methods=['GET'])
 def api_v1_get_record(record):
     return jsonify(Model().get_record(TABLE, record))
+
+
+@app.route('/license', methods=['GET'])
+def license_info():
+    """Human-readable license page (footer link opens this in a new tab)."""
+    response = 'LICENSE Information is not available at this moment.'
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding="utf-8") as file_data:
+            response = '<br />'.join(file_data.readlines())
+    return response
 
 
 @app.route('/api/v1/license', methods=['GET'])
