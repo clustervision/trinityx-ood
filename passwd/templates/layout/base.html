@@ -30,12 +30,12 @@
           <div class="content-wrapper">
             {% block content %}
             {% endblock content %}
-            {% include "layout/footer.html" %}
             <div class="content-backdrop fade"></div>
           </div>
       </div>
       <div class="layout-overlay layout-menu-toggle"></div>
     </div>
+    {% include "layout/footer.html" %}
     {% include "layout/footer_js.html" %}
   </body>
 </html>
