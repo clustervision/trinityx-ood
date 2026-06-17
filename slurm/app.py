@@ -70,6 +70,7 @@ else:
     }
 
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
+LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 CONFIGS = get_configs()
 SLURM_FILES = get_slurm_files()
 SLURM_BACKUP_FILES = get_slurm_backup_files()
@@ -1057,6 +1058,16 @@ def import_luna_nodes_route():
         return jsonify(nodes), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+
+@app.route('/license', methods=['GET'])
+def license_info():
+    """Human-readable license page (footer link opens this in a new tab)."""
+    response = 'LICENSE Information is not available at this moment.'
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding='utf-8') as file_data:
+            response = '<br />'.join(file_data.readlines())
+    return response
 
 
 if __name__ == "__main__":
