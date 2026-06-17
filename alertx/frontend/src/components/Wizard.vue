@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, toRaw, reactive, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, toRaw, reactive, watch, computed } from 'vue';
 import axios, { AxiosError } from 'axios';
+import { punAppAssetUrl } from '@/utils/publicAssets';
 import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -97,6 +98,8 @@ const props = defineProps({
   },
 
 });
+
+const wizardHatSrc = computed(() => punAppAssetUrl('wizard-hat-70.png'));
 
 const form = reactive<WidgetForm>({
   rule_name: '',
@@ -695,7 +698,7 @@ watch(selectedMetric, (newVal) => {
       <div class="modal-content">
         <div class="modal-header wizard-header d-flex align-items-center justify-content-between">
           <h2 class="modal-title wizard-title m-0">Rule Creation Wizard</h2>
-          <img :src="`${$props.url}/assets/wizard-hat-70.png`" alt="Wizard Logo" class="img-fluid ms-auto" style="width: 150px; height: 150px; ">
+          <img :src="wizardHatSrc" alt="Wizard Logo" class="img-fluid ms-auto" style="width: 150px; height: 150px; ">
           <button type="button" class="btn-close wizard-btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
