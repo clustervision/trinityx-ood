@@ -106,12 +106,17 @@ function onSaved(message: string) {
   successMsg.value = message
   loadData()
 }
-const CLUSTER_STATIC_KEYS = new Set([
-  'name', 'user', 'domain_search', 'nameserver_ip', 'forwardserver_ip',
-  'ntp_server', 'technical_contacts', 'provision_method', 'provision_fallback',
-  'debug', 'security', 'packing_bootpause', 'createnode_ondemand',
-  'createnode_macashost', 'nextnode_discover', 'controller'
-])
+function isController(value: unknown): value is Controller {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'hostname' in value &&
+    'ipaddress' in value &&
+    'serverport' in value &&
+    'luna_config' in value
+  )
+}
+
 async function loadData() {
   loading.value = true
   errorMsg.value = ''
@@ -121,7 +126,9 @@ async function loadData() {
     if (data.status === true && data.content?.config?.cluster) {
       const raw: Cluster = data.content.config.cluster
     cluster.value = raw
-    ha_controllers.value = Object.entries(raw).filter(([key]) => !CLUSTER_STATIC_KEYS.has(key)).map(([, value]) => value as Controller)
+    ha_controllers.value = Object.entries(raw)
+      .filter(([key, value]) => key.startsWith('availability-') && isController(value))
+      .map(([, value]) => value)
     } else {
       if (data.status_code === 404) {
         httpError.value = data.content?.message
@@ -230,8 +237,8 @@ function boolBadge(value: boolean | string | null | undefined): string {
                     </div>
 
                     <!-- HA Controllers -->
-                    <div v-for="node in ha_controllers" :key="node.hostname" class="controller-block">
-                        <div class="controller-header">{{ node.hostname.toUpperCase() }}:</div>
+                    <div v-for="(node, key) in ha_controllers" :key="key" class="controller-block">
+                        <div class="controller-header">{{ (node.hostname || key).toUpperCase() }}:</div>
                         <div class="controller-content">
                             <p>Hostname = {{ node.hostname }}</p>
                             <div class="inline-row">
