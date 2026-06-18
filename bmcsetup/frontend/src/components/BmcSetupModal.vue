@@ -1,3 +1,29 @@
+<!--
+  This code is part of the TrinityX software suite
+  Copyright (C) 2026  ClusterVision Solutions b.v.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+  @author      Yixin Zhang
+  @copyright   Copyright 2026, Luna2 Project[OOD]
+  @license     GPL
+  @version     2.0
+  @maintainer  Yixin Zhang
+  @email       yixin.zhang@clustervision.com
+  @status      Development
+-->
+
 <script setup lang="ts">
 
 import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue'
@@ -6,6 +32,7 @@ import BaseModal from './BaseModal.vue'
 import TextEditorModal from './TextEditorModal.vue'
 import { BMC_NAME_MAX_LENGTH, validateBmcNameInput } from '@/constants/bmcName'
 import { punAppAssetUrl } from '@/utils/publicAssets'
+import eyeOpenIconUrl from '../../public/icons/eye_open.png'
 
 interface BMCSetup {
   name: string
@@ -312,6 +339,7 @@ watch(
   () => {
     renaming.value = false
     renameDraft.value = ''
+    showPassword.value = false
     errorMsg.value = ''
     successMsg.value = ''
 
@@ -609,8 +637,31 @@ async function onSubmit() {
                 <div class="bmc-password-wrapper">
                   <input id="bmc-password" v-model="form.password" :type="showPassword ? 'text' : 'password'" class="bmc-input bmc-password-input" autocomplete="new-password">
 
-                  <button type="button" class="bmc-toggle-password" :aria-label="showPassword ? 'Hide password' : 'Show password'" @click="showPassword = !showPassword">
-                    <svg width="16" height="16" viewBox="0 0 14 5" fill="none" aria-hidden="true">
+                  <button
+                    type="button"
+                    class="bmc-toggle-password"
+                    :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                    :aria-pressed="showPassword"
+                    @click="showPassword = !showPassword"
+                  >
+                    <img
+                      v-if="showPassword"
+                      :src="eyeOpenIconUrl"
+                      alt=""
+                      width="16"
+                      height="16"
+                      class="bmc-toggle-password-icon"
+                      aria-hidden="true"
+                    >
+                    <svg
+                      v-else
+                      class="bmc-toggle-password-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 14 5"
+                      fill="none"
+                      aria-hidden="true"
+                    >
                       <path d="M0.5 0C3 2.5 10 3.5 13 0" stroke="#5376EA" stroke-width="2"/>
                       <path d="M1.5 1L0 3" stroke="#5376EA" stroke-width="2"/>
                       <path d="M5 2.5L4.33008 5" stroke="#5376EA" stroke-width="2"/>
