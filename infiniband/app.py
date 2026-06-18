@@ -10,7 +10,7 @@ from flask import Flask, render_template, request, jsonify
 from base.config import get_configs
 from rest import Rest
 from helper import Helper
-from constant import INI_FILE, TOKEN_FILE
+from constant import INI_FILE, TOKEN_FILE, LICENSE
 STATE_PATH = os.path.join(os.path.dirname(__file__), "state.json")
 CONFIGS = get_configs()
 
@@ -361,6 +361,16 @@ def slurm_action(action: str):
         else:
             message = {"status": False, "data": slurm_nodes["response"]}
     return jsonify(message)
+
+
+@app.route('/license', methods=['GET'])
+def license_info():
+    """Human-readable license page (footer link opens this in a new tab)."""
+    response = 'LICENSE Information is not available at this moment.'
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding='utf-8') as file_data:
+            response = '<br />'.join(file_data.readlines())
+    return response
 
 
 if __name__ == "__main__":

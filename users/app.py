@@ -31,12 +31,14 @@ __status__      = 'Development'
 
 
 import datetime
+import os
 from flask import Flask, jsonify, render_template, request
 from luna_requests import LunaRequestHandler
 
 from base.config import get_configs
 
 CONFIGS = get_configs()
+LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
 
 app = Flask(__name__, static_url_path='/')
 handler = LunaRequestHandler()
@@ -192,4 +194,14 @@ def action(target, name, action):
 
 
     return '', 200
+
+
+@app.route('/license', methods=['GET'])
+def license_info():
+    """Human-readable license page (footer link opens this in a new tab)."""
+    response = 'LICENSE Information is not available at this moment.'
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding='utf-8') as file_data:
+            response = '<br />'.join(file_data.readlines())
+    return response
 

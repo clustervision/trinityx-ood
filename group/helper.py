@@ -362,3 +362,34 @@ class Helper():
             'broadcast', '802.3ad', 'balance-tlb', 'balance-alb',
         ]
 
+
+    def normalize_group_request(self, request_data=None):
+        """
+        Coerce tri-state bool fields before posting to Luna.
+        String values like 'False' are truthy in Python and must not reach the daemon as-is.
+        """
+        if not isinstance(request_data, dict):
+            return request_data
+        config = request_data.get('config', {}).get('group')
+        if not isinstance(config, dict):
+            return request_data
+        bool_fields = ('setupbmc', 'netboot', 'bootmenu')
+        for record in config.values():
+            if not isinstance(record, dict):
+                continue
+            for field in bool_fields:
+                if field not in record:
+                    continue
+                value = record[field]
+                if isinstance(value, bool):
+                    continue
+                if isinstance(value, str):
+                    lower = value.strip().lower()
+                    if lower == 'true':
+                        record[field] = True
+                    elif lower == 'false':
+                        record[field] = False
+            if record.get('setupbmc') is False:
+                record.pop('bmcsetupname', None)
+        return request_data
+

@@ -1,11 +1,15 @@
-<nav class="navbar navbar-light" style="background-color: {{CONFIGS['ENV']['BRAND_BG_COLOR']}};">
-  <ol class="breadcrumb bg-transparent d-flex align-items-center">
-    <img src="{{ url_for( 'static', filename='/branding/trinityX/logo.png') }}" class="img-logo">
-    <li class="breadcrumb-item">
-      <a class="align-middle" href="/">Home</a>
+<nav class="tx-navbar">
+  <ol class="tx-breadcrumb">
+    <li class="tx-breadcrumb-logo">
+      <a href="https://{{ request.host.split(':')[0] }}:8080">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="tx-navbar-logo" />
+      </a>
     </li>
-    <li class="breadcrumb-item">
-      <a class="align-middle" href="#">{{CONFIGS['APP']['APP_NAME']}}</a>
+    <li class="tx-breadcrumb-item">
+      <a href="https://{{ request.host.split(':')[0] }}:8080" class="tx-breadcrumb-link">Home</a>
+    </li>
+    <li class="tx-breadcrumb-item">
+      <a href="#" class="tx-breadcrumb-link" onclick="return false;">{{ CONFIGS['APP']['APP_NAME'] }}</a>
     </li>
   </ol>
 </nav>
