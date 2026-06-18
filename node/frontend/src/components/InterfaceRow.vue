@@ -3,7 +3,7 @@
     <div class="tx-iface-main-grid">
       <div class="tx-field tx-field-iface-key tx-iface-c1">
         <span class="tx-label">Interface:</span>
-        <input type="text" v-model="iface.interface" required placeholder="interface" />
+        <input type="text" v-model="iface.interface" placeholder="interface" />
       </div>
       <div class="tx-field tx-field-iface-key tx-iface-c2">
         <span class="tx-label">Network:</span>

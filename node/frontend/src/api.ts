@@ -4,6 +4,7 @@ import type {
   OsPushGrabPayload,
   SubmitResult,
 } from '@/types'
+import { normalizeNodeInterfaces } from '@/utils/nodeInterfaces'
 
 
 const UNSUBSTITUTED_APP_URL = /^\{\{\s*APP_URL\s*\}\}$/i
@@ -310,6 +311,7 @@ export async function fetchNodes(): Promise<FetchNodesResponse> {
   const nodes = Object.entries(nodeMap).map(([k, rec]) => ({
     ...(rec || {}),
     name: rec?.name ?? k,
+    interfaces: normalizeNodeInterfaces(rec?.interfaces),
   }))
 
   return { fields: [...NODE_INVENTORY_FIELDS], nodes }

@@ -6,6 +6,51 @@ function interfaceNames(list: NodeFormInterface[] | undefined): string[] {
     .filter(Boolean)
 }
 
+function ifaceDhcpString(v: unknown): string {
+  if (v === true || v === 1 || v === '1') return 'true'
+  if (v === false || v === 0 || v === '0') return 'false'
+  const s = String(v ?? '').trim().toLowerCase()
+  if (s === 'true' || s === 'yes' || s === 'on') return 'true'
+  return 'false'
+}
+
+function mapInterfaceRow(name: string, row: Record<string, unknown>): NodeFormInterface {
+  const key = String(name ?? '').trim()
+  return {
+    // Object keys from Luna are the authoritative delete/API names (e.g. BOOTIF, BMC).
+    interface: key || String(row.interface ?? '').trim(),
+    network: String(row.network ?? '').trim(),
+    ipaddress: row.ipaddress != null ? String(row.ipaddress) : '',
+    mtu: (row.mtu as string | number) ?? '',
+    dhcp: ifaceDhcpString(row.dhcp),
+    bond_mode: String(row.bond_mode ?? '').trim(),
+    bond_slaves: String(row.bond_slaves ?? '').trim(),
+    vlanid: (row.vlanid as string | number) ?? '',
+    options: String(row.options ?? '').trim(),
+    vlan_parent: String(row.vlan_parent ?? '').trim(),
+    macaddress: row.macaddress != null ? String(row.macaddress) : '',
+  }
+}
+
+/** Luna may return interfaces as an array or as an object keyed by interface name. */
+export function normalizeNodeInterfaces(raw: unknown): NodeFormInterface[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => mapInterfaceRow(String((item as Record<string, unknown>).interface ?? ''), item as Record<string, unknown>))
+      .filter((row) => row.interface)
+  }
+  if (raw && typeof raw === 'object') {
+    return Object.entries(raw as Record<string, unknown>)
+      .map(([name, item]) => {
+        const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {}
+        return mapInterfaceRow(name, row)
+      })
+      .filter((row) => row.interface)
+  }
+  return []
+}
+
 /** Interface names present when the form was opened but removed before Save. */
 export function removedInterfaceNames(
   initialSnapshot: string,

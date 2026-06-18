@@ -32,6 +32,7 @@
           :inventory-exclude-node-name="inventoryExcludeNodeName"
           submit-label="Save Changes"
           @submit="onSubmit"
+          @hydrated="onFormHydrated"
         />
       </template>
     </div>
@@ -104,6 +105,13 @@ function optionList(payload: NodeFormPayload, ...keys: string[]): string[] {
 async function captureInitialSnapshot() {
   await nextTick()
   await nextTick()
+  await nextTick()
+  if (!fatalError.value && formRef.value?.comparableSnapshot) {
+    initialSnapshot.value = formRef.value.comparableSnapshot()
+  }
+}
+
+async function onFormHydrated() {
   await nextTick()
   if (!fatalError.value && formRef.value?.comparableSnapshot) {
     initialSnapshot.value = formRef.value.comparableSnapshot()
