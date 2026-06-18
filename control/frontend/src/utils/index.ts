@@ -33,6 +33,7 @@ export {
   isPowerOn,
   isResetPowerStatus,
   powerStatusDotClass,
+  powerStatusIconSrc,
   powerStatusLabel,
   powerStatusTextClass,
   powerToggleAction,
