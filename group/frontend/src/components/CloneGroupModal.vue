@@ -152,6 +152,7 @@ async function onSubmit() {
           ref="formRef"
           mode="clone"
           :groupList="props.groupList"
+          :record-name="props.groupName"
           :initial-data="formData"
           :bmcsetup-options="bmcsetupOptions"
           :osimage-options="osimageOptions"
