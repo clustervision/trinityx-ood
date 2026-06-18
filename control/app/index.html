@@ -8,8 +8,8 @@
     <script>
       window.APP_URL = "{{ APP_URL }}";
     </script>
-    <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}"></script>
-    <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}">
+    <script type="module" crossorigin src="{{ url_for('static', filename='index.js') }}?v=3"></script>
+    <link rel="stylesheet" crossorigin href="{{ url_for('static', filename='index.css') }}?v=3">
   </head>
   <body>
     <div id="app"></div>
