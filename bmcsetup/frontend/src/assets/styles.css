@@ -2203,6 +2203,14 @@ select.tx-select-placeholder {
   opacity: 1;
 }
 
+.bmc-toggle-password-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .bmc-select {
   appearance: none;
   -webkit-appearance: none;
