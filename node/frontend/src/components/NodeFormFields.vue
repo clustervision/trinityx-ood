@@ -1,3 +1,29 @@
+<!--
+  This code is part of the TrinityX software suite
+  Copyright (C) 2026  ClusterVision Solutions b.v.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+  @author      Yixin Zhang
+  @copyright   Copyright 2026, Luna2 Project[OOD]
+  @license     GPL
+  @version     2.0
+  @maintainer  Yixin Zhang
+  @email       yixin.zhang@clustervision.com
+  @status      Development
+-->
+
 <template>
   <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
     <div v-if="liveNameValidationMsg" class="alert alert-danger" role="alert">{{ liveNameValidationMsg }}</div>
@@ -354,7 +380,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick, toRaw } from 'vue'
-import { removedInterfaceNames } from '@/utils/nodeInterfaces'
+import { normalizeNodeInterfaces, removedInterfaceNames } from '@/utils/nodeInterfaces'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
 import { punAppAssetUrl } from '../utils/publicAssets'
@@ -397,12 +423,14 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   submit: []
+  hydrated: []
 }>()
 
 const showInterfaces = ref(false)
 const showAdvanced = ref(false)
 const originalNodeName = ref('')
 const initialInterfacesJson = ref('')
+const initialGroupname = ref('')
 const nameInlineEdit = ref(false)
 const nameDraft = ref('')
 
@@ -553,33 +581,17 @@ function hydrateForm(d: Record<string, unknown> | null) {
     form.service = s === true || s === 'true' || s === 1 || s === '1' || s === 'on'
   }
   form.comment = d.comment != null ? String(d.comment) : ''
-  const rawIfaces = d.interfaces as Record<string, unknown>[] | undefined
-  if (Array.isArray(rawIfaces) && rawIfaces.length) {
-    form.interfaces = rawIfaces.map((row): NodeFormInterface => ({
-      interface: (row.interface as string) || '',
-      network: (row.network as string) || '',
-      ipaddress: row.ipaddress != null ? String(row.ipaddress) : '',
-      mtu: (row.mtu as string | number) || '',
-      dhcp: ifaceDhcpString(row.dhcp),
-      bond_mode: (row.bond_mode as string) || '',
-      bond_slaves: (row.bond_slaves as string) || '',
-      vlanid: (row.vlanid as string | number) || '',
-      options: (row.options as string) || '',
-      vlan_parent: (row.vlan_parent as string) || '',
-      macaddress: row.macaddress != null ? String(row.macaddress) : '',
-    }))
-  } else {
-    form.interfaces = []
-  }
+  form.interfaces = normalizeNodeInterfaces(d.interfaces)
+  if (form.interfaces.length) showInterfaces.value = true
   if (props.mode === 'edit') {
     const n = String(d.name || props.recordName || '').trim()
     form.name = n
     originalNodeName.value = String(props.recordName || n).trim()
     nameDraft.value = n
     nameInlineEdit.value = false
-    if (!initialInterfacesJson.value && form.interfaces.length > 0) {
-      initialInterfacesJson.value = JSON.stringify(toRaw(form.interfaces))
-    }
+    initialInterfacesJson.value = JSON.stringify(toRaw(form.interfaces))
+    initialGroupname.value = String(form.groupname ?? '').trim()
+    nextTick(() => emit('hydrated'))
   }
 }
 
@@ -587,6 +599,7 @@ watch(
   () => props.recordName,
   () => {
     initialInterfacesJson.value = ''
+    initialGroupname.value = ''
   },
 )
 
@@ -594,9 +607,6 @@ watch(() => props.initialData, (d: Record<string, unknown>) => hydrateForm(d), {
 
 function toggleInterfaces() {
   showInterfaces.value = !showInterfaces.value
-  if (showInterfaces.value && form.interfaces.length === 0) {
-    form.interfaces.push(makeEmptyIface())
-  }
 }
 
 function addInterfaceAfter(idx: number) {
@@ -825,6 +835,13 @@ function buildLunaNodeRecord(): Record<string, unknown> {
       return row
     })
     .filter((row) => Object.keys(row).length > 0)
+  // Luna re-syncs group template interfaces (BOOTIF/BMC) on every update when `group` is sent.
+  if (props.mode === 'edit') {
+    const currentGroup = String(form.groupname ?? '').trim()
+    if (currentGroup && currentGroup === initialGroupname.value) {
+      delete record.group
+    }
+  }
   return record
 }
 
