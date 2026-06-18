@@ -1,3 +1,29 @@
+/*
+ * This code is part of the TrinityX software suite
+ * Copyright (C) 2026  ClusterVision Solutions b.v.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>
+ *
+ * @author      Yixin Zhang
+ * @copyright   Copyright 2026, Luna2 Project[OOD]
+ * @license     GPL
+ * @version     2.0
+ * @maintainer  Yixin Zhang
+ * @email       yixin.zhang@clustervision.com
+ * @status      Development
+ */
+
 import type {
   ControlStatusRow,
   RequestEnvelope,
@@ -37,6 +63,49 @@ async function readJson(res: Response): Promise<unknown> {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function hostlistIncludes(hostlist: string[] | undefined, node: string): boolean {
+  if (!hostlist?.length) return true
+  const lower = node.toLowerCase()
+  return hostlist.some((h) => h.toLowerCase() === lower)
+}
+
+function rowKeyForHostlist(
+  rowMap: Record<string, ControlStatusRow>,
+  node: string,
+): string {
+  if (rowMap[node]) return node
+  const lower = node.toLowerCase()
+  return Object.keys(rowMap).find((k) => k.toLowerCase() === lower) ?? node
+}
+
+function hostlistFieldResolved(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+  hostlist: string[] | undefined,
+): boolean {
+  if (!hostlist?.length) return true
+  const pending = pendingStatus()
+  return hostlist.every((node) => {
+    const key = rowKeyForHostlist(rowMap, node)
+    const row = rowMap[key]
+    return row != null && row[field] !== pending
+  })
+}
+
+function clearPendingForHostlist(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+  hostlist: string[] | undefined,
+): void {
+  const pending = pendingStatus()
+  const targets = hostlist?.length ? hostlist : Object.keys(rowMap)
+  for (const node of targets) {
+    const key = rowKeyForHostlist(rowMap, node)
+    const row = rowMap[key]
+    if (row && row[field] === pending) row[field] = 'UNKNOWN'
+  }
 }
 
 function normalizeState(v: unknown): string {
@@ -165,7 +234,7 @@ function applyResultItem(
   const idPrefix = options?.idPrefix ?? ''
   const failures = collectControlFailures(ctl)
   for (const [node, message] of failures) {
-    if (options?.hostlist && !options.hostlist.includes(node)) continue
+    if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
     if (!rows[node]) rows[node] = emptyRow(node)
     rows[node][system] = 'ERROR'
     finalizeNodePowerIfPending(rows, node)
@@ -181,7 +250,7 @@ function applyResultItem(
     const hostMap = statusObj[statusKey]
     if (!hostMap || typeof hostMap !== 'object') continue
     for (const node of Object.keys(hostMap as Record<string, unknown>)) {
-      if (options?.hostlist && !options.hostlist.includes(node)) continue
+      if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
       if (!rows[node]) rows[node] = emptyRow(node)
       rows[node][system] = normalizeState(statusKey)
       if (system !== 'redfish' && rows[node].errors?.[system]) {
@@ -289,7 +358,7 @@ function parseStatusPayload(data: {
 }
 
 export function rowsFromNodeList(nodes: string[]): ControlStatusRow[] {
-  return nodes.map((n) => emptyRow(n)).sort((a, b) => a.node.localeCompare(b.node))
+  return nodes.map((n) => emptyRow(n))
 }
 
 export function mergeRowUpdates(
@@ -390,10 +459,14 @@ async function pollOneRequest(
         toasts.push(...collectFailuresFromBody(body, field, options?.hostlist, idPrefix))
       }
       onUpdate(sortedRows(rowMap), toasts)
-      return
+      if (hostlistFieldResolved(rowMap, field, options?.hostlist)) {
+        return
+      }
+      await sleep(POLL_INTERVAL_MS)
+      continue
     }
     if (!ok && !isPendingRequestStatus(status)) {
-      clearPendingField(rowMap, field)
+      clearPendingForHostlist(rowMap, field, options?.hostlist)
       const message = String((body as RequestEnvelope)?.message ?? `Request failed (${status})`).trim()
       const toasts: StatusToast[] = []
       if (message) {
@@ -410,7 +483,7 @@ async function pollOneRequest(
     await sleep(POLL_INTERVAL_MS)
   }
   if (!signal.aborted) {
-    clearPendingField(rowMap, field)
+    clearPendingForHostlist(rowMap, field, options?.hostlist)
     onUpdate(sortedRows(rowMap), [])
   }
 }
