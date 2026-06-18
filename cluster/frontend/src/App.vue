@@ -31,6 +31,11 @@ import axios from 'axios'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import UpdateCluster from '@/components/UpdateCluster.vue'
+import {
+  type Controller,
+  type HaControllerEntry,
+  collectHaControllerEntries,
+} from '@/utils/clusterControllers'
 
 const app_url = window.APP_URL || import.meta.env.VITE_APP_URL;
 
@@ -47,15 +52,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-
-interface Controller {
-  hostname: string
-  ipaddress: string
-  luna_config: string
-  serverport: number
-  status: string | null  // null in response
-  vendor: string | null  // null in response
-}
 
 interface Cluster {
   createnode_macashost: boolean
@@ -78,7 +74,7 @@ interface Cluster {
 }
 
 const cluster = ref<Cluster | null>(null)
-const ha_controllers = ref<Controller[]>([]);
+const ha_controllers = ref<HaControllerEntry[]>([]);
 
 const errorMsg = ref('')
 const successMsg = ref('')
@@ -106,16 +102,6 @@ function onSaved(message: string) {
   successMsg.value = message
   loadData()
 }
-function isController(value: unknown): value is Controller {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'hostname' in value &&
-    'ipaddress' in value &&
-    'serverport' in value &&
-    'luna_config' in value
-  )
-}
 
 async function loadData() {
   loading.value = true
@@ -124,11 +110,9 @@ async function loadData() {
   try {
     const { data } = await apiClient.get('/api/v1/cluster')
     if (data.status === true && data.content?.config?.cluster) {
-      const raw: Cluster = data.content.config.cluster
-    cluster.value = raw
-    ha_controllers.value = Object.entries(raw)
-      .filter(([key, value]) => key.startsWith('availability-') && isController(value))
-      .map(([, value]) => value)
+      const raw = data.content.config.cluster as Cluster & Record<string, unknown>
+      cluster.value = raw
+      ha_controllers.value = collectHaControllerEntries(raw)
     } else {
       if (data.status_code === 404) {
         httpError.value = data.content?.message
@@ -237,21 +221,21 @@ function boolBadge(value: boolean | string | null | undefined): string {
                     </div>
 
                     <!-- HA Controllers -->
-                    <div v-for="(node, key) in ha_controllers" :key="key" class="controller-block">
-                        <div class="controller-header">{{ (node.hostname || key).toUpperCase() }}:</div>
+                    <div v-for="entry in ha_controllers" :key="entry.key" class="controller-block">
+                        <div class="controller-header">{{ (entry.controller.hostname || entry.key).toUpperCase() }}:</div>
                         <div class="controller-content">
-                            <p>Hostname = {{ node.hostname }}</p>
+                            <p>Hostname = {{ entry.controller.hostname }}</p>
                             <div class="inline-row">
                                 <span>Status =</span>
-                                <span :class="['badge', boolBadge(node.status)]">{{ boolLabel(node.status) }}</span>
+                                <span :class="['badge', boolBadge(entry.controller.status)]">{{ boolLabel(entry.controller.status) }}</span>
                             </div>
-                            <p>Server Port = {{ node.serverport }}</p>
+                            <p>Server Port = {{ entry.controller.serverport }}</p>
                             <div class="inline-row">
                                 <span>Vendor =</span>
-                                <span :class="['badge', boolBadge(node.vendor)]">{{ boolLabel(node.vendor) }}</span>
+                                <span :class="['badge', boolBadge(entry.controller.vendor)]">{{ boolLabel(entry.controller.vendor) }}</span>
                             </div>
-                            <p>IPAddress = {{ node.ipaddress }}</p>
-                            <p>Luna Config = {{ node.luna_config }}</p>
+                            <p>IPAddress = {{ entry.controller.ipaddress }}</p>
+                            <p>Luna Config = {{ entry.controller.luna_config }}</p>
                         </div>
                     </div>
                 </div>

@@ -30,15 +30,10 @@ import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue'
 import type { AxiosInstance } from 'axios'
 import BaseModal from './BaseModal.vue'
 import { validateClusterNameInput } from '@/constants/clusterName'
-
-interface Controller {
-  hostname: string
-  ipaddress: string
-  luna_config: string
-  serverport: number
-  status: string | null  // null in response
-  vendor: string | null  // null in response
-}
+import {
+  type Controller,
+  collectHaControllerMap,
+} from '@/utils/clusterControllers'
 
 interface Cluster {
   name: string | null
@@ -58,7 +53,7 @@ interface Cluster {
   nextnode_discover: boolean
   controller: Controller
 
-  // Allows keys such as "availability-one" and "availability-two"
+  // Allows extra HA controllers under arbitrary keys
   [key: string]: unknown
 }
 
@@ -131,17 +126,6 @@ const form = reactive({
   controller_network: '',
 })
 
-function isController(value: unknown): value is Controller {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'hostname' in value &&
-    'ipaddress' in value &&
-    'serverport' in value &&
-    'luna_config' in value
-  )
-}
-
 watch(
   () => props.cluster,
   (cluster) => {
@@ -165,15 +149,9 @@ watch(
     Object.assign(form.controller, cluster?.controller ?? emptyController())
     form.controller_ip = cluster?.controller?.ipaddress ?? ''
     form.controller_network = ''
-    form.availability_controllers = {}
-
-    if (cluster) {
-      for (const [key, value] of Object.entries(cluster)) {
-        if (key !== 'controller' && key.startsWith('availability-') && isController(value)) {
-          form.availability_controllers[key] = { ...value }
-        }
-      }
-    }
+    form.availability_controllers = cluster
+      ? collectHaControllerMap(cluster as Record<string, unknown>)
+      : {}
   },
   { immediate: true }
 )
