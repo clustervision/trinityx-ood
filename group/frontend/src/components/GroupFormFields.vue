@@ -1,3 +1,29 @@
+<!--
+  This code is part of the TrinityX software suite
+  Copyright (C) 2026  ClusterVision Solutions b.v.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+  @author      Yixin Zhang
+  @copyright   Copyright 2026, Luna2 Project[OOD]
+  @license     GPL
+  @version     2.0
+  @maintainer  Yixin Zhang
+  @email       yixin.zhang@clustervision.com
+  @status      Development
+-->
+
 <script setup lang="ts">
 import { ref, reactive, watch, computed, nextTick } from 'vue'
 import InterfaceRow from './InterfaceRow.vue'
@@ -177,6 +203,12 @@ function normalizeTriState(v: boolean | string | null | undefined,): string {
   return ''
 }
 
+function triStateToPayloadValue(v: string): boolean | undefined {
+  if (v === 'true') return true
+  if (v === 'false') return false
+  return undefined
+}
+
 function toggleInterfaces() {
   showInterfaces.value = !showInterfaces.value
 
@@ -347,8 +379,9 @@ function buildPayload() {
   let groupDisplayName: string
 
   if (props.mode === 'clone') {
-    groupDisplayName = String(form.newgroupname || '').trim()
-    urlRecordKey = groupDisplayName
+    const sourceName = groupRecordName()
+    groupDisplayName = sourceName
+    urlRecordKey = sourceName
   } else if (props.mode === 'edit') {
     groupDisplayName =
       nameInlineEdit.value
@@ -386,7 +419,13 @@ function buildPayload() {
 
   const groupPayload: Record<string, unknown> = { name: groupDisplayName, }
 
-  if (form.setupbmc !== '') { groupPayload.setupbmc = form.setupbmc === 'true' ? 'True' : 'False' }
+  if (props.mode === 'clone') {
+    const newName = String(form.newgroupname || '').trim()
+    if (newName) groupPayload.newgroupname = newName
+  }
+
+  const setupbmc = triStateToPayloadValue(form.setupbmc)
+  if (setupbmc !== undefined) groupPayload.setupbmc = setupbmc
   const domain = nonEmptyTrimmed(form.domain)
   if (domain) groupPayload.domain = domain
   const kerneloptions = nonEmptyTrimmed(form.kerneloptions)
@@ -397,8 +436,10 @@ function buildPayload() {
   if (partscript) groupPayload.partscript = partscript
   const postscript = nonEmptyTrimmed(form.postscript)
   if (postscript) groupPayload.postscript = postscript
-  if (form.netboot !== '') { groupPayload.netboot = form.netboot === 'true' ? 'True' : 'False' }
-  if (form.bootmenu !== '') { groupPayload.bootmenu = form.bootmenu === 'true' ? 'True' : 'False' }
+  const netboot = triStateToPayloadValue(form.netboot)
+  if (netboot !== undefined) groupPayload.netboot = netboot
+  const bootmenu = triStateToPayloadValue(form.bootmenu)
+  if (bootmenu !== undefined) groupPayload.bootmenu = bootmenu
   const comment = nonEmptyTrimmed(form.comment)
   if (comment) groupPayload.comment = comment
   const roles = nonEmptyTrimmed(form.roles)
@@ -417,7 +458,7 @@ function buildPayload() {
   if (osimage) groupPayload.osimage = osimage
   if (cleanedInterfaces.length) { groupPayload.interfaces = cleanedInterfaces }
   const bmcsetupname = nonEmptyTrimmed(form.bmcsetupname)
-  if (bmcsetupname) groupPayload.bmcsetupname = bmcsetupname
+  if (bmcsetupname && form.setupbmc !== 'false') groupPayload.bmcsetupname = bmcsetupname
   const osimagetag = nonEmptyTrimmed(form.osimagetag)
   if (osimagetag) groupPayload.osimagetag = osimagetag
 
