@@ -242,17 +242,17 @@
           </ul>
           <h3 class="tx-help-section-title">Power</h3>
           <ul class="tx-help-list">
-            <li><strong>Green dot</strong> — node power is on. Click the dot to turn power off.</li>
-            <li><strong>Red dot</strong> — node power is off. Click the dot to turn power on.</li>
-            <li><strong>Grey dot</strong> — power status is not yet known. Click the dot to turn power on.</li>
-            <li><strong>RESET</strong> — hard reset the node without using the power dot.</li>
-            <li>While a power action runs, a spinner appears next to the dot until Luna reports the new state.</li>
+            <li><strong>Green power icon</strong> — node power is on. Click the icon to turn power off.</li>
+            <li><strong>Red power icon</strong> — node power is off. Click the icon to turn power on.</li>
+            <li><strong>Grey power icon</strong> — power status is not yet known. Click the icon to turn power on.</li>
+            <li><strong>RESET</strong> — hard reset the node without using the power icon.</li>
+            <li>While a power action runs, a spinner appears next to the icon until Luna reports the new state.</li>
           </ul>
           <h3 class="tx-help-section-title">Bulk actions</h3>
           <ul class="tx-help-list">
             <li>Select one or more nodes with the checkboxes, then use the left panel.</li>
             <li>The header checkbox selects or clears every node on the <em>current page</em> only.</li>
-            <li>The power dot in the sidebar applies to all selected nodes: green when all are on (click to turn off), red when any are off (click to turn all on).</li>
+            <li>The power icon in the sidebar applies to all selected nodes: green when all are on (click to turn off), red when any are off (click to turn all on).</li>
             <li>SEL, Chassis, and other bulk buttons run the same action on every selected node.</li>
           </ul>
           <h3 class="tx-help-section-title">Row actions</h3>

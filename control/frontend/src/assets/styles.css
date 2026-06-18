@@ -545,6 +545,24 @@ body {
   animation: tx-status-loading-pulse 1.2s ease-in-out infinite;
 }
 
+.tx-power-status-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tx-power-dot-btn--sidebar .tx-power-status-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tx-power-status-icon--loading {
+  animation: tx-status-loading-pulse 1.2s ease-in-out infinite;
+  opacity: 0.85;
+}
+
 .tx-power-dot-btn {
   display: inline-flex;
   align-items: center;

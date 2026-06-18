@@ -34,12 +34,18 @@
     :title="title"
     @click="$emit('click')"
   >
-    <span :class="dotClass" aria-hidden="true" />
+    <img
+      :src="iconSrc"
+      alt=""
+      class="tx-power-status-icon"
+      :class="{ 'tx-power-status-icon--loading': visual === 'loading' }"
+      aria-hidden="true"
+    />
   </button>
 </template>
 
 <script setup lang="ts">
-import { powerStatusDotClass, powerToggleVisualState } from '@/utils'
+import { powerStatusIconSrc, powerToggleVisualState } from '@/utils'
 import { computed } from 'vue'
 
 const props = withDefaults(defineProps<{
@@ -61,12 +67,7 @@ defineEmits<{
 
 const visual = computed(() => powerToggleVisualState(props.power, props.loading))
 
-const dotClass = computed(() => {
-  if (props.loading || visual.value === 'loading') {
-    return 'tx-status-dot tx-status-dot--power tx-status-loading-dot'
-  }
-  return powerStatusDotClass(props.power)
-})
+const iconSrc = computed(() => powerStatusIconSrc(visual.value))
 
 const clickable = computed(() =>
   visual.value === 'on' || visual.value === 'off' || visual.value === 'unknown',

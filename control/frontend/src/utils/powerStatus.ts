@@ -25,6 +25,9 @@
  */
 
 import type { ControlStatusRow } from '@/types'
+import powerIconGreen from '../../public/icons/power-icon-green.png'
+import powerIconGrey from '../../public/icons/power-icon-grey.png'
+import powerIconRed from '../../public/icons/pwer-icon-red.png'
 import {
   isNodeControllable,
   isStatusLoading,
@@ -65,6 +68,20 @@ export function powerStatusDotClass(value: string): string {
   if (v.includes('OFF')) return 'tx-status-dot tx-status-dot--power tx-status-bad'
   if (!isNodeControllable({ power: value })) return 'tx-status-dot tx-status-dot--power tx-status-muted'
   return 'tx-status-dot tx-status-dot--power tx-status-bad'
+}
+
+/** Bundled icon URL (emitted next to index.js in dist). */
+export function powerStatusIconSrc(visual: PowerToggleVisual): string {
+  switch (visual) {
+    case 'on':
+      return powerIconGreen
+    case 'off':
+      return powerIconRed
+    case 'loading':
+    case 'unknown':
+    default:
+      return powerIconGrey
+  }
 }
 
 export function isPowerOn(value: string): boolean {
