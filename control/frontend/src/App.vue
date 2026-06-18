@@ -176,7 +176,13 @@ async function loadPageStatus(hostlist: string[]) {
     rows.value = mergeRowUpdates(rows.value, snapshot.rows)
     presentNotices(snapshot.toasts)
     syncPowerLoading(snapshot.rows, snapshot.toasts)
-    const pageRows = rows.value.filter((r) => hostlist.includes(r.node))
+    const rowByNode = new Map(rows.value.map((r) => [r.node.toLowerCase(), r]))
+    const pageRows = hostlist.map((node) => {
+      const row = rowByNode.get(node.toLowerCase())
+      if (row) return row
+      const created = rowsFromNodeList([node])
+      return created[0]!
+    })
     beginBackgroundPollForPage(hostlist, pageRows, snapshot.requestIds)
   } catch (e) {
     if (requestId !== pageStatusRequest) return
