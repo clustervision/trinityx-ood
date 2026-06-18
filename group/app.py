@@ -48,6 +48,13 @@ LOGGER = Log.init_log('INFO')
 TABLE = 'group'
 TABLE_CAP = 'Group'
 
+
+def _group_write_payload():
+    request_data = request.get_json()
+    if not request_data:
+        return None, (jsonify({"status": False, "message": "No JSON payload received"}), 400)
+    return Helper().normalize_group_request(request_data), None
+
 # Match node/osimage: expose bundle under /app/assets so punAppAssetUrl() paths resolve.
 app = Flask(
     __name__,
@@ -169,9 +176,9 @@ def add():
     """
     This Method will add a requested record.
     """
-    request_data = request.get_json()
-    if not request_data:
-        return jsonify({"status": False, "message": "No JSON payload received"}), 400
+    request_data, err = _group_write_payload()
+    if err:
+        return err
 
     name = next(iter(request_data["config"][TABLE]))
     response = Rest().post_data(TABLE, name, request_data)
@@ -184,9 +191,9 @@ def edit():
     """
     This Method will add a requested record.
     """
-    request_data = request.get_json()
-    if not request_data:
-        return jsonify({"status": False, "message": "No JSON payload received"}), 400
+    request_data, err = _group_write_payload()
+    if err:
+        return err
 
     name = next(iter(request_data["config"][TABLE]))
     response = Rest().post_data(TABLE, name, request_data)
@@ -264,12 +271,12 @@ def clone():
     """
     This Method will add a requested record.
     """
-    request_data = request.get_json()
-    if not request_data:
-        return jsonify({"status": False, "message": "No JSON payload received"}), 400
+    request_data, err = _group_write_payload()
+    if err:
+        return err
 
     name = next(iter(request_data["config"][TABLE]))
-    response = Rest().post_data(TABLE, name, request_data)
+    response = Rest().post_clone(TABLE, name, request_data)
     return jsonify(response), 200
 
 
