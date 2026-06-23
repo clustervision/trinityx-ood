@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
@@ -83,6 +83,15 @@ const helpOpen = ref(false)
 
 const loading = ref(true);
 const activeModal = ref(false);
+const controllersExpanded = ref(false);
+
+const allControllers = computed(() => {
+  if (!cluster.value?.controller) return []
+  const entries: HaControllerEntry[] = [
+    { key: 'controller', controller: cluster.value.controller },
+  ]
+  return entries.concat(ha_controllers.value)
+})
 
 /** -----------------------
  * UI Actions
@@ -171,21 +180,13 @@ function boolBadge(value: boolean | string | null | undefined): string {
         <div class="tx-inventory-table-wrap">
           <!-- Form Content -->
             <div class="form-content">
-                <!-- Row 1: NAME | TECHNICAL CONTACTS | USER | DEBUG -->
+                <!-- Row 1: NAME | DEBUG -->
                 <div class="form-row">
                     <div class="field field-name">
                         <div class="field-label">NAME:</div>
                         <div class="field-input">{{ cluster?.name }}</div>
                     </div>
                     <div class="form-row-inline">
-                        <div class="field flex-1">
-                            <div class="field-label">TECHNICAL CONTACTS:</div>
-                            <div class="field-input">{{ cluster?.technical_contacts }}</div>
-                        </div>
-                        <div class="field flex-1">
-                            <div class="field-label">USER:</div>
-                            <div class="field-input">{{ cluster?.user }}</div>
-                        </div>
                         <div class="field-bool">
                             <label class="field-label">DEBUG:</label>
                             <div role="status" aria-label="DEBUG: TRUE">
@@ -195,124 +196,132 @@ function boolBadge(value: boolean | string | null | undefined): string {
                     </div>
                 </div>
 
-                <!-- Row 2: Controller (left) + Fields (right) -->
-                <div class="form-row-two-col">
-
-
-                    <!-- Controller Box -->
-                  <div class="controller-box">
-                  <div class="controller-box">
-
-                    <!-- Primary controller -->
-                    <div class="controller-header">CONTROLLER:</div>
-                    <div class="controller-content">
-                        <p>Hostname = {{ cluster?.controller.hostname }}</p>
-                        <div class="inline-row">
-                            <span>Status =</span>
-                            <span :class="['badge', boolBadge(cluster?.controller.status)]">{{ boolLabel(cluster?.controller.status) }}</span>
-                        </div>
-                        <p>Server Port = {{ cluster?.controller.serverport }}</p>
-                        <div class="inline-row">
-                            <span>Vendor =</span>
-                            <span :class="['badge', boolBadge(cluster?.controller.vendor)]">{{ boolLabel(cluster?.controller.vendor) }}</span>
-                        </div>
-                        <p>IPAddress = {{ cluster?.controller.ipaddress }}</p>
-                        <p>Luna Config = {{ cluster?.controller.luna_config }}</p>
+                <!-- PROVISIONING METHOD | PROVISION FALLBACK -->
+                <div class="form-row-inline">
+                    <div class="field flex-1">
+                        <div class="field-label">PROVISIONING METHOD:</div>
+                        <div class="field-input">{{ cluster?.provision_method }}</div>
                     </div>
+                    <div class="field flex-1">
+                        <div class="field-label">PROVISION FALLBACK:</div>
+                        <div class="field-input">{{ cluster?.provision_fallback }}</div>
+                    </div>
+                </div>
 
-                    <!-- HA Controllers -->
-                    <div v-for="entry in ha_controllers" :key="entry.key" class="controller-block">
-                        <div class="controller-header">{{ (entry.controller.hostname || entry.key).toUpperCase() }}:</div>
-                        <div class="controller-content">
-                            <p>Hostname = {{ entry.controller.hostname }}</p>
-                            <div class="inline-row">
-                                <span>Status =</span>
-                                <span :class="['badge', boolBadge(entry.controller.status)]">{{ boolLabel(entry.controller.status) }}</span>
-                            </div>
-                            <p>Server Port = {{ entry.controller.serverport }}</p>
-                            <div class="inline-row">
-                                <span>Vendor =</span>
-                                <span :class="['badge', boolBadge(entry.controller.vendor)]">{{ boolLabel(entry.controller.vendor) }}</span>
-                            </div>
-                            <p>IPAddress = {{ entry.controller.ipaddress }}</p>
-                            <p>Luna Config = {{ entry.controller.luna_config }}</p>
+                <!-- DOMAIN SEARCH -->
+                <div class="field">
+                    <div class="field-label">DOMAIN SEARCH:</div>
+                    <div class="field-input">{{ cluster?.domain_search }}</div>
+                </div>
+
+                <!-- NAMESERVER IP -->
+                <div class="field">
+                    <div class="field-label">NAMESERVER IP:</div>
+                    <div class="field-input">{{ cluster?.nameserver_ip }}</div>
+                </div>
+
+                <!-- FORWARDSERVER IP -->
+                <div class="field">
+                    <div class="field-label">FORWARDSERVER IP:</div>
+                    <div class="field-input">{{ cluster?.forwardserver_ip }}</div>
+                </div>
+
+                <!-- NTP SERVER -->
+                <div class="field">
+                    <div class="field-label">NTP SERVER:</div>
+                    <div class="field-input">{{ cluster?.ntp_server }}</div>
+                </div>
+
+                <!-- CREATE NODE ON DEMAND | CREATE NODE ON MACASHOST (read-only status) -->
+                <div class="form-row-inline">
+                    <div class="field-bool">
+                        <label class="field-label">CREATE NODE ON DEMAND:</label>
+                        <div role="status" aria-label="CREATE NODE ON DEMAND: TRUE">
+                            <span :class="['badge', boolBadge(cluster?.createnode_ondemand)]">{{ boolLabel(cluster?.createnode_ondemand) }}</span>
+                        </div>
+                    </div>
+                    <div class="field-bool">
+                        <label class="field-label">CREATE NODE ON MACASHOST:</label>
+                        <div role="status" aria-label="CREATE NODE ON MACASHOST: NONE">
+                            <span :class="['badge', boolBadge(cluster?.createnode_macashost)]">{{ boolLabel(cluster?.createnode_macashost) }}</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- NEXT NODE DISCOVER | SECURITY | PACKING BOOTPAUSE (read-only status) -->
+                <div class="form-row-inline">
+                    <div class="field-bool">
+                        <label class="field-label">NEXT NODE DISCOVER:</label>
+                        <div role="status" aria-label="NEXT NODE DISCOVER: TRUE">
+                          <span :class="['badge', boolBadge(cluster?.nextnode_discover)]">{{ boolLabel(cluster?.nextnode_discover) }}</span>
+                        </div>
+                    </div>
+                    <div class="field-bool">
+                        <label class="field-label">SECURITY:</label>
+                        <div role="status" aria-label="SECURITY: TRUE">
+                            <span :class="['badge', boolBadge(cluster?.security)]">{{ boolLabel(cluster?.security) }}</span>
+                        </div>
+                    </div>
+                    <div class="field-bool">
+                        <label class="field-label">PACKING BOOTPAUSE:</label>
+                        <div role="status" aria-label="PACKING BOOTPAUSE: TRUE">
+                            <span :class="['badge', boolBadge(cluster?.packing_bootpause)]">{{ boolLabel(cluster?.packing_bootpause) }}</span>
+                        </div>
+                    </div>
                 </div>
 
-                    <!-- Right-side fields -->
-                    <div class="right-fields">
-                        <!-- PROVISIONING METHOD | PROVISION FALLBACK -->
-                        <div class="form-row-inline">
-                            <div class="field flex-1">
-                                <div class="field-label">PROVISIONING METHOD:</div>
-                                <div class="field-input">{{ cluster?.provision_method }}</div>
-                            </div>
-                            <div class="field flex-1">
-                                <div class="field-label">PROVISION FALLBACK:</div>
-                                <div class="field-input">{{ cluster?.provision_fallback }}</div>
-                            </div>
-                        </div>
+                <!-- Controllers (collapsed by default) -->
+                <div class="controllers-section">
+                    <button
+                        type="button"
+                        class="controllers-toggle"
+                        :aria-expanded="controllersExpanded"
+                        @click="controllersExpanded = !controllersExpanded"
+                    >
+                        <span>Controllers</span>
+                        <svg
+                            class="controllers-chevron"
+                            :class="{ expanded: controllersExpanded }"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
 
-                        <!-- DOMAIN SEARCH -->
-                        <div class="field">
-                            <div class="field-label">DOMAIN SEARCH:</div>
-                            <div class="field-input">{{ cluster?.domain_search }}</div>
-                        </div>
-
-                        <!-- NAMESERVER IP -->
-                        <div class="field">
-                            <div class="field-label">NAMESERVER IP:</div>
-                            <div class="field-input">{{ cluster?.nameserver_ip }}</div>
-                        </div>
-
-                        <!-- FORWARDSERVER IP -->
-                        <div class="field">
-                            <div class="field-label">FORWARDSERVER IP:</div>
-                            <div class="field-input">{{ cluster?.forwardserver_ip }}</div>
-                        </div>
-
-                        <!-- NTP SERVER -->
-                        <div class="field">
-                            <div class="field-label">NTP SERVER:</div>
-                            <div class="field-input">{{ cluster?.ntp_server }}</div>
-                        </div>
-
-                        <!-- CREATE NODE ON DEMAND | CREATE NODE ON MACASHOST (read-only status) -->
-                        <div class="form-row-inline">
-                            <div class="field-bool">
-                                <label class="field-label">CREATE NODE ON DEMAND:</label>
-                                <div role="status" aria-label="CREATE NODE ON DEMAND: TRUE">
-                                    <span :class="['badge', boolBadge(cluster?.createnode_ondemand)]">{{ boolLabel(cluster?.createnode_ondemand) }}</span>
-                                </div>
-                            </div>
-                            <div class="field-bool">
-                                <label class="field-label">CREATE NODE ON MACASHOST:</label>
-                                <div role="status" aria-label="CREATE NODE ON MACASHOST: NONE">
-                                    <span :class="['badge', boolBadge(cluster?.createnode_macashost)]">{{ boolLabel(cluster?.createnode_macashost) }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- NEXT NODE DISCOVER | SECURITY | PACKING BOOTPAUSE (read-only status) -->
-                        <div class="form-row-inline">
-                            <div class="field-bool">
-                                <label class="field-label">NEXT NODE DISCOVER:</label>
-                                <div role="status" aria-label="NEXT NODE DISCOVER: TRUE">
-                                  <span :class="['badge', boolBadge(cluster?.nextnode_discover)]">{{ boolLabel(cluster?.nextnode_discover) }}</span>
-                                </div>
-                            </div>
-                            <div class="field-bool">
-                                <label class="field-label">SECURITY:</label>
-                                <div role="status" aria-label="SECURITY: TRUE">
-                                    <span :class="['badge', boolBadge(cluster?.security)]">{{ boolLabel(cluster?.security) }}</span>
-                                </div>
-                            </div>
-                            <div class="field-bool">
-                                <label class="field-label">PACKING BOOTPAUSE:</label>
-                                <div role="status" aria-label="PACKING BOOTPAUSE: TRUE">
-                                    <span :class="['badge', boolBadge(cluster?.packing_bootpause)]">{{ boolLabel(cluster?.packing_bootpause) }}</span>
+                    <div v-show="controllersExpanded" class="controllers-panel">
+                        <div class="controllers-grid">
+                            <div
+                                v-for="entry in allControllers"
+                                :key="entry.key"
+                                class="controller-card"
+                            >
+                                <div class="controller-header">CONTROLLER:</div>
+                                <div class="controller-card-body">
+                                    <div class="controller-field-row">
+                                        <span class="controller-field-label">hostname =</span>
+                                        <span class="controller-field-value">{{ entry.controller.hostname || '\u00a0' }}</span>
+                                    </div>
+                                    <div class="controller-field-row">
+                                        <span class="controller-field-label">status =</span>
+                                        <span class="controller-field-value">{{ entry.controller.status || '\u00a0' }}</span>
+                                    </div>
+                                    <div class="controller-field-row">
+                                        <span class="controller-field-label">serverport =</span>
+                                        <span class="controller-field-value">{{ entry.controller.serverport ?? '\u00a0' }}</span>
+                                    </div>
+                                    <div class="controller-field-row">
+                                        <span class="controller-field-label">vendor =</span>
+                                        <span class="controller-field-value">{{ entry.controller.vendor || '\u00a0' }}</span>
+                                    </div>
+                                    <div class="controller-field-row">
+                                        <span class="controller-field-label">ipaddress =</span>
+                                        <span class="controller-field-value">{{ entry.controller.ipaddress || '\u00a0' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -342,11 +351,9 @@ function boolBadge(value: boolean | string | null | undefined): string {
                   <li><strong>Cluster Name</strong> — The logical name of the Luna cluster.</li>
                   <li><strong>Controller IP</strong> — The IP address of the cluster controller. Maps to <code>--controller</code>.</li>
                   <li><strong>Controller Network</strong> — Network name used when changing the controller IP outside the current network scope. Maps to <code>--controller_network</code>.</li>
-                  <li><strong>User</strong> — The cluster user value stored in Luna.</li>
                   <li><strong>NTP Server</strong> — Time synchronisation server used by the cluster. Important for logs, certificates, authentication, and troubleshooting.</li>
                   <li><strong>Name Server IP</strong> — DNS server used by cluster nodes. Often the controller IP.</li>
                   <li><strong>Forward Server IP</strong> — Upstream DNS resolver used to forward external DNS requests.</li>
-                  <li><strong>Technical Contacts</strong> — Contact details for the people responsible for the cluster.</li>
                   <li><strong>Provision Method</strong> — Main node provisioning method, for example <code>torrent</code> or <code>http</code>.</li>
                   <li><strong>Provision Fallback</strong> — Backup provisioning method if the primary method is unavailable.</li>
                   <li><strong>Domain Search</strong> — Comma-separated DNS search domains, for example <code>cluster,ib,ipmi</code>.</li>

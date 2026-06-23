@@ -2337,6 +2337,119 @@ select.tx-select-placeholder {
     word-break: break-all;
 }
 
+/* Controllers collapsible section */
+.controllers-section {
+    margin-top: 4px;
+}
+
+.controllers-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: auto;
+    padding: 0.3rem 1.5rem;
+    border: 2px solid #5376EA;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #5376EA;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.35;
+    font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    box-sizing: border-box;
+}
+
+.controllers-toggle:hover {
+    opacity: 0.85;
+}
+
+.controllers-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.controllers-chevron.expanded {
+    transform: rotate(180deg);
+}
+
+.controllers-panel {
+    margin-top: 10px;
+}
+
+.controllers-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+@media (min-width: 768px) {
+    .controllers-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .controllers-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.controller-card {
+    border-radius: 10px;
+    border: 2px solid var(--cluster-blue-light);
+    overflow: hidden;
+}
+
+.controller-card .controller-header {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.35;
+    font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+
+.controller-card-body {
+    background-color: #ffffff;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.controller-field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.controller-field-label {
+    color: #303030;
+    font-size: 18px;
+    font-family: 'Geist', sans-serif;
+    flex-shrink: 0;
+    min-width: 100px;
+}
+
+.controller-field-value {
+    flex: 1;
+    min-width: 0;
+    min-height: 35px;
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--cluster-blue-light);
+    border-radius: 4px;
+    padding: 6px 10px;
+    color: #303030;
+    font-size: 18px;
+    font-family: 'Geist', sans-serif;
+    background-color: var(--cluster-blue-light);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Right Fields */
 .right-fields {
     flex: 1;

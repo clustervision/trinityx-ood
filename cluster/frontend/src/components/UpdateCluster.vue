@@ -37,12 +37,10 @@ import {
 
 interface Cluster {
   name: string | null
-  user: string | null
   domain_search: string | null
   nameserver_ip: string | null
   forwardserver_ip: string | null
   ntp_server: string | null
-  technical_contacts: string | null
   provision_method: string | null
   provision_fallback: string | null
   debug: boolean
@@ -106,12 +104,10 @@ const emptyController = (): Controller => ({
 
 const form = reactive({
   name: '',
-  user: '',
   domain_search: '',
   nameserver_ip: '',
   forwardserver_ip: '',
   ntp_server: '',
-  technical_contacts: '',
   provision_method: '',
   provision_fallback: '',
   debug: false,
@@ -130,12 +126,10 @@ watch(
   () => props.cluster,
   (cluster) => {
     form.name = cluster?.name ?? ''
-    form.user = cluster?.user ?? ''
     form.domain_search = cluster?.domain_search ?? ''
     form.nameserver_ip = cluster?.nameserver_ip ?? ''
     form.forwardserver_ip = cluster?.forwardserver_ip ?? ''
     form.ntp_server = cluster?.ntp_server ?? ''
-    form.technical_contacts = cluster?.technical_contacts ?? ''
     form.provision_method = cluster?.provision_method ?? ''
     form.provision_fallback = cluster?.provision_fallback ?? ''
 
@@ -172,12 +166,10 @@ function emptyToNull(value: string): string | null {
 function buildPayload() {
   const clusterPayload: Record<string, unknown> = {
     name: form.name,
-    user: emptyToNull(form.user),
     domain_search: emptyToNull(form.domain_search),
     nameserver_ip: emptyToNull(form.nameserver_ip),
     forwardserver_ip: emptyToNull(form.forwardserver_ip),
     ntp_server: emptyToNull(form.ntp_server),
-    technical_contacts: emptyToNull(form.technical_contacts),
     provision_method: emptyToNull(form.provision_method),
     provision_fallback: emptyToNull(form.provision_fallback),
     debug: form.debug,
@@ -314,20 +306,8 @@ const liveNameValidationMsg = computed(() => {
           </div>
 
           <div class="right-column">
-            <!-- Row 1: TECHNICAL CONTACTS | USER | DEBUG -->
+            <!-- Row 1: DEBUG -->
             <div class="row">
-              <div class="text-field wide">
-                <div class="label-part">
-                  <label>TECHNICAL CONTACTS:</label>
-                </div>
-                <input type="text" id="technicalContacts" v-model="form.technical_contacts">
-              </div>
-              <div class="text-field wide">
-                <div class="label-part">
-                  <label>USER:</label>
-                </div>
-                <input type="text" id="user" v-model="form.user">
-              </div>
               <div class="checkbox-field">
                 <div class="label-part">
                   <label for="debugCheckbox">DEBUG:</label>
