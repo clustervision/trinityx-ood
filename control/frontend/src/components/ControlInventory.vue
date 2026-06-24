@@ -47,18 +47,12 @@
 
     <div class="tx-control-layout">
       <aside class="tx-control-sidebar" aria-label="Bulk actions">
-        <label class="tx-control-sidebar-head">
-          <input
-            type="checkbox"
-            :checked="allPageSelected"
-            :title="`Select all ${pagedRows.length} nodes on this page`"
-            @change="togglePageSelection"
-          />
+        <div class="tx-control-sidebar-head">
           <span class="tx-control-sidebar-head-text">
             <span>ACTIONS FOR SELECTED NODES</span>
             <span class="tx-control-selected-count">{{ selectedCountLabel }}</span>
           </span>
-        </label>
+        </div>
 
         <section class="tx-control-section">
           <h3 class="tx-control-section-title">POWER</h3>
@@ -137,7 +131,17 @@
           <table class="tx-inventory-table">
             <thead>
               <tr>
-                <th class="tx-th-regular tx-col-check" />
+                <th class="tx-th-regular tx-col-check">
+                  <label class="tx-col-check-box">
+                    <input
+                      type="checkbox"
+                      :checked="allPageSelected"
+                      :title="`Select all ${pagedRows.length} nodes on this page`"
+                      aria-label="Select all nodes on this page"
+                      @change="togglePageSelection"
+                    />
+                  </label>
+                </th>
                 <th class="tx-th-regular tx-col-name">NAME</th>
                 <th class="tx-th-regular">POWER ACTIONS</th>
                 <th class="tx-th-regular">SEL ACTIONS</th>
@@ -153,7 +157,9 @@
               </tr>
               <tr v-for="row in pagedRows" :key="row.node">
                 <td class="tx-col-check">
-                  <input type="checkbox" :checked="selectedSet.has(row.node)" @change="toggleOne(row.node)" />
+                  <label class="tx-col-check-box">
+                    <input type="checkbox" :checked="selectedSet.has(row.node)" @change="toggleOne(row.node)" />
+                  </label>
                 </td>
                 <td class="tx-td-name tx-col-name">
                   <span class="tx-name-link"><span class="tx-cell-ellipsis">{{ row.node }}</span></span>
