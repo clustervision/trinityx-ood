@@ -65,8 +65,7 @@ optgroup {
   margin-right: auto;
 }
 
-.tx-inventory-page .tx-header-actions > .tx-btn-blue,
-.tx-inventory-page .tx-action-icons > .tx-btn-blue {
+.tx-inventory-page .tx-header-actions > .tx-btn-blue {
   font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
 }
@@ -2438,6 +2437,16 @@ select.tx-select-placeholder {
   font-size: 0.78rem;
   background: #f6f8fa;
   padding: 1rem;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.tx-ip-check-result {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  color: #333;
+  background: #f6f8fa;
   border-radius: 8px;
   text-align: left;
 }

@@ -289,6 +289,36 @@ export async function fetchNextIp(networkName: string): Promise<string> {
   return next ? String(next) : ''
 }
 
+export function formatIpCheckMessage(ip: string, content: unknown): string {
+  if (typeof content === 'string' && content.trim()) {
+    return messageForDisplay(content)
+  }
+
+  const root =
+    content && typeof content === 'object' ? (content as Record<string, unknown>) : null
+  const config =
+    root?.config && typeof root.config === 'object'
+      ? (root.config as Record<string, unknown>)
+      : root
+  const network =
+    config?.network && typeof config.network === 'object'
+      ? (config.network as Record<string, unknown>)
+      : null
+
+  if (network) {
+    const entry = network[ip]
+    if (entry && typeof entry === 'object' && 'status' in entry) {
+      const status = String((entry as { status?: string }).status || '').trim().toLowerCase()
+      if (status === 'free') return `${ip} is available.`
+      if (status === 'taken') return `${ip} is already in use.`
+      if (status) return `${ip}: ${status}.`
+    }
+  }
+
+  const fallback = envelopeMessage(content)
+  return fallback ? messageForDisplay(fallback) : 'Could not determine IP status.'
+}
+
 export async function fetchIpInfo(networkName: string, ip: string): Promise<string> {
   const res = await fetch(apiPath(`/api/v1/ipinfo/${encodeURIComponent(networkName)}/${encodeURIComponent(ip)}`), {
     headers: { Accept: 'application/json' },
@@ -298,9 +328,9 @@ export async function fetchIpInfo(networkName: string, ip: string): Promise<stri
     throw new Error(envelopeMessage(data) || 'Could not load IP information')
   }
   try {
-    return JSON.stringify(unwrapEnvelope(data, 'ip info'), null, 2)
+    return formatIpCheckMessage(ip, unwrapEnvelope(data, 'ip info'))
   } catch {
-    return typeof data === 'object' ? JSON.stringify(data, null, 2) : String(data)
+    return formatIpCheckMessage(ip, data)
   }
 }
 

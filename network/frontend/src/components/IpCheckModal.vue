@@ -27,7 +27,7 @@
 <template>
   <BaseModal size="medium" @close="$emit('close')">
     <div class="tx-form-page">
-      <h2 class="tx-title" style="margin-bottom: 1rem">Check IP — {{ networkName }}</h2>
+      <h2 class="tx-title" style="margin-bottom: 1rem">Check IP Address — {{ networkName }}</h2>
       <div v-if="errorMsg" class="alert-danger">{{ errorMsg }}</div>
       <div class="tx-field tx-field-match tx-ipv4-field" style="max-width: 420px">
         <span class="tx-label">IP Address:</span>
@@ -43,10 +43,10 @@
       </div>
       <div class="tx-form-footer-right" style="margin-top: 1rem">
         <button type="button" class="tx-btn tx-btn-blue" :disabled="loading" @click="runCheck">
-          {{ loading ? 'Checking...' : 'Check IP' }}
+          {{ loading ? 'Checking...' : 'Check IP Address' }}
         </button>
       </div>
-      <pre v-if="result" class="tx-detail-pre" style="margin-top: 1rem">{{ result }}</pre>
+      <p v-if="result" class="tx-ip-check-result" role="status">{{ result }}</p>
     </div>
   </BaseModal>
 </template>
