@@ -208,6 +208,10 @@ const submitValidationMsg = computed(() => {
     return 'BMC New Name is required for clone.'
   }
 
+  if (form.mgmtchannel !== null && form.mgmtchannel < 0) {
+    return 'Management Channel cannot be negative.'
+  }
+
   return liveNameValidationMsg.value
 })
 
@@ -681,7 +685,7 @@ async function onSubmit() {
 
               <div class="bmc-form-field">
                 <label class="bmc-field-label" for="bmc-mgmtchannel">MANAGEMENT CHANNEL:</label>
-                <input id="bmc-mgmtchannel" v-model.number="form.mgmtchannel" type="number" class="bmc-input" placeholder="">
+                <input id="bmc-mgmtchannel" v-model.number="form.mgmtchannel" type="number" class="bmc-input" min="0" placeholder="">
               </div>
             </div>
 
