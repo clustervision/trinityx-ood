@@ -108,11 +108,11 @@
       </label>
       <div class="tx-field tx-field-match">
         <span class="tx-label">DHCP Range Begin:</span>
-        <input v-model="form.dhcp_range_begin" type="text" placeholder="__.___.___.___" />
+        <input v-model="form.dhcp_range_begin" type="text" />
       </div>
       <div class="tx-field tx-field-match">
         <span class="tx-label">DHCP Range End:</span>
-        <input v-model="form.dhcp_range_end" type="text" placeholder="__.___.___.___" />
+        <input v-model="form.dhcp_range_end" type="text" />
       </div>
     </div>
 

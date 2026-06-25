@@ -116,11 +116,11 @@
               <div class="tx-action-icons">
                 <button
                   type="button"
-                  class="tx-btn tx-btn-blue tx-btn-compact"
-                  title="Check IP"
+                  class="tx-btn tx-btn-blue tx-btn-compact tx-btn-check-ip-inv"
+                  title="Check IP Address"
                   @click="$emit('open-ip-check', row.name)"
                 >
-                  Check IP
+                  Check IP Address
                 </button>
                 <button
                   type="button"
@@ -198,7 +198,7 @@
           </ul>
           <h3 class="tx-help-section-title">IP tools</h3>
           <ul class="tx-help-list">
-            <li><strong>Check IP</strong> — Look up an address in a network.</li>
+            <li><strong>Check IP Address</strong> — Look up an address in a network.</li>
             <li><strong>Next IP</strong> — Show the next free address from Luna.</li>
             <li><strong>Reserved list</strong> — View reserved IPs and device names.</li>
           </ul>
@@ -276,7 +276,7 @@ const displayColumns = computed(() =>
   })),
 )
 
-const pageLabel = computed(() => String(currentPage.value).padStart(2, '0'))
+const pageLabel = computed(() => String(currentPage.value))
 
 function cellText(val: unknown): string {
   if (val == null) return ''
