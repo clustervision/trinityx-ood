@@ -432,7 +432,7 @@ const totalColspan = computed((): number => {
   return count
 })
 
-const pageLabel = computed(() => String(currentPage.value).padStart(2, '0'))
+const pageLabel = computed(() => String(currentPage.value))
 
 function canonicalName(displayName: unknown): string {
   return String(displayName || '').replace(/\s+\*$/, '').trim()
