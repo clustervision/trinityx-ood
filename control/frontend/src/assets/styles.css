@@ -229,18 +229,11 @@ body {
 .tx-control-sidebar-head {
   display: flex;
   align-items: flex-start;
-  gap: 0.45rem;
   font-size: 0.74rem;
   font-weight: 700;
   line-height: 1.25;
   color: #5376ea;
   margin-bottom: 0.85rem;
-  cursor: pointer;
-}
-
-.tx-control-sidebar-head input {
-  margin-top: 0.15rem;
-  flex-shrink: 0;
 }
 
 .tx-control-sidebar-head-text {
@@ -415,6 +408,28 @@ body {
   font-weight: 500;
   font-size: 0.84rem;
   vertical-align: middle;
+}
+
+.tx-inventory-table thead th.tx-th-regular.tx-col-check,
+.tx-inventory-table tbody td.tx-col-check {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+  padding: 0.5rem 0.35rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.tx-col-check-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.tx-col-check-box input[type="checkbox"] {
+  margin: 0;
 }
 
 .tx-col-check {
