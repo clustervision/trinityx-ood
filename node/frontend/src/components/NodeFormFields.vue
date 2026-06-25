@@ -263,24 +263,6 @@
         <div class="tx-field-block">
           <div class="tx-label-row">
             <span class="tx-adv-heading">
-              <span class="tx-label-title-blue">PART SCRIPT</span>
-              <span class="tx-label-title-sep"> | </span>
-              <span class="tx-label-title-black">GROUP</span>
-            </span>
-            <label class="tx-upload-pill">
-              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'partscript')" />
-              <span>Upload</span>
-            </label>
-          </div>
-          <div class="tx-field-block-body">
-            <textarea v-model="form.partscript" rows="3"></textarea>
-            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Part Script | Group', 'partscript')"></button>
-          </div>
-        </div>
-
-        <div class="tx-field-block">
-          <div class="tx-label-row">
-            <span class="tx-adv-heading">
               <span class="tx-label-title-blue">POST SCRIPT</span>
               <span class="tx-label-title-sep"> | </span>
               <span class="tx-label-title-black">GROUP</span>
@@ -296,26 +278,44 @@
           </div>
         </div>
 
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">OS Image Tag:</span>
-          <input type="text" v-model="form.osimagetag" maxlength="100" style="flex:1" />
-          <span v-if="hints.osimagetag" class="tx-hint">{{ hints.osimagetag }}</span>
+        <div class="tx-field-block">
+          <div class="tx-label-row">
+            <span class="tx-adv-heading">
+              <span class="tx-label-title-blue">PART SCRIPT</span>
+              <span class="tx-label-title-sep"> | </span>
+              <span class="tx-label-title-black">GROUP</span>
+            </span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'partscript')" />
+              <span>Upload</span>
+            </label>
+          </div>
+          <div class="tx-field-block-body">
+            <textarea v-model="form.partscript" rows="3"></textarea>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Part Script | Group', 'partscript')"></button>
+          </div>
         </div>
+
         <div class="tx-field" style="width:100%">
           <span class="tx-label">Provision Interface:</span>
           <input type="text" v-model="form.provision_interface" maxlength="100" style="flex:1" />
           <span v-if="hints.provision_interface" class="tx-hint">{{ hints.provision_interface }}</span>
         </div>
-
         <div class="tx-field" style="width:100%">
-          <span class="tx-label">Provision Fallback:</span>
-          <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex:1" />
-          <span v-if="hints.provision_fallback" class="tx-hint">{{ hints.provision_fallback }}</span>
+          <span class="tx-label">OS Image Tag:</span>
+          <input type="text" v-model="form.osimagetag" maxlength="100" style="flex:1" />
+          <span v-if="hints.osimagetag" class="tx-hint">{{ hints.osimagetag }}</span>
         </div>
+
         <div class="tx-field" style="width:100%">
           <span class="tx-label">Provision Method:</span>
           <input type="text" v-model="form.provision_method" maxlength="100" style="flex:1" />
           <span v-if="hints.provision_method" class="tx-hint">{{ hints.provision_method }}</span>
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">Provision Fallback:</span>
+          <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex:1" />
+          <span v-if="hints.provision_fallback" class="tx-hint">{{ hints.provision_fallback }}</span>
         </div>
 
         <div class="tx-field" style="width:100%">
@@ -326,15 +326,15 @@
           <span class="tx-label">TPM Pubkey:</span>
           <input type="text" v-model="form.tpm_pubkey" maxlength="2000" style="flex:1" />
         </div>
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">TPM SHA256:</span>
-          <input type="text" v-model="form.tpm_sha256" maxlength="200" style="flex:1" />
-        </div>
         <div class="tx-adv-svc-merged" style="width:100%">
           <label class="tx-adv-svc-merged-inner">
             <span class="tx-adv-svc-text">Service:</span>
             <input v-model="form.service" type="checkbox" class="tx-adv-svc-input" />
           </label>
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM SHA256:</span>
+          <input type="text" v-model="form.tpm_sha256" maxlength="200" style="flex:1" />
         </div>
 
         <div class="tx-field-block tx-adv-full">
