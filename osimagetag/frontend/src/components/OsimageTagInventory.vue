@@ -232,7 +232,7 @@ const displayColumns = computed(() =>
   }))
 )
 
-const pageLabel = computed(() => String(currentPage.value).padStart(2, '0'))
+const pageLabel = computed(() => String(currentPage.value))
 
 function cellText(val) {
   if (val == null) return ''
