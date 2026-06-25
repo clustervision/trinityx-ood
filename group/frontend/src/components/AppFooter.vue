@@ -43,7 +43,7 @@ defineProps({
       </div>
       <div class="tx-footer-right">
         <a :href="`${$props.app_url}/license`" class="tx-footer-link" target="_blank">License</a>
-        <a href="https://docs.clustervision.com/" target="_blank" rel="noopener noreferrer" class="tx-footer-link">Documentation</a>
+        <a href="https://docs.clustervision.com/" target="_blank" rel="noopener noreferrer" class="tx-footer-link">Docs</a>
         <a href="https://support.clustervision.com/" target="_blank" class="tx-footer-link">Support</a>
       </div>
     </div>
