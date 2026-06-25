@@ -74,13 +74,14 @@ export function validateSecretNameInput(raw: unknown): SecretNameValidation {
   return { ok: true, name: normalized }
 }
 
-/** Visible characters in table / compact UI before appending "...". */
-export const SECRET_NAME_DISPLAY_MAX = 25
+/** Visible characters in table before appending "...". */
+export const SECRET_NAME_DISPLAY_MAX = 10
 
 export function secretNameTitle(name: string | null | undefined): string {
   return String(name ?? '')
 }
 
+/** Truncate long names for display (full name still in title). */
 export function formatSecretNameDisplay(
   name: string | null | undefined,
   maxVisible = SECRET_NAME_DISPLAY_MAX,

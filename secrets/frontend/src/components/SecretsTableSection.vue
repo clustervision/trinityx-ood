@@ -44,9 +44,9 @@
         </thead>
         <tbody>
           <tr v-for="row in rows" :key="`${row.entity}-${row.owner}-${row.name}`">
-            <td>
+            <td class="tx-td-name">
               <button type="button" class="tx-name-link" :title="secretNameTitle(row.name)" @click="$emit('edit', row)">
-                <span class="tx-cell-ellipsis tx-cell-truncate-js">{{ formatSecretNameDisplay(row.name) }}</span>
+                <span class="tx-cell-ellipsis">{{ formatSecretNameDisplay(row.name) }}</span>
               </button>
             </td>
             <td><span class="tx-cell-ellipsis">{{ row.owner }}</span></td>
