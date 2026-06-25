@@ -309,8 +309,8 @@ export function formatIpCheckMessage(ip: string, content: unknown): string {
     const entry = network[ip]
     if (entry && typeof entry === 'object' && 'status' in entry) {
       const status = String((entry as { status?: string }).status || '').trim().toLowerCase()
-      if (status === 'free') return `${ip} is available.`
-      if (status === 'taken') return `${ip} is already in use.`
+      if (status === 'free') return `IP address ${ip} is not occupied.`
+      if (status === 'taken') return `IP address ${ip} is occupied.`
       if (status) return `${ip}: ${status}.`
     }
   }
