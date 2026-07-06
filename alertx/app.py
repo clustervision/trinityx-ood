@@ -33,7 +33,8 @@ __status__      = 'Development'
 import os
 import requests
 import urllib3
-from flask import Flask, render_template, request, jsonify
+import json
+from flask import Flask, render_template, request, jsonify, stream_with_context, Response
 from flask_cors import CORS
 from constant import LICENSE, APP_STATE
 from log import Log
@@ -42,37 +43,54 @@ from helper import Helper
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+NODE_BATCH_SIZE = 10
+HTTP_CONNECT_TIMEOUT = 5
+HTTP_READ_TIMEOUT = 60
+
 LOGGER = Log.init_log('INFO')
 TABLE = 'monitor'
 TABLE_CAP = 'Alert Configurator'
 app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 
 if APP_STATE is False: # FOR Development Only
-    CORS(app, resources={r"/get_rules": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/save_config": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/license": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/get_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/save_nodes": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/get_global": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/set_global": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/proxy": {"origins": "http://localhost:5173"}})
-    CORS(app, resources={r"/proxy_post": {"origins": "http://localhost:5173"}})
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+
+
+def chunk_list(items, size):
+    """
+    Yield items in chunks of `size`.
+    """
+    for index in range(0, len(items), size):
+        yield items[index:index + size]
+
+
+def sse_event(event_name, data):
+    """
+    Format data as a Server-Sent Event.
+    """
+    return f"event: {event_name}\ndata: {json.dumps(data)}\n\n"
 
 
 @app.route('/proxy', methods=['GET'])
 def proxy():
     """
-    This is AlertX application proxy pass, which can pass alert manager, Prometheus or any other
-    CORS related URL, and give back the clean response.
+    AlertX proxy endpoint.
     """
     target_url = request.args.get('url')
+
     if not target_url:
         return jsonify({'error': 'URL parameter is required'}), 400
+
     try:
-        response = requests.get(target_url, verify=False, timeout=5)
-        return jsonify(response.json()), response.status_code
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': str(e)}), 500
+        response = requests.get(target_url, verify=False, timeout=(HTTP_CONNECT_TIMEOUT, HTTP_READ_TIMEOUT))
+        try:
+            return jsonify(response.json()), response.status_code
+        except ValueError:
+            return Response(response.content, status=response.status_code, content_type=response.headers.get('content-type', 'text/plain'))
+    except requests.exceptions.Timeout as exc:
+        return jsonify({'error': f'Upstream request timed out: {exc}'}), 504
+    except requests.exceptions.RequestException as exc:
+        return jsonify({'error': str(exc)}), 500
 
 
 @app.route('/proxy_post', methods=['POST'])
@@ -102,23 +120,54 @@ def home():
     return render_template("index.html", PROMQL_URL=url['PROMQL_URL'], APP_URL=url['APP_URL'], ALERT_URL=url['ALERT_URL'])
 
 
-@app.route('/get_nodes', methods=['GET'])
-def get_nodes():
+@app.route('/get_nodes/', methods=['GET'])
+@app.route('/get_nodes/<string:node>', methods=['GET'])
+def get_nodes(node: str = ""):
     """
-    This method to show the monitor status and queue.
+    /get_nodes/ -> Stream node hardware details in batches of 10 using SSE.
+    /get_nodes/<node>- > Return hardware data for one specific node only.
     """
-    status, response = Rest().get_luna_nodes()
-    node_list = []
-    if 'config' in response:
-        for _, details in response["config"]["node"].items():
-            node_list.append(details["hostname"])
-        if node_list:
-            node_list = ",".join(node_list)
-            status, response = Rest().get_node_hw(nodes = node_list)
-    if status is True:
-        return jsonify(response), 200
-    else:
-        return jsonify(response), 400
+    if node:
+        status, hw_response = Rest().get_node_hw(nodes = node, config = "hostnames")
+        return jsonify(hw_response), 200 if status is True else 400
+
+    def event_stream():
+        status, luna_response = Rest().get_luna_nodes()
+        if status is not True:
+            yield sse_event("error", {"status": False, "message": "Failed to fetch Luna nodes", "response": luna_response})
+            return
+        try:
+            nodes = luna_response.get("config", {}).get("node", {})
+            hostnames = [details["hostname"] for details in nodes.values() if details.get("hostname")]
+
+        except (AttributeError, TypeError, KeyError) as exc:
+            yield sse_event("error", {"status": False, "message": "Unexpected Luna node response format", "details": str(exc)})
+            return
+
+        if not hostnames:
+            yield sse_event("done", {"status": True, "message": "No nodes found", "total": 0, "processed": 0, "has_more": False})
+            return
+
+        total = len(hostnames)
+        processed = 0
+        del luna_response
+        yield sse_event("meta", {"status": True, "total": total, "batch_size": NODE_BATCH_SIZE})
+
+        for hostname_chunk in chunk_list(hostnames, NODE_BATCH_SIZE):
+            node_csv = ",".join(hostname_chunk)
+            status, hw_response = Rest().get_node_hw(nodes=node_csv, config="hasconfig")
+            processed += len(hostname_chunk)
+            if status is True:
+                yield sse_event("batch", {"status": True, "data": hw_response, "nodes": hostname_chunk, "batch_size": len(hostname_chunk), "processed": processed, "total": total, "has_more": processed < total})
+            else:
+                yield sse_event("batch_error", {"status": False, "nodes": hostname_chunk, "response": hw_response, "batch_size": len(hostname_chunk), "processed": processed, "total": total, "has_more": processed < total})
+        yield sse_event("done", {"status": True, "message": "Completed node hardware streaming", "processed": processed, "total": total, "has_more": False})
+
+    return Response(
+        stream_with_context(event_stream()),
+        mimetype="text/event-stream",
+        headers={ "Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"}
+    )
 
 
 @app.route('/save_config', methods=['POST'])
