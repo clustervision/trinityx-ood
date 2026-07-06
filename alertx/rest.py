@@ -248,7 +248,7 @@ class Rest():
         return status, response
 
 
-    def get_node_hw(self, nodes=None):
+    def get_node_hw(self, nodes: str = '', config: str = 'hasconfig'):
         """
         This method will call the export API to export the Trinity Rules from the Prometheus Server
         Configuration file via Luna2 Daemon.
@@ -258,17 +258,21 @@ class Rest():
         headers = {'x-access-tokens': self.get_token()}
         daemon_url = f'{self.daemon}/export/prometheus_hw_rules'
         if nodes:
-            daemon_url = f'{daemon_url}?hostnames={nodes}'
+            daemon_url = f'{daemon_url}?{config}={nodes}'
         self.logger.debug(f'GET URL => {daemon_url}')
+        # print(f'GET URL => {daemon_url}')
         try:
             call = self.session.get(url=daemon_url, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.info(f'Response {call.content} & HTTP Code {call.status_code}')
+            # print(f'Response {call.content} & HTTP Code {call.status_code}')
             response_json = call.json()
-            if 'message' in response_json:
-                self.errors.append(response_json["message"])
-            else:
-                response = response_json
-                status = True
+            # if 'message' in response_json:
+            #     self.errors.append(response_json["message"])
+            # else:
+            #     response = response_json
+            #     status = True
+            response = response_json
+            status = True
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
