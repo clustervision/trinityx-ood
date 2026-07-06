@@ -376,7 +376,7 @@ watch: {
 
     startAutoReload() {
       if (this.autoReload && !this.intervalId) {
-        this.intervalId = setInterval(this.fetchOverview, 30000);
+        this.intervalId = setInterval(this.fetchOverview, 60000);
       }
     },
 
