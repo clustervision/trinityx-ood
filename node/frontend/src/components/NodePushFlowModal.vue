@@ -148,11 +148,23 @@ function coalesceStr(...vals: unknown[]): string {
   return ''
 }
 
+function selectedOption(payload: OsPushGrabPayload, ...keys: string[]): string {
+  for (const k of keys) {
+    const v = (payload as Record<string, unknown>)[k]
+
+    if (v && typeof v === 'object' && !Array.isArray(v) && typeof (v as Record<string, unknown>).selected === 'string') {
+      return String((v as Record<string, unknown>).selected).trim()
+    }
+  }
+
+  return ''
+}
+
 async function loadOsFormForNode(name: string) {
   const fetchFn = props.flow === 'osgrab' ? fetchNodeOsgrabData : fetchNodeOspushData
   const payload = await fetchFn(name)
   osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
-  selectedOsimage.value = coalesceStr(payload.osimage_list?.selected, payload.data?.osimage)
+  selectedOsimage.value = coalesceStr(selectedOption(payload, 'osimage_list', 'osimage'), payload.data?.osimage)
 }
 
 function buildNodeOptionsFromInventory(rows: NodeRow[], preferredCanon: string): string[] {
@@ -188,7 +200,7 @@ onMounted(async () => {
         ? preferred
         : nodeOptions.value[0] || preferred || ''
     osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
-    selectedOsimage.value = coalesceStr(payload.osimage_list?.selected, payload.data?.osimage)
+    selectedOsimage.value = coalesceStr(selectedOption(payload, 'osimage_list', 'osimage'), payload.data?.osimage)
   } catch (err) {
     errorMsg.value = (err as Error).message || 'Failed to load form data.'
     nodeOptions.value = buildNodeOptionsFromInventory(rows, preferred)

@@ -44,5 +44,5 @@
 import { computed } from 'vue'
 import { baseUrl } from '../api'
 
-const licenseUrl = computed((): string => `${baseUrl()}/license`)
+const licenseUrl = computed((): string => `${baseUrl()}/api/v1/license`)
 </script>

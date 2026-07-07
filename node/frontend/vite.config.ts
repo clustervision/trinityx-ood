@@ -27,7 +27,7 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import type { AssetInfo } from 'rollup'
+import type { PreRenderedAsset } from 'rollup'
 
 /**
  * Dev: base `/` so `/node-backend` proxy paths stay at the dev root.
@@ -82,15 +82,15 @@ export default defineConfig(({ mode }) => {
         output: {
           entryFileNames: 'index.js',
           chunkFileNames: '[name].js',
-          assetFileNames: (info: AssetInfo) => {
-            if (info.name && info.name.endsWith('.css')) return 'index.css'
+          assetFileNames: (info: PreRenderedAsset) => {
+            if (info.names.some((name) => name.endsWith('.css'))) return 'index.css'
             return '[name][extname]'
           },
         },
       },
     },
     server: {
-      port: 5174,
+      port: 5173,
       proxy,
     },
   }

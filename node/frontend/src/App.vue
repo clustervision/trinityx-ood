@@ -84,6 +84,7 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref, nextTick } from 'vue'
 import type { InventoryIpv4Record } from '@/types'
 import AppHeader from './components/AppHeader.vue'
@@ -95,12 +96,13 @@ import NodePushFlowModal from './components/NodePushFlowModal.vue'
 import CloneNodeModal from './components/CloneNodeModal.vue'
 import DeleteNodeModal from './components/DeleteNodeModal.vue'
 
+type PushFlowType = 'ospush' | 'osgrab'
 const inventoryRef = ref<InstanceType<typeof NodeInventory> | null>(null)
 const addOpen = ref(false)
 const editOpen = ref(false)
 const editNodeName = ref('')
 const pushFlowOpen = ref(false)
-const pushFlowType = ref('')
+const pushFlowType = ref<PushFlowType | ''>('')
 const pushFlowNodeName = ref('')
 const cloneOpen = ref(false)
 const cloneSourceName = ref('')
@@ -125,7 +127,7 @@ function closeEdit() {
   blurInventoryNameFocus()
 }
 
-function openPushFlow(flow: string, name: string) {
+function openPushFlow(flow: PushFlowType, name: string) {
   pushFlowType.value = flow
   pushFlowNodeName.value = name || ''
   pushFlowOpen.value = true
