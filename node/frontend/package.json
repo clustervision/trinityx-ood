@@ -23,5 +23,8 @@
   },
   "overrides": {
     "rollup": "npm:@rollup/wasm-node@^4.34.9"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
   }
 }

@@ -24,45 +24,6 @@
   @status      Development
 -->
 
-<template>
-  <BaseModal size="large" @close="$emit('close')">
-    <div class="tx-form-page">
-      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
-      <p v-if="loading" class="tx-loading">Loading...</p>
-
-      <template v-if="!loading && !fatalError">
-        <div class="tx-header">
-          <h2 class="tx-title">
-            Clone node
-            <strong
-              class="tx-title-highlight-name"
-              :title="displayNameTitle(cloneSourceDisplayName)"
-            >{{ formatDisplayName(cloneSourceDisplayName) }}</strong>
-          </h2>
-        </div>
-
-        <NodeFormFields
-          ref="formRef"
-          mode="clone"
-          :initial-data="formData"
-          :group-options="groupOptions"
-          :switch-options="switchOptions"
-          :bmcsetup-options="bmcsetupOptions"
-          :osimage-options="osimageOptions"
-          :cloudname-options="cloudnameOptions"
-          :network-options="networkOptions"
-          :bond-mode-options="bondModeOptions"
-          :hints="hints"
-          :get-inventory-ipv4="getInventoryIpv4"
-          :inventory-exclude-node-name="inventoryExcludeNodeName"
-          submit-label="Clone Node"
-          @submit="onSubmit"
-        />
-      </template>
-    </div>
-  </BaseModal>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import BaseModal from './BaseModal.vue'
@@ -85,6 +46,7 @@ const emit = defineEmits<{
   saved: []
 }>()
 
+const successMsg = ref('')
 const loading = ref(true)
 const errorMsg = ref('')
 const fatalError = ref(false)
@@ -148,6 +110,8 @@ onMounted(async () => {
 async function onSubmit() {
   if (!formRef.value) return
   errorMsg.value = ''
+  successMsg.value = ''
+
   try {
     const record = formRef.value.buildLunaNodeRecord()
     const newName = String(record.newnodename ?? '').trim()
@@ -160,10 +124,15 @@ async function onSubmit() {
       errorMsg.value = nameCheck.message
       return
     }
-    const { ok, data, status } = await submitNodeClone(newName, record)
+    const { ok, data, status } = await submitNodeClone(String(record.name ?? '').trim(), record)
     if (ok || data.status === 'success') {
-      emit('saved')
-      emit('close')
+      successMsg.value = String(data.message || `Node ${newName} created successfully.`)
+      
+      window.setTimeout(() => {
+        emit('saved')
+        emit('close')
+      }, 5000)
+      return
     } else {
       errorMsg.value =
         data.message || data.error || (status ? `Clone failed (HTTP ${status}).` : 'Clone failed.')
@@ -173,3 +142,45 @@ async function onSubmit() {
   }
 }
 </script>
+
+
+<template>
+  <BaseModal size="large" @close="$emit('close')">
+    <div class="tx-form-page">
+      <div v-if="errorMsg" class="alert alert-danger" role="alert">{{ errorMsg }}</div>
+      <div v-if="successMsg" class="alert alert-success" role="alert">{{ successMsg }}</div>
+      <p v-if="loading" class="tx-loading">Loading...</p>
+
+      <template v-if="!loading && !fatalError">
+        <div class="tx-header">
+          <h2 class="tx-title">
+            Clone node
+            <strong
+              class="tx-title-highlight-name"
+              :title="displayNameTitle(cloneSourceDisplayName)"
+            >{{ formatDisplayName(cloneSourceDisplayName) }}</strong>
+          </h2>
+        </div>
+
+        <NodeFormFields
+          ref="formRef"
+          mode="clone"
+          :initial-data="formData"
+          :group-options="groupOptions"
+          :switch-options="switchOptions"
+          :bmcsetup-options="bmcsetupOptions"
+          :osimage-options="osimageOptions"
+          :cloudname-options="cloudnameOptions"
+          :network-options="networkOptions"
+          :bond-mode-options="bondModeOptions"
+          :hints="hints"
+          :get-inventory-ipv4="getInventoryIpv4"
+          :inventory-exclude-node-name="inventoryExcludeNodeName"
+          submit-label="Clone Node"
+          @submit="onSubmit"
+        />
+      </template>
+    </div>
+  </BaseModal>
+</template>
+

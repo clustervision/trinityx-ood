@@ -297,72 +297,157 @@
       <div v-if="helpOpen" class="tx-modal-overlay" @mousedown.self="helpOpen = false">
         <div class="tx-help-dialog" role="dialog" aria-labelledby="help-title-node">
           <button type="button" class="tx-modal-x" aria-label="Close" @click="helpOpen = false">&times;</button>
-          <h2 id="help-title-node" class="tx-help-title">How to use this app</h2>
+
+          <h2 id="help-title-node" class="tx-help-title">Node management help</h2>
+
+          <h3 class="tx-help-section-title">What this app does</h3>
+          <ul class="tx-help-list">
+            <li><strong>Purpose</strong>: This page manages Luna nodes. A node is a machine known to Luna, usually a compute node, login node, service node, or another system that can be provisioned, configured, cloned, or removed.</li>
+            <li><strong>Scope</strong>: The GUI focuses on Luna <strong>node</strong> operations: list, add, edit, clone, delete, OS Grab, OS Push, and interface management.</li>
+            <li><strong>Inheritance</strong>: Some values may come directly from the node, while others may be inherited from a group, OS image, or default Luna configuration. When the UI shows a label such as <strong>NODE</strong>, <strong>GROUP</strong>, <strong>OS IMAGE</strong>, or <strong>DEFAULT</strong>, it indicates where the displayed value currently comes from.</li>
+            <li><strong>Saving</strong>: Changes are only applied after clicking <strong>Add Node</strong>, <strong>Save Changes</strong>, or <strong>Clone Node</strong>. Editing a field in the dialog alone does not change Luna until the form is submitted.</li>
+          </ul>
 
           <h3 class="tx-help-section-title">Main page</h3>
           <ul class="tx-help-list">
-            <li><strong>Add Node</strong> — Opens the create dialog.</li>
-            <li><strong>Search</strong> — Filters the table as you type (all visible columns).</li>
-            <li><strong>Sort</strong> — Click a column header; click again to reverse. Under <strong>Interfaces</strong>, sort by interface <strong>Name</strong>, <strong>MAC address</strong>, or <strong>IP address</strong>.</li>
-            <li><strong>Name</strong> — Node name (blue link). Click to edit.</li>
-            <li><strong>Group / OS Image / BMC Setup / Status</strong> — Shown when configured; otherwise <em>NOT AVAILABLE</em>.</li>
-            <li><strong>Interfaces</strong> — Each node row lists interface name, MAC, and IP (yellow columns).</li>
-            <li><strong>Actions</strong> — Clone (copy node), OS Grab, OS Push (deploy image), Delete (remove node).</li>
-            <li><strong>Entries per Page</strong> — Page size at the bottom; use &lt; &gt; to change page.</li>
+            <li><strong>Add Node</strong>: Opens the dialog for creating a new Luna node.</li>
+            <li><strong>Search</strong>: Filters the node table as you type. It searches the visible node data, including names and common node fields.</li>
+            <li><strong>Sort</strong>: Click a column header to sort. Click the same header again to reverse the order.</li>
+            <li><strong>Name</strong>: The Luna node name. The name is used as the node identifier in Luna commands and API calls.</li>
+            <li><strong>Group</strong>: The node group. Groups are commonly used to share configuration such as OS image, provisioning settings, scripts, roles, interfaces, and defaults across multiple nodes.</li>
+            <li><strong>OS Image</strong>: The OS image assigned to the node. This determines what image is used when the node is provisioned or synchronised.</li>
+            <li><strong>BMC Setup</strong>: The BMC setup profile linked to the node. This profile normally contains BMC access and channel settings used during BMC configuration.</li>
+            <li><strong>Setup BMC</strong>: Shows whether BMC setup is enabled, disabled, or inherited. This controls whether Luna should configure the node BMC when provisioning or applying configuration.</li>
+            <li><strong>Status</strong>: The current node status when Luna provides one. If no status is available, the table may show <em>NOT AVAILABLE</em> or an empty value.</li>
+            <li><strong>TPM</strong>: Shows TPM-related state when available. TPM fields are used only when the environment uses TPM-based node admission or identity checks.</li>
+            <li><strong>Interfaces</strong>: Shows interface name, MAC address, IP address, and DHCP state where available. Interface columns can be sorted by interface name, MAC address, or IP address.</li>
+            <li><strong>Actions</strong>: Opens node actions: clone, OS Grab, OS Push, or delete.</li>
+            <li><strong>Entries per Page</strong>: Controls how many nodes are displayed on one page. Use the page controls to move through the node list.</li>
           </ul>
 
-          <h3 class="tx-help-section-title">Add / Edit node</h3>
+          <h3 class="tx-help-section-title">Add node</h3>
           <ul class="tx-help-list">
-            <li><strong>Name</strong> — Unique node identifier (letters, numbers, dot, hyphen).</li>
-            <li><strong>Group</strong> — Group this node belongs to.</li>
-            <li><strong>OS Image</strong> — OS image assigned to this node.</li>
-            <li><strong>Setup BMC</strong> — TRUE / FALSE / DEFAULT: whether BMC setup runs.</li>
-            <li><strong>Switch / Switch Port / Vendor</strong> — Network switch details when used.</li>
-            <li><strong>+ Interfaces</strong> — Expand to add or edit network interfaces.</li>
-            <li><strong>Advanced</strong> — Domain, scripts, provision settings, TPM fields, comment, and more.</li>
-            <li><strong>Save Changes</strong> — Writes edits to the cluster. Removing an interface in the form only updates the dialog until you save; after a successful save the main table refreshes.</li>
+            <li><strong>Name</strong>: Unique Luna node name. Use a predictable name, for example <code>node001</code>. Avoid spaces. The name is the primary identifier used by Luna.</li>
+            <li><strong>Group</strong>: Select the group the node should belong to. A group can provide inherited defaults such as OS image, scripts, provisioning method, and interfaces.</li>
+            <li><strong>OS Image</strong>: Select the image assigned to this node. If set at node level, it overrides the inherited OS image from the group.</li>
+            <li><strong>Net Boot</strong>: Controls whether the node should use network boot. <strong>YES</strong> enables Luna/PXE/iPXE-style booting. <strong>NO</strong> disables it for the node. <strong>INHERITED</strong> keeps the value from the parent configuration.</li>
+            <li><strong>Setup BMC</strong>: Controls whether Luna should configure the node BMC. <strong>TRUE</strong> enables BMC setup, <strong>FALSE</strong> disables it, and <strong>DEFAULT</strong> keeps the inherited/default value.</li>
+            <li><strong>BMC Setup</strong>: Selects the BMC setup profile. This is normally where BMC username, user ID, management channel, network channel, and related BMC defaults are defined.</li>
+            <li><strong>Switch</strong>: Optional switch name associated with the node. Use this when Luna tracks physical switch placement.</li>
+            <li><strong>Switch Port</strong>: Optional port on the selected switch where the node is connected.</li>
+            <li><strong>Vendor</strong>: Optional vendor or hardware vendor label. This is useful for inventory and support context.</li>
+            <li><strong>Scripts</strong>: Optional Luna script plugin list or script reference. Scripts are used during provisioning and configuration.</li>
+            <li><strong>Roles</strong>: Optional Luna role plugin list or role reference. Roles are used to apply reusable configuration behaviour to a node.</li>
+            <li><strong>+ Interfaces</strong>: Expands the interface section so that BOOTIF, BMC, bonded interfaces, VLANs, IP addresses, and MAC addresses can be configured.</li>
+            <li><strong>Advanced</strong>: Expands less frequently changed fields such as kernel options, provisioning settings, scripts, TPM identity fields, service flag, and comments.</li>
           </ul>
 
-          <h3 class="tx-help-section-title">Interfaces (in Add / Edit / Clone)</h3>
+          <h3 class="tx-help-section-title">Edit node</h3>
           <ul class="tx-help-list">
-            <li><strong>Interface</strong> — Interface name (e.g. BOOTIF, BMC).</li>
-            <li><strong>Network</strong> — Luna network this interface uses.</li>
-            <li><strong>IP address / MAC address</strong> — Address assignments when used.</li>
-            <li><strong>MTU</strong> — 68–65535, optional.</li>
-            <li><strong>DHCP</strong> — Enable DHCP on this interface.</li>
-            <li><strong>Bond Mode / Bond Member</strong> — Link aggregation settings when used.</li>
-            <li><strong>VLAN ID / VLAN Parent</strong> — VLAN tagging when used.</li>
-            <li><strong>Options</strong> — Extra interface options; use the edit icon for a larger editor.</li>
-            <li><strong>Remove Interface</strong> — Removes the row in this dialog only. Click <strong>Save Changes</strong> (Edit) or <strong>Clone Node</strong> (Clone) to apply.</li>
-            <li><strong>+ Add</strong> — Inserts another interface row below.</li>
-          </ul>
-
-          <h3 class="tx-help-section-title">Advanced fields</h3>
-          <ul class="tx-help-list">
-            <li><strong>Domain</strong> — DNS domain for the node.</li>
-            <li><strong>Kernel Options | OS Image</strong> — Kernel command line (may inherit from OS image).</li>
-            <li><strong>Pre / Part / Post Script</strong> — Provisioning scripts at different stages.</li>
-            <li><strong>Provision Interface / Method / Fallback</strong> — How the node is provisioned.</li>
-            <li><strong>TPM UUID / Public Key / SHA256</strong> — TPM-related fields when used.</li>
-            <li><strong>Comment</strong> — Free-text notes; upload or expand editor for long text.</li>
+            <li><strong>Save Changes</strong>: Writes the changed node values back to Luna.</li>
+            <li><strong>Rename</strong>: In edit mode, the node name can be changed using the rename control next to the name field. A rename changes the Luna node identifier, so confirm the new name carefully.</li>
+            <li><strong>No changes to save</strong>: If nothing changed compared with the loaded form, the app will not submit an update.</li>
+            <li><strong>Removing a value</strong>: Some fields must be submitted as an explicit empty value to clear them in Luna. Script fields such as pre, part, and post script are handled this way by the GUI.</li>
+            <li><strong>Removing an interface</strong>: Removing an interface row in the form only changes the dialog until <strong>Save Changes</strong> is clicked. On save, the interface removal is sent to Luna.</li>
+            <li><strong>Inherited values</strong>: If a value reappears after clearing it, it may be inherited from a group, OS image, or default configuration. Check the source label beside the field where available.</li>
           </ul>
 
           <h3 class="tx-help-section-title">Clone node</h3>
           <ul class="tx-help-list">
-            <li><strong>Clone Name</strong> — Name for the new node (must not already exist).</li>
-            <li>Other fields are copied from the source node; adjust as needed, then <strong>Clone Node</strong>.</li>
+            <li><strong>Clone Name</strong>: Name for the new node. It must be unique and must not be the same as the source node.</li>
+            <li><strong>Copied values</strong>: Clone starts with values from the source node, then lets you adjust the new node before creating it.</li>
+            <li><strong>Interfaces</strong>: Existing interface definitions are copied, but the GUI can prefill the next available IP address so the clone does not reuse the source node IP.</li>
+            <li><strong>MAC addresses</strong>: Review MAC address fields before cloning. Reusing a MAC address on two nodes can break provisioning, DHCP, or network identity.</li>
+            <li><strong>IP addresses</strong>: Review IP fields before cloning. The new node should not use the same IP addresses as the source node.</li>
+            <li><strong>Clone Node</strong>: Creates the new Luna node using the source node and the adjusted clone fields.</li>
           </ul>
 
-          <h3 class="tx-help-section-title">OS Grab / OS Push</h3>
+          <h3 class="tx-help-section-title">Interfaces</h3>
           <ul class="tx-help-list">
-            <li><strong>OS Grab</strong> — Pull OS image content from the node.</li>
-            <li><strong>OS Push</strong> — Deploy an OS image to the node.</li>
-            <li><strong>No Dry</strong> — When checked, runs a live push (not dry-run only).</li>
+            <li><strong>Interface</strong>: Luna interface name, for example <code>BOOTIF</code>, <code>BMC</code>, <code>eth0</code>, or another site-defined name. <code>BOOTIF</code> is commonly used for provisioning or boot networking. <code>BMC</code> is commonly used for management controller access.</li>
+            <li><strong>Network</strong>: Luna network assigned to this interface, for example a cluster network, IPMI network, management network, or provisioning network.</li>
+            <li><strong>IP Address</strong>: IPv4 address assigned to the interface. For clone, this should normally be a new free IP, not the source node IP.</li>
+            <li><strong>NEXT IP</strong>: Finds and fills the next available IPv4 address for the selected network, based on the inventory data available to the GUI.</li>
+            <li><strong>MAC Address</strong>: Hardware MAC address for the interface. For provisioning and DHCP workflows, this should match the real interface MAC address.</li>
+            <li><strong>MTU</strong>: Maximum Transmission Unit. Valid range is 68 to 65535. Use the network-standard MTU unless jumbo frames or special network tuning is required.</li>
+            <li><strong>DHCP</strong>: Enables or disables DHCP behaviour for this interface. When enabled, the interface may receive an address through DHCP rather than using a fixed address, depending on Luna/network configuration.</li>
+            <li><strong>Bond Mode</strong>: Bonding mode used when multiple physical interfaces are combined into one logical interface. Only set this when the network design uses Linux bonding.</li>
+            <li><strong>Bond Member</strong>: Physical member interfaces used by the bond, for example interfaces that belong to a bonded BOOTIF or data interface.</li>
+            <li><strong>VLAN ID</strong>: VLAN tag ID for tagged networking. Use only when the interface should be placed on a VLAN.</li>
+            <li><strong>VLAN Parent</strong>: Parent interface for a VLAN interface. For example, a VLAN interface may be based on a physical interface or bond.</li>
+            <li><strong>Options</strong>: Extra interface options. Use this for advanced interface-specific configuration that does not fit the standard fields.</li>
+            <li><strong>Remove Interface</strong>: Removes the row from the form. In edit mode, the removal is applied only after saving.</li>
+            <li><strong>+ Add</strong>: Adds another interface row below the current one.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Advanced fields</h3>
+          <ul class="tx-help-list">
+            <li><strong>Domain</strong>: DNS domain related to the node. In many Luna environments this is inherited from cluster or group configuration.</li>
+            <li><strong>Unmanaged BMC Users</strong>: Number of BMC users that Luna should leave unmanaged. Use this when some BMC accounts are reserved for vendor, site, or break-glass access.</li>
+            <li><strong>Asset Tag</strong>: Optional inventory asset tag. Useful for mapping Luna nodes to hardware labels, CMDB records, or support contracts.</li>
+            <li><strong>Cloud Name</strong>: Optional cloud or cloud profile association when Luna cloud-related configuration is used.</li>
+            <li><strong>Kernel Options</strong>: Kernel command-line options used during boot or provisioning. Common examples include network naming or BIOS device naming options. The source label shows whether the current value comes from node, group, OS image, or default configuration.</li>
+            <li><strong>Pre Script</strong>: Script content or script reference run early in the provisioning process, before the main image or partitioning steps, depending on Luna configuration.</li>
+            <li><strong>Part Script</strong>: Partitioning script used during provisioning. This normally controls disk layout or partition creation. Be careful: wrong partitioning logic can destroy data.</li>
+            <li><strong>Post Script</strong>: Script run after the image or core provisioning steps. Often used for final configuration, package changes, mounts, service setup, or site-specific tweaks.</li>
+            <li><strong>Upload</strong>: Loads script or text content from a local text file into the field.</li>
+            <li><strong>Expand editor</strong>: Opens a larger editor for long scripts, comments, kernel options, or interface options.</li>
+            <li><strong>Provision Interface</strong>: Interface used for provisioning traffic. <code>BOOTIF</code> is a common value.</li>
+            <li><strong>Provision Method</strong>: Method used by Luna to provision or transfer image data. The environment may use methods such as torrent or HTTP depending on cluster configuration.</li>
+            <li><strong>Provision Fallback</strong>: Fallback method if the primary provisioning method is unavailable or unsuitable.</li>
+            <li><strong>OS Image Tag</strong>: Optional OS image tag. Tags can be used to select a specific image variant or version when the OS image supports tags.</li>
+            <li><strong>TPM UUID</strong>: TPM identity UUID when TPM-based node validation is used.</li>
+            <li><strong>TPM Pubkey</strong>: TPM public key used for node identity or attestation workflows.</li>
+            <li><strong>TPM SHA256</strong>: SHA256 fingerprint or digest associated with TPM validation.</li>
+            <li><strong>Service</strong>: Marks the node as a service node when applicable. This is site-specific and should be used only when the node has a service role.</li>
+            <li><strong>Comment</strong>: Free-text note for administrators. Use it for operational context, not for secrets or passwords.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Source labels and inheritance</h3>
+          <ul class="tx-help-list">
+            <li><strong>NODE</strong>: The value is set directly on the node and overrides inherited configuration.</li>
+            <li><strong>GROUP</strong>: The value is inherited from the node group.</li>
+            <li><strong>OS IMAGE</strong>: The value is inherited from the selected OS image or image tag.</li>
+            <li><strong>DEFAULT</strong>: The value comes from Luna defaults or another default configuration level.</li>
+            <li><strong>Why this matters</strong>: Clearing a node-level value may reveal an inherited value after reload. That does not always mean the clear failed. It may mean Luna fell back to the next available configuration source.</li>
+            <li><strong>Override behaviour</strong>: Setting a value directly on a node usually makes it a node-level override. Removing or clearing the node value may return the field to inherited behaviour.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">OS Grab</h3>
+          <ul class="tx-help-list">
+            <li><strong>Purpose</strong>: OS Grab captures the state of a running node into an OS image. Use it when a node has been prepared manually or updated and you want that state reflected in an image.</li>
+            <li><strong>Node</strong>: Target node to grab from. This is the source of the captured state.</li>
+            <li><strong>OS Image</strong>: Destination image name. The grabbed state is associated with this image.</li>
+            <li><strong>Bare</strong>: Grabs a bare OS image and excludes packing behaviour where supported. Use this only when you specifically need the bare image workflow.</li>
+            <li><strong>No Dry</strong>: Runs the real operation. When not selected, the workflow may run as a dry-run or validation-only action, depending on the backend behaviour.</li>
+            <li><strong>When to use</strong>: Use OS Grab after validating a node configuration that should become reusable for other nodes.</li>
+            <li><strong>Caution</strong>: Make sure the node state is clean before grabbing. Temporary files, local changes, credentials, or test data may become part of the captured image if not excluded.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">OS Push</h3>
+          <ul class="tx-help-list">
+            <li><strong>Purpose</strong>: OS Push deploys or synchronises an OS image to a node. It is used to push image changes from Luna to the selected node.</li>
+            <li><strong>Node</strong>: Target node that will receive the image push.</li>
+            <li><strong>OS Image</strong>: Image to push to the node. Confirm this carefully before running a live push.</li>
+            <li><strong>No Dry</strong>: Runs the real push. If this is not selected, the operation may be a dry-run or validation-only action, depending on the backend behaviour.</li>
+            <li><strong>When to use</strong>: Use OS Push when an image has changed and a node must be updated or synchronised from that image.</li>
+            <li><strong>Caution</strong>: A live OS Push can modify the node. Make sure the selected node and image are correct before enabling <strong>No Dry</strong>.</li>
           </ul>
 
           <h3 class="tx-help-section-title">Delete node</h3>
           <ul class="tx-help-list">
-            <li>Confirms permanent deletion of the node. This cannot be undone.</li>
+            <li><strong>Delete</strong>: Removes the node from Luna configuration.</li>
+            <li><strong>Permanent action</strong>: Deletion cannot be undone from this dialog. Recreating a deleted node requires adding it again or restoring configuration from elsewhere.</li>
+            <li><strong>Before deleting</strong>: Confirm the node name, check whether it is still in use, and verify that removing it will not affect provisioning, monitoring, or operational workflows.</li>
+          </ul>
+
+          <h3 class="tx-help-section-title">Practical guidance</h3>
+          <ul class="tx-help-list">
+            <li><strong>Use inheritance where possible</strong>: Put common values on groups or OS images. Use node-level overrides only for node-specific differences.</li>
+            <li><strong>Be careful with scripts</strong>: Pre, part, and post scripts can change the node filesystem and provisioning behaviour. Check them before saving.</li>
+            <li><strong>Review clone network data</strong>: A cloned node should have unique IP addresses and MAC addresses.</li>
+            <li><strong>Prefer dry-run first</strong>: For OS Grab and OS Push, leave <strong>No Dry</strong> unchecked first when you want to verify what would happen before running the real operation.</li>
+            <li><strong>Do not store secrets in comments</strong>: Comments are for operational notes, not passwords, tokens, or private keys.</li>
           </ul>
 
           <p class="tx-help-note">Press <strong>Esc</strong> or click outside the help panel to close it.</p>

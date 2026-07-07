@@ -24,361 +24,8 @@
   @status      Development
 -->
 
-<template>
-  <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
-    <div v-if="liveNameValidationMsg" class="alert alert-danger" role="alert">{{ liveNameValidationMsg }}</div>
-    <div class="tx-add-grid tx-add-form-main tx-node-add-main">
-      <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
-        <span class="tx-label">Clone Name:</span>
-        <input
-          v-model="form.newnodename"
-          type="text"
-          :placeholder="form.name || ''"
-          :class="{ 'input-error': liveNameValidationMsg }"
-          @keypress="noSpaces"
-          @blur="onCloneNameBlur"
-          required
-        />
-      </div>
-      <div v-else class="tx-field tx-field-strong tx-field-name-with-rename">
-        <span class="tx-label">Name:</span>
-        <div v-if="mode === 'edit'" class="tx-name-input-wrap">
-          <template v-if="!nameInlineEdit">
-            <input
-              type="text"
-              class="tx-name-input-readonly"
-              :value="form.name"
-              readonly
-            />
-            <button
-              type="button"
-              class="tx-btn-rename"
-              title="Edit name"
-              aria-label="Edit name"
-              @click="startInlineRename"
-            >
-              <img :src="renameIcon" alt="" width="20" height="20" />
-            </button>
-          </template>
-          <template v-else>
-            <input
-              v-model="nameDraft"
-              type="text"
-              class="tx-name-input-editing"
-              :class="{ 'input-error': liveNameValidationMsg }"
-              required
-              aria-label="Node name"
-              @keypress="noSpaces"
-              @blur="onNameDraftBlur"
-              @keydown.escape.stop="onNameDraftEscape"
-            />
-            <button
-              type="button"
-              class="tx-btn-rename tx-btn-rename-cancel-char"
-              title="Stop editing name"
-              aria-label="Stop editing name"
-              @click="cancelInlineRename"
-            >
-              ×
-            </button>
-          </template>
-        </div>
-        <input
-          v-else
-          type="text"
-          v-model="form.name"
-          :class="{ 'input-error': liveNameValidationMsg }"
-          @keypress="noSpaces"
-          @blur="onAddNameBlur"
-          required
-        />
-      </div>
-      <div class="tx-field tx-field-strong">
-        <span class="tx-label">Group:</span>
-        <select v-model="form.groupname" :class="{ 'tx-select-placeholder': !form.groupname }">
-          <option value="">--- Select ---</option>
-          <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
-        </select>
-      </div>
-      <div class="tx-field tx-field-strong">
-        <span class="tx-label">OS Image:</span>
-        <select v-model="form.osimage" :class="{ 'tx-select-placeholder': !form.osimage }">
-          <option value="">--- Select ---</option>
-          <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
-        </select>
-      </div>
-
-      <div class="tx-field tx-tri-field tx-field-match">
-        <span class="tx-label">Net Boot:</span>
-        <div class="tx-tri-inner">
-          <div class="tx-segmented" role="group" aria-label="Net boot">
-            <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
-            <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
-            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''"> INHERITED (YES) </button>
-          </div>
-        </div>
-      </div>
-      <div class="tx-field tx-tri-field tx-field-match">
-        <span class="tx-label">Setup BMC:</span>
-        <div class="tx-tri-inner">
-          <div class="tx-segmented" role="group" aria-label="BMC setup">
-            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">TRUE</button>
-            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">FALSE</button>
-            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''"> DEFAULT (TRUE) </button>
-          </div>
-        </div>
-      </div>
-      <div class="tx-field tx-field-match">
-        <span class="tx-label">BMC Setup:</span>
-        <select v-model="form.bmcsetupname" :class="{ 'tx-select-placeholder': !form.bmcsetupname }">
-          <option value="">--- Select ---</option>
-          <option v-for="b in bmcsetupOptions" :key="b" :value="b">{{ b }}</option>
-        </select>
-      </div>
-
-      <div class="tx-field tx-field-match">
-        <span class="tx-label">Switch:</span>
-        <select v-model="form.switchname" :class="{ 'tx-select-placeholder': !form.switchname }">
-          <option value="">--- Select ---</option>
-          <option v-for="s in switchOptions" :key="s" :value="s">{{ s }}</option>
-        </select>
-      </div>
-      <div class="tx-field tx-field-match">
-        <span class="tx-label">Switch Port:</span>
-        <input type="text" v-model="form.switchport" maxlength="100" />
-      </div>
-      <div class="tx-field tx-field-match">
-        <span class="tx-label">Vendor:</span>
-        <input type="text" v-model="form.vendor" maxlength="100" />
-      </div>
-
-      <div class="tx-field tx-field-match">
-        <span class="tx-label">Scripts:</span>
-        <input type="text" v-model="form.scripts" maxlength="100" />
-      </div>
-      <div class="tx-field tx-field-match">
-        <span class="tx-label">Roles:</span>
-        <input type="text" v-model="form.roles" maxlength="100" />
-      </div>
-      <div class="tx-node-iface-btn-wrap">
-        <button type="button" class="tx-btn tx-btn-orange tx-btn-block-col" @click="toggleInterfaces">
-          {{ showInterfaces ? '- Interfaces' : '+ Interfaces' }}
-        </button>
-      </div>
-    </div>
-
-    <div v-if="showInterfaces" class="tx-interface-section">
-      <InterfaceRow
-        v-for="(iface, idx) in form.interfaces"
-        :key="idx"
-        :iface="iface"
-        :row-key="idx"
-        :all-ifaces="form.interfaces"
-        :networks="networkOptions"
-        :bond-modes="bondModeOptions"
-        :get-inventory-ipv4="getInventoryIpv4"
-        :inventory-exclude-node-name="inventoryExcludeNodeName"
-        @remove="removeInterface(idx)"
-        @add-after="addInterfaceAfter(idx)"
-        @open-options-editor="openIfaceOptionsEditor(idx)"
-        @update-dhcp="(v) => setIfaceDhcp(idx, v)"
-      />
-      <div v-if="!form.interfaces.length" class="tx-interface-empty">
-        <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
-      </div>
-    </div>
-
-    <div v-if="showAdvanced" class="tx-advanced-body">
-      <div class="tx-adv-grid">
-        <div class="tx-field tx-field-adv-sys" style="width:100%">
-          <span class="tx-label">Domain:</span>
-          <input type="text" v-model="form.domain" maxlength="100" style="flex:1" />
-        </div>
-        <div class="tx-field tx-field-adv-sys" style="width:100%">
-          <span class="tx-label">Unmanaged BMC Users:</span>
-          <select
-            v-model="form.unmanaged_bmc_users"
-            style="flex:1"
-            :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }"
-          >
-            <option value="">--- Select ---</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-          </select>
-        </div>
-
-        <div class="tx-field tx-field-adv-sys" style="width:100%">
-          <span class="tx-label">Asset Tag:</span>
-          <input type="text" v-model="form.asset_tag" maxlength="200" style="flex:1" />
-        </div>
-        <div class="tx-field tx-field-adv-sys" style="width:100%">
-          <span class="tx-label">Cloud Name:</span>
-          <select
-            v-model="form.cloud_name"
-            style="flex:1"
-            :class="{ 'tx-select-placeholder': !form.cloud_name }"
-          >
-            <option value="">--- Select ---</option>
-            <option v-for="c in cloudnameOptions" :key="c" :value="c">{{ c }}</option>
-          </select>
-        </div>
-
-        <div class="tx-field-block">
-          <div class="tx-label-row">
-            <span class="tx-adv-heading">
-              <span class="tx-label-title-blue">KERNEL OPTIONS</span>
-              <span class="tx-label-title-sep"> | </span>
-              <span class="tx-label-title-black">OS IMAGE</span>
-            </span>
-            <label class="tx-upload-pill">
-              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'kerneloptions')" />
-              <span>Upload</span>
-            </label>
-          </div>
-          <div class="tx-field-block-body">
-            <textarea v-model="form.kerneloptions" rows="3"></textarea>
-            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Kernel Options | OS Image', 'kerneloptions')"></button>
-          </div>
-        </div>
-
-        <div class="tx-field-block">
-          <div class="tx-label-row">
-            <span class="tx-adv-heading">
-              <span class="tx-label-title-blue">PRE SCRIPT</span>
-              <span class="tx-label-title-sep"> | </span>
-              <span class="tx-label-title-black">DEFAULT</span>
-            </span>
-            <label class="tx-upload-pill">
-              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'prescript')" />
-              <span>Upload</span>
-            </label>
-          </div>
-          <div class="tx-field-block-body">
-            <textarea v-model="form.prescript" rows="3"></textarea>
-            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Pre Script | Default', 'prescript')"></button>
-          </div>
-        </div>
-
-        <div class="tx-field-block">
-          <div class="tx-label-row">
-            <span class="tx-adv-heading">
-              <span class="tx-label-title-blue">POST SCRIPT</span>
-              <span class="tx-label-title-sep"> | </span>
-              <span class="tx-label-title-black">GROUP</span>
-            </span>
-            <label class="tx-upload-pill">
-              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'postscript')" />
-              <span>Upload</span>
-            </label>
-          </div>
-          <div class="tx-field-block-body">
-            <textarea v-model="form.postscript" rows="3"></textarea>
-            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Post Script | Group', 'postscript')"></button>
-          </div>
-        </div>
-
-        <div class="tx-field-block">
-          <div class="tx-label-row">
-            <span class="tx-adv-heading">
-              <span class="tx-label-title-blue">PART SCRIPT</span>
-              <span class="tx-label-title-sep"> | </span>
-              <span class="tx-label-title-black">GROUP</span>
-            </span>
-            <label class="tx-upload-pill">
-              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'partscript')" />
-              <span>Upload</span>
-            </label>
-          </div>
-          <div class="tx-field-block-body">
-            <textarea v-model="form.partscript" rows="3"></textarea>
-            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Part Script | Group', 'partscript')"></button>
-          </div>
-        </div>
-
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">Provision Interface:</span>
-          <input type="text" v-model="form.provision_interface" maxlength="100" style="flex:1" />
-          <span v-if="hints.provision_interface" class="tx-hint">{{ hints.provision_interface }}</span>
-        </div>
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">OS Image Tag:</span>
-          <input type="text" v-model="form.osimagetag" maxlength="100" style="flex:1" />
-          <span v-if="hints.osimagetag" class="tx-hint">{{ hints.osimagetag }}</span>
-        </div>
-
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">Provision Method:</span>
-          <input type="text" v-model="form.provision_method" maxlength="100" style="flex:1" />
-          <span v-if="hints.provision_method" class="tx-hint">{{ hints.provision_method }}</span>
-        </div>
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">Provision Fallback:</span>
-          <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex:1" />
-          <span v-if="hints.provision_fallback" class="tx-hint">{{ hints.provision_fallback }}</span>
-        </div>
-
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">TPM UUID:</span>
-          <input type="text" v-model="form.tpm_uuid" maxlength="500" style="flex:1" />
-        </div>
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">TPM Pubkey:</span>
-          <input type="text" v-model="form.tpm_pubkey" maxlength="2000" style="flex:1" />
-        </div>
-        <div class="tx-adv-svc-merged" style="width:100%">
-          <label class="tx-adv-svc-merged-inner">
-            <span class="tx-adv-svc-text">Service:</span>
-            <input v-model="form.service" type="checkbox" class="tx-adv-svc-input" />
-          </label>
-        </div>
-        <div class="tx-field" style="width:100%">
-          <span class="tx-label">TPM SHA256:</span>
-          <input type="text" v-model="form.tpm_sha256" maxlength="200" style="flex:1" />
-        </div>
-
-        <div class="tx-field-block tx-adv-full">
-          <div class="tx-label-row">
-            <span class="tx-label">Comment:</span>
-          </div>
-          <div class="tx-field-block-body">
-            <textarea v-model="form.comment" rows="3"></textarea>
-            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Comment', 'comment')"></button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="tx-form-footer">
-      <button
-        type="button"
-        class="tx-btn tx-btn-outline-blue tx-btn-advanced-toggle"
-        :aria-expanded="showAdvanced"
-        @click="showAdvanced = !showAdvanced"
-      >
-        <span>Advanced</span>
-        <span
-          class="tx-advanced-chevron"
-          :class="{ 'is-open': showAdvanced }"
-          aria-hidden="true"
-        />
-      </button>
-      <button type="submit" class="tx-btn tx-btn-blue" :disabled="Boolean(liveNameValidationMsg)">{{ submitLabel }}</button>
-    </div>
-
-    <TextEditorModal
-      v-if="textEditorOpen"
-      :key="textEditorModalKey"
-      :title="textEditorTitle"
-      :model-value="textEditorModalValue"
-      @update:model-value="onTextEditorModalApply"
-      @close="closeTextEditor"
-    />
-
-  </form>
-</template>
-
 <script setup lang="ts">
+
 import { ref, reactive, computed, watch, nextTick, toRaw } from 'vue'
 import { normalizeNodeInterfaces, removedInterfaceNames } from '@/utils/nodeInterfaces'
 import InterfaceRow from './InterfaceRow.vue'
@@ -388,6 +35,12 @@ import { validateNodeNameInput } from '@/constants/displayName'
 
 const renameIcon = punAppAssetUrl('icons/icon-rename.png')
 import type { NodeFormInterface, NodeFormData, InventoryIpv4Record } from '@/types'
+
+const CLEARABLE_EDITOR_FIELDS = new Set([
+  'prescript',
+  'partscript',
+  'postscript',
+])
 
 const props = withDefaults(defineProps<{
   mode?: 'add' | 'edit' | 'clone'
@@ -819,22 +472,29 @@ function buildLunaNodeRecord(): Record<string, unknown> {
       }
       if (isClone && typeof out === 'string' && out.trim() === '') continue
     }
-    if (typeof out === 'string' && out.trim() === '') continue
+    if (typeof out === 'string' && out.trim() === '') {
+      if (props.mode === 'edit' && CLEARABLE_EDITOR_FIELDS.has(f)) {
+        record[f] = ''
+      }
+      continue
+    }
     const postKey = SCALAR_TO_POST_KEY[f as keyof typeof SCALAR_TO_POST_KEY] || f
     if (!LUNA_NODE_SCALAR_KEYS.has(postKey)) continue
     record[postKey] = out
   }
   if (!isClone && form.service) record.service = true
-  record.interfaces = form.interfaces
-    .map((iface) => {
+    record.interfaces = form.interfaces.map((iface) => {
       const row: Record<string, unknown> = {}
+
       for (const [k, val] of Object.entries(iface)) {
+        // if (isClone && k === 'ipaddress') continue
         const s = val != null ? String(val) : ''
         if (s.trim() !== '') row[k] = s
       }
       return row
-    })
-    .filter((row) => Object.keys(row).length > 0)
+    }).filter((row) => Object.keys(row).length > 0)
+
+
   // Luna re-syncs group template interfaces (BOOTIF/BMC) on every update when `group` is sent.
   if (props.mode === 'edit') {
     const currentGroup = String(form.groupname ?? '').trim()
@@ -911,6 +571,23 @@ function getRemovedInterfaceNames(): string[] {
   return []
 }
 
+function sourceLabel(field: string, fallback = 'DEFAULT'): string {
+  const key = `_${field}_source`
+  const raw = props.initialData?.[key]
+
+  if (typeof raw === 'string' && raw.trim() !== '') {
+    return raw
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .toUpperCase()
+  }
+  return fallback
+}
+
+function editorTitle(label: string, field: string, fallback = 'DEFAULT'): string {
+  return `${label} | ${sourceLabel(field, fallback)}`
+}
+
 defineExpose({
   form,
   buildFormData,
@@ -921,3 +598,359 @@ defineExpose({
   getRemovedInterfaceNames,
 })
 </script>
+
+<template>
+  <form @submit.prevent="$emit('submit')" class="tx-group-form tx-group-form-fixed">
+    <div v-if="liveNameValidationMsg" class="alert alert-danger" role="alert">{{ liveNameValidationMsg }}</div>
+    <div class="tx-add-grid tx-add-form-main tx-node-add-main">
+      <div v-if="mode === 'clone'" class="tx-field tx-field-strong">
+        <span class="tx-label">Clone Name:</span>
+        <input
+          v-model="form.newnodename"
+          type="text"
+          :placeholder="form.name || ''"
+          :class="{ 'input-error': liveNameValidationMsg }"
+          @keypress="noSpaces"
+          @blur="onCloneNameBlur"
+          required
+        />
+      </div>
+      <div v-else class="tx-field tx-field-strong tx-field-name-with-rename">
+        <span class="tx-label">Name:</span>
+        <div v-if="mode === 'edit'" class="tx-name-input-wrap">
+          <template v-if="!nameInlineEdit">
+            <input
+              type="text"
+              class="tx-name-input-readonly"
+              :value="form.name"
+              readonly
+            />
+            <button
+              type="button"
+              class="tx-btn-rename"
+              title="Edit name"
+              aria-label="Edit name"
+              @click="startInlineRename"
+            >
+              <img :src="renameIcon" alt="" width="20" height="20" />
+            </button>
+          </template>
+          <template v-else>
+            <input
+              v-model="nameDraft"
+              type="text"
+              class="tx-name-input-editing"
+              :class="{ 'input-error': liveNameValidationMsg }"
+              required
+              aria-label="Node name"
+              @keypress="noSpaces"
+              @blur="onNameDraftBlur"
+              @keydown.escape.stop="onNameDraftEscape"
+            />
+            <button
+              type="button"
+              class="tx-btn-rename tx-btn-rename-cancel-char"
+              title="Stop editing name"
+              aria-label="Stop editing name"
+              @click="cancelInlineRename"
+            >
+              ×
+            </button>
+          </template>
+        </div>
+        <input
+          v-else
+          type="text"
+          v-model="form.name"
+          :class="{ 'input-error': liveNameValidationMsg }"
+          @keypress="noSpaces"
+          @blur="onAddNameBlur"
+          required
+        />
+      </div>
+      <div class="tx-field tx-field-strong">
+        <span class="tx-label">Group:</span>
+        <select v-model="form.groupname" :class="{ 'tx-select-placeholder': !form.groupname }">
+          <option value="">--- Select ---</option>
+          <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
+        </select>
+      </div>
+      <div class="tx-field tx-field-strong">
+        <span class="tx-label">OS Image:</span>
+        <select v-model="form.osimage" :class="{ 'tx-select-placeholder': !form.osimage }">
+          <option value="">--- Select ---</option>
+          <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
+        </select>
+      </div>
+
+      <div class="tx-field tx-tri-field tx-field-match">
+        <span class="tx-label">Net Boot:</span>
+        <div class="tx-tri-inner">
+          <div class="tx-segmented" role="group" aria-label="Net boot">
+            <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'true' }" data-v="true" @click="form.netboot = 'true'">YES</button>
+            <button type="button" class="tx-seg" :class="{ 'is-active': form.netboot === 'false' }" data-v="false" @click="form.netboot = 'false'">NO</button>
+            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.netboot === '' }" data-v="" @click="form.netboot = ''"> INHERITED (YES) </button>
+          </div>
+        </div>
+      </div>
+      <div class="tx-field tx-tri-field tx-field-match">
+        <span class="tx-label">Setup BMC:</span>
+        <div class="tx-tri-inner">
+          <div class="tx-segmented" role="group" aria-label="BMC setup">
+            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'true' }" data-v="true" @click="form.setupbmc = 'true'">TRUE</button>
+            <button type="button" class="tx-seg" :class="{ 'is-active': form.setupbmc === 'false' }" data-v="false" @click="form.setupbmc = 'false'">FALSE</button>
+            <button type="button" class="tx-seg tx-seg-tri-inherit" :class="{ 'is-active': form.setupbmc === '' }" data-v="" @click="form.setupbmc = ''"> DEFAULT (TRUE) </button>
+          </div>
+        </div>
+      </div>
+      <div class="tx-field tx-field-match">
+        <span class="tx-label">BMC Setup:</span>
+        <select v-model="form.bmcsetupname" :class="{ 'tx-select-placeholder': !form.bmcsetupname }">
+          <option value="">--- Select ---</option>
+          <option v-for="b in bmcsetupOptions" :key="b" :value="b">{{ b }}</option>
+        </select>
+      </div>
+
+      <div class="tx-field tx-field-match">
+        <span class="tx-label">Switch:</span>
+        <select v-model="form.switchname" :class="{ 'tx-select-placeholder': !form.switchname }">
+          <option value="">--- Select ---</option>
+          <option v-for="s in switchOptions" :key="s" :value="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="tx-field tx-field-match">
+        <span class="tx-label">Switch Port:</span>
+        <input type="text" v-model="form.switchport" maxlength="100" />
+      </div>
+      <div class="tx-field tx-field-match">
+        <span class="tx-label">Vendor:</span>
+        <input type="text" v-model="form.vendor" maxlength="100" />
+      </div>
+
+      <div class="tx-field tx-field-match">
+        <span class="tx-label">Scripts:</span>
+        <input type="text" v-model="form.scripts" maxlength="100" />
+      </div>
+      <div class="tx-field tx-field-match">
+        <span class="tx-label">Roles:</span>
+        <input type="text" v-model="form.roles" maxlength="100" />
+      </div>
+      <div class="tx-node-iface-btn-wrap">
+        <button type="button" class="tx-btn tx-btn-orange tx-btn-block-col" @click="toggleInterfaces">
+          {{ showInterfaces ? '- Interfaces' : '+ Interfaces' }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="showInterfaces" class="tx-interface-section">
+      <InterfaceRow
+        :mode="props.mode"
+        v-for="(iface, idx) in form.interfaces"
+        :key="idx"
+        :iface="iface"
+        :row-key="idx"
+        :all-ifaces="form.interfaces"
+        :networks="networkOptions"
+        :bond-modes="bondModeOptions"
+        :get-inventory-ipv4="getInventoryIpv4"
+        :inventory-exclude-node-name="inventoryExcludeNodeName"
+        @remove="removeInterface(idx)"
+        @add-after="addInterfaceAfter(idx)"
+        @open-options-editor="openIfaceOptionsEditor(idx)"
+        @update-dhcp="(v) => setIfaceDhcp(idx, v)"
+      />
+      <div v-if="!form.interfaces.length" class="tx-interface-empty">
+        <button type="button" class="tx-btn tx-btn-orange" @click="addInterfaceAfter(-1)">+ Add Interface</button>
+      </div>
+    </div>
+
+    <div v-if="showAdvanced" class="tx-advanced-body">
+      <div class="tx-adv-grid">
+        <div class="tx-field tx-field-adv-sys" style="width:100%">
+          <span class="tx-label">Domain:</span>
+          <input type="text" v-model="form.domain" maxlength="100" style="flex:1" />
+        </div>
+        <div class="tx-field tx-field-adv-sys" style="width:100%">
+          <span class="tx-label">Unmanaged BMC Users:</span>
+          <select
+            v-model="form.unmanaged_bmc_users"
+            style="flex:1"
+            :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }"
+          >
+            <option value="">--- Select ---</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <div class="tx-field tx-field-adv-sys" style="width:100%">
+          <span class="tx-label">Asset Tag:</span>
+          <input type="text" v-model="form.asset_tag" maxlength="200" style="flex:1" />
+        </div>
+        <div class="tx-field tx-field-adv-sys" style="width:100%">
+          <span class="tx-label">Cloud Name:</span>
+          <select
+            v-model="form.cloud_name"
+            style="flex:1"
+            :class="{ 'tx-select-placeholder': !form.cloud_name }"
+          >
+            <option value="">--- Select ---</option>
+            <option v-for="c in cloudnameOptions" :key="c" :value="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <div class="tx-field-block">
+          <div class="tx-label-row">
+            <span class="tx-adv-heading">
+              <span class="tx-label-title-blue">KERNEL OPTIONS</span>
+              <span class="tx-label-title-sep"> | </span>
+              <span class="tx-label-title-black">{{ sourceLabel('kerneloptions', 'OS IMAGE') }}</span>
+            </span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'kerneloptions')" />
+              <span>Upload</span>
+            </label>
+          </div>
+          <div class="tx-field-block-body">
+            <textarea v-model="form.kerneloptions" rows="3"></textarea>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor(editorTitle('Kernel Options', 'kerneloptions', 'OS IMAGE'), 'kerneloptions')"></button>
+          </div>
+        </div>
+
+        <div class="tx-field-block">
+          <div class="tx-label-row">
+            <span class="tx-adv-heading">
+              <span class="tx-label-title-blue">PRE SCRIPT</span>
+              <span class="tx-label-title-sep"> | </span>
+              <span class="tx-label-title-black">{{ sourceLabel('prescript', 'DEFAULT') }}</span>
+            </span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'prescript')" />
+              <span>Upload</span>
+            </label>
+          </div>
+          <div class="tx-field-block-body">
+            <textarea v-model="form.prescript" rows="3"></textarea>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor(editorTitle('Pre Script', 'prescript', 'DEFAULT'), 'prescript')"></button>
+          </div>
+        </div>
+
+        <div class="tx-field-block">
+          <div class="tx-label-row">
+            <span class="tx-adv-heading">
+              <span class="tx-label-title-blue">POST SCRIPT</span>
+              <span class="tx-label-title-sep"> | </span>
+              <span class="tx-label-title-black">{{ sourceLabel('postscript', 'GROUP') }}</span>
+            </span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'postscript')" />
+              <span>Upload</span>
+            </label>
+          </div>
+          <div class="tx-field-block-body">
+            <textarea v-model="form.postscript" rows="3"></textarea>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor(editorTitle('Post Script', 'postscript', 'GROUP'), 'postscript')"></button>
+          </div>
+        </div>
+
+        <div class="tx-field-block">
+          <div class="tx-label-row">
+            <span class="tx-adv-heading">
+              <span class="tx-label-title-blue">PART SCRIPT</span>
+              <span class="tx-label-title-sep"> | </span>
+              <span class="tx-label-title-black">{{ sourceLabel('partscript', 'GROUP') }}</span>
+            </span>
+            <label class="tx-upload-pill">
+              <input type="file" accept=".txt,.text,.sh,.cfg,.conf,.yaml,.yml,.json,.xml,.md,.csv,.ini,.env,.log,text/plain" @change="onUploadFile($event, 'partscript')" />
+              <span>Upload</span>
+            </label>
+          </div>
+          <div class="tx-field-block-body">
+            <textarea v-model="form.partscript" rows="3"></textarea>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor(editorTitle('Part Script', 'partscript', 'GROUP'), 'partscript')"></button>
+          </div>
+        </div>
+
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">Provision Interface:</span>
+          <input type="text" v-model="form.provision_interface" maxlength="100" style="flex:1" />
+          <span v-if="hints.provision_interface" class="tx-hint">{{ hints.provision_interface }}</span>
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">OS Image Tag:</span>
+          <input type="text" v-model="form.osimagetag" maxlength="100" style="flex:1" />
+          <span v-if="hints.osimagetag" class="tx-hint">{{ hints.osimagetag }}</span>
+        </div>
+
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">Provision Method:</span>
+          <input type="text" v-model="form.provision_method" maxlength="100" style="flex:1" />
+          <span v-if="hints.provision_method" class="tx-hint">{{ hints.provision_method }}</span>
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">Provision Fallback:</span>
+          <input type="text" v-model="form.provision_fallback" maxlength="100" style="flex:1" />
+          <span v-if="hints.provision_fallback" class="tx-hint">{{ hints.provision_fallback }}</span>
+        </div>
+
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM UUID:</span>
+          <input type="text" v-model="form.tpm_uuid" maxlength="500" style="flex:1" />
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM Pubkey:</span>
+          <input type="text" v-model="form.tpm_pubkey" maxlength="2000" style="flex:1" />
+        </div>
+        <div class="tx-adv-svc-merged" style="width:100%">
+          <label class="tx-adv-svc-merged-inner">
+            <span class="tx-adv-svc-text">Service:</span>
+            <input v-model="form.service" type="checkbox" class="tx-adv-svc-input" />
+          </label>
+        </div>
+        <div class="tx-field" style="width:100%">
+          <span class="tx-label">TPM SHA256:</span>
+          <input type="text" v-model="form.tpm_sha256" maxlength="200" style="flex:1" />
+        </div>
+
+        <div class="tx-field-block tx-adv-full">
+          <div class="tx-label-row">
+            <span class="tx-label">Comment:</span>
+          </div>
+          <div class="tx-field-block-body">
+            <textarea v-model="form.comment" rows="3"></textarea>
+            <button type="button" class="tx-expand-text-trigger" @click="openTextEditor('Comment', 'comment')"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tx-form-footer">
+      <button
+        type="button"
+        class="tx-btn tx-btn-outline-blue tx-btn-advanced-toggle"
+        :aria-expanded="showAdvanced"
+        @click="showAdvanced = !showAdvanced"
+      >
+        <span>Advanced</span>
+        <span
+          class="tx-advanced-chevron"
+          :class="{ 'is-open': showAdvanced }"
+          aria-hidden="true"
+        />
+      </button>
+      <button type="submit" class="tx-btn tx-btn-blue" :disabled="Boolean(liveNameValidationMsg)">{{ submitLabel }}</button>
+    </div>
+
+    <TextEditorModal
+      v-if="textEditorOpen"
+      :key="textEditorModalKey"
+      :title="textEditorTitle"
+      :model-value="textEditorModalValue"
+      @update:model-value="onTextEditorModalApply"
+      @close="closeTextEditor"
+    />
+
+  </form>
+</template>
+

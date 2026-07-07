@@ -23,6 +23,119 @@
   @email       yixin.zhang@clustervision.com
   @status      Development
 -->
+<script setup lang="ts">
+
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { suggestNextFreeIpv424 } from '../utils/nextFreeIpv4'
+import type { NodeFormInterface, InventoryIpv4Record } from '@/types'
+
+const cloneIpPrefilled = ref(false);
+const props = withDefaults(defineProps<{
+  mode?: 'add' | 'edit' | 'clone'
+  iface: NodeFormInterface
+  rowKey?: string | number
+  allIfaces?: NodeFormInterface[]
+  networks?: string[]
+  bondModes?: string[]
+  getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
+  inventoryExcludeNodeName?: string
+}>(), {
+  rowKey: 0,
+  allIfaces: () => [],
+  networks: () => [],
+  bondModes: () => [],
+  getInventoryIpv4: null,
+  inventoryExcludeNodeName: '',
+})
+
+const emit = defineEmits<{
+  remove: []
+  'add-after': []
+  'open-options-editor': []
+  'update-dhcp': [value: string]
+}>()
+
+const dhcpInputId = computed(() => `tx-dhcp-${props.rowKey}`)
+
+const dhcpChecked = computed((): boolean => {
+  const v = props.iface.dhcp
+  if ((v as unknown) === true || (v as unknown) === 1) return true
+  const s = String(v ?? '').trim().toLowerCase()
+  return s === 'true' || s === '1' || s === 'yes' || s === 'on'
+})
+
+function toggleDhcp() {
+  emit('update-dhcp', dhcpChecked.value ? 'false' : 'true')
+}
+
+function clampMtu(ev: Event) {
+  const v = parseInt((ev.target as HTMLInputElement).value, 10)
+  if (!isNaN(v)) {
+    if (v < 68) props.iface.mtu = 68
+    if (v > 65535) props.iface.mtu = 65535
+  }
+}
+
+function fillNextIp(showAlert = true): boolean {
+  const records = props.getInventoryIpv4?.() ?? []
+  const result = suggestNextFreeIpv424({
+    networkName: props.iface.network,
+    formInterfaces: props.allIfaces,
+    inventoryRecords: records,
+    excludeNodeName: props.mode === 'clone' ? '' : (props.inventoryExcludeNodeName || ''),
+  })
+  if (!result.ok) {
+    if (showAlert) {
+      if (result.reason === 'network') {
+        window.alert('Select a network first.')
+      } else if (result.reason === 'subnet') {
+        window.alert(
+          'No IPv4 subnet found for this network. Pick a network that already has nodes with IPv4 on it, or type an address on the desired subnet first.',
+        )
+      } else {
+        window.alert('No free IPv4 addresses in this /24.')
+      }
+    }
+    return false
+  }
+  props.iface.ipaddress = result.ip
+  return true
+}
+
+function onNextIp() {
+  fillNextIp(true)
+}
+
+function prefillCloneIpOnce() {
+  if (props.mode !== 'clone') return
+  if (cloneIpPrefilled.value) return
+
+  const networkName = String(props.iface.network || '').trim()
+  if (!networkName) return
+
+  const ok = fillNextIp(false)
+  if (ok) {
+    cloneIpPrefilled.value = true
+  }
+}
+
+onMounted(() => {
+  nextTick(() => {
+    prefillCloneIpOnce()
+  })
+})
+
+watch(
+  () => [props.mode, props.iface.network],
+  () => {
+    nextTick(() => {
+      prefillCloneIpOnce()
+    })
+  },
+  { flush: 'post' },
+)
+
+</script>
 
 <template>
   <div class="tx-interface-block">
@@ -42,9 +155,7 @@
         <span class="tx-label">IP Address:</span>
         <div class="tx-iface-ip-next-inner">
           <input type="text" v-model="iface.ipaddress" placeholder="IPv4" autocomplete="off" />
-          <button type="button" class="tx-btn tx-btn-orange tx-btn-next-ip" @click="onNextIp">
-            NEXT IP
-          </button>
+          <button type="button" class="tx-btn tx-btn-orange tx-btn-next-ip" @click="onNextIp">NEXT IP</button>
         </div>
       </div>
 
@@ -115,76 +226,3 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue'
-import { suggestNextFreeIpv424 } from '../utils/nextFreeIpv4'
-import type { NodeFormInterface, InventoryIpv4Record } from '@/types'
-
-const props = withDefaults(defineProps<{
-  iface: NodeFormInterface
-  rowKey?: string | number
-  allIfaces?: NodeFormInterface[]
-  networks?: string[]
-  bondModes?: string[]
-  getInventoryIpv4?: (() => InventoryIpv4Record[]) | null
-  inventoryExcludeNodeName?: string
-}>(), {
-  rowKey: 0,
-  allIfaces: () => [],
-  networks: () => [],
-  bondModes: () => [],
-  getInventoryIpv4: null,
-  inventoryExcludeNodeName: '',
-})
-
-const emit = defineEmits<{
-  remove: []
-  'add-after': []
-  'open-options-editor': []
-  'update-dhcp': [value: string]
-}>()
-
-const dhcpInputId = computed(() => `tx-dhcp-${props.rowKey}`)
-
-const dhcpChecked = computed((): boolean => {
-  const v = props.iface.dhcp
-  if ((v as unknown) === true || (v as unknown) === 1) return true
-  const s = String(v ?? '').trim().toLowerCase()
-  return s === 'true' || s === '1' || s === 'yes' || s === 'on'
-})
-
-function toggleDhcp() {
-  emit('update-dhcp', dhcpChecked.value ? 'false' : 'true')
-}
-
-function clampMtu(ev: Event) {
-  const v = parseInt((ev.target as HTMLInputElement).value, 10)
-  if (!isNaN(v)) {
-    if (v < 68) props.iface.mtu = 68
-    if (v > 65535) props.iface.mtu = 65535
-  }
-}
-
-function onNextIp() {
-  const records = props.getInventoryIpv4?.() ?? []
-  const result = suggestNextFreeIpv424({
-    networkName: props.iface.network,
-    formInterfaces: props.allIfaces,
-    inventoryRecords: records,
-    excludeNodeName: props.inventoryExcludeNodeName || '',
-  })
-  if (!result.ok) {
-    if (result.reason === 'network') {
-      window.alert('Select a network first.')
-    } else if (result.reason === 'subnet') {
-      window.alert(
-        'No IPv4 subnet found for this network. Pick a network that already has nodes with IPv4 on it, or type an address on the desired subnet first.',
-      )
-    } else {
-      window.alert('No free IPv4 addresses in this /24.')
-    }
-    return
-  }
-  props.iface.ipaddress = result.ip
-}
-</script>

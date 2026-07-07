@@ -112,8 +112,8 @@ function transformEditorFieldsDeep(payload: unknown, mode: 'encode' | 'decode'):
   for (const [key, value] of Object.entries(input)) {
     if (EDITOR_FIELD_SET.has(key) && typeof value === 'string') {
       if (mode === 'encode') {
-        if (value.trim() === '') continue
-        out[key] = b64EncodeUtf8(value.replace(/\r\n/g, '\n'))
+        const normalised = value.replace(/\r\n/g, '\n')
+        out[key] = normalised.trim() === '' ? b64EncodeUtf8(" ") : b64EncodeUtf8(normalised)
       } else {
         out[key] = safeDecodeIfPossible(value)
       }
@@ -247,7 +247,7 @@ function tableKeysFromDaemon(content: unknown, table: string): string[] {
 }
 
 async function fetchTableDaemon(table: string): Promise<{ ok: boolean; content: unknown; status: number }> {
-  const url = `${apiV1Base()}/table/${encodeURIComponent(table)}`
+  const url = `${apiV1Base()}/resource/${encodeURIComponent(table)}`
   const { res, text } = await fetchText(url)
   const raw = parseJsonMaybe(text)
   const u = unwrapFlaskRest(raw)
@@ -333,15 +333,20 @@ export async function fetchNodes(): Promise<FetchNodesResponse> {
   if (!cfg?.node || typeof cfg.node !== 'object') {
     return { fields: [...NODE_INVENTORY_FIELDS], nodes: [] }
   }
-  const nodeMap = cfg.node as Record<string, Record<string, unknown>>
-  const nodes = Object.entries(nodeMap).map(([k, rec]) => ({
-    ...(rec || {}),
-    name: rec?.name ?? k,
-    interfaces: normalizeNodeInterfaces(rec?.interfaces),
-  }))
+
+  const nodeMap = cfg.node as Record<string, unknown>
+  const nodes: NonNullable<FetchNodesResponse['nodes']> = Object.entries(nodeMap).map(
+    ([k, value]) => {
+      const rec = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+      const rawName = rec.name
+      const name = typeof rawName === 'string' && rawName.trim() !== '' ? rawName : k
+
+      return {...rec,  name, interfaces: normalizeNodeInterfaces(rec.interfaces),}
+    },
+  )
 
   return { fields: [...NODE_INVENTORY_FIELDS], nodes }
-}
+  }
 
 export async function fetchNodeDetail(name: string): Promise<Record<string, unknown>> {
   return fetchNodeDaemonRecord(name)
@@ -508,12 +513,11 @@ export async function submitNodeRename(
   return postSubmitResult(`${apiV1Base()}/rename`, body)
 }
 
+
 /** Clone → POST /api/v1/clone ({ config.node[newName]: record }); daemon URL uses new name path. */
-export async function submitNodeClone(newName: string, record: Record<string, unknown>): Promise<SubmitResult> {
-  const nn = String(newName).trim()
-  const { newnodename: _drop, ...rest } = record
-  void _drop
-  const body = { config: { node: { [nn]: { ...rest, name: nn } } } }
+export async function submitNodeClone(source: string, record: Record<string, unknown>): Promise<SubmitResult> {
+  const sourceName = String(source).trim()
+  const body = { config: { node: { [sourceName]: { ...record, name: sourceName } } } }
   return postSubmitResult(`${apiV1Base()}/clone`, body)
 }
 
