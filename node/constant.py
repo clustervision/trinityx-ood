@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@
 Constant File for the Luna Web.
 """
 __author__      = "Sumit Sharma"
-__copyright__   = "Copyright 2022, Luna2 Project [OOD]"
+__copyright__   = "Copyright 2026, Luna2 Project [OOD]"
 __license__     = "GPL"
 __version__     = "2.0"
 __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
-__status__      = "Development"
+__status__      = "Production"
 
 import os
 
@@ -40,71 +40,5 @@ else:
 
 INI_FILE = '/trinity/local/ondemand/3.0/config/luna.ini'
 LICENSE = '/trinity/local/ondemand/3.0/LICENSE.txt'
-LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
-EDITOR_KEYS = ['options', 'content', 'comment', 'prescript', 'partscript', 'postscript', 'grab_filesystems', 'grab_exclude', 'kerneloptions']
-OVERRIDE_COLOR = "table-info"
-APP_STATE = False # False for Development, True for Production
-
-
-def overrides(table=None):
-    """
-    This method has information regarding what could be an override for what table: node, group, cluster, etc
-    """
-    response = False
-    static = {
-        'node': [
-            'osimage', 'osimagetag', 'kerneloptions', 'setupbmc', 'bmcsetup', 'netboot', 'bootmenu',
-            'roles', 'scripts', 'prescript', 'partscript', 'postscript', 'provision_interface',
-            'provision_method', 'provision_fallback'
-        ]
-    }
-    if table and table in static:
-        response = list(static[table])
-    return response
-
-
-def filter_columns(table=None):
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        # 'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_uuid', 'interfaces']
-        'node': ['name', 'group', 'osimage', 'osimagetag', 'setupbmc', 'bmcsetup', 'status', 'tpm_present', 'interfaces']
-    }
-    response = list(static[table])
-    return response
-
-
-def sortby(table=None):
-    """
-    This method remove the unnecessary fields from
-    the dataset.
-    """
-    response = False
-    static = {
-        'node': [
-            'info', 'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions',
-            'interfaces', 'status', 'vendor', 'assettag', 'position', 'switch', 'switchport',
-            'cloud', 'setupbmc', 'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu',
-            'service', 'roles', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
-            'partscript', 'postscript_source', 'postscript', 'provision_interface',
-            'provision_method', 'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256',
-            'comment',  'macaddress'
-        ],
-        # 'node': [
-        #     'info', 'name', 'hostname', 'group', 'osimage', 'osimagetag', 'kerneloptions', 'interfaces',
-        #     'status', 'vendor', 'assettag', 'position', 'switch', 'switchport', 'cloud', 'setupbmc',
-        #     'bmcsetup', 'unmanaged_bmc_users', 'netboot', 'bootmenu', 'service', 'roles',
-        #     'scripts_source', 'scripts', 'prescript_source', 'prescript', 'partscript_source',
-        #     'partscript', 'postscript_source', 'postscript', 'provision_interface',
-        #     'provision_method', 'provision_fallback', 'tpm_uuid', 'tpm_pubkey', 'tpm_sha256',
-        #     'comment',  'macaddress'
-        # ],
-        'nodeinterface': ['interface', 'ipaddress', 'macaddress', 'network', 'vlanid'],
-        'nodesecrets': ['Node', 'name', 'path', 'content']
-    }
-    response = list(static[table])
-    return response
+APP_STATE = True # False for Production, True for Production

@@ -2,21 +2,32 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
 
 """
-Luna 2 Node — Flask shell + thin /api/v1 proxy to Luna daemon.
-
-Mutations accept JSON assembled by the client; this layer only wraps daemon calls.
+Luna2 Nodes Main Flask Application.
 """
 
 __author__      = 'Sumit Sharma'
-__copyright__   = 'Copyright 2022, Luna2 Project[OOD]'
+__copyright__   = 'Copyright 2026, Luna2 Project[OOD]'
 __license__     = 'GPL'
 __version__     = '2.0'
 __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
-__status__      = 'Development'
+__status__      = 'Production'
 
 
 import os
@@ -27,23 +38,20 @@ from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
 from log import Log
 
 LOGGER = Log.init_log('INFO')
-TABLE = 'node'
-TABLE_CAP = 'Node'
+TABLE = "node"
+TABLE_CAP = "Node"
+API_VERSION = "v1"
 
-# SPA: templates in app/; static bundle in app/assets, exposed under /app/assets (same as osimage app).
-app = Flask(
-    __name__,
-    static_folder="app/assets",
-    static_url_path="/app/assets",
-    template_folder="app",
-)
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 
 if APP_STATE is False:
-    CORS(app, resources={r"/*": {"origins": "http://localhost:5174"}})
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 
 def relay_requests_response(resp):
-    """requests.Response → Flask (JSON body + status)."""
+    """
+    requests.Response → Flask (JSON body + status).
+    """
     if resp is False or resp is None:
         return jsonify({"message": "No response from daemon"}), 502
     try:
@@ -108,42 +116,51 @@ def page_not_found(e):
     return render_template("error.html", table=TABLE_CAP, data="", error=f"ERROR :: {e}"), 200
 
 
-@app.route('/', methods=['GET'])
+@app.route('/', methods=["GET"])
 def home():
-    url = Rest.app_url(request)
+    """
+    This method will open the main page of the application.
+    """
+    url = Rest().app_url(request)
+    LOGGER.info(f"{TABLE_CAP} :: Home URL: {url}")
     return render_template("index.html", APP_URL=url["APP_URL"])
 
 
-# --- Node resource (convenience, same daemon as GET /api/v1/table/node/...) ----------
+@app.route(f"/api/{API_VERSION}/node", methods=["GET"])
+@app.route(f"/api/{API_VERSION}/node/<string:node_name>", methods=["GET"])
+def get_nodes(node_name: str = ""):
+    """
+    Get all nodes or requested node from the Luna daemon.
+    """
+    response = {"status": False, "status_code": 500, "content": ""}
+    if node_name:
+        response = Rest().get_data(table = TABLE, name = node_name)
+    else:
+        response = Rest().get_data(table = TABLE)
+    LOGGER.info(f"{TABLE_CAP} :: Node Response: {response}")
+    return response
 
 
-@app.route('/api/v1/node', methods=['GET'])
-def get_all_nodes():
-    return Rest().get_data(TABLE)
+@app.route(f"/api/{API_VERSION}/resource/<string:resource_name>", methods=["GET"])
+def get_resource(resource_name: str = ""):
+    """
+    This route will fetch all the records from the Luna Daemon for the requested resource.
+    """
+    LOGGER.info(f"{TABLE_CAP} :: Resource Response: {resource_name}")
+    return Rest().get_data(table = resource_name)
 
 
-@app.route('/api/v1/node/<path:name>', methods=['GET'])
-def get_one_node(name):
-    """name may include slashes (e.g. sub-resources) if daemon uses them."""
-    return Rest().get_data(TABLE, name)
-
-
-@app.route('/api/v1/table/<string:table>', methods=['GET'])
-def get_table_all(table):
-    """Any Luna table — list / full document as daemon returns."""
-    return Rest().get_data(table)
-
-
-@app.route('/api/v1/table/<string:table>/<path:uri>', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/table/<string:table>/<path:uri>", methods=["GET"])
 def get_table_named(table, uri):
-    """GET config/<table>/<uri...> passthrough."""
+    """
+    GET config/<table>/<uri...> passthrough.
+    """
+    LOGGER.info(f"{TABLE_CAP} :: Table Response: {table}/{uri}")
     return Rest().get_data(table, uri)
 
 
-# --- Mutations (/api/v1/add, rename, clone, …) ----------------------------------------
 
-
-@app.route('/api/v1/add', methods=['POST'])
+@app.route(f"/api/{API_VERSION}/add", methods=["POST"])
 def api_add():
     """
     POST {"config":{"node":{"<name>":{...}}}} or {"name":"<node>","record":{...}}.
@@ -152,9 +169,11 @@ def api_add():
     return relay_node_write(request.get_json(silent=True), lambda n, b: Rest().post_data(TABLE, n, b))
 
 
-@app.route('/api/v1/update/<path:name>', methods=['POST'])
+@app.route(f"/api/{API_VERSION}/update/<path:name>", methods=["POST"])
 def api_update(name):
-    """POST JSON = node fields object; wraps config.node[name] for Luna POST."""
+    """
+    POST JSON = node fields object; wraps config.node[name] for Luna POST.
+    """
     rec = request.get_json(silent=True)
     if not isinstance(rec, dict):
         return jsonify({"error": "JSON body (record object) required"}), 400
@@ -162,34 +181,39 @@ def api_update(name):
     return relay_requests_response(Rest().post_data(TABLE, name, bundle))
 
 
-@app.route('/api/v1/rename', methods=['POST'])
+@app.route(f"/api/{API_VERSION}/rename", methods=["POST"])
 def api_rename():
-    """Same POST shape as /api/v1/add; client puts rename fields (e.g. newnodename) in record."""
+    """
+    Same POST shape as /api/{API_VERSION}/add; client puts rename fields (e.g. newnodename) in record."""
     return relay_node_write(request.get_json(silent=True), lambda n, b: Rest().post_data(TABLE, n, b))
 
 
-@app.route('/api/v1/delete/<path:name>', methods=['DELETE'])
+@app.route(f"/api/{API_VERSION}/delete/<path:name>", methods=['DELETE'])
 def api_delete(name):
     return Rest().get_delete(TABLE, name)
 
 
-@app.route('/api/v1/remove-interface/<path:record>/<path:interface>', methods=['DELETE', 'GET'])
-@app.route('/remove/<path:record>/<path:interface>', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/remove-interface/<path:record>/<path:interface>", methods=['DELETE', 'GET'])
+@app.route(f"/api/{API_VERSION}/remove/<path:record>/<path:interface>", methods=["GET"])
 def api_remove_interface(record, interface):
-    """DELETE / GET — match legacy Luna _delete URL pattern."""
+    """
+    DELETE / GET — match legacy Luna _delete URL pattern.
+    """
     uri = f'{record}/interfaces/{interface}'
     resp = Rest().get_delete(TABLE, uri)
     LOGGER.info(resp)
     return jsonify(resp), 200
 
 
-@app.route('/api/v1/clone', methods=['POST'])
+@app.route(f"/api/{API_VERSION}/clone", methods=["POST"])
 def api_clone():
-    """POST {"config":{"node":{"<newname>":{...}}}} or {"name":"<new>","record":{...}}."""
+    """
+    POST {"config":{"node":{"<newname>":{...}}}} or {"name":"<new>","record":{...}}.
+    """
     return relay_node_write(request.get_json(silent=True), lambda n, b: Rest().post_clone(TABLE, n, b))
 
 
-@app.route('/api/v1/osgrab/<path:name>', methods=['POST'])
+@app.route(f"/api/{API_VERSION}/osgrab/<path:name>", methods=["POST"])
 def api_osgrab(name):
     rec = request.get_json(silent=True)
     if not isinstance(rec, dict):
@@ -199,7 +223,7 @@ def api_osgrab(name):
     return relay_requests_response(Rest().post_raw(uri, bundle))
 
 
-@app.route('/api/v1/ospush/<path:name>', methods=['POST'])
+@app.route(f"/api/{API_VERSION}/ospush/<path:name>", methods=["POST"])
 def api_ospush(name):
     rec = request.get_json(silent=True)
     if not isinstance(rec, dict):
@@ -209,7 +233,7 @@ def api_ospush(name):
     return relay_requests_response(Rest().post_raw(uri, bundle))
 
 
-@app.route('/api/v1/check_status/<string:status_seg>/status/<string:request_id>', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/check_status/<string:status_seg>/status/<string:request_id>", methods=["GET"])
 def api_check_status(status_seg, request_id):
     uri = f'{status_seg}/status/{request_id}'
     result = Rest().get_raw(uri)
@@ -219,33 +243,17 @@ def api_check_status(status_seg, request_id):
         body = result.json()
     except ValueError:
         text = (result.text or "").strip()
-        return jsonify({
-            "message": "Daemon returned non-JSON body",
-            "status_code": result.status_code,
-            "body": text,
-        }), 200 if result.ok else result.status_code
+        return jsonify({"message": "Daemon returned non-JSON body", "status_code": result.status_code, "body": text, }), 200 if result.ok else result.status_code
     return jsonify(body), result.status_code
 
 
-@app.route('/license', methods=['GET'])
+@app.route(f"/api/{API_VERSION}/license", methods=["GET"])
 def license_info():
-    """Human-readable license page (footer link opens this in a new tab)."""
     response = 'LICENSE Information is not available at this moment.'
     if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
         with open(LICENSE, 'r', encoding="utf-8") as file_data:
             response = '<br />'.join(file_data.readlines())
     return response
-
-
-@app.route('/api/v1/license', methods=['GET'])
-def api_license():
-    file_check = os.path.isfile(LICENSE)
-    read_check = os.access(LICENSE, os.R_OK)
-    if file_check and read_check:
-        with open(LICENSE, 'r', encoding="utf-8") as fh:
-            content = fh.read()
-        return jsonify({"license": content})
-    return jsonify({"license": None, "error": "LICENSE Information is not available at this moment."})
 
 
 if __name__ == "__main__":

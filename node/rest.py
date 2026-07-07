@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # This code is part of the TrinityX software suite
-# Copyright (C) 2023  ClusterVision Solutions b.v.
+# Copyright (C) 2026  ClusterVision Solutions b.v.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,12 @@
 Microservice Class for the Luna Web.
 """
 __author__      = "Sumit Sharma"
-__copyright__   = "Copyright 2022, Luna2 Project [OOD]"
+__copyright__   = "Copyright 2026, Luna2 Project [OOD]"
 __license__     = "GPL"
 __version__     = "2.0"
 __maintainer__  = "Sumit Sharma"
 __email__       = "sumit.sharma@clustervision.com"
-__status__      = "Development"
+__status__      = "Production"
 
 
 from configparser import RawConfigParser
@@ -49,13 +49,16 @@ class Rest():
 
     @staticmethod
     def app_url(request):
-        """Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context."""
+        """
+        Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context.
+        """
         response = {"APP_URL": ""}
         full_url = f"{request.scheme}://{request.host}{request.path}"
         full_url = full_url[:-1]
         full_url_app = f"{full_url}{url_for('home')}"
         response["APP_URL"] = full_url_app[:-1]
         return response
+
 
     def __init__(self):
         """
@@ -171,7 +174,7 @@ class Rest():
         return response
 
 
-    def get_data(self, table=None, name=None, data=None):
+    def get_data(self, table :str = "", name :str = ""):
         """
         This method is based on REST API's GET method.
         It will fetch the records from Luna 2 Daemon
@@ -267,7 +270,7 @@ class Rest():
         return response
 
 
-    def post_clone(self, table=None, name=None, data=None):
+    def post_clone(self, table: str = "", name: str = "", data: dict = {}):
         """
         This method is based on REST API's POST method.
         It will post data to Luna 2 Daemon via REST API's.
@@ -280,6 +283,7 @@ class Rest():
         try:
             response = self.session.post(url=daemon_url, json=data, stream=True, headers=headers, timeout=5, verify=self.security)
             self.logger.debug(f'Response {response.content} & HTTP Code {response.status_code}')
+            print(f'Response {response.content} & HTTP Code {response.status_code}')
         except requests.exceptions.SSLError as ssl_loop_error:
             self.errors.append(f'ERROR :: {ssl_loop_error}')
         except requests.exceptions.ConnectionError:
