@@ -1,0 +1,15 @@
+<nav class="tx-navbar">
+  <ol class="tx-breadcrumb">
+    <li class="tx-breadcrumb-logo">
+      <a href="https://{{ request.host.split(':')[0] }}:8080">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="tx-navbar-logo" />
+      </a>
+    </li>
+    <li class="tx-breadcrumb-item">
+      <a href="https://{{ request.host.split(':')[0] }}:8080" class="tx-breadcrumb-link">Home</a>
+    </li>
+    <li class="tx-breadcrumb-item">
+      <a href="{{ url_for('home') }}" class="tx-breadcrumb-link">{{ table }}</a>
+    </li>
+  </ol>
+</nav>
