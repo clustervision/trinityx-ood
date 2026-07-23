@@ -118,7 +118,9 @@ class TestRenderRawGresDefaults:
                            'File': '', 'no_consume': True}
         }])
         block = slurm_app.render_raw_gres_defaults(cfg)
-        assert 'no_consume' in block
+        # Must be written as no_consume=true (a key=value pair), not a bare flag —
+        # only that form survives the key=value parser on reload (see Defect 2).
+        assert 'no_consume=true' in block
 
     def test_empty_gres_presets(self, slurm_app):
         cfg = _make_full_config()
@@ -308,6 +310,26 @@ class TestLoadGresConfiguration:
         with open(slurm_files['gres']) as fh:
             content = fh.read()
         assert 'Partitions=gpu' in content
+
+    def test_no_consume_survives_round_trip(self, slurm_app, slurm_files):
+        """
+        Defect 2: the no_consume flag must survive a Defaults-block save+reload.
+        Writes the Defaults block the same way save_configuration() does
+        (defaults_only=True), then reads it back — self-contained so it does not
+        depend on test ordering.
+        """
+        cfg = _make_full_config(extra_gres_presets=[{
+            'name': 'shared_nic',
+            'properties': {'Name': 'nic', 'Type': '', 'Count': '1',
+                           'File': '', 'no_consume': True}
+        }])
+        slurm_app.save_gres_configuration(cfg, slurm_files, defaults_only=True)
+        presets, _, _ = slurm_app.load_gres_configuration(slurm_files)
+        by_name = {p['name']: p for p in presets}
+        # the shared resource kept its ON state across the round-trip
+        assert by_name['shared_nic']['properties'].get('no_consume') is True
+        # a preset that was OFF must not come back ON
+        assert not by_name['gpu_A100']['properties'].get('no_consume')
 
     def test_missing_gres_file_returns_empty(self, slurm_app, slurm_files):
         """If gres.conf doesn't exist yet, must return empty structures."""
