@@ -692,7 +692,11 @@ def render_raw_gres_defaults(configuration):
         if props.get('File'):
             line += f" File={props['File']}"
         if props.get('no_consume'):
-            line += " no_consume"
+            # Written as no_consume=true (not a bare flag) so it round-trips
+            # through the key=value parser that load_gres_configuration() uses.
+            # This is a comment-only Defaults line the app reads back; the real
+            # gres.conf running block still emits the bare Slurm flag.
+            line += " no_consume=true"
         line += " #"
         if pname in gres_preset_nodes:
             line += " Nodes=" + compress(','.join(gres_preset_nodes[pname]))
