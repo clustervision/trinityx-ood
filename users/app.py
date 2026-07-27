@@ -71,6 +71,22 @@ fields = {
 def get_name_filter(items):
     return [i['name'] for i in items]
 
+def split_group_members(group):
+    """
+    Split a group's members into users whose primary group this is (removable
+    only by changing the user's primary group or deleting the user) and
+    secondary members (removable by editing the user's group list).
+    """
+    # openldap-backed obol reports group members as 'member', ds389 as 'uniqueMember'
+    members = group.get('member') or group.get('uniqueMember') or []
+    if not members:
+        return [], []
+    gid = str(group.get('gidNumber'))
+    user_gids = {str(u.get('uid')): str(u.get('gidNumber')) for u in handler.list('users')}
+    primary = [m for m in members if user_gids.get(m) == gid]
+    secondary = [m for m in members if m not in primary]
+    return primary, secondary
+
 # add a wrapper to all the routes to catch errors
 @app.errorhandler(Exception)
 def wrap_errors(error):
@@ -130,11 +146,16 @@ def modal(target, mode, name):
         item = None
     
     if mode == 'delete':
+        primary_members, secondary_members = [], []
+        if target == 'groups':
+            primary_members, secondary_members = split_group_members(item)
         return render_template('osusers_delete_modal.html',
                             target=target,
                             mode=mode,
                             name=name,
-                            item=item
+                            item=item,
+                            primary_members=primary_members,
+                            secondary_members=secondary_members
                             )
 
     all_users = handler.list('users') if target == 'groups' else None
@@ -183,6 +204,12 @@ def action(target, name, action):
 
 
     if action == 'delete':
+        if target == 'groups':
+            group = handler.get(target, name)
+            members = group.get('member') or group.get('uniqueMember') or []
+            if members:
+                return jsonify({"message": f"Group {name} still has members: {', '.join(members)}. "
+                                            "Remove the users from the group before deleting it."}), 400
         handler.delete(target, name)
         return {"message": f'{target} {name} deleted successfully'}
     if action == 'update':
