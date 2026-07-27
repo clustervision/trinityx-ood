@@ -683,9 +683,8 @@ const isSubmitDisabled = computed(() => Boolean(liveNameValidationMsg.value))
           <span class="tx-label">Unmanaged BMC Users:</span>
           <select v-model="form.unmanaged_bmc_users" style="flex: 1" :class="{ 'tx-select-placeholder': !form.unmanaged_bmc_users }">
             <option value="">--- Select ---</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
+            <option value="disable">disabled</option>
+            <option value="delete">deleted</option>
           </select>
         </div>
 

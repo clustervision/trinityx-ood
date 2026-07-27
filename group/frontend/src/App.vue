@@ -451,7 +451,7 @@ onUnmounted(() => {
               <h3 class="tx-help-section-title">Advanced fields</h3>
               <ul class="tx-help-list">
                 <li><strong>Domain</strong> — DNS domain for group members.</li>
-                <li><strong>Unmanaged BMC Users</strong> — BMC user slot configuration.</li>
+                <li><strong>Unmanaged BMC Users</strong> — How to handle unmanaged BMC users: leave empty, disable, or delete.</li>
                 <li><strong>Kernel Options | OS Image</strong> — Kernel command line (may inherit from OS image).</li>
                 <li><strong>Pre / Part / Post Script</strong> — Provisioning scripts at different stages.</li>
                 <li><strong>OS Image Tag</strong> — Tag for the OS image variant.</li>
