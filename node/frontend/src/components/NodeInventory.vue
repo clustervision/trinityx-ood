@@ -383,7 +383,7 @@
           <h3 class="tx-help-section-title">Advanced fields</h3>
           <ul class="tx-help-list">
             <li><strong>Domain</strong>: DNS domain related to the node. In many Luna environments this is inherited from cluster or group configuration.</li>
-            <li><strong>Unmanaged BMC Users</strong>: Number of BMC users that Luna should leave unmanaged. Use this when some BMC accounts are reserved for vendor, site, or break-glass access.</li>
+            <li><strong>Unmanaged BMC Users</strong>: How Luna should treat unmanaged BMC users — leave empty (skip), <code>disable</code>, or <code>delete</code>.</li>
             <li><strong>Asset Tag</strong>: Optional inventory asset tag. Useful for mapping Luna nodes to hardware labels, CMDB records, or support contracts.</li>
             <li><strong>Cloud Name</strong>: Optional cloud or cloud profile association when Luna cloud-related configuration is used.</li>
             <li><strong>Kernel Options</strong>: Kernel command-line options used during boot or provisioning. Common examples include network naming or BIOS device naming options. The source label shows whether the current value comes from node, group, OS image, or default configuration.</li>
