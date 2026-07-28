@@ -329,7 +329,7 @@
           <ul class="tx-help-list">
             <li><strong>Name</strong>: Unique Luna node name. Use a predictable name, for example <code>node001</code>. Avoid spaces. The name is the primary identifier used by Luna.</li>
             <li><strong>Group</strong>: Select the group the node should belong to. A group can provide inherited defaults such as OS image, scripts, provisioning method, and interfaces.</li>
-            <li><strong>OS Image</strong>: Select the image assigned to this node. If set at node level, it overrides the inherited OS image from the group.</li>
+            <li><strong>OS Image</strong>: Select the image for this node. The inherit choice is shown in gray as <code>imagename | inherited from group</code> and follows the group's OS image. Choosing the same image from the plain list (without the inherit suffix) creates a node-level override that will not change when the group image changes.</li>
             <li><strong>Net Boot</strong>: Controls whether the node should use network boot. <strong>YES</strong> enables Luna/PXE/iPXE-style booting. <strong>NO</strong> disables it for the node. <strong>INHERITED</strong> keeps the value from the parent configuration.</li>
             <li><strong>Setup BMC</strong>: Controls whether Luna should configure the node BMC. <strong>TRUE</strong> enables BMC setup, <strong>FALSE</strong> disables it, and <strong>DEFAULT</strong> keeps the inherited/default value.</li>
             <li><strong>BMC Setup</strong>: Selects the BMC setup profile. This is normally where BMC username, user ID, management channel, network channel, and related BMC defaults are defined.</li>

@@ -127,6 +127,8 @@ export interface NodeFormPayload {
   group_list?: string[] | OptionListPayload
   groups?: string[]
   groupname_list?: string[]
+  /** group name → that group's osimage (for inherit option label). */
+  group_osimage_map?: Record<string, string>
   switch_list?: string[] | OptionListPayload
   switchname_list?: string[]
   switches?: string[]
