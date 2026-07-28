@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 
-import { ref, reactive, computed, watch, nextTick, toRaw } from 'vue'
+import { ref, reactive, computed, watch, nextTick, toRaw, onMounted, onUnmounted } from 'vue'
 import { normalizeNodeInterfaces, removedInterfaceNames } from '@/utils/nodeInterfaces'
 import InterfaceRow from './InterfaceRow.vue'
 import TextEditorModal from './TextEditorModal.vue'
@@ -50,6 +50,8 @@ const props = withDefaults(defineProps<{
   switchOptions?: string[]
   bmcsetupOptions?: string[]
   osimageOptions?: string[]
+  /** group name → group's osimage (for `name | group` inherit option). */
+  groupOsimageMap?: Record<string, string>
   networkOptions?: string[]
   bondModeOptions?: string[]
   cloudnameOptions?: string[]
@@ -65,6 +67,7 @@ const props = withDefaults(defineProps<{
   switchOptions: () => [],
   bmcsetupOptions: () => [],
   osimageOptions: () => [],
+  groupOsimageMap: () => ({}),
   networkOptions: () => [],
   bondModeOptions: () => [],
   cloudnameOptions: () => [],
@@ -84,8 +87,63 @@ const showAdvanced = ref(false)
 const originalNodeName = ref('')
 const initialInterfacesJson = ref('')
 const initialGroupname = ref('')
+/** True when node loaded with OS image inherited from group (empty select = keep inheriting). */
+const osimageLoadedAsInherited = ref(false)
+/** Fallback image name for inherit label when group map has no entry. */
+const osimageInheritFallback = ref('')
 const nameInlineEdit = ref(false)
 const nameDraft = ref('')
+
+function fieldSource(d: Record<string, unknown>, field: string): string {
+  const raw = d[`_${field}_source`] ?? d[`${field}_source`] ?? ''
+  return String(raw).trim().toLowerCase()
+}
+
+function groupOsimageFor(groupName: string): string {
+  const g = String(groupName || '').trim()
+  if (!g) return ''
+  const mapped = props.groupOsimageMap?.[g]
+  return mapped != null ? String(mapped).trim() : ''
+}
+
+/** Empty option: e.g. `rocky | inherited from group` when we know the group image. */
+const osimageInheritName = computed(() =>
+  groupOsimageFor(form.groupname) || osimageInheritFallback.value.trim(),
+)
+
+const osimageMenuOpen = ref(false)
+const osimagePickerRef = ref<HTMLElement | null>(null)
+
+const osimageIsInherited = computed(() => !String(form.osimage ?? '').trim())
+
+function closeOsimageMenu() {
+  osimageMenuOpen.value = false
+}
+
+function toggleOsimageMenu() {
+  osimageMenuOpen.value = !osimageMenuOpen.value
+}
+
+function pickOsimageInherit() {
+  if (form.osimage) osimageLoadedAsInherited.value = false
+  form.osimage = ''
+  closeOsimageMenu()
+}
+
+function pickOsimageOverride(name: string) {
+  form.osimage = name
+  osimageLoadedAsInherited.value = false
+  closeOsimageMenu()
+}
+
+function onOsimageDocumentClick(e: MouseEvent) {
+  if (!osimageMenuOpen.value) return
+  const el = osimagePickerRef.value
+  if (el && !el.contains(e.target as Node)) closeOsimageMenu()
+}
+
+onMounted(() => document.addEventListener('click', onOsimageDocumentClick))
+onUnmounted(() => document.removeEventListener('click', onOsimageDocumentClick))
 
 const liveNameValidationMsg = computed(() => {
   if (props.mode === 'clone') {
@@ -197,7 +255,22 @@ function hydrateForm(d: Record<string, unknown> | null) {
       ? String(d.newnodename)
       : (d.newname != null ? String(d.newname) : '')
   form.groupname = d.groupname != null && d.groupname !== '' ? String(d.groupname) : (d.group != null ? String(d.group) : '')
-  form.osimage = String(d.osimage || '')
+  {
+    const src = fieldSource(d, 'osimage')
+    const effective = String(d.osimage || '').trim()
+    const fromGroup = groupOsimageFor(form.groupname)
+    // Inherited: keep select empty so Save does not write a node override.
+    // Empty option label shows e.g. "rocky | inherited from group"; plain "rocky" is a separate override.
+    if ((props.mode === 'edit' || props.mode === 'clone') && src === 'group') {
+      form.osimage = ''
+      osimageLoadedAsInherited.value = true
+      osimageInheritFallback.value = effective || fromGroup
+    } else {
+      form.osimage = effective
+      osimageLoadedAsInherited.value = false
+      osimageInheritFallback.value = fromGroup
+    }
+  }
   form.netboot = triValue(d.netboot)
   form.setupbmc = triValue(d.setupbmc)
   form.bmcsetupname = d.bmcsetupname != null && d.bmcsetupname !== ''
@@ -253,6 +326,16 @@ watch(
   () => {
     initialInterfacesJson.value = ''
     initialGroupname.value = ''
+    osimageLoadedAsInherited.value = false
+    osimageInheritFallback.value = ''
+  },
+)
+
+watch(
+  () => form.groupname,
+  (g) => {
+    const img = groupOsimageFor(String(g ?? ''))
+    if (img) osimageInheritFallback.value = img
   },
 )
 
@@ -475,7 +558,15 @@ function buildLunaNodeRecord(): Record<string, unknown> {
     if (typeof out === 'string' && out.trim() === '') {
       if (props.mode === 'edit' && CLEARABLE_EDITOR_FIELDS.has(f)) {
         record[f] = ''
+      } else if (
+        f === 'osimage' &&
+        props.mode === 'edit' &&
+        !osimageLoadedAsInherited.value
+      ) {
+        // Clear node-level osimage override so group inheritance applies.
+        record.osimage = ''
       }
+      // Inherited (empty) and already inheriting: omit osimage entirely.
       continue
     }
     const postKey = SCALAR_TO_POST_KEY[f as keyof typeof SCALAR_TO_POST_KEY] || f
@@ -675,12 +766,59 @@ defineExpose({
           <option v-for="g in groupOptions" :key="g" :value="g">{{ g }}</option>
         </select>
       </div>
-      <div class="tx-field tx-field-strong">
+      <div class="tx-field tx-field-strong tx-field-osimage">
         <span class="tx-label">OS Image:</span>
-        <select v-model="form.osimage" :class="{ 'tx-select-placeholder': !form.osimage }">
-          <option value="">--- Select ---</option>
-          <option v-for="o in osimageOptions" :key="o" :value="o">{{ o }}</option>
-        </select>
+        <div
+          ref="osimagePickerRef"
+          class="tx-osimage-picker"
+          :class="{ 'is-open': osimageMenuOpen, 'is-inherited': osimageIsInherited }"
+        >
+          <button
+            type="button"
+            class="tx-osimage-picker-trigger"
+            :class="{ 'tx-osimage-picker-trigger-placeholder': osimageIsInherited && !osimageInheritName }"
+            aria-haspopup="listbox"
+            :aria-expanded="osimageMenuOpen"
+            @click.stop="toggleOsimageMenu"
+          >
+            <span v-if="osimageIsInherited && osimageInheritName" class="tx-osimage-picker-value">
+              <span class="tx-osimage-picker-name">{{ osimageInheritName }}</span>
+              <span class="tx-osimage-picker-suffix">| inherited from group</span>
+            </span>
+            <span
+              v-else-if="osimageIsInherited"
+              class="tx-osimage-picker-placeholder"
+            >
+              {{ props.mode === 'add' ? '--- Select ---' : '--- Inherited from group ---' }}
+            </span>
+            <span v-else class="tx-osimage-picker-name">{{ form.osimage }}</span>
+          </button>
+          <ul v-if="osimageMenuOpen" class="tx-osimage-picker-menu" role="listbox">
+            <li
+              v-if="props.mode !== 'add' || osimageInheritName"
+              class="tx-osimage-picker-option tx-osimage-picker-option-inherit"
+              role="option"
+              :aria-selected="osimageIsInherited"
+              @click.stop="pickOsimageInherit"
+            >
+              <template v-if="osimageInheritName">
+                <span class="tx-osimage-picker-name">{{ osimageInheritName }}</span>
+                <span class="tx-osimage-picker-suffix">| inherited from group</span>
+              </template>
+              <span v-else class="tx-osimage-picker-placeholder">--- Inherited from group ---</span>
+            </li>
+            <li
+              v-for="o in osimageOptions"
+              :key="o"
+              class="tx-osimage-picker-option"
+              role="option"
+              :aria-selected="form.osimage === o"
+              @click.stop="pickOsimageOverride(o)"
+            >
+              {{ o }}
+            </li>
+          </ul>
+        </div>
       </div>
 
       <div class="tx-field tx-tri-field tx-field-match">

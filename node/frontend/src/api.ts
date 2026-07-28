@@ -125,6 +125,9 @@ function transformEditorFieldsDeep(payload: unknown, mode: 'encode' | 'decode'):
   return out
 }
 
+/** Empty string clears a node-level override in Luna (e.g. osimage → inherit from group). */
+const PRESERVE_EMPTY_STRING_KEYS = new Set(['osimage'])
+
 function omitEmptyStringsDeep(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => omitEmptyStringsDeep(item))
@@ -132,7 +135,7 @@ function omitEmptyStringsDeep(value: unknown): unknown {
   if (value && typeof value === 'object') {
     const out: Record<string, unknown> = {}
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      if (typeof v === 'string' && v.trim() === '') continue
+      if (typeof v === 'string' && v.trim() === '' && !PRESERVE_EMPTY_STRING_KEYS.has(k)) continue
       out[k] = omitEmptyStringsDeep(v)
     }
     return out
@@ -246,6 +249,20 @@ function tableKeysFromDaemon(content: unknown, table: string): string[] {
   )
 }
 
+/** Map group name → its osimage name (from daemon group list). */
+function groupOsimageMapFromDaemon(content: unknown): Record<string, string> {
+  const cfg = daemonConfig(content)
+  const groups = cfg?.group
+  if (!groups || typeof groups !== 'object') return {}
+  const out: Record<string, string> = {}
+  for (const [name, rec] of Object.entries(groups as Record<string, unknown>)) {
+    if (!rec || typeof rec !== 'object') continue
+    const o = (rec as Record<string, unknown>).osimage
+    if (o != null && String(o).trim() !== '') out[name] = String(o).trim()
+  }
+  return out
+}
+
 async function fetchTableDaemon(table: string): Promise<{ ok: boolean; content: unknown; status: number }> {
   const url = `${apiV1Base()}/resource/${encodeURIComponent(table)}`
   const { res, text } = await fetchText(url)
@@ -275,6 +292,7 @@ async function assembleOptionPayload(): Promise<NodeFormPayload> {
   return {
     groups: groupKeys,
     groupname_list: groupKeys,
+    group_osimage_map: groupOsimageMapFromDaemon(opts.group.content),
     switches: switchKeys,
     switchname_list: switchKeys,
     bmcsetupname_list: bmcKeys,

@@ -41,6 +41,7 @@
           :switch-options="switchOptions"
           :bmcsetup-options="bmcsetupOptions"
           :osimage-options="osimageOptions"
+          :group-osimage-map="groupOsimageMap"
           :cloudname-options="cloudnameOptions"
           :network-options="networkOptions"
           :bond-mode-options="bondModeOptions"
@@ -80,6 +81,7 @@ const groupOptions = ref<string[]>([])
 const switchOptions = ref<string[]>([])
 const bmcsetupOptions = ref<string[]>([])
 const osimageOptions = ref<string[]>([])
+const groupOsimageMap = ref<Record<string, string>>({})
 const cloudnameOptions = ref<string[]>([])
 const networkOptions = ref<string[]>([])
 const bondModeOptions = ref<string[]>([])
@@ -110,6 +112,10 @@ onMounted(async () => {
     switchOptions.value = optionList(payload, 'switch_list', 'switchname_list', 'switches')
     bmcsetupOptions.value = optionList(payload, 'bmcsetup_list', 'bmcsetupname_list')
     osimageOptions.value = optionList(payload, 'osimage_list', 'osimage')
+    groupOsimageMap.value =
+      payload.group_osimage_map && typeof payload.group_osimage_map === 'object'
+        ? (payload.group_osimage_map as Record<string, string>)
+        : {}
     cloudnameOptions.value = optionList(
       payload,
       'cloudname_list',
