@@ -23,6 +23,17 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+def get_error_message(resp):
+    """
+    Extract the daemon's message field from an error response, so alerts show
+    one readable sentence instead of the raw JSON body.
+    """
+    try:
+        return resp.json()['message']
+    except (ValueError, KeyError):
+        return resp.text
+
+
 class LunaRequestHandler():
 
     def __init__(self):
@@ -64,7 +75,7 @@ class LunaRequestHandler():
         if resp.status_code == 404:
             return []
         elif resp.status_code not in [200, 201, 204]:
-            raise Exception(f"Error {resp.text} while listing {target}, received status code {resp.status_code}")
+            raise Exception(f"Error {get_error_message(resp)} while listing {target}, received status code {resp.status_code}")
         data = resp.json()['config'][f"os{target[:-1]}"]
             
         return data
@@ -75,7 +86,7 @@ class LunaRequestHandler():
         """
         resp = self.session.get(self.endpoints[target]['get'].format(name=name), headers=self.get_auth_header(), verify=self.verify_certificate)
         if resp.status_code not in [200, 201, 204]:
-            raise Exception(f"Error {resp.text} while getting {target}, received status code {resp.status_code}")
+            raise Exception(f"Error {get_error_message(resp)} while getting {target}, received status code {resp.status_code}")
         return  resp.json()['config'][f"os{target[:-1]}"][name]
 
     def delete(self, target, name):
@@ -84,7 +95,7 @@ class LunaRequestHandler():
         """
         resp = self.session.get(self.endpoints[target]['delete'].format(name=name), headers=self.get_auth_header(), verify=self.verify_certificate)
         if resp.status_code not in [200, 201, 204]:
-            raise Exception(f"Error {resp.text} while deleting {target}, received status code {resp.status_code}")
+            raise Exception(f"Error {get_error_message(resp)} while deleting {target}, received status code {resp.status_code}")
         return  {"message", 'User Updated successfully'}
     
     def update(self, target, name, data):
@@ -100,7 +111,7 @@ class LunaRequestHandler():
         }
         resp = self.session.post(self.endpoints[target]['update'].format(name=name), headers=self.get_auth_header(), json=payload, verify=self.verify_certificate)
         if resp.status_code not in [200, 201, 204]:
-            raise Exception(f"Error {resp.text} while updating {target}, received status code {resp.status_code}")
+            raise Exception(f"Error {get_error_message(resp)} while updating {target}, received status code {resp.status_code}")
         return  {"message", 'User Updated successfully'}
 
 if __name__ == "__main__":
