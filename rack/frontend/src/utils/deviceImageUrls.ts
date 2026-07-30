@@ -5,6 +5,9 @@ function assetUrl(file: string): string {
   return new URL(`../assets/img/${file}`, import.meta.url).href;
 }
 
+/** Vendors with shipped chassis artwork; all others use default-* images. */
+const VENDORS_WITH_CHASSIS_ART = new Set(['supermicro', 'dell', 'hp', 'lenovo']);
+
 export function getSwitchImageUrl(): string {
   return assetUrl('switch.png');
 }
@@ -18,15 +21,13 @@ export function getVendorImageUrl(device: Device, size: number): string {
   let vendor = device.vendor ? device.vendor.toLowerCase() : '';
   if (vendor.includes('supermicro')) vendor = 'supermicro';
   else if (vendor.includes('dell')) vendor = 'dell';
-  else if (vendor.includes('asus')) vendor = 'asus';
   else if (vendor.includes('hp')) vendor = 'hp';
   else if (vendor.includes('lenovo')) vendor = 'lenovo';
-  else if (vendor.includes('gigabyte')) vendor = 'gigabyte';
   else vendor = '';
   const validSizes = [1, 2, 3, 4, 8];
   const safeSize = validSizes.includes(size) ? size : 1;
 
-  if (!vendor) {
+  if (!vendor || !VENDORS_WITH_CHASSIS_ART.has(vendor)) {
     return assetUrl(`default-${safeSize}u.png`);
   }
   return assetUrl(`${vendor}-${safeSize}u.png`);
