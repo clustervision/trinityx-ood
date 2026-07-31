@@ -25,6 +25,7 @@
  */
 
 import type {
+  ControlNodeInfo,
   ControlStatusRow,
   RequestEnvelope,
   StatusField,
@@ -32,6 +33,7 @@ import type {
   StatusToast,
 } from './types'
 import { isSelListResponseReady } from './utils/selLogDisplay'
+import { isSetupBmcEnabled } from './utils/setupbmc'
 import { pendingStatus } from './utils/statusDisplay'
 import { oodAppRoot } from './utils/oodAppRoot'
 
@@ -90,7 +92,9 @@ function hostlistFieldResolved(
   return hostlist.every((node) => {
     const key = rowKeyForHostlist(rowMap, node)
     const row = rowMap[key]
-    return row != null && row[field] !== pending
+    if (row == null) return false
+    if (field === 'sel' && row.setupbmc === false) return true
+    return row[field] !== pending
   })
 }
 
@@ -114,9 +118,18 @@ function normalizeState(v: unknown): string {
   return s.toUpperCase()
 }
 
-function emptyRow(node: string): ControlStatusRow {
+function emptyRow(node: string, setupbmc = true): ControlStatusRow {
   const pending = pendingStatus()
-  return { node, power: pending, sel: pending, chassis: pending, redfish: pending, errors: {} }
+  const sel = setupbmc ? pending : 'N/A'
+  return {
+    node,
+    power: pending,
+    sel,
+    chassis: pending,
+    redfish: pending,
+    setupbmc,
+    errors: {},
+  }
 }
 
 function rowMapFromRows(rows: ControlStatusRow[]): Record<string, ControlStatusRow> {
@@ -236,6 +249,7 @@ function applyResultItem(
   for (const [node, message] of failures) {
     if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
     if (!rows[node]) rows[node] = emptyRow(node)
+    if (system === 'sel' && rows[node].setupbmc === false) continue
     rows[node][system] = 'ERROR'
     finalizeNodePowerIfPending(rows, node)
     if (system !== 'redfish') {
@@ -252,6 +266,7 @@ function applyResultItem(
     for (const node of Object.keys(hostMap as Record<string, unknown>)) {
       if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
       if (!rows[node]) rows[node] = emptyRow(node)
+      if (system === 'sel' && rows[node].setupbmc === false) continue
       rows[node][system] = normalizeState(statusKey)
       if (system !== 'redfish' && rows[node].errors?.[system]) {
         const nextErrors = { ...rows[node].errors }
@@ -325,25 +340,54 @@ function isPendingRequestStatus(status: number): boolean {
   return status === 404 || status === 202 || status === 204
 }
 
+function parseSetupbmcMap(data: {
+  setupbmc?: Record<string, unknown>
+  nodes?: unknown[]
+}): Record<string, boolean> {
+  const out: Record<string, boolean> = {}
+  const map = data.setupbmc
+  if (map && typeof map === 'object') {
+    for (const [name, value] of Object.entries(map)) {
+      const key = String(name).trim()
+      if (key) out[key] = isSetupBmcEnabled(value)
+    }
+  }
+  return out
+}
+
 function parseStatusPayload(data: {
   results?: unknown[]
   request_ids?: Record<string, string>
   nodes?: unknown[]
+  setupbmc?: Record<string, unknown>
 }): StatusSnapshot {
   const results = Array.isArray(data.results) ? data.results : []
   const ids = data.request_ids || {}
   const nodeNames = Array.isArray(data.nodes)
     ? data.nodes.map((n) => String(n).trim()).filter(Boolean)
     : []
+  const setupbmcMap = parseSetupbmcMap(data)
 
   const rowMap: Record<string, ControlStatusRow> = {}
   for (const node of nodeNames) {
-    rowMap[node] = emptyRow(node)
+    rowMap[node] = emptyRow(node, setupbmcMap[node] ?? true)
   }
 
   const toasts: StatusToast[] = []
   for (const item of results) {
     applyResultItem(rowMap, item, toasts)
+  }
+
+  // Nodes with setupbmc=false were never queried for SEL — keep N/A, drop any sel toasts for them.
+  for (const row of Object.values(rowMap)) {
+    if (row.setupbmc === false) {
+      row.sel = 'N/A'
+      if (row.errors?.sel) {
+        const nextErrors = { ...row.errors }
+        delete nextErrors.sel
+        row.errors = nextErrors
+      }
+    }
   }
 
   return {
@@ -353,12 +397,24 @@ function parseStatusPayload(data: {
       sel: String(ids.sel || ''),
       chassis: String(ids.chassis || ''),
     },
-    toasts,
+    toasts: toasts.filter((t) => {
+      if (t.field !== 'sel' || !t.node) return true
+      const row = rowMap[t.node] ?? Object.values(rowMap).find((r) => r.node.toLowerCase() === t.node.toLowerCase())
+      return row?.setupbmc !== false
+    }),
   }
 }
 
-export function rowsFromNodeList(nodes: string[]): ControlStatusRow[] {
-  return nodes.map((n) => emptyRow(n))
+export function rowsFromNodeList(
+  nodes: string[] | ControlNodeInfo[],
+  setupbmcByNode?: Record<string, boolean>,
+): ControlStatusRow[] {
+  return nodes.map((entry) => {
+    if (typeof entry === 'string') {
+      return emptyRow(entry, setupbmcByNode?.[entry] ?? true)
+    }
+    return emptyRow(entry.name, entry.setupbmc)
+  })
 }
 
 export function mergeRowUpdates(
@@ -367,22 +423,52 @@ export function mergeRowUpdates(
 ): ControlStatusRow[] {
   const map = rowMapFromRows(existing)
   for (const row of updates) {
-    map[row.node] = { ...row, errors: { ...row.errors } }
+    const prev = map[row.node]
+    map[row.node] = {
+      ...row,
+      setupbmc: row.setupbmc ?? prev?.setupbmc ?? true,
+      errors: { ...row.errors },
+    }
+    if (map[row.node].setupbmc === false) {
+      map[row.node].sel = 'N/A'
+    }
   }
   return sortedRows(map)
 }
 
-/** Fast node name list only — no per-node Luna status jobs. */
-export async function fetchNodeList(): Promise<string[]> {
+/** Fast node list with setupbmc flags — no per-node Luna status jobs. */
+export async function fetchNodeList(): Promise<ControlNodeInfo[]> {
   const res = await fetch(apiPath('/api/v1/get_nodes'), { headers: { Accept: 'application/json' } })
   if (!res.ok) throw new Error(`Failed loading node list (${res.status})`)
-  const data = (await readJson(res)) as { node_list?: unknown[]; options?: unknown[] }
+  const data = (await readJson(res)) as {
+    node_list?: unknown[]
+    options?: unknown[]
+    nodes?: unknown[]
+    setupbmc?: Record<string, unknown>
+  }
+
+  if (Array.isArray(data.nodes) && data.nodes.length > 0) {
+    return data.nodes
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') return null
+        const rec = entry as Record<string, unknown>
+        const name = String(rec.name ?? '').trim()
+        if (!name) return null
+        return { name, setupbmc: isSetupBmcEnabled(rec.setupbmc) }
+      })
+      .filter((n): n is ControlNodeInfo => Boolean(n))
+  }
+
+  const setupbmcMap = parseSetupbmcMap(data)
   const raw = Array.isArray(data.node_list)
     ? data.node_list
     : Array.isArray(data.options)
       ? data.options
       : []
-  return raw.map((n) => String(n).trim()).filter(Boolean)
+  return raw
+    .map((n) => String(n).trim())
+    .filter(Boolean)
+    .map((name) => ({ name, setupbmc: setupbmcMap[name] ?? true }))
 }
 
 /** Status for a page subset; does not wait for background polls. */
@@ -400,6 +486,7 @@ export async function fetchPageStatusSnapshot(hostlist: string[]): Promise<Statu
     results?: unknown[]
     request_ids?: Record<string, string>
     nodes?: unknown[]
+    setupbmc?: Record<string, unknown>
   }
   return parseStatusPayload(data)
 }
@@ -412,6 +499,7 @@ export async function fetchControlStatusSnapshot(): Promise<StatusSnapshot> {
     results?: unknown[]
     request_ids?: Record<string, string>
     nodes?: unknown[]
+    setupbmc?: Record<string, unknown>
   }
   return parseStatusPayload(data)
 }

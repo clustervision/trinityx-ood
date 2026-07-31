@@ -42,3 +42,4 @@ export {
 } from './powerStatus'
 export type { PowerToggleVisual } from './powerStatus'
 export { isNodeControllable, statusDotClass, statusLabel, statusTextClass } from './statusDisplay'
+export { filterSelHostlist, isSetupBmcEnabled } from './setupbmc'

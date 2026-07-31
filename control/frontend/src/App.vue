@@ -40,6 +40,8 @@
         @bulk="runBulk"
         @single="runSingle"
         @dismiss-toast="dismissToast"
+        @hold-toast="holdToast"
+        @release-toast="releaseToast"
         @load-page="loadPageStatus"
       />
     </main>
@@ -73,13 +75,13 @@ import {
   triggerAction,
 } from './api'
 import { TOAST_TTL_MS, useToasts } from './composables/useToasts'
-import { appUrlFromRuntime, resetPowerNotification } from './utils'
+import { appUrlFromRuntime, filterSelHostlist, resetPowerNotification } from './utils'
 import {
   extractSelListResults,
   isSelListResponseReady,
   orderSelLogEntries,
 } from './utils/selLogDisplay'
-import type { ControlStatusRow, SelLogEntry, StatusToast } from './types'
+import type { ControlStatusRow, SelLogEntry, StatusField, StatusToast } from './types'
 
 const rows = ref<ControlStatusRow[]>([])
 const selectedNodes = ref<string[]>([])
@@ -88,7 +90,7 @@ const messageOk = ref(true)
 const powerLoadingNodes = ref<Record<string, boolean>>({})
 const nodesLoading = ref(true)
 const appUrl = computed(() => appUrlFromRuntime())
-const { toasts, pushToast, dismissToast, clearToasts } = useToasts()
+const { toasts, pushToast, dismissToast, clearToasts, holdToast, releaseToast } = useToasts()
 
 let stopStatusPoll: (() => void) | null = null
 let stopActionPoll: (() => void) | null = null
@@ -146,7 +148,7 @@ function clearPowerLoading(): void {
   powerLoadingNodes.value = {}
 }
 
-/** One notice → top banner; multiple → toast stack only (no duplicate banner). */
+/** One notice → top banner; multiple → one expandable toast (no stack spam). */
 function presentNotices(items: StatusToast[], ok = false): void {
   if (items.length === 0) return
   if (items.length === 1) {
@@ -157,7 +159,47 @@ function presentNotices(items: StatusToast[], ok = false): void {
   }
   if (messageTimer) clearTimeout(messageTimer)
   message.value = ''
-  for (const toast of items) pushToast(toast)
+
+  const fieldCounts = new Map<string, number>()
+  for (const item of items) {
+    fieldCounts.set(item.field, (fieldCounts.get(item.field) ?? 0) + 1)
+  }
+  const fieldLabel = [...fieldCounts.keys()].sort().join('/')
+  const summary = `${items.length} errors${fieldLabel ? ` · ${fieldLabel}` : ''}`
+  pushToast({
+    id: `batch:${fieldLabel || 'mixed'}`,
+    node: '',
+    field: (items[0]?.field ?? 'power') as StatusField,
+    message: summary,
+    details: items.map((t) => t.message),
+  })
+}
+
+function setupbmcByNodeMap(): Record<string, boolean | undefined> {
+  const map: Record<string, boolean | undefined> = {}
+  for (const row of rows.value) map[row.node] = row.setupbmc
+  return map
+}
+
+function resolveActionHostlist(system: string, hostlist: string[]): string[] | null {
+  if (system !== 'sel') return hostlist
+  const { enabled, skipped } = filterSelHostlist(hostlist, setupbmcByNodeMap())
+  if (enabled.length === 0) {
+    setBanner(
+      skipped.length === 1
+        ? `${skipped[0]} has setupbmc=false; SEL is unavailable.`
+        : `SEL is unavailable because setupbmc is false for the selected node(s).`,
+      false,
+    )
+    return null
+  }
+  if (skipped.length > 0) {
+    setBanner(
+      `Skipping SEL for ${skipped.length} node(s) with setupbmc=false: ${skipped.join(', ')}.`,
+      true,
+    )
+  }
+  return enabled
 }
 
 function applyPageRowUpdate(updatedPageRows: ControlStatusRow[], newToasts: StatusToast[]) {
@@ -182,8 +224,8 @@ function beginBackgroundPollForPage(
 async function loadNodes() {
   nodesLoading.value = true
   try {
-    const names = await fetchNodeList()
-    rows.value = rowsFromNodeList(names)
+    const nodes = await fetchNodeList()
+    rows.value = rowsFromNodeList(nodes)
   } finally {
     nodesLoading.value = false
   }
@@ -194,7 +236,11 @@ async function loadPageStatus(hostlist: string[]) {
   const requestId = ++pageStatusRequest
   stopStatusPoll?.()
   setPowerLoading(hostlist)
-  rows.value = mergeRowUpdates(rows.value, rowsFromNodeList(hostlist))
+  const setupbmcMap = setupbmcByNodeMap()
+  rows.value = mergeRowUpdates(
+    rows.value,
+    rowsFromNodeList(hostlist, setupbmcMap as Record<string, boolean>),
+  )
 
   try {
     const snapshot = await fetchPageStatusSnapshot(hostlist)
@@ -206,7 +252,7 @@ async function loadPageStatus(hostlist: string[]) {
     const pageRows = hostlist.map((node) => {
       const row = rowByNode.get(node.toLowerCase())
       if (row) return row
-      const created = rowsFromNodeList([node])
+      const created = rowsFromNodeList([node], setupbmcMap as Record<string, boolean>)
       return created[0]!
     })
     beginBackgroundPollForPage(hostlist, pageRows, snapshot.requestIds)
@@ -222,11 +268,15 @@ async function runBulk(system: string, action: string) {
     setBanner('Please select at least one node.', false)
     return
   }
-  await runAction(system, action, selectedNodes.value)
+  const hostlist = resolveActionHostlist(system, selectedNodes.value)
+  if (!hostlist) return
+  await runAction(system, action, hostlist)
 }
 
 async function runSingle(system: string, action: string, node: string) {
-  await runAction(system, action, [node])
+  const hostlist = resolveActionHostlist(system, [node])
+  if (!hostlist) return
+  await runAction(system, action, hostlist)
 }
 
 async function fetchSelListBatch(
