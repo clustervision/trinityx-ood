@@ -109,23 +109,52 @@ def _status_node_list():
 @app.route('/api/v1/get_nodes', methods=['GET'])
 def get_nodes():
     """
-    Return all node names for the Vue table without querying per-node status.
+    Return node names plus setupbmc flags for the Vue table (no per-node status jobs).
     """
-    node_list = Helper().get_name_list('node')
-    return jsonify({'node_list': node_list}), 200
+    helper = Helper()
+    setupbmc_map = helper.get_node_setupbmc_map()
+    if setupbmc_map:
+        node_list = list(setupbmc_map.keys())
+    else:
+        node_list = helper.get_name_list('node')
+        setupbmc_map = {name: True for name in node_list}
+    nodes = [{'name': name, 'setupbmc': bool(setupbmc_map.get(name, True))} for name in node_list]
+    return jsonify({
+        'node_list': node_list,
+        'nodes': nodes,
+        'setupbmc': setupbmc_map,
+    }), 200
 
 
 @app.route('/api/v1/status', methods=['GET', 'POST'])
 def get_status():
+    helper = Helper()
     node_list = _status_node_list()
     if not node_list:
-        return jsonify({'results': [], 'request_ids': {'power': '', 'sel': '', 'chassis': ''}, 'nodes': []}), 200
-    hostlist = Helper().collect_nodelist(node_list)
-    systems = {'power': 'status', 'sel': 'list', 'chassis': 'identify'}
+        return jsonify({
+            'results': [],
+            'request_ids': {'power': '', 'sel': '', 'chassis': ''},
+            'nodes': [],
+            'setupbmc': {},
+        }), 200
+
+    setupbmc_map = helper.get_node_setupbmc_map()
+    for name in node_list:
+        setupbmc_map.setdefault(name, True)
+    sel_nodes, _skipped = helper.filter_sel_hostlist(node_list)
+
     results = []
     request_ids = {'power': '', 'sel': '', 'chassis': ''}
+    systems = {
+        'power': ('status', node_list),
+        'sel': ('list', sel_nodes),
+        'chassis': ('identify', node_list),
+    }
 
-    for system, action in systems.items():
+    for system, (action, targets) in systems.items():
+        if not targets:
+            continue
+        hostlist = helper.collect_nodelist(targets)
         payload = {'control': {system: {action: {"hostlist": hostlist}}}}
         uri = f'control/action/{system}/_{action}'
         result = Rest().post_raw(uri, payload)
@@ -134,20 +163,51 @@ def get_status():
         body = result.json()
         results.append(body)
         request_ids[system] = str(body.get('request_id', ''))
-    return jsonify({'results': results, 'request_ids': request_ids, 'nodes': node_list})
+
+    return jsonify({
+        'results': results,
+        'request_ids': request_ids,
+        'nodes': node_list,
+        'setupbmc': {name: bool(setupbmc_map.get(name, True)) for name in node_list},
+    })
 
 
 @app.route('/api/v1/action/<string:system>/<string:action>', methods=['POST'])
 def perform(system=None, action=None):
+    helper = Helper()
     request_data = request.get_json(silent=True) or {}
-    hostlist = request_data.get('hostlist', [])
-    hostlist = Helper().collect_nodelist(hostlist)
+    raw_hostlist = request_data.get('hostlist', [])
+    if isinstance(raw_hostlist, str):
+        node_list = [n.strip() for n in raw_hostlist.split(',') if n.strip()]
+    elif isinstance(raw_hostlist, list):
+        node_list = [str(n).strip() for n in raw_hostlist if str(n).strip()]
+    else:
+        node_list = []
+
+    skipped = []
+    if system == 'sel':
+        node_list, skipped = helper.filter_sel_hostlist(node_list)
+        if not node_list:
+            return jsonify({
+                "message": (
+                    "SEL is unavailable because setupbmc is false for the selected node(s)"
+                    + (f": {', '.join(skipped)}" if skipped else "")
+                    + "."
+                ),
+                "skipped": skipped,
+            }), 400
+
+    hostlist = helper.collect_nodelist(node_list)
     payload = {'control': {system: {action: {"hostlist": hostlist}}}}
     uri = f'control/action/{system}/_{action}'
     result = Rest().post_raw(uri, payload)
     if result is False:
         return jsonify({"message": "No response from daemon"}), 502
-    return jsonify(result.json()), result.status_code
+    body = result.json()
+    if skipped and isinstance(body, dict):
+        body = dict(body)
+        body['skipped'] = skipped
+    return jsonify(body), result.status_code
 
 
 @app.route('/api/v1/request/<string:request_id>', methods=['GET'])
