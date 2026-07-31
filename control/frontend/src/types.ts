@@ -32,7 +32,14 @@ export interface ControlStatusRow {
   sel: string
   chassis: string
   redfish: string
+  /** false → skip SEL status/actions (from Luna node.setupbmc). Default true. */
+  setupbmc?: boolean
   errors?: Partial<Record<Exclude<StatusField, 'redfish'>, string>>
+}
+
+export interface ControlNodeInfo {
+  name: string
+  setupbmc: boolean
 }
 
 export interface StatusToast {
@@ -40,6 +47,8 @@ export interface StatusToast {
   node: string
   field: StatusField
   message: string
+  /** When many failures are collapsed into one toast. */
+  details?: string[]
 }
 
 export interface RequestEnvelope {

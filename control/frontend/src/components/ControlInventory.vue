@@ -76,10 +76,22 @@
         <section class="tx-control-section">
           <h3 class="tx-control-section-title">SEL</h3>
           <div class="tx-control-section-actions tx-control-section-actions--row">
-            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-sidebar" @click="emitBulk('sel', 'clear')">
+            <button
+              type="button"
+              class="tx-btn tx-btn-outline-blue tx-btn-sidebar"
+              :disabled="!selectedHaveSel"
+              :title="selectedHaveSel ? undefined : 'No selected nodes have setupbmc enabled'"
+              @click="emitBulk('sel', 'clear')"
+            >
               CLEAR
             </button>
-            <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-sidebar" @click="emitBulk('sel', 'list')">
+            <button
+              type="button"
+              class="tx-btn tx-btn-outline-blue tx-btn-sidebar"
+              :disabled="!selectedHaveSel"
+              :title="selectedHaveSel ? undefined : 'No selected nodes have setupbmc enabled'"
+              @click="emitBulk('sel', 'list')"
+            >
               LIST
             </button>
           </div>
@@ -112,8 +124,29 @@
 
       <div class="tx-control-table-area">
         <aside v-if="toasts.length" class="tx-toast-stack" aria-live="polite" aria-label="Luna status messages">
-          <div v-for="toast in toasts" :key="toast.id" class="tx-toast" role="status">
-            <span class="tx-toast-text">{{ toast.message }}</span>
+          <div
+            v-for="toast in toasts"
+            :key="toast.id"
+            class="tx-toast"
+            :class="{ 'tx-toast--expandable': Boolean(toast.details?.length) }"
+            role="status"
+          >
+            <div class="tx-toast-body">
+              <button
+                v-if="toast.details?.length"
+                type="button"
+                class="tx-toast-summary"
+                :aria-expanded="expandedToastIds.has(toast.id)"
+                @click="toggleToastExpand(toast.id)"
+              >
+                <span class="tx-toast-text">{{ toast.message }}</span>
+                <span class="tx-toast-chevron" aria-hidden="true">{{ expandedToastIds.has(toast.id) ? '▾' : '▸' }}</span>
+              </button>
+              <span v-else class="tx-toast-text">{{ toast.message }}</span>
+              <ul v-if="toast.details?.length && expandedToastIds.has(toast.id)" class="tx-toast-details">
+                <li v-for="(line, idx) in toast.details" :key="`${toast.id}-${idx}`">{{ line }}</li>
+              </ul>
+            </div>
             <button type="button" class="tx-toast-close" aria-label="Dismiss" @click="emit('dismissToast', toast.id)">
               &times;
             </button>
@@ -183,10 +216,22 @@
                 </td>
                 <td class="tx-td-actions">
                   <div class="tx-control-cell-actions">
-                    <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-cell" @click="emitSingle('sel', 'clear', row.node)">
+                    <button
+                      type="button"
+                      class="tx-btn tx-btn-outline-blue tx-btn-cell"
+                      :disabled="row.setupbmc === false"
+                      :title="row.setupbmc === false ? 'setupbmc is false; SEL unavailable' : undefined"
+                      @click="emitSingle('sel', 'clear', row.node)"
+                    >
                       CLEAR
                     </button>
-                    <button type="button" class="tx-btn tx-btn-outline-blue tx-btn-cell" @click="emitSingle('sel', 'list', row.node)">
+                    <button
+                      type="button"
+                      class="tx-btn tx-btn-outline-blue tx-btn-cell"
+                      :disabled="row.setupbmc === false"
+                      :title="row.setupbmc === false ? 'setupbmc is false; SEL unavailable' : undefined"
+                      @click="emitSingle('sel', 'list', row.node)"
+                    >
                       LIST
                     </button>
                   </div>
@@ -277,6 +322,8 @@
           <ul class="tx-help-list">
             <li>Success and error banners appear at the top of the page after an action.</li>
             <li>Failed nodes may also show a toast in the upper-right corner with Luna error details.</li>
+            <li>When many nodes fail at once, errors are grouped into one toast — click to expand the full list.</li>
+            <li>Nodes with <strong>setupbmc=false</strong> skip SEL status checks; SEL CLEAR/LIST are disabled for those rows.</li>
           </ul>
         </div>
       </div>
@@ -309,12 +356,35 @@ const emit = defineEmits<{
   single: [system: string, action: string, node: string]
   toggleSelect: [next: string[]]
   dismissToast: [id: string]
+  holdToast: [id: string]
+  releaseToast: [id: string]
   loadPage: [nodes: string[]]
 }>()
 
 const toasts = computed(() => props.toasts ?? [])
 const nodesLoading = computed(() => Boolean(props.nodesLoading))
 const rows = computed(() => props.rows)
+const expandedToastIds = ref<Set<string>>(new Set())
+
+const selectedHaveSel = computed(() =>
+  props.selected.some((node) => {
+    const row = props.rows.find((r) => r.node === node)
+    return row?.setupbmc !== false
+  }),
+)
+
+function toggleToastExpand(id: string): void {
+  const next = new Set(expandedToastIds.value)
+  if (next.has(id)) {
+    next.delete(id)
+    expandedToastIds.value = next
+    emit('releaseToast', id)
+    return
+  }
+  next.add(id)
+  expandedToastIds.value = next
+  emit('holdToast', id)
+}
 
 function isPowerRowLoading(node: string): boolean {
   return Boolean(props.powerLoadingNodes?.[node])

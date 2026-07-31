@@ -326,9 +326,58 @@ body {
   min-width: 220px;
 }
 
+.tx-toast--expandable {
+  max-width: min(420px, 48vw);
+}
+
+.tx-toast-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tx-toast-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tx-toast-summary:hover .tx-toast-text {
+  text-decoration: underline;
+}
+
+.tx-toast-chevron {
+  flex-shrink: 0;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
 .tx-toast-text {
   flex: 1 1 auto;
   min-width: 0;
+  word-break: break-word;
+}
+
+.tx-toast-details {
+  margin: 0;
+  padding: 0.35rem 0 0 1rem;
+  max-height: 220px;
+  overflow: auto;
+  list-style: disc;
+}
+
+.tx-toast-details li {
+  margin: 0.15rem 0;
   word-break: break-word;
 }
 
@@ -346,6 +395,12 @@ body {
 
 .tx-toast-close:hover {
   opacity: 1;
+}
+
+.tx-btn:disabled,
+.tx-btn.tx-btn-inactive:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .tx-inventory-table-wrap {
