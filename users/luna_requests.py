@@ -34,6 +34,16 @@ def get_error_message(resp):
         return resp.text
 
 
+def normalise_group(group):
+    """
+    ds389-backed obol reports group members as 'uniqueMember', openldap as
+    'member'. The app uses 'member' everywhere, so map it here at the source.
+    """
+    if 'member' not in group and 'uniqueMember' in group:
+        group['member'] = group.pop('uniqueMember')
+    return group
+
+
 class LunaRequestHandler():
 
     def __init__(self):
@@ -77,7 +87,9 @@ class LunaRequestHandler():
         elif resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {get_error_message(resp)} while listing {target}, received status code {resp.status_code}")
         data = resp.json()['config'][f"os{target[:-1]}"]
-            
+        if target == 'groups':
+            data = [normalise_group(group) for group in data]
+
         return data
 
     def get(self, target, name):
@@ -85,9 +97,14 @@ class LunaRequestHandler():
         This method will get the group/user from the database.
         """
         resp = self.session.get(self.endpoints[target]['get'].format(name=name), headers=self.get_auth_header(), verify=self.verify_certificate)
+        if resp.status_code == 404:
+            raise LookupError(f"The {target[:-1]} {name} no longer exists. The list has been refreshed.")
         if resp.status_code not in [200, 201, 204]:
             raise Exception(f"Error {get_error_message(resp)} while getting {target}, received status code {resp.status_code}")
-        return  resp.json()['config'][f"os{target[:-1]}"][name]
+        item = resp.json()['config'][f"os{target[:-1]}"][name]
+        if target == 'groups':
+            item = normalise_group(item)
+        return item
 
     def delete(self, target, name):
         """

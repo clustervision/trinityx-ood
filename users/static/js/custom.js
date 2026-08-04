@@ -73,6 +73,7 @@ function loadModal(target, mode, name) {
         error: function (request) {
             message = JSON.parse(request.responseText).message
             displayAlert('danger', "Error while loading modal: " + message);
+            refreshTables();
         }
     });
 }
@@ -106,6 +107,7 @@ function handleDeleteSubmitButton(target, name) {
             $('#modal').modal('hide');
             message = JSON.parse(request.responseText).message
             displayAlert('danger', message);
+            refreshTables();
         }
     });
 }
@@ -227,4 +229,12 @@ window.onload = function () {
     // reload on tab switch so changes made from the other tab (or outside
     // the app) show up without a full page refresh
     $('a[data-toggle="tab"]').on('shown.bs.tab', refreshTables);
+
+    // plain click toggles an entry in the member/group selectors, instead of
+    // the native ctrl-click / drag multi-select
+    $(document).on('mousedown', '#modal-form select.form-entry[multiple] option', function (e) {
+        e.preventDefault();
+        this.selected = !this.selected;
+        return false;
+    });
 }

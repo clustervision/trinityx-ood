@@ -77,8 +77,7 @@ def split_group_members(group):
     only by changing the user's primary group or deleting the user) and
     secondary members (removable by editing the user's group list).
     """
-    # openldap-backed obol reports group members as 'member', ds389 as 'uniqueMember'
-    members = group.get('member') or group.get('uniqueMember') or []
+    members = group.get('member') or []
     if not members:
         return [], []
     gid = str(group.get('gidNumber'))
@@ -93,6 +92,8 @@ def wrap_errors(error):
     """Decorator to wrap errors in a JSON response."""
     if app.debug:
         raise error
+    if isinstance(error, LookupError):
+        return jsonify({"message": str(error)}), 404
     return jsonify({"message": str(error)}), 500
 
 
@@ -206,7 +207,7 @@ def action(target, name, action):
     if action == 'delete':
         if target == 'groups':
             group = handler.get(target, name)
-            members = group.get('member') or group.get('uniqueMember') or []
+            members = group.get('member') or []
             if members:
                 return jsonify({"message": f"Group {name} still has members: {', '.join(members)}. "
                                             "Remove the users from the group before deleting it."}), 400
