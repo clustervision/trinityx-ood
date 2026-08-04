@@ -15,8 +15,8 @@
   {% endif %}
   {% if primary_members %}
   <p>
-    For the following users this is their <strong>primary group</strong>.
-    Change the user's primary group (GID), or delete the user, before deleting this group:
+    For the following users this is their <strong>primary group</strong>, which cannot
+    be changed here. Delete the user before deleting this group:
   </p>
   <ul>
     {% for member in primary_members %}
