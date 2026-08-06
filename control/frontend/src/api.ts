@@ -176,9 +176,19 @@ function finalizeNodePowerIfPending(rows: Record<string, ControlStatusRow>, node
 
 function addFailedMap(map: unknown, out: Map<string, string>): void {
   if (!map || typeof map !== 'object') return
+  if (Array.isArray(map)) {
+    for (const entry of map) {
+      const node = String(entry ?? '').trim()
+      if (node && !out.has(node)) out.set(node, '')
+    }
+    return
+  }
   for (const [node, msg] of Object.entries(map as Record<string, unknown>)) {
+    const key = String(node ?? '').trim()
+    if (!key) continue
     const message = String(msg ?? '').trim()
-    if (message) out.set(node, message)
+    // Keep empty message as a failure marker; caller may fill from top-level message.
+    if (!out.has(key) || message) out.set(key, message)
   }
 }
 
@@ -198,16 +208,20 @@ function collectFailuresFromBody(
   if (!body || typeof body !== 'object') return []
   const o = body as Record<string, unknown>
   const ctl = o.control
-  const toasts: StatusToast[] = []
-  if (ctl && typeof ctl === 'object') {
-    toasts.push(...failuresToToasts(collectControlFailures(ctl as Record<string, unknown>), field, hostlist, idPrefix))
-  }
   const topMessage = String(o.message ?? '').trim()
-  if (topMessage && toasts.length === 0) {
-    const node = hostlist?.length === 1 ? (hostlist[0] ?? '') : ''
-    toasts.push(makeToast(node, field, topMessage, idPrefix))
+  const failures = new Map<string, string>()
+  if (ctl && typeof ctl === 'object') {
+    for (const [node, message] of collectControlFailures(ctl as Record<string, unknown>)) {
+      failures.set(node, message || topMessage)
+    }
   }
-  return toasts
+  const toasts = failuresToToasts(failures, field, hostlist, idPrefix)
+  if (toasts.length > 0) return toasts
+  if (topMessage) {
+    const node = hostlist?.length === 1 ? (hostlist[0] ?? '') : ''
+    return [makeToast(node, field, topMessage, idPrefix)]
+  }
+  return []
 }
 
 function failuresToToasts(
@@ -216,13 +230,12 @@ function failuresToToasts(
   hostlist?: string[],
   idPrefix = '',
 ): StatusToast[] {
-  const hosts = hostlist ? new Set(hostlist) : null
   const toasts: StatusToast[] = []
   for (const [node, message] of failures) {
-    if (hosts && !hosts.has(node)) continue
+    if (hostlist && !hostlistIncludes(hostlist, node)) continue
     toasts.push(makeToast(node, field, message, idPrefix))
   }
-  if (toasts.length === 0 && hosts && failures.size > 0) {
+  if (toasts.length === 0 && hostlist && failures.size > 0) {
     for (const [node, message] of failures) {
       toasts.push(makeToast(node, field, message, idPrefix))
     }
@@ -245,11 +258,13 @@ function applyResultItem(
   if (!system) return
 
   const idPrefix = options?.idPrefix ?? ''
+  const topMessage = String(o.message ?? '').trim()
   const failures = collectControlFailures(ctl)
-  for (const [node, message] of failures) {
+  for (const [node, rawMessage] of failures) {
     if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
     if (!rows[node]) rows[node] = emptyRow(node)
     if (system === 'sel' && rows[node].setupbmc === false) continue
+    const message = rawMessage.trim() || topMessage || 'Action failed.'
     rows[node][system] = 'ERROR'
     finalizeNodePowerIfPending(rows, node)
     if (system !== 'redfish') {
@@ -521,6 +536,43 @@ function clearPendingField(
   }
 }
 
+function isTerminalFailureBody(body: unknown): boolean {
+  if (!body || typeof body !== 'object') return false
+  const status = String((body as Record<string, unknown>).status ?? '')
+    .trim()
+    .toUpperCase()
+  return status === 'FAILED' || status === 'FAILURE' || status === 'ERROR'
+}
+
+function markHostlistFieldError(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+  hostlist: string[] | undefined,
+): void {
+  const targets = hostlist?.length ? hostlist : Object.keys(rowMap)
+  for (const node of targets) {
+    const key = rowKeyForHostlist(rowMap, node)
+    if (!rowMap[key]) rowMap[key] = emptyRow(key)
+    rowMap[key][field] = 'ERROR'
+    if (field !== 'power') finalizeNodePowerIfPending(rowMap, key)
+  }
+}
+
+function toastsFromTerminalBody(
+  body: unknown,
+  field: PollField,
+  hostlist: string[] | undefined,
+  idPrefix: string,
+  fallbackMessage: string,
+): StatusToast[] {
+  const toasts = collectFailuresFromBody(body, field, hostlist, idPrefix)
+  if (toasts.length > 0) return toasts
+  const message = fallbackMessage.trim()
+  if (!message) return []
+  const node = hostlist?.length === 1 ? (hostlist[0] ?? '') : ''
+  return [makeToast(node, field, message, idPrefix)]
+}
+
 async function pollOneRequest(
   requestId: string,
   field: PollField,
@@ -534,8 +586,10 @@ async function pollOneRequest(
   const start = Date.now()
   while (!signal.aborted && Date.now() - start < timeoutMs) {
     const { ok, status, body } = await fetchRequestBody(requestId)
+    const idPrefix = `${requestId}:`
+    const terminalFailure = isTerminalFailureBody(body)
+
     if (ok && hasControlPayload(body, field, options?.action)) {
-      const idPrefix = `${requestId}:`
       const toasts: StatusToast[] = []
       applyResultItem(rowMap, body, toasts, {
         system: field,
@@ -546,28 +600,38 @@ async function pollOneRequest(
       if (toasts.length === 0) {
         toasts.push(...collectFailuresFromBody(body, field, options?.hostlist, idPrefix))
       }
+      // Luna sometimes returns control + status FAILED with only a top-level message.
+      if (toasts.length === 0 && terminalFailure) {
+        toasts.push(
+          ...toastsFromTerminalBody(
+            body,
+            field,
+            options?.hostlist,
+            idPrefix,
+            String((body as RequestEnvelope)?.message ?? 'Action failed.'),
+          ),
+        )
+        if (toasts.length > 0) markHostlistFieldError(rowMap, field, options?.hostlist)
+      }
       onUpdate(sortedRows(rowMap), toasts)
-      if (hostlistFieldResolved(rowMap, field, options?.hostlist)) {
+      if (hostlistFieldResolved(rowMap, field, options?.hostlist) || (terminalFailure && toasts.length > 0)) {
         return
       }
       await sleep(POLL_INTERVAL_MS)
       continue
     }
-    if (!ok && !isPendingRequestStatus(status)) {
-      clearPendingForHostlist(rowMap, field, options?.hostlist)
-      const message = String((body as RequestEnvelope)?.message ?? `Request failed (${status})`).trim()
-      const toasts: StatusToast[] = []
-      if (message) {
-        toasts.push({
-          id: `poll:${requestId}:${message}`,
-          node: '',
-          field,
-          message,
-        })
-      }
+
+    // HTTP ok/not-ok with status FAILED (no usable control payload) — still surface the error.
+    if (terminalFailure || (!ok && !isPendingRequestStatus(status))) {
+      const fallback = String(
+        (body as RequestEnvelope)?.message ?? `Request failed (${status})`,
+      ).trim()
+      const toasts = toastsFromTerminalBody(body, field, options?.hostlist, idPrefix, fallback)
+      markHostlistFieldError(rowMap, field, options?.hostlist)
       onUpdate(sortedRows(rowMap), toasts)
       return
     }
+
     await sleep(POLL_INTERVAL_MS)
   }
   if (!signal.aborted) {
