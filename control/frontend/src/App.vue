@@ -413,6 +413,17 @@ async function runAction(system: string, action: string, hostlist: string[]) {
           return
         }
         if (hadFailures) return
+
+        // Ignore intermediate PENDING updates from pollActionInBackground startup.
+        const field = (['power', 'sel', 'chassis', 'redfish'] as const).find((f) => f === system)
+        if (field) {
+          const stillPending = hostlist.some((node) => {
+            const row = updated.find((r) => r.node.toLowerCase() === node.toLowerCase())
+            return !row || row[field] === 'PENDING'
+          })
+          if (stillPending) return
+        }
+
         if (system === 'power' && action === 'reset') {
           const resetMsg = resetPowerNotification(updated, hostlist)
           if (resetMsg) {
