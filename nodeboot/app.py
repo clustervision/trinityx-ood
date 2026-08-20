@@ -20,10 +20,12 @@
 """
 Node Boot — OOD GUI for lconsole / node provisioning.
 
-Live view of nodes booting: one card per OS image, progress bars for each group of
-nodes sharing a provisioning state (the collapsed hostlist), plus the network and
-provisioning method. Data comes from the Luna2 daemon:
-  GET /config/node    -> node -> group / osimage / provision_method / interfaces
+Live view of nodes booting: one row per OS image, expandable into its real
+Luna groups (node.group — a rack/pool grouping, not a state bucket), each
+with booted/booting/failed counts and a 3-phase breakdown of "booting" for
+the wave chart (redesign, 30 Jul 2026 — "a few states, not all of them").
+Data comes from the Luna2 daemon:
+  GET /config/node    -> node -> group / osimage / interfaces
   GET /monitor/node   -> per-node live state (populated only while provisioning)
 """
 
@@ -41,27 +43,47 @@ from collections import defaultdict
 from configparser import RawConfigParser
 
 import requests
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, abort, url_for, request
 
-from constant import INI_FILE, TOKEN_FILE
+from constant import (
+    INI_FILE, TOKEN_FILE, SOL_GRAB_URL, SOL_GRAB_TIMEOUT,
+)
 
 requests.packages.urllib3.disable_warnings()
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 
-# Ordered provisioning pipeline -> progress %. Raw Luna state strings (see
-# daemon monitor node_state[204]) plus the post-install 'booted'. Anything not
-# listed (e.g. no monitor entry yet) is treated as idle (0%).
+_NODE_NAME_RE = re.compile(r'^[A-Za-z0-9_.-]+$')  # matches STRICT_NAMES-style node names
+
+# Ordered provisioning pipeline -> progress %. Raw Luna state strings, straight
+# from daemon monitor node_state[204] — 'install.booted' is the post-install
+# state reported by the node's own OS at first boot (TRIX-1221), just another
+# link in the same chain now. Anything not listed (e.g. no monitor entry yet)
+# is treated as idle (0%).
 STAGE_PCT = {
-    "install.started":    5,
-    "install.completed":  15,
-    "install.prescript":  25,
-    "install.partscript": 38,
-    "install.postscript": 50,
-    "install.roles":      65,
-    "install.image":      80,
-    "install.finalizing": 92,
-    "install.success":    98,
+    "install.discovered": 4,
+    "install.rendered":   8,
+    "install.started":    10,
+    "install.scripts":    12,
+    "install.prescript":  16,
+    "install.setupbmc":   22,
+    "install.partscript": 28,
+    "install.downloaded": 38,
+    "install.download":   40,
+    "install.completed":  50,
+    "install.unpack":     55,
+    "install.setnet":     62,
+    "install.secrets":    68,
+    "install.postscript": 75,
+    "install.roles":      85,
+    "install.image":      90,
+    "install.finalizing": 95,
+    "install.success":    100,
+    "install.booted":     100,
+    # ponytail: transitional back-compat only. Nodes booted under the retired
+    # trinity-booted-notify mechanism (pre-TRIX-1221 daemon rewrite) still have
+    # this bare value sitting in monitor state until their next reprovision.
+    # Drop once no live cluster has pre-rewrite state left.
     "booted":             100,
 }
 
@@ -127,77 +149,127 @@ def stage_of(state):
     pct = STAGE_PCT.get(state)
     if pct is None:
         return 0, state, 'other'
-    label = 'booted' if state == 'booted' else state.replace('install.', '')
+    label = state.replace('install.', '')
     kind = 'done' if pct >= 100 else 'run'
     return pct, label, kind
 
 
-_NODE_RE = re.compile(r'^(.*?)(\d+)$')
-
-def collapse_hostlist(names):
-    """['node001','node002','node004'] -> 'node[001-002],node004'. Non-numeric names pass through."""
-    plain, groups = [], defaultdict(list)
-    for n in names:
-        m = _NODE_RE.match(n)
-        if m:
-            groups[(m.group(1), len(m.group(2)))].append(int(m.group(2)))
-        else:
-            plain.append(n)
-    out = []
-    for (prefix, width), nums in sorted(groups.items()):
-        nums.sort()
-        start = prev = nums[0]
-        for num in nums[1:] + [None]:
-            if num == prev + 1:
-                prev = num
-                continue
-            if start == prev:
-                out.append(f'{prefix}{start:0{width}d}')
-            else:
-                out.append(f'{prefix}[{start:0{width}d}-{prev:0{width}d}]')
-            start = prev = num
-    return ','.join(out + sorted(plain))
+# Booting nodes are bucketed into 3 coarse phases for the wave chart, not
+# tracked by every individual install.* state (30 Jul 2026 redesign — "a few
+# states, not all of them"). Boundaries match the pipeline order in STAGE_PCT:
+# phase 1 runs up to (not including) install.downloaded, phase 2 up to (not
+# including) install.unpack, phase 3 up to booted.
+PHASE1_STATES = frozenset({
+    'install.discovered', 'install.rendered', 'install.started', 'install.scripts',
+    'install.prescript', 'install.setupbmc', 'install.partscript',
+})
+PHASE2_STATES = frozenset({'install.downloaded', 'install.download', 'install.completed'})
+PHASE3_STATES = frozenset({
+    'install.unpack', 'install.setnet', 'install.secrets', 'install.postscript',
+    'install.roles', 'install.image', 'install.finalizing',
+})
 
 
-def build_sessions(nodes, states):
-    """nodes: {name: cfg}, states: {name: raw_state} -> list of session dicts.
+def classify_group(members, states):
+    """[node names] + {name: raw_state} -> one Luna group's counts.
 
-    Session = OS image. Racks = nodes bucketed by current state (collapsed hostlist),
-    sorted most-advanced first. Same JSON shape the template/JS already consume.
+    booted/phase1/phase2/phase3 are what the UI renders (a wave chart split
+    into 3 coarse phases, not all ~19 install.* states individually — see
+    PHASE1/2/3_STATES above). 'failed' is explicit install.error for now.
+
+    The previous design's STUCK_GAP_PCT ("this node is N points behind its
+    fastest peer") does NOT carry over to this per-Luna-group granularity: a
+    real group's own phase1/phase2/phase3 pcts span ~4 to ~95, so the instant
+    even one member reaches booted (100%), every node still mid-pipeline is
+    >=25 points behind it and would get flagged "stuck" purely for being
+    normal and unfinished — caught by the demo() test below before this
+    shipped. failedReasons keeps 'error' as its own key (not a bare bool) so
+    a real staleness signal (e.g. no state change in N minutes) can be added
+    as a second reason later without changing the shape callers already read.
     """
-    by_image = defaultdict(list)
-    for name, cfg in nodes.items():
-        by_image[cfg.get('osimage') or 'unknown'].append(name)
+    scored = []
+    for name in members:
+        state = states.get(name)
+        _pct, _label, kind = stage_of(state)
+        scored.append((name, state, kind))
 
-    sessions = []
-    for image, members in sorted(by_image.items()):
-        sample = nodes[members[0]]
-        buckets = defaultdict(list)   # state -> [names]
-        pcts = []
-        for name in members:
-            state = states.get(name)
-            pct, _, _ = stage_of(state)
-            buckets[state].append(name)
-            pcts.append(pct)
-        racks = []
-        for state, bnames in buckets.items():
-            pct, label, kind = stage_of(state)
-            racks.append({'name': collapse_hostlist(bnames), 'pct': pct,
-                          'stage': label, 'kind': kind, 'count': len(bnames)})
-        racks.sort(key=lambda r: (-r['pct'], r['name']))
-        overall = round(sum(pcts) / len(pcts)) if pcts else 0
-        sessions.append({
+    booted, phase1, phase2, phase3 = [], [], [], []
+    failed_reasons = {}
+    for name, state, kind in scored:
+        if kind == 'error':
+            failed_reasons[name] = 'error'
+        elif kind == 'done':
+            booted.append(name)
+        elif kind in ('idle', 'other'):
+            # No monitor entry yet, or a state we don't recognize -- this is
+            # not "before install.discovered and about to start", it's "we
+            # don't know it's making progress at all". Counts as not booting
+            # rather than inflating the booting wave with nodes that may not
+            # be doing anything.
+            failed_reasons[name] = 'not_started'
+        elif state in PHASE2_STATES:
+            phase2.append(name)
+        elif state in PHASE3_STATES:
+            phase3.append(name)
+        else:  # PHASE1_STATES
+            phase1.append(name)
+
+    failed_nodes = sorted(failed_reasons)
+    return {
+        'total': len(members),
+        'booted': len(booted),
+        'booting': len(phase1) + len(phase2) + len(phase3),
+        'phase1': len(phase1), 'phase2': len(phase2), 'phase3': len(phase3),
+        'failed': len(failed_nodes),
+        'failedNodes': failed_nodes,
+        'failedReasons': failed_reasons,
+    }
+
+
+def _sum_group_counts(groups):
+    totals = {'total': 0, 'booted': 0, 'booting': 0, 'failed': 0}
+    for g in groups:
+        for key in totals:
+            totals[key] += g[key]
+    return totals
+
+
+def build_images(nodes, states, all_osimage_names=()):
+    """nodes: {name: cfg}, states: {name: raw_state} -> list of image dicts
+    (id, name, groups), most-active-first then by name. groups = real Luna
+    node groups (node.group), each with its own booted/booting/failed counts —
+    not provisioning-state buckets.
+
+    all_osimage_names: every osimage Luna knows about, not just ones with
+    nodes on them right now. An osimage with zero nodes still gets listed
+    (empty groups) — a group with zero nodes still doesn't, since a group
+    only exists here as a byproduct of nodes actually being in it."""
+    by_image_group = defaultdict(lambda: defaultdict(list))
+    for name, cfg in nodes.items():
+        image = cfg.get('osimage') or 'unknown'
+        group = cfg.get('group') or 'ungrouped'
+        by_image_group[image][group].append(name)
+
+    images = []
+    for image, groupmap in sorted(by_image_group.items()):
+        groups = []
+        for group, members in sorted(groupmap.items()):
+            sample = nodes[members[0]]
+            counts = classify_group(members, states)
+            groups.append({'name': group, 'network': _provision_network(sample), **counts})
+        images.append({
             'id': re.sub(r'[^A-Za-z0-9_-]', '-', image),
-            'image': image,
-            'nodes': collapse_hostlist(members),
-            'network': _provision_network(sample),
-            'boot': sample.get('provision_method') or 'pxe',
-            'overall': overall,
-            'racks': racks,
+            'name': image,
+            'groups': groups,
         })
-    # Most active sessions first (not fully booted), then by name.
-    sessions.sort(key=lambda s: (s['overall'] >= 100, s['image']))
-    return sessions
+
+    seen = {img['name'] for img in images}
+    for image in sorted(set(all_osimage_names) - seen):
+        images.append({'id': re.sub(r'[^A-Za-z0-9_-]', '-', image), 'name': image, 'groups': []})
+
+    all_booted = lambda img: all(g['failed'] == 0 and g['booting'] == 0 for g in img['groups']) if img['groups'] else True
+    images.sort(key=lambda i: (all_booted(i), i['name']))
+    return images
 
 
 def _provision_network(cfg):
@@ -217,6 +289,12 @@ def get_status():
     node_data = api.get('/config/node')
     nodes = node_data.get('config', {}).get('node', {}) or {}
 
+    try:
+        osimage_data = api.get('/config/osimage')
+        all_osimage_names = list(osimage_data.get('config', {}).get('osimage', {}) or {})
+    except requests.HTTPError:
+        all_osimage_names = []  # don't fail the whole page over this — nodes' own osimages still show
+
     states = {}
     try:
         mon = api.get('/monitor/node')
@@ -230,25 +308,62 @@ def get_status():
     except requests.HTTPError:
         pass  # 404 "no entries found" -> nothing provisioning right now
 
-    return build_sessions(nodes, states)
+    return build_images(nodes, states, all_osimage_names)
 
 
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
 
+def _app_url():
+    """Absolute pun-namespaced root for this app, used by the Vue SPA's
+    window.APP_URL — same computation as the `node` app's Rest.app_url()."""
+    full_url = f"{request.scheme}://{request.host}{request.path}"
+    full_url = full_url[:-1]
+    full_url_app = f"{full_url}{url_for('home')}"
+    return full_url_app[:-1]
+
+
 @app.route('/', methods=['GET'])
 def home():
-    return render_template("index.html", table='Node Boot')
+    return render_template("index.html", APP_URL=_app_url())
 
 
 @app.route('/api/status', methods=['GET'])
 def status():
     try:
-        return jsonify({"sessions": get_status()})
+        return jsonify({"images": get_status()})
     except Exception as exc:  # surface API/config errors in the UI, don't 500
         app.logger.warning("status failed: %s", exc)
-        return jsonify({"sessions": [], "error": str(exc)}), 200
+        return jsonify({"images": [], "error": str(exc)}), 200
+
+
+def _sol_grab(node):
+    """On-demand SOL capture via the sol-grab service (controller1). Never
+    runs unbounded: the service itself caps concurrency and grab duration;
+    this is just the call."""
+    try:
+        resp = requests.get(f'{SOL_GRAB_URL}/grab/{node}', timeout=SOL_GRAB_TIMEOUT)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException as exc:
+        return {"lines": [], "error": f"sol-grab unreachable: {exc}"}
+
+
+@app.route('/api/console/<node>', methods=['GET'])
+def console(node):
+    """Latest console output for one node, captured live over SOL. Empty is
+    a valid, common state (a quiet console has nothing to say during the
+    grab window) and is reported as such, not an error."""
+    if not _NODE_NAME_RE.match(node):
+        abort(404)
+
+    result = _sol_grab(node)
+    if result.get("error"):
+        return jsonify({"node": node, "lines": [], "message": result["error"]}), 200
+    if not result.get("lines"):
+        return jsonify({"node": node, "lines": [], "message": "no console output captured yet"})
+    return jsonify({"node": node, "lines": result["lines"], "source": "sol"})
 
 
 if __name__ == "__main__":
@@ -259,25 +374,85 @@ if __name__ == "__main__":
 def demo():
     # ponytail: one runnable check for the pure logic (no network needed)
     assert stage_of(None) == (0, 'idle', 'idle')
-    assert stage_of('booted') == (100, 'booted', 'done')
-    assert stage_of('install.image')[0] == 80
+    assert stage_of('install.booted') == (100, 'booted', 'done')
+    assert stage_of('booted') == (100, 'booted', 'done')  # legacy pre-rewrite value
+    assert stage_of('install.image')[0] == 90
+    assert stage_of('install.setupbmc')[0] == 22
+    assert stage_of('install.unpack')[0] == 55
     assert stage_of('install.error')[2] == 'error'
-    assert collapse_hostlist(['node001', 'node002', 'node003', 'node005']) == 'node[001-003],node005'
-    assert collapse_hostlist(['gpu01']) == 'gpu01'
-    assert collapse_hostlist(['login', 'node010', 'node011']) == 'node[010-011],login'
 
-    nodes = {
-        'node001': {'osimage': 'img', 'provision_method': 'torrent',
-                    'provision_interface': 'BOOTIF',
-                    'interfaces': [{'interface': 'BOOTIF', 'network': 'cluster'}]},
-        'node002': {'osimage': 'img', 'provision_method': 'torrent',
-                    'provision_interface': 'BOOTIF',
-                    'interfaces': [{'interface': 'BOOTIF', 'network': 'cluster'}]},
-    }
-    sess = build_sessions(nodes, {'node001': 'booted', 'node002': 'install.roles'})
-    assert len(sess) == 1
-    s = sess[0]
-    assert s['network'] == 'cluster' and s['boot'] == 'torrent'
-    assert s['overall'] == round((100 + 65) / 2), s['overall']
-    assert [r['stage'] for r in s['racks']] == ['booted', 'roles'], s['racks']
-    print("OK: nodeboot logic (stage map, hostlist collapse, session build)")
+    def node(group, osimage='img', network='cluster'):
+        return {'osimage': osimage, 'group': group, 'provision_method': 'torrent',
+                'provision_interface': 'BOOTIF',
+                'interfaces': [{'interface': 'BOOTIF', 'network': network}]}
+
+    # Two nodes, same image, same group, one in phase1 one in phase2 -- not
+    # merged with each other, and neither is "failed".
+    nodes = {'node001': node('compute01'), 'node002': node('compute01')}
+    images = build_images(nodes, {'node001': 'install.discovered', 'node002': 'install.downloaded'})
+    assert len(images) == 1
+    img = images[0]
+    assert img['name'] == 'img'
+    assert len(img['groups']) == 1
+    g = img['groups'][0]
+    assert g['name'] == 'compute01' and g['network'] == 'cluster'
+    assert g == {'name': 'compute01', 'network': 'cluster', 'total': 2, 'booted': 0,
+                 'booting': 2, 'phase1': 1, 'phase2': 1, 'phase3': 0,
+                 'failed': 0, 'failedNodes': [], 'failedReasons': {}}, g
+
+    # Two different Luna groups under the same image stay separate group cards.
+    nodes2 = {'node001': node('compute01'), 'node002': node('compute02')}
+    images2 = build_images(nodes2, {'node001': 'install.booted', 'node002': 'install.booted'})
+    assert len(images2[0]['groups']) == 2
+    by_name = {g['name']: g for g in images2[0]['groups']}
+    assert by_name['compute01']['booted'] == 1 and by_name['compute02']['booted'] == 1
+
+    # phase boundaries: discovered->downloaded is phase1, downloaded->unpack is
+    # phase2, unpack->booted is phase3 -- exactly the 3 states asked for.
+    nodes3 = {n: node('compute01') for n in ('node001', 'node002', 'node003', 'node004')}
+    images3 = build_images(nodes3, {
+        'node001': 'install.discovered', 'node002': 'install.downloaded',
+        'node003': 'install.unpack', 'node004': 'install.booted',
+    })
+    g3 = images3[0]['groups'][0]
+    assert (g3['phase1'], g3['phase2'], g3['phase3'], g3['booted']) == (1, 1, 1, 1), g3
+
+    # a node still early in the pipeline while a sibling has already booted is
+    # NORMAL, not "failed" -- the regression this test exists to catch (an
+    # earlier version of this function flagged it "stuck" purely for being
+    # >=25 points behind a booted peer, which is true of almost every
+    # mid-pipeline node the instant anyone in its group finishes).
+    nodes4 = {n: node('compute01') for n in ('node001', 'node002', 'node003')}
+    images4 = build_images(nodes4, {'node001': 'install.booted', 'node002': 'install.booted',
+                                     'node003': 'install.discovered'})
+    g4 = images4[0]['groups'][0]
+    assert g4['failed'] == 0, g4
+    assert g4['booted'] == 2 and g4['phase1'] == 1
+
+    # only an explicit install.error counts as failed right now
+    nodes5 = {n: node('compute01') for n in ('node001', 'node002', 'node003')}
+    images5 = build_images(nodes5, {'node001': 'install.error', 'node002': 'install.booted',
+                                     'node003': 'install.discovered'})
+    g5 = images5[0]['groups'][0]
+    assert g5['booted'] == 1 and g5['failed'] == 1
+    assert g5['failedReasons'] == {'node001': 'error'}
+
+    # a node with no monitor entry at all (never reached install.discovered)
+    # counts as not booting, not as an early-phase booting node
+    nodes6 = {n: node('compute01') for n in ('node001', 'node002')}
+    images6 = build_images(nodes6, {'node001': 'install.discovered'})  # node002 has no entry
+    g6 = images6[0]['groups'][0]
+    assert g6['booting'] == 1 and g6['phase1'] == 1
+    assert g6['failed'] == 1 and g6['failedReasons'] == {'node002': 'not_started'}
+
+    # an osimage with zero nodes still gets listed (empty groups) when we know
+    # about it from Luna's own osimage list; a group with zero nodes still
+    # never gets synthesized, since groups only exist as a byproduct of nodes
+    nodes7 = {'node001': node('rack01')}
+    images7 = build_images(nodes7, {'node001': 'install.booted'},
+                            all_osimage_names=['img', 'unused-image'])
+    by_name7 = {i['name']: i for i in images7}
+    assert set(by_name7) == {'img', 'unused-image'}, by_name7
+    assert by_name7['unused-image']['groups'] == []
+
+    print("OK: nodeboot logic (stage map, phase mapping, per-group build, no false-positive failures)")
