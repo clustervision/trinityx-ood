@@ -1,0 +1,10 @@
+name: NODEBOOT
+description: Live node provisioning view
+icon: /icon.png
+category: Utilities
+new_window: false
+
+tile:
+  title: "Node Boot"
+  sub_caption: |
+   Watch nodes boot — live
