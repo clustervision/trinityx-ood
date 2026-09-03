@@ -52,7 +52,8 @@ class Helper():
         This method will provide the URL's for the frontend application.
         """
         response = {"PROMETHEUS_URL": "", "APP_URL": ""}
-        full_url = f"https://{request.host}{request.path}"
+        scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+        full_url = f"{scheme}://{request.host}{request.path}"
         full_url = full_url[:-1]
         full_url_app = f"{full_url}{url_for('home')}"
         base_url = full_url_app[:-1]

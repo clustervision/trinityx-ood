@@ -106,8 +106,7 @@ def home():
     Serve the Vue SPA shell. window.APP_URL is this app's base URL.
     """
     url = Rest.app_url(request)
-    # url = {"APP_URL": f"{request.scheme}://{request.host}{request.path}"}
-    print(url)
+    LOGGER.debug(url)
     return render_template("index.html", APP_URL=url["APP_URL"])
 
 
