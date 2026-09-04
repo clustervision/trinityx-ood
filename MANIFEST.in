@@ -59,7 +59,13 @@ include node/*
 include node/app
 include node/app/*
 include node/app/assets
-include node/app/assets/*
+
+include nodeboot
+include nodeboot/*
+include nodeboot/app
+include nodeboot/app/*
+include nodeboot/app/assets
+include nodeboot/app/assets/*
 
 include osimage
 include osimage/*
