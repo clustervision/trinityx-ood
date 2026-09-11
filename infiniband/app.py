@@ -1,11 +1,13 @@
 import re
 import os
+import glob
 import subprocess
 import requests
 import hostlist
 from json import loads, dumps, JSONDecodeError
 from textwrap import wrap
 from flask import Flask, render_template, request, jsonify
+from markupsafe import escape
 
 from base.config import get_configs
 from rest import Rest
@@ -30,13 +32,13 @@ def validate_home_directory():
     if request.path.startswith('/static/'):
         return
     if isinstance(TOKEN_FILE, dict):
-        return render_template("error.html", table="Infiniband", data="", error=TOKEN_FILE["error"])
+        raise Exception(TOKEN_FILE["error"])
     file_check = os.path.isfile(INI_FILE)
     if file_check is False:
-        return render_template("error.html", table="Infiniband", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
+        raise Exception(f'Luna Configuration File: <strong>{INI_FILE}</strong> Not Found')
     read_check = os.access(INI_FILE, os.R_OK)
     if read_check is False:
-        return render_template("error.html", table="Infiniband", data="", error=f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
+        raise Exception(f'Luna Configuration File: <strong>{INI_FILE}</strong> is not readable.')
     return None
 
 def _parse_severity(metric_name):
@@ -187,13 +189,59 @@ def get_graph_state():
         pass
     return None
 
+def fabric_unavailable():
+    """
+    This method tells why this machine cannot scan the fabric, or None when it can.
+
+    Both signals are the ones ibnetdiscover itself depends on: an entry under
+    /sys/class/infiniband means an HCA is present, and a umad character device means
+    ib_umad is loaded. The sysfs directory exists even on a machine that has no
+    InfiniBand at all, so it is the entries that decide and not the directory.
+    """
+    if not glob.glob("/sys/class/infiniband/*"):
+        return {
+            "level": "info",
+            "message": "No InfiniBand hardware was found on this machine, so there is no fabric to display."
+        }
+    umad_ports = glob.glob("/dev/infiniband/umad*")
+    if not umad_ports:
+        return {
+            "level": "warning",
+            "message": "InfiniBand hardware is present, but the <strong>ib_umad</strong> module is not loaded, "
+                       "so the fabric cannot be scanned."
+        }
+    if not any(os.access(port, os.R_OK | os.W_OK) for port in umad_ports):
+        return {
+            "level": "warning",
+            "message": "The InfiniBand MAD ports are not readable and writable by this user, so the fabric "
+                       "cannot be scanned."
+        }
+    return None
+
 def get_graph_data():
-    process = subprocess.run(
-        CONFIGS['APP']['IBNETDISCOVER_CMD'] , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-    )
-    if process.returncode != 0:
+    timeout = CONFIGS['APP']['IBNETDISCOVER_TIMEOUT']
+    try:
+        process = subprocess.run(
+            CONFIGS['APP']['IBNETDISCOVER_CMD'] , stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True,
+            timeout=timeout
+        )
+    except subprocess.TimeoutExpired:
+        LOGGER.error(f"ibnetdiscover did not finish within {timeout} seconds")
         raise Exception(
-            f"ibnetdiscover failed with code {process.returncode}:\n{process.stderr.decode('utf-8')}"
+            f"The InfiniBand fabric scan did not finish within {timeout} seconds. The fabric may be very "
+            "large, or the subnet manager may not be responding."
+        )
+    if process.returncode != 0:
+        stderr = process.stderr.decode("utf-8").strip()
+        LOGGER.error(f"ibnetdiscover exited {process.returncode}: {stderr}")
+        if process.returncode == 127:
+            raise Exception(
+                "The <strong>ibnetdiscover</strong> command is not available on this machine. "
+                "It ships in the <strong>infiniband-diags</strong> package."
+            )
+        raise Exception(
+            f"The InfiniBand fabric scan failed (exit code {process.returncode})."
+            f"<details><summary>Details</summary><pre>{escape(stderr)}</pre></details>"
         )
 
     ibnetdiscover_output = process.stdout.decode("utf-8")    
@@ -216,6 +264,11 @@ def graph_route():
     """
     Route to get the graph.
     """
+
+    notice = fabric_unavailable()
+    if notice:
+        LOGGER.info(f"Fabric not scanned: {notice['message']}")
+        return jsonify({"nodes": [], "links": [], "state": get_graph_state(), "notice": notice})
 
     graph_data = get_graph_data()
     prometheus_data = get_prometheus_data()

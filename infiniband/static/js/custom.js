@@ -832,6 +832,9 @@ const Context = {
         var currentUrl = window.location.href.replace(/\/$/, "");
         var url = `${currentUrl}/graph`;
         var successCallback = (data) => {
+            if (data.notice) {
+                displayAlert(data.notice.level, data.notice.message);
+            }
 
             data.links.forEach((link) => {
                 var source = data.nodes.find(node => node.uid == link.source_uid);
