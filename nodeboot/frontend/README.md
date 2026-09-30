@@ -86,3 +86,4 @@ Ensure production `VITE_PUBLIC_BASE` matches how Flask serves assets (see `.env.
 ## License
 
 Part of the TrinityX software suite — GPL v3 or later.
+
