@@ -1,7 +1,7 @@
 name: NODEBOOT
 description: Live node provisioning view
 icon: /icon.png
-category: Utilities
+category: Monitoring
 new_window: false
 
 tile:
