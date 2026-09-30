@@ -45,6 +45,5 @@ LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 APP_STATE = True  # False for Development, True for Production
 
-# sol-grab service — controller1 specifically (the box with BMC network access).
-SOL_GRAB_URL = 'http://10.141.255.252:6667'
+SOL_GRAB_URL = 'http://127.0.0.1:6667'
 SOL_GRAB_TIMEOUT = 25  # covers the service's own grab window + pool wait
