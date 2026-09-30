@@ -45,8 +45,5 @@ LOG_DIR = '/var/log/luna'
 LOG_FILE = '/var/log/luna/luna2-web.log'
 APP_STATE = True  # False for Development, True for Production
 
-# sol-grab (trinity/node-console) runs on every controller and listens
-# locally; the app talks to its own controller's instance. On a host
-# without sol-grab the console panel degrades gracefully.
 SOL_GRAB_URL = 'http://127.0.0.1:6667'
 SOL_GRAB_TIMEOUT = 25  # covers the service's own grab window + pool wait
