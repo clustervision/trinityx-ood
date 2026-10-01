@@ -14,3 +14,5 @@ In order to fully integrate this app inside OOD the following steps are required
 - Clone the repository to `/tmp/`
 - Add required things to `/var/www/ood/apps/sys/`. Example ` cp -r /tmp/trinityx-ood/bmcsetup /var/www/ood/apps/sys/`
 - Install the python modules located inside `requirements.txt` in each module.
+
+## Before Clubing the frontend and backend for luna apps.
