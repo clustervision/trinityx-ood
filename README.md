@@ -15,6 +15,14 @@ In order to fully integrate this app inside OOD the following steps are required
 - Add required things to `/var/www/ood/apps/sys/`. Example ` cp -r /tmp/trinityx-ood/bmcsetup /var/www/ood/apps/sys/`
 - Install the python modules located inside `requirements.txt` in each module.
 
+## Packaging
+CI builds one pip package that holds every app's backend together with its built frontend:
+1. `frontend-build` reads `frontends.txt`. For each app listed there it runs `npm ci` and `npm run build` in `<app>/frontend/`, and copies the build into `<app>/app/assets/`.
+2. `build-job` makes the pip package from the backend and the built assets. The `frontend/` folders are not part of it.
+3. On `development` and `main`, `publish-job` uploads the package, and `frontend-publish` uploads each build as `<package>-1.0.latest.tar.gz`, the file older TrinityX installs download themselves.
+
+`<app>/app/assets/` holds the committed build of each frontend. CI rebuilds it from `<app>/frontend/` on every pipeline, so the package always carries a fresh build. To keep the committed copy current, run `npm run build` in `<app>/frontend/` after a frontend change and copy `dist/` into `<app>/app/assets/`. A new frontend must be added to `frontends.txt`, or the pipeline fails.
+
 ## Development mode
 Every app with a `frontend/` folder can run against its live frontend, so backend and frontend changes reload without a build.
 

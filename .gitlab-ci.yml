@@ -4,23 +4,60 @@
 # copyright: Copyright 2026, Luna2 Project
 # license: GPL
 #
-# Build and publish the pip package. The build/publish logic lives once in
-# ClusterVision/gitlab-cicd-pipelines rather than being copied into every project:
-# it also points the target directory's "latest" symlinks at the build it just
-# produced and prunes older ones, which the per-project version never did.
+# Build and publish the pip package with every app's frontend built in. The logic lives
+# once in ClusterVision/gitlab-cicd-pipelines rather than being copied into every project:
 #
-# Branch -> stream:  main -> $LOCATION,  development -> $DEV_LOCATION,
-#                    ztp-poc -> $ZTPPOC_LOCATION (skipped where unset).
+#   trinityx-ood-frontends-pipeline.yml  builds the frontends listed in frontends.txt
+#                                        into <folder>/app/assets/, and publishes the
+#                                        per-app tarballs older TrinityX installs download.
+#   pip-package-pipeline.yml             builds the pip package and publishes it,
+#                                        pointing the "latest" symlinks at that build.
+#
+# Branch -> stream:  main -> $LOCATION,  development -> $DEV_LOCATION.
 # Any other branch is built but not published.
 #
 # Required project CI/CD variables: LOCATION, DEV_LOCATION, IPADDRESS, SSH_USER,
-# SSH_PASSWORD.
+# SSH_PASSWORD; LOCATION_TRIX_16_1, DEV_LOCATION_TRIX_16_1 for the 16.1 tree; and
+# <target>_LOCATION, <target>_DEV_LOCATION for every target named in frontends.txt.
 #
 
 include:
   - project: 'ClusterVision/gitlab-cicd-pipelines'
+    file: '/trinityx-ood-frontends-pipeline.yml'
+    ref: 'main'
+  - project: 'ClusterVision/gitlab-cicd-pipelines'
     file: '/pip-package-pipeline.yml'
     ref: 'main'
+
+stages:
+  - frontend
+  - build
+  - publish
+
+# The package is made from the built assets, and the per-app tarballs are uploaded
+# only once the package is published, so both come from the same build.
+build-job:
+  needs: ["frontend-build"]
+
+frontend-publish:
+  needs:
+    - job: frontend-build
+      artifacts: true
+    - job: publish-job
+      artifacts: false
+
+# The 16.1 tree has its own folder for this package; the shared publish-job serves one
+# tree. Its frontend files are the same as the 16 tree's, so they need no second upload.
+publish-job-16.1:
+  extends: publish-job
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      variables:
+        TARGET_LOCATION: $LOCATION_TRIX_16_1
+    - if: $CI_COMMIT_BRANCH == "development"
+      variables:
+        TARGET_LOCATION: $DEV_LOCATION_TRIX_16_1
+    - when: never
 
 # APP_STATE = False in an app's constant.py is development mode (see devserver.py).
 # It runs in .pre so that a failure stops the build and the publish behind it.
