@@ -1,0 +1,179 @@
+
+.layout-menu-fixed:not(.layout-menu-collapsed) .layout-page, .layout-menu-fixed-offcanvas:not(.layout-menu-collapsed) .layout-page {
+  padding: 0rem;
+}
+
+/* When footer is revealed (outer scrolled), sidebar scrolls with page instead of being fixed */
+.layout-footer-revealed .layout-menu {
+  position: relative;
+}
+.grad {
+  /* background-image: linear-gradient(to right, lightblue, green, yellow, orange, red); */
+  background: linear-gradient(to right,
+      /* lightblue 0%,  */
+      blue 15%,
+      green 25%,
+      yellow 50%,
+      orange 75%,
+      red 100%);
+  width: 60%;
+}
+
+/* ------------ Introducing Media Query to Make Large and Small Layouts for Rack and it's components. ----------------- */
+
+/* ------------ Small Screen View ----------------- */
+
+
+@media only screen and (max-width: 1920px) {
+
+.draggable {
+  height: 10px;
+  padding: 0;
+  margin: 0;
+}
+
+.ui-widget-content {
+    border: null;
+    background: #363636;
+    color: #ffffff;
+}
+
+#devices {
+  background-color: rgb(203, 209, 209);
+  height: 100%;
+  width:90%;
+  margin-left: 5%;
+  margin-right: 5%;
+}
+
+#devices .draggable{
+  margin: 2%;
+}
+
+
+.ui-state-hover {
+  border: 1px solid #cccccc;
+  background: #067a19;
+  font-weight:bolder;
+  color: #ffffff;
+}
+
+
+.right-click {
+  display: inline-block;
+}
+
+#dev-name {
+  font-size:xx-small;
+  margin-top: 0px;
+  position:absolute;
+  margin-left: 40px;
+}
+
+
+.color_metric_1 {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Clearfix to contain floated elements */
+}
+
+.color_metric_2 {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Clearfix to contain floated elements */
+}
+
+code {
+  font-size: 100%;
+  height: 10px;
+  width: 5px;
+  padding: 0;
+  margin: 2px;
+  display: inline-block; /* Ensure it behaves like a block while remaining inline */
+}
+.row {
+  flex-wrap: nowrap;
+}
+
+.rack-slot {
+  width: 120px;
+  height: 15px;
+  padding: 0;
+  margin: 0;
+  color:#ffffff;
+}
+.rack-slot p {
+  margin: 0;
+}
+}
+
+
+@media (max-width: 1199.98px) {
+  .layout-menu {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 90vh !important;
+    max-width: 250px !important;
+    transform: none !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ------------ Large Screen View ----------------- */
+@media only screen and (min-width: 1921px) {
+
+  .draggable {
+    height: 30px;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+  }
+
+
+  code {
+    font-size: 100%;
+    height: 20px;
+    width: 10px;
+    padding: 0;
+    margin: 2px;
+    display: inline-block; /* Ensure it behaves like a block while remaining inline */
+  }
+  .row {
+    flex-wrap: nowrap;
+  }
+
+  .rack-slot {
+    width: 220px;
+    height: 30px;
+    padding: 0;
+    margin: 0;
+    color:#ffffff;
+  }
+  .rack-slot p {
+    margin: 0;
+  }
+
+
+
+}
+
