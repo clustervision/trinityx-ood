@@ -30,6 +30,7 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
+import sys
 from flask import Flask, jsonify, render_template, request
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
@@ -227,12 +228,9 @@ def api_v1_license():
 
 if __name__ == "__main__":
     if APP_STATE is False:
-        _ssl_crt = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.crt'
-        _ssl_key = '/trinity/local/etc/ssl/yixin3-dev-ctrl001.cluster.key'
-        if os.path.isfile(_ssl_crt) and os.path.isfile(_ssl_key):
-            dev_context = (_ssl_crt, _ssl_key)
-            app.run(host='0.0.0.0', port=7755, debug=True, ssl_context=dev_context)
-        else:
-            app.run(host='0.0.0.0', port=7755, debug=True)
+        # devserver.py sits in the repository root, next to the app folders.
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from devserver import run_dev
+        run_dev(app, port=7755)
     else:
         app.run()

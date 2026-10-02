@@ -28,6 +28,7 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
+import sys
 from flask import Flask, jsonify, request, render_template
 from rest import Rest
 from constant import LICENSE, INI_FILE, TOKEN_FILE, APP_STATE
@@ -232,7 +233,10 @@ def license_info():
 
 
 if __name__ == "__main__":
-    if APP_STATE is False: 
-        app.run(host='0.0.0.0', port=7755, debug=True)
+    if APP_STATE is False:
+        # devserver.py sits in the repository root, next to the app folders.
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from devserver import run_dev
+        run_dev(app, port=7755)
     else:
         app.run()

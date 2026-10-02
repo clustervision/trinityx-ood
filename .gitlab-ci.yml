@@ -21,3 +21,15 @@ include:
   - project: 'ClusterVision/gitlab-cicd-pipelines'
     file: '/pip-package-pipeline.yml'
     ref: 'main'
+
+# APP_STATE = False in an app's constant.py is development mode (see devserver.py).
+# It runs in .pre so that a failure stops the build and the publish behind it.
+app-state-check:
+  stage: .pre
+  image: python:3.10.0-alpine
+  script:
+    - |
+      if grep -nE '^APP_STATE *= *False' */constant.py; then
+        echo "APP_STATE = False is development mode; set it back to True before merging." >&2
+        exit 1
+      fi

@@ -31,6 +31,7 @@ __email__       = 'sumit.sharma@clustervision.com'
 __status__      = 'Development'
 
 import os
+import sys
 import requests
 import urllib3
 import json
@@ -238,14 +239,9 @@ def license_info():
 
 if __name__ == "__main__":
     if APP_STATE is False:
-        dev_context=(
-            '/trinity/local/etc/ssl/vmware-controller1.cluster.crt',
-            '/trinity/local/etc/ssl/vmware-controller1.cluster.key'
-        )
-        app.run(host='0.0.0.0', port=7755, debug= True, ssl_context=dev_context)
+        # devserver.py sits in the repository root, next to the app folders.
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from devserver import run_dev
+        run_dev(app, port=7755)
     else:
         app.run()
-
-# Run in Dev mode:
-# sudo setfacl -m u:admin:r /trinity/local/etc/ssl/vmware-controller1.cluster.*
-# sudo -u admin bash -c '. /trinity/local/python/bin/activate && python app.py'

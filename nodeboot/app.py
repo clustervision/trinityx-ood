@@ -38,6 +38,7 @@ __email__       = 'support@clustervision.com'
 __status__      = 'Development'
 
 import os
+import sys
 import re
 from collections import defaultdict
 from configparser import RawConfigParser
@@ -46,7 +47,7 @@ import requests
 from flask import Flask, render_template, jsonify, abort, url_for, request
 
 from constant import (
-    INI_FILE, TOKEN_FILE, SOL_GRAB_URL, SOL_GRAB_TIMEOUT,
+    INI_FILE, TOKEN_FILE, SOL_GRAB_URL, SOL_GRAB_TIMEOUT, APP_STATE,
 )
 
 requests.packages.urllib3.disable_warnings()
@@ -367,8 +368,14 @@ def console(node):
 
 
 if __name__ == "__main__":
-    app.config["DEBUG"] = True
-    app.run(host='0.0.0.0', port=7756, debug=True)
+    if APP_STATE is False:
+        # devserver.py sits in the repository root, next to the app folders.
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from devserver import run_dev
+        run_dev(app, port=7756)
+    else:
+        app.config["DEBUG"] = True
+        app.run(host='0.0.0.0', port=7756, debug=True)
 
 
 def demo():
