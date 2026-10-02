@@ -129,6 +129,7 @@ include rack/app/assets
 include rack/app/assets/*
 
 recursive-include rack *
+prune rack/frontend
 
 include alertx
 include alertx/*

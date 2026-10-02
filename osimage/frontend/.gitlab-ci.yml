@@ -1,5 +1,0 @@
-include:
-  - project: 'ClusterVision/gitlab-cicd-pipelines'
-    file: '/trinityx-luna-ood-apps.yml'
-    inputs:
-      SKIP_TESTING: "true"
