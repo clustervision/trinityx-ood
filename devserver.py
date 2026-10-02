@@ -99,15 +99,15 @@ def _start_vite(frontend: str, name: str) -> None:
     """
     Install node_modules when the lock file changed, start Vite and stop it on exit.
     """
-    shared = _mount_type(frontend).startswith('fuse')
+    on_fuse = _mount_type(frontend).startswith('fuse')
     node_modules = os.path.join(frontend, 'node_modules')
-    if shared:
+    if on_fuse:
         _mount_local_node_modules(node_modules, name)
     _install_node_modules(frontend, node_modules)
     command = [os.path.join(node_modules, '.bin', 'vite'),
                '--host', '0.0.0.0', '--port', str(VITE_PORT), '--strictPort', '--cors']
-    # A shared folder does not report edits made on the host, so Vite has to poll for them.
-    env = dict(os.environ, CHOKIDAR_USEPOLLING='true') if shared else None
+    # A FUSE mount raises no file events for edits made on the other side, so Vite has to poll.
+    env = dict(os.environ, CHOKIDAR_USEPOLLING='true') if on_fuse else None
     vite = subprocess.Popen(command, cwd=frontend, env=env, start_new_session=True)
     atexit.register(_stop, vite)
     signal.signal(signal.SIGHUP, lambda *_: sys.exit(0))
@@ -132,11 +132,11 @@ def _mount_type(path: str) -> str:
 
 def _mount_local_node_modules(node_modules: str, name: str) -> None:
     """
-    Bind-mount a VM-local node_modules over the shared one.
-    The shared folder cannot hold symlinks, and its node_modules belongs to the host's OS.
+    Bind-mount a node_modules on local disk over the one in a FUSE-mounted checkout.
+    Such mounts often cannot hold symlinks, and their node_modules may be built for another OS.
     """
     if os.geteuid() != 0:
-        raise SystemExit('ERROR :: Run as root: the frontend is on a shared folder and its '
+        raise SystemExit('ERROR :: Run as root: the checkout is on a FUSE mount and its '
                          'node_modules has to be bind-mounted from local disk.')
     local = os.path.join(NODE_MODULES_CACHE, name, 'node_modules')
     os.makedirs(local, exist_ok=True)
