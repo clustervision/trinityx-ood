@@ -1,0 +1,977 @@
+/* ========================================================
+   TrinityX OOD – OS Image Tags App (Vue SPA)
+   Styles matched to the OS Images / Nodes / Group design system
+   ======================================================== */
+
+/* ---------- Reset / base ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: #ffffff;
+  font-family: "Geist Sans", "Geist", system-ui, -apple-system, sans-serif;
+  color: #111111;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100%;
+}
+
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tx-app-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.tx-app-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* ---------- Shell (page wrapper) ---------- */
+.tx-shell {
+  position: relative;
+  max-width: 1400px;
+  margin: 1.5rem auto;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+}
+
+.tx-inventory-page.tx-shell {
+  max-width: none;
+  width: calc(100% - 2.5rem);
+  min-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tx-inventory-page .tx-header-actions {
+  align-items: stretch;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-blue,
+.tx-inventory-page .tx-header-actions > .tx-btn-help {
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-blue {
+  border: 2px solid transparent;
+}
+
+.tx-inventory-page .tx-header-actions > .tx-btn-help {
+  width: auto;
+  min-width: 2.75rem;
+  height: auto;
+}
+
+.tx-inventory-page .tx-inline-search-label {
+  font-weight: 400;
+}
+
+/* ---------- Page title ---------- */
+.tx-title {
+  color: #5376EA;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0;
+}
+
+/* ---------- Header bar (title + actions) ---------- */
+.tx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+  padding-bottom: 0.85rem;
+}
+
+.tx-header .tx-title {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.tx-header-actions {
+  display: flex;
+  align-items: center;
+  gap: calc(0.65rem + 2px);
+  flex-wrap: nowrap;
+  flex: 0 1 auto;
+  margin-left: auto;
+  min-width: 0;
+}
+
+/* ---------- Buttons ---------- */
+.tx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  line-height: 1.5;
+  transition: opacity 0.15s;
+}
+
+.tx-btn:hover {
+  opacity: 0.85;
+}
+
+.tx-btn-blue {
+  background: #5376EA;
+  color: #fff;
+}
+
+.tx-btn-orange {
+  background: #f0a848;
+  color: #fff;
+}
+
+.tx-btn-dark {
+  background: #2c2c3a;
+  color: #fff;
+}
+
+.tx-btn-outline-blue {
+  background: transparent;
+  color: #5376EA;
+  border: 2px solid #5376EA;
+}
+
+.tx-btn-danger {
+  background: #E74C3C;
+  color: #fff;
+}
+
+.tx-btn-help {
+  background: #f0a848;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* ---------- Inline search ---------- */
+.tx-inline-search {
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  border: 2px solid #E6EEFF;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.tx-inline-search-label {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0.3rem 0.55rem;
+  font-size: 18px;
+  font-weight: 600;
+  color: #5376EA;
+  background: #E6EEFF;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tx-inline-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  outline: none;
+  padding: 0.3rem 0.55rem;
+  font-size: 18px;
+  color: #111;
+  background: #ffffff;
+  max-width: min(220px, 36vw);
+}
+
+.tx-inline-search-input:focus {
+  box-shadow: inset 0 0 0 1px #4a6cf7;
+}
+
+/* ---------- Alerts ---------- */
+.alert-danger {
+  background: #fde0db;
+  border: 1.5px solid #f5b8ac;
+  color: #6b3a30;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background: #dff5e3;
+  border: 1.5px solid #a8ddb5;
+  color: #2a6b3a;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Table wrapper (rounded frame) ---------- */
+.tx-inventory-table-wrap {
+  border: 2px solid #e6eeff;
+  border-radius: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------- Table ---------- */
+.tx-inventory-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
+.tx-inventory-table thead th.tx-th-regular {
+  color: #5376EA;
+  background: #ffffff;
+  border: none;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.15;
+  padding: 0.6rem 0.75rem;
+  text-transform: uppercase;
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal;
+  cursor: pointer;
+  user-select: none;
+  min-width: 8.5rem;
+  overflow: visible;
+}
+
+.tx-th-actions {
+  cursor: default !important;
+  min-width: 6rem;
+}
+
+.tx-th-actions .tx-sort-dt {
+  display: none;
+}
+
+.tx-sort-dt {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: #5376EA;
+}
+
+/* ========== Vertical Separators ========== */
+.tx-th-sep-blue {
+  border-left: 2px solid rgba(83, 118, 234, 0.2) !important;
+}
+.tx-td-sep-blue {
+  border-left: 2px solid rgba(83, 118, 234, 0.2) !important;
+}
+
+/* ---------- Body cells ---------- */
+.tx-inventory-table tbody td {
+  color: #111111;
+  vertical-align: middle;
+  border: none;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.45;
+  padding: 0.6rem 0.75rem 0.72rem;
+  min-width: 0;
+  text-align: center;
+  overflow: visible;
+}
+
+.tx-th-label-clip {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+.tx-cell-ellipsis {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.45;
+  padding: 0.06em 0 0.14em;
+}
+
+.tx-inventory-table .tx-cell-ellipsis {
+  text-align: center;
+}
+
+.tx-inventory-table .tx-cell-truncate-js {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+button.tx-name-link {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+}
+
+button.tx-name-link.tx-cell-ellipsis,
+button.tx-name-link.tx-cell-truncate-js {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: center;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Alternating row backgrounds */
+.tx-inventory-table tbody tr:nth-child(odd) td {
+  background: rgba(230, 238, 255, 0.6);
+}
+
+.tx-inventory-table tbody tr:nth-child(even) td {
+  background: #ffffff;
+}
+
+/* ---------- Name link ---------- */
+.tx-name-link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.35;
+  color: #321DFF;
+  cursor: pointer;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tx-name-link .tx-cell-ellipsis,
+.tx-name-link .tx-cell-truncate-js {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+  border-bottom: 1.5px solid currentColor;
+  padding-bottom: 2px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.tx-name-link:hover {
+  color: #2818cc;
+}
+
+button.tx-name-link:focus {
+  outline: none;
+}
+
+button.tx-name-link:focus-visible .tx-cell-ellipsis,
+button.tx-name-link:focus-visible .tx-cell-truncate-js {
+  outline: 2px solid #5376ea;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- NONE badge ---------- */
+.tx-na-box {
+  display: inline-block;
+  min-width: 5rem;
+  padding: 0.28rem 0.55rem 0.32rem;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: #AEAEAE;
+  background: #E8E8E8;
+  border: 2px solid #AEAEAE;
+  border-radius: 4px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* ---------- Actions column ---------- */
+.tx-col-actions {
+  white-space: nowrap;
+  width: 1%;
+  min-width: 3.5rem;
+  overflow: visible;
+}
+
+.tx-inventory-table td.tx-col-actions .tx-action-icons {
+  justify-content: center;
+}
+
+.tx-action-icons {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.tx-icon-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0.15rem;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tx-icon-act:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tx-icon-act:not(:disabled):hover {
+  opacity: 0.75;
+}
+
+.tx-icon-delete .tx-delete-icon-img {
+  display: block;
+  vertical-align: middle;
+}
+
+.tx-icon-link {
+  color: #696cff;
+}
+
+.tx-icon-danger {
+  color: #e74c3c;
+}
+
+/* ---------- Table footer (pagination) ---------- */
+.tx-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0 0;
+}
+
+.tx-page-length-box {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  border: 2px solid #E6EEFF;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #E6EEFF;
+}
+
+.tx-page-length-box select {
+  border: none;
+  outline: none;
+  color: #5376EA;
+  font-size: 18px;
+  font-weight: 500;
+  min-width: 3.25rem;
+  padding: 0.3rem 1.75rem 0.3rem 1rem;
+  background: #fff;
+  cursor: pointer;
+  text-align: center;
+  text-align-last: center;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+.tx-page-length-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.55rem;
+  color: #5376EA;
+  font-size: 18px;
+  font-weight: 500;
+  background: #E6EEFF;
+  white-space: nowrap;
+}
+
+.tx-paging {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tx-paging-arrow {
+  box-sizing: border-box;
+  width: 21px;
+  height: 43.5px;
+  min-width: 21px;
+  min-height: 43.5px;
+  padding: 0;
+  border: 2px solid #e6eeff;
+  border-radius: 10px;
+  color: #5376EA;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tx-paging-arrow:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tx-paging-current {
+  font-family: "Geist Sans", "Geist", system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 100%;
+  letter-spacing: 0;
+  color: #5376EA;
+  min-width: 1.5ch;
+  text-align: center;
+}
+
+/* ================================================================
+   NAVBAR (Header)
+   ================================================================ */
+.tx-navbar {
+  background: linear-gradient(
+    to right,
+    #4a54f1 0%,
+    #4a54f1 10%,
+    #7d4dbb 25%,
+    #c63d7b 45%,
+    #e95f4a 65%,
+    #f3a133 85%,
+    #f8c325 100%
+  ) !important;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 0 1rem;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+
+.tx-breadcrumb {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2px;
+}
+
+.tx-breadcrumb-logo {
+  display: flex;
+  align-items: center;
+  margin-right: 22px;
+  max-height: 42px;
+  padding: 6px 0;
+  box-sizing: border-box;
+}
+
+.tx-breadcrumb-logo a {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.tx-navbar-logo {
+  width: 30px;
+  height: 30px;
+  max-width: 30px;
+  max-height: 30px;
+  object-fit: contain;
+  display: block;
+  padding: 0;
+  margin: 0;
+}
+
+.tx-breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.tx-breadcrumb-item::before {
+  content: '/';
+  color: rgba(255, 255, 255, 0.65);
+  padding: 0 calc(0.4rem + 2px);
+}
+
+.tx-breadcrumb-item:first-of-type::before {
+  display: none;
+}
+
+.tx-breadcrumb-link {
+  color: #ffffff;
+  text-decoration: none;
+  background-color: transparent;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.3;
+  padding: 10px 0.4rem;
+  box-sizing: border-box;
+}
+
+.tx-breadcrumb-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255, 255, 255, 0.85);
+}
+
+/* ================================================================
+   FOOTER
+   ================================================================ */
+.tx-footer {
+  background: transparent;
+  color: #666;
+  font-size: 0.8rem;
+  padding: 0.75rem 0;
+  margin-top: auto;
+}
+
+.tx-footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.5rem 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tx-footer-left {
+  margin-bottom: 0;
+}
+
+.tx-footer-right {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.tx-footer-link {
+  color: #666;
+  text-decoration: none;
+}
+
+.tx-footer-link:hover {
+  color: #222;
+  text-decoration: underline;
+}
+
+/* ================================================================
+   MODAL (BaseModal)
+   ================================================================ */
+.tx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.tx-modal-container {
+  position: relative;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  width: 100%;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2.5rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.tx-modal-lg {
+  max-width: min(1280px, calc(100vw - 2rem));
+}
+
+.tx-modal-md {
+  max-width: 640px;
+}
+
+.tx-modal-wide {
+  max-width: min(920px, calc(100vw - 2rem));
+}
+
+.tx-modal-sm {
+  max-width: 440px;
+}
+
+.tx-modal-x {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #5376EA;
+  cursor: pointer;
+  z-index: 6;
+}
+
+.tx-modal-x:hover {
+  color: #3a5cd0;
+}
+
+/* ================================================================
+   FORM PAGE (inside modals)
+   ================================================================ */
+.tx-form-page {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.tx-form-page .tx-title {
+  color: #5376EA;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.tx-form-page .tx-title strong {
+  color: #111;
+  font-weight: 700;
+}
+
+/* Geist @font-face: public/fonts/geist/geist.css (loaded from index.html; woff2 + LICENSE in public/fonts/geist/) */
+
+.tx-tag-detail-name {
+  font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: #321dff;
+}
+
+.tx-loading {
+  color: #999;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+
+/* ---------- Blue field (input-group style) ---------- */
+.tx-field {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid #E6EEFF;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.tx-field .tx-label {
+  background: #E6EEFF;
+  color: #5376EA;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+  line-height: 1.5;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.tx-field input {
+  border: none;
+  outline: none;
+  padding: 0.35rem 0.55rem;
+  font-size: 15px;
+  background: transparent;
+  min-width: 100px;
+}
+
+.tx-field input:focus {
+  box-shadow: none;
+}
+
+.tx-modal-container .tx-field .tx-label {
+  font-weight: 400;
+}
+
+.tx-modal-container .tx-btn {
+  font-family: "Geist Sans", "Geist", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* ---------- Footer actions row ---------- */
+.tx-form-footer-right {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  gap: 0.75rem;
+}
+
+/* Help modal */
+.tx-help-dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 20px;
+  max-width: 700px;
+  width: calc(100% - 2rem);
+  padding: 1.75rem 2rem 2rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+
+.tx-help-dialog .tx-modal-x {
+  top: 1rem;
+  right: 1rem;
+}
+
+.tx-help-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #5376EA;
+  margin: 0 0 1rem;
+}
+
+.tx-help-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #111;
+}
+
+.tx-help-list li {
+  margin-bottom: 0.5rem;
+}
+
+.tx-help-section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #5376EA;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.tx-help-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.tx-help-note {
+  margin: 0.75rem 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #444;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .tx-header {
+    flex-wrap: wrap;
+  }
+
+  .tx-header-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Delete confirm modal (matches group app) */
+.tx-delete-confirm {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.tx-delete-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #111;
+  margin-bottom: 0.5rem;
+}
+
+.tx-delete-title strong {
+  font-weight: 700;
+}
+
+.tx-delete-desc {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.tx-delete-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+}
