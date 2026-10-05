@@ -1,0 +1,114 @@
+<!--
+  This code is part of the TrinityX software suite
+  Copyright (C) 2026  ClusterVision Solutions b.v.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+  @author      Yixin Zhang
+  @copyright   Copyright 2026, Luna2 Project[OOD]
+  @license     GPL
+  @version     2.0
+  @maintainer  Yixin Zhang
+  @email       yixin.zhang@clustervision.com
+  @status      Development
+-->
+
+<template>
+  <BaseModal size="wide" @close="$emit('close')">
+    <div class="tx-form-page">
+      <h2 class="tx-title" style="margin-bottom: 1rem">Add DNS Entry</h2>
+      <div v-if="alertMsg" :class="alertOk ? 'alert-success' : 'alert-danger'" role="alert">
+        {{ alertMsg }}
+      </div>
+      <DnsFormFields :form="form" :network-options="networkOptions" />
+      <div class="tx-form-footer-right" style="margin-top: 1.25rem">
+        <button type="button" class="tx-btn tx-btn-blue" :disabled="saving" @click="submit">
+          {{ saving ? 'Saving...' : 'Add DNS Entry' }}
+        </button>
+      </div>
+    </div>
+  </BaseModal>
+</template>
+
+<script setup lang="ts">
+import { onMounted, reactive, ref } from 'vue'
+import BaseModal from './BaseModal.vue'
+import DnsFormFields from './DnsFormFields.vue'
+import { fetchNetworks, saveDnsEntry } from '@/api'
+import { DNS_HOST_MAX_LENGTH, validateDnsLabel } from '@/constants/dnsName'
+import { validateIpv4ForSubmit } from '@/utils/ipv4Input'
+import type { DnsFormState } from '@/types'
+
+const emit = defineEmits<{ close: []; saved: [] }>()
+
+const form = reactive<DnsFormState>({
+  network: '',
+  host: '',
+  ipaddress: '',
+})
+
+const networkOptions = ref<string[]>([])
+const saving = ref(false)
+const alertMsg = ref('')
+const alertOk = ref(false)
+
+onMounted(async () => {
+  try {
+    networkOptions.value = await fetchNetworks()
+  } catch (e) {
+    alertMsg.value = e instanceof Error ? e.message : 'Failed to load networks.'
+    alertOk.value = false
+  }
+})
+
+async function submit() {
+  saving.value = true
+  alertMsg.value = ''
+
+  const net = validateDnsLabel(form.network, 'Network')
+  if (!net.ok) {
+    alertMsg.value = net.message
+    saving.value = false
+    return
+  }
+  const host = validateDnsLabel(form.host, 'Host', true, DNS_HOST_MAX_LENGTH)
+  if (!host.ok) {
+    alertMsg.value = host.message
+    saving.value = false
+    return
+  }
+  const ip = validateIpv4ForSubmit(form.ipaddress)
+  if (!ip.ok) {
+    alertMsg.value = ip.message
+    saving.value = false
+    return
+  }
+
+  try {
+    await saveDnsEntry({
+      network: net.value,
+      host: host.value,
+      ipaddress: ip.value,
+    })
+    alertMsg.value = 'DNS entry added successfully.'
+    alertOk.value = true
+    setTimeout(() => emit('saved'), 500)
+  } catch (e) {
+    alertMsg.value = e instanceof Error ? e.message : 'Add failed.'
+    alertOk.value = false
+  } finally {
+    saving.value = false
+  }
+}
+</script>

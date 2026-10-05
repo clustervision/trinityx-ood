@@ -1,0 +1,243 @@
+
+
+  button.tooltip-modal-link {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  
+  /* Overlay to block page interaction */
+  .spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent gray */
+    display: none; /* Initially hidden */
+    justify-content: center;
+    align-items: center; /* Center spinner both vertically and horizontally */
+    z-index: 9999999; /* Ensure overlay is above the content */
+  }
+  
+  /* Center spinner in the middle of the page */
+  #spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  body.spinner-active {
+    overflow: hidden; /* Disable scrolling */
+    padding-right: 17px; /* Same as when a Bootstrap modal is opened */
+  }
+  
+  .tx-navbar {
+    background: linear-gradient(
+      to right,
+      #4a54f1 0%,
+      #4a54f1 10%,
+      #7d4dbb 25%,
+      #c63d7b 45%,
+      #e95f4a 65%,
+      #f3a133 85%,
+      #f8c325 100%
+    ) !important;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 42px;
+    padding: 0 1rem;
+    box-shadow: none;
+    box-sizing: border-box;
+  }
+
+  .tx-breadcrumb {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+  }
+
+  .tx-breadcrumb-logo {
+    display: flex;
+    align-items: center;
+    margin-right: 22px;
+    max-height: 42px;
+    padding: 6px 0;
+    box-sizing: border-box;
+  }
+
+  .tx-breadcrumb-logo a {
+    display: flex;
+    align-items: center;
+    line-height: 1;
+  }
+
+  .tx-navbar-logo {
+    width: 30px;
+    height: 30px;
+    max-width: 30px;
+    max-height: 30px;
+    object-fit: contain;
+    display: block;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tx-breadcrumb-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .tx-breadcrumb-item::before {
+    content: '/';
+    color: rgba(255, 255, 255, 0.65);
+    padding: 0 0.4rem;
+  }
+
+  .tx-breadcrumb-item:first-of-type::before {
+    display: none;
+  }
+
+  .tx-breadcrumb-link {
+    color: #ffffff;
+    text-decoration: none;
+    background-color: transparent;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.3;
+    padding: 10px 0.4rem;
+    box-sizing: border-box;
+  }
+
+  .tx-breadcrumb-link:hover {
+    color: #ffffff;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: rgba(255, 255, 255, 0.85);
+  }
+
+  .tx-navbar-action {
+    flex-shrink: 0;
+  }
+
+  .tx-footer {
+    background: transparent;
+    color: #666;
+    font-size: 0.8rem;
+    padding: 0.75rem 0;
+    margin-top: auto;
+  }
+
+  .tx-footer-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0.5rem 2.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tx-footer-left {
+    margin-bottom: 0;
+  }
+
+  .tx-footer-right {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .tx-footer-link {
+    color: #666;
+    text-decoration: none;
+  }
+
+  .tx-footer-link:hover {
+    color: #222;
+    text-decoration: underline;
+  }
+
+  .sub-navbar {
+    background-color: #563d7c;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    color: white;
+  }
+  
+
+
+
+/* .active {
+
+box-shadow: 0px 0px 50px #28c45c;
+} */
+
+.alert-error {
+  background-color: #ffe0db;
+  border-color: #ffc5bb;
+  color: #ff3e1d;
+}
+
+a:not([href]) {
+  color: white;
+  text-decoration: none;
+}
+
+.button_tooltip {
+  background: none !important;
+  border: none;
+  padding: 0 !important;
+  /*optional*/
+  font-family: arial, sans-serif;
+  /*input has OS specific font-family*/
+  color: #069;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+#run-time-body {
+  background-color: black;
+  color: antiquewhite;
+}
+
+.spinner {
+  margin: auto;
+  width: 50%;
+  padding: 10px;
+}
+
+.datatable_length {
+  display: inline-block;
+}
+
+.datatable_search {
+  margin-left: 55%;
+}
+
+.datatable_filter {
+  margin-left: 55%;
+}
+
+.datatable_paginate {
+  float: right;
+}
+
+.datatable_paginate::before {
+  content: '\a';
+  white-space: pre;
+}
+
+#datatable_info::before {
+  content: '\a';
+  white-space: pre;
+}

@@ -1,162 +1,22 @@
-include requirements.txt
-include VERSION.txt
-include LICENSE.txt
-include README.md
-include manifest.yml
-include Passengerfile.json
+# What goes into the trinityx-ood pip package. setuptools adds setup.py itself.
+include requirements.txt VERSION.txt LICENSE.txt README.md
 
-include _base
-include _base/*
-include _base/settings
-include _base/settings/*
-include _base/static
-include _base/static/*
-include _base/static/bootstrap-3.3.7/*
-include _base/static/bootstrap-3.3.7/css/*
-include _base/static/bootstrap-3.3.7/fonts/*
-include _base/static/bootstrap-3.3.7/js/*
-include _base/static/jquery-3.2.1/*
-include _base/static/ood-bootstrap3-override-0.0.1/*
-include _base/templates/*
+# Each app's own files: the backend, manifest.yml, requirements.txt and the like.
+include */*
 
-include cluster
-include cluster/*
-include cluster/app
-include cluster/app/*
-include cluster/app/assets
-include cluster/app/assets/*
+# Each app's page templates, and its frontend build in app/assets/ made by the
+# frontend-build CI job.
+graft */app
 
-include control
-include control/*
-include control/app
-include control/app/*
-include control/app/assets
-include control/app/assets/*
+# Folders that ship with everything in them.
+graft infiniband
+graft osimage/addons
+graft passwd
+graft rack
+graft slurm
+graft users
 
-include bmcsetup
-include bmcsetup/*
-include bmcsetup/app
-include bmcsetup/app/*
-include bmcsetup/app/assets
-include bmcsetup/app/assets/*
-
-include group
-include group/*
-include group/app
-include group/app/*
-include group/app/assets
-include group/app/assets/*
-
-include network
-include network/*
-include network/app
-include network/app/*
-include network/app/assets
-include network/app/assets/*
-
-include node
-include node/*
-include node/app
-include node/app/*
-include node/app/assets
-
-include nodeboot
-include nodeboot/*
-include nodeboot/app
-include nodeboot/app/*
-include nodeboot/app/assets
-include nodeboot/app/assets/*
-
-include osimage
-include osimage/*
-include osimage/addons
-include osimage/addons/*
-include osimage/addons/chroot_wrapper.sh
-include osimage/app
-include osimage/app/*
-include osimage/app/assets
-include osimage/app/assets/*
-
-include osimagetag
-include osimagetag/*
-include osimagetag/app
-include osimagetag/app/*
-include osimagetag/app/assets
-include osimagetag/app/assets/*
-
-include otherdev
-include otherdev/*
-include otherdev/app
-include otherdev/app/*
-include otherdev/app/assets
-include otherdev/app/assets/*
-
-include switch
-include switch/*
-include switch/app
-include switch/app/*
-include switch/app/assets
-include switch/app/assets/*
-
-include secrets
-include secrets/*
-include secrets/app
-include secrets/app/*
-include secrets/app/assets
-include secrets/app/assets/*
-
-
-include dns
-include dns/*
-include dns/app
-include dns/app/*
-include dns/app/assets
-include dns/app/assets/*
-
-recursive-include users * 
-
-recursive-include infiniband *
-
-recursive-include slurm *
-
-recursive-include sensu *
-
-include rack
-include rack/*
-include rack/app
-include rack/app/*
-include rack/app/assets
-include rack/app/assets/*
-
-recursive-include rack *
-
-include alertx
-include alertx/*
-include alertx/app
-include alertx/app/*
-include alertx/app/assets
-include alertx/app/assets/*
-
-include passwd
-include passwd/*
-include passwd/static
-include passwd/static/*
-include passwd/static/css
-include passwd/static/css/*
-include passwd/static/fonts
-include passwd/static/fonts/*
-include passwd/static/img
-include passwd/static/img/*
-include passwd/static/js
-include passwd/static/js/*
-include passwd/static/icons
-include passwd/static/icons/*
-include passwd/templates
-include passwd/templates/*
-include passwd/templates/layout
-include passwd/templates/layout/*
-
-recursive-include passwd *
-
-
-
+# Frontend sources, earlier package builds and Python caches never ship.
+prune */frontend
+prune dist
+global-exclude *.py[cod]
