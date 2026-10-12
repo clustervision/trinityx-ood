@@ -18,18 +18,6 @@ export function distributeBlocks(booted, booting, failed, total, blockCount) {
   return blocks
 }
 
-export function sumGroupCounts(groups) {
-  return groups.reduce(
-    (acc, group) => ({
-      total: acc.total + group.total,
-      booted: acc.booted + group.booted,
-      booting: acc.booting + group.booting,
-      failed: acc.failed + group.failed,
-    }),
-    { total: 0, booted: 0, booting: 0, failed: 0 },
-  )
-}
-
 export function formatCount(value) {
   return value.toLocaleString()
 }

@@ -1,14 +1,8 @@
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { fetchStatus } from '../api.js'
 
 export const images = ref([])
 export const apiError = ref('')
-export const expandedIds = reactive(new Set())
-
-export function toggleExpanded(id) {
-  if (expandedIds.has(id)) expandedIds.delete(id)
-  else expandedIds.add(id)
-}
 
 let pollTimer = null
 

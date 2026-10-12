@@ -45,9 +45,10 @@ from configparser import RawConfigParser
 
 import requests
 from flask import Flask, render_template, jsonify, abort, url_for, request
+from luna.boot import Boot
 
 from constant import (
-    INI_FILE, TOKEN_FILE, SOL_GRAB_URL, SOL_GRAB_TIMEOUT, APP_STATE,
+    INI_FILE, TOKEN_FILE, LICENSE, SOL_GRAB_URL, SOL_GRAB_TIMEOUT, APP_STATE,
 )
 
 requests.packages.urllib3.disable_warnings()
@@ -55,6 +56,12 @@ requests.packages.urllib3.disable_warnings()
 app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
 
 _NODE_NAME_RE = re.compile(r'^[A-Za-z0-9_.-]+$')  # matches STRICT_NAMES-style node names
+
+# The stage tables behind `luna boot status` (luna2-cli 2.2) are the one source of
+# truth for the Boot Overview / Boot Progress numbers, so the web view and the CLI
+# agree. Boot.__init__ parses CLI arguments, which is why the instance is created
+# without it: only the tables and the pure classifiers are used.
+_BOOT = Boot.__new__(Boot)
 
 # Ordered provisioning pipeline -> progress %. Raw Luna state strings, straight
 # from daemon monitor node_state[204] — 'install.booted' is the post-install
@@ -224,7 +231,24 @@ def classify_group(members, states):
         'failed': len(failed_nodes),
         'failedNodes': failed_nodes,
         'failedReasons': failed_reasons,
+        'overview': boot_overview(state for _name, state, _kind in scored),
+        'funnel': boot_funnel(state for _name, state, _kind in scored),
     }
+
+
+def boot_overview(raw_states):
+    """Per-phase counts, the columns of `luna boot status`'s Boot Overview table."""
+    counts = dict.fromkeys([phase for phase, _ in Boot.BOOT_PHASES] + ['config', 'unknown'], 0)
+    for state in raw_states:
+        counts[_BOOT.boot_phase(state)] += 1
+    return counts
+
+
+def boot_funnel(raw_states):
+    """Nodes that reached at least each milestone, the bars of Boot Progress."""
+    stages = [stage for stage in map(_BOOT.node_stage, raw_states) if stage is not None]
+    return {label: sum(1 for stage in stages if stage >= threshold)
+            for label, threshold, _note in Boot.BOOT_MILESTONES}
 
 
 def _sum_group_counts(groups):
@@ -235,7 +259,7 @@ def _sum_group_counts(groups):
     return totals
 
 
-def build_images(nodes, states, all_osimage_names=()):
+def build_images(nodes, states, all_osimage_names=(), all_groups=None):
     """nodes: {name: cfg}, states: {name: raw_state} -> list of image dicts
     (id, name, groups), most-active-first then by name. groups = real Luna
     node groups (node.group), each with its own booted/booting/failed counts —
@@ -244,7 +268,12 @@ def build_images(nodes, states, all_osimage_names=()):
     all_osimage_names: every osimage Luna knows about, not just ones with
     nodes on them right now. An osimage with zero nodes still gets listed
     (empty groups) — a group with zero nodes still doesn't, since a group
-    only exists here as a byproduct of nodes actually being in it."""
+    only exists here as a byproduct of nodes actually being in it.
+
+    all_groups: {group: osimage} for every group Luna knows about. The ones
+    with no nodes are listed by name in their osimage's unusedGroups, so the
+    page can account for every image and group without inventing empty
+    group rows."""
     by_image_group = defaultdict(lambda: defaultdict(list))
     for name, cfg in nodes.items():
         image = cfg.get('osimage') or 'unknown'
@@ -262,11 +291,24 @@ def build_images(nodes, states, all_osimage_names=()):
             'id': re.sub(r'[^A-Za-z0-9_-]', '-', image),
             'name': image,
             'groups': groups,
+            'unusedGroups': [],
         })
 
     seen = {img['name'] for img in images}
     for image in sorted(set(all_osimage_names) - seen):
-        images.append({'id': re.sub(r'[^A-Za-z0-9_-]', '-', image), 'name': image, 'groups': []})
+        images.append({'id': re.sub(r'[^A-Za-z0-9_-]', '-', image), 'name': image, 'groups': [], 'unusedGroups': []})
+
+    used = {cfg.get('group') or 'ungrouped' for cfg in nodes.values()}
+    by_name = {img['name']: img for img in images}
+    for group, image in sorted((all_groups or {}).items()):
+        if group in used:
+            continue
+        image = image or 'unknown'
+        if image not in by_name:
+            by_name[image] = {'id': re.sub(r'[^A-Za-z0-9_-]', '-', image), 'name': image,
+                              'groups': [], 'unusedGroups': []}
+            images.append(by_name[image])
+        by_name[image]['unusedGroups'].append(group)
 
     all_booted = lambda img: all(g['failed'] == 0 and g['booting'] == 0 for g in img['groups']) if img['groups'] else True
     images.sort(key=lambda i: (all_booted(i), i['name']))
@@ -296,6 +338,13 @@ def get_status():
     except requests.HTTPError:
         all_osimage_names = []  # don't fail the whole page over this — nodes' own osimages still show
 
+    try:
+        group_data = api.get('/config/group')
+        all_groups = {name: cfg.get('osimage') for name, cfg in
+                      (group_data.get('config', {}).get('group', {}) or {}).items()}
+    except requests.HTTPError:
+        all_groups = {}  # same as osimages: unused groups just aren't listed
+
     states = {}
     try:
         mon = api.get('/monitor/node')
@@ -309,7 +358,7 @@ def get_status():
     except requests.HTTPError:
         pass  # 404 "no entries found" -> nothing provisioning right now
 
-    return build_images(nodes, states, all_osimage_names)
+    return build_images(nodes, states, all_osimage_names, all_groups)
 
 
 # ---------------------------------------------------------------------------
@@ -367,6 +416,16 @@ def console(node):
     return jsonify({"node": node, "lines": result["lines"], "source": "sol"})
 
 
+@app.route('/license', methods=['GET'])
+def license_info():
+    """Human-readable license page (footer link opens this in a new tab)."""
+    response = 'LICENSE Information is not available at this moment.'
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding='utf-8') as file_data:
+            response = '<br />'.join(file_data.readlines())
+    return response
+
+
 if __name__ == "__main__":
     if APP_STATE is False:
         # devserver.py sits in the repository root, next to the app folders.
@@ -405,7 +464,10 @@ def demo():
     assert g['name'] == 'compute01' and g['network'] == 'cluster'
     assert g == {'name': 'compute01', 'network': 'cluster', 'total': 2, 'booted': 0,
                  'booting': 2, 'phase1': 1, 'phase2': 1, 'phase3': 0,
-                 'failed': 0, 'failedNodes': [], 'failedReasons': {}}, g
+                 'failed': 0, 'failedNodes': [], 'failedReasons': {},
+                 'overview': {'ipxe': 0, 'download': 1, 'unpack': 0, 'done': 0, 'config': 1, 'unknown': 0},
+                 'funnel': {'discovered': 2, 'rendered': 1, 'prepared': 1, 'downloaded': 0,
+                            'unpacked': 0, 'configured': 0, 'booted': 0}}, g
 
     # Two different Luna groups under the same image stay separate group cards.
     nodes2 = {'node001': node('compute01'), 'node002': node('compute02')}
@@ -423,6 +485,16 @@ def demo():
     })
     g3 = images3[0]['groups'][0]
     assert (g3['phase1'], g3['phase2'], g3['phase3'], g3['booted']) == (1, 1, 1, 1), g3
+
+    # overview/funnel use the CLI's own tables, so they match `luna boot status`,
+    # quirks included: install.discovered sits under 'config' (the CLI's 'ipxe'
+    # phase only matches 'rendered'), and a milestone counts as passed only once
+    # the node is in the stage after it (install.downloaded has not passed
+    # 'downloaded', install.unpack has).
+    assert g3['overview'] == {'ipxe': 0, 'download': 1, 'unpack': 1, 'done': 1,
+                              'config': 1, 'unknown': 0}, g3['overview']
+    assert g3['funnel'] == {'discovered': 4, 'rendered': 3, 'prepared': 3, 'downloaded': 2,
+                            'unpacked': 1, 'configured': 1, 'booted': 1}, g3['funnel']
 
     # a node still early in the pipeline while a sibling has already booted is
     # NORMAL, not "failed" -- the regression this test exists to catch (an
@@ -451,6 +523,9 @@ def demo():
     g6 = images6[0]['groups'][0]
     assert g6['booting'] == 1 and g6['phase1'] == 1
     assert g6['failed'] == 1 and g6['failedReasons'] == {'node002': 'not_started'}
+    # a node with no state is 'unknown' in the overview and reaches no milestone
+    assert g6['overview']['unknown'] == 1 and g6['overview']['config'] == 1, g6['overview']
+    assert g6['funnel']['discovered'] == 1 and g6['funnel']['booted'] == 0, g6['funnel']
 
     # an osimage with zero nodes still gets listed (empty groups) when we know
     # about it from Luna's own osimage list; a group with zero nodes still
@@ -461,5 +536,15 @@ def demo():
     by_name7 = {i['name']: i for i in images7}
     assert set(by_name7) == {'img', 'unused-image'}, by_name7
     assert by_name7['unused-image']['groups'] == []
+
+    # groups with no nodes are named under their own osimage's unusedGroups,
+    # including an osimage nothing else references; groups with nodes are not
+    images8 = build_images(nodes7, {'node001': 'install.booted'}, all_osimage_names=['img'],
+                           all_groups={'rack01': 'img', 'rack02': 'img', 'spare': 'other-image'})
+    by_name8 = {i['name']: i for i in images8}
+    assert by_name8['img']['unusedGroups'] == ['rack02'], by_name8
+    assert [g['name'] for g in by_name8['img']['groups']] == ['rack01']
+    assert by_name8['other-image'] == {'id': 'other-image', 'name': 'other-image',
+                                       'groups': [], 'unusedGroups': ['spare']}, by_name8
 
     print("OK: nodeboot logic (stage map, phase mapping, per-group build, no false-positive failures)")

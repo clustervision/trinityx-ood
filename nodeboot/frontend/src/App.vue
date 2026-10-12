@@ -3,20 +3,16 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
 import HeaderBar from './components/HeaderBar.vue'
-import ImagesTable from './components/ImagesTable.vue'
+import BootOverview from './components/BootOverview.vue'
+import BootProgress from './components/BootProgress.vue'
 import NodesModal from './components/NodesModal.vue'
 import ConsoleModal from './components/ConsoleModal.vue'
 import { images, apiError, startPolling, stopPolling } from './composables/useStatus.js'
 
 const consoleNode = ref(null)
+const selectedRow = ref(null)
 const nodesModal = ref(null)
 const nodesModalReturn = ref(null)
-
-function openConsole(node) {
-  nodesModalReturn.value = nodesModal.value
-  nodesModal.value = null
-  consoleNode.value = node
-}
 
 function openConsoleFromModal(node) {
   nodesModalReturn.value = nodesModal.value
@@ -68,11 +64,13 @@ onUnmounted(() => {
         <div v-if="apiError" class="alert alert-danger" role="alert">
           <strong>API error ::</strong> {{ apiError }}
         </div>
-        <ImagesTable
+        <BootOverview
           :images="images"
-          @open-console="openConsole"
-          @see-all="openNodesModal"
+          :selected="selectedRow"
+          @select="selectedRow = $event"
+          @show-nodes="openNodesModal"
         />
+        <BootProgress :images="images" :selected="selectedRow" @select="selectedRow = $event" />
       </div>
     </main>
     <AppFooter />
