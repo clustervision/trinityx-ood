@@ -189,6 +189,24 @@ def get_graph_state():
         pass
     return None
 
+def infiniband_devices(devices):
+    """
+    The devices with a port on an InfiniBand link layer. The kernel registers every RDMA
+    adapter under /sys/class/infiniband, so iWARP and RoCE Ethernet cards sit there too;
+    only a port whose link layer is InfiniBand has a subnet manager to ask.
+    """
+    found = []
+    for device in devices:
+        for port in glob.glob(f"{device}/ports/*/link_layer"):
+            try:
+                with open(port) as handle:
+                    if handle.read().strip() == "InfiniBand":
+                        found.append(device)
+                        break
+            except OSError:
+                continue
+    return found
+
 def fabric_unavailable():
     """
     This method tells why this machine cannot scan the fabric, or None when it can.
@@ -198,11 +216,13 @@ def fabric_unavailable():
     ib_umad is loaded. The sysfs directory exists even on a machine that has no
     InfiniBand at all, so it is the entries that decide and not the directory.
     """
-    if not glob.glob("/sys/class/infiniband/*"):
-        return {
-            "level": "info",
-            "message": "No InfiniBand hardware was found on this machine, so there is no fabric to display."
-        }
+    devices = glob.glob("/sys/class/infiniband/*")
+    if not infiniband_devices(devices):
+        message = "No InfiniBand hardware was found on this machine, so there is no fabric to display."
+        if devices:
+            names = ", ".join(sorted(os.path.basename(device) for device in devices))
+            message += f" The RDMA devices {names} are Ethernet adapters, which carry no fabric."
+        return {"level": "info", "message": message}
     umad_ports = glob.glob("/dev/infiniband/umad*")
     if not umad_ports:
         return {

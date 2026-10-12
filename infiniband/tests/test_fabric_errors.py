@@ -15,7 +15,19 @@ import pytest
 # ── the pre-flight check ─────────────────────────────────────────────────
 
 def _fake_glob(monkeypatch, app_module, mapping):
-    monkeypatch.setattr(app_module.glob, 'glob', lambda pattern: mapping.get(pattern, []))
+    # the class listing and the umad devices are faked; the port files under a faked
+    # device are real files in tmp_path, so the link-layer read goes through glob as is
+    real_glob = app_module.glob.glob
+    monkeypatch.setattr(app_module.glob, 'glob',
+                        lambda pattern: mapping[pattern] if pattern in mapping else real_glob(pattern))
+
+
+def _device(tmp_path, name, link_layer):
+    """An RDMA device as sysfs shows it: one port, its link_layer file."""
+    port = tmp_path / name / 'ports' / '1'
+    port.mkdir(parents=True)
+    (port / 'link_layer').write_text(f'{link_layer}\n')
+    return str(tmp_path / name)
 
 
 def test_no_hardware_is_informational(app_module, monkeypatch):
@@ -32,16 +44,16 @@ def test_empty_sysfs_directory_counts_as_no_hardware(app_module, monkeypatch):
     assert app_module.fabric_unavailable()['level'] == 'info'
 
 
-def test_hardware_without_umad_names_the_module(app_module, monkeypatch):
-    _fake_glob(monkeypatch, app_module, {'/sys/class/infiniband/*': ['/sys/class/infiniband/mlx5_0']})
+def test_hardware_without_umad_names_the_module(app_module, monkeypatch, tmp_path):
+    _fake_glob(monkeypatch, app_module, {'/sys/class/infiniband/*': [_device(tmp_path, 'mlx5_0', 'InfiniBand')]})
     notice = app_module.fabric_unavailable()
     assert notice['level'] == 'warning'
     assert 'ib_umad' in notice['message']
 
 
-def test_umad_without_access_is_reported_separately(app_module, monkeypatch):
+def test_umad_without_access_is_reported_separately(app_module, monkeypatch, tmp_path):
     _fake_glob(monkeypatch, app_module, {
-        '/sys/class/infiniband/*': ['/sys/class/infiniband/mlx5_0'],
+        '/sys/class/infiniband/*': [_device(tmp_path, 'mlx5_0', 'InfiniBand')],
         '/dev/infiniband/umad*': ['/dev/infiniband/umad0'],
     })
     monkeypatch.setattr(app_module.os, 'access', lambda path, mode: False)
@@ -50,13 +62,32 @@ def test_umad_without_access_is_reported_separately(app_module, monkeypatch):
     assert 'not readable and writable' in notice['message']
 
 
-def test_usable_fabric_gives_no_notice(app_module, monkeypatch):
+def test_usable_fabric_gives_no_notice(app_module, monkeypatch, tmp_path):
     _fake_glob(monkeypatch, app_module, {
-        '/sys/class/infiniband/*': ['/sys/class/infiniband/mlx5_0'],
+        '/sys/class/infiniband/*': [_device(tmp_path, 'mlx5_0', 'InfiniBand')],
         '/dev/infiniband/umad*': ['/dev/infiniband/umad0'],
     })
     monkeypatch.setattr(app_module.os, 'access', lambda path, mode: True)
     assert app_module.fabric_unavailable() is None
+
+
+def test_rdma_ethernet_adapters_are_not_infiniband(app_module, monkeypatch, tmp_path):
+    # Intel X722 ports register under /sys/class/infiniband through irdma with an
+    # Ethernet link layer; they have no subnet manager, so there is nothing to scan
+    _fake_glob(monkeypatch, app_module, {
+        '/sys/class/infiniband/*': [_device(tmp_path, f'irdma{n}', 'Ethernet') for n in range(4)],
+    })
+    notice = app_module.fabric_unavailable()
+    assert notice['level'] == 'info'
+    assert 'No InfiniBand hardware' in notice['message']
+    assert 'irdma0, irdma1, irdma2, irdma3' in notice['message']
+
+
+def test_one_infiniband_port_beside_ethernet_adapters_counts(app_module, monkeypatch, tmp_path):
+    _fake_glob(monkeypatch, app_module, {
+        '/sys/class/infiniband/*': [_device(tmp_path, 'irdma0', 'Ethernet'), _device(tmp_path, 'mlx5_0', 'InfiniBand')],
+    })
+    assert 'ib_umad' in app_module.fabric_unavailable()['message']
 
 
 # ── the route ────────────────────────────────────────────────────────────
