@@ -6,11 +6,12 @@ const props = defineProps({
   booted: { type: Number, default: 0 },
   booting: { type: Number, default: 0 },
   failed: { type: Number, default: 0 },
+  unknown: { type: Number, default: 0 },
   total: { type: Number, default: 0 },
   blocks: { type: Number, default: 20 },
 })
 
-const cells = computed(() => distributeBlocks(props.booted, props.booting, props.failed, props.total, props.blocks))
+const cells = computed(() => distributeBlocks(props.booted, props.booting, props.failed, props.unknown, props.total, props.blocks))
 </script>
 
 <template>

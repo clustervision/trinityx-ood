@@ -1,8 +1,9 @@
 <script setup>
 import { computed } from 'vue'
-import BlockBar from './BlockBar.vue'
+import SplitBar from './SplitBar.vue'
 import { overviewOf, pctOf } from '../utils/stages.js'
 import { formatCount } from '../utils/progress.js'
+import { ICON_CONSOLE } from '../utils/icons.js'
 
 const props = defineProps({
   images: { type: Array, default: () => [] },
@@ -11,7 +12,11 @@ const props = defineProps({
 
 const emit = defineEmits(['select', 'show-nodes'])
 
-const COLUMNS = ['ipxe', 'download', 'unpack', 'config', 'done']
+// The CLI's column order. BACKEND-REQUEST(2026-10-15): Flask's jsonify sorts keys
+// alphabetically, so group.overview arrives as config, done, download, ... and its
+// key order cannot be read here. Either set app.json.sort_keys = False or ship an
+// explicit column list; until then this list has to match `luna boot status`.
+const COLUMNS = ['unknown', 'ipxe', 'download', 'unpack', 'config', 'parked', 'done']
 
 const rows = computed(() =>
   props.images.flatMap((image) =>
@@ -60,10 +65,8 @@ function showNodes(row, reason) {
           <tr>
             <th class="num">#</th>
             <th>Group</th>
-            <th>OS image</th>
+            <th>osimage</th>
             <th v-for="col in COLUMNS" :key="col" class="num">{{ col }}</th>
-            <th class="num">failed</th>
-            <th class="num">unknown</th>
             <th class="num">total</th>
             <th class="progress-col">Progress</th>
           </tr>
@@ -86,31 +89,22 @@ function showNodes(row, reason) {
               class="num fmono"
               :class="{ 'is-done': col === 'done' && row.counts.done }"
             >
-              {{ cell(row.counts[col]) }}
-            </td>
-            <td class="num fmono">
               <button
-                v-if="row.counts.failed"
-                class="count-link is-failed"
-                title="Show failed nodes"
-                @click.stop="showNodes(row, 'error')"
-              >{{ formatCount(row.counts.failed) }}</button>
-            </td>
-            <td class="num fmono">
-              <button
-                v-if="row.counts.unknown"
+                v-if="col === 'unknown' && row.counts.unknown"
                 class="count-link is-unknown"
                 title="Show nodes with no reported state"
                 @click.stop="showNodes(row, 'not_started')"
-              >{{ formatCount(row.counts.unknown) }}</button>
+              >{{ formatCount(row.counts.unknown) }} <span class="console-icon" v-html="ICON_CONSOLE" /></button>
+              <template v-else-if="col !== 'unknown'">{{ cell(row.counts[col]) }}</template>
             </td>
             <td class="num fmono strong">{{ formatCount(row.counts.total) }}</td>
             <td class="progress-col">
               <div class="row-progress">
-                <BlockBar
+                <SplitBar
                   :booted="row.counts.done"
                   :booting="row.counts.booting"
-                  :failed="row.group.failed"
+                  :unknown="row.counts.unknown"
+                  :failed="row.counts.failed"
                   :total="row.counts.total"
                   :blocks="10"
                 />
@@ -119,7 +113,7 @@ function showNodes(row, reason) {
             </td>
           </tr>
           <tr v-if="!rows.length">
-            <td colspan="13" class="boot-empty">No nodes are assigned to any group yet.</td>
+            <td colspan="12" class="boot-empty">No nodes are assigned to any group yet.</td>
           </tr>
         </tbody>
       </table>

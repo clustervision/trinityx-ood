@@ -1,19 +1,15 @@
-export function distributeBlocks(booted, booting, failed, total, blockCount) {
+export function distributeBlocks(booted, booting, failed, unknown, total, blockCount) {
   const safeTotal = total || 1
-  let bootedBlocks = Math.round((booted / safeTotal) * blockCount)
-  let bootingBlocks = Math.round((booting / safeTotal) * blockCount)
-  let failedBlocks = Math.round((failed / safeTotal) * blockCount)
-
-  while (bootedBlocks + bootingBlocks + failedBlocks > blockCount) {
-    if (failedBlocks > 0) failedBlocks--
-    else if (bootingBlocks > 0) bootingBlocks--
-    else bootedBlocks--
+  const counts = { 'b-booted': booted, 'b-booting': booting, 'b-unknown': unknown, 'b-failed': failed }
+  const sized = Object.entries(counts).map(([cls, n]) => [cls, Math.round((n / safeTotal) * blockCount)])
+  // rounding can overshoot by a block; trim from the end (failed first) until it fits
+  let over = sized.reduce((sum, [, n]) => sum + n, 0) - blockCount
+  for (let i = sized.length - 1; over > 0 && i >= 0; i--) {
+    const take = Math.min(over, sized[i][1])
+    sized[i][1] -= take
+    over -= take
   }
-
-  const blocks = []
-  for (let i = 0; i < bootedBlocks; i++) blocks.push('b-booted')
-  for (let i = 0; i < bootingBlocks; i++) blocks.push('b-booting')
-  for (let i = 0; i < failedBlocks; i++) blocks.push('b-failed')
+  const blocks = sized.flatMap(([cls, n]) => Array(n).fill(cls))
   while (blocks.length < blockCount) blocks.push('')
   return blocks
 }

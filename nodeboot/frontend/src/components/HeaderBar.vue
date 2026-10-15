@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { distributeBlocks, formatCount } from '../utils/progress.js'
-import { useProgressTrack } from '../composables/useProgressTrack.js'
-import { ICON_CHECK, ICON_BOOTING, ICON_WARNING, ICON_LAYERS, ICON_GRID } from '../utils/icons.js'
+import { formatCount } from '../utils/progress.js'
+import { overviewOf } from '../utils/stages.js'
+import SplitBar from './SplitBar.vue'
+import { ICON_CHECK, ICON_BOOTING, ICON_WARNING, ICON_LAYERS, ICON_GRID, ICON_UNKNOWN } from '../utils/icons.js'
 
 const props = defineProps({
   images: { type: Array, default: () => [] },
@@ -26,37 +27,28 @@ const themeOptions = [
   { value: 'dark', label: 'Dark theme' },
 ]
 
-const { trackEl, blockCount } = useProgressTrack(1, 60, 6, 5, 3)
-
+// failed/unknown split by reason, as Boot Overview does: the backend's group.failed
+// counts both.
 const totals = computed(() => {
-  let total = 0
-  let booted = 0
-  let booting = 0
-  let failed = 0
+  const sum = { total: 0, booted: 0, booting: 0, failed: 0, unknown: 0 }
   for (const image of props.images) {
     for (const group of image.groups) {
-      total += group.total
-      booted += group.booted
-      booting += group.booting
-      failed += group.failed
+      const counts = overviewOf(group)
+      for (const key in sum) sum[key] += counts[key] || 0
+      sum.booted += group.booted
     }
   }
-  return { total, booted, booting, failed }
+  return sum
 })
 
 const pct = computed(() => (totals.value.total ? Math.round((totals.value.booted / totals.value.total) * 100) : 0))
-const blocks = computed(() => distributeBlocks(totals.value.booted, totals.value.booting, totals.value.failed, totals.value.total, blockCount.value))
-
-function blockClass(index) {
-  return blocks.value[index - 1]
-}
 </script>
 
 <template>
   <div class="panel main-card">
     <div class="main-card-header">
       <div class="title-row">
-        <div class="main-title fmono">Node Boot</div>
+        <div class="main-title fmono">Node Boot Overview</div>
         <div class="theme-toggle-group" role="radiogroup" aria-label="Theme">
           <button
             v-for="option in themeOptions"
@@ -88,19 +80,10 @@ function blockClass(index) {
     </div>
 
     <div class="main-progress-row">
-      <div ref="trackEl" class="main-progress-track">
-        <div
-          v-for="i in blockCount"
-          :key="i"
-          class="progress-block"
-          :class="blockClass(i)"
-        />
+      <SplitBar v-bind="totals" labels />
+      <div class="main-progress-side">
+        <span class="main-progress-pct fmono">{{ pct }}%</span>
       </div>
-      <span class="main-progress-pct fmono">{{ pct }}%</span>
-    </div>
-
-    <div class="main-progress-sub fmono">
-      {{ formatCount(totals.booted) }} / {{ formatCount(totals.total) }} nodes booted
     </div>
 
     <div class="main-stats-row">
@@ -138,6 +121,16 @@ function blockClass(index) {
           <span class="stat-pill-text">Failed:</span>
         </span>
         <span class="stat-pill-value">{{ formatCount(totals.failed) }}</span>
+      </div>
+      <div class="stat-pill-row pill-neutral">
+        <span class="stat-pill-label">
+          <span class="stat-pill-icon" v-html="ICON_UNKNOWN" />
+          <span class="stat-pill-text">Unknown:</span>
+        </span>
+        <span class="stat-pill-value">{{ formatCount(totals.unknown) }}</span>
+      </div>
+      <div class="main-progress-sub">
+        <span class="fmono">{{ formatCount(totals.booted) }} / {{ formatCount(totals.total) }} ({{ pct }}%)</span> nodes booted
       </div>
     </div>
   </div>
