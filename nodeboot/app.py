@@ -237,8 +237,11 @@ def classify_group(members, states):
 
 
 def boot_overview(raw_states):
-    """Per-phase counts, the columns of `luna boot status`'s Boot Overview table."""
-    counts = dict.fromkeys([phase for phase, _ in Boot.BOOT_PHASES] + ['config', 'unknown'], 0)
+    """Per-phase counts, the columns of `luna boot status`'s Boot Overview table,
+    in the CLI's column order: unknown first, then the phases as the boot runs
+    them, parked before done, done last."""
+    phases = [phase for phase, _ in Boot.BOOT_PHASES if phase not in ('parked', 'done')]
+    counts = dict.fromkeys(['unknown'] + phases + ['config', 'parked', 'done'], 0)
     for state in raw_states:
         counts[_BOOT.boot_phase(state)] += 1
     return counts
@@ -259,7 +262,22 @@ def _sum_group_counts(groups):
     return totals
 
 
-def build_images(nodes, states, all_osimage_names=(), all_groups=None):
+def boot_view(monitor, nodes, scope):
+    """The Boot Progress block and the Not Booted rows of `luna boot status -l`,
+    computed by the CLI's own code for these nodes. node_states() is the one
+    method of Boot that would call the daemon itself; it is given the monitor
+    data this app already fetched (same shape: {node: {state, status, updated}}).
+    None when no node in scope has reported a state, as the CLI returns."""
+    boot = Boot.__new__(Boot)
+    boot.args = {}
+    boot.node_states = lambda: monitor
+    progress = boot.boot_progress(scope)
+    if progress is not None:
+        progress['notBooted'] = boot.not_booted(nodes, scope)
+    return progress
+
+
+def build_images(nodes, states, all_osimage_names=(), all_groups=None, monitor=None):
     """nodes: {name: cfg}, states: {name: raw_state} -> list of image dicts
     (id, name, groups), most-active-first then by name. groups = real Luna
     node groups (node.group), each with its own booted/booting/failed counts —
@@ -273,7 +291,11 @@ def build_images(nodes, states, all_osimage_names=(), all_groups=None):
     all_groups: {group: osimage} for every group Luna knows about. The ones
     with no nodes are listed by name in their osimage's unusedGroups, so the
     page can account for every image and group without inventing empty
-    group rows."""
+    group rows.
+
+    monitor: {node: {state, status, updated}} as the daemon's monitor route
+    reports it; feeds each group's 'progress' block (see boot_view)."""
+    monitor = monitor or {}
     by_image_group = defaultdict(lambda: defaultdict(list))
     for name, cfg in nodes.items():
         image = cfg.get('osimage') or 'unknown'
@@ -286,7 +308,8 @@ def build_images(nodes, states, all_osimage_names=(), all_groups=None):
         for group, members in sorted(groupmap.items()):
             sample = nodes[members[0]]
             counts = classify_group(members, states)
-            groups.append({'name': group, 'network': _provision_network(sample), **counts})
+            groups.append({'name': group, 'network': _provision_network(sample), **counts,
+                           'progress': boot_view(monitor, nodes, members)})
         images.append({
             'id': re.sub(r'[^A-Za-z0-9_-]', '-', image),
             'name': image,
@@ -345,7 +368,7 @@ def get_status():
     except requests.HTTPError:
         all_groups = {}  # same as osimages: unused groups just aren't listed
 
-    states = {}
+    states, monitor = {}, {}
     try:
         mon = api.get('/monitor/node')
         entries = mon.get('monitor', {}).get('status', {}).get('node', {}) or {}
@@ -355,10 +378,14 @@ def get_status():
             if raw.startswith(name + ' '):
                 raw = raw[len(name) + 1:]
             states[name] = raw or None
+            monitor[name] = {'state': raw, 'status': info.get('status'), 'updated': info.get('updated')}
     except requests.HTTPError:
         pass  # 404 "no entries found" -> nothing provisioning right now
 
-    return build_images(nodes, states, all_osimage_names, all_groups)
+    return {
+        'images': build_images(nodes, states, all_osimage_names, all_groups, monitor),
+        'progress': boot_view(monitor, nodes, sorted(nodes)),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -382,10 +409,10 @@ def home():
 @app.route('/api/status', methods=['GET'])
 def status():
     try:
-        return jsonify({"images": get_status()})
+        return jsonify(get_status())
     except Exception as exc:  # surface API/config errors in the UI, don't 500
         app.logger.warning("status failed: %s", exc)
-        return jsonify({"images": [], "error": str(exc)}), 200
+        return jsonify({"images": [], "progress": None, "error": str(exc)}), 200
 
 
 def _sol_grab(node):
@@ -462,12 +489,18 @@ def demo():
     assert len(img['groups']) == 1
     g = img['groups'][0]
     assert g['name'] == 'compute01' and g['network'] == 'cluster'
+    # overview columns are whatever the installed CLI's BOOT_PHASES says, so the
+    # expectation is built from that table rather than spelled out
+    def overview(**counts):
+        return {**boot_overview([]), **counts}
+    assert list(boot_overview([])) == ['unknown', 'ipxe', 'download', 'unpack', 'config', 'parked', 'done']
     assert g == {'name': 'compute01', 'network': 'cluster', 'total': 2, 'booted': 0,
                  'booting': 2, 'phase1': 1, 'phase2': 1, 'phase3': 0,
                  'failed': 0, 'failedNodes': [], 'failedReasons': {},
-                 'overview': {'ipxe': 0, 'download': 1, 'unpack': 0, 'done': 0, 'config': 1, 'unknown': 0},
+                 'overview': overview(download=1, config=1),
                  'funnel': {'discovered': 2, 'rendered': 1, 'prepared': 1, 'downloaded': 0,
-                            'unpacked': 0, 'configured': 0, 'booted': 0}}, g
+                            'unpacked': 0, 'configured': 0, 'booted': 0},
+                 'progress': None}, g
 
     # Two different Luna groups under the same image stay separate group cards.
     nodes2 = {'node001': node('compute01'), 'node002': node('compute02')}
@@ -491,8 +524,7 @@ def demo():
     # phase only matches 'rendered'), and a milestone counts as passed only once
     # the node is in the stage after it (install.downloaded has not passed
     # 'downloaded', install.unpack has).
-    assert g3['overview'] == {'ipxe': 0, 'download': 1, 'unpack': 1, 'done': 1,
-                              'config': 1, 'unknown': 0}, g3['overview']
+    assert g3['overview'] == overview(download=1, unpack=1, done=1, config=1), g3['overview']
     assert g3['funnel'] == {'discovered': 4, 'rendered': 3, 'prepared': 3, 'downloaded': 2,
                             'unpacked': 1, 'configured': 1, 'booted': 1}, g3['funnel']
 
@@ -546,5 +578,38 @@ def demo():
     assert [g['name'] for g in by_name8['img']['groups']] == ['rack01']
     assert by_name8['other-image'] == {'id': 'other-image', 'name': 'other-image',
                                        'groups': [], 'unusedGroups': ['spare']}, by_name8
+
+    # the progress block is the CLI's own luna boot status -l, fed with monitor
+    # rows: cohort anchored on the in-flight node, a parked node is not in
+    # flight, sanitized counts as done, a silent node is stuck, a 500 is failed
+    from datetime import datetime, timedelta
+    stamp = lambda minutes_ago: (datetime.utcnow() - timedelta(minutes=minutes_ago)).strftime('%Y-%m-%d %H:%M:%S')
+    nodes9 = {n: node('compute01') for n in ('node001', 'node002', 'node003', 'node004', 'node005')}
+    monitor9 = {
+        'node001': {'state': 'install.booted', 'status': '200', 'updated': stamp(3)},
+        'node002': {'state': 'install.unpack', 'status': '200', 'updated': stamp(2)},
+        'node003': {'state': 'install.fatal', 'status': '200', 'updated': stamp(95)},
+        'node004': {'state': 'install.sanitized', 'status': '200', 'updated': stamp(40)},
+        'node005': {'state': 'install.discovered', 'status': '200', 'updated': stamp(120)},
+    }
+    states9 = {name: row['state'] for name, row in monitor9.items()}
+    result9 = build_images(nodes9, states9, monitor=monitor9)
+    g9 = result9[0]['groups'][0]
+    assert g9['overview'] == overview(unpack=1, parked=1, done=2, config=1), g9['overview']
+    p9 = g9['progress']
+    assert p9['nodes'] == 5 and p9['anchored'] is True, p9
+    assert [s['node'] for s in p9['stuck']] == ['node005'], p9['stuck']
+    assert {m['milestone']: m['nodes'] for m in p9['milestones']}['booted'] == 1
+    by_node = {row['node']: row for row in p9['notBooted']}
+    assert set(by_node) == {'node002', 'node003', 'node004', 'node005'}, by_node
+    assert by_node['node002']['condition'] == '' and by_node['node002']['stage'] == 'unpack'
+    assert by_node['node003']['condition'] == 'parked' and by_node['node003']['step'] == 'fatal'
+    assert by_node['node004']['condition'] == 'sanitized'
+    assert by_node['node005']['condition'] == 'stuck' and by_node['node005']['minutes'] >= 120
+    # a 500 from the installer is what the daemon classes as failed
+    monitor9['node002']['status'] = '500'
+    assert {r['node']: r['condition'] for r in boot_view(monitor9, nodes9, ['node002'])['notBooted']} == {'node002': 'failed'}
+    # no monitor rows at all: no cohort, no block -- the CLI's None, not a crash
+    assert boot_view({}, nodes9, list(nodes9)) is None
 
     print("OK: nodeboot logic (stage map, phase mapping, per-group build, no false-positive failures)")
