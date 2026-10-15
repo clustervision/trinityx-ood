@@ -5,6 +5,6 @@ category: Monitoring
 new_window: false
 
 tile:
-  title: "Node Boot"
+  title: "Node Boot Overview"
   sub_caption: |
    Watch nodes boot — live

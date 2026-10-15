@@ -7,16 +7,26 @@ import BootOverview from './components/BootOverview.vue'
 import BootProgress from './components/BootProgress.vue'
 import NodesModal from './components/NodesModal.vue'
 import ConsoleModal from './components/ConsoleModal.vue'
-import { images, apiError, startPolling, stopPolling } from './composables/useStatus.js'
+import NotBooted from './components/NotBooted.vue'
+import NotBootedModal from './components/NotBootedModal.vue'
+import { images, progress, apiError, startPolling, stopPolling } from './composables/useStatus.js'
 
 const consoleNode = ref(null)
 const selectedRow = ref(null)
 const nodesModal = ref(null)
 const nodesModalReturn = ref(null)
+const notBootedModal = ref(null)
+const notBootedReturn = ref(null)
 
 function openConsoleFromModal(node) {
   nodesModalReturn.value = nodesModal.value
   nodesModal.value = null
+  consoleNode.value = node
+}
+
+function openConsoleFromNotBooted(node) {
+  notBootedReturn.value = notBootedModal.value
+  notBootedModal.value = null
   consoleNode.value = node
 }
 
@@ -26,6 +36,10 @@ function closeConsole() {
     nodesModal.value = nodesModalReturn.value
     nodesModalReturn.value = null
   }
+  if (notBootedReturn.value) {
+    notBootedModal.value = notBootedReturn.value
+    notBootedReturn.value = null
+  }
 }
 
 function openNodesModal(image, group) {
@@ -33,7 +47,7 @@ function openNodesModal(image, group) {
 }
 
 function isPaused() {
-  return consoleNode.value !== null || nodesModal.value !== null
+  return consoleNode.value !== null || nodesModal.value !== null || notBootedModal.value !== null
 }
 
 function onKeydown(event) {
@@ -41,6 +55,8 @@ function onKeydown(event) {
     consoleNode.value = null
     nodesModal.value = null
     nodesModalReturn.value = null
+    notBootedModal.value = null
+    notBootedReturn.value = null
   }
 }
 
@@ -70,7 +86,14 @@ onUnmounted(() => {
           @select="selectedRow = $event"
           @show-nodes="openNodesModal"
         />
-        <BootProgress :images="images" :selected="selectedRow" @select="selectedRow = $event" />
+        <BootProgress :images="images" :progress="progress" :selected="selectedRow" @select="selectedRow = $event" />
+        <NotBooted
+          :images="images"
+          :progress="progress"
+          :selected="selectedRow"
+          @open-console="consoleNode = $event"
+          @view-all="notBootedModal = { rows: $event }"
+        />
       </div>
     </main>
     <AppFooter />
@@ -82,6 +105,13 @@ onUnmounted(() => {
     :group="nodesModal.group"
     @close="nodesModal = null"
     @open-console="openConsoleFromModal"
+  />
+
+  <NotBootedModal
+    v-if="notBootedModal"
+    :rows="notBootedModal.rows"
+    @close="notBootedModal = null"
+    @open-console="openConsoleFromNotBooted"
   />
 
   <ConsoleModal

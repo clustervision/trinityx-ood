@@ -18,7 +18,7 @@ const logoUrl = computed(() => punAppAssetUrl('static/img/logo.png'))
         <a :href="homeUrl" class="tx-breadcrumb-link">Home</a>
       </li>
       <li class="tx-breadcrumb-item">
-        <a href="#" class="tx-breadcrumb-link" @click.prevent>Node Boot</a>
+        <a href="#" class="tx-breadcrumb-link" @click.prevent>Node Boot Overview</a>
       </li>
     </ol>
   </nav>
