@@ -17,10 +17,14 @@ const props = defineProps({
 // reads a little calmer than the rows.
 const trackEl = ref(null)
 const fitted = ref(10)
+const trackWidth = ref(0)
 let resizeObserver
 onMounted(() => {
-  if (props.blocks || !trackEl.value) return
-  const update = () => { fitted.value = Math.max(10, Math.round(((trackEl.value.clientWidth + 3) / 14.3) * 0.9)) }
+  if (!trackEl.value) return
+  const update = () => {
+    trackWidth.value = trackEl.value.clientWidth
+    if (!props.blocks) fitted.value = Math.max(10, Math.round(((trackWidth.value + 3) / 14.3) * 0.9))
+  }
   resizeObserver = new ResizeObserver(update)
   resizeObserver.observe(trackEl.value)
   update()
@@ -29,14 +33,18 @@ onUnmounted(() => resizeObserver?.disconnect())
 
 const cells = computed(() => distributeBlocks(props.booted, props.booting, props.failed, props.unknown, props.total, props.blocks || fitted.value))
 
-// label spans follow the real shares, so each sits over its own run of blocks
+// each label starts on the first pill of its colour, measured in pixels from the
+// pill layout (3px gap), so the word and the colour line up exactly
+const GAP = 3
 const segments = computed(() => {
-  let start = 0
+  const n = cells.value.length
+  const pill = (trackWidth.value - (n - 1) * GAP) / n
   const out = []
-  for (const [key, label, count] of [['booted', 'booted', props.booted], ['booting', 'booting', props.booting], ['unknown', 'unknown', props.unknown], ['failed', 'failed', props.failed]]) {
-    const share = props.total ? (count / props.total) * 100 : 0
-    if (count) out.push({ key, label, count, start, share })
-    start += share
+  for (const [key, count] of [['booted', props.booted], ['booting', props.booting], ['unknown', props.unknown], ['failed', props.failed]]) {
+    if (!count) continue
+    const first = cells.value.indexOf(`b-${key}`)
+    const run = cells.value.filter((c) => c === `b-${key}`).length
+    out.push({ key, label: key, count, left: first < 0 ? 0 : first * (pill + GAP), width: run * (pill + GAP) - GAP })
   }
   return out
 })
@@ -49,8 +57,8 @@ const segments = computed(() => {
         v-for="s in segments"
         :key="s.key"
         class="split-label"
-        :class="[`c-${s.key}`, { hidden: s.share < 7 }]"
-        :style="{ left: `${s.start}%`, width: `${s.share}%` }"
+        :class="[`c-${s.key}`, { hidden: s.width < 60 }]"
+        :style="{ left: `${s.left}px`, width: `${s.width}px` }"
       >{{ s.label[0].toUpperCase() + s.label.slice(1) }}: <b class="fmono">{{ formatCount(s.count) }}</b></span>
       <span v-if="!segments.length" class="split-label">no nodes</span>
     </div>
