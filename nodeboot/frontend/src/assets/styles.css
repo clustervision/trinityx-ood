@@ -143,7 +143,7 @@
 /* Node Boot header: split by state, drawn as pills like every other bar */
 .boot-split{flex:1;min-width:0}
 .split-labels{position:relative;height:18px;margin:-10px 0 14px}
-.split-label{position:absolute;top:0;font-size:var(--fs-md);font-weight:500;color:var(--c-grey-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:2px}
+.split-label{position:absolute;top:0;font-size:var(--fs-md);font-weight:500;color:var(--c-grey-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .split-label.c-booted{color:var(--c-green)}
 .split-label.c-booting{color:var(--c-blue-strong)}
 .split-label.c-unknown{color:var(--c-grey-mid)}
