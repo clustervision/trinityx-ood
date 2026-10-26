@@ -63,39 +63,6 @@ _NODE_NAME_RE = re.compile(r'^[A-Za-z0-9_.-]+$')  # matches STRICT_NAMES-style n
 # without it: only the tables and the pure classifiers are used.
 _BOOT = Boot.__new__(Boot)
 
-# Ordered provisioning pipeline -> progress %. Raw Luna state strings, straight
-# from daemon monitor node_state[204] — 'install.booted' is the post-install
-# state reported by the node's own OS at first boot (TRIX-1221), just another
-# link in the same chain now. Anything not listed (e.g. no monitor entry yet)
-# is treated as idle (0%).
-STAGE_PCT = {
-    "install.discovered": 4,
-    "install.rendered":   8,
-    "install.started":    10,
-    "install.scripts":    12,
-    "install.prescript":  16,
-    "install.setupbmc":   22,
-    "install.partscript": 28,
-    "install.downloaded": 38,
-    "install.download":   40,
-    "install.completed":  50,
-    "install.unpack":     55,
-    "install.setnet":     62,
-    "install.secrets":    68,
-    "install.postscript": 75,
-    "install.roles":      85,
-    "install.image":      90,
-    "install.finalizing": 95,
-    "install.success":    100,
-    "install.booted":     100,
-    # ponytail: transitional back-compat only. Nodes booted under the retired
-    # trinity-booted-notify mechanism (pre-TRIX-1221 daemon rewrite) still have
-    # this bare value sitting in monitor state until their next reprovision.
-    # Drop once no live cluster has pre-rewrite state left.
-    "booted":             100,
-}
-
-
 # ---------------------------------------------------------------------------
 # Luna API client — read luna.ini, cache a token, refresh once on 401/403.
 # ---------------------------------------------------------------------------
@@ -148,42 +115,28 @@ class LunaAPI:
 # Pure helpers (unit-tested in demo())
 # ---------------------------------------------------------------------------
 
-def stage_of(state):
-    """(pct, label, kind) for a raw Luna state string."""
-    if not state:
-        return 0, 'idle', 'idle'
-    if 'error' in state:
-        return STAGE_PCT.get(state, 0) or 40, 'error', 'error'
-    pct = STAGE_PCT.get(state)
-    if pct is None:
-        return 0, state, 'other'
-    label = state.replace('install.', '')
-    kind = 'done' if pct >= 100 else 'run'
-    return pct, label, kind
-
-
-# Booting nodes are bucketed into 3 coarse phases for the wave chart, not
-# tracked by every individual install.* state (30 Jul 2026 redesign — "a few
-# states, not all of them"). Boundaries match the pipeline order in STAGE_PCT:
-# phase 1 runs up to (not including) install.downloaded, phase 2 up to (not
-# including) install.unpack, phase 3 up to booted.
-PHASE1_STATES = frozenset({
-    'install.discovered', 'install.rendered', 'install.started', 'install.scripts',
-    'install.prescript', 'install.setupbmc', 'install.partscript',
-})
-PHASE2_STATES = frozenset({'install.downloaded', 'install.download', 'install.completed'})
-PHASE3_STATES = frozenset({
-    'install.unpack', 'install.setnet', 'install.secrets', 'install.postscript',
-    'install.roles', 'install.image', 'install.finalizing',
-})
+# Booting nodes are bucketed into 3 coarse phases, not tracked by every
+# individual install.* state (30 Jul 2026 redesign — "a few states, not all of
+# them"). The phases are cut from the CLI's own ladder (Boot.BOOT_STAGES) so
+# nodeboot carries no copy of the daemon's state list: phase 1 runs up to and
+# including the prepare stretch, phase 2 is the download stretch, phase 3 the
+# rest up to booted. A hand-written copy here went stale twice (lpart, mounts,
+# profiles, sanitized were all missing) and showed installing nodes as failed.
+_STAGE_INDEX = {name: index for index, (name, _steps, _pct) in enumerate(Boot.BOOT_STAGES)}
+_LAST_PHASE1_STAGE = _STAGE_INDEX['prepare']
+_PHASE2_STAGE = _STAGE_INDEX['download']
+_BOOTED_STAGE = _STAGE_INDEX['booted']
 
 
 def classify_group(members, states):
     """[node names] + {name: raw_state} -> one Luna group's counts.
 
     booted/phase1/phase2/phase3 are what the UI renders (a wave chart split
-    into 3 coarse phases, not all ~19 install.* states individually — see
-    PHASE1/2/3_STATES above). 'failed' is explicit install.error for now.
+    into 3 coarse phases cut from Boot.BOOT_STAGES, see above). failedReasons
+    is 'error' for the daemon's own failure state, 'parked' for an install
+    that stopped for good (degraded, refused, fatal), 'not_started' for a node
+    with no state or one the ladder does not place. A sanitized node has
+    nothing left to install and counts as booted, as the CLI counts it done.
 
     The previous design's STUCK_GAP_PCT ("this node is N points behind its
     fastest peer") does NOT carry over to this per-Luna-group granularity: a
@@ -195,32 +148,32 @@ def classify_group(members, states):
     a real staleness signal (e.g. no state change in N minutes) can be added
     as a second reason later without changing the shape callers already read.
     """
-    scored = []
-    for name in members:
-        state = states.get(name)
-        _pct, _label, kind = stage_of(state)
-        scored.append((name, state, kind))
+    scored = [(name, states.get(name)) for name in members]
 
     booted, phase1, phase2, phase3 = [], [], [], []
     failed_reasons = {}
-    for name, state, kind in scored:
-        if kind == 'error':
+    for name, state in scored:
+        stopped = _BOOT.stopped(state)
+        stage = _BOOT.node_stage(state)
+        if state and 'error' in state:
             failed_reasons[name] = 'error'
-        elif kind == 'done':
+        elif stopped == 'parked':
+            failed_reasons[name] = 'parked'
+        elif stopped == 'sanitized' or stage == _BOOTED_STAGE:
             booted.append(name)
-        elif kind in ('idle', 'other'):
-            # No monitor entry yet, or a state we don't recognize -- this is
-            # not "before install.discovered and about to start", it's "we
+        elif stage is None:
+            # No monitor entry yet, or a state the ladder does not place -- this
+            # is not "before install.discovered and about to start", it's "we
             # don't know it's making progress at all". Counts as not booting
             # rather than inflating the booting wave with nodes that may not
             # be doing anything.
             failed_reasons[name] = 'not_started'
-        elif state in PHASE2_STATES:
-            phase2.append(name)
-        elif state in PHASE3_STATES:
-            phase3.append(name)
-        else:  # PHASE1_STATES
+        elif stage <= _LAST_PHASE1_STAGE:
             phase1.append(name)
+        elif stage == _PHASE2_STAGE:
+            phase2.append(name)
+        else:
+            phase3.append(name)
 
     failed_nodes = sorted(failed_reasons)
     return {
@@ -231,8 +184,8 @@ def classify_group(members, states):
         'failed': len(failed_nodes),
         'failedNodes': failed_nodes,
         'failedReasons': failed_reasons,
-        'overview': boot_overview(state for _name, state, _kind in scored),
-        'funnel': boot_funnel(state for _name, state, _kind in scored),
+        'overview': boot_overview(state for _name, state in scored),
+        'funnel': boot_funnel(state for _name, state in scored),
     }
 
 
@@ -466,13 +419,25 @@ if __name__ == "__main__":
 
 def demo():
     # ponytail: one runnable check for the pure logic (no network needed)
-    assert stage_of(None) == (0, 'idle', 'idle')
-    assert stage_of('install.booted') == (100, 'booted', 'done')
-    assert stage_of('booted') == (100, 'booted', 'done')  # legacy pre-rewrite value
-    assert stage_of('install.image')[0] == 90
-    assert stage_of('install.setupbmc')[0] == 22
-    assert stage_of('install.unpack')[0] == 55
-    assert stage_of('install.error')[2] == 'error'
+    # every step the CLI's ladder knows lands in a phase or in booted -- never
+    # in failedReasons. This is the class of bug a hand-written state list had:
+    # lpart.pre/part/post, mounts, profiles and sanitized were unknown to it
+    # and installing nodes showed as "not booting".
+    ladder = [f'install.{step}' for _name, steps, _pct in Boot.BOOT_STAGES for step in steps]
+    placed = classify_group(ladder, dict(zip(ladder, ladder)))
+    assert placed['failed'] == 0, placed['failedReasons']
+    assert placed['booted'] + placed['booting'] == len(ladder)
+    one = lambda state: classify_group(['n'], {'n': state})
+    assert one('booted')['booted'] == 1  # legacy pre-rewrite value still counts
+    assert one('install.lpart.pre')['phase1'] == 1
+    assert one('install.download')['phase2'] == 1
+    assert one('install.lpart.part')['phase3'] == 1
+    assert one('install.mounts')['phase3'] == 1 and one('install.profiles')['phase3'] == 1
+    assert one('install.success')['phase3'] == 1  # installed, not yet booted: not done
+    assert one('install.sanitized')['booted'] == 1
+    assert one('install.fatal')['failedReasons'] == {'n': 'parked'}
+    assert one('install.error')['failedReasons'] == {'n': 'error'}
+    assert one(None)['failedReasons'] == {'n': 'not_started'}
 
     def node(group, osimage='img', network='cluster'):
         return {'osimage': osimage, 'group': group, 'provision_method': 'torrent',
@@ -497,7 +462,7 @@ def demo():
     assert g == {'name': 'compute01', 'network': 'cluster', 'total': 2, 'booted': 0,
                  'booting': 2, 'phase1': 1, 'phase2': 1, 'phase3': 0,
                  'failed': 0, 'failedNodes': [], 'failedReasons': {},
-                 'overview': overview(download=1, config=1),
+                 'overview': overview(ipxe=1, download=1),
                  'funnel': {'discovered': 2, 'rendered': 1, 'prepared': 1, 'downloaded': 0,
                             'unpacked': 0, 'configured': 0, 'booted': 0},
                  'progress': None}, g
@@ -519,12 +484,11 @@ def demo():
     g3 = images3[0]['groups'][0]
     assert (g3['phase1'], g3['phase2'], g3['phase3'], g3['booted']) == (1, 1, 1, 1), g3
 
-    # overview/funnel use the CLI's own tables, so they match `luna boot status`,
-    # quirks included: install.discovered sits under 'config' (the CLI's 'ipxe'
-    # phase only matches 'rendered'), and a milestone counts as passed only once
-    # the node is in the stage after it (install.downloaded has not passed
-    # 'downloaded', install.unpack has).
-    assert g3['overview'] == overview(download=1, unpack=1, done=1, config=1), g3['overview']
+    # overview/funnel use the CLI's own tables, so they match `luna boot status`:
+    # discovered and rendered are the ipxe phase, and a milestone counts as
+    # passed only once the node is in the stage after it (install.downloaded
+    # has not passed 'downloaded', install.unpack has).
+    assert g3['overview'] == overview(ipxe=1, download=1, unpack=1, done=1), g3['overview']
     assert g3['funnel'] == {'discovered': 4, 'rendered': 3, 'prepared': 3, 'downloaded': 2,
                             'unpacked': 1, 'configured': 1, 'booted': 1}, g3['funnel']
 
@@ -556,7 +520,7 @@ def demo():
     assert g6['booting'] == 1 and g6['phase1'] == 1
     assert g6['failed'] == 1 and g6['failedReasons'] == {'node002': 'not_started'}
     # a node with no state is 'unknown' in the overview and reaches no milestone
-    assert g6['overview']['unknown'] == 1 and g6['overview']['config'] == 1, g6['overview']
+    assert g6['overview']['unknown'] == 1 and g6['overview']['ipxe'] == 1, g6['overview']
     assert g6['funnel']['discovered'] == 1 and g6['funnel']['booted'] == 0, g6['funnel']
 
     # an osimage with zero nodes still gets listed (empty groups) when we know
@@ -595,7 +559,7 @@ def demo():
     states9 = {name: row['state'] for name, row in monitor9.items()}
     result9 = build_images(nodes9, states9, monitor=monitor9)
     g9 = result9[0]['groups'][0]
-    assert g9['overview'] == overview(unpack=1, parked=1, done=2, config=1), g9['overview']
+    assert g9['overview'] == overview(ipxe=1, unpack=1, parked=1, done=2), g9['overview']
     p9 = g9['progress']
     assert p9['nodes'] == 5 and p9['anchored'] is True, p9
     assert [s['node'] for s in p9['stuck']] == ['node005'], p9['stuck']
