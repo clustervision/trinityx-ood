@@ -95,6 +95,12 @@ function showNodes(row, reason) {
                 title="Show nodes with no reported state"
                 @click.stop="showNodes(row, 'not_started')"
               >{{ formatCount(row.counts.unknown) }} <span class="console-icon" v-html="ICON_CONSOLE" /></button>
+              <button
+                v-else-if="col === 'parked' && row.counts.parked"
+                class="count-link is-parked"
+                title="Show parked nodes"
+                @click.stop="showNodes(row, 'parked')"
+              >{{ formatCount(row.counts.parked) }} <span class="console-icon" v-html="ICON_CONSOLE" /></button>
               <template v-else-if="col !== 'unknown'">{{ cell(row.counts[col]) }}</template>
             </td>
             <td class="num fmono strong">{{ formatCount(row.counts.total) }}</td>

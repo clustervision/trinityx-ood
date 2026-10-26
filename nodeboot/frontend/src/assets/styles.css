@@ -59,6 +59,7 @@
 .count-link .console-icon svg{width:100%;height:100%;display:block}
 .count-link:hover{filter:brightness(.92)}
 .count-link.is-unknown{background:var(--c-grey-bg);color:var(--c-grey-mid)}
+.count-link.is-parked{background:var(--c-tan-bg);color:var(--c-tan)}
 .unused{font-size:var(--fs-sm);color:var(--c-grey-mid)}
 .unused summary{cursor:pointer;width:max-content;font-weight:500;list-style:none;display:flex;align-items:center;gap:9px}
 .unused summary::-webkit-details-marker{display:none}
