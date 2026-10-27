@@ -215,6 +215,19 @@ def _sum_group_counts(groups):
     return totals
 
 
+# What the operator does about a node whose install stopped, by the step the
+# node reports (TRIX-2320). The states come from the installer template: lpart
+# parks a node on a safety or fatal exit, sanitize erases the disks and stops,
+# any other failure is install.error and retries by itself.
+OPERATOR_ACTIONS = {
+    'degraded': 'replace the disk, reinstall with install_mode full',
+    'refused': 'fix the cause in Luna, reboot the node',
+    'fatal': 'fix the cause in Luna, reboot the node',
+    'sanitized': 'none, or reinstall',
+    'error': 'watch; it retries by itself',
+}
+
+
 def boot_view(monitor, nodes, scope):
     """The Boot Progress block and the Not Booted rows of `luna boot status -l`,
     computed by the CLI's own code for these nodes. node_states() is the one
@@ -227,6 +240,8 @@ def boot_view(monitor, nodes, scope):
     progress = boot.boot_progress(scope)
     if progress is not None:
         progress['notBooted'] = boot.not_booted(nodes, scope)
+        for row in progress['notBooted']:
+            row['action'] = OPERATOR_ACTIONS.get(row['step'], '')
     return progress
 
 
@@ -552,7 +567,7 @@ def demo():
     monitor9 = {
         'node001': {'state': 'install.booted', 'status': '200', 'updated': stamp(3)},
         'node002': {'state': 'install.unpack', 'status': '200', 'updated': stamp(2)},
-        'node003': {'state': 'install.fatal', 'status': '200', 'updated': stamp(95)},
+        'node003': {'state': 'install.degraded', 'status': '200', 'updated': stamp(95)},
         'node004': {'state': 'install.sanitized', 'status': '200', 'updated': stamp(40)},
         'node005': {'state': 'install.discovered', 'status': '200', 'updated': stamp(120)},
     }
@@ -567,9 +582,16 @@ def demo():
     by_node = {row['node']: row for row in p9['notBooted']}
     assert set(by_node) == {'node002', 'node003', 'node004', 'node005'}, by_node
     assert by_node['node002']['condition'] == '' and by_node['node002']['stage'] == 'unpack'
-    assert by_node['node003']['condition'] == 'parked' and by_node['node003']['step'] == 'fatal'
+    assert by_node['node003']['condition'] == 'parked' and by_node['node003']['step'] == 'degraded'
     assert by_node['node004']['condition'] == 'sanitized'
     assert by_node['node005']['condition'] == 'stuck' and by_node['node005']['minutes'] >= 120
+    # every stopped state the installer can report carries its operator action;
+    # a node that is merely slow or mid-install carries none
+    assert by_node['node003']['action'] == 'replace the disk, reinstall with install_mode full'
+    assert by_node['node004']['action'] == 'none, or reinstall'
+    assert by_node['node002']['action'] == '' and by_node['node005']['action'] == ''
+    for step in ('degraded', 'refused', 'fatal', 'sanitized', 'error'):
+        assert OPERATOR_ACTIONS[step], step
     # a 500 from the installer is what the daemon classes as failed
     monitor9['node002']['status'] = '500'
     assert {r['node']: r['condition'] for r in boot_view(monitor9, nodes9, ['node002'])['notBooted']} == {'node002': 'failed'}

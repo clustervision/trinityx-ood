@@ -40,6 +40,7 @@ const shown = computed(() => rows.value.slice(0, LIMIT))
             <th>step</th>
             <th class="num">since</th>
             <th>condition</th>
+            <th>action</th>
           </tr>
         </thead>
         <tbody>
@@ -57,9 +58,10 @@ const shown = computed(() => rows.value.slice(0, LIMIT))
             <td class="fmono">{{ row.step }}</td>
             <td class="num fmono">{{ formatAge(row.minutes) }}</td>
             <td><span v-if="row.condition" class="condition" :class="`is-${row.condition}`">{{ row.condition }}</span></td>
+            <td class="dim">{{ row.action }}</td>
           </tr>
           <tr v-if="!rows.length">
-            <td colspan="7" class="boot-empty">{{ view ? 'Every node in this boot has booted.' : 'No nodes are assigned to any group yet.' }}</td>
+            <td colspan="8" class="boot-empty">{{ view ? 'Every node in this boot has booted.' : 'No nodes are assigned to any group yet.' }}</td>
           </tr>
         </tbody>
       </table>
