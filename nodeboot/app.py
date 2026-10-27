@@ -112,7 +112,7 @@ class LunaAPI:
 
 
 # ---------------------------------------------------------------------------
-# Pure helpers (unit-tested in demo())
+# Pure helpers (tests in tests/test_boot_status.py)
 # ---------------------------------------------------------------------------
 
 # Booting nodes are bucketed into 3 coarse phases, not tracked by every
@@ -143,8 +143,7 @@ def classify_group(members, states):
     real group's own phase1/phase2/phase3 pcts span ~4 to ~95, so the instant
     even one member reaches booted (100%), every node still mid-pipeline is
     >=25 points behind it and would get flagged "stuck" purely for being
-    normal and unfinished — caught by the demo() test below before this
-    shipped. failedReasons keeps 'error' as its own key (not a bare bool) so
+    normal and unfinished — caught by the tests before this shipped. failedReasons keeps 'error' as its own key (not a bare bool) so
     a real staleness signal (e.g. no state change in N minutes) can be added
     as a second reason later without changing the shape callers already read.
     """
@@ -215,6 +214,19 @@ def _sum_group_counts(groups):
     return totals
 
 
+# What the operator does about a node whose install stopped, by the step the
+# node reports (TRIX-2320). The states come from the installer template: lpart
+# parks a node on a safety or fatal exit, sanitize erases the disks and stops,
+# any other failure is install.error and retries by itself.
+OPERATOR_ACTIONS = {
+    'degraded': 'replace the disk, reinstall with install_mode full',
+    'refused': 'fix the cause in Luna, reboot the node',
+    'fatal': 'fix the cause in Luna, reboot the node',
+    'sanitized': 'none, or reinstall',
+    'error': 'watch; it retries by itself',
+}
+
+
 def boot_view(monitor, nodes, scope):
     """The Boot Progress block and the Not Booted rows of `luna boot status -l`,
     computed by the CLI's own code for these nodes. node_states() is the one
@@ -227,6 +239,8 @@ def boot_view(monitor, nodes, scope):
     progress = boot.boot_progress(scope)
     if progress is not None:
         progress['notBooted'] = boot.not_booted(nodes, scope)
+        for row in progress['notBooted']:
+            row['action'] = OPERATOR_ACTIONS.get(row['step'], '')
     return progress
 
 
@@ -415,165 +429,3 @@ if __name__ == "__main__":
     else:
         app.config["DEBUG"] = True
         app.run(host='0.0.0.0', port=7756, debug=True)
-
-
-def demo():
-    # ponytail: one runnable check for the pure logic (no network needed)
-    # every step the CLI's ladder knows lands in a phase or in booted -- never
-    # in failedReasons. This is the class of bug a hand-written state list had:
-    # lpart.pre/part/post, mounts, profiles and sanitized were unknown to it
-    # and installing nodes showed as "not booting".
-    ladder = [f'install.{step}' for _name, steps, _pct in Boot.BOOT_STAGES for step in steps]
-    placed = classify_group(ladder, dict(zip(ladder, ladder)))
-    assert placed['failed'] == 0, placed['failedReasons']
-    assert placed['booted'] + placed['booting'] == len(ladder)
-    one = lambda state: classify_group(['n'], {'n': state})
-    assert one('booted')['booted'] == 1  # legacy pre-rewrite value still counts
-    assert one('install.lpart.pre')['phase1'] == 1
-    assert one('install.download')['phase2'] == 1
-    assert one('install.lpart.part')['phase3'] == 1
-    assert one('install.mounts')['phase3'] == 1 and one('install.profiles')['phase3'] == 1
-    assert one('install.success')['phase3'] == 1  # installed, not yet booted: not done
-    assert one('install.sanitized')['booted'] == 1
-    assert one('install.fatal')['failedReasons'] == {'n': 'parked'}
-    assert one('install.error')['failedReasons'] == {'n': 'error'}
-    assert one(None)['failedReasons'] == {'n': 'not_started'}
-
-    def node(group, osimage='img', network='cluster'):
-        return {'osimage': osimage, 'group': group, 'provision_method': 'torrent',
-                'provision_interface': 'BOOTIF',
-                'interfaces': [{'interface': 'BOOTIF', 'network': network}]}
-
-    # Two nodes, same image, same group, one in phase1 one in phase2 -- not
-    # merged with each other, and neither is "failed".
-    nodes = {'node001': node('compute01'), 'node002': node('compute01')}
-    images = build_images(nodes, {'node001': 'install.discovered', 'node002': 'install.downloaded'})
-    assert len(images) == 1
-    img = images[0]
-    assert img['name'] == 'img'
-    assert len(img['groups']) == 1
-    g = img['groups'][0]
-    assert g['name'] == 'compute01' and g['network'] == 'cluster'
-    # overview columns are whatever the installed CLI's BOOT_PHASES says, so the
-    # expectation is built from that table rather than spelled out
-    def overview(**counts):
-        return {**boot_overview([]), **counts}
-    assert list(boot_overview([])) == ['unknown', 'ipxe', 'download', 'unpack', 'config', 'parked', 'done']
-    assert g == {'name': 'compute01', 'network': 'cluster', 'total': 2, 'booted': 0,
-                 'booting': 2, 'phase1': 1, 'phase2': 1, 'phase3': 0,
-                 'failed': 0, 'failedNodes': [], 'failedReasons': {},
-                 'overview': overview(ipxe=1, download=1),
-                 'funnel': {'discovered': 2, 'rendered': 1, 'prepared': 1, 'downloaded': 0,
-                            'unpacked': 0, 'configured': 0, 'booted': 0},
-                 'progress': None}, g
-
-    # Two different Luna groups under the same image stay separate group cards.
-    nodes2 = {'node001': node('compute01'), 'node002': node('compute02')}
-    images2 = build_images(nodes2, {'node001': 'install.booted', 'node002': 'install.booted'})
-    assert len(images2[0]['groups']) == 2
-    by_name = {g['name']: g for g in images2[0]['groups']}
-    assert by_name['compute01']['booted'] == 1 and by_name['compute02']['booted'] == 1
-
-    # phase boundaries: discovered->downloaded is phase1, downloaded->unpack is
-    # phase2, unpack->booted is phase3 -- exactly the 3 states asked for.
-    nodes3 = {n: node('compute01') for n in ('node001', 'node002', 'node003', 'node004')}
-    images3 = build_images(nodes3, {
-        'node001': 'install.discovered', 'node002': 'install.downloaded',
-        'node003': 'install.unpack', 'node004': 'install.booted',
-    })
-    g3 = images3[0]['groups'][0]
-    assert (g3['phase1'], g3['phase2'], g3['phase3'], g3['booted']) == (1, 1, 1, 1), g3
-
-    # overview/funnel use the CLI's own tables, so they match `luna boot status`:
-    # discovered and rendered are the ipxe phase, and a milestone counts as
-    # passed only once the node is in the stage after it (install.downloaded
-    # has not passed 'downloaded', install.unpack has).
-    assert g3['overview'] == overview(ipxe=1, download=1, unpack=1, done=1), g3['overview']
-    assert g3['funnel'] == {'discovered': 4, 'rendered': 3, 'prepared': 3, 'downloaded': 2,
-                            'unpacked': 1, 'configured': 1, 'booted': 1}, g3['funnel']
-
-    # a node still early in the pipeline while a sibling has already booted is
-    # NORMAL, not "failed" -- the regression this test exists to catch (an
-    # earlier version of this function flagged it "stuck" purely for being
-    # >=25 points behind a booted peer, which is true of almost every
-    # mid-pipeline node the instant anyone in its group finishes).
-    nodes4 = {n: node('compute01') for n in ('node001', 'node002', 'node003')}
-    images4 = build_images(nodes4, {'node001': 'install.booted', 'node002': 'install.booted',
-                                     'node003': 'install.discovered'})
-    g4 = images4[0]['groups'][0]
-    assert g4['failed'] == 0, g4
-    assert g4['booted'] == 2 and g4['phase1'] == 1
-
-    # only an explicit install.error counts as failed right now
-    nodes5 = {n: node('compute01') for n in ('node001', 'node002', 'node003')}
-    images5 = build_images(nodes5, {'node001': 'install.error', 'node002': 'install.booted',
-                                     'node003': 'install.discovered'})
-    g5 = images5[0]['groups'][0]
-    assert g5['booted'] == 1 and g5['failed'] == 1
-    assert g5['failedReasons'] == {'node001': 'error'}
-
-    # a node with no monitor entry at all (never reached install.discovered)
-    # counts as not booting, not as an early-phase booting node
-    nodes6 = {n: node('compute01') for n in ('node001', 'node002')}
-    images6 = build_images(nodes6, {'node001': 'install.discovered'})  # node002 has no entry
-    g6 = images6[0]['groups'][0]
-    assert g6['booting'] == 1 and g6['phase1'] == 1
-    assert g6['failed'] == 1 and g6['failedReasons'] == {'node002': 'not_started'}
-    # a node with no state is 'unknown' in the overview and reaches no milestone
-    assert g6['overview']['unknown'] == 1 and g6['overview']['ipxe'] == 1, g6['overview']
-    assert g6['funnel']['discovered'] == 1 and g6['funnel']['booted'] == 0, g6['funnel']
-
-    # an osimage with zero nodes still gets listed (empty groups) when we know
-    # about it from Luna's own osimage list; a group with zero nodes still
-    # never gets synthesized, since groups only exist as a byproduct of nodes
-    nodes7 = {'node001': node('rack01')}
-    images7 = build_images(nodes7, {'node001': 'install.booted'},
-                            all_osimage_names=['img', 'unused-image'])
-    by_name7 = {i['name']: i for i in images7}
-    assert set(by_name7) == {'img', 'unused-image'}, by_name7
-    assert by_name7['unused-image']['groups'] == []
-
-    # groups with no nodes are named under their own osimage's unusedGroups,
-    # including an osimage nothing else references; groups with nodes are not
-    images8 = build_images(nodes7, {'node001': 'install.booted'}, all_osimage_names=['img'],
-                           all_groups={'rack01': 'img', 'rack02': 'img', 'spare': 'other-image'})
-    by_name8 = {i['name']: i for i in images8}
-    assert by_name8['img']['unusedGroups'] == ['rack02'], by_name8
-    assert [g['name'] for g in by_name8['img']['groups']] == ['rack01']
-    assert by_name8['other-image'] == {'id': 'other-image', 'name': 'other-image',
-                                       'groups': [], 'unusedGroups': ['spare']}, by_name8
-
-    # the progress block is the CLI's own luna boot status -l, fed with monitor
-    # rows: cohort anchored on the in-flight node, a parked node is not in
-    # flight, sanitized counts as done, a silent node is stuck, a 500 is failed
-    from datetime import datetime, timedelta
-    stamp = lambda minutes_ago: (datetime.utcnow() - timedelta(minutes=minutes_ago)).strftime('%Y-%m-%d %H:%M:%S')
-    nodes9 = {n: node('compute01') for n in ('node001', 'node002', 'node003', 'node004', 'node005')}
-    monitor9 = {
-        'node001': {'state': 'install.booted', 'status': '200', 'updated': stamp(3)},
-        'node002': {'state': 'install.unpack', 'status': '200', 'updated': stamp(2)},
-        'node003': {'state': 'install.fatal', 'status': '200', 'updated': stamp(95)},
-        'node004': {'state': 'install.sanitized', 'status': '200', 'updated': stamp(40)},
-        'node005': {'state': 'install.discovered', 'status': '200', 'updated': stamp(120)},
-    }
-    states9 = {name: row['state'] for name, row in monitor9.items()}
-    result9 = build_images(nodes9, states9, monitor=monitor9)
-    g9 = result9[0]['groups'][0]
-    assert g9['overview'] == overview(ipxe=1, unpack=1, parked=1, done=2), g9['overview']
-    p9 = g9['progress']
-    assert p9['nodes'] == 5 and p9['anchored'] is True, p9
-    assert [s['node'] for s in p9['stuck']] == ['node005'], p9['stuck']
-    assert {m['milestone']: m['nodes'] for m in p9['milestones']}['booted'] == 1
-    by_node = {row['node']: row for row in p9['notBooted']}
-    assert set(by_node) == {'node002', 'node003', 'node004', 'node005'}, by_node
-    assert by_node['node002']['condition'] == '' and by_node['node002']['stage'] == 'unpack'
-    assert by_node['node003']['condition'] == 'parked' and by_node['node003']['step'] == 'fatal'
-    assert by_node['node004']['condition'] == 'sanitized'
-    assert by_node['node005']['condition'] == 'stuck' and by_node['node005']['minutes'] >= 120
-    # a 500 from the installer is what the daemon classes as failed
-    monitor9['node002']['status'] = '500'
-    assert {r['node']: r['condition'] for r in boot_view(monitor9, nodes9, ['node002'])['notBooted']} == {'node002': 'failed'}
-    # no monitor rows at all: no cohort, no block -- the CLI's None, not a crash
-    assert boot_view({}, nodes9, list(nodes9)) is None
-
-    print("OK: nodeboot logic (stage map, phase mapping, per-group build, no false-positive failures)")
