@@ -23,7 +23,7 @@ Setup file, will build the pip package for the project.
 
 __author__      = 'Sumit Sharma'
 __copyright__   = 'Copyright 2026, Trinity[OOD]'
-__license__     = 'GPL'
+__license__     = 'GPLv3'
 __version__     = '3.0'
 __maintainer__  = 'Sumit Sharma'
 __email__       = 'sumit.sharma@clustervision.com'
@@ -70,7 +70,7 @@ setup(
 	url = "https://gitlab.taurusgroup.one/clustervision/trinityx-ood.git",
 	download_url = f"https://{PRE}@gitlab.taurusgroup.one/api/v4/projects/30/packages/pypi/simple",
 	packages = find_packages(),
-	license = "MIT",
+	license = "GPLv3",
 	keywords = ["luna", "ood", "GUI", "Trinity", "ClusterVision", "Sumit", "Sumit Sharma"],
 	entry_points = {
 		'console_scripts': [
@@ -86,7 +86,7 @@ setup(
 		'Development Status :: Beta',
 		'Environment :: Web Interface',
 		'Intended Audience :: System Administrators',
-		'License :: MIT',
+		'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
 		'Operating System :: RockyLinux :: CentOS :: RedHat',
 		'Programming Language :: Python',
 		'Topic :: Trinity :: Luna'
