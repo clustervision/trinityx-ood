@@ -50,11 +50,7 @@ function renderModalFooter(target, mode, name) {
     return button;
 }
 function renderModalBody(target, mode, name, data) {
-    if (mode == 'delete') {
-        return 'Are you sure you want to delete ' + name + '?';
-    } else {
-        return data;
-    }
+    return data;
 }
 
 function loadModal(target, mode, name) {
@@ -77,8 +73,16 @@ function loadModal(target, mode, name) {
         error: function (request) {
             message = JSON.parse(request.responseText).message
             displayAlert('danger', "Error while loading modal: " + message);
+            refreshTables();
         }
     });
+}
+
+function refreshTables() {
+    // deleting or editing a user can change the groups table and vice versa
+    // (member lists, auto-removed personal groups), so always reload both
+    tables['users'].setData(currentUrl + 'users');
+    tables['groups'].setData(currentUrl + 'groups');
 }
 
 function handle_new_button(target) {
@@ -96,12 +100,14 @@ function handleDeleteSubmitButton(target, name) {
         type: 'POST',
         success: function (data) {
             $('#modal').modal('hide');
-            tables[target].setData(currentUrl + target);
+            refreshTables();
             displayAlert('success', data.message);
         },
         error: function (request) {
+            $('#modal').modal('hide');
             message = JSON.parse(request.responseText).message
             displayAlert('danger', message);
+            refreshTables();
         }
     });
 }
@@ -136,7 +142,7 @@ function handleSubmitButton(target, name, mode) {
         data: JSON.stringify(formdata),
         success: function (data) {
             $('#modal').modal('hide');
-            tables[target].setData(currentUrl + target);
+            refreshTables();
             displayAlert('success', data.message);
         },
         error: function (request) {
@@ -219,4 +225,16 @@ window.onload = function () {
 
     $("#new-user-wrapper").html(renderNewUserButton());
     $("#new-group-wrapper").html(renderNewGroupButton());
+
+    // reload on tab switch so changes made from the other tab (or outside
+    // the app) show up without a full page refresh
+    $('a[data-toggle="tab"]').on('shown.bs.tab', refreshTables);
+
+    // plain click toggles an entry in the member/group selectors, instead of
+    // the native ctrl-click / drag multi-select
+    $(document).on('mousedown', '#modal-form select.form-entry[multiple] option', function (e) {
+        e.preventDefault();
+        this.selected = !this.selected;
+        return false;
+    });
 }

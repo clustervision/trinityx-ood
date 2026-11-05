@@ -639,6 +639,15 @@ function _saveConfigurationAction(configuration) {
     });
 }
 function saveConfiguration(){
+    // Block the save when any table has invalid input (e.g. an empty required
+    // Preset/GRES Name, a duplicate name or a non-numeric Count) — the same gate
+    // testConfiguration() already applies. Without this the backend silently
+    // persists an incomplete preset.
+    var [result, message] = _validateTables();
+    if (result != 0) {
+        displayAlert("danger", `${message}<br>Please fix the errors and try again.`);
+        return
+    }
     var configuration = _getConfiguration();
     displayConfirmationModal(
         "Save Configuration", 

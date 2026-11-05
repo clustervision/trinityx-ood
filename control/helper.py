@@ -65,3 +65,56 @@ class Helper():
             raw_data = get_list['config'][table]
             response = list(raw_data.keys())
         return response
+
+    @staticmethod
+    def is_setupbmc_enabled(value):
+        """
+        Match node app semantics: empty / inherit → default True; only explicit false disables BMC.
+        """
+        if value is False:
+            return False
+        if isinstance(value, str) and value.strip().lower() in ('false', 'no', '0'):
+            return False
+        return True
+
+    def get_node_setupbmc_map(self):
+        """
+        Return {node_name: bool} for setupbmc from Luna node config.
+        Missing nodes default to True (BMC assumed available).
+        """
+        out = {}
+        get_list = Rest().get_data('node')
+        if not get_list:
+            return out
+        raw = (get_list.get('config') or {}).get('node') or {}
+        if not isinstance(raw, dict):
+            return out
+        for name, rec in raw.items():
+            key = str(name).strip()
+            if not key:
+                continue
+            value = None
+            if isinstance(rec, dict):
+                value = rec.get('setupbmc')
+            out[key] = self.is_setupbmc_enabled(value)
+        return out
+
+    def filter_sel_hostlist(self, node_list):
+        """
+        Keep only nodes with setupbmc enabled. Returns (enabled_names, skipped_names).
+        """
+        if not node_list:
+            return [], []
+        setupbmc_map = self.get_node_setupbmc_map()
+        enabled = []
+        skipped = []
+        for name in node_list:
+            node = str(name).strip()
+            if not node:
+                continue
+            # Default True when node is not in the map (same as node form DEFAULT).
+            if setupbmc_map.get(node, True):
+                enabled.append(node)
+            else:
+                skipped.append(node)
+        return enabled, skipped

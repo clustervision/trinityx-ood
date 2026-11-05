@@ -29,10 +29,18 @@ __email__       = "sumit.sharma@clustervision.com"
 __status__      = "Development"
 
 import os
+from time import time
 from urllib.parse import urlparse, urlunparse
+import requests
+import urllib3
 from flask import url_for
-from constant import APP_STATE, ALERT_MANAGER_DIR
+from constant import ALERT_MANAGER_DIR
 from log import Log
+
+urllib3.disable_warnings()
+
+SCHEME_CACHE_TTL = 600
+scheme_cache = {}
 
 
 class Helper():
@@ -47,25 +55,48 @@ class Helper():
         self.logger = Log.get_logger()
 
 
+    def detect_protocol(self, host, port, timeout=2):
+        """
+        Prometheus/Alert Manager TLS is configured independently of the OOD portal
+        and the Luna daemon, so probe the port directly instead of assuming either
+        scheme applies. Results are cached so pages do not re-probe on every load.
+        """
+        now = time()
+        cached = scheme_cache.get((host, port))
+        if cached and cached[1] > now:
+            return cached[0]
+        try:
+            requests.get(f"https://{host}:{port}/", timeout=timeout, verify=False)
+            scheme = "https"
+        except requests.exceptions.RequestException:
+            try:
+                requests.get(f"http://{host}:{port}/", timeout=timeout)
+                scheme = "http"
+            except requests.exceptions.RequestException:
+                scheme = "https"
+        scheme_cache[(host, port)] = (scheme, now + SCHEME_CACHE_TTL)
+        return scheme
+
+
     def app_url(self, request=None):
         """
         This method will provide the URL's for the frontend application.
         """
         response = {"PROMQL_URL": "", "APP_URL": "", "ALERT_URL": ""}
-        full_url = f"https://{request.host}{request.path}"
+        scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+        full_url = f"{scheme}://{request.host}{request.path}"
         full_url = full_url[:-1]
         full_url_app = f"{full_url}{url_for('home')}"
         APP_URL = full_url_app[:-1]
-        if APP_STATE is False: # FOR Development Only
-            PROMQL_URL = full_url.replace("7755", "9090")
-        else:
-            PROMQL_URL = full_url.replace("8080", "9090")
+        hostname = request.host.split(':')[0]
+        promql_scheme = self.detect_protocol(hostname, 9090)
+        PROMQL_URL = f"{promql_scheme}://{hostname}:9090"
         response['PROMQL_URL'] = PROMQL_URL
         response['APP_URL'] = APP_URL
         credentials = self.get_alert_manager_credential()
         if isinstance(credentials, dict):
-            raw_url = PROMQL_URL.replace("9090", "9093")
-            raw_url = f"{raw_url}/api/v2/alerts"
+            alert_scheme = self.detect_protocol(hostname, 9093)
+            raw_url = f"{alert_scheme}://{hostname}:9093/api/v2/alerts"
             parsed_url = urlparse(raw_url)
             ALERT_URL = urlunparse((
                 parsed_url.scheme,

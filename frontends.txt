@@ -1,0 +1,22 @@
+# Vue.js frontends built by CI into <folder>/app/assets/ before the pip package is made.
+#
+# Each build is also published as <package>-1.0.latest.tar.gz, the file older TrinityX
+# installs download and unpack themselves. <target> names the CI/CD variables holding
+# the upload folder: <target>_LOCATION (main) and <target>_DEV_LOCATION (development).
+#
+# folder        package          target
+alertx          alertx-gui       ALERTX
+bmcsetup        bmcsetup         OOD_APPS
+cluster         cluster          OOD_APPS
+control         control          OOD_APPS
+dns             dns              OOD_APPS
+group           group            OOD_APPS
+network         network          OOD_APPS
+node            node             OOD_APPS
+nodeboot        nodeboot         OOD_APPS
+osimage         osimage          OOD_APPS
+osimagetag      osimage-tag      OOD_APPS
+otherdev        otherdev         OOD_APPS
+rack            rack-gui         RACK
+secrets         secrets          OOD_APPS
+switch          switch           OOD_APPS

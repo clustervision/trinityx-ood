@@ -1,0 +1,800 @@
+/*
+ * This code is part of the TrinityX software suite
+ * Copyright (C) 2026  ClusterVision Solutions b.v.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>
+ *
+ * @author      Yixin Zhang
+ * @copyright   Copyright 2026, Luna2 Project[OOD]
+ * @license     GPL
+ * @version     2.0
+ * @maintainer  Yixin Zhang
+ * @email       yixin.zhang@clustervision.com
+ * @status      Development
+ */
+
+import type {
+  ControlNodeInfo,
+  ControlStatusRow,
+  RequestEnvelope,
+  StatusField,
+  StatusSnapshot,
+  StatusToast,
+} from './types'
+import { isSelListResponseReady } from './utils/selLogDisplay'
+import { isSetupBmcEnabled } from './utils/setupbmc'
+import { pendingStatus } from './utils/statusDisplay'
+import { oodAppRoot } from './utils/oodAppRoot'
+
+const STATUS_TYPES = ['power', 'sel', 'chassis'] as const
+const ALL_STATUS_FIELDS = ['power', 'sel', 'chassis', 'redfish'] as const
+type PollField = (typeof ALL_STATUS_FIELDS)[number]
+
+const BACKGROUND_POLL_MS = 30000
+const POLL_INTERVAL_MS = 1000
+
+export function baseUrl(): string {
+  if (import.meta.env.DEV) return '/control-backend'
+  return oodAppRoot()
+}
+
+function apiPath(path: string): string {
+  return `${baseUrl().replace(/\/+$/, '')}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+async function readJson(res: Response): Promise<unknown> {
+  const text = await res.text()
+  if (!text) return {}
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { message: text }
+  }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function hostlistIncludes(hostlist: string[] | undefined, node: string): boolean {
+  if (!hostlist?.length) return true
+  const lower = node.toLowerCase()
+  return hostlist.some((h) => h.toLowerCase() === lower)
+}
+
+function rowKeyForHostlist(
+  rowMap: Record<string, ControlStatusRow>,
+  node: string,
+): string {
+  if (rowMap[node]) return node
+  const lower = node.toLowerCase()
+  return Object.keys(rowMap).find((k) => k.toLowerCase() === lower) ?? node
+}
+
+function hostlistFieldResolved(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+  hostlist: string[] | undefined,
+): boolean {
+  if (!hostlist?.length) return true
+  const pending = pendingStatus()
+  return hostlist.every((node) => {
+    const key = rowKeyForHostlist(rowMap, node)
+    const row = rowMap[key]
+    if (row == null) return false
+    if (field === 'sel' && row.setupbmc === false) return true
+    return row[field] !== pending
+  })
+}
+
+function clearPendingForHostlist(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+  hostlist: string[] | undefined,
+): void {
+  const pending = pendingStatus()
+  const targets = hostlist?.length ? hostlist : Object.keys(rowMap)
+  for (const node of targets) {
+    const key = rowKeyForHostlist(rowMap, node)
+    const row = rowMap[key]
+    if (row && row[field] === pending) row[field] = 'UNKNOWN'
+  }
+}
+
+function normalizeState(v: unknown): string {
+  const s = String(v ?? '').trim()
+  if (!s) return 'UNKNOWN'
+  return s.toUpperCase()
+}
+
+function emptyRow(node: string, setupbmc = true): ControlStatusRow {
+  const pending = pendingStatus()
+  const sel = setupbmc ? pending : 'N/A'
+  return {
+    node,
+    power: pending,
+    sel,
+    chassis: pending,
+    redfish: pending,
+    setupbmc,
+    errors: {},
+  }
+}
+
+function rowMapFromRows(rows: ControlStatusRow[]): Record<string, ControlStatusRow> {
+  const map: Record<string, ControlStatusRow> = {}
+  for (const row of rows) {
+    map[row.node] = { ...row, errors: { ...row.errors } }
+  }
+  return map
+}
+
+function sortedRows(rowMap: Record<string, ControlStatusRow>): ControlStatusRow[] {
+  return Object.values(rowMap).sort((a, b) => a.node.localeCompare(b.node))
+}
+
+function makeToast(
+  node: string,
+  field: StatusField,
+  message: string,
+  idPrefix = '',
+): StatusToast {
+  const label = node ? `${node} · ${field}: ${message}` : message
+  return {
+    id: `${idPrefix}${node}:${field}:${message}`,
+    node,
+    field,
+    message: label,
+  }
+}
+
+function walkCollectFailures(obj: unknown, out: Map<string, string>): void {
+  if (!obj || typeof obj !== 'object') return
+  const o = obj as Record<string, unknown>
+  if ('failed' in o) addFailedMap(o.failed, out)
+  for (const val of Object.values(o)) {
+    if (val && typeof val === 'object') walkCollectFailures(val, out)
+  }
+}
+
+function finalizeNodePowerIfPending(rows: Record<string, ControlStatusRow>, node: string): void {
+  if (!rows[node]) return
+  if (rows[node].power !== pendingStatus()) return
+  rows[node].power = 'ERROR'
+}
+
+function addFailedMap(map: unknown, out: Map<string, string>): void {
+  if (!map || typeof map !== 'object') return
+  if (Array.isArray(map)) {
+    for (const entry of map) {
+      const node = String(entry ?? '').trim()
+      if (node && !out.has(node)) out.set(node, '')
+    }
+    return
+  }
+  for (const [node, msg] of Object.entries(map as Record<string, unknown>)) {
+    const key = String(node ?? '').trim()
+    if (!key) continue
+    const message = String(msg ?? '').trim()
+    // Keep empty message as a failure marker; caller may fill from top-level message.
+    if (!out.has(key) || message) out.set(key, message)
+  }
+}
+
+/** Walk entire control tree for per-node failed{ node: message } maps. */
+function collectControlFailures(ctl: Record<string, unknown>): Map<string, string> {
+  const out = new Map<string, string>()
+  walkCollectFailures(ctl, out)
+  return out
+}
+
+function collectFailuresFromBody(
+  body: unknown,
+  field: StatusField,
+  hostlist?: string[],
+  idPrefix = '',
+): StatusToast[] {
+  if (!body || typeof body !== 'object') return []
+  const o = body as Record<string, unknown>
+  const ctl = o.control
+  const topMessage = String(o.message ?? '').trim()
+  const failures = new Map<string, string>()
+  if (ctl && typeof ctl === 'object') {
+    for (const [node, message] of collectControlFailures(ctl as Record<string, unknown>)) {
+      failures.set(node, message || topMessage)
+    }
+  }
+  const toasts = failuresToToasts(failures, field, hostlist, idPrefix)
+  if (toasts.length > 0) return toasts
+  if (topMessage) {
+    const node = hostlist?.length === 1 ? (hostlist[0] ?? '') : ''
+    return [makeToast(node, field, topMessage, idPrefix)]
+  }
+  return []
+}
+
+function failuresToToasts(
+  failures: Map<string, string>,
+  field: StatusField,
+  hostlist?: string[],
+  idPrefix = '',
+): StatusToast[] {
+  const toasts: StatusToast[] = []
+  for (const [node, message] of failures) {
+    if (hostlist && !hostlistIncludes(hostlist, node)) continue
+    toasts.push(makeToast(node, field, message, idPrefix))
+  }
+  if (toasts.length === 0 && hostlist && failures.size > 0) {
+    for (const [node, message] of failures) {
+      toasts.push(makeToast(node, field, message, idPrefix))
+    }
+  }
+  return toasts
+}
+
+function applyResultItem(
+  rows: Record<string, ControlStatusRow>,
+  item: unknown,
+  toasts: StatusToast[],
+  options?: { system?: PollField; action?: string; hostlist?: string[]; idPrefix?: string },
+): void {
+  if (!item || typeof item !== 'object') return
+  const o = item as Record<string, unknown>
+  const ctl = o.control as Record<string, unknown> | undefined
+  if (!ctl) return
+  const system =
+    options?.system ?? (ALL_STATUS_FIELDS.find((k) => k in ctl) as PollField | undefined)
+  if (!system) return
+
+  const idPrefix = options?.idPrefix ?? ''
+  const topMessage = String(o.message ?? '').trim()
+  const failures = collectControlFailures(ctl)
+  for (const [node, rawMessage] of failures) {
+    if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
+    if (!rows[node]) rows[node] = emptyRow(node)
+    if (system === 'sel' && rows[node].setupbmc === false) continue
+    const message = rawMessage.trim() || topMessage || 'Action failed.'
+    rows[node][system] = 'ERROR'
+    finalizeNodePowerIfPending(rows, node)
+    if (system !== 'redfish') {
+      rows[node].errors = { ...rows[node].errors, [system]: message }
+    }
+    toasts.push(makeToast(node, system, message, idPrefix))
+  }
+
+  const statusObj = ctl[system] as Record<string, unknown> | undefined
+  if (!statusObj || typeof statusObj !== 'object') return
+  for (const statusKey of ['off', 'on', 'ok'] as const) {
+    const hostMap = statusObj[statusKey]
+    if (!hostMap || typeof hostMap !== 'object') continue
+    for (const node of Object.keys(hostMap as Record<string, unknown>)) {
+      if (options?.hostlist && !hostlistIncludes(options.hostlist, node)) continue
+      if (!rows[node]) rows[node] = emptyRow(node)
+      if (system === 'sel' && rows[node].setupbmc === false) continue
+      rows[node][system] = normalizeState(statusKey)
+      if (system !== 'redfish' && rows[node].errors?.[system]) {
+        const nextErrors = { ...rows[node].errors }
+        delete nextErrors[system]
+        rows[node].errors = nextErrors
+      }
+    }
+  }
+}
+
+function extractRequestId(data: unknown): string {
+  if (!data || typeof data !== 'object') return ''
+  const o = data as Record<string, unknown>
+  const top = String(o.request_id ?? '').trim()
+  if (top) return top
+  const ctl = o.control
+  if (ctl && typeof ctl === 'object') {
+    return String((ctl as Record<string, unknown>).request_id ?? '').trim()
+  }
+  return ''
+}
+
+function pollTimeoutMs(system: string, action: string, hostlist?: string[]): number {
+  if (system === 'power' && action === 'reset') return 120000
+  if (system === 'sel' && action === 'list') {
+    const count = hostlist?.length ?? 1
+    return Math.min(300000, 60000 + count * 2000)
+  }
+  return BACKGROUND_POLL_MS
+}
+
+function hasControlPayload(
+  body: unknown,
+  system?: string,
+  action?: string,
+): boolean {
+  if (!body || typeof body !== 'object') return false
+  const ctl = (body as RequestEnvelope).control
+  if (!ctl || typeof ctl !== 'object') return false
+  const ctlObj = ctl as Record<string, unknown>
+  if (collectControlFailures(ctlObj).size > 0) return true
+  const types = system ? [system] : [...ALL_STATUS_FIELDS]
+  for (const type of types) {
+    const typeObj = ctlObj[type]
+    if (!typeObj || typeof typeObj !== 'object') continue
+    for (const statusKey of ['off', 'on', 'ok'] as const) {
+      const hostMap = (typeObj as Record<string, unknown>)[statusKey]
+      if (hostMap && typeof hostMap === 'object' && Object.keys(hostMap).length > 0) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+async function fetchRequestBody(
+  requestId: string,
+  options?: { throwOnError?: boolean },
+): Promise<{ ok: boolean; status: number; body: unknown }> {
+  const res = await fetch(apiPath(`/api/v1/request/${encodeURIComponent(requestId)}`), {
+    headers: { Accept: 'application/json' },
+  })
+  const body = await readJson(res)
+  if (!res.ok && options?.throwOnError) {
+    throw new Error(`Failed loading request ${requestId} (${res.status})`)
+  }
+  return { ok: res.ok, status: res.status, body }
+}
+
+function isPendingRequestStatus(status: number): boolean {
+  return status === 404 || status === 202 || status === 204
+}
+
+function parseSetupbmcMap(data: {
+  setupbmc?: Record<string, unknown>
+  nodes?: unknown[]
+}): Record<string, boolean> {
+  const out: Record<string, boolean> = {}
+  const map = data.setupbmc
+  if (map && typeof map === 'object') {
+    for (const [name, value] of Object.entries(map)) {
+      const key = String(name).trim()
+      if (key) out[key] = isSetupBmcEnabled(value)
+    }
+  }
+  return out
+}
+
+function parseStatusPayload(data: {
+  results?: unknown[]
+  request_ids?: Record<string, string>
+  nodes?: unknown[]
+  setupbmc?: Record<string, unknown>
+}): StatusSnapshot {
+  const results = Array.isArray(data.results) ? data.results : []
+  const ids = data.request_ids || {}
+  const nodeNames = Array.isArray(data.nodes)
+    ? data.nodes.map((n) => String(n).trim()).filter(Boolean)
+    : []
+  const setupbmcMap = parseSetupbmcMap(data)
+
+  const rowMap: Record<string, ControlStatusRow> = {}
+  for (const node of nodeNames) {
+    rowMap[node] = emptyRow(node, setupbmcMap[node] ?? true)
+  }
+
+  const toasts: StatusToast[] = []
+  for (const item of results) {
+    applyResultItem(rowMap, item, toasts)
+  }
+
+  // Nodes with setupbmc=false were never queried for SEL — keep N/A, drop any sel toasts for them.
+  for (const row of Object.values(rowMap)) {
+    if (row.setupbmc === false) {
+      row.sel = 'N/A'
+      if (row.errors?.sel) {
+        const nextErrors = { ...row.errors }
+        delete nextErrors.sel
+        row.errors = nextErrors
+      }
+    }
+  }
+
+  return {
+    rows: sortedRows(rowMap),
+    requestIds: {
+      power: String(ids.power || ''),
+      sel: String(ids.sel || ''),
+      chassis: String(ids.chassis || ''),
+    },
+    toasts: toasts.filter((t) => {
+      if (t.field !== 'sel' || !t.node) return true
+      const row = rowMap[t.node] ?? Object.values(rowMap).find((r) => r.node.toLowerCase() === t.node.toLowerCase())
+      return row?.setupbmc !== false
+    }),
+  }
+}
+
+export function rowsFromNodeList(
+  nodes: string[] | ControlNodeInfo[],
+  setupbmcByNode?: Record<string, boolean>,
+): ControlStatusRow[] {
+  return nodes.map((entry) => {
+    if (typeof entry === 'string') {
+      return emptyRow(entry, setupbmcByNode?.[entry] ?? true)
+    }
+    return emptyRow(entry.name, entry.setupbmc)
+  })
+}
+
+export function mergeRowUpdates(
+  existing: ControlStatusRow[],
+  updates: ControlStatusRow[],
+): ControlStatusRow[] {
+  const map = rowMapFromRows(existing)
+  for (const row of updates) {
+    const prev = map[row.node]
+    map[row.node] = {
+      ...row,
+      setupbmc: row.setupbmc ?? prev?.setupbmc ?? true,
+      errors: { ...row.errors },
+    }
+    if (map[row.node].setupbmc === false) {
+      map[row.node].sel = 'N/A'
+    }
+  }
+  return sortedRows(map)
+}
+
+/** Fast node list with setupbmc flags — no per-node Luna status jobs. */
+export async function fetchNodeList(): Promise<ControlNodeInfo[]> {
+  const res = await fetch(apiPath('/api/v1/get_nodes'), { headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new Error(`Failed loading node list (${res.status})`)
+  const data = (await readJson(res)) as {
+    node_list?: unknown[]
+    options?: unknown[]
+    nodes?: unknown[]
+    setupbmc?: Record<string, unknown>
+  }
+
+  if (Array.isArray(data.nodes) && data.nodes.length > 0) {
+    return data.nodes
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object') return null
+        const rec = entry as Record<string, unknown>
+        const name = String(rec.name ?? '').trim()
+        if (!name) return null
+        return { name, setupbmc: isSetupBmcEnabled(rec.setupbmc) }
+      })
+      .filter((n): n is ControlNodeInfo => Boolean(n))
+  }
+
+  const setupbmcMap = parseSetupbmcMap(data)
+  const raw = Array.isArray(data.node_list)
+    ? data.node_list
+    : Array.isArray(data.options)
+      ? data.options
+      : []
+  return raw
+    .map((n) => String(n).trim())
+    .filter(Boolean)
+    .map((name) => ({ name, setupbmc: setupbmcMap[name] ?? true }))
+}
+
+/** Status for a page subset; does not wait for background polls. */
+export async function fetchPageStatusSnapshot(hostlist: string[]): Promise<StatusSnapshot> {
+  if (hostlist.length === 0) {
+    return { rows: [], requestIds: { power: '', sel: '', chassis: '' }, toasts: [] }
+  }
+  const res = await fetch(apiPath('/api/v1/status'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ hostlist }),
+  })
+  if (!res.ok) throw new Error(`Failed loading status (${res.status})`)
+  const data = (await readJson(res)) as {
+    results?: unknown[]
+    request_ids?: Record<string, string>
+    nodes?: unknown[]
+    setupbmc?: Record<string, unknown>
+  }
+  return parseStatusPayload(data)
+}
+
+/** Load all nodes from /api/v1/status; does not wait for background polls. */
+export async function fetchControlStatusSnapshot(): Promise<StatusSnapshot> {
+  const res = await fetch(apiPath('/api/v1/status'), { headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new Error(`Failed loading status (${res.status})`)
+  const data = (await readJson(res)) as {
+    results?: unknown[]
+    request_ids?: Record<string, string>
+    nodes?: unknown[]
+    setupbmc?: Record<string, unknown>
+  }
+  return parseStatusPayload(data)
+}
+
+/** @deprecated Use fetchControlStatusSnapshot + startBackgroundStatusPoll */
+export async function fetchControlStatus(): Promise<StatusSnapshot> {
+  return fetchControlStatusSnapshot()
+}
+
+function clearPendingField(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+): void {
+  const pending = pendingStatus()
+  for (const row of Object.values(rowMap)) {
+    if (row[field] === pending) row[field] = 'UNKNOWN'
+    if (field === 'power') continue
+    if (row.power === pending) row.power = 'UNKNOWN'
+  }
+}
+
+function isTerminalFailureBody(body: unknown): boolean {
+  if (!body || typeof body !== 'object') return false
+  const status = String((body as Record<string, unknown>).status ?? '')
+    .trim()
+    .toUpperCase()
+  return status === 'FAILED' || status === 'FAILURE' || status === 'ERROR'
+}
+
+function markHostlistFieldError(
+  rowMap: Record<string, ControlStatusRow>,
+  field: PollField,
+  hostlist: string[] | undefined,
+): void {
+  const targets = hostlist?.length ? hostlist : Object.keys(rowMap)
+  for (const node of targets) {
+    const key = rowKeyForHostlist(rowMap, node)
+    if (!rowMap[key]) rowMap[key] = emptyRow(key)
+    rowMap[key][field] = 'ERROR'
+    if (field !== 'power') finalizeNodePowerIfPending(rowMap, key)
+  }
+}
+
+function toastsFromTerminalBody(
+  body: unknown,
+  field: PollField,
+  hostlist: string[] | undefined,
+  idPrefix: string,
+  fallbackMessage: string,
+): StatusToast[] {
+  const toasts = collectFailuresFromBody(body, field, hostlist, idPrefix)
+  if (toasts.length > 0) return toasts
+  const message = fallbackMessage.trim()
+  if (!message) return []
+  const node = hostlist?.length === 1 ? (hostlist[0] ?? '') : ''
+  return [makeToast(node, field, message, idPrefix)]
+}
+
+async function pollOneRequest(
+  requestId: string,
+  field: PollField,
+  rowMap: Record<string, ControlStatusRow>,
+  timeoutMs: number,
+  signal: AbortSignal,
+  onUpdate: (rows: ControlStatusRow[], toasts: StatusToast[]) => void,
+  options?: { action?: string; hostlist?: string[] },
+): Promise<void> {
+  if (!requestId || signal.aborted) return
+  const start = Date.now()
+  while (!signal.aborted && Date.now() - start < timeoutMs) {
+    const { ok, status, body } = await fetchRequestBody(requestId)
+    const idPrefix = `${requestId}:`
+    const terminalFailure = isTerminalFailureBody(body)
+
+    if (ok && hasControlPayload(body, field, options?.action)) {
+      const toasts: StatusToast[] = []
+      applyResultItem(rowMap, body, toasts, {
+        system: field,
+        action: options?.action,
+        hostlist: options?.hostlist,
+        idPrefix,
+      })
+      if (toasts.length === 0) {
+        toasts.push(...collectFailuresFromBody(body, field, options?.hostlist, idPrefix))
+      }
+      // Luna sometimes returns control + status FAILED with only a top-level message.
+      if (toasts.length === 0 && terminalFailure) {
+        toasts.push(
+          ...toastsFromTerminalBody(
+            body,
+            field,
+            options?.hostlist,
+            idPrefix,
+            String((body as RequestEnvelope)?.message ?? 'Action failed.'),
+          ),
+        )
+        if (toasts.length > 0) markHostlistFieldError(rowMap, field, options?.hostlist)
+      }
+      onUpdate(sortedRows(rowMap), toasts)
+      if (hostlistFieldResolved(rowMap, field, options?.hostlist) || (terminalFailure && toasts.length > 0)) {
+        return
+      }
+      await sleep(POLL_INTERVAL_MS)
+      continue
+    }
+
+    // HTTP ok/not-ok with status FAILED (no usable control payload) — still surface the error.
+    if (terminalFailure || (!ok && !isPendingRequestStatus(status))) {
+      const fallback = String(
+        (body as RequestEnvelope)?.message ?? `Request failed (${status})`,
+      ).trim()
+      const toasts = toastsFromTerminalBody(body, field, options?.hostlist, idPrefix, fallback)
+      markHostlistFieldError(rowMap, field, options?.hostlist)
+      onUpdate(sortedRows(rowMap), toasts)
+      return
+    }
+
+    await sleep(POLL_INTERVAL_MS)
+  }
+  if (!signal.aborted) {
+    clearPendingForHostlist(rowMap, field, options?.hostlist)
+    onUpdate(sortedRows(rowMap), [])
+  }
+}
+
+/**
+ * Poll power/sel/chassis in the background and push row + toast updates.
+ * Returns a stop function (call before starting a new poll generation).
+ */
+export function startBackgroundStatusPoll(
+  initialRows: ControlStatusRow[],
+  requestIds: StatusSnapshot['requestIds'],
+  onUpdate: (rows: ControlStatusRow[], toasts: StatusToast[]) => void,
+  options?: { timeoutMs?: number; onPowerPollComplete?: () => void; hostlist?: string[] },
+): () => void {
+  const ac = new AbortController()
+  const rowMap = rowMapFromRows(initialRows)
+  const timeoutMs = options?.timeoutMs ?? BACKGROUND_POLL_MS
+
+  const notify = (rows: ControlStatusRow[], toasts: StatusToast[]) => {
+    if (!ac.signal.aborted) onUpdate(rows, toasts)
+  }
+
+  for (const type of STATUS_TYPES) {
+    const requestId = requestIds[type]
+    if (!requestId) continue
+    void pollOneRequest(requestId, type, rowMap, timeoutMs, ac.signal, (rows, toasts) => {
+      notify(rows, toasts)
+      if (type === 'power') options?.onPowerPollComplete?.()
+    }, { hostlist: options?.hostlist })
+  }
+
+  if (!requestIds.power) options?.onPowerPollComplete?.()
+
+  return () => ac.abort()
+}
+
+function extractActionFailures(
+  data: unknown,
+  hostlist: string[],
+  system: string,
+  actionPrefix: string,
+): StatusToast[] {
+  const field = (ALL_STATUS_FIELDS.find((f) => f === system) ?? 'power') as StatusField
+  return collectFailuresFromBody(data, field, hostlist, `${actionPrefix}:`)
+}
+
+export async function triggerAction(
+  system: string,
+  action: string,
+  hostlist: string[],
+): Promise<{ requestId: string; immediateToasts: StatusToast[]; body: unknown }> {
+  const res = await fetch(apiPath(`/api/v1/action/${encodeURIComponent(system)}/${encodeURIComponent(action)}`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ hostlist }),
+  })
+  const data = (await readJson(res)) as RequestEnvelope
+  if (!res.ok) throw new Error(String(data.message || `Action failed (${res.status})`))
+  const requestId = extractRequestId(data)
+  const immediateToasts = extractActionFailures(
+    data,
+    hostlist,
+    system,
+    requestId || `${system}/${action}/${Date.now()}`,
+  )
+  return { requestId, immediateToasts, body: data }
+}
+
+export function pollActionInBackground(
+  requestId: string,
+  initialRows: ControlStatusRow[],
+  hostlist: string[],
+  onUpdate: (rows: ControlStatusRow[], toasts: StatusToast[]) => void,
+  system: string,
+  action: string,
+): () => void {
+  const ac = new AbortController()
+  const rowMap = rowMapFromRows(initialRows)
+  const timeoutMs = pollTimeoutMs(system, action, hostlist)
+  const pending = pendingStatus()
+  const field = ALL_STATUS_FIELDS.find((f) => f === system)
+  if (field) {
+    for (const node of hostlist) {
+      if (rowMap[node]) rowMap[node][field] = pending
+    }
+    onUpdate(sortedRows(rowMap), [])
+  }
+
+  const pollField = (field ?? 'power') as PollField
+  void pollOneRequest(requestId, pollField, rowMap, timeoutMs, ac.signal, (rows, toasts) => {
+    if (!ac.signal.aborted) onUpdate(rows, toasts)
+  }, { action, hostlist })
+
+  return () => ac.abort()
+}
+
+export function actionPollTimeoutMs(system: string, action: string): number {
+  return pollTimeoutMs(system, action)
+}
+
+function isActionResponseReady(
+  body: unknown,
+  system: string,
+  action: string,
+  hostlist: string[],
+  field: PollField,
+  ok: boolean,
+): boolean {
+  if (system === 'sel' && action === 'list') {
+    return isSelListResponseReady(body, hostlist)
+  }
+  return ok && hasControlPayload(body, field, action)
+}
+
+/** Poll until Luna returns a final action body (used by SEL LIST modal). */
+export async function pollActionForResult(
+  requestId: string,
+  hostlist: string[],
+  system: string,
+  action: string,
+  options?: { signal?: AbortSignal },
+): Promise<{ body: unknown; timedOut: boolean }> {
+  const field = (ALL_STATUS_FIELDS.find((f) => f === system) ?? 'power') as PollField
+  const timeoutMs = pollTimeoutMs(system, action, hostlist)
+  const signal = options?.signal
+  const start = Date.now()
+  let lastBody: unknown = {}
+
+  while (!signal?.aborted && Date.now() - start < timeoutMs) {
+    const { ok, status, body } = await fetchRequestBody(requestId)
+    lastBody = body
+    if (isActionResponseReady(body, system, action, hostlist, field, ok)) {
+      return { body, timedOut: false }
+    }
+    if (!ok && !isPendingRequestStatus(status)) {
+      return { body, timedOut: false }
+    }
+    await sleep(POLL_INTERVAL_MS)
+  }
+
+  return { body: lastBody, timedOut: true }
+}
+
+export function mergeActionBodyIntoRows(
+  existing: ControlStatusRow[],
+  body: unknown,
+  hostlist: string[],
+  system: StatusField,
+  action?: string,
+): { rows: ControlStatusRow[]; toasts: StatusToast[] } {
+  const rowMap = rowMapFromRows(existing)
+  const toasts: StatusToast[] = []
+  applyResultItem(rowMap, body, toasts, {
+    system: system as PollField,
+    hostlist,
+    action,
+  })
+  if (toasts.length === 0) {
+    toasts.push(...collectFailuresFromBody(body, system, hostlist))
+  }
+  return { rows: sortedRows(rowMap), toasts }
+}

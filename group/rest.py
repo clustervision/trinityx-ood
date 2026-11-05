@@ -51,8 +51,8 @@ class Rest():
     def app_url(request):
         """Base URL for the SPA shell (window.APP_URL). Must run inside a Flask request context."""
         response = {"APP_URL": ""}
-        # full_url = f"{request.scheme}://{request.host}{request.path}"
-        full_url = f"https://{request.host}{request.path}"
+        scheme = request.headers.get('X-Forwarded-Proto', request.scheme)
+        full_url = f"{scheme}://{request.host}{request.path}"
         full_url = full_url[:-1]
         full_url_app = f"{full_url}{url_for('home')}"
         response["APP_URL"] = full_url_app[:-1]

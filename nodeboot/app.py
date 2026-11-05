@@ -1,0 +1,431 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+# This code is part of the TrinityX software suite
+# Copyright (C) 2023  ClusterVision Solutions b.v.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>
+
+"""
+Node Boot — OOD GUI for lconsole / node provisioning.
+
+Live view of nodes booting: one row per OS image, expandable into its real
+Luna groups (node.group — a rack/pool grouping, not a state bucket), each
+with booted/booting/failed counts and a 3-phase breakdown of "booting" for
+the wave chart (redesign, 30 Jul 2026 — "a few states, not all of them").
+Data comes from the Luna2 daemon:
+  GET /config/node    -> node -> group / osimage / interfaces
+  GET /monitor/node   -> per-node live state (populated only while provisioning)
+"""
+
+__author__      = 'Dev-team'
+__copyright__   = 'Copyright 2025, TrinityX[NODEBOOT]'
+__license__     = 'GPL'
+__version__     = '1.0'
+__maintainer__  = 'Dev-team'
+__email__       = 'support@clustervision.com'
+__status__      = 'Development'
+
+import os
+import sys
+import re
+from collections import defaultdict
+from configparser import RawConfigParser
+
+import requests
+from flask import Flask, render_template, jsonify, abort, url_for, request
+from luna.boot import Boot
+
+from constant import (
+    INI_FILE, TOKEN_FILE, LICENSE, SOL_GRAB_URL, SOL_GRAB_TIMEOUT, APP_STATE,
+)
+
+requests.packages.urllib3.disable_warnings()
+
+app = Flask(__name__, static_folder="app/assets", static_url_path="/app/assets", template_folder="app")
+
+_NODE_NAME_RE = re.compile(r'^[A-Za-z0-9_.-]+$')  # matches STRICT_NAMES-style node names
+
+# The stage tables behind `luna boot status` (luna2-cli 2.2) are the one source of
+# truth for the Boot Overview / Boot Progress numbers, so the web view and the CLI
+# agree. Boot.__init__ parses CLI arguments, which is why the instance is created
+# without it: only the tables and the pure classifiers are used.
+_BOOT = Boot.__new__(Boot)
+
+# ---------------------------------------------------------------------------
+# Luna API client — read luna.ini, cache a token, refresh once on 401/403.
+# ---------------------------------------------------------------------------
+
+class LunaAPI:
+    def __init__(self):
+        p = RawConfigParser()
+        p.read(INI_FILE)
+        a = p['API']
+        self.base = f"{a['PROTOCOL']}://{a['ENDPOINT']}"
+        self.user = a['USERNAME']
+        self.password = a['PASSWORD']
+        self.verify = str(a.get('VERIFY_CERTIFICATE', 'False')).lower() in ('y', 'yes', 'true')
+        self._token = None
+
+    def _token_path_ok(self):
+        return isinstance(TOKEN_FILE, str)
+
+    def _load_cached(self):
+        if self._token:
+            return self._token
+        if self._token_path_ok() and os.path.isfile(TOKEN_FILE):
+            with open(TOKEN_FILE, encoding='utf-8') as fh:
+                self._token = fh.read().strip() or None
+        return self._token
+
+    def _new_token(self):
+        r = requests.post(f'{self.base}/token', json={'username': self.user, 'password': self.password},
+                          timeout=5, verify=self.verify)
+        r.raise_for_status()
+        self._token = r.json()['token']
+        if self._token_path_ok():
+            with open(TOKEN_FILE, 'w', encoding='utf-8') as fh:
+                fh.write(self._token)
+            os.chmod(TOKEN_FILE, 0o600)
+        return self._token
+
+    def get(self, path):
+        token = self._load_cached() or self._new_token()
+        url = f'{self.base}{path}'
+        r = requests.get(url, headers={'x-access-tokens': token}, timeout=8, verify=self.verify)
+        if r.status_code in (401, 403):
+            token = self._new_token()
+            r = requests.get(url, headers={'x-access-tokens': token}, timeout=8, verify=self.verify)
+        r.raise_for_status()
+        return r.json()
+
+
+# ---------------------------------------------------------------------------
+# Pure helpers (tests in tests/test_boot_status.py)
+# ---------------------------------------------------------------------------
+
+# Booting nodes are bucketed into 3 coarse phases, not tracked by every
+# individual install.* state (30 Jul 2026 redesign — "a few states, not all of
+# them"). The phases are cut from the CLI's own ladder (Boot.BOOT_STAGES) so
+# nodeboot carries no copy of the daemon's state list: phase 1 runs up to and
+# including the prepare stretch, phase 2 is the download stretch, phase 3 the
+# rest up to booted. A hand-written copy here went stale twice (lpart, mounts,
+# profiles, sanitized were all missing) and showed installing nodes as failed.
+_STAGE_INDEX = {name: index for index, (name, _steps, _pct) in enumerate(Boot.BOOT_STAGES)}
+_LAST_PHASE1_STAGE = _STAGE_INDEX['prepare']
+_PHASE2_STAGE = _STAGE_INDEX['download']
+_BOOTED_STAGE = _STAGE_INDEX['booted']
+
+
+def classify_group(members, states):
+    """[node names] + {name: raw_state} -> one Luna group's counts.
+
+    booted/phase1/phase2/phase3 are what the UI renders (a wave chart split
+    into 3 coarse phases cut from Boot.BOOT_STAGES, see above). failedReasons
+    is 'error' for the daemon's own failure state, 'parked' for an install
+    that stopped for good (degraded, refused, fatal), 'not_started' for a node
+    with no state or one the ladder does not place. A sanitized node has
+    nothing left to install and counts as booted, as the CLI counts it done.
+
+    The previous design's STUCK_GAP_PCT ("this node is N points behind its
+    fastest peer") does NOT carry over to this per-Luna-group granularity: a
+    real group's own phase1/phase2/phase3 pcts span ~4 to ~95, so the instant
+    even one member reaches booted (100%), every node still mid-pipeline is
+    >=25 points behind it and would get flagged "stuck" purely for being
+    normal and unfinished — caught by the tests before this shipped. failedReasons keeps 'error' as its own key (not a bare bool) so
+    a real staleness signal (e.g. no state change in N minutes) can be added
+    as a second reason later without changing the shape callers already read.
+    """
+    scored = [(name, states.get(name)) for name in members]
+
+    booted, phase1, phase2, phase3 = [], [], [], []
+    failed_reasons = {}
+    for name, state in scored:
+        stopped = _BOOT.stopped(state)
+        stage = _BOOT.node_stage(state)
+        if state and 'error' in state:
+            failed_reasons[name] = 'error'
+        elif stopped == 'parked':
+            failed_reasons[name] = 'parked'
+        elif stopped == 'sanitized' or stage == _BOOTED_STAGE:
+            booted.append(name)
+        elif stage is None:
+            # No monitor entry yet, or a state the ladder does not place -- this
+            # is not "before install.discovered and about to start", it's "we
+            # don't know it's making progress at all". Counts as not booting
+            # rather than inflating the booting wave with nodes that may not
+            # be doing anything.
+            failed_reasons[name] = 'not_started'
+        elif stage <= _LAST_PHASE1_STAGE:
+            phase1.append(name)
+        elif stage == _PHASE2_STAGE:
+            phase2.append(name)
+        else:
+            phase3.append(name)
+
+    failed_nodes = sorted(failed_reasons)
+    return {
+        'total': len(members),
+        'booted': len(booted),
+        'booting': len(phase1) + len(phase2) + len(phase3),
+        'phase1': len(phase1), 'phase2': len(phase2), 'phase3': len(phase3),
+        'failed': len(failed_nodes),
+        'failedNodes': failed_nodes,
+        'failedReasons': failed_reasons,
+        'overview': boot_overview(state for _name, state in scored),
+        'funnel': boot_funnel(state for _name, state in scored),
+    }
+
+
+def boot_overview(raw_states):
+    """Per-phase counts, the columns of `luna boot status`'s Boot Overview table,
+    in the CLI's column order: unknown first, then the phases as the boot runs
+    them, parked before done, done last."""
+    phases = [phase for phase, _ in Boot.BOOT_PHASES if phase not in ('parked', 'done')]
+    counts = dict.fromkeys(['unknown'] + phases + ['config', 'parked', 'done'], 0)
+    for state in raw_states:
+        counts[_BOOT.boot_phase(state)] += 1
+    return counts
+
+
+def boot_funnel(raw_states):
+    """Nodes that reached at least each milestone, the bars of Boot Progress."""
+    stages = [stage for stage in map(_BOOT.node_stage, raw_states) if stage is not None]
+    return {label: sum(1 for stage in stages if stage >= threshold)
+            for label, threshold, _note in Boot.BOOT_MILESTONES}
+
+
+def _sum_group_counts(groups):
+    totals = {'total': 0, 'booted': 0, 'booting': 0, 'failed': 0}
+    for g in groups:
+        for key in totals:
+            totals[key] += g[key]
+    return totals
+
+
+# What the operator does about a node whose install stopped, by the step the
+# node reports (TRIX-2320). The states come from the installer template: lpart
+# parks a node on a safety or fatal exit, sanitize erases the disks and stops,
+# any other failure is install.error and retries by itself.
+OPERATOR_ACTIONS = {
+    'degraded': 'replace the disk, reinstall with install_mode full',
+    'refused': 'fix the cause in Luna, reboot the node',
+    'fatal': 'fix the cause in Luna, reboot the node',
+    'sanitized': 'none, or reinstall',
+    'error': 'watch; it retries by itself',
+}
+
+
+def boot_view(monitor, nodes, scope):
+    """The Boot Progress block and the Not Booted rows of `luna boot status -l`,
+    computed by the CLI's own code for these nodes. node_states() is the one
+    method of Boot that would call the daemon itself; it is given the monitor
+    data this app already fetched (same shape: {node: {state, status, updated}}).
+    None when no node in scope has reported a state, as the CLI returns."""
+    boot = Boot.__new__(Boot)
+    boot.args = {}
+    boot.node_states = lambda: monitor
+    progress = boot.boot_progress(scope)
+    if progress is not None:
+        progress['notBooted'] = boot.not_booted(nodes, scope)
+        for row in progress['notBooted']:
+            row['action'] = OPERATOR_ACTIONS.get(row['step'], '')
+    return progress
+
+
+def build_images(nodes, states, all_osimage_names=(), all_groups=None, monitor=None):
+    """nodes: {name: cfg}, states: {name: raw_state} -> list of image dicts
+    (id, name, groups), most-active-first then by name. groups = real Luna
+    node groups (node.group), each with its own booted/booting/failed counts —
+    not provisioning-state buckets.
+
+    all_osimage_names: every osimage Luna knows about, not just ones with
+    nodes on them right now. An osimage with zero nodes still gets listed
+    (empty groups) — a group with zero nodes still doesn't, since a group
+    only exists here as a byproduct of nodes actually being in it.
+
+    all_groups: {group: osimage} for every group Luna knows about. The ones
+    with no nodes are listed by name in their osimage's unusedGroups, so the
+    page can account for every image and group without inventing empty
+    group rows.
+
+    monitor: {node: {state, status, updated}} as the daemon's monitor route
+    reports it; feeds each group's 'progress' block (see boot_view)."""
+    monitor = monitor or {}
+    by_image_group = defaultdict(lambda: defaultdict(list))
+    for name, cfg in nodes.items():
+        image = cfg.get('osimage') or 'unknown'
+        group = cfg.get('group') or 'ungrouped'
+        by_image_group[image][group].append(name)
+
+    images = []
+    for image, groupmap in sorted(by_image_group.items()):
+        groups = []
+        for group, members in sorted(groupmap.items()):
+            sample = nodes[members[0]]
+            counts = classify_group(members, states)
+            groups.append({'name': group, 'network': _provision_network(sample), **counts,
+                           'progress': boot_view(monitor, nodes, members)})
+        images.append({
+            'id': re.sub(r'[^A-Za-z0-9_-]', '-', image),
+            'name': image,
+            'groups': groups,
+            'unusedGroups': [],
+        })
+
+    seen = {img['name'] for img in images}
+    for image in sorted(set(all_osimage_names) - seen):
+        images.append({'id': re.sub(r'[^A-Za-z0-9_-]', '-', image), 'name': image, 'groups': [], 'unusedGroups': []})
+
+    used = {cfg.get('group') or 'ungrouped' for cfg in nodes.values()}
+    by_name = {img['name']: img for img in images}
+    for group, image in sorted((all_groups or {}).items()):
+        if group in used:
+            continue
+        image = image or 'unknown'
+        if image not in by_name:
+            by_name[image] = {'id': re.sub(r'[^A-Za-z0-9_-]', '-', image), 'name': image,
+                              'groups': [], 'unusedGroups': []}
+            images.append(by_name[image])
+        by_name[image]['unusedGroups'].append(group)
+
+    all_booted = lambda img: all(g['failed'] == 0 and g['booting'] == 0 for g in img['groups']) if img['groups'] else True
+    images.sort(key=lambda i: (all_booted(i), i['name']))
+    return images
+
+
+def _provision_network(cfg):
+    want = (cfg.get('provision_interface') or 'BOOTIF').upper()
+    for iface in cfg.get('interfaces', []):
+        if iface.get('interface', '').upper() == want:
+            return iface.get('network') or want
+    return want
+
+
+# ---------------------------------------------------------------------------
+# Status assembly
+# ---------------------------------------------------------------------------
+
+def get_status():
+    api = LunaAPI()
+    node_data = api.get('/config/node')
+    nodes = node_data.get('config', {}).get('node', {}) or {}
+
+    try:
+        osimage_data = api.get('/config/osimage')
+        all_osimage_names = list(osimage_data.get('config', {}).get('osimage', {}) or {})
+    except requests.HTTPError:
+        all_osimage_names = []  # don't fail the whole page over this — nodes' own osimages still show
+
+    try:
+        group_data = api.get('/config/group')
+        all_groups = {name: cfg.get('osimage') for name, cfg in
+                      (group_data.get('config', {}).get('group', {}) or {}).items()}
+    except requests.HTTPError:
+        all_groups = {}  # same as osimages: unused groups just aren't listed
+
+    states, monitor = {}, {}
+    try:
+        mon = api.get('/monitor/node')
+        entries = mon.get('monitor', {}).get('status', {}).get('node', {}) or {}
+        for name, info in entries.items():
+            # bulk state is "<name> <raw-state>", e.g. "node001 install.image"
+            raw = (info.get('state') or '').strip()
+            if raw.startswith(name + ' '):
+                raw = raw[len(name) + 1:]
+            states[name] = raw or None
+            monitor[name] = {'state': raw, 'status': info.get('status'), 'updated': info.get('updated')}
+    except requests.HTTPError:
+        pass  # 404 "no entries found" -> nothing provisioning right now
+
+    return {
+        'images': build_images(nodes, states, all_osimage_names, all_groups, monitor),
+        'progress': boot_view(monitor, nodes, sorted(nodes)),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+def _app_url():
+    """Absolute pun-namespaced root for this app, used by the Vue SPA's
+    window.APP_URL — same computation as the `node` app's Rest.app_url()."""
+    full_url = f"{request.scheme}://{request.host}{request.path}"
+    full_url = full_url[:-1]
+    full_url_app = f"{full_url}{url_for('home')}"
+    return full_url_app[:-1]
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return render_template("index.html", APP_URL=_app_url())
+
+
+@app.route('/api/status', methods=['GET'])
+def status():
+    try:
+        return jsonify(get_status())
+    except Exception as exc:  # surface API/config errors in the UI, don't 500
+        app.logger.warning("status failed: %s", exc)
+        return jsonify({"images": [], "progress": None, "error": str(exc)}), 200
+
+
+def _sol_grab(node):
+    """On-demand SOL capture via the sol-grab service (controller1). Never
+    runs unbounded: the service itself caps concurrency and grab duration;
+    this is just the call."""
+    try:
+        resp = requests.get(f'{SOL_GRAB_URL}/grab/{node}', timeout=SOL_GRAB_TIMEOUT)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException as exc:
+        return {"lines": [], "error": f"sol-grab unreachable: {exc}"}
+
+
+@app.route('/api/console/<node>', methods=['GET'])
+def console(node):
+    """Latest console output for one node, captured live over SOL. Empty is
+    a valid, common state (a quiet console has nothing to say during the
+    grab window) and is reported as such, not an error."""
+    if not _NODE_NAME_RE.match(node):
+        abort(404)
+
+    result = _sol_grab(node)
+    if result.get("error"):
+        return jsonify({"node": node, "lines": [], "message": result["error"]}), 200
+    if not result.get("lines"):
+        return jsonify({"node": node, "lines": [], "message": "no console output captured yet"})
+    return jsonify({"node": node, "lines": result["lines"], "source": "sol"})
+
+
+@app.route('/license', methods=['GET'])
+def license_info():
+    """Human-readable license page (footer link opens this in a new tab)."""
+    response = 'LICENSE Information is not available at this moment.'
+    if os.path.isfile(LICENSE) and os.access(LICENSE, os.R_OK):
+        with open(LICENSE, 'r', encoding='utf-8') as file_data:
+            response = '<br />'.join(file_data.readlines())
+    return response
+
+
+if __name__ == "__main__":
+    if APP_STATE is False:
+        # devserver.py sits in the repository root, next to the app folders.
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from devserver import run_dev
+        run_dev(app, port=7756)
+    else:
+        app.config["DEBUG"] = True
+        app.run(host='0.0.0.0', port=7756, debug=True)

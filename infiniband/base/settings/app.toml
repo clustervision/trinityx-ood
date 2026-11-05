@@ -1,3 +1,4 @@
 APP_NAME = "Infiniband"
 PROMETHEUS_ENDPOINT = "https://localhost:9090"
 IBNETDISCOVER_CMD = "ibnetdiscover"
+IBNETDISCOVER_TIMEOUT = 60

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 from constant import APP_STATE, INI_FILE, LICENSE, TOKEN_FILE
@@ -214,4 +215,10 @@ def license_info():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=7755, debug=(APP_STATE is False))
+    if APP_STATE is False:
+        # devserver.py sits in the repository root, next to the app folders.
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from devserver import run_dev
+        run_dev(app, port=7755)
+    else:
+        app.run(host="0.0.0.0", port=7755)
